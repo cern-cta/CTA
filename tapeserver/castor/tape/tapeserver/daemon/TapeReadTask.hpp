@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor {
@@ -62,7 +62,7 @@ public:
      */
   void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc,RecallWatchDog& watchdog,
-    TapeSessionStats & stats, castor::utils::Timer & timer) {
+    TapeSessionStats & stats, cta::utils::Timer & timer) {
 
     using castor::log::Param;
     
@@ -77,8 +77,8 @@ public:
     // stats to the session's.
     TapeSessionStats localStats;
     std::string LBPMode;
-    castor::utils::Timer localTime;
-    castor::utils::Timer totalTime(localTime);
+    cta::utils::Timer localTime;
+    cta::utils::Timer totalTime(localTime);
 
     // Read the file and transmit it
     bool stillReading = true;
@@ -100,14 +100,14 @@ public:
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
 
       lc.log(LOG_INFO, "Successfully positioned for reading");
-      localStats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
+      localStats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
-      localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       currentErrorToCount = "Error_tapeReadData";
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
-        localStats.waitFreeMemoryTime += timer.secs(castor::utils::Timer::resetCounter);
+        localStats.waitFreeMemoryTime += timer.secs(cta::utils::Timer::resetCounter);
         
         mb->m_fSeq = m_retrieveJob->selectedTapeFile().fSeq;
         mb->m_fileBlock = fileBlock++;
@@ -126,13 +126,13 @@ public:
           // append() signaled the end of the file.
           stillReading = false;
         }
-        localStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
+        localStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
         localStats.dataVolume += mb->m_payload.size();
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
         watchdog.notify();
-        localStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+        localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);

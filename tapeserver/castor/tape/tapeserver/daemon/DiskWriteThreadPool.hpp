@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -189,7 +189,7 @@ private:
   /**
    * Measure the thread pool's lifetime
    */
-  castor::utils::Timer m_totalTime;
+  cta::utils::Timer m_totalTime;
     
   /** Reference to the report packer where tasks report the result of their 
    * individual files and the end of session (for the last thread) */

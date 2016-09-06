@@ -23,7 +23,7 @@
 
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 
 namespace castor {
 namespace tape {
@@ -51,8 +51,8 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
   using log::LogContext;
   using log::Param;
 
-  castor::utils::Timer localTime;
-  castor::utils::Timer totalTime(localTime);
+  cta::utils::Timer localTime;
+  cta::utils::Timer totalTime(localTime);
   size_t blockId=0;
   size_t migratingFileSize=m_archiveJob->archiveFile.fileSize;
   MemBlock* mb=NULL;
@@ -79,7 +79,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     }
     currentErrorToCount = "";
     
-    m_stats.openingTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    m_stats.openingTime+=localTime.secs(cta::utils::Timer::resetCounter);
      
     LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.archiveFileID));
     lc.log(LOG_INFO,"Opened disk file for read");
@@ -89,7 +89,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       checkMigrationFailing();
       
       mb = m_nextTask.getFreeBlock();
-      m_stats.waitFreeMemoryTime+=localTime.secs(castor::utils::Timer::resetCounter);
+      m_stats.waitFreeMemoryTime+=localTime.secs(cta::utils::Timer::resetCounter);
       
       //set metadata and read the data
       mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
@@ -97,7 +97,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       
       currentErrorToCount = "Error_diskRead";
       migratingFileSize -= mb->m_payload.read(*sourceFile);
-      m_stats.readWriteTime+=localTime.secs(castor::utils::Timer::resetCounter);
+      m_stats.readWriteTime+=localTime.secs(cta::utils::Timer::resetCounter);
 
       m_stats.dataVolume += mb->m_payload.size();
 
@@ -121,7 +121,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
         throw cta::exception::Exception(erroMsg);
       }
       currentErrorToCount = "";
-      m_stats.checkingErrorTime += localTime.secs(castor::utils::Timer::resetCounter);
+      m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
       
       // We are done with the block, push it to the write task
       m_nextTask.pushDataBlock(mb);

@@ -54,7 +54,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   m_this.m_taskInjector->finish();
   //then we log/notify
   m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signalled end of session to task injector.");
-  m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
+  m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try { m_this.logTapeAlerts(); } catch (...) {}
   // This out-of-try-catch variables allows us to record the stage of the 
@@ -83,7 +83,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     } else {
       m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
     }
-    m_this.m_stats.unloadTime += m_timer.secs(castor::utils::Timer::resetCounter);
+    m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
     // And return the tape to the library
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
@@ -92,11 +92,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Up);
-    m_this.m_stats.unmountTime += m_timer.secs(castor::utils::Timer::resetCounter);
+    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
     m_this.m_initialProcess.reportTapeUnmountedForRetrieve();
-    m_this.m_stats.waitReportingTime += m_timer.secs(castor::utils::Timer::resetCounter);
+    m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   } catch(const cta::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
@@ -181,7 +181,7 @@ const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   m_logContext.pushOrReplace(log::Param("thread", "TapeRead"));
-  castor::utils::Timer timer, totalTimer;
+  cta::utils::Timer timer, totalTimer;
   std::string currentErrorToCount = "Error_setCapabilities";
   try{
     // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
@@ -211,7 +211,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       waitForDrive();
       currentErrorToCount = "Error_checkingTapeAlert";
       logTapeAlerts();
-      m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
@@ -222,7 +222,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
       // From now on, the tasks will identify problems when executed.
       currentErrorToCount = "";
-      m_stats.positionTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       //and then report
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
@@ -249,7 +249,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       m_initialProcess.reportState(cta::tape::session::SessionState::Running,
         cta::tape::session::SessionType::Retrieve);
-      m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector
       std::unique_ptr<TapeReadTask> task;
@@ -257,7 +257,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());
-        m_stats.waitInstructionsTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
         if (NULL==task.get()) {
           m_logContext.log(LOG_DEBUG, "No more files to read from tape");

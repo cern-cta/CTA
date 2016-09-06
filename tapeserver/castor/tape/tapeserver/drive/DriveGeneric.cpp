@@ -25,7 +25,7 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include "common/CRC.hpp"
 #include "common/exception/MemException.hpp"
 
@@ -1187,7 +1187,7 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
 
 void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   std::string lastTestUnitReadyExceptionMsg("");
-  castor::utils::Timer t;
+  cta::utils::Timer t;
   // Query the tape drive at least once hence a do while loop/
   do  {
     // testUnitReady() uses SG_IO TEST_UNIT_READY to avoid calling open on the

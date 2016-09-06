@@ -24,7 +24,6 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 set (UTILS_LIB_SRC_FILES
   SmartFILEPtr.cpp
-  Timer.cpp
   utils.cpp
   ../common/CastorConfiguration.cpp
   ../System.cpp

@@ -29,7 +29,7 @@
 #include "castor/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
@@ -70,22 +70,22 @@ protected:
   /**
    * A timer allowing estimation of the total timer for crashing sessions
    */
-  castor::utils::Timer m_tapeThreadTimer;
+  cta::utils::Timer m_tapeThreadTimer;
   
   /**
    *  Timer for regular heartbeat reports to parent process
    */  
-  castor::utils::Timer m_reportTimer;
+  cta::utils::Timer m_reportTimer;
   
   /*
    *  How long since we last logged a warning?
    */
-  castor::utils::Timer m_blockMovementReportTimer;
+  cta::utils::Timer m_blockMovementReportTimer;
   
   /**
    * how long since the last block movement?
    */
-  castor::utils::Timer m_blockMovementTimer;
+  cta::utils::Timer m_blockMovementTimer;
   
   /**
    * How fast should we tick?
@@ -249,7 +249,7 @@ protected:
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.
     // To be sure we wait the full half second, we use a timed loop.
-    castor::utils::Timer exitTimer;
+    cta::utils::Timer exitTimer;
     while (exitTimer.secs() < 0.5)
       usleep(100*1000);
   }
@@ -300,7 +300,7 @@ protected:
    * time, we will not use this value.
    * @param tapeThreadTimer:  the start time of the tape thread
    */
-  void updateThreadTimer(const castor::utils::Timer & timer) {
+  void updateThreadTimer(const cta::utils::Timer & timer) {
     cta::threading::MutexLocker locker(m_mutex);
     m_tapeThreadTimer = timer;
   }

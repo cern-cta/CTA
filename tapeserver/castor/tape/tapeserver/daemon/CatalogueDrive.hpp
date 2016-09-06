@@ -35,7 +35,7 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 
 #include <iostream>
 #include <memory>
@@ -362,7 +362,7 @@ private:
    * Timer used to decide when to check if another transfer session needs to
    * be launched.
    */
-  castor::utils::Timer m_launchTransferSessionTimer;
+  cta::utils::Timer m_launchTransferSessionTimer;
 
   /**
    * Checks that there is a tape session currently associated with the

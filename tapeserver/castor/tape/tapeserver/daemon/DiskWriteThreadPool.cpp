@@ -23,7 +23,7 @@
 
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include "castor/log/LogContext.hpp"
 
 #include <memory>
@@ -153,12 +153,12 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
   
   std::unique_ptr<DiskWriteTask>  task;
-  castor::utils::Timer localTime;
-  castor::utils::Timer totalTime(localTime);
+  cta::utils::Timer localTime;
+  cta::utils::Timer totalTime(localTime);
   
   while(1) {
     task.reset(m_parentThreadPool.m_tasks.pop());
-    m_threadStat.waitInstructionsTime+=localTime.secs(castor::utils::Timer::resetCounter);
+    m_threadStat.waitInstructionsTime+=localTime.secs(cta::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
           m_parentThreadPool.m_diskFileFactory, m_parentThreadPool.m_watchdog)) {

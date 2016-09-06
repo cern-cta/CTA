@@ -93,10 +93,10 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
 tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
-  castor::utils::Timer & timer)
+  cta::utils::Timer & timer)
 {
   m_drive.flush();
-  double flushTime = timer.secs(castor::utils::Timer::resetCounter);
+  double flushTime = timer.secs(cta::utils::Timer::resetCounter);
   log::ScopedParamContainer params(m_logContext);
   params.add("files", files)
         .add("bytes", bytes)
@@ -141,7 +141,7 @@ const char *castor::tape::tapeserver::daemon::TapeWriteSingleThread::
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   castor::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeWrite");
-  castor::utils::Timer timer, totalTimer;
+  cta::utils::Timer timer, totalTimer;
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -186,7 +186,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       currentErrorToCount = "Error_tapeNotWriteable";
       isTapeWritable();
       
-      m_stats.mountTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
@@ -195,7 +195,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       currentErrorToCount = "Error_tapePositionForWrite";
       // Then we have to initialize the tape write session
       std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-      m_stats.positionTime  += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.positionTime  += timer.secs(cta::utils::Timer::resetCounter);
       {
         castor::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("positionTime", m_stats.positionTime);
@@ -227,7 +227,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         cta::tape::session::SessionType::Archive);
       uint64_t bytes=0;
       uint64_t files=0;
-      m_stats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       std::unique_ptr<TapeWriteTask> task;   
@@ -235,12 +235,12 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       while(1) {
         //get a task
         task.reset(m_tasks.pop());
-        m_stats.waitInstructionsTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         //if is the end
         if(NULL==task.get()) {      
           //we flush without asking
           tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
-          m_stats.flushTime += timer.secs(castor::utils::Timer::resetCounter);
+          m_stats.flushTime += timer.secs(cta::utils::Timer::resetCounter);
           //end of session + log
           m_reportPacker.reportEndOfSession();
           log::LogContext::ScopedParam sp0(m_logContext, log::Param("tapeThreadDuration", totalTimer.secs()));

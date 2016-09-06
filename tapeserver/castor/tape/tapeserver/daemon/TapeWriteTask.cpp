@@ -64,7 +64,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-           castor::log::LogContext& lc, castor::utils::Timer & timer) {
+           castor::log::LogContext& lc, cta::utils::Timer & timer) {
     using castor::log::LogContext;
     using castor::log::Param;
     using castor::log::ScopedParamContainer;
@@ -77,7 +77,7 @@ namespace daemon {
     
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    castor::utils::Timer localTime;
+    cta::utils::Timer localTime;
     unsigned long ckSum = Payload::zeroAdler32();
     uint32_t memBlockId  = 0;
     
@@ -93,25 +93,25 @@ namespace daemon {
       watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
       std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       m_LBPMode = output->getLBPMode();
-      m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       // We are not error sources here until we actually write.
       currentErrorToCount = "";
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
-        m_taskStats.waitDataTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_taskStats.waitDataTime += timer.secs(cta::utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,memBlockId,lc);
         
         ckSum =  mb->m_payload.adler32(ckSum);
-        m_taskStats.checksumingTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_taskStats.checksumingTime += timer.secs(cta::utils::Timer::resetCounter);
         currentErrorToCount = "Error_tapeWriteData";
         mb->m_payload.write(*output);
         currentErrorToCount = "";
         
-        m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
+        m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
         watchdog.notify();
         ++memBlockId;
@@ -122,7 +122,7 @@ namespace daemon {
       currentErrorToCount = "Error_tapeWriteTrailer";
       output->close();
       currentErrorToCount = "";
-      m_taskStats.readWriteTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
@@ -136,7 +136,7 @@ namespace daemon {
       m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
       m_archiveJob->tapeFile.blockId = output->getBlockId();
       reportPacker.reportCompletedJob(std::move(m_archiveJob));
-      m_taskStats.waitReportingTime += timer.secs(castor::utils::Timer::resetCounter);
+      m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
       logWithStats(LOG_INFO, "File successfully transmitted to drive",lc);

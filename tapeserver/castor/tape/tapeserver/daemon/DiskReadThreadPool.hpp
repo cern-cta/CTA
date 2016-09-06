@@ -30,7 +30,7 @@
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/utils/Timer.hpp"
+#include "common/Timer.hpp"
 #include <vector>
 #include <stdint.h>
 
@@ -137,7 +137,7 @@ private:
   /**
    * Measure the thread pool's lifetime
    */
-  castor::utils::Timer m_totalTime;
+  cta::utils::Timer m_totalTime;
   
   /**
    * A disk file factory, that will create the proper type of file access class,

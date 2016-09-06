@@ -171,7 +171,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
-    castor::utils::Timer timer;
+    cta::utils::Timer timer;
     if (rti.synchronousInjection()) {  //adapt the recall task injector (starting from synchronousInjection)
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
@@ -260,7 +260,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     drtp.setTaskInjector(&mti);
     twst.setTaskInjector(&mti);
     mrp.setWatchdog(mwd);
-    castor::utils::Timer timer;
+    cta::utils::Timer timer;
 
     if (mti.synchronousInjection()) {
       const uint64_t firstFseqFromClient = mti.firstFseqToWrite();
