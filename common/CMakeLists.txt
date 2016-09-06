@@ -23,6 +23,8 @@ find_package (libuuid REQUIRED)
 
 add_subdirectory (exception)
 
+set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
+
 set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp
@@ -102,6 +104,7 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
   SmartFd.cpp
+  CRC.cpp
   threading/ChildProcess.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
@@ -141,6 +144,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
   SmartFdTest.cpp
+  CRCTest.cpp
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp
   threading/ThreadingBlockingQTests.cpp

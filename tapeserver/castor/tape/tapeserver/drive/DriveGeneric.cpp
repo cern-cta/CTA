@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
 #include "castor/utils/Timer.hpp"
-#include "castor/utils/CRC.hpp"
+#include "common/CRC.hpp"
 #include "common/exception/MemException.hpp"
 
 namespace castor {
@@ -703,7 +703,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
         }
         memcpy(dataWithCrc32c, data, count);
         const size_t countWithCrc32c =
-          castor::utils::CRC::addCrc32cToMemoryBlock(
+          cta::addCrc32cToMemoryBlock(
             SCSI::logicBlockProtectionMethod::CRC32CSeed,
             count, dataWithCrc32c);
         if (countWithCrc32c !=
@@ -771,7 +771,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
           delete[] dataWithCrc32c;
           throw cta::exception::Exception("In DriveGeneric::readBlock: wrong data block size, checksum cannot fit");
         }
-        if (castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+        if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
           SCSI::logicBlockProtectionMethod::CRC32CSeed,
           res, dataWithCrc32c)) {
             // everything is fine here do mem copy
@@ -835,7 +835,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
           delete[] dataWithCrc32c;
           throw UnexpectedSize(context);
         }
-        if (castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+        if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
           SCSI::logicBlockProtectionMethod::CRC32CSeed,
           res, dataWithCrc32c)) {
             // everything is fine here do mem copy

@@ -1,32 +1,31 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include "castor/utils/CRC.hpp"
+#include "common/CRC.hpp"
 
 #include <stdint.h>
 
+namespace cta {
+  
 //-----------------------------------------------------------------------------
 // crcRS_sw
 //-----------------------------------------------------------------------------
-uint32_t castor::utils::CRC::crcRS_sw (const uint32_t crcInit, 
+uint32_t crcRS_sw (const uint32_t crcInit, 
   const uint32_t cnt, const void *const start) {
   static const uint32_t crcTable[256] = {
     0x00000000, 0x38CF3801, 0x70837002, 0x484C4803, 0xE01BE004, 0xD8D4D805,
@@ -87,7 +86,7 @@ uint32_t castor::utils::CRC::crcRS_sw (const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // crc32c_sw
 //-----------------------------------------------------------------------------
-uint32_t castor::utils::CRC::crc32c_sw (const uint32_t crcInit, 
+uint32_t crc32c_sw (const uint32_t crcInit, 
   const uint32_t cnt, const void *const start)
 {
   static const uint32_t crcTable[256] = {
@@ -194,7 +193,7 @@ uint32_t crc32c_intel_le_hw_64b(const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // crc32c_hw
 //-----------------------------------------------------------------------------
-uint32_t castor::utils::CRC::crc32c_hw (const uint32_t crcInit, 
+uint32_t crc32c_hw (const uint32_t crcInit, 
   const uint32_t cnt, const void *const start) {
 
   /* Do CPU 64 instruction */
@@ -217,7 +216,7 @@ uint32_t castor::utils::CRC::crc32c_hw (const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // crc32c
 //-----------------------------------------------------------------------------
-uint32_t castor::utils::CRC::crc32c(const uint32_t crcInit, const uint32_t cnt,
+uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt,
   const void *const start) {
   int sse42;
 
@@ -228,7 +227,7 @@ uint32_t castor::utils::CRC::crc32c(const uint32_t crcInit, const uint32_t cnt,
 //-----------------------------------------------------------------------------
 // addCrc32cToMemoryBlock
 //-----------------------------------------------------------------------------
-uint32_t castor::utils::CRC::addCrc32cToMemoryBlock(const uint32_t crcInit,
+uint32_t addCrc32cToMemoryBlock(const uint32_t crcInit,
   const uint32_t cnt, uint8_t *start ) {
   if (cnt == 0)
     return 0; //no such thing as a zero length block in SSC (write NOP)
@@ -245,7 +244,7 @@ uint32_t castor::utils::CRC::addCrc32cToMemoryBlock(const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // verifyCrc32cForMemoryBlockWithCrc32c
 //-----------------------------------------------------------------------------
-bool castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
+bool verifyCrc32cForMemoryBlockWithCrc32c(
   const uint32_t crcInit, const uint32_t cnt, const uint8_t *start) {
   if (cnt <= 4)
     return false; //block is too small to be valid, cannot check CRC
@@ -260,3 +259,5 @@ bool castor::utils::CRC::verifyCrc32cForMemoryBlockWithCrc32c(
     return false; //block CRC is incorrect
   return true;
 }
+
+} // namespace cta
