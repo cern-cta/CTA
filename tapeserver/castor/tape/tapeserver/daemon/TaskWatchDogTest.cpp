@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "common/log/StringLogger.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -39,8 +39,8 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
   
-  castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
-  castor::log::LogContext lc(log);
+  cta::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
 
@@ -60,8 +60,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
   
-  castor::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck");
-  castor::log::LogContext lc(log);
+  cta::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
   

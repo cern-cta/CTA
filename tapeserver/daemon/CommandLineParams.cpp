@@ -80,12 +80,12 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   }
 }
 
-std::list<log::Param> CommandLineParams::toLogParams() const {
-  std::list<log::Param> ret;
-  ret.push_back(log::Param("foreground", foreground));
-  ret.push_back(log::Param("logToStdout", logToStdout));
-  ret.push_back(log::Param("configFileLocation", configFileLocation));
-  ret.push_back(log::Param("helpRequested", helpRequested));
+std::list<cta::log::Param> CommandLineParams::toLogParams() const {
+  std::list<cta::log::Param> ret;
+  ret.push_back(cta::log::Param("foreground", foreground));
+  ret.push_back(cta::log::Param("logToStdout", logToStdout));
+  ret.push_back(cta::log::Param("configFileLocation", configFileLocation));
+  ret.push_back(cta::log::Param("helpRequested", helpRequested));
   return ret;
 }
 

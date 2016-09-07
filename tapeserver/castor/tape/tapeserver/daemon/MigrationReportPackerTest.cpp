@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/StringLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/CatalogueFactory.hpp"
@@ -94,8 +94,8 @@ namespace unitTests {
       job2.reset(mockJob.release());
     }
 
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");
-    castor::log::LogContext lc(log);
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
@@ -137,8 +137,8 @@ namespace unitTests {
       job3.reset(mockJob.release());
     }
     
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure");
-    castor::log::LogContext lc(log);  
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
+    cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
@@ -191,8 +191,8 @@ namespace unitTests {
     migratedFileSmall->archiveFile.fileSize=1;
     migratedNullFile->archiveFile.fileSize=0;
     
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile");
-    castor::log::LogContext lc(log);  
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
+    cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 

@@ -18,27 +18,33 @@
 
 #include "common/log/StdoutLogger.hpp"
 
+namespace cta {
+namespace log {
+  
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::log::StdoutLogger::StdoutLogger(const std::string &programName):
+StdoutLogger::StdoutLogger(const std::string &programName):
   Logger(programName, DEBUG) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::log::StdoutLogger::~StdoutLogger() {
+StdoutLogger::~StdoutLogger() {
 }
 
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void cta::log::StdoutLogger::prepareForFork() {}
+void StdoutLogger::prepareForFork() {}
 
 //------------------------------------------------------------------------------
 // reducedSyslog
 //------------------------------------------------------------------------------
-void cta::log::StdoutLogger::reducedSyslog(const std::string & msg) {
+void StdoutLogger::reducedSyslog(const std::string & msg) {
   printf("%s", msg.substr(0,m_maxMsgLen).c_str());
 }
+
+} // namespace log
+} // namespace cta

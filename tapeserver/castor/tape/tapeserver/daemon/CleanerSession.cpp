@@ -29,7 +29,7 @@
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   cta::server::ProcessCap &capUtils,
   mediachanger::MediaChangerFacade &mc,
-  castor::log::Logger &log,
+  cta::log::Logger &log,
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
   const std::string &vid,
@@ -63,11 +63,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
 
   // Reaching this point means the cleaner failed and an exception was thrown
-  std::list<log::Param> params = {
-    log::Param("TPVID", m_vid),
-    log::Param("unitName", m_driveConfig.getUnitName()),
-    log::Param("message", errorMessage)};
-  m_log(LOG_ERR, "Cleaner failed", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", m_vid),
+    cta::log::Param("unitName", m_driveConfig.getUnitName()),
+    cta::log::Param("message", errorMessage)};
+  m_log(cta::log::ERR, "Cleaner failed", params);
   return MARK_DRIVE_AS_DOWN;
 }
 
@@ -102,10 +102,10 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
   }
 
   if(!drive.hasTapeInPlace()) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("TPVID", m_vid));
-    params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-    m_log(LOG_INFO, "Cleaner found tape drive empty", params);
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("TPVID", m_vid));
+    params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
+    m_log(cta::log::INFO, "Cleaner found tape drive empty", params);
     return; //return immediately if there is no tape
   }
 
@@ -134,11 +134,11 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
       std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
       for (std::vector<std::string>::iterator ta=tapeAlerts.begin(); ta!=tapeAlerts.end();ta++)
       {
-        std::list<log::Param> params = {
-          log::Param("tapeAlert",*ta),
-          log::Param("tapeAlertNumber", alertNumber++),
-          log::Param("tapeAlertCount", tapeAlerts.size())};
-        m_log(LOG_WARNING, "Tape alert detected",params);
+        std::list<cta::log::Param> params = {
+          cta::log::Param("tapeAlert",*ta),
+          cta::log::Param("tapeAlertNumber", alertNumber++),
+          cta::log::Param("tapeAlertCount", tapeAlerts.size())};
+        m_log(cta::log::WARNING, "Tape alert detected",params);
       }
     }
     return;
@@ -151,11 +151,11 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
   }
 
   // Reaching this point means it failed and an exception was thrown (because of the "return" above)
-  std::list<log::Param> params = {
-    log::Param("TPVID", m_vid),
-    log::Param("unitName", m_driveConfig.getUnitName()),
-    log::Param("message", errorMessage)};
-  m_log(LOG_ERR, "Cleaner failed getting tape alerts from the drive", params);  
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", m_vid),
+    cta::log::Param("unitName", m_driveConfig.getUnitName()),
+    cta::log::Param("message", errorMessage)};
+  m_log(cta::log::ERR, "Cleaner failed getting tape alerts from the drive", params);  
 }
 
 //------------------------------------------------------------------------------
@@ -165,9 +165,9 @@ void castor::tape::tapeserver::daemon::CleanerSession::setProcessCapabilities(
   const std::string &capabilities) {
   m_capUtils.setProcText(capabilities);
   {
-    std::list<log::Param> params = {
-      log::Param("capabilities", m_capUtils.getProcText())};
-    m_log(LOG_INFO, "Cleaner set process capabilities for using tape",
+    std::list<cta::log::Param> params = {
+      cta::log::Param("capabilities", m_capUtils.getProcText())};
+    m_log(cta::log::INFO, "Cleaner set process capabilities for using tape",
       params);
   }
 }
@@ -198,19 +198,19 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(
   drive::DriveInterface &drive) {  
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-  params.push_back(log::Param("waitMediaInDriveTimeout",
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", m_vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(cta::log::Param("waitMediaInDriveTimeout",
     m_waitMediaInDriveTimeout));
 
   try {
-    m_log(LOG_INFO, "Cleaner waiting for drive to be ready", params);
+    m_log(cta::log::INFO, "Cleaner waiting for drive to be ready", params);
     drive.waitUntilReady(m_waitMediaInDriveTimeout);
-    m_log(LOG_INFO, "Cleaner detected drive is ready", params);
+    m_log(cta::log::INFO, "Cleaner detected drive is ready", params);
   } catch (cta::exception::Exception &ex) {
-    params.push_back(log::Param("message", ex.getMessage().str()));
-    m_log(LOG_INFO, "Cleaner caught non-fatal exception whilst waiting for"
+    params.push_back(cta::log::Param("message", ex.getMessage().str()));
+    m_log(cta::log::INFO, "Cleaner caught non-fatal exception whilst waiting for"
       " drive to become ready", params);
   }
 }
@@ -220,13 +220,13 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
   drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", m_vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
 
-  m_log(LOG_INFO, "Cleaner rewinding tape", params);
+  m_log(cta::log::INFO, "Cleaner rewinding tape", params);
   drive.rewind();
-  m_log(LOG_INFO, "Cleaner successfully rewound tape", params);
+  m_log(cta::log::INFO, "Cleaner successfully rewound tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -234,17 +234,17 @@ void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
   drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", m_vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
 
-  m_log(LOG_INFO, "Cleaner checking tape contains data", params);
+  m_log(cta::log::INFO, "Cleaner checking tape contains data", params);
   if(drive.isTapeBlank()) {
     cta::exception::Exception ex;
     ex.getMessage() << "Tape is completely blank when it should be labeled";
     throw ex;
   }
-  m_log(LOG_INFO, "Cleaner successfully detected tape contains data", params);
+  m_log(cta::log::INFO, "Cleaner successfully detected tape contains data", params);
 }
 
 //------------------------------------------------------------------------------
@@ -253,9 +253,9 @@ void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(
 std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
   drive::DriveInterface &drive) {
   tapeFile::VOL1 vol1;
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", m_vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", m_vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
   
   try {
     drive.readExactBlock((void * )&vol1, sizeof(vol1),
@@ -263,17 +263,17 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
     vol1.verify();
 
     const std::string &volumeLabelVSN = vol1.getVSN();
-    params.push_back(log::Param("volumeLabelVSN", volumeLabelVSN));
+    params.push_back(cta::log::Param("volumeLabelVSN", volumeLabelVSN));
 
-    m_log(LOG_INFO, "Cleaner read VSN from volume label", params);
+    m_log(cta::log::INFO, "Cleaner read VSN from volume label", params);
 
     // If the cleaner was given a VID
     if(!m_vid.empty()) {
       if(m_vid == volumeLabelVSN) {
-        m_log(LOG_INFO, "Cleaner detected volume label contains expected VSN",
+        m_log(cta::log::INFO, "Cleaner detected volume label contains expected VSN",
           params);
       } else {
-        m_log(LOG_WARNING,
+        m_log(cta::log::WARNING,
           "Cleaner detected volume label does not contain expected VSN", params);
       }
     }
@@ -292,23 +292,23 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
 void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
   const std::string &vid, drive::DriveInterface &drive) {
   const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-  params.push_back(log::Param("librarySlot", librarySlot.str()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
   if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(LOG_INFO, "Cleaner not unloading tape because media changer is"
+    m_log(cta::log::INFO, "Cleaner not unloading tape because media changer is"
       " manual", params);
     return;
   }
 
   try {
-    m_log(LOG_INFO, "Cleaner unloading tape", params);
+    m_log(cta::log::INFO, "Cleaner unloading tape", params);
     drive.unloadTape();
-    m_log(LOG_INFO, "Cleaner unloaded tape", params);
+    m_log(cta::log::INFO, "Cleaner unloaded tape", params);
   } catch (cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Cleaner failed to unload tape: " <<
@@ -323,20 +323,20 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
 void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
   const std::string &vid) {
   const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
-  std::list<log::Param> params;
-  params.push_back(log::Param("TPVID", vid));
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
-  params.push_back(log::Param("librarySlot", librarySlot.str()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("TPVID", vid));
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
 
   try {
     m_mc.dismountTape(vid, librarySlot);
     const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
       librarySlot.getLibraryType();
     if(dismountWasManual) {
-      m_log(LOG_INFO, "Cleaner did not dismount tape because media changer is"
+      m_log(cta::log::INFO, "Cleaner did not dismount tape because media changer is"
         " manual", params);
     } else {
-      m_log(LOG_INFO, "Cleaner dismounted tape", params);
+      m_log(cta::log::INFO, "Cleaner dismounted tape", params);
     }
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;

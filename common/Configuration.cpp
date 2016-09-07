@@ -91,7 +91,7 @@ cta::common::Configuration &
 //------------------------------------------------------------------------------
 const std::string& cta::common::Configuration::getConfEntString(
   const std::string &category, const std::string &key,
-  const std::string &defaultValue, log::Logger *const log) {
+  const std::string &defaultValue, cta::log::Logger *const log) {
   try {
     if (isStale()) {
       tryToRenewConfig();
@@ -113,11 +113,11 @@ const std::string& cta::common::Configuration::getConfEntString(
         // release the lock
         pthread_rwlock_unlock(&m_lock);
         if(NULL != log) {           
-          std::list<log::Param> params = {   
-            log::Param("category", category),
-            log::Param("key", key),
-            log::Param("value", entIt->second),
-            log::Param("source", m_fileName)};
+          std::list<cta::log::Param> params = {   
+            cta::log::Param("category", category),
+            cta::log::Param("key", key),
+            cta::log::Param("value", entIt->second),
+            cta::log::Param("source", m_fileName)};
           (*log)(log::INFO, "Configuration entry", params);
         }
         return entIt->second;
@@ -125,11 +125,11 @@ const std::string& cta::common::Configuration::getConfEntString(
     }
     // no entry found
     if(NULL != log) {
-      std::list<log::Param> params = {
-        log::Param("category", category),
-        log::Param("key", key),
-        log::Param("value", defaultValue),
-        log::Param("source", "DEFAULT")};
+      std::list<cta::log::Param> params = {
+        cta::log::Param("category", category),
+        cta::log::Param("key", key),
+        cta::log::Param("value", defaultValue),
+        cta::log::Param("source", "DEFAULT")};
       (*log)(log::INFO, "Configuration entry", params);
     }
     // Unlock and return default
@@ -139,11 +139,11 @@ const std::string& cta::common::Configuration::getConfEntString(
     pthread_rwlock_unlock(&m_lock);
     // log the exception
     if(NULL != log) {
-      std::list<log::Param> params = {
-        log::Param("category", category),
-        log::Param("key", key),
-        log::Param("value", defaultValue),
-        log::Param("source", "DEFAULT")};
+      std::list<cta::log::Param> params = {
+        cta::log::Param("category", category),
+        cta::log::Param("key", key),
+        cta::log::Param("value", defaultValue),
+        cta::log::Param("source", "DEFAULT")};
       (*log)(log::INFO, "Configuration entry", params);
     }
   } catch (...) {
@@ -158,7 +158,7 @@ const std::string& cta::common::Configuration::getConfEntString(
 // getConfEntString
 //------------------------------------------------------------------------------
 const std::string& cta::common::Configuration::getConfEntString(
-  const std::string &category, const std::string &key, log::Logger *const log) {
+  const std::string &category, const std::string &key, cta::log::Logger *const log) {
   // check whether we need to reload the configuration
   if (isStale()) {
     tryToRenewConfig();
@@ -191,11 +191,11 @@ const std::string& cta::common::Configuration::getConfEntString(
     }
 
     if(NULL != log) {
-      std::list<log::Param> params = {
-        log::Param("category", category),
-        log::Param("key", key),
-        log::Param("value", entIt->second),
-        log::Param("source", m_fileName)};
+      std::list<cta::log::Param> params = {
+        cta::log::Param("category", category),
+        cta::log::Param("key", key),
+        cta::log::Param("value", entIt->second),
+        cta::log::Param("source", m_fileName)};
       (*log)(log::INFO, "Configuration entry", params);
     }
 

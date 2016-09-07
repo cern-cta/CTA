@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
@@ -31,8 +31,8 @@
 
 #include <stdint.h>
 
-using castor::log::LogContext;
-using castor::log::Param;
+using cta::log::LogContext;
+using cta::log::Param;
 
 namespace castor{
 namespace tape{
@@ -43,7 +43,7 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,
         cta::RetrieveMount &retrieveMount,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
+        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold)
@@ -97,7 +97,7 @@ void RecallTaskInjector::injectBulkRecalls(std::vector<std::unique_ptr<cta::Retr
     };
     tape::utils::suppresUnusedVariable(sp);
     
-    m_lc.log(LOG_INFO, "Recall task created");
+    m_lc.log(cta::log::INFO, "Recall task created");
     
     cta::RetrieveJob *job = it->get();
     DiskWriteTask * dwt = new DiskWriteTask(it->release(), m_memManager);
@@ -105,10 +105,10 @@ void RecallTaskInjector::injectBulkRecalls(std::vector<std::unique_ptr<cta::Retr
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
-    m_lc.log(LOG_INFO, "Created tasks for recalling a file");
+    m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", jobs.size()));
-  m_lc.log(LOG_INFO, "Finished processing batch of recall tasks from client");
+  m_lc.log(cta::log::INFO, "Finished processing batch of recall tasks from client");
 }
 //------------------------------------------------------------------------------
 //synchronousInjection
@@ -128,19 +128,19 @@ bool RecallTaskInjector::synchronousInjection()
       jobs.emplace_back(job.release());
     }
   } catch (cta::exception::Exception & ex) {
-    castor::log::ScopedParamContainer scoped(m_lc);
+    cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
           .add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles)
           .add("message", ex.getMessageValue());
-    m_lc.log(LOG_ERR, "Failed to getFilesToRecall");
+    m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
     return false;
   }
-  castor::log::ScopedParamContainer scoped(m_lc); 
+  cta::log::ScopedParamContainer scoped(m_lc); 
   scoped.add("byteSizeThreshold",m_maxBytes)
         .add("maxFiles", m_maxFiles);
   if(jobs.empty()) { 
-    m_lc.log(LOG_ERR, "No files to recall: empty mount");
+    m_lc.log(cta::log::ERR, "No files to recall: empty mount");
     return false;
   }
   else {
@@ -171,19 +171,19 @@ bool RecallTaskInjector::synchronousInjection()
 //------------------------------------------------------------------------------
 void RecallTaskInjector::WorkerThread::run()
 {
-  using castor::log::LogContext;
+  using cta::log::LogContext;
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallTaskInjector"));
-  m_parent.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
+  m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
   
   try{
     while (1) {
       Request req = m_parent.m_queue.pop();
       if (req.end) {
-        m_parent.m_lc.log(LOG_INFO,"Received a end notification from tape thread: triggering the end of session.");
+        m_parent.m_lc.log(cta::log::INFO,"Received a end notification from tape thread: triggering the end of session.");
         m_parent.signalEndDataMovement();
         break;
       }
-      m_parent.m_lc.log(LOG_DEBUG,"RecallJobInjector:run: about to call client interface");
+      m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
       std::vector<std::unique_ptr<cta::RetrieveJob>> jobs;
       
       uint64_t files=0;
@@ -200,11 +200,11 @@ void RecallTaskInjector::WorkerThread::run()
       
       if (jobs.empty()) {
         if (req.lastCall) {
-          m_parent.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.");
+          m_parent.m_lc.log(cta::log::INFO,"No more file to recall: triggering the end of session.");
           m_parent.signalEndDataMovement();
           break;
         } else {
-          m_parent.m_lc.log(LOG_DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
+          m_parent.m_lc.log(cta::log::DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
         }
       } else {
         m_parent.injectBulkRecalls(jobs);
@@ -213,17 +213,17 @@ void RecallTaskInjector::WorkerThread::run()
   } //end of try
   catch(const cta::exception::Exception& ex){
       //we end up there because we could not talk to the client
-      log::ScopedParamContainer container( m_parent.m_lc);
+      cta::log::ScopedParamContainer container( m_parent.m_lc);
       container.add("exception message",ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
-      m_parent.m_lc.log(LOG_ERR,"In RecallJobInjector::WorkerThread::run(): "
+      m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
+      m_parent.m_lc.log(cta::log::ERR,"In RecallJobInjector::WorkerThread::run(): "
       "could not retrieve a list of file to recall. End of session");
       
       m_parent.signalEndDataMovement();
       m_parent.deleteAllTasks();
     }
   //-------------
-  m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
+  m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallTaskInjector thread");
   /* We want to finish at the first lastCall we encounter.
    * But even after sending finish() to m_diskWriter and to m_tapeReader,
    * m_diskWriter might still want some more task (the threshold could be crossed),
@@ -237,7 +237,7 @@ void RecallTaskInjector::WorkerThread::run()
         stillReading = false;
       }
       LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
-      m_parent.m_lc.log(LOG_DEBUG,"In RecallJobInjector::WorkerThread::run(): popping extra request");
+      m_parent.m_lc.log(cta::log::DEBUG,"In RecallJobInjector::WorkerThread::run(): popping extra request");
     }
   }
 }

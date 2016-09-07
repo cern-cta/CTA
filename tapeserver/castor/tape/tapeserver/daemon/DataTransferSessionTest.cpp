@@ -28,7 +28,7 @@
 #include <gtest/gtest.h>
 
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
 #include "castor/messages/AcsProxyDummy.hpp"
@@ -308,7 +308,7 @@ protected:
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -461,7 +461,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // to recall the first file and cancel the second.
 
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -626,7 +626,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -760,7 +760,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -899,7 +899,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
   
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest", cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -949,7 +949,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
    
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1067,7 +1067,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1181,7 +1181,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 //
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1307,7 +1307,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
-  castor::log::StringLogger logger("tapeServerUnitTest");
+  cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler

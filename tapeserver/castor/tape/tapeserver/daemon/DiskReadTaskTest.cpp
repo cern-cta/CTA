@@ -25,8 +25,8 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
@@ -54,7 +54,7 @@ namespace unitTests{
     void reportEndOfSession() {}
     void reportEndOfSessionWithErrors(const std::string msg, int error_code) {}
     void disableBulk() {}
-    MockMigrationReportPacker(cta::ArchiveMount *rm,castor::log::LogContext lc):
+    MockMigrationReportPacker(cta::ArchiveMount *rm,cta::log::LogContext lc):
       MigrationReportPacker(rm,lc) {}
   };
   
@@ -93,7 +93,7 @@ namespace unitTests{
     MockMigrationWatchDog(double periodToReport,double stuckPeriod,
     cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
-    castor::log::LogContext lc, double pollPeriod = 0.1): 
+    cta::log::LogContext lc, double pollPeriod = 0.1): 
       MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, 
           driveUnitName, lc, pollPeriod) {}
   private:
@@ -111,8 +111,8 @@ namespace unitTests{
     url += path;
     std::ofstream out(path,std::ios::out | std::ios::binary);
     cta::threading::AtomicFlag flag;
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest");
-    castor::log::LogContext lc(log);
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_DiskReadTaskTest",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
 
     const int blockSize=1500;    
     const int fileSize(1024*2000);

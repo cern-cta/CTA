@@ -41,7 +41,7 @@ castor::tape::tapeserver::daemon::CatalogueConfig::CatalogueConfig() throw():
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueConfig
   castor::tape::tapeserver::daemon::CatalogueConfig::createFromCastorConf(
-    log::Logger *const log) {
+    cta::log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
 

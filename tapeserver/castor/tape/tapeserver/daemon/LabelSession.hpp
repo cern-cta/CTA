@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -73,7 +73,7 @@ public:
     cta::tape::daemon::TapedProxy &tapeserver,
     mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
-    castor::log::Logger &log,
+    cta::log::Logger &log,
     System::virtualWrapper &sysWrapper,
     const DriveConfig &driveConfig,
     const bool force,
@@ -114,7 +114,7 @@ private:
   /**
    * The logging object     
    */
-  castor::log::Logger & m_log;
+  cta::log::Logger & m_log;
     
   /**
    * The system wrapper used to find the device and instantiate the drive object

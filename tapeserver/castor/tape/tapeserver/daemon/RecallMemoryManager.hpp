@@ -25,7 +25,7 @@
 
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace castor {
 namespace exception {
@@ -50,7 +50,7 @@ public:
    * @param blockSize: size of each block
    */
   RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize,
-          castor::log::LogContext& lc);
+          cta::log::LogContext&  lc);
   
   /**
    * Are all sheep back to the farm?
@@ -89,7 +89,7 @@ private:
   /**
    * Logging. The class is not threaded, so it can be shared with its parent
    */
-  castor::log::LogContext& m_lc;
+  cta::log::LogContext&  m_lc;
 };
 
 }}}}

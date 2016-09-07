@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/threading/AtomicCounter.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
@@ -61,7 +61,7 @@ public:
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskReadThreadPool & diskReader,
         TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,cta::ArchiveMount &archiveMount,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
+        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc);
 
   /**
    * Wait for the inner thread to finish
@@ -192,7 +192,7 @@ private:
   /**
    * utility member to log some pieces of information
    */
-  castor::log::LogContext m_lc;
+  cta::log::LogContext m_lc;
   
   cta::threading::Mutex m_producerProtection;
   

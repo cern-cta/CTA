@@ -23,7 +23,7 @@
 
 #include "castor/tape/reactor/DummyPollEventHandler.hpp"
 #include "castor/tape/reactor/PollReactorImpl.hpp"
-#include "castor/log/DummyLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>
 
@@ -40,21 +40,21 @@ protected:
 };
 
 TEST_F(castor_tape_reactor_PollReactorImplTest, goodDayRegisterAndLeave) {
-  castor::log::DummyLogger log("unittests");
+  cta::log::DummyLogger log("unittests");
   castor::tape::reactor::PollReactorImpl reactor(log);
   reactor.registerHandler(
     new castor::tape::reactor::DummyPollEventHandler(1234, false));
 }
 
 TEST_F(castor_tape_reactor_PollReactorImplTest, goodDayRegisterAndRemove) {
-  castor::log::DummyLogger log("unittests");
+  cta::log::DummyLogger log("unittests");
   castor::tape::reactor::PollReactorImpl reactor(log);
   reactor.registerHandler(
     new castor::tape::reactor::DummyPollEventHandler(1234, true));
 }
 
 TEST_F(castor_tape_reactor_PollReactorImplTest, registerTwiceTheSameHandler) {
-  castor::log::DummyLogger log("unittests");
+  cta::log::DummyLogger log("unittests");
   castor::tape::reactor::PollReactorImpl reactor(log);
   castor::tape::reactor::DummyPollEventHandler *handler =
     new castor::tape::reactor::DummyPollEventHandler(1234,false);

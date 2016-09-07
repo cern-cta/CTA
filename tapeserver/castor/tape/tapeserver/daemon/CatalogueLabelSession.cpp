@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueLabelSession *
   castor::tape::tapeserver::daemon::CatalogueLabelSession::create(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
@@ -56,7 +56,7 @@ castor::tape::tapeserver::daemon::CatalogueLabelSession *
 // checkUserCanLabelTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueLabelSession::
-  checkUserCanLabelTape(log::Logger &log,
+  checkUserCanLabelTape(cta::log::Logger &log,
   const legacymsg::TapeLabelRqstMsgBody &labelJob,
   const int labelCmdConnection) {
   /* TODO: re-implement std::ostringstream msg;
@@ -70,7 +70,7 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueLabelSession::
   CatalogueLabelSession(
-  log::Logger &log,
+  cta::log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const DriveConfig &driveConfig,
@@ -128,8 +128,8 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
         666, "Unknown error");
     }
   } catch(cta::exception::Exception &we) {
-    std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
-    m_log(LOG_ERR, "Failed to send failure reply-message to label command",
+    std::list<cta::log::Param> params = {cta::log::Param("message", we.getMessage().str())};
+    m_log(cta::log::ERR, "Failed to send failure reply-message to label command",
       params);
   }
 }
@@ -142,8 +142,8 @@ void castor::tape::tapeserver::daemon::CatalogueLabelSession::
   try {
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_labelCmdConnection, 0, "");
   } catch(cta::exception::Exception &we) { 
-    std::list<log::Param> params = {log::Param("message", we.getMessage().str())};
-    m_log(LOG_ERR, "Failed to send success reply-message to label command",
+    std::list<cta::log::Param> params = {cta::log::Param("message", we.getMessage().str())};
+    m_log(cta::log::ERR, "Failed to send success reply-message to label command",
       params);
   }
 }

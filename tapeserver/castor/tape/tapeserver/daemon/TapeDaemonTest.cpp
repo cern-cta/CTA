@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/DummyLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -68,7 +68,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   const std::string programName = "unittests";
-  castor::log::DummyLogger log(programName);
+  cta::log::DummyLogger log(programName);
   const int netTimeout = 1;
   DriveConfigMap driveConfigs;
   castor::tape::reactor::ZMQReactor reactor(log);

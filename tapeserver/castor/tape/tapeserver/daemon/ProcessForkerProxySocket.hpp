@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
@@ -56,7 +56,7 @@ public:
    * @param socketFd The file-descriptor of the socket to be used to communicate
    * with the process forker.
    */
-  ProcessForkerProxySocket(log::Logger &log, const int socketFd) throw();
+  ProcessForkerProxySocket(cta::log::Logger &log, const int socketFd) throw();
 
   /**
    * Destructor.
@@ -114,7 +114,7 @@ private:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * The file-descriptor of the socket to be used to communicate

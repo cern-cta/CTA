@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::reactor::PollReactorImpl::PollReactorImpl(log::Logger &log)
+castor::tape::reactor::PollReactorImpl::PollReactorImpl(cta::log::Logger &log)
   throw(): m_log(log) {
 }
 
@@ -102,10 +102,10 @@ void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
     {
       const int pollErrno = errno;
 
-      std::list<log::Param> params = {
-        log::Param("errno", pollErrno),
-        log::Param("message", utils::errnoToString(pollErrno))};
-      m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
+      std::list<cta::log::Param> params = {
+        cta::log::Param("errno", pollErrno),
+        cta::log::Param("message", utils::errnoToString(pollErrno))};
+      m_log(cta::log::ERR, "Failed to handle a pending vdqm request: poll() failed",
         params);
     }
     break;

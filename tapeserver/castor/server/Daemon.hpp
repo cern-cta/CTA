@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/exception/CommandLineNotParsed.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <ostream>
@@ -46,7 +46,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log Object representing the API of the CASTOR logging system.
    */
-  Daemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
+  Daemon(std::ostream &stdOut, std::ostream &stdErr, cta::log::Logger &log)
     throw();
 
   /**
@@ -118,7 +118,7 @@ protected:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
 private:
 

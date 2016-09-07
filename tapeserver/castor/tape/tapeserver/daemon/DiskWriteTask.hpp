@@ -56,7 +56,7 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
    */
-  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc,
+  virtual bool execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
     diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog) ;
   
   /**
@@ -96,7 +96,7 @@ private:
    * @param blockId The block id the mem blopck should be at
    * @param lc FOr logging
    */
-  void checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc);
+  void checkErrors(MemBlock* mb,int blockId,cta::log::LogContext&  lc);
   
   /**
    * In case of error, it will spin on the blocks until we reach the end
@@ -130,7 +130,7 @@ private:
    * @param level
    * @param message
    */
-  void logWithStat(int level,const std::string& msg,log::LogContext& lc) ;
+  void logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc) ;
 };
 
 }}}}

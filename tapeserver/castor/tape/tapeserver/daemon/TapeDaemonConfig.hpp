@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
@@ -113,7 +113,7 @@ struct TapeDaemonConfig {
    * @return The configuration structure.
    */
   static TapeDaemonConfig createFromCastorConf(
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
 private:
 
@@ -125,7 +125,7 @@ private:
    * @return The trusted vdqm hosts.
    */
   static std::vector<std::string> createVdqmHostsFromCastorConf(
-    log::Logger *const log, common::CastorConfiguration &castorConf);
+    cta::log::Logger *const log, common::CastorConfiguration &castorConf);
 
 }; // TapeDaemonConfig
 

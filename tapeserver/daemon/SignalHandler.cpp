@@ -78,7 +78,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
     throw cta::exception::Exception(err.str());
   }
   // Prepare logging the signal
-  log::ScopedParamContainer params(m_processManager.logContext());
+  cta::log::ScopedParamContainer params(m_processManager.logContext());
   if (char * signalName = ::strsignal(sigInf.ssi_signo)) {
     params.add("signal", signalName);
   } else {

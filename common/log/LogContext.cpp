@@ -1,25 +1,20 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * Interface to the CASTOR logging system
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Param.hpp"
@@ -29,10 +24,13 @@
 #include <algorithm>
 #include <bfd.h>
 
-cta::log::LogContext::LogContext(Logger& logger) throw():
+namespace cta {
+namespace log {
+
+LogContext::LogContext(Logger& logger) throw():
 m_log(logger) {}
 
-void cta::log::LogContext::pushOrReplace(const Param& param) throw() {
+void LogContext::pushOrReplace(const Param& param) throw() {
   ParamNameMatcher match(param.getName());
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -43,16 +41,16 @@ void cta::log::LogContext::pushOrReplace(const Param& param) throw() {
   }
 }
 
-void cta::log::LogContext::erase(const std::string& paramName) throw() {
+void LogContext::erase(const std::string& paramName) throw() {
   ParamNameMatcher match(paramName);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
 
-void cta::log::LogContext::log(const int priority, const std::string& msg) throw() {
+void LogContext::log(const int priority, const std::string& msg) throw() {
   m_log(priority, msg, m_params);
 }
 
-void cta::log::LogContext::logBacktrace(const int priority, 
+void LogContext::logBacktrace(const int priority, 
     const std::string& backtrace) throw() {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
@@ -75,26 +73,26 @@ void cta::log::LogContext::logBacktrace(const int priority,
       line = backtrace.substr(position);
     }
     if (line.size()) {
-      ScopedParam sp1 (*this, cta::log::Param("traceFrameNumber", lineNumber++));
-      ScopedParam sp2 (*this, cta::log::Param("traceFrame", line));
+      ScopedParam sp1 (*this, Param("traceFrameNumber", lineNumber++));
+      ScopedParam sp2 (*this, Param("traceFrame", line));
       log(priority, "Stack trace");
     }
   }
 }
 
-cta::log::LogContext::ScopedParam::ScopedParam(
+LogContext::ScopedParam::ScopedParam(
     LogContext& context, 
     const Param& param) throw(): 
     m_context(context), m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
 
-cta::log::LogContext::ScopedParam::~ScopedParam() throw() {
+LogContext::ScopedParam::~ScopedParam() throw() {
    m_context.erase(m_name);
 }
 
-std::ostream & cta::log::operator << (std::ostream & os, 
-    const cta::log::LogContext & lc) {
+std::ostream & operator << (std::ostream & os, 
+    const LogContext & lc) {
   bool first=true;
   for (std::list<Param>::const_iterator p = lc.m_params.begin(); 
       p != lc.m_params.end(); ++p) {
@@ -107,3 +105,6 @@ std::ostream & cta::log::operator << (std::ostream & os,
   }
   return os;
 }
+
+} // namespace log
+} // namespace cta

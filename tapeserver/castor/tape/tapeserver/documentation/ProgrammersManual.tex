@@ -1039,7 +1039,7 @@ logging through the \textbf{log} member function.
 log::Logger log;
 log::LogContext lc(log);
 {
-  lc.pushOrReplace(log::Param("Name var 1",var1));
+  lc.pushOrReplace(cta::log::Param("Name var 1",var1));
   lc.log(LEVEL,message);
   lc.erase("Name var 1");
 }
@@ -1050,8 +1050,8 @@ a RAII-class for registering a variable into the \textbf{LogContext} and removin
 \begin{table}[h]
 \begin{lstlisting}
 {
-  log::LogContext::ScopedParam sp(lc, log::Param("name var1",var1));
-  log::LogContext::ScopedParam sp2(lc, log::Param("name var2",var2));
+  cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("name var1",var1));
+  cta::log::LogContext::ScopedParam sp2(lc, cta::log::Param("name var2",var2));
   lc.log(LEVEL,message);
 }
 \end{lstlisting}
@@ -1061,7 +1061,7 @@ Using \textbf{LogContext::ScopedParameter} is still a bit clunky. To get rid of 
 \begin{table}[h]
 \begin{lstlisting}
 {
-  log::ScopedParamContainer sp(lc);
+  cta::log::ScopedParamContainer sp(lc);
   sp.add(var1, "name1").add(var2, "name2");
   lc.log(LEVEL,message);
 }

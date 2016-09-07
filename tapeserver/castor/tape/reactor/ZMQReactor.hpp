@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 
@@ -52,7 +52,7 @@ public:
    *
    * @param log Interface to the CASTOR logging system.
    */
-  ZMQReactor(log::Logger& log) throw();
+  ZMQReactor(cta::log::Logger& log) throw();
 
   /**
    * Destructor.
@@ -138,7 +138,7 @@ private:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger& m_log;
+  cta::log::Logger& m_log;
 
 }; // class ZMQReactor
 

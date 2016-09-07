@@ -39,7 +39,7 @@ public:
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
   
   void addLogParams(const std::string &unitName,
-    const std::list<castor::log::Param> & params) override;
+    const std::list<cta::log::Param> & params) override;
   
   void deleteLogParams(const std::string &unitName,
     const std::list<std::string> & paramNames) override;

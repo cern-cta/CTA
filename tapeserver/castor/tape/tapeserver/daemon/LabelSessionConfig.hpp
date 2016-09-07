@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 
 namespace castor {
 namespace tape {
@@ -57,7 +57,7 @@ struct LabelSessionConfig {
    * @return The configuration structure.
    */
   static LabelSessionConfig createFromCastorConf(
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
 }; // LabelSessionConfig
 

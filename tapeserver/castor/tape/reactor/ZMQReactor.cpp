@@ -38,7 +38,7 @@ namespace{
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::reactor::ZMQReactor::ZMQReactor(log::Logger& log) throw():
+castor::tape::reactor::ZMQReactor::ZMQReactor(cta::log::Logger& log) throw():
   m_log(log) {
 }
 
@@ -69,9 +69,9 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
 
   std::ostringstream socketInHex;
   socketInHex << std::hex << item.socket;
-  std::list<log::Param> params = {log::Param("fd", item.fd),
-    log::Param("socket", socketInHex.str())};
-  m_log(LOG_DEBUG, "ZMQReactor registering a new handler", params);
+  std::list<cta::log::Param> params = {cta::log::Param("fd", item.fd),
+    cta::log::Param("socket", socketInHex.str())};
+  m_log(cta::log::DEBUG, "ZMQReactor registering a new handler", params);
 
   checkDoubleRegistration(item);
   m_handlers.push_back(std::make_pair(item,handler));
@@ -114,8 +114,8 @@ void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
     }
   } else if(0 > pollRc) {
     const std::string message = utils::errnoToString(errno);
-    std::list<log::Param> params = {log::Param("message", message)};
-    m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
+    std::list<cta::log::Param> params = {cta::log::Param("message", message)};
+    m_log(cta::log::ERR, "Failed to handle I/O event: zmq_poll() failed", params);
   }
 }
 
@@ -135,10 +135,10 @@ void castor::tape::reactor::ZMQReactor::handleEvent(
         delete(handler);
       }
     }else {
-      std::list<log::Param> params;
-      params.push_back(log::Param("fd",pollFd.fd));
-      params.push_back(log::Param("socket",pollFd.socket));
-      m_log(LOG_ERR, "Event on some poll, but no handler to match it", params);
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("fd",pollFd.fd));
+      params.push_back(cta::log::Param("socket",pollFd.socket));
+      m_log(cta::log::ERR, "Event on some poll, but no handler to match it", params);
     }
   }
 }

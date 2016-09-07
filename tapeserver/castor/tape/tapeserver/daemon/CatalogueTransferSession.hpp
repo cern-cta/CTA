@@ -62,7 +62,7 @@ public:
    * @return A newly created CatalogueTransferSession object.
    */
   static CatalogueTransferSession *create(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
     const std::string &hostName,
@@ -185,7 +185,7 @@ public:
    * @param param Log parameter to add to the log context used at the end of the 
    * session.
    */
-  void addLogParam(const log::Param & param);
+  void addLogParam(const cta::log::Param & param);
   
   /**
    * deletes from the catalogue entry log parameters relevant to the session.
@@ -219,7 +219,7 @@ protected:
    * data-transfer session can cease to move data blocks.
    */
   CatalogueTransferSession(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const pid_t pid,
     const DriveConfig &driveConfig,
@@ -308,7 +308,7 @@ private:
    * be updated regularly by the session process, so we get a good picture
    * of the session's state even after a crash.
    */
-  log::LogContext m_sessionLogContext;
+  cta::log::LogContext m_sessionLogContext;
 
   /**
    * Handles a tick in time whilst in the TRANSFERSTATE_WAIT_JOB state.  Time

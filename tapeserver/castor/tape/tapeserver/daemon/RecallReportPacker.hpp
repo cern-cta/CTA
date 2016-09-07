@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/threading/Threading.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -44,7 +44,7 @@ public:
    * @param tg the client to whom we report the success/failures
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(cta::RetrieveMount *retrieveMount, log::LogContext lc);
+  RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext lc);
   
   virtual ~RecallReportPacker();
   

@@ -1,26 +1,20 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *
- * Interface to the CASTOR logging system
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #pragma once
 
@@ -67,7 +61,7 @@ namespace log {
  *
  * void MyClassThatWillLog::aMethodThatWillLog() {
  *   ....
- *   m_log(LOG_INFO, "My log message");
+ *   m_log(cta::log::INFO, "My log message");
  *   ....
  * }
  *
@@ -78,7 +72,7 @@ namespace log {
  * paste the following example):
  * \code{.cpp}
  *
- * m_log.logMsg(LOG_INFO, "My log message");
+ * m_log.logMsg(cta::log::INFO, "My log message");
  *
  * \endcode
  */
@@ -190,8 +184,8 @@ protected:
   const std::map<int, std::string> m_priorityToText;
 
   /**
-   * Map from the possible string values of the LogMask parameters of
-   * /etc/castor.conf and their equivalent syslog priorities.
+   * Map from the possible string values of the LogMask parameters and
+   * their equivalent syslog priorities.
    */
   const std::map<std::string, int> m_configTextToPriority;
 
@@ -250,8 +244,7 @@ protected:
 
   /**
    * Generates and returns the mapping between the possible string values
-   * of the LogMask parameters of /etc/castor.conf and their equivalent
-   * syslog priorities.
+   * of the LogMask parameters their equivalent syslog priorities.
    */
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 

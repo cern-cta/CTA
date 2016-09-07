@@ -34,7 +34,7 @@ namespace daemon {
 // Constructor
 //------------------------------------------------------------------------------
 MigrationMemoryManager::MigrationMemoryManager(const size_t numberOfBlocks, 
-    const size_t blockSize, castor::log::LogContext lc)
+    const size_t blockSize, cta::log::LogContext lc)
 :
     m_blockCapacity(blockSize), m_totalNumberOfBlocks(0),
     m_totalMemoryAllocated(0), m_blocksProvided(0), 
@@ -45,7 +45,7 @@ MigrationMemoryManager::MigrationMemoryManager(const size_t numberOfBlocks,
     m_totalNumberOfBlocks++;
     m_totalMemoryAllocated += blockSize;
   }
-  m_lc.log(LOG_INFO, "MigrationMemoryManager: all blocks have been created");
+  m_lc.log(cta::log::INFO, "MigrationMemoryManager: all blocks have been created");
 }
 
 //------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ MigrationMemoryManager::~MigrationMemoryManager() throw() {
     delete ret.value;
   } while (ret.remaining > 0);
 
-  m_lc.log(LOG_INFO, "MigrationMemoryManager destruction : all memory blocks have been deleted");
+  m_lc.log(cta::log::INFO, "MigrationMemoryManager destruction : all memory blocks have been deleted");
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ MigrationMemoryManager::~MigrationMemoryManager() throw() {
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::startThreads()  {
   cta::threading::Thread::start();
-  m_lc.log(LOG_INFO, "MigrationMemoryManager starting thread");
+  m_lc.log(cta::log::INFO, "MigrationMemoryManager starting thread");
 }
 
 //------------------------------------------------------------------------------

@@ -45,7 +45,7 @@ void ProcessManager::addHandler(std::unique_ptr<SubprocessHandler>&& handler) {
   m_subprocessHandlers.push_back(SubprocessAndStatus());
   m_subprocessHandlers.back().handler = std::move(handler);
   m_subprocessHandlers.back().status = m_subprocessHandlers.back().handler->getInitialStatus();
-  log::ScopedParamContainer params(m_logContext);
+  cta::log::ScopedParamContainer params(m_logContext);
   params.add("SubprocessName", m_subprocessHandlers.back().handler->index);
   m_logContext.log(log::INFO, "Adding handler for subprocess");
 }
@@ -94,7 +94,7 @@ SubprocessHandler& ProcessManager::at(const std::string& name) {
   throw cta::exception::Exception("In ProcessManager::at(): entry not found");
 }
 
-log::LogContext& ProcessManager::logContext() {
+cta::log::LogContext&  ProcessManager::logContext() {
   return m_logContext;
 }
 
@@ -106,7 +106,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       m_subprocessHandlers.cend(), 
       [&](const SubprocessAndStatus &i){
         if (i.status.shutdownRequested) {
-          log::ScopedParamContainer params(m_logContext);
+          cta::log::ScopedParamContainer params(m_logContext);
           params.add("SubprocessName", i.handler->index);
           m_logContext.log(log::INFO, "Subprocess requested shutdown");
         }
@@ -115,7 +115,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   if (anyAskedShutdown) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->shutdown();
-      log::ScopedParamContainer params(m_logContext);
+      cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index)
             .add("ShutdownComplete", sp.status.shutdownComplete);
       m_logContext.log(log::INFO, "Signaled shutdown to subprocess handler");
@@ -140,7 +140,7 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
       m_subprocessHandlers.cend(), 
       [&](const SubprocessAndStatus &i){
         if (i.status.killRequested) {
-          log::ScopedParamContainer params(m_logContext);
+          cta::log::ScopedParamContainer params(m_logContext);
           params.add("SubprocessName", i.handler->index);
           m_logContext.log(log::INFO, "Subprocess requested kill");
         }
@@ -149,7 +149,7 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   if (anyAskedKill) {
     for(auto & sp: m_subprocessHandlers) { 
       sp.handler->kill(); 
-      log::ScopedParamContainer params(m_logContext);
+      cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
       m_logContext.log(log::INFO, "Instructed handler to kill subprocess");
     }
@@ -167,17 +167,17 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
   for(auto & sp: m_subprocessHandlers) {
     if(sp.status.forkRequested) {
       {
-        log::ScopedParamContainer params(m_logContext);
+        cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", sp.handler->index);
         m_logContext.log(log::INFO, "Subprocess handler requested forking");
       }
       for (auto & sp2:m_subprocessHandlers) {
         sp2.handler->prepareForFork();
-        log::ScopedParamContainer params(m_logContext);
+        cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", sp2.handler->index);
         m_logContext.log(log::INFO, "Subprocess handler prepared for forking");
       }
-      log::ScopedParamContainer params(m_logContext);
+      cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
       m_logContext.log(log::INFO, "Subprocess handler will fork");
       auto newStatus = sp.handler->fork();
@@ -209,7 +209,7 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
       m_subprocessHandlers.cend(), 
       [&](const SubprocessAndStatus &i){
         if (i.status.sigChild) {
-          log::ScopedParamContainer params(m_logContext);
+          cta::log::ScopedParamContainer params(m_logContext);
           params.add("SubprocessName", i.handler->index);
           m_logContext.log(log::INFO, "Handler received SIGCHILD. Propagating to all handlers.");
         }
@@ -218,7 +218,7 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   if (sigChild) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->processSigChild();
-      log::ScopedParamContainer params(m_logContext);
+      cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
       m_logContext.log(log::INFO, "Propagated SIGCHILD.");
     }

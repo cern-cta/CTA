@@ -1,37 +1,35 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "common/log/SyslogLogger.hpp"
+#include "common/log/TestingSyslogLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
 #include <sys/time.h>
 
-namespace unitTests {
+using namespace cta::log;
 
+namespace unitTests {
+  
 class cta_log_SyslogLoggerTest: public ::testing::Test {
 public:
-  cta_log_SyslogLoggerTest() {
+  cta_log_SyslogLoggerTest(): m_log("unitttests") {
   }
 protected:
 
@@ -40,18 +38,35 @@ protected:
 
   virtual void TearDown() {
   }
-
+  TestingSyslogLogger m_log;
+  
 }; // class SyslogLoggerTest
+
+TEST_F(cta_log_SyslogLoggerTest, logMsgAndParamsList) {
+  std::list<Param> params;
+  params.push_back(Param("testParam", "value of test param"));
+
+  ASSERT_NO_THROW(
+    m_log(
+      INFO,
+      "cta_log_SyslogLoggerTest logMsgAndParamsList",
+      params));
+}
+
+TEST_F(cta_log_SyslogLoggerTest, logMsg) {
+  ASSERT_NO_THROW(
+    m_log(INFO, "Calling logger without parameters"));
+}   
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = cta::log::Logger::cleanString(s, false);
+  const std::string cleaned = Logger::cleanString(s, false);
   ASSERT_EQ(std::string("'Hello there World'"), cleaned);
 }
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = cta::log::Logger::cleanString(s, true);
+  const std::string cleaned = Logger::cleanString(s, true);
   ASSERT_EQ(std::string("'Hello_there_World'"), cleaned);
 }
 

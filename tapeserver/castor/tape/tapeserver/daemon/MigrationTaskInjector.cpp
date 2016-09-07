@@ -24,8 +24,8 @@
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 
-using castor::log::LogContext;
-using castor::log::Param;
+using cta::log::LogContext;
+using cta::log::Param;
 
 namespace castor{
 namespace tape{
@@ -38,7 +38,7 @@ namespace daemon {
   MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskReadThreadPool & diskReader,
           TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,cta::ArchiveMount &archiveMount,
-           uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc):
+           uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
           m_diskReader(diskReader),m_archiveMount(archiveMount),m_lc(lc),
           m_maxFiles(maxFiles),  m_maxBytes(byteSizeThreshold)
@@ -69,10 +69,10 @@ namespace daemon {
       
       m_tapeWriter.push(twt.release());
       m_diskReader.push(drt.release());
-      m_lc.log(LOG_INFO, "Created tasks for migrating a file");
+      m_lc.log(cta::log::INFO, "Created tasks for migrating a file");
     }
     LogContext::ScopedParam(m_lc, Param("numbnerOfFiles", jobs.size()));
-    m_lc.log(LOG_INFO, "Finished creating tasks for migrating");
+    m_lc.log(cta::log::INFO, "Finished creating tasks for migrating");
   }
   
 //------------------------------------------------------------------------------
@@ -113,19 +113,19 @@ namespace daemon {
         jobs.push_back(job.release());
       }
     } catch (cta::exception::Exception & ex) {
-      castor::log::ScopedParamContainer scoped(m_lc);
+      cta::log::ScopedParamContainer scoped(m_lc);
       scoped.add("transactionId", m_archiveMount.getMountTransactionId())
             .add("byteSizeThreshold",m_maxBytes)
             .add("maxFiles", m_maxFiles)
             .add("message", ex.getMessageValue());
-      m_lc.log(LOG_ERR, "Failed to getFilesToMigrate");
+      m_lc.log(cta::log::ERR, "Failed to getFilesToMigrate");
       return false;
     }
-    castor::log::ScopedParamContainer scoped(m_lc); 
+    cta::log::ScopedParamContainer scoped(m_lc); 
     scoped.add("byteSizeThreshold",m_maxBytes)
           .add("maxFiles", m_maxFiles);
     if(jobs.empty()) {
-      m_lc.log(LOG_ERR, "No files to migrate: empty mount");
+      m_lc.log(cta::log::ERR, "No files to migrate: empty mount");
       return false;
     } else {
       m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;
@@ -155,7 +155,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::WorkerThread::run(){
     m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
-    m_parent.m_lc.log(LOG_INFO, "Starting MigrationTaskInjector thread");
+    m_parent.m_lc.log(cta::log::INFO, "Starting MigrationTaskInjector thread");
     try{
       while(1){
         if(m_parent.m_errorFlag){
@@ -176,11 +176,11 @@ namespace daemon {
 
         if(jobs.empty()){
           if (req.lastCall) {
-            m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.");
+            m_parent.m_lc.log(cta::log::INFO,"No more file to migrate: triggering the end of session.");
             m_parent.signalEndDataMovement();
             break;
           } else {
-            m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
+            m_parent.m_lc.log(cta::log::INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
           }
         } else {
           
@@ -190,12 +190,12 @@ namespace daemon {
           if(files < req.filesRequested / 2 && bytes < req.bytesRequested) {
             // The client starts to dribble files at a low rate. Better finish
             // the session now, so we get a clean batch on a later mount.
-            log::ScopedParamContainer params(m_parent.m_lc);
+            cta::log::ScopedParamContainer params(m_parent.m_lc);
             params.add("filesRequested", req.filesRequested)
                   .add("bytesRequested", req.bytesRequested)
                   .add("filesReceived", files)
                   .add("bytesReceived", bytes);
-            m_parent.m_lc.log(LOG_INFO, "Got less than half the requested work to do: triggering the end of session.");
+            m_parent.m_lc.log(cta::log::INFO, "Got less than half the requested work to do: triggering the end of session.");
             m_parent.signalEndDataMovement();
             break;
           }
@@ -204,7 +204,7 @@ namespace daemon {
     }//end of try
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       //we end up there because a task screw up somewhere 
-      m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): a task failed, "
+      m_parent.m_lc.log(cta::log::INFO,"In MigrationTaskInjector::WorkerThread::run(): a task failed, "
       "indicating finish of run");
       
       m_parent.signalEndDataMovement();
@@ -212,16 +212,16 @@ namespace daemon {
     catch(const cta::exception::Exception& ex){
       //we end up there because we could not talk to the client
       
-      log::ScopedParamContainer container( m_parent.m_lc);
+      cta::log::ScopedParamContainer container( m_parent.m_lc);
       container.add("exception message",ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
-      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): "
+      m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
+      m_parent.m_lc.log(cta::log::ERR,"In MigrationTaskInjector::WorkerThread::run(): "
       "could not retrieve a list of file to migrate, indicating finish of run");
       
       m_parent.signalEndDataMovement();
     } 
     //-------------
-    m_parent.m_lc.log(LOG_INFO, "Finishing MigrationTaskInjector thread");
+    m_parent.m_lc.log(cta::log::INFO, "Finishing MigrationTaskInjector thread");
     /* We want to finish at the first lastCall we encounter.
      * But even after sending finish() to m_diskWriter and to m_tapeReader,
      * m_diskWriter might still want some more task (the threshold could be crossed),
@@ -232,7 +232,7 @@ namespace daemon {
       Request req = m_parent.m_queue.pop();
       if (req.end) stillReading = false;
       LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
-      m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): popping extra request");
+      m_parent.m_lc.log(cta::log::INFO,"In MigrationTaskInjector::WorkerThread::run(): popping extra request");
     }
   }
 

@@ -65,7 +65,7 @@ public:
     TapeServerReporter & tsr,
     MigrationWatchDog & mwd,
     const VolumeInfo& volInfo,
-    castor::log::LogContext & lc,
+    cta::log::LogContext & lc,
     MigrationReportPacker & repPacker,
     cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp);
@@ -122,16 +122,16 @@ private:
           m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
         } catch (cta::exception::Exception &) {}
         if (!m_this.m_drive.hasTapeInPlace()) {
-          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
+          m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
           goto done;
         }
         // in the special case of a "manual" mode tape, we should skip the unload too.
         if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
           m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Unloading);
           m_this.m_drive.unloadTape();
-          m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape unloaded");
+          m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
         } else {
-          m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
+          m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
         }
         m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
         // And return the tape to the library
@@ -143,7 +143,7 @@ private:
         m_this.m_drive.disableLogicalBlockProtection();
         m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Up);
         m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-        m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
+        m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
         m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Shutdown,
           cta::tape::session::SessionType::Archive);
@@ -153,9 +153,9 @@ private:
         // Notify something failed during the cleaning 
         m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
         m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Down);
-        castor::log::ScopedParamContainer scoped(m_this.m_logContext);
+        cta::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue());
-        m_this.m_logContext.log(LOG_ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
+        m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
         // As we do not throw exceptions from here, the watchdog signalling has
         // to occur from here.
         try {
@@ -167,7 +167,7 @@ private:
           // Notify something failed during the cleaning 
           m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
           m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Down);
-          m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
+          m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
           try {
           if (currentErrorToCount.size()) {
             m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -188,7 +188,7 @@ private:
    * Log  m_stats  parameters into m_logContext with msg at the given level
    */
   void logWithStats(int level,const std::string& msg,
-    log::ScopedParamContainer& params);
+    cta::log::ScopedParamContainer& params);
   
   /**
    * Function to open the WriteSession 

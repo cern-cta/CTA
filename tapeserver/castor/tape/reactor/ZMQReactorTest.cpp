@@ -23,7 +23,7 @@
 
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/log/DummyLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -113,7 +113,7 @@ protected:
 TEST_F(castor_tape_reactor_ZMQReactorTest, constructor) {
   using namespace castor::tape::reactor;
 
-  castor::log::DummyLogger log("unittests");
+  cta::log::DummyLogger log("unittests");
   std::unique_ptr<ZMQReactor> reactor;
 
   ASSERT_NO_THROW(reactor.reset(new ZMQReactor(log)));
@@ -128,7 +128,7 @@ valgrind --track-fds=yes test/castorUnitTests
 TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd) {
   using namespace castor::tape::reactor;
 
-  castor::log::DummyLogger log("unittests");
+  cta::log::DummyLogger log("unittests");
   ZMQReactor reactor(log);
 
   int sv[2] = {-1, -1};

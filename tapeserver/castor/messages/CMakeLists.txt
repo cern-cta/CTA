@@ -59,7 +59,6 @@ add_dependencies(ctamessages ctamessagesprotobuf)
 
 target_link_libraries(ctamessages
   ctamessagesprotobuf
-  castorlog
   ctamediachanger
   ctautils
   ctatapesession

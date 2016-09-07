@@ -30,7 +30,7 @@ set (UTILS_LIB_SRC_FILES
 
 add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
 
-target_link_libraries(ctautils castorlog)
+target_link_libraries(ctautils)
 
 install(TARGETS ctautils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

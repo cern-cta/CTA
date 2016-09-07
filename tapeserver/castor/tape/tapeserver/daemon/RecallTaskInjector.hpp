@@ -24,7 +24,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -70,7 +70,7 @@ public:
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,cta::RetrieveMount &retrieveMount,
-        uint64_t filesPerRequest, uint64_t bytesPerRequest,castor::log::LogContext lc);
+        uint64_t filesPerRequest, uint64_t bytesPerRequest,cta::log::LogContext lc);
 
   virtual ~RecallTaskInjector();
   
@@ -182,7 +182,7 @@ private:
   /**
    * utility member to log some pieces of information
    */
-  castor::log::LogContext m_lc;
+  cta::log::LogContext m_lc;
   
   cta::threading::Mutex m_producerProtection;
   cta::threading::BlockingQueue<Request> m_queue;

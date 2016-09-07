@@ -33,7 +33,7 @@ castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   ProcessForkerConnectionHandler(
   const int fd,
   reactor::ZMQReactor &reactor,
-  log::Logger &log,
+  cta::log::Logger &log,
   Catalogue &driveCatalogue) throw():
   m_fd(fd),
   m_reactor(reactor),
@@ -48,8 +48,8 @@ castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   ~ProcessForkerConnectionHandler() throw() {
-  std::list<log::Param> params = {log::Param("fd", m_fd)};
-  m_log(LOG_DEBUG, "Closing incoming connection from the ProcessForker",
+  std::list<cta::log::Param> params = {cta::log::Param("fd", m_fd)};
+  m_log(cta::log::DEBUG, "Closing incoming connection from the ProcessForker",
     params);
   close(m_fd);
 }
@@ -90,12 +90,12 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
   logConnectionEvent(const zmq_pollitem_t &fd)  {
-  std::list<log::Param> params = {
-  log::Param("fd", fd.fd),
-  log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
-  log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
-  log::Param("ZMQ_POLLERR", fd.revents & ZMQ_POLLERR ? "true" : "false")};
-  m_log(LOG_DEBUG, "I/O event on incoming ProcessForker connection", params);
+  std::list<cta::log::Param> params = {
+  cta::log::Param("fd", fd.fd),
+  cta::log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
+  cta::log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
+  cta::log::Param("ZMQ_POLLERR", fd.revents & ZMQ_POLLERR ? "true" : "false")};
+  m_log(cta::log::DEBUG, "I/O event on incoming ProcessForker connection", params);
 }
 
 //------------------------------------------------------------------------------
@@ -122,8 +122,8 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     const int timeout = 10; // Timeout in seconds
     frame = ProcessForkerUtils::readFrame(m_fd, timeout);
   } catch(cta::exception::Exception &ne) {
-    std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message"
+    std::list<cta::log::Param> params = {cta::log::Param("message", ne.getMessage().str())};
+    m_log(cta::log::ERR, "ProcessForkerConnectionHandler failed to handle message"
       ": Failed to read frame", params);
 
     // There is no point in continuing if communications with ProcessForker are
@@ -131,16 +131,16 @@ bool castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     return true; // Ask reactor to remove and delete this event handler
   }
 
-  std::list<log::Param> params = {
-    log::Param("type", messages::msgTypeToString(frame.type)),
-    log::Param("payloadLen", frame.payload.length())};
-  m_log(LOG_INFO, "ProcessForkerConnectionHandler handling a message", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("type", messages::msgTypeToString(frame.type)),
+    cta::log::Param("payloadLen", frame.payload.length())};
+  m_log(cta::log::INFO, "ProcessForkerConnectionHandler handling a message", params);
 
   try {
     dispatchMsgHandler(frame);
   } catch(cta::exception::Exception &ne) {
-    std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
-    m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to handle message",
+    std::list<cta::log::Param> params = {cta::log::Param("message", ne.getMessage().str())};
+    m_log(cta::log::ERR, "ProcessForkerConnectionHandler failed to handle message",
       params);
 
     // This may be a transient error so keep communicating with ProcessForker
@@ -163,10 +163,10 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
       return handleProcessExitedMsg(frame);
     default:
       {
-        std::list<log::Param> params = {
-          log::Param("type", frame.type),
-          log::Param("typeStr", messages::msgTypeToString(frame.type))};
-        m_log(LOG_ERR, "ProcessForkerConnectionHandler failed to dispatch"
+        std::list<cta::log::Param> params = {
+          cta::log::Param("type", frame.type),
+          cta::log::Param("typeStr", messages::msgTypeToString(frame.type))};
+        m_log(cta::log::ERR, "ProcessForkerConnectionHandler failed to dispatch"
          " message handler: Unexpected message type", params);
       }
     }
@@ -190,10 +190,10 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     ProcessForkerUtils::parsePayload(frame, msg);
 
     // Log the contents of the message
-    std::list<log::Param> params;
-    params.push_back(log::Param("pid", msg.pid()));
-    params.push_back(log::Param("signal", msg.signal()));
-    m_log(LOG_INFO,
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("pid", msg.pid()));
+    params.push_back(cta::log::Param("signal", msg.signal()));
+    m_log(cta::log::INFO,
       "ProcessForkerConnectionHandler handling ProcessCrashed message", params);
 
     // Get information about the crashed session that can be used by a
@@ -222,10 +222,10 @@ void castor::tape::tapeserver::daemon::ProcessForkerConnectionHandler::
     ProcessForkerUtils::parsePayload(frame, msg);
 
     // Log the contents of the message
-    std::list<log::Param> params;
-    params.push_back(log::Param("pid", msg.pid()));
-    params.push_back(log::Param("exitCode", msg.exitcode()));
-    m_log(LOG_INFO, 
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("pid", msg.pid()));
+    params.push_back(cta::log::Param("exitCode", msg.exitcode()));
+    m_log(cta::log::INFO, 
       "ProcessForkerConnectionHandler handling ProcessExited message", params);
 
     CatalogueDrive &drive = m_driveCatalogue.findDrive(msg.pid());

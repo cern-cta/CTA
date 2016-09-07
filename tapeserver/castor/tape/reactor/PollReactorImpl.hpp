@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/reactor/PollReactor.hpp"
 
 #include <map>
@@ -50,7 +50,7 @@ public:
    *
    * @param log The object representing the API of the CASTOR logging system.
    */
-  PollReactorImpl(log::Logger &log) throw();
+  PollReactorImpl(cta::log::Logger &log) throw();
 
   /**
    * Destructor.
@@ -86,7 +86,7 @@ private:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * Type used to map file descriptor to event handler.

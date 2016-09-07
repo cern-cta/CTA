@@ -33,19 +33,19 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RecallMemoryManager::RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize, castor::log::LogContext& lc)
+RecallMemoryManager::RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize, cta::log::LogContext&  lc)
 : m_totalNumberOfBlocks(numberOfBlocks), m_lc(lc) {
   for (size_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
 
-    //m_lc.pushOrReplace(log::Param("blockId", i));
-    //m_lc.log(LOG_DEBUG, "RecallMemoryManager created a block");
+    //m_lc.pushOrReplace(cta::log::Param("blockId", i));
+    //m_lc.log(cta::log::DEBUG, "RecallMemoryManager created a block");
   }
-  log::ScopedParamContainer params(m_lc);
+  cta::log::ScopedParamContainer params(m_lc);
   params.add("blockCount", numberOfBlocks)
         .add("blockSize", blockSize)
         .add("totalSize", numberOfBlocks*blockSize);
-  m_lc.log(LOG_INFO, "RecallMemoryManager: all blocks have been created");
+  m_lc.log(cta::log::INFO, "RecallMemoryManager: all blocks have been created");
 }
 
 //------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ RecallMemoryManager::~RecallMemoryManager() {
     delete ret.value;
   } while (ret.remaining > 0);
 
-  m_lc.log(LOG_INFO, "RecallMemoryManager destruction : all memory blocks have been deleted");
+  m_lc.log(cta::log::INFO, "RecallMemoryManager destruction : all memory blocks have been deleted");
 }
 
 //------------------------------------------------------------------------------
@@ -93,8 +93,8 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
 // RecallMemoryManager::~RecallMemoryManager
 //------------------------------------------------------------------------------
 void RecallMemoryManager::releaseBlock(MemBlock* mb) {
-  //m_lc.pushOrReplace(log::Param("blockId", mb->m_memoryBlockId));
-  //m_lc.log(LOG_DEBUG, "RecallMemoryManager A block has been released");
+  //m_lc.pushOrReplace(cta::log::Param("blockId", mb->m_memoryBlockId));
+  //m_lc.log(cta::log::DEBUG, "RecallMemoryManager A block has been released");
   mb->reset();
   m_freeBlocks.push(mb);
 }

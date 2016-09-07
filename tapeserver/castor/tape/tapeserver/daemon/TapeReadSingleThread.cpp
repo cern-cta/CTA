@@ -33,7 +33,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   uint64_t maxFilesRequest,
   cta::server::ProcessCap& capUtils,
   RecallWatchDog& watchdog,
-  castor::log::LogContext& lc,
+  cta::log::LogContext&  lc,
   RecallReportPacker &rrp,
   const bool useLbp) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
@@ -53,7 +53,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   // will hence be no more requests for more.
   m_this.m_taskInjector->finish();
   //then we log/notify
-  m_this.m_logContext.log(LOG_DEBUG, "Starting session cleanup. Signalled end of session to task injector.");
+  m_this.m_logContext.log(cta::log::DEBUG, "Starting session cleanup. Signalled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try { m_this.logTapeAlerts(); } catch (...) {}
@@ -72,16 +72,16 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
     } catch (cta::exception::Exception &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
-      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: No tape to unload");
+      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
       goto done;
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
     if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {      
       m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Unloading);
       m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape unloaded");
+      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
     } else {
-      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
+      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
     }
     m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
     // And return the tape to the library
@@ -93,7 +93,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-    m_this.m_logContext.log(LOG_INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
+    m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
     m_this.m_initialProcess.reportTapeUnmountedForRetrieve();
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
@@ -101,9 +101,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
-    castor::log::ScopedParamContainer scoped(m_this.m_logContext);
+    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exception_message", ex.getMessageValue());
-    m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -113,7 +113,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
-    m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -153,13 +153,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
     std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
-    m_logContext.log(LOG_DEBUG, "Created tapeFile::ReadSession with success");
+    m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
   }catch(cta::exception::Exception & ex){
-      castor::log::ScopedParamContainer scoped(m_logContext); 
+      cta::log::ScopedParamContainer scoped(m_logContext); 
       scoped.add("exception_message", ex.getMessageValue());
-      m_logContext.log(LOG_ERR, "Failed to tapeFile::ReadSession");
+      m_logContext.log(cta::log::ERR, "Failed to tapeFile::ReadSession");
       throw cta::exception::Exception("Tape's label is either missing or not valid"); 
   }  
 }
@@ -180,7 +180,7 @@ const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
 //TapeReadSingleThread::run()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
-  m_logContext.pushOrReplace(log::Param("thread", "TapeRead"));
+  m_logContext.pushOrReplace(cta::log::Param("thread", "TapeRead"));
   cta::utils::Timer timer, totalTimer;
   std::string currentErrorToCount = "Error_setCapabilities";
   try{
@@ -189,7 +189,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     setCapabilities();
     
     // Report the parameters of the session to the main thread
-    typedef castor::log::Param Param;
+    typedef cta::log::Param Param;
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     
@@ -213,9 +213,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       logTapeAlerts();
       m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
       {
-        castor::log::ScopedParamContainer scoped(m_logContext);
+        cta::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("mountTime", m_stats.mountTime);
-        m_logContext.log(LOG_INFO, "Tape mounted and drive ready");
+        m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
@@ -225,25 +225,25 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       //and then report
       {
-        castor::log::ScopedParamContainer scoped(m_logContext);
+        cta::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("positionTime", m_stats.positionTime);
         scoped.add("useLbp", m_useLbp);
         scoped.add("detectedLbp", rs->isTapeWithLbp());
         if (rs->isTapeWithLbp() && !m_useLbp) {
-          m_logContext.log(LOG_WARNING, "Tapserver started without LBP support"
+          m_logContext.log(cta::log::WARNING, "Tapserver started without LBP support"
           " but the tape with LBP label mounted");
         }
         switch(m_drive.getLbpToUse()) {
           case drive::lbpToUse::crc32cReadOnly:
-            m_logContext.log(LOG_INFO, "Tape read session session with LBP "
+            m_logContext.log(cta::log::INFO, "Tape read session session with LBP "
               "crc32c in ReadOnly mode successfully started");
             break;
           case drive::lbpToUse::disabled:
-            m_logContext.log(LOG_INFO, "Tape read session session without LBP "
+            m_logContext.log(cta::log::INFO, "Tape read session session without LBP "
             "successfully started");
             break;
           default:
-            m_logContext.log(LOG_ERR, "Tape read session session with "
+            m_logContext.log(cta::log::ERR, "Tape read session session with "
             "unsupported LBP started");
         }
       }
@@ -260,7 +260,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
         if (NULL==task.get()) {
-          m_logContext.log(LOG_DEBUG, "No more files to read from tape");
+          m_logContext.log(cta::log::DEBUG, "No more files to read from tape");
           break;
         }
         // This can lead the the session being marked as corrupt, so we test
@@ -276,10 +276,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     }
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
-    log::ScopedParamContainer params(m_logContext);
+    cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
-    logWithStat(LOG_INFO, "Tape thread complete",
+    logWithStat(cta::log::INFO, "Tape thread complete",
             params);
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStats(m_stats);
@@ -292,11 +292,11 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // to know where we are to proceed to the next file incrementally in fseq
     // positioning mode).
     // This can happen late in the session, so we can still print the stats.
-    log::ScopedParamContainer params(m_logContext);
+    cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
           .add("ErrorMesage", e.getMessageValue());
     m_stats.totalTime = totalTimer.secs();
-    logWithStat(LOG_INFO, "Tape thread complete",
+    logWithStat(cta::log::INFO, "Tape thread complete",
             params);
     // Also transmit the error step to the watchdog
     if (currentErrorToCount.size()) {
@@ -318,7 +318,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 //TapeReadSingleThread::logWithStat()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
-  int level, const std::string& msg, log::ScopedParamContainer& params) {
+  int level, const std::string& msg, cta::log::ScopedParamContainer& params) {
     params.add("type", "read")
           .add("TPVID", m_volInfo.vid)
           .add("mountTime", m_stats.mountTime)

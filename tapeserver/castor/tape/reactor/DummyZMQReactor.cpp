@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::reactor::DummyZMQReactor::DummyZMQReactor(log::Logger& log) throw():
+castor::tape::reactor::DummyZMQReactor::DummyZMQReactor(cta::log::Logger& log) throw():
   ZMQReactor(log) {
 }
 

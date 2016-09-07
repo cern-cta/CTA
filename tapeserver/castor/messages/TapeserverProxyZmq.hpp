@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/Mutex.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
@@ -44,7 +44,7 @@ public:
    * listening for internal ZMQ message.
    * @param zmqContext The ZMQ context.
    */
-  TapeserverProxyZmq(log::Logger &log, const unsigned short serverPort,
+  TapeserverProxyZmq(cta::log::Logger &log, const unsigned short serverPort,
     void *const zmqContext, const std::string & driveName) throw();
 
   void reportState(const cta::tape::session::SessionState state,
@@ -74,7 +74,7 @@ private:
     const uint64_t nbBlocksMoved);
 public:  
   virtual void addLogParams(const std::string &unitName,
-    const std::list<castor::log::Param> & params) override;
+    const std::list<cta::log::Param> & params) override;
   
   virtual void deleteLogParams(const std::string &unitName,
     const std::list<std::string> & paramNames) override;
@@ -92,7 +92,7 @@ private:
   /**
    * The object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
   
   /**
    * The name of the drive managed by this proxy.
@@ -174,7 +174,7 @@ private:
    * @return The frame.
    */
   Frame createAddLogParamsFrame(const std::string &unitName,
-    const std::list<castor::log::Param> & params);
+    const std::list<cta::log::Param> & params);
 
   /**
    * Creates a frame containing a delete log params.

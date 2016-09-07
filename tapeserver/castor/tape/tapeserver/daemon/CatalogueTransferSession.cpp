@@ -34,7 +34,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueTransferSession*
   castor::tape::tapeserver::daemon::CatalogueTransferSession::create(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
     const std::string &hostName,
@@ -61,7 +61,7 @@ castor::tape::tapeserver::daemon::CatalogueTransferSession*
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueTransferSession::
   CatalogueTransferSession(
-  log::Logger &log,
+  cta::log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const DriveConfig &driveConfig,
@@ -106,23 +106,23 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const bool timeOutExceeded = secsWaiting > m_waitJobTimeoutInSecs;
 
   if(timeOutExceeded) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("transferSessionPid", m_pid));
-    params.push_back(log::Param("secsWaiting", secsWaiting));
-    params.push_back(log::Param("waitJobTimeoutInSecs",
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("transferSessionPid", m_pid));
+    params.push_back(cta::log::Param("secsWaiting", secsWaiting));
+    params.push_back(cta::log::Param("waitJobTimeoutInSecs",
       m_waitJobTimeoutInSecs));
-    m_log(LOG_ERR,
+    m_log(cta::log::ERR,
       "Killing data-transfer session because transfer job is too late",
       params);
     // We will also attach the error to final log for the session
-    addLogParam(castor::log::Param("Error_timeoutGettingJobInfo","1"));
+    addLogParam(cta::log::Param("Error_timeoutGettingJobInfo","1"));
 
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(cta::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+      params.push_back(cta::log::Param("message", ex.getMessage().str()));
+      m_log(cta::log::ERR, "Failed to kill data-transfer session", params);
     }
   }
 
@@ -158,23 +158,23 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const bool timeOutExceeded = secsWaiting > m_mountTimeoutInSecs;
 
   if(timeOutExceeded) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("transferSessionPid", m_pid));
-    params.push_back(log::Param("secsWaiting", secsWaiting));
-    params.push_back(log::Param("mountTimeoutInSecs",
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("transferSessionPid", m_pid));
+    params.push_back(cta::log::Param("secsWaiting", secsWaiting));
+    params.push_back(cta::log::Param("mountTimeoutInSecs",
       m_mountTimeoutInSecs));
-    m_log(LOG_ERR,
+    m_log(cta::log::ERR,
       "Killing data-transfer session because tape mount is taking too long",
       params);
     // We will also attach the error to final log for the session
-    addLogParam(castor::log::Param("Error_timeoutMountingTape","1"));
+    addLogParam(cta::log::Param("Error_timeoutMountingTape","1"));
     
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(cta::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+      params.push_back(cta::log::Param("message", ex.getMessage().str()));
+      m_log(cta::log::ERR, "Failed to kill data-transfer session", params);
     }
   }
 
@@ -191,23 +191,23 @@ bool castor::tape::tapeserver::daemon::CatalogueTransferSession::
   const bool timeOutExceeded = secsWaiting > m_blockMoveTimeoutInSecs;
 
   if(timeOutExceeded) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("transferSessionPid", m_pid));
-    params.push_back(log::Param("secsWaiting", secsWaiting));
-    params.push_back(log::Param("blockMoveTimeoutInSecs",
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("transferSessionPid", m_pid));
+    params.push_back(cta::log::Param("secsWaiting", secsWaiting));
+    params.push_back(cta::log::Param("blockMoveTimeoutInSecs",
       m_blockMoveTimeoutInSecs));
-    m_log(LOG_ERR,
+    m_log(cta::log::ERR,
       "Killing data-transfer session because data blocks are not being moved",
       params);
     // We will also attach the error to final log for the session
-    addLogParam(castor::log::Param("Error_sessionHung","1"));
+    addLogParam(cta::log::Param("Error_sessionHung","1"));
 
     try {
       idempotentKill(m_pid, SIGKILL);
       m_state = WAIT_TIMEOUT_KILL;
     } catch(cta::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_ERR, "Failed to kill data-transfer session", params);
+      params.push_back(cta::log::Param("message", ex.getMessage().str()));
+      m_log(cta::log::ERR, "Failed to kill data-transfer session", params);
     }
   }
 
@@ -229,7 +229,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionSucceeded() {
   // If the session is happy, it could determine the operational status
   // (was there a problem or not?) by itself. status should be set by now.
-  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
+  m_sessionLogContext.log(cta::log::INFO, "Tape session finished");
 }
 
 //------------------------------------------------------------------------------
@@ -238,8 +238,8 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionFailed() {
   // In case of problem, we mark the session failed ourselves
-  m_sessionLogContext.pushOrReplace(log::Param("status","failure"));
-  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
+  m_sessionLogContext.pushOrReplace(cta::log::Param("status","failure"));
+  m_sessionLogContext.log(cta::log::INFO, "Tape session finished");
 }
 
 //------------------------------------------------------------------------------
@@ -248,10 +248,10 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
   sessionKilled(uint32_t signal) {
   // In case of problem, we mark the session failed ourselves
-  m_sessionLogContext.pushOrReplace(log::Param("Error_sessionKilled","1"));
-  m_sessionLogContext.pushOrReplace(log::Param("killSignal",signal));
-  m_sessionLogContext.pushOrReplace(log::Param("status","failure"));
-  m_sessionLogContext.log(LOG_INFO, "Tape session finished");
+  m_sessionLogContext.pushOrReplace(cta::log::Param("Error_sessionKilled","1"));
+  m_sessionLogContext.pushOrReplace(cta::log::Param("killSignal",signal));
+  m_sessionLogContext.pushOrReplace(cta::log::Param("status","failure"));
+  m_sessionLogContext.log(cta::log::INFO, "Tape session finished");
 }
 
 //------------------------------------------------------------------------------
@@ -462,7 +462,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::
 // addLogParam
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueTransferSession::
-  addLogParam(const log::Param & param) {
+  addLogParam(const cta::log::Param & param) {
   m_sessionLogContext.pushOrReplace(param);
 }
 

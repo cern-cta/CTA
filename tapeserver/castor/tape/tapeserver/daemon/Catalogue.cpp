@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Catalogue::Catalogue(
   const int netTimeout,
-  log::Logger &log,
+  cta::log::Logger &log,
   ProcessForkerProxy &processForker,
   const std::string &hostName,
   const CatalogueConfig &catalogueConfig,
@@ -177,8 +177,8 @@ void castor::tape::tapeserver::daemon::Catalogue::shutdown() {
     try {
       drive->shutdown();
     } catch(cta::exception::Exception &ex) {
-      std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "Failed to shutdown session", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ex.getMessage().str())};
+      m_log(cta::log::ERR, "Failed to shutdown session", params);
     }
   }
 }
@@ -193,8 +193,8 @@ void castor::tape::tapeserver::daemon::Catalogue::killSessions() {
     try {
       drive->killSession();
     } catch(cta::exception::Exception &ex) {
-      std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "Failed to kill session", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ex.getMessage().str())};
+      m_log(cta::log::ERR, "Failed to kill session", params);
     }
   }
 }

@@ -27,7 +27,7 @@
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicCounter.hpp"
 
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
@@ -66,7 +66,7 @@ public:
   DiskWriteThreadPool(int nbThread, 
           RecallReportPacker& reportPacker,
           RecallWatchDog& recallWatchDog,
-          castor::log::LogContext lc,
+          cta::log::LogContext lc,
           const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKeyPath);
   /**
@@ -120,8 +120,8 @@ private:
     {
       // This thread Id will remain for the rest of the thread's lifetime (and 
       // also context's lifetime) so ne need for a scope.
-      m_lc.pushOrReplace(log::Param("threadID", m_threadID));
-      m_lc.log(LOG_INFO,"DiskWrite Thread created");
+      m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
+      m_lc.log(cta::log::INFO,"DiskWrite Thread created");
     }
       
     void start() { cta::threading::Thread::start(); }
@@ -146,7 +146,7 @@ private:
     /**
      * For logging the event
      */
-    castor::log::LogContext m_lc;
+    cta::log::LogContext m_lc;
     
     
     virtual void run();
@@ -200,7 +200,7 @@ private:
   RecallWatchDog& m_watchdog;
   
   /** logging context that will be copied by each thread for individual context */
-  castor::log::LogContext m_lc;
+  cta::log::LogContext m_lc;
 };
 
 }}}}

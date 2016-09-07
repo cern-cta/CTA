@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfigMap.hpp"
@@ -62,7 +62,7 @@ public:
    */
   Catalogue(
     const int netTimeout,
-    log::Logger &log,
+    cta::log::Logger &log,
     ProcessForkerProxy &processForker,
     const std::string &hostName,
     const CatalogueConfig &catalogueConfig,
@@ -169,7 +169,7 @@ private:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * Proxy object representing the ProcessForker.

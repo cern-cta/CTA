@@ -26,7 +26,7 @@
 
 #include "common/threading/AtomicFlag.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/Timer.hpp"
@@ -123,7 +123,7 @@ protected:
   /*
    * Logging system  
    */
-  log::LogContext m_lc;
+  cta::log::LogContext m_lc;
   
   /*
    * Member function actually logging the file.
@@ -133,7 +133,7 @@ protected:
   /**
    * One offs parameters to be sent to the initial process
    */
-  cta::threading::BlockingQueue<castor::log::Param> m_paramsQueue;
+  cta::threading::BlockingQueue<cta::log::Param> m_paramsQueue;
   
   /**
    * Map of all error counts
@@ -146,7 +146,7 @@ protected:
    */
   void reportStats() {
     // Shortcut definitions
-    typedef castor::log::Param Param;
+    typedef cta::log::Param Param;
     if (m_statsSet) {
       // Build the statistics to be logged
       std::list<Param> paramList;
@@ -186,7 +186,7 @@ protected:
    */
   void run(){
     // Shortcut definitions
-    typedef castor::log::Param Param;
+    typedef cta::log::Param Param;
     // reset timers as we don't know how long it took before the thread started
     m_reportTimer.reset();
     m_blockMovementReportTimer.reset();
@@ -222,7 +222,7 @@ protected:
       // and transmit statistics
       if(m_reportTimer.secs() > m_reportPeriod){
         cta::threading::MutexLocker locker(m_mutex);
-        m_lc.log(LOG_DEBUG,"going to report");
+        m_lc.log(cta::log::DEBUG,"going to report");
         m_reportTimer.reset();
         m_initialProcess.reportHeartbeat(m_nbOfMemblocksMoved, 0);
         reportStats();
@@ -267,12 +267,12 @@ protected:
   TaskWatchDog(double reportPeriod,double stuckPeriod,
          cta::tape::daemon::TapedProxy& initialProcess,
           const std::string & driveUnitName,
-         log::LogContext& lc, double pollPeriod = 0.1):
+         cta::log::LogContext&  lc, double pollPeriod = 0.1):
   m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
   m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
   m_initialProcess(initialProcess), m_driveUnitName(driveUnitName),
   m_fileBeingMoved(false), m_lc(lc) {
-    m_lc.pushOrReplace(log::Param("thread","Watchdog"));
+    m_lc.pushOrReplace(cta::log::Param("thread","Watchdog"));
   }
   
   /**
@@ -308,7 +308,7 @@ protected:
   /**
    * Queue new parameter to be sent asynchronously to the main thread.
    */
-  void addParameter (const log::Param & param) {
+  void addParameter (const cta::log::Param & param) {
     m_paramsQueue.push(param);
   }
   
@@ -328,7 +328,7 @@ protected:
       }
     }
     // We ship the new value ASAP to the main thread.
-    addParameter(log::Param(errorName, count));
+    addParameter(cta::log::Param(errorName, count));
   }
   
   /**
@@ -341,7 +341,7 @@ protected:
       m_errorCounts[errorName] = value;
     }
     // We ship the new value ASAP to the main thread.
-    addParameter(log::Param(errorName, value));
+    addParameter(cta::log::Param(errorName, value));
   }
   
   /**
@@ -381,12 +381,12 @@ private:
   uint64_t m_fSeq;
   
   virtual void logStuckFile() {
-    castor::log::ScopedParamContainer params(m_lc);
+    cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
           .add("fileId", m_fileId)
           .add("archiveFileID",m_fileId)
           .add("fSeq",m_fSeq);
-    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+    m_lc.log(cta::log::WARNING, "No tape block movement for too long");
   }
   
 public:
@@ -395,7 +395,7 @@ public:
   RecallWatchDog(double periodToReport,double stuckPeriod,
     cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
-    log::LogContext& lc, double pollPeriod = 0.1): 
+    cta::log::LogContext&  lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
     pollPeriod) {}
   
@@ -433,11 +433,11 @@ private:
   uint64_t m_fSeq;
  
   virtual void logStuckFile() {
-    castor::log::ScopedParamContainer params(m_lc);
+    cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
           .add("archiveFileID",m_fileId)
           .add("fSeq",m_fSeq);
-    m_lc.log(LOG_WARNING, "No tape block movement for too long");
+    m_lc.log(cta::log::WARNING, "No tape block movement for too long");
   }
   
 public:
@@ -446,7 +446,7 @@ public:
   MigrationWatchDog(double periodToReport,double stuckPeriod,
     cta::tape::daemon::TapedProxy& initialProcess,
     const std::string & driveUnitName,
-    log::LogContext lc, double pollPeriod = 0.1): 
+    cta::log::LogContext lc, double pollPeriod = 0.1): 
   TaskWatchDog(periodToReport, stuckPeriod, initialProcess, driveUnitName, lc, 
     pollPeriod) {}
   

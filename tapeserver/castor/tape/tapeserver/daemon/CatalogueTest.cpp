@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/DummyLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxyDummy.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -53,7 +53,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
   DriveConfigMap driveConfigs;
   ASSERT_NO_THROW(driveConfigs.enterTpconfigLines(lines));
 
-  castor::log::DummyLogger log("unittest");
+  cta::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
@@ -131,7 +131,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest,
 
   const std::string unitName = "DRIVE";
   const int netTimeout = 1;
-  castor::log::DummyLogger log("unittest");
+  cta::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;
@@ -152,7 +152,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, getUnitNames) {
   ASSERT_NO_THROW(driveConfigs.enterTpconfigLines(lines));
 
   const int netTimeout = 1;
-  castor::log::DummyLogger log("unittest");
+  cta::log::DummyLogger log("unittest");
   ProcessForkerProxyDummy processForker;
   const std::string hostName = "";
   const CatalogueConfig catalogueConfig;

@@ -64,7 +64,7 @@ public:
           uint64_t maxFilesRequest,
           cta::server::ProcessCap &capUtils,
           RecallWatchDog& watchdog,
-          castor::log::LogContext & lc,
+          cta::log::LogContext & lc,
           RecallReportPacker &rrp,
           const bool useLbp);
    
@@ -122,7 +122,7 @@ private:
    * @param sessionTime
    */
   void logWithStat(int level,const std::string& msg,
-    log::ScopedParamContainer& params);
+    cta::log::ScopedParamContainer& params);
   
   /**
    * Number of files a single request to the client might give us.

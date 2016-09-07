@@ -49,42 +49,42 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
     cta::catalogue::TapeFileSearchCriteria searchCriteria;    
     searchCriteria.diskInstance = path; //the path will be the disk instance that we want the disk id's of
     m_itor = m_catalogue->getArchiveFileItor(searchCriteria);
-    std::list<log::Param> params;
-    params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-    params.push_back(log::Param("HOST", m_cliIdentity.host));
-    params.push_back(log::Param("DIRPATH", path));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+    params.push_back(cta::log::Param("DIRPATH", path));
     m_log(log::INFO, "Successful Request", params);
     return SFS_OK;
   } catch (cta::exception::Exception &ex) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-    params.push_back(log::Param("HOST", m_cliIdentity.host));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
     if(path && strlen(path)) {
-      params.push_back(log::Param("DIRPATH", path));
+      params.push_back(cta::log::Param("DIRPATH", path));
     }
-    params.push_back(log::Param("ERROR",  ex.getMessageValue()));
+    params.push_back(cta::log::Param("ERROR",  ex.getMessageValue()));
     m_log(log::ERR, "Unsuccessful Request", params);
     error.setErrInfo(ENOTSUP, ex.getMessageValue().c_str());    
     return SFS_ERROR;
   } catch (std::exception &ex) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-    params.push_back(log::Param("HOST", m_cliIdentity.host));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
     if(path && strlen(path)) {
-      params.push_back(log::Param("DIRPATH", path));
+      params.push_back(cta::log::Param("DIRPATH", path));
     }
-    params.push_back(log::Param("ERROR",  ex.what()));
+    params.push_back(cta::log::Param("ERROR",  ex.what()));
     m_log(log::ERR, "Unsuccessful Request", params);
     error.setErrInfo(ENOTSUP, ex.what());    
     return SFS_ERROR;
   } catch (...) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-    params.push_back(log::Param("HOST", m_cliIdentity.host));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
     if(path && strlen(path)) {
-      params.push_back(log::Param("DIRPATH", path));
+      params.push_back(cta::log::Param("DIRPATH", path));
     }
-    params.push_back(log::Param("ERROR",  "Unknown exception caught!"));
+    params.push_back(cta::log::Param("ERROR",  "Unknown exception caught!"));
     m_log(log::ERR, "Unsuccessful Request", params);
     error.setErrInfo(ENOTSUP, "Unknown exception caught!");    
     return SFS_ERROR;

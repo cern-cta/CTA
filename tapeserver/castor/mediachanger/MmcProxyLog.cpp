@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::mediachanger::MmcProxyLog::MmcProxyLog(log::Logger &log) throw():
+castor::mediachanger::MmcProxyLog::MmcProxyLog(cta::log::Logger &log) throw():
   m_log(log) {
 }
 
@@ -33,10 +33,10 @@ castor::mediachanger::MmcProxyLog::MmcProxyLog(log::Logger &log) throw():
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyLog::mountTapeReadOnly(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("TPVID", vid),
-    log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual mounted for read-only access",
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", vid),
+    cta::log::Param("librarySlot", librarySlot.str())};
+  m_log(cta::log::WARNING, "Tape should be manual mounted for read-only access",
     params);
 }
 
@@ -45,10 +45,10 @@ void castor::mediachanger::MmcProxyLog::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyLog::mountTapeReadWrite(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("TPVID", vid),
-    log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual mounted for read/write access",
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", vid),
+    cta::log::Param("librarySlot", librarySlot.str())};
+  m_log(cta::log::WARNING, "Tape should be manual mounted for read/write access",
     params);
 }
 
@@ -57,10 +57,10 @@ void castor::mediachanger::MmcProxyLog::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyLog::dismountTape(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("TPVID", vid),
-    log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", vid),
+    cta::log::Param("librarySlot", librarySlot.str())};
+  m_log(cta::log::WARNING, "Tape should be manual dismounted", params);
 }
 
 //------------------------------------------------------------------------------
@@ -68,8 +68,8 @@ void castor::mediachanger::MmcProxyLog::dismountTape(
 //------------------------------------------------------------------------------
 void castor::mediachanger::MmcProxyLog::forceDismountTape(
   const std::string &vid, const ManualLibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("TPVID", vid),
-    log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("TPVID", vid),
+    cta::log::Param("librarySlot", librarySlot.str())};
+  m_log(cta::log::WARNING, "Tape should be manual dismounted", params);
 }

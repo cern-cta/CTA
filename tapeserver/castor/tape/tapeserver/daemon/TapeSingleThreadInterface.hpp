@@ -29,7 +29,7 @@
 #pragma once
 
 #include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/Threading.hpp"
@@ -79,7 +79,7 @@ protected:
   const std::string m_vid;
 
   ///log context, for ... logging purpose, copied du to thread mechanism 
-  castor::log::LogContext m_logContext;
+  cta::log::LogContext m_logContext;
   
   VolumeInfo m_volInfo;
   
@@ -98,11 +98,11 @@ protected:
   void setCapabilities(){
     try {
       m_capUtils.setProcText("cap_sys_rawio+ep");
-      log::LogContext::ScopedParam sp(m_logContext,
-        log::Param("capabilities", m_capUtils.getProcText()));
-      m_logContext.log(LOG_INFO, "Set process capabilities for using tape");
+      cta::log::LogContext::ScopedParam sp(m_logContext,
+        cta::log::Param("capabilities", m_capUtils.getProcText()));
+      m_logContext.log(cta::log::INFO, "Set process capabilities for using tape");
     } catch(const cta::exception::Exception &ne) {
-      m_logContext.log(LOG_ERR,
+      m_logContext.log(cta::log::ERR,
         "Failed to set process capabilities for using the tape ");
     }
   }
@@ -111,7 +111,7 @@ protected:
    * Try to mount the tape for read-only access, get an exception if it fails 
    */
   void mountTapeReadOnly(){
-    castor::log::ScopedParamContainer scoped(m_logContext); 
+    cta::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("TPVID",m_volInfo.vid)
           .add("drive_Slot",m_drive.config.getLibrarySlot().str());
     try {
@@ -121,12 +121,12 @@ protected:
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
           m_drive.config.getLibrarySlot().getLibraryType()) {
-          m_logContext.log(LOG_INFO, "Tape mounted for read-only access");
+          m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
         }
     }
     catch (cta::exception::Exception & ex) {
       scoped.add("exception_message", ex.getMessageValue());
-      m_logContext.log(LOG_ERR,
+      m_logContext.log(cta::log::ERR,
         "Failed to mount the tape for read-only access");
       throw;
     }
@@ -136,7 +136,7 @@ protected:
    * Try to mount the tape for read/write access, get an exception if it fails 
    */
   void mountTapeReadWrite(){
-    castor::log::ScopedParamContainer scoped(m_logContext); 
+    cta::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("TPVID",m_volInfo.vid)
           .add("drive_Slot",m_drive.config.getLibrarySlot().str());
     try {
@@ -144,11 +144,11 @@ protected:
         m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.config.getLibrarySlot());
         const std::string modeAsString = "RW";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
-        m_logContext.log(LOG_INFO, "Tape mounted for read/write access");
+        m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
     }
     catch (cta::exception::Exception & ex) {
       scoped.add("exception_message", ex.getMessageValue());
-      m_logContext.log(LOG_ERR,
+      m_logContext.log(cta::log::ERR,
         "Failed to mount the tape for read/write access");
       throw;
     }
@@ -166,10 +166,10 @@ protected:
       cta::utils::Timer timer;
       // wait 600 drive is ready
       m_drive.waitUntilReady(600);
-      log::LogContext::ScopedParam sp0(m_logContext, log::Param("loadTime", timer.secs()));
+      cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
-      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_message", e.getMessageValue()));
-      m_logContext.log(LOG_INFO, "Got timeout or error while waiting for drive to be ready.");
+      cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exception_message", e.getMessageValue()));
+      m_logContext.log(cta::log::INFO, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }
   }
@@ -188,11 +188,11 @@ protected:
     for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
             ta!=tapeAlerts.end();ta++)
     {
-      log::ScopedParamContainer params(m_logContext);
+      cta::log::ScopedParamContainer params(m_logContext);
       params.add("tapeAlert",*ta)
             .add("tapeAlertNumber", alertNumber++)
             .add("tapeAlertCount", tapeAlerts.size());
-      m_logContext.log(LOG_WARNING, "Tape alert detected");
+      m_logContext.log(cta::log::WARNING, "Tape alert detected");
     }
     // Add tape alerts in the tape log parameters
     std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
@@ -262,7 +262,7 @@ public:
     mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
-    cta::server::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
+    cta::server::ProcessCap &capUtils, cta::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}
 }; // class TapeSingleThreadInterface

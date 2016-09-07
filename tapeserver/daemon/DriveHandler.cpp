@@ -113,7 +113,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       return m_processingStatus;
     }
   } catch (cta::exception::Exception & ex) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Drive", m_configLine.unitName)
           .add("Error", ex.getMessageValue());
     m_processManager.logContext().log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
@@ -140,7 +140,7 @@ decltype (SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTi
 void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
   // track of the exit state as kill() mens we will not be called anymore.
-  log::ScopedParamContainer params(m_processManager.logContext());
+  cta::log::ScopedParamContainer params(m_processManager.logContext());
   params.add("unitName", m_configLine.unitName);
   if (m_pid != -1) {
     ::kill(m_pid, SIGKILL);
@@ -190,7 +190,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       }
     }
   } catch(cta::exception::Exception & ex) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Message", ex.getMessageValue());
     m_processManager.logContext().log(log::ERR, 
         "In DriveHandler::processEvent(): failed");
@@ -204,14 +204,14 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
   // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
   std::set<SessionState> expectedStates = { SessionState::Cleaning, SessionState::Scheduling };
   if (expectedStates.find(m_sessionState)==expectedStates.end()) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processScheduling(): unexpected previous state.");
   }
   m_sessionState=SessionState::Scheduling;
   if ((SessionType)message.sessiontype()!= SessionType::Undetermined) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Type", toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processScheduling(): unexpected session type reported.");
@@ -226,7 +226,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
 SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::WatchdogMessage& message) {
   // The only transition expected is from scheduling.
   if (SessionState::Scheduling != m_sessionState) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processMounting(): unexpected previous state.");
@@ -234,7 +234,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
   // The type of mount is expected here. If we do not get it, the process is killed.
   std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve };
   if (expectedTypes.end()==expectedTypes.find((SessionType)message.sessiontype())) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Type", toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::ERR, 
         "In DriveHandler::processMounting(): unexpected session type reported. Killing the session.");
@@ -256,7 +256,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   // Log the (possible) unexpected previous state.
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
   if (expectedStates.end() == expectedStates.find(m_sessionState)) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processRunning(): unexpected previous state.");
@@ -266,7 +266,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve };
   if ((expectedTypes.end()==expectedTypes.find(m_sessionType)) ||
         ((SessionType)message.sessiontype() != m_sessionType)) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousType", toString(m_sessionType));
     params.add("Type", toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::ERR, 
@@ -296,7 +296,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
 SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers::WatchdogMessage& message) {
   // This status transition is exclusively expected from running
   if (SessionState::Running != m_sessionState) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processUnmounting(): unexpected previous state.");
@@ -304,7 +304,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
   // Check if the session type is consistent. It is still important as the post-unmount
   // behavior depends on it.
   if ((SessionType)message.sessiontype()!=m_sessionType) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousType", toString(m_sessionType));
     params.add("Type", toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::ERR, 
@@ -324,7 +324,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
 SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializers::WatchdogMessage& message) {
   // This status transition is expected from unmounting.
   if (SessionState::Unmounting != m_sessionState) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processDrainingToDisk(): unexpected previous state.");
@@ -332,7 +332,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializ
   // This state is only for retrieve sessions.
   if ((SessionType::Retrieve!=m_sessionType) 
        || (SessionType::Retrieve!=(SessionType)message.sessiontype())) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousType", toString(m_sessionType));
     params.add("Type", toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::ERR, 
@@ -354,7 +354,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processClosingDown(serializers
   // We expect to transition from Unmounting or draining to disk
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
   if (expectedStates.end() == expectedStates.find(m_sessionState)) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("PreviousState", session::toString(m_sessionState));
     m_processManager.logContext().log(log::WARNING, 
         "In DriveHandler::processClosingDown(): unexpected previous state.");
@@ -390,7 +390,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       //TODOTODO
       throw 0;
     } catch (exception::Exception ex) {
-      log::ScopedParamContainer params(m_processManager.logContext());
+      cta::log::ScopedParamContainer params(m_processManager.logContext());
       params.add("pid", m_pid)
             .add("Message", ex.getMessageValue())
             .add("SessionState", session::toString(m_sessionState))

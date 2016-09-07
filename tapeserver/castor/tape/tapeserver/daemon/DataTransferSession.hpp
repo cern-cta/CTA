@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -60,7 +60,7 @@ namespace daemon {
      */
     DataTransferSession(
       const std::string & hostname,
-      castor::log::Logger & log,
+      cta::log::Logger & log,
       System::virtualWrapper & sysWrapper,
       const DriveConfig & driveConfig,
       castor::mediachanger::MediaChangerFacade & mc,
@@ -104,7 +104,7 @@ namespace daemon {
     /**
      * Object representing the API of the CASTOR logging system.
      */
-    castor::log::Logger & m_log;
+    cta::log::Logger & m_log;
     VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;
     /**
@@ -116,12 +116,12 @@ namespace daemon {
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
     castor::tape::tapeserver::drive::DriveInterface * findDrive(
-     const DriveConfig &driveConfig,log::LogContext & lc, cta::TapeMount *mount);
+     const DriveConfig &driveConfig, cta::log::LogContext & lc, cta::TapeMount *mount);
         
     /** sub-part of execute for the read sessions */
-    EndOfSessionAction executeRead(log::LogContext & lc, cta::RetrieveMount *retrieveMount);
+    EndOfSessionAction executeRead(cta::log::LogContext & lc, cta::RetrieveMount *retrieveMount);
     /** sub-part of execute for a write session */
-    EndOfSessionAction executeWrite(log::LogContext & lc, cta::ArchiveMount *archiveMount);
+    EndOfSessionAction executeWrite(cta::log::LogContext & lc, cta::ArchiveMount *archiveMount);
     /** Reference to the MediaChangerFacade, allowing the mounting of the tape
      * by the library. It will be used exclusively by the tape thread. */
     castor::mediachanger::MediaChangerFacade & m_mc;

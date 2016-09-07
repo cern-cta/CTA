@@ -43,7 +43,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log Object representing the API of the CASTOR logging system.
    */
-  Daemon(log::Logger &log)
+  Daemon(cta::log::Logger &log)
     throw();
 
   /**
@@ -91,7 +91,7 @@ protected:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+ cta::log::Logger &m_log;
 
 private:
 

@@ -78,7 +78,7 @@ public:
     char **const argv,
     std::ostream &stdOut,
     std::ostream &stdErr,
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfigMap &driveConfigs,
     reactor::ZMQReactor &reactor,

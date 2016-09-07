@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
@@ -63,7 +63,7 @@ namespace daemon {
     CleanerSession(
       cta::server::ProcessCap &capUtils,
       mediachanger::MediaChangerFacade &mc,
-      castor::log::Logger &log,
+      cta::log::Logger &log,
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
       const std::string &vid,
@@ -94,7 +94,7 @@ namespace daemon {
     /**
      * The logging object     
      */
-    castor::log::Logger & m_log;
+    cta::log::Logger & m_log;
     
     /**
      * The configuration of the tape drive to be cleaned.

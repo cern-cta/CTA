@@ -27,7 +27,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
-  castor::log::Logger &log,
+  cta::log::Logger &log,
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper):
   m_log(log),
@@ -52,10 +52,10 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
   }
 
   // Reaching this point means the probe failed and an exception was thrown
-  std::list<log::Param> params = {
-    log::Param("unitName", m_driveConfig.getUnitName()),
-    log::Param("message", errorMessage)};
-  m_log(LOG_ERR, "Probe failed", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("unitName", m_driveConfig.getUnitName()),
+    cta::log::Param("message", errorMessage)};
+  m_log(cta::log::ERR, "Probe failed", params);
   return false;
 }
 
@@ -64,17 +64,17 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::EmptyDriveProbe::
   exceptionThrowingDriveIsEmpty() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_driveConfig.getUnitName()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
   if(drive.hasTapeInPlace()) {
-    m_log(LOG_INFO, "Probe found tape drive with a tape inside", params);
+    m_log(cta::log::INFO, "Probe found tape drive with a tape inside", params);
     return false;
   } else {
-    m_log(LOG_INFO, "Probe found tape drive is empty", params);
+    m_log(cta::log::INFO, "Probe found tape drive is empty", params);
     return true;
   }
 }

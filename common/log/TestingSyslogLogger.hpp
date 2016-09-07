@@ -18,21 +18,16 @@
 
 #pragma once
 
-#include "common/log/Logger.hpp"
+#include "common/log/SyslogLogger.hpp"
 
 namespace cta {
 namespace log {
 
 /**
- * A dummy logger class whose implementation of the API of the CASTOR logging
- * system does nothing.
- *
- * The primary purpose of this class is to facilitate the unit testing of
- * classes that require a logger object.  Using an instance of this class
- * during unit testing means that no logs will actually be written to a log
- * file.
+ * Class used to facilitate unit testing by making public one or more of the
+ * protected members of its super class.
  */
-class DummyLogger: public Logger {
+class TestingSyslogLogger: public SyslogLogger {
 public:
 
   /**
@@ -41,25 +36,13 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  DummyLogger(const std::string &programName);
+  TestingSyslogLogger(const std::string &programName):
+    SyslogLogger(programName,DEBUG)  {
+  }
 
-  /**
-   * Destructor.
-   */
-  virtual ~DummyLogger();
+  using SyslogLogger::cleanString;
 
-  /**
-   * Prepares the logger object for a call to fork().
-   *
-   * No further calls to operator() should be made after calling this
-   * method until the call to fork() has completed.
-   */
-  void prepareForFork() ;
-  
-protected:
-  virtual void reducedSyslog(const std::string & msg);
-
-}; // class DummyLogger
+}; // class TestingSyslogLogger
 
 } // namespace log
 } // namespace cta

@@ -25,7 +25,7 @@
 
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace castor {
 namespace exception {
@@ -53,7 +53,7 @@ public:
    * @param blockSize: size of each block
    */
   MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, 
-          castor::log::LogContext lc) 
+          cta::log::LogContext lc) 
           ;
   
   /**
@@ -145,7 +145,7 @@ private:
    * Logging purpose. Given the fact the class is threaded, the LogContext
    * has to be copied.
    */
-  castor::log::LogContext m_lc;
+  cta::log::LogContext m_lc;
     
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!

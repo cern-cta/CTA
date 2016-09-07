@@ -33,7 +33,7 @@
 #include "castor/messages/ProcessExited.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/StopProcessForker.pb.h"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"
 
 #include <google/protobuf/message.h>
@@ -170,7 +170,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::Exception &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -182,7 +182,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ForkCleaner &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
   
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -194,7 +194,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ForkDataTransfer &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -206,7 +206,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ForkLabel &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -218,7 +218,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ProcessCrashed &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -230,7 +230,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::ProcessExited &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame with the specified message as its payload to the specified
@@ -242,7 +242,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::StopProcessForker &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes the specified frame to the specified file descriptor.
@@ -253,7 +253,7 @@ public:
    * logging system.
    */
   static void writeFrame(const int fd, const ProcessForkerFrame &frame,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Reads either a good-day reply-message or an exception message from the
@@ -409,7 +409,7 @@ private:
    * logging system.
    */
   static void writeFrame(const int fd, const messages::MsgType type,
-    const google::protobuf::Message &msg, log::Logger *const log = NULL);
+    const google::protobuf::Message &msg, cta::log::Logger *const log = NULL);
 
   /**
    * Writes a frame header to the specfied file descriptor.
@@ -424,7 +424,7 @@ private:
   static void writeFrameHeader(const int fd,
     const messages::MsgType msgType,
     const uint32_t payloadLen,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes the specified unsigned 32-bit integer to the specified file
@@ -445,7 +445,7 @@ private:
    * logging system.
    */
   static void writeFramePayload(const int fd,
-    const google::protobuf::Message &msg, log::Logger *const log = NULL);
+    const google::protobuf::Message &msg, cta::log::Logger *const log = NULL);
 
   /**
    * Writes the specified message as the payload of a frame to the specified
@@ -455,7 +455,7 @@ private:
    * @param msg The message.
    */
   static void writeFramePayload(const int fd, const std::string &msg,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Writes the specified string to the specified file descriptor.
@@ -466,7 +466,7 @@ private:
    * logging system.
    */
   static void writeString(const int fd, const std::string &str,
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
   /**
    * Reads the payload-type field of a frame from the specified file descriptor.

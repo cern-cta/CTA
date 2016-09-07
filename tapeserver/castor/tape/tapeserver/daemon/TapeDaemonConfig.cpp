@@ -43,7 +43,7 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig::TapeDaemonConfig():
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemonConfig
   castor::tape::tapeserver::daemon::TapeDaemonConfig::createFromCastorConf(
-    log::Logger *const log) {
+    cta::log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
 
@@ -74,7 +74,7 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
 // createVdqmHostsFromCastorConf
 //------------------------------------------------------------------------------
 std::vector<std::string> castor::tape::tapeserver::daemon::TapeDaemonConfig::
-  createVdqmHostsFromCastorConf(log::Logger *const log,
+  createVdqmHostsFromCastorConf(cta::log::Logger *const log,
   common::CastorConfiguration &castorConf) {
   const std::string rawVdqmHosts = castorConf.getConfEntString("TapeServer",
     "VdqmHosts", log);

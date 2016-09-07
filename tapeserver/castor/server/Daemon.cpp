@@ -33,7 +33,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
-  log::Logger &log) throw():
+  cta::log::Logger &log) throw():
   m_stdOut(stdOut),
   m_stdErr(stdErr),
   m_log(log),

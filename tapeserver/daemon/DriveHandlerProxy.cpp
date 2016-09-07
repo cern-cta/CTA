@@ -25,7 +25,7 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
   m_socketPair.close(server::SocketPair::Side::parent);  
 }
 
-void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<castor::log::Param>& params) {
+void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 

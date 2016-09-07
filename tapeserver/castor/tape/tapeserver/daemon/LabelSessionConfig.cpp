@@ -37,7 +37,7 @@ castor::tape::tapeserver::daemon::LabelSessionConfig::LabelSessionConfig()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSessionConfig
   castor::tape::tapeserver::daemon::LabelSessionConfig::createFromCastorConf(
-    log::Logger *const log) {
+    cta::log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
   LabelSessionConfig config;

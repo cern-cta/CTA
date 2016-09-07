@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueCleanerSession *
   castor::tape::tapeserver::daemon::CatalogueCleanerSession::create(
-  log::Logger &log,
+  cta::log::Logger &log,
   const int netTimeout,
   const DriveConfig &driveConfig,
   ProcessForkerProxy &processForker,
@@ -59,7 +59,7 @@ castor::tape::tapeserver::daemon::CatalogueCleanerSession *
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueCleanerSession::
   CatalogueCleanerSession(
-  log::Logger &log,
+  cta::log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const DriveConfig &driveConfig,

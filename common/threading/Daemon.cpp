@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(log::Logger &log) throw():
+cta::server::Daemon::Daemon(cta::log::Logger &log) throw():
   m_log(log),
   m_foreground(false),
   m_commandLineHasBeenParsed(false) {

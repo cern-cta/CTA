@@ -22,7 +22,7 @@
 #pragma once
 
 #include "castor/io/io.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/messages/ProcessCrashed.pb.h"
 #include "castor/messages/ProcessExited.pb.h"
 #include "castor/legacymsg/CommonMarshal.hpp"
@@ -56,7 +56,7 @@ public:
   ProcessForkerConnectionHandler(
     const int fd,
     reactor::ZMQReactor &reactor,
-    log::Logger &log,
+    cta::log::Logger &log,
     Catalogue &driveCatalogue) throw();
 
   /**
@@ -101,7 +101,7 @@ private:
   /**
    * The object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+ cta::log::Logger &m_log;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

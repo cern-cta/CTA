@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 
 #include <string>
@@ -155,7 +155,7 @@ protected:
    */
   CatalogueSession(
     const Type sessionType,
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const pid_t pid,
     const DriveConfig &driveConfig) throw();
@@ -168,7 +168,7 @@ protected:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * Timeout in seconds to be used when performing network I/O.

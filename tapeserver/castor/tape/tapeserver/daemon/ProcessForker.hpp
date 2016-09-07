@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
 #include "castor/messages/ForkLabel.pb.h"
@@ -63,7 +63,7 @@ public:
    * @param config The CASTOR configuration parameters used by the tapeserverd
    * daemon.
    */
-  ProcessForker(log::Logger &log, const int cmdSocket, const int reaperSocket,
+  ProcessForker(cta::log::Logger &log, const int cmdSocket, const int reaperSocket,
     const std::string &hostName, char *const argv0,
     const TapeDaemonConfig &config) throw();
 
@@ -91,7 +91,7 @@ private:
   /**
    * Object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * The file-descriptor of the socket used to receive commands from the

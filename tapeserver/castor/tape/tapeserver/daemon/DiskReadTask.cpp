@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "common/Timer.hpp"
 
@@ -46,10 +46,10 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 //------------------------------------------------------------------------------
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
-void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
+void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
     MigrationWatchDog & watchdog) {
-  using log::LogContext;
-  using log::Param;
+  using cta::log::LogContext;
+  using cta::log::Param;
 
   cta::utils::Timer localTime;
   cta::utils::Timer totalTime(localTime);
@@ -69,7 +69,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     currentErrorToCount = "Error_diskOpenForRead";
     std::unique_ptr<tape::diskFile::ReadFile> sourceFile(
       fileFactory.createReadFile(m_archiveJob->srcURL));
-    log::ScopedParamContainer URLcontext(lc);
+    cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL)
               .add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
@@ -82,7 +82,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     m_stats.openingTime+=localTime.secs(cta::utils::Timer::resetCounter);
      
     LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.archiveFileID));
-    lc.log(LOG_INFO,"Opened disk file for read");
+    lc.log(cta::log::INFO,"Opened disk file for read");
     
     while(migratingFileSize>0){
 
@@ -108,11 +108,11 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
         std::string erroMsg = "Error while reading a file: memory block not filled up, but the file is not fully read yet";
         // Log the error
-        log::ScopedParamContainer params(lc);
+        cta::log::ScopedParamContainer params(lc);
         params.add("bytesInBlock", mb->m_payload.size())
               .add("BlockCapacity", mb->m_payload.totalCapacity())
               .add("BytesNotYetRead", migratingFileSize);
-        lc.log(LOG_ERR, "Error while reading a file: memory block not filled up, but the file is not fully read yet");
+        lc.log(cta::log::ERR, "Error while reading a file: memory block not filled up, but the file is not fully read yet");
         // Mark the block as failed
         mb->markAsFailed(erroMsg,666);
         // Transmit to the tape write task, which will finish the session
@@ -133,11 +133,11 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     // We do not have delayed open like in disk writes, so time spent 
     // transferring equals total time.
     m_stats.transferTime = m_stats.totalTime;
-    logWithStat(LOG_INFO, "File successfully read from disk", lc);
+    logWithStat(cta::log::INFO, "File successfully read from disk", lc);
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
    
-    lc.log(LOG_DEBUG,"DiskReadTask: a previous file has failed for migration "
+    lc.log(cta::log::DEBUG,"DiskReadTask: a previous file has failed for migration "
     "Do nothing except circulating blocks");
     circulateAllBlocks(blockId,mb);
   }
@@ -164,7 +164,7 @@ void DiskReadTask::execute(log::LogContext& lc, diskFile::DiskFileFactory & file
     
     LogContext::ScopedParam sp(lc, Param("blockID",blockId));
     LogContext::ScopedParam sp0(lc, Param("exceptionMessage", e.getMessageValue()));
-    lc.log(LOG_ERR,"Exception while reading a file");
+    lc.log(cta::log::ERR,"Exception while reading a file");
     
     //deal here the number of mem block
     circulateAllBlocks(blockId,mb);
@@ -191,8 +191,8 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------  
-void DiskReadTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
-  log::ScopedParamContainer params(lc);
+void DiskReadTask::logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc){
+  cta::log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_stats.readWriteTime)
            .add("checksumingTime",m_stats.checksumingTime)
            .add("waitFreeMemoryTime",m_stats.waitFreeMemoryTime)

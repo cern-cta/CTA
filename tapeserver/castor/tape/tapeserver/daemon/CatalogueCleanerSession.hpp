@@ -61,7 +61,7 @@ public:
    * @return A newly created CatalogueCleanerSession object.
    */
   static CatalogueCleanerSession *create(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
     ProcessForkerProxy &processForker,
@@ -151,7 +151,7 @@ protected:
    * drive.
    */
   CatalogueCleanerSession(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const pid_t pid,
     const DriveConfig &driveConfig,

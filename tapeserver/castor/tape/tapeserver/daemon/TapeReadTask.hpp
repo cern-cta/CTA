@@ -61,13 +61,13 @@ public:
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
   void execute(castor::tape::tapeFile::ReadSession & rs,
-    castor::log::LogContext & lc,RecallWatchDog& watchdog,
+    cta::log::LogContext & lc,RecallWatchDog& watchdog,
     TapeSessionStats & stats, cta::utils::Timer & timer) {
 
-    using castor::log::Param;
+    using cta::log::Param;
     
     // Set the common context for all the coming logs (file info)
-    log::ScopedParamContainer params(lc);
+    cta::log::ScopedParamContainer params(lc);
     params.add("archiveFileID", m_retrieveJob->archiveFile.archiveFileID)
           .add("BlockId", m_retrieveJob->selectedTapeFile().blockId)
           .add("fSeq", m_retrieveJob->selectedTapeFile().fSeq)
@@ -99,7 +99,7 @@ public:
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
 
-      lc.log(LOG_INFO, "Successfully positioned for reading");
+      lc.log(cta::log::INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
       localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
@@ -156,7 +156,7 @@ public:
             .add("payloadTransferSpeedMBps",
                      localStats.totalTime?1.0*localStats.dataVolume/1000/1000/localStats.totalTime:0)
             .add("LBPMode", LBPMode);
-      lc.log(LOG_INFO, "File successfully read from tape");
+      lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
     } //end of try
@@ -170,13 +170,13 @@ public:
       }
       // This is an error case. Log and signal to the disk write task
       { 
-        castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
-        castor::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
-        lc.log(LOG_ERR, "Error reading a file in TapeReadFileTask (backtrace follows)");
+        cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
+        cta::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
+        lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask (backtrace follows)");
       }
       {
-        castor::log::LogContext lc2(lc.logger());
-        lc2.logBacktrace(LOG_ERR, ex.backtrace());
+        cta::log::LogContext lc2(lc.logger());
+        lc2.logBacktrace(cta::log::ERR, ex.backtrace());
       }
       
       // mb might or might not be allocated at this point, but 
@@ -222,19 +222,19 @@ private:
    * @return if successful, return an unique_ptr on the ReadFile we want
    */
   std::unique_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
-  castor::tape::tapeFile::ReadSession & rs, castor::log::LogContext & lc){
+  castor::tape::tapeFile::ReadSession & rs, cta::log::LogContext & lc){
 
-    using castor::log::Param;
-    typedef castor::log::LogContext::ScopedParam ScopedParam;
+    using cta::log::Param;
+    typedef cta::log::LogContext::ScopedParam ScopedParam;
 
     std::unique_ptr<castor::tape::tapeFile::ReadFile> rf;
     try {
       rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_retrieveJob));
-      lc.log(LOG_DEBUG, "Successfully opened the tape file");
+      lc.log(cta::log::DEBUG, "Successfully opened the tape file");
     } catch (cta::exception::Exception & ex) {
       // Log the error
       ScopedParam sp0(lc, Param("ErrorMessage", ex.getMessageValue()));
-      lc.log(LOG_ERR, "Failed to open tape file for reading");
+      lc.log(cta::log::ERR, "Failed to open tape file for reading");
       throw;
     }
     return rf;

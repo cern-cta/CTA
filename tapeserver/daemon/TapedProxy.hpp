@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "tapeserver/castor/log/Param.hpp"
+#include "common/log/Param.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
@@ -71,7 +71,7 @@ public:
    * @param params: a vector of log parameters
    */
   virtual void addLogParams(const std::string &unitName,
-    const std::list<castor::log::Param> & params) = 0;
+    const std::list<cta::log::Param> & params) = 0;
   
   /**
    * Sends a list of parameters to remove from the end of session logging.

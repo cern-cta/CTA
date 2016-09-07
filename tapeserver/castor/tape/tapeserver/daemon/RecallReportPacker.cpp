@@ -23,7 +23,7 @@
 
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 
 #include <signal.h>
 #include <iostream>
@@ -34,8 +34,8 @@ namespace{
   };
 }
 
-using castor::log::LogContext;
-using castor::log::Param;
+using cta::log::LogContext;
+using cta::log::Param;
 
 namespace castor {
 namespace tape {
@@ -44,7 +44,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, log::LogContext lc):
+RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext lc):
   ReportPackerInterface<detail::Recall>(lc),
   m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
   m_tapeThreadComplete(false), m_diskThreadComplete(false)
@@ -119,9 +119,9 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
   if(!parent.errorHappened()){
-    parent.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
+    parent.m_lc.log(cta::log::INFO,"Nominal RecallReportPacker::EndofSession has been reported");
     if (parent.m_watchdog) {
-      parent.m_watchdog->addParameter(log::Param("status","success"));
+      parent.m_watchdog->addParameter(cta::log::Param("status","success"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
@@ -130,9 +130,9 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent)
   }
   else {
     const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
-    parent.m_lc.log(LOG_ERR,msg);
+    parent.m_lc.log(cta::log::ERR,msg);
     if (parent.m_watchdog) {
-      parent.m_watchdog->addParameter(log::Param("status","failure"));
+      parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
@@ -172,14 +172,14 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   if(parent.m_errorHappened) {
     LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
-    parent.m_lc.log(LOG_ERR,m_message);
+    parent.m_lc.log(cta::log::ERR,m_message);
   }
   else{
     const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
-    parent.m_lc.log(LOG_ERR,msg);
+    parent.m_lc.log(cta::log::ERR,msg);
   }
   if (parent.m_watchdog) {
-    parent.m_watchdog->addParameter(log::Param("status","failure"));
+    parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.
@@ -199,7 +199,7 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
-  parent.m_lc.log(LOG_ERR,m_failedRetrieveJob->failureMessage);
+  parent.m_lc.log(cta::log::ERR,m_failedRetrieveJob->failureMessage);
   m_failedRetrieveJob->failed();
 }
 
@@ -214,18 +214,18 @@ m_parent(parent) {
 //------------------------------------------------------------------------------
 void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
-  m_parent.m_lc.log(LOG_DEBUG, "Starting RecallReportPacker thread");
+  m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
   try{
     while(1) {
       std::string debugType;
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
       {
-        log::ScopedParamContainer spc(m_parent.m_lc);
+        cta::log::ScopedParamContainer spc(m_parent.m_lc);
         spc.add("ReportType", debugType=typeid(*rep).name());
         if (rep->goingToEnd())
           spc.add("goingToEnd", "true");
-        m_parent.m_lc.log(LOG_DEBUG, "Popping report");
+        m_parent.m_lc.log(cta::log::DEBUG, "Popping report");
       }
       // Record whether we found end before calling the potentially exception
       // throwing execute().)
@@ -239,30 +239,30 @@ void RecallReportPacker::WorkerThread::run(){
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report and got a CTA exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(const std::exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report and got a standard exception, cant do much more. The exception is the following: " << e.what();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(...){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report and got an unknown exception, cant do much more.";
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   }
   // Drain the fifo in case we got an exception
@@ -276,14 +276,14 @@ void RecallReportPacker::WorkerThread::run(){
   // Cross check that the queue is indeed empty.
   while (m_parent.m_fifo.size()) {
     // There is at least one extra report we missed.
-    log::ScopedParamContainer spc(m_parent.m_lc);
+    cta::log::ScopedParamContainer spc(m_parent.m_lc);
     std::unique_ptr<Report> missedReport(m_parent.m_fifo.pop());
     spc.add("ReportType", typeid(*missedReport).name());
     if (missedReport->goingToEnd())
       spc.add("goingToEnd", "true");
-    m_parent.m_lc.log(LOG_ERR, "Popping missed report (memory leak)");
+    m_parent.m_lc.log(cta::log::ERR, "Popping missed report (memory leak)");
   }
-  m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallReportPacker thread");
+  m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallReportPacker thread");
 }
 
 //------------------------------------------------------------------------------

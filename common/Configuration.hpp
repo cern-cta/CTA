@@ -90,7 +90,7 @@ namespace cta { namespace common {
        */
       const std::string& getConfEntString(const std::string &category,
         const std::string &key, const std::string &defaultValue,
-        log::Logger *const log = NULL);
+        cta::log::Logger *const log = NULL);
 
       /**
        * Retrieves a configuration entry.
@@ -107,7 +107,7 @@ namespace cta { namespace common {
        * @param log pointer to NULL or an optional logger object
        */
       const std::string& getConfEntString(const std::string &category,
-        const std::string &key, log::Logger *const log = NULL);
+        const std::string &key, cta::log::Logger *const log = NULL);
 
       /**
        * Retrieves a configuration entry as an integer.
@@ -126,17 +126,17 @@ namespace cta { namespace common {
        */
       template<typename T> T getConfEntInt(const std::string &category,
         const std::string &key, const T defaultValue,
-        log::Logger *const log = NULL)  {
+        cta::log::Logger *const log = NULL)  {
         std::string strValue;
         try {
           strValue = getConfEntString(category, key);
         } catch(cta::exception::Exception &ex) {
           if(NULL != log) {
-            std::list<log::Param> params = {
-              log::Param("category", category),
-              log::Param("key", key),
-              log::Param("value", defaultValue),
-              log::Param("source", "DEFAULT")};
+            std::list<cta::log::Param> params = {
+              cta::log::Param("category", category),
+              cta::log::Param("key", key),
+              cta::log::Param("value", defaultValue),
+              cta::log::Param("source", "DEFAULT")};
             (*log)(log::INFO, "Configuration entry", params);
           }
           return defaultValue;
@@ -157,11 +157,11 @@ namespace cta { namespace common {
         ss >> value;
 
         if(NULL != log) {
-          std::list<log::Param> params = {
-            log::Param("category", category),
-            log::Param("key", key),
-            log::Param("value", value),
-            log::Param("source", m_fileName)};
+          std::list<cta::log::Param> params = {
+            cta::log::Param("category", category),
+            cta::log::Param("key", key),
+            cta::log::Param("value", value),
+            cta::log::Param("source", m_fileName)};
           (*log)(log::INFO, "Configuration entry", params);
         }
 
@@ -181,7 +181,7 @@ namespace cta { namespace common {
        * @return the integer value
        */
       template<typename T> T getConfEntInt(const std::string &category,
-        const std::string &key, log::Logger *const log = NULL)  {
+        const std::string &key, cta::log::Logger *const log = NULL)  {
         const std::string strValue = getConfEntString(category, key);
 
         if (!utils::isValidUInt(strValue.c_str())) {
@@ -198,11 +198,11 @@ namespace cta { namespace common {
         ss >> value;
 
         if(NULL != log) {
-          std::list<log::Param> params = {
-            log::Param("category", category),
-            log::Param("key", key),
-            log::Param("value", value),
-            log::Param("source", m_fileName)};
+          std::list<cta::log::Param> params = {
+            cta::log::Param("category", category),
+            cta::log::Param("key", key),
+            cta::log::Param("value", value),
+            cta::log::Param("source", m_fileName)};
           (*log)(log::INFO, "Configuration entry", params);
         }
 

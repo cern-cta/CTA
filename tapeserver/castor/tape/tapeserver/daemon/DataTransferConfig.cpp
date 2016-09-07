@@ -48,7 +48,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferConfig
   castor::tape::tapeserver::daemon::DataTransferConfig::createFromCastorConf(
-    log::Logger *const log) {
+    cta::log::Logger *const log) {
   common::CastorConfiguration &castorConf =
     common::CastorConfiguration::getConfig();
   DataTransferConfig config;

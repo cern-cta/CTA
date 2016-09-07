@@ -70,7 +70,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProcessForker::ProcessForker(
-  log::Logger &log,
+  cta::log::Logger &log,
   const int cmdSocket,
   const int reaperSocket,
   const std::string &hostName,
@@ -97,15 +97,15 @@ castor::tape::tapeserver::daemon::ProcessForker::~ProcessForker() throw() {
 void castor::tape::tapeserver::daemon::ProcessForker::closeCmdReceiverSocket()
   throw() {
   if(-1 != m_cmdSocket) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("cmdSocket", m_cmdSocket));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("cmdSocket", m_cmdSocket));
     if(-1 == close(m_cmdSocket)) {
       const std::string message = castor::utils::errnoToString(errno);
-      params.push_back(log::Param("message", message));
-      m_log(LOG_ERR, "Failed to close command receiver socket",
+      params.push_back(cta::log::Param("message", message));
+      m_log(cta::log::ERR, "Failed to close command receiver socket",
         params);
     } else {
-      m_log(LOG_INFO, "Closed command receiver socket", params);
+      m_log(cta::log::INFO, "Closed command receiver socket", params);
     }
   }
 }
@@ -126,19 +126,19 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleEvents() throw() {
   try {
     return handlePendingMsgs() && handlePendingSignals();
   } catch(cta::exception::Exception &ex) {
-    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+    std::list<cta::log::Param> params = {cta::log::Param("message", ex.getMessage().str())};
+    m_log(cta::log::ERR, "ProcessForker failed to handle events", params);
   } catch(std::exception &se) {
-    std::list<log::Param> params = {log::Param("message", se.what())};
-    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+    std::list<cta::log::Param> params = {cta::log::Param("message", se.what())};
+    m_log(cta::log::ERR, "ProcessForker failed to handle events", params);
   } catch(...) {
-    std::list<log::Param> params =
-      {log::Param("message", "Caught an unknown exception")};
-    m_log(LOG_ERR, "ProcessForker failed to handle events", params);
+    std::list<cta::log::Param> params =
+      {cta::log::Param("message", "Caught an unknown exception")};
+    m_log(cta::log::ERR, "ProcessForker failed to handle events", params);
   }
 
   // If program execution reached here then an exception was thrown
-  m_log(LOG_ERR, "ProcessForker is gracefully shutting down");
+  m_log(cta::log::ERR, "ProcessForker is gracefully shutting down");
   return false;
 }
 
@@ -173,8 +173,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
   case -1: // Error
     {
       const std::string message = castor::utils::errnoToString(errno);
-      std::list<log::Param> params = {log::Param("message", message)};
-      m_log(LOG_ERR,
+      std::list<cta::log::Param> params = {cta::log::Param("message", message)};
+      m_log(cta::log::ERR,
         "Error detected when checking for a pending ProcessForker message",
         params);
       return false;
@@ -186,8 +186,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
       std::ostringstream message;
       message << "poll returned an unexpected value"
         ": expected=0 or 1 actual=" << pollRc;
-      std::list<log::Param> params = {log::Param("message", message.str())};
-      m_log(LOG_ERR,
+      std::list<cta::log::Param> params = {cta::log::Param("message", message.str())};
+      m_log(cta::log::ERR,
         "Error detected when checking for a pending ProcessForker message",
         params);
       return false;
@@ -209,17 +209,17 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     throw ex;
   }
 
-  std::list<log::Param> params = {
-    log::Param("type", messages::msgTypeToString(frame.type)),
-    log::Param("len", frame.payload.length())};
-  m_log(LOG_INFO, "ProcessForker handling a ProcessForker message", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("type", messages::msgTypeToString(frame.type)),
+    cta::log::Param("len", frame.payload.length())};
+  m_log(cta::log::INFO, "ProcessForker handling a ProcessForker message", params);
 
   MsgHandlerResult result;
   try {
     result = dispatchMsgHandler(frame);
   } catch(cta::exception::Exception &ex) {
-    log::Param("message", ex.getMessage().str());
-    m_log(LOG_ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
+    cta::log::Param("message", ex.getMessage().str());
+    m_log(cta::log::ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
       params);
     messages::Exception msg;
     msg.set_code(666); // TODO - Remove error code
@@ -227,8 +227,8 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     ProcessForkerUtils::writeFrame(m_cmdSocket, msg);
     return true; // The main event loop should continue
   } catch(std::exception &se) {
-    log::Param("message", se.what());
-    m_log(LOG_ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
+    cta::log::Param("message", se.what());
+    m_log(cta::log::ERR, "ProcessForker::dispatchMsgHandler() threw an exception",
       params);
     messages::Exception msg;
     msg.set_code(666);
@@ -236,7 +236,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
     ProcessForkerUtils::writeFrame(m_cmdSocket, msg);
     return true; // The main event loop should continue
   } catch(...) {
-    m_log(LOG_ERR,
+    m_log(cta::log::ERR,
       "ProcessForker::dispatchMsgHandler() threw an unknown exception");
     messages::Exception msg;
     msg.set_code(666);
@@ -247,11 +247,11 @@ bool castor::tape::tapeserver::daemon::ProcessForker::handleMsg() {
 
   ProcessForkerUtils::writeFrame(m_cmdSocket, result.reply);
   {
-    std::list<log::Param> params = {
-      log::Param("payloadType",
+    std::list<cta::log::Param> params = {
+      cta::log::Param("payloadType",
         messages::msgTypeToString(result.reply.type)),
-      log::Param("payloadLen", result.reply.payload.length())};
-    m_log(LOG_DEBUG, "ProcessForker wrote reply", params);
+      cta::log::Param("payloadLen", result.reply.payload.length())};
+    m_log(cta::log::DEBUG, "ProcessForker wrote reply", params);
   }
   return result.continueMainEventLoop;
 }
@@ -293,14 +293,14 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   ProcessForkerUtils::parsePayload(frame, rqst);
 
   // Log the contents of the incomming request
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("TPVID", rqst.vid()));
-  params.push_back(log::Param("waitMediaInDrive",
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", rqst.unitname()));
+  params.push_back(cta::log::Param("TPVID", rqst.vid()));
+  params.push_back(cta::log::Param("waitMediaInDrive",
     rqst.waitmediaindrive()));
-  params.push_back(log::Param("waitMediaInDriveTimeout",
+  params.push_back(cta::log::Param("waitMediaInDriveTimeout",
     rqst.waitmediaindrivetimeout()));
-  m_log(LOG_INFO, "ProcessForker handling ForkCleaner message", params);
+  m_log(cta::log::INFO, "ProcessForker handling ForkCleaner message", params);
 
   // Fork a label session
   const pid_t forkRc = fork();
@@ -312,8 +312,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    std::list<log::Param> params = {log::Param("pid", forkRc)};
-    m_log(LOG_INFO, "ProcessForker forked cleaner session", params);
+    std::list<cta::log::Param> params = {cta::log::Param("pid", forkRc)};
+    m_log(cta::log::INFO, "ProcessForker forked cleaner session", params);
 
     return createForkSucceededResult(forkRc, true);
 
@@ -326,15 +326,15 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runCleanerSession(rqst));
     } catch(cta::exception::Exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Cleaner session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.getMessage().str())};
+      m_log(cta::log::ERR, "Cleaner session failed", params);
     } catch(std::exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Cleaner session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.what())};
+      m_log(cta::log::ERR, "Cleaner session failed", params);
     } catch(...) {
-      std::list<log::Param> params = {log::Param("message",
+      std::list<cta::log::Param> params = {cta::log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Cleaner session failed", params);
+      m_log(cta::log::ERR, "Cleaner session failed", params);
     }
     exit(Session::MARK_DRIVE_AS_DOWN);
   }
@@ -352,9 +352,9 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   ProcessForkerUtils::parsePayload(frame, rqst);
 
   // Log the contents of the incomming request
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", rqst.unitname()));
-  m_log(LOG_INFO, "ProcessForker handling ForkDataTransfer message", params);
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", rqst.unitname()));
+  m_log(cta::log::INFO, "ProcessForker handling ForkDataTransfer message", params);
 
   // Fork a data-transfer session
   const pid_t forkRc = fork();
@@ -365,8 +365,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
       "Failed to fork data-transfer session for tape drive", true);
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    std::list<log::Param> params = {log::Param("pid", forkRc)};
-    m_log(LOG_INFO, "ProcessForker forked data-transfer session", params);
+    std::list<cta::log::Param> params = {cta::log::Param("pid", forkRc)};
+    m_log(cta::log::INFO, "ProcessForker forked data-transfer session", params);
 
     return createForkSucceededResult(forkRc, true);
 
@@ -379,15 +379,15 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runDataTransferSession(rqst));
     } catch(cta::exception::Exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Data-transfer session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.getMessage().str())};
+      m_log(cta::log::ERR, "Data-transfer session failed", params);
     } catch(std::exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Data-transfer session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.what())};
+      m_log(cta::log::ERR, "Data-transfer session failed", params);
     } catch(...) {
-      std::list<log::Param> params = {log::Param("message",
+      std::list<cta::log::Param> params = {cta::log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Data-transfer session failed", params);
+      m_log(cta::log::ERR, "Data-transfer session failed", params);
     }
     exit(Session::CLEAN_DRIVE);
   }
@@ -404,10 +404,10 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   ProcessForkerUtils::parsePayload(frame, rqst);
 
   // Log the contents of the incomming request
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", rqst.unitname()));
-  params.push_back(log::Param("TPVID", rqst.vid()));
-  m_log(LOG_INFO, "ProcessForker handling ForkLabel message", params);
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", rqst.unitname()));
+  params.push_back(cta::log::Param("TPVID", rqst.vid()));
+  m_log(cta::log::INFO, "ProcessForker handling ForkLabel message", params);
 
   // Fork a label session
   const pid_t forkRc = fork();
@@ -419,8 +419,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    std::list<log::Param> params = {log::Param("pid", forkRc)};
-    m_log(LOG_INFO, "ProcessForker forked label session", params);
+    std::list<cta::log::Param> params = {cta::log::Param("pid", forkRc)};
+    m_log(cta::log::INFO, "ProcessForker forked label session", params);
 
     return createForkSucceededResult(forkRc, true);
 
@@ -433,15 +433,15 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
     try {
       exit(runLabelSession(rqst));
     } catch(cta::exception::Exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.getMessage().str())};
-      m_log(LOG_ERR, "Label session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.getMessage().str())};
+      m_log(cta::log::ERR, "Label session failed", params);
     } catch(std::exception &ne) {
-      std::list<log::Param> params = {log::Param("message", ne.what())};
-      m_log(LOG_ERR, "Label session failed", params);
+      std::list<cta::log::Param> params = {cta::log::Param("message", ne.what())};
+      m_log(cta::log::ERR, "Label session failed", params);
     } catch(...) {
-      std::list<log::Param> params = {log::Param("message",
+      std::list<cta::log::Param> params = {cta::log::Param("message",
         "Caught an unknown exception")};
-      m_log(LOG_ERR, "Label session failed", params);
+      m_log(cta::log::ERR, "Label session failed", params);
     }
     exit(Session::CLEAN_DRIVE);
   }
@@ -459,8 +459,8 @@ castor::tape::tapeserver::daemon::ProcessForker::MsgHandlerResult
   ProcessForkerUtils::parsePayload(frame, rqst);
 
   // Log the fact that the ProcessForker will not gracefully stop
-  std::list<log::Param> params = {log::Param("reason", rqst.reason())};
-  m_log(LOG_INFO, "Gracefully stopping ProcessForker", params);
+  std::list<cta::log::Param> params = {cta::log::Param("reason", rqst.reason())};
+  m_log(cta::log::INFO, "Gracefully stopping ProcessForker", params);
 
   return createReturnValueResult(0, false);
 }
@@ -475,12 +475,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     cta::server::ProcessCap capUtils;
 
     const DriveConfig driveConfig = getDriveConfig(rqst);
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
-    params.push_back(log::Param("TPVID", rqst.vid()));
-    params.push_back(log::Param("waitMediaInDrive", rqst.waitmediaindrive()));
-    params.push_back(log::Param("waitMediaInDriveTimeout", rqst.waitmediaindrivetimeout()));
-    m_log(LOG_INFO, "Cleaner-session child-process started", params);
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("unitName", driveConfig.getUnitName()));
+    params.push_back(cta::log::Param("TPVID", rqst.vid()));
+    params.push_back(cta::log::Param("waitMediaInDrive", rqst.waitmediaindrive()));
+    params.push_back(cta::log::Param("waitMediaInDriveTimeout", rqst.waitmediaindrivetimeout()));
+    m_log(cta::log::INFO, "Cleaner-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;
     messages::SmartZmqContext
@@ -531,9 +531,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   const messages::ForkDataTransfer &rqst) {
   const DriveConfig driveConfig = getDriveConfig(rqst);
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", driveConfig.getUnitName()));
-  m_log(LOG_INFO, "Data-transfer child-process started", params);
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", driveConfig.getUnitName()));
+  m_log(cta::log::INFO, "Data-transfer child-process started", params);
 
   cta::server::ProcessCap capUtils;
 
@@ -591,11 +591,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       m_config.dataTransfer,
       scheduler));
   } catch (cta::exception::Exception & ex) {
-    params.push_back(log::Param("errorMessage", ex.getMessageValue()));
-    m_log(LOG_ERR, "Failed to set up the data-transfer session", params);
+    params.push_back(cta::log::Param("errorMessage", ex.getMessageValue()));
+    m_log(cta::log::ERR, "Failed to set up the data-transfer session", params);
     throw;
   } catch (...) {
-    m_log(LOG_ERR, "Got non castor exception error while constructing data-transfer session", params);
+    m_log(cta::log::ERR, "Got non castor exception error while constructing data-transfer session", params);
     throw;
   }
 
@@ -630,8 +630,8 @@ void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
 
   std::ostringstream contextAddr;
   contextAddr << std::hex << zmqContext;
-  std::list<log::Param> params = {log::Param("contextAddr", contextAddr.str())};
-  m_log(LOG_INFO, "Child of ProcessForker instantiated a ZMQ context", params);
+  std::list<cta::log::Param> params = {cta::log::Param("contextAddr", contextAddr.str())};
+  m_log(cta::log::INFO, "Child of ProcessForker instantiated a ZMQ context", params);
 
   return zmqContext;
 }
@@ -697,34 +697,34 @@ void castor::tape::tapeserver::daemon::ProcessForker::handleReapedZombie(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForker::logChildProcessTerminated(
   const pid_t pid, const int waitpidStat) throw() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("terminatedPid", pid));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("terminatedPid", pid));
 
   if(WIFEXITED(waitpidStat)) {
-    params.push_back(log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
+    params.push_back(cta::log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
   }
 
   if(WIFSIGNALED(waitpidStat)) {
-    params.push_back(log::Param("WTERMSIG", WTERMSIG(waitpidStat)));
+    params.push_back(cta::log::Param("WTERMSIG", WTERMSIG(waitpidStat)));
   }
 
   if(WCOREDUMP(waitpidStat)) {
-    params.push_back(log::Param("WCOREDUMP", "true"));
+    params.push_back(cta::log::Param("WCOREDUMP", "true"));
   } else {
-    params.push_back(log::Param("WCOREDUMP", "false"));
+    params.push_back(cta::log::Param("WCOREDUMP", "false"));
   }
 
   if(WIFSTOPPED(waitpidStat)) {
-    params.push_back(log::Param("WSTOPSIG", WSTOPSIG(waitpidStat)));
+    params.push_back(cta::log::Param("WSTOPSIG", WSTOPSIG(waitpidStat)));
   }
 
   if(WIFCONTINUED(waitpidStat)) {
-    params.push_back(log::Param("WIFCONTINUED", "true"));
+    params.push_back(cta::log::Param("WIFCONTINUED", "true"));
   } else {
-    params.push_back(log::Param("WIFCONTINUED", "false"));
+    params.push_back(cta::log::Param("WIFCONTINUED", "false"));
   }
 
-  m_log(LOG_INFO, "ProcessForker child process terminated", params);
+  m_log(cta::log::INFO, "ProcessForker child process terminated", params);
 }
 
 //------------------------------------------------------------------------------
@@ -760,11 +760,11 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     msg.set_pid(pid);
     msg.set_exitcode(WEXITSTATUS(waitpidStat));
 
-    std::list<log::Param> params = {
-      log::Param("pid", msg.pid()),
-      log::Param("exitCode", msg.exitcode()),
-      log::Param("payloadLen", msg.ByteSize())};
-    m_log(LOG_INFO, "ProcessForker notifying TapeDaemon of process exit",
+    std::list<cta::log::Param> params = {
+      cta::log::Param("pid", msg.pid()),
+      cta::log::Param("exitCode", msg.exitcode()),
+      cta::log::Param("payloadLen", msg.ByteSize())};
+    m_log(cta::log::INFO, "ProcessForker notifying TapeDaemon of process exit",
       params);
 
     ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
@@ -796,9 +796,9 @@ void castor::tape::tapeserver::daemon::ProcessForker::
     msg.set_pid(pid);
     msg.set_signal(WTERMSIG(waitpidStat));
 
-    std::list<log::Param> params = {log::Param("pid", msg.pid()),
-      log::Param("signal", msg.signal())};
-    m_log(LOG_WARNING, "ProcessForker notifying TapeDaemon of process crash",
+    std::list<cta::log::Param> params = {cta::log::Param("pid", msg.pid()),
+      cta::log::Param("signal", msg.signal())};
+    m_log(cta::log::WARNING, "ProcessForker notifying TapeDaemon of process crash",
       params);
 
     ProcessForkerUtils::writeFrame(m_reaperSocket, msg, &m_log);
@@ -832,10 +832,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     const DriveConfig &driveConfig = getDriveConfig(rqst);
     const legacymsg::TapeLabelRqstMsgBody labelJob = getLabelJob(rqst);
 
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", driveConfig.getUnitName()));
-    params.push_back(log::Param("TPVID", labelJob.vid));
-    m_log(LOG_INFO, "Label-session child-process started", params);
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("unitName", driveConfig.getUnitName()));
+    params.push_back(cta::log::Param("TPVID", labelJob.vid));
+    m_log(cta::log::INFO, "Label-session child-process started", params);
 
     const int sizeOfIOThreadPoolForZMQ = 1;
     messages::SmartZmqContext

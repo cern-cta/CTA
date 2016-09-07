@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -134,7 +134,7 @@ struct DataTransferConfig {
    * @return The configuration structure.
    */
   static DataTransferConfig createFromCastorConf(
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
 }; // DataTransferConfig
 

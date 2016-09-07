@@ -52,7 +52,7 @@
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   const unsigned short internalPort,
   reactor::ZMQReactor &reactor,
-  log::Logger &log,Catalogue &driveCatalogue,
+  cta::log::Logger &log,Catalogue &driveCatalogue,
   const std::string &hostName,
   void *const zmqContext):
   m_reactor(reactor),
@@ -66,8 +66,8 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   
   try {
     m_socket.bind(endpoint.str().c_str());
-    std::list<log::Param> params = {log::Param("endpoint", endpoint.str())};
-    m_log(LOG_INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
+    std::list<cta::log::Param> params = {cta::log::Param("endpoint", endpoint.str())};
+    m_log(cta::log::INFO, "Bound the ZMQ_REP socket of the TapeMessageHandler",
       params);
   } catch(cta::exception::Exception &ne){
     cta::exception::Exception ex;
@@ -127,15 +127,15 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     m_socket.recv(empty);
     rqst = messages::recvFrame(m_socket);
   } catch(cta::exception::Exception &ex) {
-    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "TapeMessageHandler failed to handle event", params);
+    std::list<cta::log::Param> params = {cta::log::Param("message", ex.getMessage().str())};
+    m_log(cta::log::ERR, "TapeMessageHandler failed to handle event", params);
     return false; // Give up and stay registered with the reactor
   }
-  std::list<log::Param> params = {
-      log::Param("sender identity", 
+  std::list<cta::log::Param> params = {
+      cta::log::Param("sender identity", 
               castor::utils::hexDump(adress.getData(),adress.size()))
      };
-  m_log(LOG_DEBUG, "handling event in TapeMessageHandler", params);
+  m_log(cta::log::DEBUG, "handling event in TapeMessageHandler", params);
   
   // From this point on any exception thrown should be converted into an
   // Exception message and sent back to the client
@@ -159,8 +159,8 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
     
     messages::sendFrame(m_socket, reply);
   } catch(cta::exception::Exception &ex) {
-    std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "TapeMessageHandler failed to send reply to client", params);
+    std::list<cta::log::Param> params = {cta::log::Param("message", ex.getMessage().str())};
+    m_log(cta::log::ERR, "TapeMessageHandler failed to send reply to client", params);
   }
 
   return false; // Stay registered with the reactor
@@ -184,7 +184,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   dispatchMsgHandler(const messages::Frame &rqst) {
-  m_log(LOG_DEBUG, "TapeMessageHandler dispatching message handler");
+  m_log(cta::log::DEBUG, "TapeMessageHandler dispatching message handler");
   
   switch(rqst.header.msgtype()) {
   case messages::MSG_TYPE_HEARTBEAT:
@@ -226,7 +226,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleHeartbeat(const messages::Frame &rqst) {
-  m_log(LOG_DEBUG, "Handling Heartbeat message");
+  m_log(cta::log::DEBUG, "Handling Heartbeat message");
 
   try {
     castor::messages::Heartbeat rqstBody;
@@ -251,14 +251,14 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleLabelError(const messages::Frame &rqst) {
-  m_log(LOG_DEBUG, "Handling LabelError message");
+  m_log(cta::log::DEBUG, "Handling LabelError message");
 
   try {
     castor::messages::LabelError rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
-    std::list<log::Param> params = {
-      log::Param("message", rqstBody.message())};
-    m_log(LOG_INFO, "Received LabelError", params);
+    std::list<cta::log::Param> params = {
+      cta::log::Param("message", rqstBody.message())};
+    m_log(cta::log::INFO, "Received LabelError", params);
 
     CatalogueDrive &drive = m_driveCatalogue.findDrive(rqstBody.unitname());
     drive.getLabelSession().receivedLabelError(rqstBody.message());
@@ -278,7 +278,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleArchiveJobFromCTA(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling ArchiveJobFromCTA message");
+  m_log(cta::log::INFO, "Handling ArchiveJobFromCTA message");
 
   try {
     castor::messages::ArchiveJobFromCTA rqstBody;
@@ -320,7 +320,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleRetrieveJobFromCTA(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling RecallJobFromTapeGateway message");
+  m_log(cta::log::INFO, "Handling RecallJobFromTapeGateway message");
 
   try {
     messages::RetrieveJobFromCTA rqstBody;
@@ -346,7 +346,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleTapeMountedForMigration(const messages::Frame &rqst) {
-  m_log(LOG_INFO, "Handling TapeMountedForMigration message");
+  m_log(cta::log::INFO, "Handling TapeMountedForMigration message");
 
   try {
     messages::TapeMountedForMigration rqstBody;
@@ -373,7 +373,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleTapeMountedForRecall(const messages::Frame& rqst) {
-  m_log(LOG_INFO, "Handling TapeMountedForRecall message");
+  m_log(cta::log::INFO, "Handling TapeMountedForRecall message");
 
   try {
     messages::TapeMountedForRecall rqstBody;
@@ -400,7 +400,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleAddLogParams(const messages::Frame& rqst) {
-  m_log(LOG_DEBUG, "Handling AddLogParams message");
+  m_log(cta::log::DEBUG, "Handling AddLogParams message");
 
   try {
     messages::AddLogParams rqstBody;
@@ -414,7 +414,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
       paramsIterator;
     for (paramsIterator i = rqstBody.params().begin(); 
         i != rqstBody.params().end(); i++) {
-      transferSession.addLogParam(log::Param(i->name(),i->value()));
+      transferSession.addLogParam(cta::log::Param(i->name(),i->value()));
     }
 
     const messages::Frame reply = createReturnValueFrame(0);
@@ -432,7 +432,7 @@ castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::tape::tapeserver::daemon::TapeMessageHandler::
   handleDeleteLogParams(const messages::Frame& rqst) {
-  m_log(LOG_DEBUG, "Handling DeleteLogParams message");
+  m_log(cta::log::DEBUG, "Handling DeleteLogParams message");
 
   try {
     messages::DeleteLogParams rqstBody;

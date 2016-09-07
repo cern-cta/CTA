@@ -131,7 +131,7 @@ void logStartOfDaemon(cta::log::Logger &log,
   const cta::daemon::CommandLineParams & commandLine) {
   using namespace cta;
 
-  std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
+  std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
   params.splice(params.end(), commandLine.toLogParams());
   log(log::INFO, "cta-taped started", params);
 }
@@ -216,17 +216,17 @@ int main(const int argc, char **const argv) {
       ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
-  log::Logger &log = *logPtr;
+  cta::log::Logger &log = *logPtr;
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {
     programRc = cta::taped::exceptionThrowingMain(*commandLine, log);
   } catch(exception::Exception &ex) {
-    std::list<log::Param> params = {
-      log::Param("message", ex.getMessage().str())};
+    std::list<cta::log::Param> params = {
+      cta::log::Param("message", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception", params);
   } catch(std::exception &se) {
-    std::list<log::Param> params = {log::Param("what", se.what())};
+    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
     log(log::ERR, "Caught an unexpected and unknown exception");

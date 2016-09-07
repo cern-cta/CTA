@@ -25,7 +25,7 @@
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueCleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueConfig.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueDriveState.hpp"
@@ -74,7 +74,7 @@ public:
    */
   CatalogueDrive(
     const int netTimeout,
-    log::Logger &log,
+    cta::log::Logger &log,
     ProcessForkerProxy &processForker,
     const std::string &hostName,
     const DriveConfig &config,
@@ -320,7 +320,7 @@ private:
   /**
    * The object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
   /**
    * Proxy object representing the ProcessForker.

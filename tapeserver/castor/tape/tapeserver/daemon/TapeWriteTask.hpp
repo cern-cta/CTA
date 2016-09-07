@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
@@ -76,7 +76,7 @@ public:
    */
   virtual void execute(castor::tape::tapeFile::WriteSession & session,
    MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-   castor::log::LogContext& lc, cta::utils::Timer & timer);
+   cta::log::LogContext&  lc, cta::utils::Timer & timer);
   
   /**
    * Used to reclaim used memory blocks
@@ -112,7 +112,7 @@ private:
    * into lc with msg at the given level
    */
   void logWithStats(int level, const std::string& msg,
-   log::LogContext& lc) const;
+   cta::log::LogContext&  lc) const;
      
   /**
    *Throw an exception if  m_errorFlag is set
@@ -126,7 +126,7 @@ private:
    * @param memBlockId The block id the mem blopck should be at
    * @param lc FOr logging
    */
-  void checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc);
+  void checkErrors(MemBlock* mb,int memBlockId,cta::log::LogContext&  lc);
     
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate
@@ -136,7 +136,7 @@ private:
    * @return the WriteFile if everything went well
    */
   std::unique_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
-  castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
+  castor::tape::tapeFile::WriteSession & session,cta::log::LogContext&  lc);
 
   /**
    * All we need to know about the file we are migrating

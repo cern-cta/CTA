@@ -25,8 +25,8 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
@@ -81,7 +81,7 @@ namespace unitTests{
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
-    MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
+    MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
     cta::threading::Mutex m_mutex;
@@ -94,8 +94,8 @@ namespace unitTests{
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
     using ::testing::_;
     
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock");
-    castor::log::LogContext lc(log);
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
     
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     TestingRetrieveMount trm(std::move(dbrm));

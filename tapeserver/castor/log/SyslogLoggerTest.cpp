@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/SyslogLogger.hpp"
+#include "common/log/SyslogLogger.hpp"
 #include "castor/log/TestingSyslogLogger.hpp"
 
 #include <gtest/gtest.h>
@@ -45,22 +45,22 @@ protected:
 }; // class SyslogLoggerTest
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsList) {
-  using namespace castor::log;
+  using namespace cta::log;
   std::list<Param> params;
   params.push_back(Param("testParam", "value of test param"));
 
   ASSERT_NO_THROW(
     m_log(
-      LOG_INFO,
+      cta::log::INFO,
       "castor_log_SyslogLoggerTest logMsgAndParamsList",
       params));
 }
 
 TEST_F(castor_log_SyslogLoggerTest, logMsg) {
-  using namespace castor::log;
+  using namespace cta::log;
 
   ASSERT_NO_THROW(
-    m_log(LOG_INFO, "Calling logger without parameters"));
+    m_log(cta::log::INFO, "Calling logger without parameters"));
 }   
 
 TEST_F(castor_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {

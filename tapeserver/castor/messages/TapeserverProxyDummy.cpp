@@ -37,7 +37,7 @@ void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeB
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyDummy::
 addLogParams(const std::string &unitName,
-  const std::list<castor::log::Param> & params) {
+  const std::list<cta::log::Param> & params) {
 }
 
 //------------------------------------------------------------------------------

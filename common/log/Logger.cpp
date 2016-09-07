@@ -1,25 +1,20 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * Interface to the CASTOR logging system
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
@@ -28,10 +23,13 @@
 #include <sys/syslog.h>
 #include <sys/syscall.h>
 
+namespace cta {
+namespace log {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::log::Logger::Logger(const std::string &programName, const int logMask):
+Logger::Logger(const std::string &programName, const int logMask):
   m_programName(programName), m_logMask(logMask),
   m_maxMsgLen(determineMaxMsgLen()),
   m_priorityToText(generatePriorityToTextMap()) {}
@@ -39,20 +37,20 @@ cta::log::Logger::Logger(const std::string &programName, const int logMask):
 //------------------------------------------------------------------------------
 // getProgramName
 //------------------------------------------------------------------------------
-const std::string &cta::log::Logger::getProgramName() const {
+const std::string &Logger::getProgramName() const {
   return m_programName;
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::log::Logger::~Logger() {
+Logger::~Logger() {
 }
 
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void cta::log::Logger::operator() (
+void Logger::operator() (
   const int priority,
   const std::string &msg,
   const std::list<Param> &params) {
@@ -107,7 +105,7 @@ void cta::log::Logger::operator() (
 //-----------------------------------------------------------------------------
 // writeLogMsg
 //-----------------------------------------------------------------------------
-void cta::log::Logger::writeLogMsg(
+void Logger::writeLogMsg(
   std::ostringstream &os,
   const int priority,
   const std::string &priorityText,
@@ -162,7 +160,7 @@ void cta::log::Logger::writeLogMsg(
 //-----------------------------------------------------------------------------
 // writeHeader
 //-----------------------------------------------------------------------------
-void cta::log::Logger::writeHeader(
+void Logger::writeHeader(
   std::ostringstream &os,
   const int priority,
   const struct timeval &timeStamp,
@@ -191,7 +189,7 @@ void cta::log::Logger::writeHeader(
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string cta::log::Logger::cleanString(const std::string &s,
+std::string Logger::cleanString(const std::string &s,
   const bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = utils::trimString(s);
@@ -220,7 +218,7 @@ std::string cta::log::Logger::cleanString(const std::string &s,
 //------------------------------------------------------------------------------
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
-size_t cta::log::Logger::determineMaxMsgLen() {
+size_t Logger::determineMaxMsgLen() {
   size_t msgSize = 0;
 
   // Determine the size automatically, this is not guaranteed to work!
@@ -260,18 +258,18 @@ size_t cta::log::Logger::determineMaxMsgLen() {
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
 std::map<int, std::string>
-  cta::log::Logger::generatePriorityToTextMap() {
+  Logger::generatePriorityToTextMap() {
   std::map<int, std::string> m;
 
   try {
     m[LOG_EMERG]   = "Emerg";
-    m[LOG_ALERT]   = "Alert";
+    m[ALERT]       = "Alert";
     m[LOG_CRIT]    = "Crit";
-    m[LOG_ERR]     = "Error";
-    m[LOG_WARNING] = "Warn";
+    m[ERR]         = "Error";
+    m[WARNING]     = "Warn";
     m[LOG_NOTICE]  = "Notice";
-    m[LOG_INFO]    = "Info";
-    m[LOG_DEBUG]   = "Debug";
+    m[INFO]        = "Info";
+    m[DEBUG]       = "Debug";
   } catch(std::exception &se) {
     exception::Exception ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<
@@ -286,18 +284,18 @@ std::map<int, std::string>
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
 std::map<std::string, int>
-  cta::log::Logger::generateConfigTextToPriorityMap() {
+  Logger::generateConfigTextToPriorityMap() {
   std::map<std::string, int> m;
 
   try {
     m["LOG_EMERG"]   = LOG_EMERG;
-    m["LOG_ALERT"]   = LOG_ALERT;
+    m["ALERT"]       = ALERT;
     m["LOG_CRIT"]    = LOG_CRIT;
-    m["LOG_ERR"]     = LOG_ERR;
-    m["LOG_WARNING"] = LOG_WARNING;
+    m["ERR"]         = ERR;
+    m["WARNING"]     = WARNING;
     m["LOG_NOTICE"]  = LOG_NOTICE;
-    m["LOG_INFO"]    = LOG_INFO;
-    m["LOG_DEBUG"]   = LOG_DEBUG;
+    m["INFO"]        = INFO;
+    m["DEBUG"]       = DEBUG;
   } catch(std::exception &se) {
     exception::Exception ex;
     ex.getMessage() <<
@@ -308,3 +306,6 @@ std::map<std::string, int>
 
   return m;
 }
+
+} // namespace log
+} // namespace cta

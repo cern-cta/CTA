@@ -41,7 +41,7 @@ public:
    * @param capUtils Object providing utilities for working UNIX capabilities. */
   TapeDaemon(
     const cta::daemon::CommandLineParams & commandLine,
-    log::Logger &log,
+    cta::log::Logger &log,
     const TapedConfiguration &globalConfig,
     cta::server::ProcessCap &capUtils);
   

@@ -29,7 +29,7 @@
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicCounter.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include <vector>
 #include <stdint.h>
@@ -53,7 +53,7 @@ public:
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
           castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-          castor::log::LogContext lc, const std::string & remoteFileProtocol,
+          cta::log::LogContext lc, const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKeyPath);
   
   /**
@@ -115,7 +115,7 @@ private:
    * it will ask the TaskInjector to get more jobs.
    * @return the next task to execute
    */
-  DiskReadTask* popAndRequestMore(castor::log::LogContext & lc);
+  DiskReadTask* popAndRequestMore(cta::log::LogContext & lc);
   
   /**
    * When a thread finishm it call this function to Add its stats to one one of the
@@ -152,8 +152,8 @@ private:
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc) {
-       log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
-       m_lc.log(LOG_INFO,"DisReadThread created");
+       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
+       m_lc.log(cta::log::INFO,"DisReadThread created");
     }
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
@@ -174,7 +174,7 @@ private:
     
     /** The local copy of the log context, allowing race-free logging with context
      between threads. */
-    castor::log::LogContext m_lc;
+    cta::log::LogContext m_lc;
     
     /** The execution thread: pops and executes tasks (potentially asking for
      more) and calls task injector's finish() on exit of the last thread. */
@@ -196,7 +196,7 @@ private:
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
    */
-  castor::log::LogContext m_lc;
+  cta::log::LogContext m_lc;
   
   /** Pointer to the task injector allowing request for more work, and 
    * termination signaling */

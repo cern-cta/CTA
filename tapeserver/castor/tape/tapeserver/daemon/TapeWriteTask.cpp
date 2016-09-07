@@ -64,10 +64,10 @@ namespace daemon {
 //------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-           castor::log::LogContext& lc, cta::utils::Timer & timer) {
-    using castor::log::LogContext;
-    using castor::log::Param;
-    using castor::log::ScopedParamContainer;
+           cta::log::LogContext&  lc, cta::utils::Timer & timer) {
+    using cta::log::LogContext;
+    using cta::log::Param;
+    using cta::log::ScopedParamContainer;
     // Add to our logs the informations on the file
     ScopedParamContainer params(lc);
     params.add("fileId",m_archiveJob->archiveFile.archiveFileID)
@@ -139,12 +139,12 @@ namespace daemon {
       m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
-      logWithStats(LOG_INFO, "File successfully transmitted to drive",lc);
+      logWithStats(cta::log::INFO, "File successfully transmitted to drive",lc);
     } 
     catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
       // We end up there because another task has failed 
       // so we just log, circulate blocks and don't even send a report 
-      lc.log(LOG_DEBUG,"TapeWriteTask: a previous file has failed for migration "
+      lc.log(cta::log::DEBUG,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
       
@@ -190,13 +190,13 @@ namespace daemon {
       // This is how we communicate the fact that a tape is full to the client.
       // We also change the log level to INFO for the case of end of tape.
       int errorCode = 666; // TODO - Remove error code
-      int errorLevel = LOG_ERR;
+      int errorLevel = cta::log::ERR;
       try {
         const cta::exception::Errnum & errnum = 
             dynamic_cast<const cta::exception::Errnum &> (e);
         if (ENOSPC == errnum.errorNumber()) {
           errorCode = ENOSPC;
-          errorLevel = LOG_INFO;
+          errorLevel = cta::log::INFO;
         }
       } catch (...) {}
       LogContext::ScopedParam sp(lc, Param("exceptionCode",errorCode));
@@ -220,8 +220,8 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // checkErrors
 //------------------------------------------------------------------------------  
-  void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,castor::log::LogContext& lc){
-    using namespace castor::log;
+  void TapeWriteTask::checkErrors(MemBlock* mb,int memBlockId,cta::log::LogContext&  lc){
+    using namespace cta::log;
     if(m_archiveJob->archiveFile.archiveFileID != mb->m_fileid
             || memBlockId != mb->m_fileBlock
             || mb->isFailed()
@@ -243,7 +243,7 @@ namespace daemon {
       }
       // Set the error flag for the session (in case of mismatch)
       m_errorFlag.set();
-      lc.log(LOG_ERR,errorMsg);
+      lc.log(cta::log::ERR,errorMsg);
       throw cta::exception::Exception(errorMsg);
     }
   }
@@ -265,16 +265,16 @@ namespace daemon {
 // openWriteFile
 //------------------------------------------------------------------------------
    std::unique_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
-   tape::tapeFile::WriteSession & session, log::LogContext& lc){
+   tape::tapeFile::WriteSession & session, cta::log::LogContext&  lc){
      std::unique_ptr<tape::tapeFile::WriteFile> output;
      try{
        const uint64_t tapeBlockSize = 256*1024;
        output.reset(new tape::tapeFile::WriteFile(&session, *m_archiveJob,tapeBlockSize));
-       lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
+       lc.log(cta::log::DEBUG, "Successfully opened the tape file for writing");
      }
      catch(const cta::exception::Exception & ex){
-       log::LogContext::ScopedParam sp(lc, log::Param("exceptionMessage", ex.getMessageValue()));
-       lc.log(LOG_ERR, "Failed to open tape file for writing");
+       cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("exceptionMessage", ex.getMessageValue()));
+       lc.log(cta::log::ERR, "Failed to open tape file for writing");
        throw;
      }
      return output;
@@ -299,8 +299,8 @@ namespace daemon {
   }
    
    void TapeWriteTask::logWithStats(int level, const std::string& msg,
-   log::LogContext& lc) const{
-     log::ScopedParamContainer params(lc);
+   cta::log::LogContext&  lc) const{
+     cta::log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_taskStats.readWriteTime)
            .add("checksumingTime",m_taskStats.checksumingTime)
            .add("waitDataTime",m_taskStats.waitDataTime)

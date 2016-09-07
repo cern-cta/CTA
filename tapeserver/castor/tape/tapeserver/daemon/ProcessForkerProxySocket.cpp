@@ -35,7 +35,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
-  ProcessForkerProxySocket(log::Logger &log, const int socketFd) throw():
+  ProcessForkerProxySocket(cta::log::Logger &log, const int socketFd) throw():
   m_log(log), m_socketFd(socketFd) {
 }
 
@@ -46,12 +46,12 @@ castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ~ProcessForkerProxySocket() throw() {
   if(-1 == close(m_socketFd)) {
     const std::string message = castor::utils::errnoToString(errno);
-    std::list<log::Param> params = {log::Param("socketFd", m_socketFd), 
-      log::Param("message", message)};
-    m_log(LOG_ERR,
+    std::list<cta::log::Param> params = {cta::log::Param("socketFd", m_socketFd), 
+      cta::log::Param("message", message)};
+    m_log(cta::log::ERR,
       "Failed to close proxy side of ProcessForker socket pair", params);
   } else {
-    m_log(LOG_INFO, "Closed proxy side of ProcessForker socket pair");
+    m_log(cta::log::INFO, "Closed proxy side of ProcessForker socket pair");
   }
 }
 
@@ -106,8 +106,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  std::list<log::Param> params = {log::Param("pid", reply.pid())};
-  m_log(LOG_INFO,
+  std::list<cta::log::Param> params = {cta::log::Param("pid", reply.pid())};
+  m_log(cta::log::INFO,
     "Got process ID of the data-transfer session from the ProcessForker",
     params);
 
@@ -143,8 +143,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  std::list<log::Param> params = {log::Param("pid", reply.pid())};
-  m_log(LOG_INFO, "Got process ID of the label session from the ProcessForker",
+  std::list<cta::log::Param> params = {cta::log::Param("pid", reply.pid())};
+  m_log(cta::log::INFO, "Got process ID of the label session from the ProcessForker",
     params);
 
   return reply.pid();
@@ -185,8 +185,8 @@ pid_t castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   const int timeout = 10; // Timeout in seconds
   messages::ForkSucceeded reply;
   ProcessForkerUtils::readReplyOrEx(m_socketFd, timeout, reply);
-  std::list<log::Param> params = {log::Param("pid", reply.pid())};
-  m_log(LOG_INFO,
+  std::list<cta::log::Param> params = {cta::log::Param("pid", reply.pid())};
+  m_log(cta::log::INFO,
     "Got process ID of the cleaner session from the ProcessForker", params);
 
   return reply.pid();

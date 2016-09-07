@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Constants.hpp"
@@ -63,7 +63,7 @@ public:
   TapeMessageHandler(
     const unsigned short internalPort,
     reactor::ZMQReactor &reactor,
-    log::Logger &log,
+    cta::log::Logger &log,
     Catalogue &driveCatalogue,
     const std::string &hostName,
     void *const zmqContext);
@@ -120,7 +120,7 @@ private:
   /**
    * The object representing the API of the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
   
   /**
    * The ZMQ socket listening for messages.

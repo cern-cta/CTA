@@ -22,8 +22,8 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/Logger.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/System.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
@@ -48,7 +48,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const std::string & hostname,
-    castor::log::Logger & log,
+    cta::log::Logger & log,
     System::virtualWrapper & sysWrapper,
     const DriveConfig & driveConfig,
     castor::mediachanger::MediaChangerFacade & mc,
@@ -81,22 +81,22 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
-  log::LogContext lc(m_log);
+  cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
-  lc.pushOrReplace(log::Param("thread", "MainThread"));
+  lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   // 2a) Get initial information from the client
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
     tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
   } catch (cta::exception::Exception & e) {
-    log::ScopedParamContainer localParams(lc);
+    cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());
-    lc.log(LOG_ERR, "Error while scheduling new mount. Putting the drive down.");
+    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down.");
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...
   if (!tapeMount.get()) {
-    lc.log(LOG_INFO, "No new mount found!");
+    lc.log(cta::log::INFO, "No new mount found!");
     return MARK_DRIVE_AS_UP;
   }
   m_volInfo.vid=tapeMount->getVid();
@@ -104,13 +104,13 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   m_volInfo.nbFiles=tapeMount->getNbFiles();
   // 2b) ... and log.
   // Make the DGN and TPVID parameter permanent.
-  log::ScopedParamContainer params(lc);
+  cta::log::ScopedParamContainer params(lc);
   params.add("TPVID", m_volInfo.vid);
   {
-    log::ScopedParamContainer localParams(lc);
+    cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
                .add("mountType", mountTypeToString(m_volInfo.mountType));
-    lc.log(LOG_INFO, "Got volume from client");
+    lc.log(cta::log::INFO, "Got volume from client");
   }
   
   // Depending on the type of session, branch into the right execution
@@ -127,7 +127,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //DataTransferSession::executeRead
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
- castor::tape::tapeserver::daemon::DataTransferSession::executeRead(log::LogContext & lc, cta::RetrieveMount *retrieveMount) {
+ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::LogContext & lc, cta::RetrieveMount *retrieveMount) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to recall.
@@ -197,16 +197,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(LOG_ERR, "Aborting recall mount startup: empty mount");
-      log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
+      lc.log(cta::log::ERR, "Aborting recall mount startup: empty mount");
+      cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
       try {
         retrieveMount->abort();
-        log::LogContext::ScopedParam sp08(lc, log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
-        log::LogContext::ScopedParam sp11(lc, log::Param("errorMessage", "Aborted: empty recall mount"));
-        lc.log(LOG_ERR, "Notified client of end session with error");
+        cta::log::LogContext::ScopedParam sp08(lc, cta::log::Param("MountTransactionId", retrieveMount->getMountTransactionId()));
+        cta::log::LogContext::ScopedParam sp11(lc, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
+        lc.log(cta::log::ERR, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
-        log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
-        lc.log(LOG_ERR, "Failed to notified client of end session with error");
+        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
+        lc.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
       // Empty mount, hardware is OK
       return MARK_DRIVE_AS_UP;
@@ -218,7 +218,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(
-  log::LogContext & lc, cta::ArchiveMount *archiveMount) {
+  cta::log::LogContext & lc, cta::ArchiveMount *archiveMount) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
@@ -276,12 +276,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         tsr.reportState(cta::tape::session::SessionState::Mounting, 
           cta::tape::session::SessionType::Archive);
       } catch (cta::exception::Exception & e) {
-        log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", e.getMessage().str()));
-        lc.log(LOG_INFO, "Aborting the session after problem with mount details. Notifying the client.");
+        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", e.getMessage().str()));
+        lc.log(cta::log::INFO, "Aborting the session after problem with mount details. Notifying the client.");
         mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666);
         return MARK_DRIVE_AS_UP;
       } catch (...) {
-        lc.log(LOG_INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
+        lc.log(cta::log::INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
         mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666);
         return MARK_DRIVE_AS_UP;
       }
@@ -310,15 +310,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
-      lc.log(LOG_ERR, "Aborting migration mount startup: empty mount");
-      log::LogContext::ScopedParam sp1(lc, log::Param("errorMessage", "Aborted: empty migration mount"));
+      lc.log(cta::log::ERR, "Aborting migration mount startup: empty mount");
+      cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", "Aborted: empty migration mount"));
       try {
         archiveMount->complete();
-        log::LogContext::ScopedParam sp1(lc, log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
-        lc.log(LOG_ERR, "Notified client of end session with error");
+        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("MountTransactionId", archiveMount->getMountTransactionId()));
+        lc.log(cta::log::ERR, "Notified client of end session with error");
       } catch(cta::exception::Exception & ex) {
-        log::LogContext::ScopedParam sp1(lc, log::Param("notificationError", ex.getMessageValue()));
-        lc.log(LOG_ERR, "Failed to notified client of end session with error");
+        cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("notificationError", ex.getMessageValue()));
+        lc.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
       // Empty mount, hardware safe
       return MARK_DRIVE_AS_UP;
@@ -344,7 +344,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
  */
 castor::tape::tapeserver::drive::DriveInterface *
 castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConfig
-  &driveConfig, log::LogContext& lc, cta::TapeMount *mount) {
+  &driveConfig, cta::log::LogContext&  lc, cta::TapeMount *mount) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
@@ -352,40 +352,40 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     driveInfo = dv.findBySymlink(driveConfig.getDevFilename());
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
-    lc.log(LOG_ERR, "Drive not found on this path");
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    lc.log(cta::log::ERR, "Drive not found on this path");
     
     std::stringstream errMsg;
     errMsg << "Drive not found on this path" << lc;
     mount->abort();
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
-    log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
+    cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    cta::log::LogContext::ScopedParam sp13(lc, cta::log::Param("errorMessage", errMsg.str()));
+    lc.log(cta::log::ERR, "Notified client of end session with error");
     return NULL;
   } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
-    log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
-    lc.log(LOG_ERR, "Error looking to path to tape drive");
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("errorMessage", e.getMessageValue()));
+    lc.log(cta::log::ERR, "Error looking to path to tape drive");
     
     std::stringstream errMsg;
     errMsg << "Error looking to path to tape drive: " << lc;
     mount->abort();
-    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
-    log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
+    cta::log::LogContext::ScopedParam sp11(lc, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    cta::log::LogContext::ScopedParam sp14(lc, cta::log::Param("errorMessage", errMsg.str()));
+    lc.log(cta::log::ERR, "Notified client of end session with error");
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
-    lc.log(LOG_ERR, "Unexpected exception while looking for drive");
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    lc.log(cta::log::ERR, "Unexpected exception while looking for drive");
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while looking for drive" << lc;
     mount->abort();
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
-    log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
+    cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    cta::log::LogContext::ScopedParam sp13(lc, cta::log::Param("errorMessage", errMsg.str()));
+    lc.log(cta::log::ERR, "Notified client of end session with error");
     return NULL;
   }
   try {
@@ -395,28 +395,28 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return drive.release();
   } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
-    log::LogContext::ScopedParam sp10(lc, log::Param("errorMessage", e.getMessageValue()));
-    lc.log(LOG_ERR, "Error opening tape drive");
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("errorMessage", e.getMessageValue()));
+    lc.log(cta::log::ERR, "Error opening tape drive");
     
     std::stringstream errMsg;
     errMsg << "Error opening tape drive" << lc;
     mount->abort();
-    log::LogContext::ScopedParam sp11(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
-    log::LogContext::ScopedParam sp14(lc, log::Param("errorMessage", errMsg.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
+    cta::log::LogContext::ScopedParam sp11(lc, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    cta::log::LogContext::ScopedParam sp14(lc, cta::log::Param("errorMessage", errMsg.str()));
+    lc.log(cta::log::ERR, "Notified client of end session with error");
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    log::LogContext::ScopedParam sp09(lc, log::Param("devFilename", driveConfig.getDevFilename()));
-    lc.log(LOG_ERR, "Unexpected exception while opening drive");
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    lc.log(cta::log::ERR, "Unexpected exception while opening drive");
     
     std::stringstream errMsg;
     errMsg << "Unexpected exception while opening drive" << lc;
     mount->abort();
-    log::LogContext::ScopedParam sp10(lc, log::Param("tapebridgeTransId", mount->getMountTransactionId()));
-    log::LogContext::ScopedParam sp13(lc, log::Param("errorMessage", errMsg.str()));
-    lc.log(LOG_ERR, "Notified client of end session with error");
+    cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    cta::log::LogContext::ScopedParam sp13(lc, cta::log::Param("errorMessage", errMsg.str()));
+    lc.log(cta::log::ERR, "Notified client of end session with error");
     return NULL;
   }
 }
@@ -429,7 +429,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession()
   try {
     google::protobuf::ShutdownProtobufLibrary();
   } catch(...) {
-    m_log(LOG_ERR, "google::protobuf::ShutdownProtobufLibrary() threw an"
+    m_log(cta::log::ERR, "google::protobuf::ShutdownProtobufLibrary() threw an"
       " unexpected exception");
   }
 }

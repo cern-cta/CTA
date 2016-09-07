@@ -98,15 +98,15 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
   m_cmdlineOutput += returnString;
   m_cmdlineReturnCode = rc;
   
-  std::list<log::Param> params;
-  params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-  params.push_back(log::Param("HOST", m_cliIdentity.host));
-  params.push_back(log::Param("RETURN_CODE", toString(m_cmdlineReturnCode)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+  params.push_back(cta::log::Param("RETURN_CODE", toString(m_cmdlineReturnCode)));
   std::stringstream originalRequest;
   for(auto it=m_requestTokens.begin(); it!=m_requestTokens.end(); it++) {
     originalRequest << *it << " ";
   }
-  params.push_back(log::Param("REQUEST", originalRequest.str()));
+  params.push_back(cta::log::Param("REQUEST", originalRequest.str()));
   
   switch(m_cmdlineReturnCode) {
     case cta::common::dataStructures::FrontendReturnCode::ok:
@@ -116,7 +116,7 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
       m_log(log::USERERR, "Syntax error or missing argument(s) in request", params);
       break;
     default:
-      params.push_back(log::Param("ERROR", returnString));
+      params.push_back(cta::log::Param("ERROR", returnString));
       m_log(log::ERR, "Unsuccessful Request", params);
       break;
   }
@@ -2060,22 +2060,22 @@ void XrdCtaFile::xCom_deletearchive() {
   request.archiveFileID=id.value();
   request.requester=originator;
   const cta::common::dataStructures::ArchiveFile archiveFile = m_scheduler->deleteArchive(m_cliIdentity.username, request);  
-  std::list<log::Param> params;
-  params.push_back(log::Param("USERNAME", m_cliIdentity.username));
-  params.push_back(log::Param("HOST", m_cliIdentity.host));
-  params.push_back(log::Param("archiveFileID", std::to_string(archiveFile.archiveFileID)));
-  params.push_back(log::Param("diskInstance", archiveFile.diskInstance));
-  params.push_back(log::Param("diskFileId", archiveFile.diskFileId));
-  params.push_back(log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
-  params.push_back(log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
-  params.push_back(log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
-  params.push_back(log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
-  params.push_back(log::Param("fileSize", std::to_string(archiveFile.fileSize)));
-  params.push_back(log::Param("checksumType", archiveFile.checksumType));
-  params.push_back(log::Param("checksumValue", archiveFile.checksumValue));
-  params.push_back(log::Param("creationTime", std::to_string(archiveFile.creationTime)));
-  params.push_back(log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
-  params.push_back(log::Param("storageClass", archiveFile.storageClass));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+  params.push_back(cta::log::Param("archiveFileID", std::to_string(archiveFile.archiveFileID)));
+  params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
+  params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
+  params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
+  params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
+  params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
+  params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
+  params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
+  params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
+  params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
+  params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
+  params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
+  params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
   for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
     std::stringstream tapeCopyLogStream;
     tapeCopyLogStream << "copy number: " << it->first
@@ -2087,7 +2087,7 @@ void XrdCtaFile::xCom_deletearchive() {
             << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
             << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
             << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-    params.push_back(log::Param("TAPE FILE", tapeCopyLogStream.str()));
+    params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
   }  
   m_log(log::INFO, "Archive File Deleted", params);  
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());

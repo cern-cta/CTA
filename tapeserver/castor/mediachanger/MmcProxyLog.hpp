@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/mediachanger/MmcProxy.hpp"
 
 namespace castor {
@@ -39,7 +39,7 @@ public:
    *
    * @param log Object representing the API to the CASTOR logging system.
    */
-  MmcProxyLog(log::Logger &log) throw();
+  MmcProxyLog(cta::log::Logger &log) throw();
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -93,7 +93,7 @@ private:
   /**
    * Object representing the API to the CASTOR logging system.
    */
-  log::Logger &m_log;
+  cta::log::Logger &m_log;
 
 }; // class MmcProxyLog
 

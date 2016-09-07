@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/log/StringLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/mediachanger/MmcProxyDummy.hpp"
 #include "castor/messages/AcsProxyDummy.hpp"
@@ -77,7 +77,7 @@ namespace unitTests
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
-    MockRecallReportPacker(cta::RetrieveMount *rm,castor::log::LogContext lc):
+    MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
     cta::threading::Mutex m_mutex;
@@ -92,7 +92,7 @@ namespace unitTests
   public:
     using DiskWriteThreadPool::m_tasks;
     FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd, 
-      castor::log::LogContext & lc):
+      cta::log::LogContext & lc):
       DiskWriteThreadPool(1,rrp,
       rwd,lc, "RFIO","/dev/null"){}
     virtual ~FakeDiskWriteThreadPool() {};
@@ -108,7 +108,7 @@ namespace unitTests
       tapeserver::daemon::TapeServerReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo, 
       cta::server::ProcessCap& cap,
-      castor::log::LogContext & lc):
+      cta::log::LogContext & lc):
     TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc){}
 
     ~FakeSingleTapeReadThread(){
@@ -140,8 +140,8 @@ namespace unitTests
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
     const int nbJobs=15;
     const int maxNbJobsInjectedAtOnce = 6;
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
-    castor::log::LogContext lc(log);
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     
@@ -202,8 +202,8 @@ namespace unitTests
   }
   
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
-    castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
-    castor::log::LogContext lc(log);
+    cta::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
     

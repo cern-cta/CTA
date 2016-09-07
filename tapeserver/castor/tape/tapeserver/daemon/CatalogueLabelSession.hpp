@@ -24,7 +24,7 @@
 #pragma once
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/CatalogueSession.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
@@ -60,7 +60,7 @@ public:
    * @return A newly created CatalogueSession object.
    */
   static CatalogueLabelSession *create(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const DriveConfig &driveConfig,
     const castor::legacymsg::TapeLabelRqstMsgBody &labelJob,
@@ -167,7 +167,7 @@ protected:
    * the tape labeling command-line tool castor-tape-label.
    */
   CatalogueLabelSession(
-    log::Logger &log,
+    cta::log::Logger &log,
     const int netTimeout,
     const pid_t pid,
     const DriveConfig &driveConfig,
@@ -212,7 +212,7 @@ private:
    * the tape labeling command-line tool castor-tape-label.
    */
   static void checkUserCanLabelTape(
-    log::Logger &log,
+    cta::log::Logger &log,
     const legacymsg::TapeLabelRqstMsgBody &labelJob,
     const int labelCmdConnection);
 

@@ -24,7 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/System.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
@@ -44,7 +44,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   cta::tape::daemon::TapedProxy &tapeserver,
   mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
-  castor::log::Logger &log,
+  cta::log::Logger &log,
   System::virtualWrapper &sysWrapper,
   const DriveConfig &driveConfig,
   const bool force,
@@ -81,16 +81,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   // Reaching this point means the label session failed and an exception was
   // thrown
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
-  params.push_back(log::Param("message", errorMessage));
-  m_log(LOG_ERR, "Label session failed", params);
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
+  params.push_back(cta::log::Param("message", errorMessage));
+  m_log(cta::log::ERR, "Label session failed", params);
 
   // Send details of exception to tapeserverd and then re-throw
   m_tapeserver.labelError(m_request.drive, errorMessage);
@@ -110,15 +110,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return MARK_DRIVE_AS_UP;
   }
   if (!m_lbp && m_labelSessionConfig.useLbp) {
-    std::list<log::Param> params;
-    params.push_back(log::Param("uid", m_request.uid));
-    params.push_back(log::Param("gid", m_request.gid));
-    params.push_back(log::Param("TPVID", m_request.vid));
-    params.push_back(log::Param("unitName", m_request.drive));
-    params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-    params.push_back(log::Param("force", boolToStr(m_force)));
-    params.push_back(log::Param("lbp", boolToStr(m_lbp)));
-    m_log(LOG_WARNING, "Label session configured to use LBP but lbp parameter "
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("uid", m_request.uid));
+    params.push_back(cta::log::Param("gid", m_request.gid));
+    params.push_back(cta::log::Param("TPVID", m_request.vid));
+    params.push_back(cta::log::Param("unitName", m_request.drive));
+    params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+    params.push_back(cta::log::Param("force", boolToStr(m_force)));
+    params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
+    m_log(cta::log::WARNING, "Label session configured to use LBP but lbp parameter "
       "is not set", params);
   }
   setProcessCapabilities("cap_sys_rawio+ep");
@@ -170,18 +170,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::setProcessCapabilities(
   const std::string &capabilities) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
   m_capUtils.setProcText(capabilities);
-  params.push_back(log::Param("capabilities", m_capUtils.getProcText()));
-  m_log(LOG_INFO, "Label session set process capabilities", params);
+  params.push_back(cta::log::Param("capabilities", m_capUtils.getProcText()));
+  m_log(cta::log::INFO, "Label session set process capabilities", params);
 }
 
 //------------------------------------------------------------------------------
@@ -211,23 +211,23 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
 void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
   const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
-  params.push_back(log::Param("librarySlot", librarySlot.str()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
 
-  m_log(LOG_INFO, "Label session mounting tape", params);
+  m_log(cta::log::INFO, "Label session mounting tape", params);
   m_mc.mountTapeReadWrite(m_request.vid, librarySlot);
   if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(LOG_INFO, "Label session did not mounted tape because the media"
+    m_log(cta::log::INFO, "Label session did not mounted tape because the media"
       " changer is manual", params);
   } else {
-   m_log(LOG_INFO, "Label session mounted tape", params);
+   m_log(cta::log::INFO, "Label session mounted tape", params);
   }
 }
 
@@ -236,18 +236,18 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
   drive::DriveInterface &drive, const int timeoutSecond) { 
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
   try {
     drive.waitUntilReady(timeoutSecond);
-    m_log(LOG_INFO, "Label session loaded tape", params);
+    m_log(cta::log::INFO, "Label session loaded tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to wait for tape to be loaded: " <<
@@ -261,18 +261,18 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilTapeLoaded(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::rewindDrive(
   drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
-  m_log(LOG_INFO, "Label session rewinding tape", params);
+  m_log(cta::log::INFO, "Label session rewinding tape", params);
   drive.rewind();
-  m_log(LOG_INFO, "Label session successfully rewound tape", params);
+  m_log(cta::log::INFO, "Label session successfully rewound tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -280,17 +280,17 @@ void castor::tape::tapeserver::daemon::LabelSession::rewindDrive(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::
   notifyTapeserverOfUserError(const std::string message) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
-  params.push_back(log::Param("message", message));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
+  params.push_back(cta::log::Param("message", message));
 
-  m_log(LOG_ERR, "Label session encountered user error", params);
+  m_log(cta::log::ERR, "Label session encountered user error", params);
   m_tapeserver.labelError(m_request.drive, message);
 }
 
@@ -299,21 +299,21 @@ void castor::tape::tapeserver::daemon::LabelSession::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
   drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
   if(m_lbp) {
-    m_log(LOG_WARNING, "LBP mode mismatch. Force labeling without lbp.", params);
+    m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling without lbp.", params);
   }
-  m_log(LOG_INFO, "Label session is writing label to tape", params);
+  m_log(cta::log::INFO, "Label session is writing label to tape", params);
   tapeFile::LabelSession ls(drive, m_request.vid, false);
-  m_log(LOG_INFO, "Label session has written label to tape", params);
+  m_log(cta::log::INFO, "Label session has written label to tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -321,21 +321,21 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::writeLabelWithLbpToTape(
   drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
   if(!m_lbp) {
-    m_log(LOG_WARNING, "LBP mode mismatch. Force labeling with lbp.", params);
+    m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling with lbp.", params);
   }
-  m_log(LOG_INFO, "Label session is writing label with LBP to tape", params);
+  m_log(cta::log::INFO, "Label session is writing label with LBP to tape", params);
   tapeFile::LabelSession ls(drive, m_request.vid, true);
-  m_log(LOG_INFO, "Label session has written label with LBP to tape", params);
+  m_log(cta::log::INFO, "Label session has written label with LBP to tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -343,28 +343,28 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelWithLbpToTape(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
   const std::string &vid, drive::DriveInterface &drive) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
   if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
     m_driveConfig.getLibrarySlot().getLibraryType()) {
-    m_log(LOG_INFO, "Label session not unloading tape because media changer is"
+    m_log(cta::log::INFO, "Label session not unloading tape because media changer is"
       " manual", params);
     return;
   }
 
   try {
-    m_log(LOG_INFO, "Label session unloading tape", params);
+    m_log(cta::log::INFO, "Label session unloading tape", params);
     drive.unloadTape();
-    m_log(LOG_INFO, "Label session unloaded tape", params);
+    m_log(cta::log::INFO, "Label session unloaded tape", params);
   } catch (cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Label session failed to unload tape: " <<
@@ -379,26 +379,26 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
 void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   const std::string &vid) {
   const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
-  std::list<log::Param> params;
-  params.push_back(log::Param("uid", m_request.uid));
-  params.push_back(log::Param("gid", m_request.gid));
-  params.push_back(log::Param("TPVID", m_request.vid));
-  params.push_back(log::Param("unitName", m_request.drive));
-  params.push_back(log::Param("logicalLibrary", m_request.logicalLibrary));
-  params.push_back(log::Param("force", boolToStr(m_force)));
-  params.push_back(log::Param("lbp", boolToStr(m_lbp)));
-  params.push_back(log::Param("librarySlot", librarySlot.str()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("uid", m_request.uid));
+  params.push_back(cta::log::Param("gid", m_request.gid));
+  params.push_back(cta::log::Param("TPVID", m_request.vid));
+  params.push_back(cta::log::Param("unitName", m_request.drive));
+  params.push_back(cta::log::Param("logicalLibrary", m_request.logicalLibrary));
+  params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
 
   try {
-    m_log(LOG_INFO, "Label session dismounting tape", params);
+    m_log(cta::log::INFO, "Label session dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
     const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
       librarySlot.getLibraryType();
     if(dismountWasManual) {
-      m_log(LOG_INFO, "Label session did not dismount tape because media"
+      m_log(cta::log::INFO, "Label session did not dismount tape because media"
         " changer is manual", params);
     } else {
-      m_log(LOG_INFO, "Label session dismounted tape", params);
+      m_log(cta::log::INFO, "Label session dismounted tape", params);
     }
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;

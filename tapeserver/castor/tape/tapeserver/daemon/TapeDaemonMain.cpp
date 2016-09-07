@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/SyslogLogger.hpp"
+#include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -52,36 +52,36 @@
 // @param log The logging system.
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv,
-  castor::log::Logger &log);
+  cta::log::Logger &log);
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
-  std::unique_ptr<castor::log::SyslogLogger> logPtr;
+  std::unique_ptr<cta::log::SyslogLogger> logPtr;
   try {
-    logPtr.reset(new castor::log::SyslogLogger("tapeserverd"));
+    logPtr.reset(new cta::log::SyslogLogger(std::string("tapeserverd"),cta::log::DEBUG));
   } catch(cta::exception::Exception &ex) {
     std::cerr <<
       "Failed to instantiate object representing CASTOR logging system: " <<
       ex.getMessage().str() << std::endl;
     return 1;
   }
-  castor::log::Logger &log = *logPtr.get();
+  cta::log::Logger &log = *logPtr.get();
 
   int programRc = 1; // Be pessimistic
   try {
     programRc = exceptionThrowingMain(argc, argv, log);
   } catch(cta::exception::Exception &ex) {
-    std::list<castor::log::Param> params = {
-      castor::log::Param("message", ex.getMessage().str())};
-    log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
+    std::list<cta::log::Param> params = {
+      cta::log::Param("message", ex.getMessage().str())};
+    log(cta::log::ERR, "Caught an unexpected CASTOR exception", params);
   } catch(std::exception &se) {
-    std::list<castor::log::Param> params = {castor::log::Param("what", se.what())};
-    log(LOG_ERR, "Caught an unexpected standard exception", params);
+    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
+    log(cta::log::ERR, "Caught an unexpected standard exception", params);
   } catch(...) {
-    log(LOG_ERR, "Caught an unexpected and unknown exception");
+    log(cta::log::ERR, "Caught an unexpected and unknown exception");
   }
 
   google::protobuf::ShutdownProtobufLibrary();
@@ -91,7 +91,7 @@ int main(const int argc, char **const argv) {
 //------------------------------------------------------------------------------
 // Logs the start of the daemon.
 //------------------------------------------------------------------------------
-static void logStartOfDaemon(castor::log::Logger &log, const int argc,
+static void logStartOfDaemon(cta::log::Logger &log, const int argc,
   const char *const *const argv);
 
 //------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ static std::string argvToString(const int argc, const char *const *const argv);
 // @param log The logging system.
 // @param lines The lines parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
-static void logTpconfigLines(castor::log::Logger &log,
+static void logTpconfigLines(cta::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLines &lines) throw();
 
 //------------------------------------------------------------------------------
@@ -118,14 +118,14 @@ static void logTpconfigLines(castor::log::Logger &log,
 // @param log The logging system.
 // @param line The line parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
-static void logTpconfigLine(castor::log::Logger &log,
+static void logTpconfigLine(cta::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLine &line) throw();
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv,
-  castor::log::Logger &log) {
+  cta::log::Logger &log) {
   using namespace castor;
 
   logStartOfDaemon(log, argc, argv);
@@ -168,7 +168,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 //------------------------------------------------------------------------------
 // logStartOfDaemon
 //------------------------------------------------------------------------------
-static void logStartOfDaemon(castor::log::Logger &log, const int argc,
+static void logStartOfDaemon(cta::log::Logger &log, const int argc,
   const char *const *const argv) {
   using namespace castor;
 
@@ -176,10 +176,10 @@ static void logStartOfDaemon(castor::log::Logger &log, const int argc,
   std::ostringstream version;
   version << MAJORVERSION << "." << MINORVERSION << "." << MAJORRELEASE << "-"
     << MINORRELEASE;
-  std::list<log::Param> params = {
-    log::Param("version", version.str()),
-    log::Param("argv", concatenatedArgs)};
-  log(LOG_INFO, "tapeserverd started", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("version", version.str()),
+    cta::log::Param("argv", concatenatedArgs)};
+  log(cta::log::INFO, "tapeserverd started", params);
 }
 
 //------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ static std::string argvToString(const int argc, const char *const *const argv) {
 //------------------------------------------------------------------------------
 // logTpconfigLines
 //------------------------------------------------------------------------------
-static void logTpconfigLines(castor::log::Logger &log,
+static void logTpconfigLines(cta::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLines &lines) throw() {
   using namespace castor::tape::tapeserver::daemon;
 
@@ -214,12 +214,12 @@ static void logTpconfigLines(castor::log::Logger &log,
 //------------------------------------------------------------------------------
 // logTpconfigLine
 //------------------------------------------------------------------------------
-static void logTpconfigLine(castor::log::Logger &log,
+static void logTpconfigLine(cta::log::Logger &log,
   const castor::tape::tapeserver::daemon::TpconfigLine &line) throw() {
-  std::list<castor::log::Param> params = {
-    castor::log::Param("unitName", line.unitName),
-    castor::log::Param("logicalLibrary", line.logicalLibrary),
-    castor::log::Param("devFilename", line.devFilename),
-    castor::log::Param("librarySlot", line.librarySlot)};
-  log(LOG_INFO, "TPCONFIG line", params);
+  std::list<cta::log::Param> params = {
+    cta::log::Param("unitName", line.unitName),
+    cta::log::Param("logicalLibrary", line.logicalLibrary),
+    cta::log::Param("devFilename", line.devFilename),
+    cta::log::Param("librarySlot", line.librarySlot)};
+  log(cta::log::INFO, "TPCONFIG line", params);
 }

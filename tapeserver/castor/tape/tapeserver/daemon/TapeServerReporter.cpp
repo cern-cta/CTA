@@ -21,8 +21,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
@@ -43,7 +43,7 @@ TapeServerReporter::TapeServerReporter(
   const DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::daemon::VolumeInfo &volume,
-  log::LogContext lc):
+  cta::log::LogContext lc):
   m_threadRunnig(false),
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
@@ -53,7 +53,7 @@ TapeServerReporter::TapeServerReporter(
   m_volume(volume),
   m_sessionPid(getpid()){
   //change the thread's name in the log
-  m_lc.pushOrReplace(log::Param("thread","TapeServerReporter"));
+  m_lc.pushOrReplace(cta::log::Param("thread","TapeServerReporter"));
 }
   
 //------------------------------------------------------------------------------
@@ -79,11 +79,11 @@ void TapeServerReporter::waitThreads(){
     wait();
     m_threadRunnig=false;
   }catch(const std::exception& e){
-      log::ScopedParamContainer sp(m_lc);
+      cta::log::ScopedParamContainer sp(m_lc);
       sp.add("what",e.what());
-      m_lc.log(LOG_ERR,"error caught while waiting");
+      m_lc.log(cta::log::ERR,"error caught while waiting");
     }catch(...){
-      m_lc.log(LOG_ERR,"unknown error while waiting");
+      m_lc.log(cta::log::ERR,"unknown error while waiting");
     }
 }
 
@@ -121,9 +121,9 @@ void TapeServerReporter::run(){
     try{
       currentReport->execute(*this); 
     }catch(const std::exception& e){
-      log::ScopedParamContainer sp(m_lc);
+      cta::log::ScopedParamContainer sp(m_lc);
       sp.add("what",e.what());
-      m_lc.log(LOG_ERR,"TapeServerReporter error caught");
+      m_lc.log(cta::log::ERR,"TapeServerReporter error caught");
     }
   }
 }

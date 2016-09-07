@@ -29,7 +29,7 @@
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "common/threading/AtomicFlag.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 
 namespace castor {
@@ -48,7 +48,7 @@ public:
           cta::ArchiveJob *archiveJob,size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
   
-  void execute(log::LogContext& lc, diskFile::DiskFileFactory & fileFactory,
+  void execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
     MigrationWatchDog & watchdog);
     /**
    * Return the stats of the tasks. Should be call after execute 
@@ -79,7 +79,7 @@ private:
    * @param level
    * @param message
    */
-  void logWithStat(int level,const std::string& msg,log::LogContext& lc) ;
+  void logWithStat(int level,const std::string& msg, cta::log::LogContext&  lc) ;
   
   /**
    * Circulate the remaining free blocks after an error

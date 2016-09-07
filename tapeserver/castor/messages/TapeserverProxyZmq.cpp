@@ -45,7 +45,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
+castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(cta::log::Logger &log, 
   const unsigned short serverPort, void *const zmqContext,
   const std::string &driveName) throw():
   m_log(log),
@@ -377,7 +377,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //-----------------------------------------------------------------------------
 void  castor::messages::TapeserverProxyZmq::addLogParams(
   const std::string &unitName,
-  const std::list<castor::log::Param> & params) {
+  const std::list<cta::log::Param> & params) {
   MutexLocker lock(&m_mutex);
 
   try {
@@ -408,7 +408,7 @@ void  castor::messages::TapeserverProxyZmq::addLogParams(
 //------------------------------------------------------------------------------
 castor::messages::Frame castor::messages::TapeserverProxyZmq::
   createAddLogParamsFrame(const std::string &unitName,
-  const std::list<castor::log::Param> & params) {
+  const std::list<cta::log::Param> & params) {
   try {
     Frame frame;
 
@@ -418,7 +418,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
     
     AddLogParams body;
     body.set_unitname(unitName);
-    for(std::list<castor::log::Param>::const_iterator i=params.begin();
+    for(std::list<cta::log::Param>::const_iterator i=params.begin();
         i!=params.end(); i++) {
       LogParam * lp = body.add_params();
       lp->set_name(i->getName());

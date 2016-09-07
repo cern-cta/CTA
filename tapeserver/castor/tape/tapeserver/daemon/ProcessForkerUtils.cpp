@@ -160,7 +160,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::serializePayload(
 // writeFrame
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
-  const int fd, const messages::ForkCleaner &msg, log::Logger *const log) {
+  const int fd, const messages::ForkCleaner &msg, cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_FORKCLEANER, msg, log);
 }
 
@@ -169,7 +169,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
   const int fd, const messages::ForkDataTransfer &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_FORKDATATRANSFER, msg, log);
 }
 
@@ -177,7 +177,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
 // writeFrame
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
-  const int fd, const messages::ForkLabel &msg, log::Logger *const log) {
+  const int fd, const messages::ForkLabel &msg, cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_FORKLABEL, msg, log);
 }
 
@@ -186,7 +186,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFrame(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const messages::Exception &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_EXCEPTION, msg, log);
 }
 
@@ -195,7 +195,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const messages::ProcessCrashed &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_PROCESSCRASHED, msg, log);
 }
 
@@ -204,7 +204,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const messages::ProcessExited &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_PROCESSEXITED, msg, log);
 }
 
@@ -213,7 +213,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const messages::StopProcessForker &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   writeFrame(fd, messages::MSG_TYPE_STOPPROCESSFORKER, msg, log);
 }
 
@@ -222,7 +222,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const messages::MsgType type,
-  const google::protobuf::Message &msg, log::Logger *const log) {
+  const google::protobuf::Message &msg, cta::log::Logger *const log) {
   writeFrameHeader(fd, type, msg.ByteSize(), log);
   writeFramePayload(fd, msg, log);
 }
@@ -232,7 +232,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrame(const int fd, const ProcessForkerFrame &frame,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   try {
     if(0 > fd) {
       cta::exception::Exception ex;
@@ -256,7 +256,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFrameHeader(const int fd, const messages::MsgType type,
-  const uint32_t payloadLen, log::Logger *const log) {
+  const uint32_t payloadLen, cta::log::Logger *const log) {
   try {
     if(0 == payloadLen) {
       cta::exception::Exception ex;
@@ -268,9 +268,9 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
     writeUint32(fd, payloadLen);
 
     if(NULL != log) {
-      std::list<log::Param> params = {log::Param("type", messages::msgTypeToString(type)),
-        log::Param("payloadLen", payloadLen)};
-      (*log)(LOG_DEBUG, "ProcessForkerUtils wrote frame header", params);
+      std::list<cta::log::Param> params = {cta::log::Param("type", messages::msgTypeToString(type)),
+        cta::log::Param("payloadLen", payloadLen)};
+      (*log)(cta::log::DEBUG, "ProcessForkerUtils wrote frame header", params);
     }
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
@@ -307,7 +307,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   writeFramePayload(const int fd, const google::protobuf::Message &msg,
-  log::Logger *const log) {
+  cta::log::Logger *const log) {
   try {
     std::string msgStr;
     if(!msg.SerializeToString(&msgStr)) {
@@ -318,8 +318,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
     writeString(fd, msgStr, log);
 
     if(NULL != log) {
-      std::list<log::Param> params = {log::Param("payloadLen", msgStr.length())};
-      (*log)(LOG_DEBUG, "ProcessForkerUtils wrote frame payload", params);
+      std::list<cta::log::Param> params = {cta::log::Param("payloadLen", msgStr.length())};
+      (*log)(cta::log::DEBUG, "ProcessForkerUtils wrote frame payload", params);
     }
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
@@ -342,7 +342,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
 // writeFramePayload
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFramePayload(
- const int fd, const std::string &msg, log::Logger *const log) {
+ const int fd, const std::string &msg, cta::log::Logger *const log) {
   try {
     writeString(fd, msg, log);
   } catch(cta::exception::Exception &ne) {
@@ -366,7 +366,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::writeFramePayload(
 // writeString
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::ProcessForkerUtils::
-  writeString(const int fd, const std::string &str, log::Logger *const log) {
+  writeString(const int fd, const std::string &str, cta::log::Logger *const log) {
   const ssize_t writeRc = write(fd, str.c_str(), str.length());
 
   if(-1 == writeRc) {
@@ -384,8 +384,8 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   }
 
   if(NULL != log) {
-    std::list<log::Param> params = {log::Param("length",  str.length())};
-    (*log)(LOG_DEBUG, "ProcessForkerUtils wrote string", params);
+    std::list<cta::log::Param> params = {cta::log::Param("length",  str.length())};
+    (*log)(cta::log::DEBUG, "ProcessForkerUtils wrote string", params);
   }
 }
 

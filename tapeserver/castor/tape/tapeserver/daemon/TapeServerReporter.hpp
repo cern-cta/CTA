@@ -27,7 +27,7 @@
 #include "common/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 #include <memory>
@@ -58,7 +58,7 @@ public:
     const DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::daemon::VolumeInfo &volume,
-    log::LogContext lc);
+    cta::log::LogContext lc);
   
   /**
    * Put into the waiting list a guard value to signal the thread we want
@@ -147,7 +147,7 @@ private:
   /**
    * Log context, copied because it is in a separated thread
    */
-  log::LogContext m_lc;
+  cta::log::LogContext m_lc;
   
   /**
    * Boolean allowing the management of the special case of recall where

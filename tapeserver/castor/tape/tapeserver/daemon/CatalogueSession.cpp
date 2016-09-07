@@ -29,7 +29,7 @@
 castor::tape::tapeserver::daemon::CatalogueSession::
   CatalogueSession(
   const Type sessionType,
-  log::Logger &log,
+  cta::log::Logger &log,
   const int netTimeout,
   const pid_t pid,
   const DriveConfig &driveConfig) throw():

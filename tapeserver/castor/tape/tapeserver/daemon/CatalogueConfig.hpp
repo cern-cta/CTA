@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
+#include "common/log/Logger.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -77,7 +77,7 @@ struct CatalogueConfig {
    * @return The configuration structure.
    */
   static CatalogueConfig createFromCastorConf(
-    log::Logger *const log = NULL);
+    cta::log::Logger *const log = NULL);
 
 }; // CatalogueConfig
 

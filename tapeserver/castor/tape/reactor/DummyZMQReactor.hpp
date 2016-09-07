@@ -39,7 +39,7 @@ public:
    *
    * @param log Interface to the CASTOR logging system.
    */   
-  DummyZMQReactor(log::Logger& log) throw();
+  DummyZMQReactor(cta::log::Logger& log) throw();
 
   /**
    * Removes and deletes all of the event handlers registered with the reactor.

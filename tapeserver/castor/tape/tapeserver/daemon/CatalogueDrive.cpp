@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CatalogueDrive::CatalogueDrive(
   const int netTimeout,
-  log::Logger &log,
+  cta::log::Logger &log,
   ProcessForkerProxy &processForker,
   const std::string &hostName,
   const DriveConfig &config,
@@ -710,12 +710,12 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::
     const char *sessionTypeStr =
       CatalogueSession::sessionTypeToStr(sessionType);
 
-    std::list<log::Param> params;
-    params.push_back(log::Param("unitName", m_config.getUnitName()));
-    params.push_back(log::Param("sessionType", sessionTypeStr));
-    params.push_back(log::Param("sessionPid", sessionPid));
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("unitName", m_config.getUnitName()));
+    params.push_back(cta::log::Param("sessionType", sessionTypeStr));
+    params.push_back(cta::log::Param("sessionPid", sessionPid));
 
-    m_log(LOG_INFO, "Failed session has requested cleaner", params);
+    m_log(cta::log::INFO, "Failed session has requested cleaner", params);
   }
 
   std::unique_ptr<CatalogueSession> session(m_session);
@@ -923,23 +923,23 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
       const char *sessionTypeStr =
         CatalogueSession::sessionTypeToStr(sessionType);
 
-      std::list<log::Param> params;
-      params.push_back(log::Param("unitName", m_config.getUnitName()));
-      params.push_back(log::Param("sessionType", sessionTypeStr));
-      params.push_back(log::Param("sessionPid", sessionPid));
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("unitName", m_config.getUnitName()));
+      params.push_back(cta::log::Param("sessionType", sessionTypeStr));
+      params.push_back(cta::log::Param("sessionPid", sessionPid));
 
       // Kill the non-cleaner session
       if(kill(sessionPid, SIGKILL)) {
         const std::string message = castor::utils::errnoToString(errno);
-        params.push_back(log::Param("message", message));
-        m_log(LOG_ERR, "Failed to kill non-cleaner session whilst shutting"
+        params.push_back(cta::log::Param("message", message));
+        m_log(cta::log::ERR, "Failed to kill non-cleaner session whilst shutting"
           " down", params);
 
         // Nothing else can be done, mark drive as shutdown
         changeState(DRIVE_STATE_SHUTDOWN);
 
       } else {
-        m_log(LOG_WARNING, "Sent SIGKILL to tape-session child-process",
+        m_log(cta::log::WARNING, "Sent SIGKILL to tape-session child-process",
           params);
       }
 
@@ -962,11 +962,11 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   const char *sessionTypeStr =
     CatalogueSession::sessionTypeToStr(sessionType);
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("sessionType", sessionTypeStr));
-  params.push_back(log::Param("sessionPid", sessionPid));
-  params.push_back(log::Param("TPVID", m_session->getVid()));
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", m_config.getUnitName()));
+  params.push_back(cta::log::Param("sessionType", sessionTypeStr));
+  params.push_back(cta::log::Param("sessionPid", sessionPid));
+  params.push_back(cta::log::Param("TPVID", m_session->getVid()));
 
   if(kill(sessionPid, SIGKILL)) {
     const std::string errorStr = castor::utils::errnoToString(errno);
@@ -975,7 +975,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
      sessionPid << " sessionType=" << sessionTypeStr << ": " << errorStr;
     throw ex;
   }
-  m_log(LOG_WARNING, "Killed tape-session child-process", params);
+  m_log(cta::log::WARNING, "Killed tape-session child-process", params);
   delete m_session;
   m_session = NULL;
   changeState(DRIVE_STATE_DOWN);
@@ -994,15 +994,15 @@ std::string castor::tape::tapeserver::daemon::CatalogueDrive::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CatalogueDrive::changeState(
   const CatalogueDriveState newState) throw() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("unitName", m_config.getUnitName()));
-  params.push_back(log::Param("previousState",
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("unitName", m_config.getUnitName()));
+  params.push_back(cta::log::Param("previousState",
     catalogueDriveStateToStr(m_state)));
-  params.push_back(log::Param("newState", catalogueDriveStateToStr(newState)));
+  params.push_back(cta::log::Param("newState", catalogueDriveStateToStr(newState)));
   if(NULL != m_session) {
-    params.push_back(log::Param("sessionPid", m_session->getPid()));
+    params.push_back(cta::log::Param("sessionPid", m_session->getPid()));
   }
 
   m_state = newState;
-  m_log(LOG_DEBUG, "CatalogueDrive changed state", params);
+  m_log(cta::log::DEBUG, "CatalogueDrive changed state", params);
 }

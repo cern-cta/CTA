@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/DummyLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "common/SmartFd.hpp"
@@ -58,7 +58,7 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, constructor) {
 
   const std::string programName = "unittests";
   const std::string hostName = "hostName";
-  castor::log::DummyLogger log(programName);
+  cta::log::DummyLogger log(programName);
   char argv0[12] = "tapeserverd";
   TapeDaemonConfig config;
   std::unique_ptr<ProcessForker> processForker;
@@ -83,7 +83,7 @@ TEST_F(castor_tape_tapeserver_daemon_ProcessForkerTest, socketproxy) {
   
   const std::string programName = "unittests";
   const std::string hostName = "hostName";
-  castor::log::DummyLogger log(programName);
+  cta::log::DummyLogger log(programName);
   char argv0[12] = "tapeserverd";
   TapeDaemonConfig config;
   std::unique_ptr<ProcessForker> processForker;

@@ -35,8 +35,8 @@ namespace{
     failedMigrationRecallResult(const std::string& s): Exception(s){}
   };
 }
-using castor::log::LogContext;
-using castor::log::Param;
+using cta::log::LogContext;
+using cta::log::Param;
 
 namespace castor {
 namespace tape {
@@ -46,7 +46,7 @@ namespace daemon {
 //Constructor
 //------------------------------------------------------------------------------
 MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
-  castor::log::LogContext & lc):
+  cta::log::LogContext & lc):
 ReportPackerInterface<detail::Migration>(lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true), m_archiveMount(archiveMount) {
 }
@@ -152,7 +152,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // right before the end of session (which triggers also a flush)
     // We refrain from sending an empty report to the client in this case.
     if (reportPacker.m_successfulArchiveJobs.empty()) {
-      reportPacker.m_lc.log(LOG_INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
+      reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
     try{
@@ -161,7 +161,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         job->complete();
         reportPacker.m_successfulArchiveJobs.pop();
       }
-      reportPacker.m_lc.log(LOG_INFO,"Reported to the client that a batch of files was written on tape");
+      reportPacker.m_lc.log(cta::log::INFO,"Reported to the client that a batch of files was written on tape");
     } catch(const cta::exception::Exception& e){
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
@@ -170,7 +170,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       tape::utils::suppresUnusedVariable(sp);
       
       const std::string msg_error="An exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(LOG_ERR,msg_error);
+      reportPacker.m_lc.log(cta::log::ERR,msg_error);
       throw failedMigrationRecallResult(msg_error);
     } catch(const std::exception& e){
       LogContext::ScopedParam sp[]={
@@ -179,12 +179,12 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       tape::utils::suppresUnusedVariable(sp);
       
       const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(LOG_ERR,msg_error);
+      reportPacker.m_lc.log(cta::log::ERR,msg_error);
       throw failedMigrationRecallResult(msg_error);
     }
   } else {
     // This is an abnormal situation: we should never flush after an error!
-    reportPacker.m_lc.log(LOG_ALERT,"Received a flush after an error: sending file errors to client");
+    reportPacker.m_lc.log(cta::log::ALERT,"Received a flush after an error: sending file errors to client");
   }
 }
 
@@ -202,10 +202,10 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   reportPacker.m_continue=false;
   reportPacker.m_archiveMount->complete();
   if(!reportPacker.m_errorHappened){
-    log::ScopedParamContainer sp(reportPacker.m_lc);
-    reportPacker.m_lc.log(LOG_INFO,"Reported end of session to client");
+    cta::log::ScopedParamContainer sp(reportPacker.m_lc);
+    reportPacker.m_lc.log(cta::log::INFO,"Reported end of session to client");
     if(reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(log::Param("status","success"));
+      reportPacker.m_watchdog->addParameter(cta::log::Param("status","success"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
@@ -214,11 +214,11 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   }
   else {
     // We have some errors
-    log::ScopedParamContainer sp(reportPacker.m_lc);
+    cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", "Previous file errors");
-    reportPacker.m_lc.log(LOG_ERR,"Reported end of session with error to client due to previous file errors");
+    reportPacker.m_lc.log(cta::log::ERR,"Reported end of session with error to client due to previous file errors");
     if(reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(log::Param("status","failure"));
+      reportPacker.m_watchdog->addParameter(cta::log::Param("status","failure"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
@@ -234,10 +234,10 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   reportPacker.m_continue=false;
   reportPacker.m_archiveMount->complete();
   if(reportPacker.m_errorHappened) {
-    log::ScopedParamContainer sp(reportPacker.m_lc);
+    cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", m_message)
       .add("errorCode", m_errorCode);
-    reportPacker.m_lc.log(LOG_INFO,"Reported end of session with error to client after sending file errors");
+    reportPacker.m_lc.log(cta::log::INFO,"Reported end of session with error to client after sending file errors");
   } else{
     const std::string& msg ="Reported end of session with error to client";
     // As a measure of safety we censor any session error which is not ENOSPC into
@@ -245,10 +245,10 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     if (ENOSPC != m_errorCode) {
       m_errorCode = 666;
     }
-    reportPacker.m_lc.log(LOG_INFO,msg);
+    reportPacker.m_lc.log(cta::log::INFO,msg);
   }
   if(reportPacker.m_watchdog) {
-    reportPacker.m_watchdog->addParameter(log::Param("status",
+    reportPacker.m_watchdog->addParameter(cta::log::Param("status",
       ENOSPC == m_errorCode?"success":"failure"));
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
@@ -261,7 +261,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_errorHappened=true;
-  reportPacker.m_lc.log(LOG_ERR,m_ex.getMessageValue());
+  reportPacker.m_lc.log(cta::log::ERR,m_ex.getMessageValue());
   m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
 }
 
@@ -275,7 +275,7 @@ m_parent(parent) {
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void MigrationReportPacker::WorkerThread::run(){
-  m_parent.m_lc.pushOrReplace(log::Param("thread", "ReportPacker"));
+  m_parent.m_lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
   try{
     while(m_parent.m_continue) {
       std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
@@ -285,10 +285,10 @@ void MigrationReportPacker::WorkerThread::run(){
       catch(const failedMigrationRecallResult& e){
         //here we catch a failed report MigrationResult. We try to close and if that fails too
         //we end up in the catch below
-        m_parent.m_lc.log(LOG_INFO,"Successfully closed client's session after the failed report MigrationResult");
+        m_parent.m_lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
         if (m_parent.m_watchdog) {
           m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-          m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+          m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
         }
         break;
       }
@@ -298,30 +298,30 @@ void MigrationReportPacker::WorkerThread::run(){
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(const std::exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more. The exception is the following: " << e.what();
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(...){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     std::stringstream ssEx;
     ssEx << "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.";
-    m_parent.m_lc.log(LOG_ERR, ssEx.str());
+    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-      m_parent.m_watchdog->addParameter(log::Param("status","failure"));
+      m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   }
   // Drain the FIFO if necessary. We know that m_continue will be 

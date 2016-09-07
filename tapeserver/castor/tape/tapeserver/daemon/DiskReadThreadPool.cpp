@@ -38,7 +38,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq,
     castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-    castor::log::LogContext lc, const std::string & remoteFileProtocol,
+    cta::log::LogContext lc, const std::string & remoteFileProtocol,
     const std::string & xrootPrivateKeyPath) : 
     m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath),
     m_watchdog(migrationWatchDog),
@@ -47,8 +47,8 @@ DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64
   for(int i=0; i<nbThread; i++) {
     DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
     m_threads.push_back(thr);
-    m_lc.pushOrReplace(log::Param("threadID",i));
-    m_lc.log(LOG_DEBUG, "DiskReadWorkerThread created");
+    m_lc.pushOrReplace(cta::log::Param("threadID",i));
+    m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread created");
   }
 }
 
@@ -60,7 +60,7 @@ DiskReadThreadPool::~DiskReadThreadPool() {
     delete m_threads.back();
     m_threads.pop_back();
   }
-  m_lc.log(LOG_DEBUG, "Deleted threads in DiskReadThreadPool::~DiskReadThreadPool");
+  m_lc.log(cta::log::DEBUG, "Deleted threads in DiskReadThreadPool::~DiskReadThreadPool");
 }
 
 //------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ void DiskReadThreadPool::startThreads() {
           i != m_threads.end(); i++) {
     (*i)->start();
   }
-  m_lc.log(LOG_INFO, "All the DiskReadWorkerThreads are started");
+  m_lc.log(cta::log::INFO, "All the DiskReadWorkerThreads are started");
 }
 
 //------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ void DiskReadThreadPool::waitThreads() {
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::push(DiskReadTask *t) { 
   m_tasks.push(t); 
-  m_lc.log(LOG_INFO, "Push a task into the DiskReadThreadPool");
+  m_lc.log(cta::log::INFO, "Push a task into the DiskReadThreadPool");
 }
 
 //------------------------------------------------------------------------------
@@ -105,18 +105,18 @@ void DiskReadThreadPool::finish() {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool::popAndRequestMore
 //------------------------------------------------------------------------------
-DiskReadTask* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc){
+DiskReadTask* DiskReadThreadPool::popAndRequestMore(cta::log::LogContext &lc){
   cta::threading::BlockingQueue<DiskReadTask*>::valueRemainingPair 
   vrp = m_tasks.popGetSize();
-  log::LogContext::ScopedParam sp(lc, log::Param("m_maxFilesReq", m_maxFilesReq));
-  log::LogContext::ScopedParam sp0(lc, log::Param("m_maxBytesReq", m_maxBytesReq));
+  cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("m_maxFilesReq", m_maxFilesReq));
+  cta::log::LogContext::ScopedParam sp0(lc, cta::log::Param("m_maxBytesReq", m_maxBytesReq));
 
   if(0==vrp.remaining){
     m_injector->requestInjection(true);
-    lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
+    lc.log(cta::log::DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
   }else if(vrp.remaining + 1 ==  m_maxFilesReq/2){
     m_injector->requestInjection(false);
-    lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
+    lc.log(cta::log::DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
   }
   return vrp.value;
 }
@@ -132,7 +132,7 @@ void DiskReadThreadPool::addThreadStats(const DiskStats& other){
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::logWithStat(int level, const std::string& message){
   m_pooldStat.totalTime = m_totalTime.secs();
-  log::ScopedParamContainer params(m_lc);
+  cta::log::ScopedParamContainer params(m_lc);
   params.add("poolReadWriteTime", m_pooldStat.readWriteTime)
         .add("poolWaitFreeMemoryTime",m_pooldStat.waitFreeMemoryTime)
         .add("poolCheckingErrorTime",m_pooldStat.checkingErrorTime)
@@ -153,10 +153,10 @@ void DiskReadThreadPool::logWithStat(int level, const std::string& message){
 // DiskReadWorkerThread::run
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::DiskReadWorkerThread::run() {
-  castor::log::ScopedParamContainer logParams(m_lc);
+  cta::log::ScopedParamContainer logParams(m_lc);
   logParams.add("thread", "DiskRead")
            .add("threadID", m_threadID);
-  m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
+  m_lc.log(cta::log::DEBUG, "Starting DiskReadWorkerThread");
   
   std::unique_ptr<DiskReadTask> task;
   cta::utils::Timer localTime;
@@ -175,18 +175,18 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   } //end of while(1)
   m_threadStat.totalTime = totalTime.secs();
   m_parent.addThreadStats(m_threadStat);
-  logWithStat(LOG_INFO, "Finishing of DiskReadWorkerThread");
+  logWithStat(cta::log::INFO, "Finishing of DiskReadWorkerThread");
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more. (last thread turns off the light)
   int remainingThreads = --m_parent.m_nbActiveThread;
   if (!remainingThreads) {
     m_parent.m_injector->finish();
-    m_lc.log(LOG_INFO, "Signalled to task injector the end of disk read threads");
-    m_parent.logWithStat(LOG_INFO, "All the DiskReadWorkerThreads have completed");
+    m_lc.log(cta::log::INFO, "Signalled to task injector the end of disk read threads");
+    m_parent.logWithStat(cta::log::INFO, "All the DiskReadWorkerThreads have completed");
   } else {
-    castor::log::ScopedParamContainer params(m_lc);
+    cta::log::ScopedParamContainer params(m_lc);
     params.add("remainingThreads", remainingThreads);
-    m_lc.log(LOG_DEBUG, "Will not signal the end to task injector yet");
+    m_lc.log(cta::log::DEBUG, "Will not signal the end to task injector yet");
   }
 }
 
@@ -195,7 +195,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::DiskReadWorkerThread::
 logWithStat(int level, const std::string& message){
-  log::ScopedParamContainer params(m_lc);
+  cta::log::ScopedParamContainer params(m_lc);
      params.add("threadReadWriteTime", m_threadStat.readWriteTime)
            .add("threadWaitFreeMemoryTime",m_threadStat.waitFreeMemoryTime)
            .add("threadCheckingErrorTime",m_threadStat.checkingErrorTime)

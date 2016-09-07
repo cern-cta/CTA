@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LogContext.hpp"
+#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
@@ -43,14 +43,14 @@ m_retrieveJob(retrieveJob),m_memManager(mm){
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
-bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
+bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
     diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog) {
-  using log::LogContext;
-  using log::Param;
+  using cta::log::LogContext;
+  using cta::log::Param;
   cta::utils::Timer localTime;
   cta::utils::Timer totalTime(localTime);
   cta::utils::Timer transferTime(localTime);
-  log::ScopedParamContainer URLcontext(lc);
+  cta::log::ScopedParamContainer URLcontext(lc);
   URLcontext.add("archiveFileID",m_retrieveJob->retrieveRequest.archiveFileID)
             .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
             .add("fSeq",m_retrieveJob->selectedTapeFile().fSeq);
@@ -74,7 +74,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         if(mb->isCanceled()) {
           // If the tape side got canceled, we report nothing and count
           // it as a success.
-          lc.log(LOG_DEBUG, "File transfer canceled");
+          lc.log(cta::log::DEBUG, "File transfer canceled");
           return true;
         }
         
@@ -84,13 +84,13 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         // If we got that far on the first pass, it's now good enough to open
         // the disk file for writing...
         if (!writeFile.get()) {
-          lc.log(LOG_DEBUG, "About to open disk file for writing");
+          lc.log(cta::log::DEBUG, "About to open disk file for writing");
           // Synchronise the counter with the open time counter.
           currentErrorToCount = "Error_diskOpenForWrite";
           transferTime = localTime;
           writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL));
           URLcontext.add("actualURL", writeFile->URL());
-          lc.log(LOG_INFO, "Opened disk file for writing");
+          lc.log(cta::log::INFO, "Opened disk file for writing");
           m_stats.openingTime+=localTime.secs(cta::utils::Timer::resetCounter);
         }
         
@@ -118,7 +118,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
         currentErrorToCount = "";
       }
     } //end of while(1)
-    logWithStat(LOG_INFO, "File successfully transfered to disk",lc);
+    logWithStat(cta::log::INFO, "File successfully transfered to disk",lc);
     m_retrieveJob->transferredSize = m_stats.dataVolume;
     m_retrieveJob->transferredChecksumType = "ADLER32";
     { 
@@ -153,10 +153,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc,
     }
     
     m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
-    log::ScopedParamContainer params(lc);
+    cta::log::ScopedParamContainer params(lc);
     params.add("errorMessage", e.getMessageValue());
-    logWithStat(LOG_ERR, "File writing to disk failed.", lc);
-    lc.logBacktrace(LOG_ERR, e.backtrace());
+    logWithStat(cta::log::ERR, "File writing to disk failed.", lc);
+    lc.logBacktrace(cta::log::ERR, e.backtrace());
     m_retrieveJob->failureMessage = e.getMessageValue();
     reporter.reportFailedJob(std::move(m_retrieveJob));
 
@@ -203,8 +203,8 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------
 // checkErrors
 //------------------------------------------------------------------------------  
-  void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,castor::log::LogContext& lc){
-    using namespace castor::log;
+  void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,cta::log::LogContext&  lc){
+    using namespace cta::log;
     if(m_retrieveJob->retrieveRequest.archiveFileID != static_cast<unsigned int>(mb->m_fileid)
             || blockId != mb->m_fileBlock  || mb->isFailed() ){
       LogContext::ScopedParam sp[]={
@@ -226,7 +226,7 @@ void DiskWriteTask::releaseAllBlock(){
         errorMsg="Mismatch between expected and received filed or blockid";
         //errCode=666;
       }
-      lc.log(LOG_ERR,errorMsg);
+      lc.log(cta::log::ERR,errorMsg);
       throw cta::exception::Exception(errorMsg);
     }
   }
@@ -240,8 +240,8 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------  
-void DiskWriteTask::logWithStat(int level,const std::string& msg,log::LogContext& lc){
-  log::ScopedParamContainer params(lc);
+void DiskWriteTask::logWithStat(int level,const std::string& msg,cta::log::LogContext&  lc){
+  cta::log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_stats.readWriteTime)
            .add("checksumingTime",m_stats.checksumingTime)
            .add("waitDataTime",m_stats.waitDataTime)

@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/log/LogContext.hpp"
-#include "castor/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "castor/mediachanger/MediaChangerFacade.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -53,7 +53,7 @@ namespace daemon {
      * @param sysWrapper Object representing the operating system.
      */
     EmptyDriveProbe(
-      castor::log::Logger &log,
+      cta::log::Logger &log,
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper);
     
@@ -69,7 +69,7 @@ namespace daemon {
     /**
      * The logging object     
      */
-    castor::log::Logger &m_log;
+    cta::log::Logger &m_log;
     
     /**
      * The configuration of the tape drive to be probed.
