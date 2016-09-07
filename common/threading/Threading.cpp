@@ -35,7 +35,6 @@ void Thread::start()
   cta::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
       "Error from pthread_create in cta::threading::Thread::start()");
-  std::cout << "Started thread:" << m_thread << " (0x" << std::hex << m_thread << std::dec << ")" << std::endl;
   m_started = true;
 }
 //------------------------------------------------------------------------------
