@@ -44,7 +44,7 @@
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
-#include "castor/utils/SmartArrayPtr.hpp"
+#include "common/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"

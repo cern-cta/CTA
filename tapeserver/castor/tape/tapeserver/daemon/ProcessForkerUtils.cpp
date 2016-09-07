@@ -23,7 +23,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
-#include "castor/utils/SmartArrayPtr.hpp"
+#include "common/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -469,7 +469,7 @@ std::string castor::tape::tapeserver::daemon::ProcessForkerUtils::
       throw ex;
     }
 
-    utils::SmartArrayPtr<char> payloadBuf(new char[payloadLen]);
+    cta::SmartArrayPtr<char> payloadBuf(new char[payloadLen]);
     io::readBytes(fd, timeout, payloadLen, payloadBuf.get());
 
     return std::string(payloadBuf.get(), payloadLen);

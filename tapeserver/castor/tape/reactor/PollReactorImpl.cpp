@@ -21,7 +21,7 @@
 
 #include "common/exception/BadAlloc.hpp"
 #include "castor/tape/reactor/PollReactorImpl.hpp"
-#include "castor/utils/SmartArrayPtr.hpp"
+#include "common/SmartArrayPtr.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <unistd.h>
@@ -90,7 +90,7 @@ void castor::tape::reactor::PollReactorImpl::removeHandler(
 //------------------------------------------------------------------------------
 void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
   nfds_t nfds = 0;
-  castor::utils::SmartArrayPtr<struct pollfd> fds(buildPollFds(nfds));
+  cta::SmartArrayPtr<struct pollfd> fds(buildPollFds(nfds));
 
   const int pollrc = poll(fds.get(), nfds, timeout);
 
@@ -121,7 +121,7 @@ struct pollfd *castor::tape::reactor::PollReactorImpl::buildPollFds(
   nfds_t &nfds) {
   nfds = m_handlers.size();
 
-  castor::utils::SmartArrayPtr<struct pollfd> fds;
+  cta::SmartArrayPtr<struct pollfd> fds;
   try {
     fds.reset(new struct pollfd[nfds]);
   } catch(std::bad_alloc &ba) {

@@ -35,7 +35,6 @@ target_link_libraries(ctautils castorlog)
 install(TARGETS ctautils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library (ctautilsunittests SHARED
-  SmartArrayPtrTest.cpp
   UtilsTest.cpp)
 
 install(TARGETS ctautilsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

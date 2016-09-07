@@ -145,6 +145,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   remoteFS/RemotePathTest.cpp
   SmartFdTest.cpp
+  SmartArrayPtrTest.cpp
   CRCTest.cpp
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp

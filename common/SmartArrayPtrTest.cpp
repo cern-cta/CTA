@@ -1,27 +1,22 @@
-/******************************************************************************
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
  *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Copyright (C) 2003  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *
- *
- * @author Castor Dev team, castor-dev@cern.ch
- *****************************************************************************/
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include "castor/utils/SmartArrayPtr.hpp"
+#include "common/SmartArrayPtr.hpp"
 
 #include <gtest/gtest.h>
 #include <list>
@@ -33,7 +28,7 @@
 
 namespace unitTests {
 
-class castor_utils_SmartArrayPtrTest : public ::testing::Test {
+class cta_SmartArrayPtrTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -43,25 +38,25 @@ protected:
   }
 };
 
-TEST_F(castor_utils_SmartArrayPtrTest, constructor) {
+TEST_F(cta_SmartArrayPtrTest, constructor) {
   char *ptr = new char[10];
-  castor::utils::SmartArrayPtr<char> smartPtr(ptr);
+  cta::SmartArrayPtr<char> smartPtr(ptr);
 
   ASSERT_EQ(ptr, smartPtr.get());
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, reset) {
+TEST_F(cta_SmartArrayPtrTest, reset) {
   char *ptr = new char[10];
-  castor::utils::SmartArrayPtr<char> smartPtr;
+  cta::SmartArrayPtr<char> smartPtr;
 
   ASSERT_EQ((char *)0, smartPtr.get());
   smartPtr.reset(ptr);
   ASSERT_EQ(ptr, smartPtr.get());
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, assignment) {
-  castor::utils::SmartArrayPtr<char> smartPtr1;
-  castor::utils::SmartArrayPtr<char> smartPtr2;
+TEST_F(cta_SmartArrayPtrTest, assignment) {
+  cta::SmartArrayPtr<char> smartPtr1;
+  cta::SmartArrayPtr<char> smartPtr2;
 
   ASSERT_EQ((char *)0, smartPtr1.get());
   ASSERT_EQ((char *)0, smartPtr2.get());
@@ -75,19 +70,19 @@ TEST_F(castor_utils_SmartArrayPtrTest, assignment) {
   ASSERT_EQ(ptr, smartPtr2.get());
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, releaseNull) {
-  castor::utils::SmartArrayPtr<char> smartPtr;
+TEST_F(cta_SmartArrayPtrTest, releaseNull) {
+  cta::SmartArrayPtr<char> smartPtr;
   ASSERT_THROW(smartPtr.release(), cta::exception::NotAnOwner);
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, subscriptRead) {
+TEST_F(cta_SmartArrayPtrTest, subscriptRead) {
   char *ptr = new char[4];
   ptr[0] = 'T';
   ptr[1] = 'e';
   ptr[2] = 's';
   ptr[3] = 't';
 
-  castor::utils::SmartArrayPtr<char> smartPtr(ptr);
+  cta::SmartArrayPtr<char> smartPtr(ptr);
   ASSERT_EQ(ptr, smartPtr.get());
 
   ASSERT_EQ('T', smartPtr[0]);
@@ -96,14 +91,14 @@ TEST_F(castor_utils_SmartArrayPtrTest, subscriptRead) {
   ASSERT_EQ('t', smartPtr[3]);
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, subscriptAssigment) {
+TEST_F(cta_SmartArrayPtrTest, subscriptAssigment) {
   char *ptr = new char[4];
   ptr[0] = 'T';
   ptr[1] = 'e';
   ptr[2] = 's';
   ptr[3] = 't';
 
-  castor::utils::SmartArrayPtr<char> smartPtr(ptr);
+  cta::SmartArrayPtr<char> smartPtr(ptr);
   ASSERT_EQ(ptr, smartPtr.get());
 
   ASSERT_EQ('T', smartPtr[0]);
