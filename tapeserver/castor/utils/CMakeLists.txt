@@ -24,9 +24,7 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 set (UTILS_LIB_SRC_FILES
   utils.cpp
-  ../common/CastorConfiguration.cpp
-  ../System.cpp
-  ../server/Daemon.cpp)
+  ../common/CastorConfiguration.cpp)
 
 add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
 

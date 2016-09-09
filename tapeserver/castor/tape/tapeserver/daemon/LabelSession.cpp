@@ -25,7 +25,7 @@
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "common/log/LogContext.hpp"
-#include "castor/System.hpp"
+#include "common/threading/System.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"

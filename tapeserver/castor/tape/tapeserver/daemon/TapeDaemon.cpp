@@ -68,7 +68,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   reactor::ZMQReactor &reactor,
   cta::server::ProcessCap &capUtils,
   const TapeDaemonConfig &tapeDaemonConfig):
-  castor::server::Daemon(stdOut, stdErr, log),
+  cta::server::Daemon(log),
   m_state(TAPEDAEMON_STATE_RUNNING),
   m_startOfShutdown(0),
   m_argc(argc),
@@ -169,7 +169,6 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
 //------------------------------------------------------------------------------
 void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
-  parseCommandLine(argc, argv);
 
   if(m_driveConfigs.empty()) {
     cta::exception::Exception ex;

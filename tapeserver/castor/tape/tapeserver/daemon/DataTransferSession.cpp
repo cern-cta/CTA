@@ -24,7 +24,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
-#include "castor/System.hpp"
+#include "common/threading/System.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"

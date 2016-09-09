@@ -27,7 +27,6 @@ target_link_libraries(cta-unitTests
   ctaiounittests
   ctalegacymsgunittests
   ctamessagesunittests
-  ctaserverunittests
   ctatapereactorunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests

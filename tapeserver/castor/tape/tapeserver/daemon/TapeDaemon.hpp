@@ -26,7 +26,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "common/exception/InvalidConfigEntry.hpp"
 #include "common/exception/NoEntry.hpp"
-#include "castor/server/Daemon.hpp"
+#include "common/threading/Daemon.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
@@ -52,7 +52,7 @@ namespace daemon     {
  * Daemon responsible for reading and writing data from and to one or more tape
  * drives drives connected to a tape server.
  */
-class TapeDaemon : public castor::server::Daemon {
+class TapeDaemon : public cta::server::Daemon {
 
 public:
 
