@@ -78,7 +78,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_reactor(reactor),
   m_capUtils(capUtils),
   m_tapeDaemonConfig(tapeDaemonConfig),
-  m_programName("tapeserverd"),
+  m_programName("cta-tapeserverd"),
   m_hostName(getHostName()),
   m_processForker(NULL),
   m_processForkerPid(0),

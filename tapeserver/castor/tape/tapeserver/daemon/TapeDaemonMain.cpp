@@ -61,7 +61,7 @@ int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
   std::unique_ptr<cta::log::SyslogLogger> logPtr;
   try {
-    logPtr.reset(new cta::log::SyslogLogger(std::string("tapeserverd"),cta::log::DEBUG));
+    logPtr.reset(new cta::log::SyslogLogger(std::string("cta-tapeserverd"),cta::log::DEBUG));
   } catch(cta::exception::Exception &ex) {
     std::cerr <<
       "Failed to instantiate object representing CASTOR logging system: " <<
@@ -179,7 +179,7 @@ static void logStartOfDaemon(cta::log::Logger &log, const int argc,
   std::list<cta::log::Param> params = {
     cta::log::Param("version", version.str()),
     cta::log::Param("argv", concatenatedArgs)};
-  log(cta::log::INFO, "tapeserverd started", params);
+  log(cta::log::INFO, "cta-tapeserverd started", params);
 }
 
 //------------------------------------------------------------------------------
