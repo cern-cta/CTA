@@ -27,8 +27,6 @@ std::string toString(SessionType type) {
     return "Archive";
   case SessionType::Retrieve:
     return "Retrieve";
-  case SessionType::Verify:
-    return "Verify";
   case SessionType::Label:
     return "Label";
   case SessionType::Undetermined:

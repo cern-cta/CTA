@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/LibrarySlot.hpp"
+#include "LibrarySlot.hpp"
 
 namespace castor {
 namespace mediachanger {

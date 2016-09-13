@@ -204,7 +204,8 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
 }
 
 ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
-  // If any process received sigChild, we signal it to all processes
+  // If any process handler received sigChild, we signal it to all processes. Typically, this is 
+  // done by the signal handler
   bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), 
       m_subprocessHandlers.cend(), 
       [&](const SubprocessAndStatus &i){

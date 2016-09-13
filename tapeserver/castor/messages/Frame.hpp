@@ -24,8 +24,8 @@
 #pragma once
 
 #include "castor/messages/Header.pb.h"
-#include "castor/messages/ZmqMsg.hpp"
-#include "castor/utils/utils.hpp"
+#include "ZmqMsg.hpp"
+#include "tapeserver/castor/utils/utils.hpp"
 
 #include <google/protobuf/message.h>
 #include <string>

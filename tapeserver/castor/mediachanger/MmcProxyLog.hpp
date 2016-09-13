@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
-#include "castor/mediachanger/MmcProxy.hpp"
+#include "MmcProxy.hpp"
 
 namespace castor {
 namespace mediachanger {

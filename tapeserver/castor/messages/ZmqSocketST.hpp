@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/messages/ZmqSocket.hpp"
+#include "ZmqSocket.hpp"
 
 namespace castor {
 namespace messages {

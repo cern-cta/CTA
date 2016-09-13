@@ -26,7 +26,6 @@ enum class SessionType: uint32_t {
     Undetermined, ///< The initial direction for the session is undetermined.
     Archive,      ///< Direction is disk to tape.
     Retrieve,     ///< Direction is tape to disk.
-    Verify,       ///< Read from tape to validate data.
     Label,        ///< (Re)label the tape.
     Cleanup       ///< Check the drive for the presence of a tape and eject it if necessary.
   };

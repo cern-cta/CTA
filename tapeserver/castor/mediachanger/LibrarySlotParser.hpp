@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "castor/mediachanger/LibrarySlot.hpp"
-#include "castor/mediachanger/AcsLibrarySlot.hpp"
-#include "castor/mediachanger/ManualLibrarySlot.hpp"
-#include "castor/mediachanger/ScsiLibrarySlot.hpp"
+#include "LibrarySlot.hpp"
+#include "AcsLibrarySlot.hpp"
+#include "ManualLibrarySlot.hpp"
+#include "ScsiLibrarySlot.hpp"
 
 namespace castor {
 namespace mediachanger {

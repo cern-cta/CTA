@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "castor/messages/Mutex.hpp"
-#include "castor/messages/ZmqSocket.hpp"
-#include "castor/messages/ZmqSocketST.hpp"
+#include "Mutex.hpp"
+#include "ZmqSocket.hpp"
+#include "ZmqSocketST.hpp"
 
 #include <pthread.h>
 #include <string>

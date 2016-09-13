@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "castor/messages/AcsProxy.hpp"
-#include "castor/messages/Frame.hpp"
-#include "castor/messages/Mutex.hpp"
-#include "castor/messages/ZmqSocketMT.hpp"
+#include "AcsProxy.hpp"
+#include "Frame.hpp"
+#include "Mutex.hpp"
+#include "ZmqSocketMT.hpp"
 
 namespace castor {
 namespace messages {

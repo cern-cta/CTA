@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "castor/mediachanger/LibrarySlot.hpp"
-#include "castor/mediachanger/LibrarySlotParser.hpp"
+#include "tapeserver/castor/mediachanger/LibrarySlot.hpp"
+#include "tapeserver/castor/mediachanger/LibrarySlotParser.hpp"
 
 #include <list>
 #include <string>
@@ -113,7 +113,7 @@ public:
    */
   const mediachanger::LibrarySlot &getLibrarySlot() const;
 
-private:
+public:
 
   /**
    * The unit name of the tape drive as used by the vdqmd daemon.

@@ -22,11 +22,14 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/SmartZmqContext.hpp"
+#include "tapeserver/castor/messages/SmartZmqContext.hpp"
+#include "tapeserver/castor/utils/utils.hpp"
+#include "common/log/Logger.hpp"
 
 #include <errno.h>
 #include <unistd.h>
 #include <zmq.h>
+#include <list>
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -105,4 +108,25 @@ void *castor::messages::SmartZmqContext::release() {
   m_zmqContext = NULL;
 
   return tmp;
+}
+
+//-----------------------------------------------------------------------------
+// release
+//-----------------------------------------------------------------------------
+void* castor::messages::SmartZmqContext::instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ, cta::log::Logger& log) {
+  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
+  if(NULL == zmqContext) {
+    const std::string message = castor::utils::errnoToString(errno);
+    cta::exception::Exception ex;
+    ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
+      " context: " << message;
+    throw ex;
+  }
+
+  std::ostringstream contextAddr;
+  contextAddr << std::hex << zmqContext;
+  std::list<cta::log::Param> params = {cta::log::Param("contextAddr", contextAddr.str())};
+  log(cta::log::INFO, "Child of ProcessForker instantiated a ZMQ context", params);
+
+  return zmqContext;
 }

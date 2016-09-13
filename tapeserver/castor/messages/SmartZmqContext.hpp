@@ -24,6 +24,7 @@
 #pragma once
 
 #include "common/exception/NotAnOwner.hpp"
+#include "common/log/Logger.hpp"
 
 #include <stdio.h>
 
@@ -98,6 +99,16 @@ public:
    * @return The released ZMQ context.
    */
   void *release() ;
+  
+  /**
+   * Helper function instancing a ZMQ context.
+   * @param sizeOfIOThreadPoolForZMQ The size of the IO thread pool to be used
+   * by ZMQ.
+   * @param log a reference to the logger, provided by the caller.
+   * @return The ZMQ context.
+   */
+  static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ,
+    cta::log::Logger & log);
 
 private:
 

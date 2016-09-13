@@ -22,7 +22,7 @@
 #pragma once
 
 #include "common/exception/InvalidArgument.hpp"
-#include "castor/mediachanger/LibrarySlot.hpp"
+#include "tapeserver/castor/mediachanger/LibrarySlot.hpp"
 
 #include <stdint.h>
 

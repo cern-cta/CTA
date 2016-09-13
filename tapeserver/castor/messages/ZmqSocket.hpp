@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/messages/ZmqMsg.hpp"
+#include "ZmqMsg.hpp"
 
 #include <string>
 #include <zmq.h>

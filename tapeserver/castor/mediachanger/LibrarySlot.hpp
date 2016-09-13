@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/TapeLibraryType.hpp"
+#include "tapeserver/castor/mediachanger/TapeLibraryType.hpp"
 
 #include <string>
 

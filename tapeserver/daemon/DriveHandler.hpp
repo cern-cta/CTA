@@ -57,17 +57,25 @@ private:
   enum class PreviousSession {
     Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
     OK,         ///< The previous process unmounted the tape properly and hardware is ready for another session
-    Failed,     ///< The previous process failed to unmount the tape and returned properly
-    Killed,     ///< The previous process was killed by the watchdog. A cleanup will be run beforehand.
     Crashed     ///< The previous process was killed or crashed for another reason. A cleanup will be run beforehand.
   };
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession=PreviousSession::Initiating;
-private:
+  /** Previous VID, that can help the unmount process */
+  std::string m_previousVid;
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState=session::SessionState::PendingFork;
+  /**
+   * Utility function resetting all parameters to pre-fork state
+   * @param previousSessionState outcome to be considered for the next run.
+   */
+  void resetToDefault(PreviousSession previousSessionState);
+  /** Helper function to handle Scheduling state report */
+  SubprocessHandler::ProcessingStatus processStartingUp(serializers::WatchdogMessage & message);
   /** Helper function to handle Scheduling state report */
   SubprocessHandler::ProcessingStatus processScheduling(serializers::WatchdogMessage & message);
+  /** Helper function to handle Checking state report */
+  SubprocessHandler::ProcessingStatus processChecking(serializers::WatchdogMessage & message);
   /** Helper function to handle Mounting state report */
   SubprocessHandler::ProcessingStatus processMounting(serializers::WatchdogMessage & message);
   /** Helper function to handle Running state report */
@@ -77,8 +85,7 @@ private:
   /** Helper function to handle DraingingToDisk state report */
   SubprocessHandler::ProcessingStatus processDrainingToDisk(serializers::WatchdogMessage & message);
   /** Helper function to handle ClosingDown state report */
-  SubprocessHandler::ProcessingStatus processClosingDown(serializers::WatchdogMessage & message);
-private:
+  SubprocessHandler::ProcessingStatus processShutingDown(serializers::WatchdogMessage & message);
   /** Current session's type */
   session::SessionType m_sessionType=session::SessionType::Undetermined;
   /** Current session's parameters: they are accumulated during session's lifetime
@@ -88,14 +95,24 @@ private:
   SubprocessHandler::ProcessingStatus m_processingStatus;
   /** Convenience type */
   typedef std::chrono::milliseconds Timeout;
-  /** Values for the heartbeat or completion timeouts where applicable */
-  static const std::map<session::SessionState, Timeout> m_timeouts;
-  /** Special timeout for data movement timeout during running */
-  static const Timeout m_dataMovementTimeout;
-  /** When did we see the last block movement? */
-  std::chrono::time_point<std::chrono::steady_clock> m_lastBlockMovementTime=decltype(m_lastBlockMovementTime)::min();
+  /** Values for the state change timeouts where applicable */
+  static const std::map<session::SessionState, Timeout> m_stateChangeTimeouts;
+  /** Values for the heartbeat timeouts, where applicable */
+  static const std::map<session::SessionState, Timeout> m_heartbeatTimeouts;
+  /** Values for the data movement timeouts, where applicable */
+  static const std::map<session::SessionState, Timeout> m_dataMovementTimeouts;
+  /** When did we see the last state change? */
+  std::chrono::time_point<std::chrono::steady_clock> m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
+  /** When did we see the last heartbeat change? */
+  std::chrono::time_point<std::chrono::steady_clock> m_lastHeartBeatTime=decltype(m_lastHeartBeatTime)::min();
+  /** When did we see the last data movement? */
+  std::chrono::time_point<std::chrono::steady_clock> m_lastDataMovementTime=decltype(m_lastDataMovementTime)::min();
   /** Computation of the next timeout (depending on the state) */
   decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout();
+  /** How much data did we see moving the session so far? (tape) */
+  uint64_t m_totalTapeBytesMoved=0;
+  /** How much data did we see moving the session so far? (disk) */
+  uint64_t m_totalDiskBytesMoved=0;
   /** PID for the subprocess */
   pid_t m_pid=-1;
   /** Socket pair allowing communication with the subprocess */

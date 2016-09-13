@@ -2,6 +2,8 @@ cmake_minimum_required (VERSION 2.6)
 
 find_package(Protobuf REQUIRED)
 
+include_directories(${PROJECT_BINARY_DIR}/tapeserver)
+
 PROTOBUF_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -24,7 +26,14 @@ add_library(ctatapedaemon
   Tpconfig.cpp)
 
 target_link_libraries(ctatapedaemon
-  ctatapesession)
+  ctatapesession
+  ctamessages
+  ctalegacymsg
+  ctaTapeServerDaemon
+  SCSI
+  TapeDrive
+  ctaio
+  File)
 
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp

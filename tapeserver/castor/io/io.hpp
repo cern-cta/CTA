@@ -28,8 +28,8 @@
 #include "common/exception/InvalidArgument.hpp"
 #include "common/exception/NoPortInRange.hpp"
 #include "common/exception/TimeOut.hpp"
-#include "castor/io/Constants.hpp"
-#include "castor/io/IpAndPort.hpp"
+#include "Constants.hpp"
+#include "IpAndPort.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <errno.h>

@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "castor/io/io.hpp"
-#include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/RmcMountMsgBody.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/legacymsg/RmcUnmountMsgBody.hpp"
-#include "castor/utils/utils.hpp"
+#include "tapeserver/castor/io/io.hpp"
+#include "MessageHeader.hpp"
+#include "RmcMountMsgBody.hpp"
+#include "RmcProxy.hpp"
+#include "RmcUnmountMsgBody.hpp"
+#include "tapeserver/castor/utils/utils.hpp"
 #include "common/SmartFd.hpp"
-#include "h/rmc_constants.h"
+#include "tapeserver/h/rmc_constants.h"
 
 #include <unistd.h>
 #include <sys/types.h>

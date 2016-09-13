@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/ScsiLibrarySlot.hpp"
+#include "tapeserver/castor/mediachanger/ScsiLibrarySlot.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <string>

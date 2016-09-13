@@ -20,6 +20,13 @@
 #include "common/log/LogContext.hpp"
 #include "common/exception/Errnum.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "common/processCap/ProcessCap.hpp"
+#include "tapeserver/castor/messages/SmartZmqContext.hpp"
+#include "tapeserver/castor/messages/AcsProxyZmq.hpp"
+#include "tapeserver/castor/acs/Constants.hpp"
+#include "tapeserver/castor/mediachanger/MmcProxyLog.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "tapeserver/castor/legacymsg/RmcProxyTcpIp.hpp"
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -27,6 +34,9 @@
 
 namespace cta { namespace tape { namespace  daemon {
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration & tapedConfig, const TpconfigLine& configline, ProcessManager& pm):
   SubprocessHandler(std::string("drive:")+configline.unitName), m_processManager(pm), 
   m_tapedConfig(tapedConfig), m_configLine(configline),
@@ -38,30 +48,69 @@ DriveHandler::DriveHandler(const TapedConfiguration & tapedConfig, const Tpconfi
 using session::SessionState;
 using session::SessionType;
 
-const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_timeouts = {
-  {SessionState::Cleaning, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
+//------------------------------------------------------------------------------
+// DriveHandler::m_stateChangeTimeouts
+//------------------------------------------------------------------------------
+// The following structure represents the timeouts expected for each session state transitions
+// (if needed).
+// The session type is not taken into account as a given state gets the same timeout regardless
+// of  the type session it is used in.
+const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeTimeouts = {
+  // Determining the drive is ready takes 1 minute, so waiting 2 should be enough.
+  {SessionState::Checking, std::chrono::duration_cast<Timeout>(std::chrono::minutes(2))},
+  // Scheduling is expected to take little time, so 5 minutes is plenty. When the scheduling
+  // determines there is nothing to do, it will transition to the same state (resetting the timeout).
   {SessionState::Scheduling, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))},
+  // We expect mounting the take no more than 10 minutes.
   {SessionState::Mounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
-  // The running timeout is a heartbeat timeout. It is distinct from 
-  {SessionState::Running, std::chrono::duration_cast<Timeout>(std::chrono::minutes(2))},
+  // Like mounting, unmounting is expected to take less than 10 minutes.
   {SessionState::Unmounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
+  // Draining to disk is given a grace period of 30 minutes for changing state.
   {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(30))},
-  {SessionState::ClosingDown, std::chrono::duration_cast<Timeout>(std::chrono::seconds(5))}
+  // We expect the process to exit within 5 seconds of getting in this state.
+  {SessionState::ShutingDown, std::chrono::duration_cast<Timeout>(std::chrono::seconds(5))}
 };
 
-const DriveHandler::Timeout DriveHandler::m_dataMovementTimeout = 
-  std::chrono::duration_cast<Timeout>(std::chrono::minutes(30));
+//------------------------------------------------------------------------------
+// DriveHandler::m_heartbeatTimeouts
+//------------------------------------------------------------------------------
+// The following structure represents heartbeat timeouts expected for each session state with data movement.
+// TODO: decide on values.
+const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_heartbeatTimeouts = {
+  {SessionState::Running, std::chrono::duration_cast<Timeout>(std::chrono::minutes(1))},
+  {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(1))}
+};
 
+//------------------------------------------------------------------------------
+// DriveHandler::m_dataMovementTimeouts
+//------------------------------------------------------------------------------
+// The following structure represents the data movement timeouts for the session states involving
+// data movements and heartbeats.
+// TODO: decide on values
+const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_dataMovementTimeouts = {
+  {SessionState::Running, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))},
+  {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))}
+};
+
+//------------------------------------------------------------------------------
+// DriveHandler::getInitialStatus
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::getInitialStatus() {
   // As we just start, we need to fork the first subprocess
   m_processingStatus.forkRequested = true;
   return m_processingStatus;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::prepareForFork
+//------------------------------------------------------------------------------
 void DriveHandler::prepareForFork() {
   // Nothing to do before a fork (ours or other's)
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::fork
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::fork() {
   // If anything fails while attempting to fork, we will have to declare ourselves
   // failed and ask for a shutdown by sending the TERM signal to the parent process
@@ -89,21 +138,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     } else {
       // We are in the parent process
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
-      // The subprocess will start cleaning up of scheduling depending on the state of the previous session
-      switch(m_previousSession) {
-        // If the session is starting up of crashed/was killed before, it will first cleanup:
-      case PreviousSession::Initiating:
-      case PreviousSession::Killed:
-      case PreviousSession::Crashed:
-        m_sessionState=SessionState::Cleaning;
-        // Else (OK of known failure to unmount, we wait for the scheduling (including 
-        // the operator putting the drive up if previous session had failed)) without
-        // calling the cleaner.
-      case PreviousSession::OK:
-      case PreviousSession::Failed:
-        m_sessionState=SessionState::Scheduling;
-      }
-      m_sessionState = SessionState::Cleaning;
+      // The subprocess will start by deciding what to do based on previous states.
+      // The child process is not forked yet.
+      m_sessionState = SessionState::PendingFork;
       // Compute the next timeout
       m_processingStatus.nextTimeout = nextTimeout();
       // Register our socketpair side for epoll after closing child side.
@@ -128,40 +165,59 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
   }
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::nextTimeout
+//------------------------------------------------------------------------------
 decltype (SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTimeout() {
   // If a timeout is defined, then we compute its expiration time. Else we just give default timeout (end of times).
+  decltype (SubprocessHandler::ProcessingStatus::nextTimeout) ret=decltype(SubprocessHandler::ProcessingStatus::nextTimeout)::max();
   try {
-    return std::chrono::steady_clock::now()+m_timeouts.at(m_sessionState);
-  } catch (...) {
-    return decltype(SubprocessHandler::ProcessingStatus::nextTimeout)::max();
-  }
+    ret=m_lastStateChangeTime+m_stateChangeTimeouts.at(m_sessionState);
+  } catch (...) {}
+  try {
+    ret=std::min(ret, m_lastHeartBeatTime+m_heartbeatTimeouts.at(m_sessionState));
+  } catch (...) {}
+  try {
+    ret=std::min(ret, m_lastDataMovementTime+m_dataMovementTimeouts.at(m_sessionState));
+  } catch (...) {}
+  return ret;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::kill
+//------------------------------------------------------------------------------
 void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
-  // track of the exit state as kill() mens we will not be called anymore.
-  cta::log::ScopedParamContainer params(m_processManager.logContext());
+  // track of the exit state as kill() means we will not be called anymore.
+  log::ScopedParamContainer params(m_processManager.logContext());
   params.add("unitName", m_configLine.unitName);
   if (m_pid != -1) {
-    ::kill(m_pid, SIGKILL);
-    int status;
-    // wait for child process exit
-    ::waitpid(m_pid, &status, 0);
-    // Log the status
-    params.add("pid", m_pid)
-          .add("WIFEXITED", WIFEXITED(status));
-    if (WIFEXITED(status)) {
-      params.add("WEXITSTATUS", WEXITSTATUS(status));
-    } else {
-      params.add("WIFSIGNALED", WIFSIGNALED(status));
+    params.add("SubProcessId", m_pid);
+    try {
+      exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL),"Failed to kill() subprocess");
+      int status;
+      // wait for child process exit
+      exception::Errnum::throwOnMinusOne(::waitpid(m_pid, &status, 0), "Failed to waitpid() subprocess");
+      // Log the status
+      params.add("WIFEXITED", WIFEXITED(status));
+      if (WIFEXITED(status)) {
+        params.add("WEXITSTATUS", WEXITSTATUS(status));
+      } else {
+        params.add("WIFSIGNALED", WIFSIGNALED(status));
+      } 
+      m_processManager.logContext().log(log::INFO, "In DriveHandler::kill(): sub process completed");
+    } catch (exception::Exception & ex) {
+      params.add("Exception", ex.getMessageValue());
+      m_processManager.logContext().log(log::ERR, "In DriveHandler::kill(): failed to kill existing subprocess");
     }
-    m_processManager.logContext().log(log::INFO, "In DriveHandler::kill(): sub process completed");
   } else {
     m_processManager.logContext().log(log::INFO, "In DriveHandler::kill(): no subprocess to kill");
   }
-  
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processEvent
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair 
   try {
@@ -169,6 +225,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     message.ParseFromString(m_socketPair->receive());
     processLogs(message);
     switch((SessionState)message.sessionstate()) {
+    case SessionState::StartingUp:
+      return processStartingUp(message);
+    case SessionState::Checking:
+      return processChecking(message);
     case SessionState::Scheduling:
       return processScheduling(message);
     case SessionState::Mounting:
@@ -179,8 +239,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       return processUnmounting(message);
     case SessionState::DrainingToDisk:
       return processDrainingToDisk(message);
-    case SessionState::ClosingDown:
-      return processClosingDown(message);
+    case SessionState::ShutingDown:
+      return processShutingDown(message);
     default:
       {
         exception::Exception ex;
@@ -198,173 +258,265 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   }
 }
 
-SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers::WatchdogMessage& message) {
-  // We are either going to schedule again either after failing to schedule (drive down or nothing to do) or
-  // after successfully cleaning the drive.
-  // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
-  std::set<SessionState> expectedStates = { SessionState::Cleaning, SessionState::Scheduling };
-  if (expectedStates.find(m_sessionState)==expectedStates.end()) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processScheduling(): unexpected previous state.");
-  }
-  m_sessionState=SessionState::Scheduling;
-  if ((SessionType)message.sessiontype()!= SessionType::Undetermined) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("Type", toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processScheduling(): unexpected session type reported.");
-  }
-  // We keep the type as should be here:
+
+//------------------------------------------------------------------------------
+// DriveHandler::resetToDefault
+//------------------------------------------------------------------------------
+void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
+  m_pid=-1;
+  m_previousSession=previousSessionState;
+  m_sessionState=SessionState::PendingFork;
   m_sessionType=SessionType::Undetermined;
-  // Set the timeout for this state
-  m_processingStatus.nextTimeout=nextTimeout();
-  return m_processingStatus;
+  m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
+  m_lastHeartBeatTime=decltype(m_lastHeartBeatTime)::min();
+  m_lastDataMovementTime=decltype(m_lastDataMovementTime)::min();
+  m_processingStatus.forkRequested = false;
+  m_processingStatus.killRequested = false;
+  m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
+  m_processingStatus.shutdownComplete = false;
+  m_processingStatus.shutdownRequested = false;
+  m_processingStatus.sigChild = false;
 }
 
-SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::WatchdogMessage& message) {
-  // The only transition expected is from scheduling.
-  if (SessionState::Scheduling != m_sessionState) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processMounting(): unexpected previous state.");
+
+//------------------------------------------------------------------------------
+// DriveHandler::processStartingUp
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processStartingUp(serializers::WatchdogMessage& message) {
+  // We expect to reach this state from pending fork. This is the first signal from the new process.
+  // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
+  if (m_sessionState!=SessionState::PendingFork || m_sessionType!=SessionType::Undetermined) {
+    log::ScopedParamContainer sp(m_processManager.logContext());
+    sp.add("ExpectedState", session::toString(SessionState::PendingFork))
+      .add("ActualState", session::toString(m_sessionState))
+      .add("ExpectedType", session::toString(SessionType::Undetermined));
+    m_processManager.logContext().log(log::WARNING,
+      "In DriveHandler::processStartingUp(): Unexpected session type of status. Killing subprocess if present.");
   }
-  // The type of mount is expected here. If we do not get it, the process is killed.
-  std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve };
-  if (expectedTypes.end()==expectedTypes.find((SessionType)message.sessiontype())) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("Type", toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::ERR, 
-        "In DriveHandler::processMounting(): unexpected session type reported. Killing the session.");
-    ::kill(m_pid, SIGKILL);
-    // processSigChild will do the rest for us.
-    // We expect nothing anymore from the sub process...
-    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-    return m_processingStatus;
-  }
-  m_sessionState=SessionState::Mounting;
+  // Record the new state:
+  m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
-  // update the new timeout
+  // kill(), when called by the process manager does not keep track of states,
+  // so here we do it.
+  m_sessionState = SessionState::Killed;
+  // We do not expected anything from the subprocess anymore, so the default
+  // return value is enough.
+  m_processingStatus.shutdownComplete=true;
+  m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processScheduling
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers::WatchdogMessage& message) {
+  // We are either going to schedule 
+  // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
+  std::set<SessionState> expectedStates = { SessionState::StartingUp, SessionState::Scheduling };
+  if (!expectedStates.count(m_sessionState) || 
+      m_sessionType != SessionType::Undetermined ||
+      (SessionType)message.sessiontype() != SessionType::Undetermined) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processScheduling(): unexpected previous state/type.");
+  }
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
   return m_processingStatus;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processChecking
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processChecking(serializers::WatchdogMessage& message) {
+  // We expect to come from statup/undefined and to get into checking/cleanup
+  // As usual, subprocess has the last word.
+  if (m_sessionState!=SessionState::StartingUp || m_sessionType!=SessionType::Undetermined||
+      (SessionType)message.sessiontype()!=SessionType::Cleanup) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processChecking(): unexpected previous state/type.");
+  }
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
+  m_processingStatus.nextTimeout=nextTimeout();
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processMounting
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::WatchdogMessage& message) {
+  // The only transition expected is from scheduling. Several sessions types are possible
+  // As usual, subprocess has the last word.
+  std::set<SessionType> expectedNewTypes= { SessionType::Archive, SessionType::Retrieve, SessionType::Label };
+  if (m_sessionState!=SessionState::Scheduling ||
+      m_sessionType!=SessionType::Undetermined||
+      !expectedNewTypes.count((SessionType)message.sessiontype())) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processMounting(): unexpected previous state/type.");
+  }
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
+  m_processingStatus.nextTimeout=nextTimeout();
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processRunning
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::WatchdogMessage& message) {
   // This status can be reported repeatedly (or we can transition from the previous one: Mounting).
-  // Log the (possible) unexpected previous state.
+  // We expect the type not to change (and to be in the right range)
+  // As usual, subprocess has the last word.
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
-  if (expectedStates.end() == expectedStates.find(m_sessionState)) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processRunning(): unexpected previous state.");
+  std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve, SessionType::Label };
+  if (!expectedStates.count(m_sessionState) ||
+      !expectedTypes.count(m_sessionType)||
+      (m_sessionType!=(SessionType)message.sessiontype())) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processMounting(): unexpected previous state/type.");
   }
-  // We should at least already have the direction defined, and it should not change. We will kill the
-  // subprocess if those conditions are not met.
-  std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve };
-  if ((expectedTypes.end()==expectedTypes.find(m_sessionType)) ||
-        ((SessionType)message.sessiontype() != m_sessionType)) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousType", toString(m_sessionType));
-    params.add("Type", toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::ERR, 
-        "In DriveHandler::processRunning(): unexpected session type reported "
-        "or incompatible previous type. Killing the session.");
-    ::kill(m_pid, SIGKILL);
-    // processSigChild will do the rest for us.
-    // We expect nothing anymore from the sub process...
-    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-    return m_processingStatus;
+  // Record session state change time and reset other counters.
+  if (m_sessionState!=(SessionState)message.sessionstate()) {
+    m_lastStateChangeTime=std::chrono::steady_clock::now();
+    m_lastDataMovementTime=std::chrono::steady_clock::now();
+    // heartbeat is update further down.
   }
-  // We are dealing with 2 competing timeouts here.
-  // First is the data movement timeout. Second is the heartbeat timeout (default one).
-  // If we transition from another state, we reset the block movement timer.
-  // We also reset the timer if data block movement is reported
-  if ((m_sessionState != SessionState::Running) || message.memblocksmoved()) {
-    m_lastBlockMovementTime=std::chrono::steady_clock::now();
+  // In all cases, this is a heartbeat.
+  m_lastHeartBeatTime=std::chrono::steady_clock::now();
+  // Record the state
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Record data moved totals if needed.
+  if (m_totalTapeBytesMoved != message.totaltapebytesmoved()||
+      m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
+    if (message.totaltapebytesmoved()<m_totalTapeBytesMoved||
+        message.totaldiskbytesmoved()<m_totalDiskBytesMoved) {
+      log::ScopedParamContainer params(m_processManager.logContext());
+      params.add("PreviousTapeBytesMoved", m_totalTapeBytesMoved)
+            .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
+            .add("NewTapeBytesMoved", message.totaltapebytesmoved())
+            .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
+      m_processManager.logContext().log(log::WARNING, "In DriveHandler::processRunning(): total bytes moved going backwards");
+    }
+    m_totalTapeBytesMoved=message.totaltapebytesmoved();
+    m_totalDiskBytesMoved=message.totaldiskbytesmoved();
+    m_lastDataMovementTime=std::chrono::steady_clock::now();
   }
-  // Now record the 
   // We can now compute the timeout and check for potential exceeding of timeout
-  auto nextHeartbeatTimeout = nextTimeout();
-  auto nextBlockMoveTimeout = std::chrono::steady_clock::now() + m_dataMovementTimeout;
-  m_processingStatus.nextTimeout = std::min(nextBlockMoveTimeout, nextHeartbeatTimeout);
+  m_processingStatus.nextTimeout = nextTimeout();
   return m_processingStatus;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processUnmounting
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers::WatchdogMessage& message) {
-  // This status transition is exclusively expected from running
-  if (SessionState::Running != m_sessionState) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processUnmounting(): unexpected previous state.");
+  // This status can come from either running (any running compatible session type)
+  // of checking in the case of the cleanup session.
+  // As usual, subprocess has the last word.
+  std::set<std::tuple<SessionState, SessionType>> expectedStateTypes = 
+  {
+    std::make_tuple( SessionState::Running, SessionType::Archive ),
+    std::make_tuple( SessionState::Running, SessionType::Retrieve ),
+    std::make_tuple( SessionState::Running, SessionType::Label ),
+    std::make_tuple( SessionState::Checking, SessionType::Cleanup )
+  };
+  // (all types of sessions can unmount).
+  if (!expectedStateTypes.count(std::make_tuple(m_sessionState, m_sessionType))) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processUnmounting(): unexpected previous state/type.");
   }
-  // Check if the session type is consistent. It is still important as the post-unmount
-  // behavior depends on it.
-  if ((SessionType)message.sessiontype()!=m_sessionType) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousType", toString(m_sessionType));
-    params.add("Type", toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::ERR, 
-        "In DriveHandler::processUnmounting(): change of session type detected. "
-        "Killing the session.");
-    ::kill(m_pid, SIGKILL);
-    // processSigChild will do the rest for us.
-    // We expect nothing anymore from the sub process...
-    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-    return m_processingStatus;
-  }
-  m_sessionState=SessionState::Unmounting;
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
   return m_processingStatus;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processDrainingToDisk
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializers::WatchdogMessage& message) {
-  // This status transition is expected from unmounting.
-  if (SessionState::Unmounting != m_sessionState) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processDrainingToDisk(): unexpected previous state.");
+  // This status transition is expected from unmounting, and only for retrieve sessions.
+  // As usual, subprocess has the last word.
+  if (SessionState::Unmounting != m_sessionState ||
+      SessionType::Retrieve != m_sessionType) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processDrainingToDisk(): unexpected previous state/type.");
   }
-  // This state is only for retrieve sessions.
-  if ((SessionType::Retrieve!=m_sessionType) 
-       || (SessionType::Retrieve!=(SessionType)message.sessiontype())) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousType", toString(m_sessionType));
-    params.add("Type", toString((SessionType)message.sessiontype()));
-    m_processManager.logContext().log(log::ERR, 
-        "In DriveHandler::processDrainingToDisk(): change of session type or "
-        "incompatible session type detected. Killing the session.");
-    ::kill(m_pid, SIGKILL);
-    // processSigChild will do the rest for us.
-    // We expect nothing anymore from the sub process...
-    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-    return m_processingStatus;
-  }
-  // We have a simple timeout configuration here
-  m_sessionState=SessionState::DrainingToDisk;
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
   return m_processingStatus;
 }
 
-SubprocessHandler::ProcessingStatus DriveHandler::processClosingDown(serializers::WatchdogMessage& message) {
-  // We expect to transition from Unmounting or draining to disk
-  std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
-  if (expectedStates.end() == expectedStates.find(m_sessionState)) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("PreviousState", session::toString(m_sessionState));
-    m_processManager.logContext().log(log::WARNING, 
-        "In DriveHandler::processClosingDown(): unexpected previous state.");
+//------------------------------------------------------------------------------
+// DriveHandler::processShutingDown
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processShutingDown(serializers::WatchdogMessage& message) {
+  // This status transition is expected from unmounting, and only for retrieve sessions.
+  // As usual, subprocess has the last word.
+  std::set<SessionState> expectedStates = { SessionState::Unmounting, SessionState::DrainingToDisk };
+  if (!expectedStates.count(m_sessionState)) {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processShutingDown(): unexpected previous state/type.");
   }
-  // We have a simple timeout configuration here
-  m_sessionState=SessionState::ClosingDown;
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
   return m_processingStatus;
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processLogs
+//------------------------------------------------------------------------------
 void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   // Accumulate the logs added (if any)
   for (auto & log: message.addedlogparams()) {
@@ -375,6 +527,9 @@ void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   }
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::processSigChild
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   // Check out child process's status. If the child process is still around,
   // waitpid will return 0. Non zero if process completed (and status needs to 
@@ -383,50 +538,163 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   if (-1 == m_pid) return m_processingStatus;
   int processStatus;
   int rc=::waitpid(m_pid, &processStatus, WNOHANG);
-  if (rc) {
-    try {
-      exception::Errnum::throwOnMinusOne(rc);
-      // We did collect the exit code of our child process
-      //TODOTODO
-      throw 0;
-    } catch (exception::Exception ex) {
-      cta::log::ScopedParamContainer params(m_processManager.logContext());
-      params.add("pid", m_pid)
-            .add("Message", ex.getMessageValue())
-            .add("SessionState", session::toString(m_sessionState))
-            .add("SessionType", toString(m_sessionType));
-      m_processManager.logContext().log(log::WARNING,
-          "In DriveHandler::processSigChild(): failed to get child process exit code. "
-          "Will respawn new subprocess.");
-      m_pid=-1;
-      m_sessionState=SessionState::PendingFork;
-      m_sessionType=SessionType::Undetermined;
-      m_previousSession=PreviousSession::Crashed;
-      m_processingStatus.nextTimeout=decltype(m_processingStatus.nextTimeout)::max();
-      m_processingStatus.forkRequested=true;
-      return m_processingStatus;
-    }
-  } else {
-    // It was not out sub process, we carry on.
+  // Check there was no error.
+  try {
+    exception::Errnum::throwOnMinusOne(rc);
+  } catch (exception::Exception ex) {
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("pid", m_pid)
+          .add("driveUnit", m_configLine.unitName)
+          .add("Message", ex.getMessageValue())
+          .add("SessionState", session::toString(m_sessionState))
+          .add("SessionType", toString(m_sessionType));
+    m_processManager.logContext().log(log::WARNING,
+        "In DriveHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
     return m_processingStatus;
+  }
+  if (rc) {
+    // It was our process. In all cases we prepare the space for the new session
+    // We did collect the exit code of our child process
+    // How well did it finish? (exit() or killed?)
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("pid", m_pid)
+          .add("driveUnit", m_configLine.unitName);
+    if (WIFEXITED(processStatus)) {
+      // Child process exited properly. The new child process will not need to start
+      // a cleanup session.
+      params.add("exitCode", WEXITSTATUS(processStatus));
+      m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
+      resetToDefault(PreviousSession::OK);
+    } else {
+      params.add("IfSignaled", WIFSIGNALED(processStatus))
+            .add("TermSignal", WTERMSIG(processStatus))
+            .add("CoreDump", WCOREDUMP(processStatus));
+      m_processManager.logContext().log(log::INFO, "Drive subprocess crashed. Will spawn a new one.");
+      resetToDefault(PreviousSession::Crashed);
+    }
+  }
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processTimeout
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
+  // Process manager found that we timed out. Let's log why and kill the child process,
+  // if any (there should be one).
+  if (-1 == m_pid) {
+    m_processManager.logContext().log(log::ERR, "In DriveHandler::processTimeout(): Received timeout without child process present.");
+    m_processManager.logContext().log(log::INFO, "Re-launching child process.");
+    m_processingStatus.forkRequested=true;
+    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+    resetToDefault(PreviousSession::Crashed);
+    return m_processingStatus;
+  }
+  log::ScopedParamContainer params(m_processManager.logContext());
+  params.add("SessionState", session::toString(m_sessionState))
+        .add("SesssionType", session::toString(m_sessionType));
+  auto now = std::chrono::steady_clock::now();
+  // Log timeouts (if we have any)
+  try {
+    decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
+        m_lastStateChangeTime + m_stateChangeTimeouts.at(m_sessionState);
+    std::chrono::duration<double> timeToTimeout = nextTimeout - now;
+    params.add("BeforeStateChangeTimeout_s", timeToTimeout.count());
+  } catch (...) {}
+  try {
+    decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
+        m_lastDataMovementTime + m_dataMovementTimeouts.at(m_sessionState);
+    std::chrono::duration<double> timeToTimeout = nextTimeout - now;
+    params.add("BeforeDataMovementTimeout_s", timeToTimeout.count());
+  } catch (...) {}
+  try {
+    decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
+        m_lastStateChangeTime + m_heartbeatTimeouts.at(m_sessionState);
+    std::chrono::duration<double> timeToTimeout = nextTimeout - now;
+    params.add("BeforeHeartbeatTimeout_s", timeToTimeout.count());
+  } catch (...) {}
+  try {
+    params.add("SubprocessId", m_pid);
+    exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL));
+    m_processManager.logContext().log(log::INFO, "Killed subprocess.");
+  } catch (exception::Exception & ex) {
+    params.add("Error", ex.getMessageValue());
+    m_processManager.logContext().log(log::INFO, "Failed to kill() subprocess.");
+  }
+  // We now should receive the sigchild, so we ask nothing from process manager
+  m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+  return m_processingStatus;
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::runChild
+//------------------------------------------------------------------------------
+int DriveHandler::runChild() {
+  // We are in the child process. It is time to open connections to the catalogue
+  // and object store, and run the session.
+  // If the previous session crashed or the daemon has freshly statred, this session 
+  // instance will be a cleaner session.
+  std::set<PreviousSession> statesRequiringCleaner = { 
+    PreviousSession::Initiating,
+    PreviousSession::Crashed
+  };
+  if (statesRequiringCleaner.count(m_previousSession)) {
+    // The next session will be a Cleaner session
+    // Capabilities management.
+    cta::server::ProcessCap capUtils;
+    
+    // Mounting management.
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    castor::messages::SmartZmqContext zmqContext(
+      castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
+        m_processManager.logContext().logger()));
+    castor::messages::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+
+    castor::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
+    // The network timeout of rmc communications should be several minutes due
+    // to the time it takes to mount and unmount tapes
+    const int rmcNetTimeout = 600; // Timeout in seconds
+
+    castor::legacymsg::RmcProxyTcpIp rmc(RMC_PORT, rmcNetTimeout,
+      RMC_MAXRQSTATTEMPTS);
+    
+    castor::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    
+    castor::tape::System::realWrapper sWrapper;
+    
+    castor::tape::tapeserver::daemon::DriveConfig driveConfig;
+    driveConfig.m_unitName = m_configLine.unitName;
+    driveConfig.m_librarySlot = castor::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_devFilename = m_configLine.devFilename;
+    driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
+    
+    castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
+      capUtils,
+      mediaChangerFacade,
+      m_processManager.logContext().logger(),
+      driveConfig,
+      sWrapper,
+      m_previousVid,
+      true,
+      60);
+    return cleanerSession.execute();
+  } else {
+    // TODO
+    throw 0;
   }
 }
 
-SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
-  throw 0;
-  // TODO
-}
-
-int DriveHandler::runChild() {
-  ::exit(EXIT_FAILURE);
-  // TODO
-}
-
+//------------------------------------------------------------------------------
+// DriveHandler::shutdown
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   throw 0;
   // TODO
 }
 
+//------------------------------------------------------------------------------
+// DriveHandler::~DriveHandler
+//------------------------------------------------------------------------------
 DriveHandler::~DriveHandler() {
   // TODO: complete
 }

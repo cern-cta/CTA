@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/ManualLibrarySlot.hpp"
+#include "ManualLibrarySlot.hpp"
 
 #include <string>
 

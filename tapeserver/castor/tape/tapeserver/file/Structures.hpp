@@ -22,8 +22,8 @@
  *****************************************************************************/
 #pragma once
 
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include <string>
 #include <stdexcept>
 

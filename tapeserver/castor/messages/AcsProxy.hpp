@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/AcsLibrarySlot.hpp"
+#include "tapeserver/castor/mediachanger/AcsLibrarySlot.hpp"
 
 #include <stdint.h>
 #include <string>

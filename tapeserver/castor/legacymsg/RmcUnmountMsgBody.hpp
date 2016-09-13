@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "h/Castor_limits.h"
+#include "tapeserver/h/Castor_limits.h"
 #include <stdint.h>
 
 namespace castor {

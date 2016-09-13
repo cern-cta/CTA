@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/mediachanger/LibrarySlot.hpp"
-#include "castor/mediachanger/MmcProxy.hpp"
-#include "castor/mediachanger/MmcProxyNotSupported.hpp"
-#include "castor/messages/AcsProxy.hpp"
+#include "tapeserver/castor/legacymsg/RmcProxy.hpp"
+#include "LibrarySlot.hpp"
+#include "MmcProxy.hpp"
+#include "MmcProxyNotSupported.hpp"
+#include "tapeserver/castor/messages/AcsProxy.hpp"
 
 #include <unistd.h>
 #include <sys/types.h>

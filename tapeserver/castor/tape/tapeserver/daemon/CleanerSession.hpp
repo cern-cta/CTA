@@ -25,13 +25,13 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
-#include "castor/tape/tapeserver/daemon/Session.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "DriveConfig.hpp"
+#include "Session.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 
 #include <memory>
 

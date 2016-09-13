@@ -255,15 +255,6 @@ private:
   }
 
   /**
-   * Instantiates a ZMQ context.
-   *
-   * @param sizeOfIOThreadPoolForZMQ The size of the IO thread pool to be used
-   * by ZMQ.
-   * @return The ZMQ context.
-   */
-  void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ);
-
-  /**
    * Reaps any zombie processes.
    */
   void reapZombies();

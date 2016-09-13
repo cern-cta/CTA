@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "castor/mediachanger/MmcProxy.hpp"
+#include "MmcProxy.hpp"
 
 namespace castor {
 namespace mediachanger {

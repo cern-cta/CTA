@@ -23,15 +23,17 @@ namespace cta { namespace tape { namespace session {
 
 /** Possible states for the tape session. */
 enum class SessionState: uint32_t  {
-  PendingFork, ///< The subprocess is not started yet.
-  Cleaning,   ///< The subprocess is cleaning up tape left in drive.
+  PendingFork,///< The subprocess is not started yet (internal state).
+  StartingUp, ///< The subprocess has just been started.
+  Checking,   ///< The cleaner session checks if a tape is still present in the drive after failure
   Scheduling, ///< The subprocess is determining what to do next.
   Mounting,   ///< The subprocess is mounting the tape.
   Running,    ///< The subprocess is running the data transfer.
   Unmounting, ///< The subprocess is unmounting the tape.
   DrainingToDisk, ///< The subprocess is flushing the memory to disk (retrieves only)
-  ClosingDown, ///< The subprocess completed all tasks and will exit
-  Shutdown    ///< The subprocess is finished after a shutdown was requested. 
+  ShutingDown,///< The subprocess completed all tasks and will exit
+  Shutdown,   ///< The subprocess is finished after a shutdown was requested and will not be retarted (internal state)
+  Killed      ///< The subprocess was killed and a restart is expected.
 };
 /** Session state to string */
 std::string toString(SessionState state);

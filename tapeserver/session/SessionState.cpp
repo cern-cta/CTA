@@ -25,8 +25,8 @@ std::string toString(SessionState state) {
   switch(state) {
   case SessionState::PendingFork:
     return "PendingFork";
-  case SessionState::Cleaning:
-    return "Cleaning";
+  case SessionState::Checking:
+    return "Checking";
   case SessionState::Scheduling:
     return "Scheduling";
   case SessionState::Mounting:
@@ -35,6 +35,10 @@ std::string toString(SessionState state) {
     return "Running";
   case SessionState::Unmounting:
     return "Unmounting";
+  case SessionState::DrainingToDisk:
+    return "DrainingToDisk";
+  case SessionState::ShutingDown:
+    return "ShutingDown";
   case SessionState::Shutdown:
     return "Shutdown";
   default:

@@ -24,12 +24,12 @@
 #pragma once
 
 #include "common/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
-#include "castor/tape/tapeserver/drive/mtio_add.hpp"
-#include "castor/tape/tapeserver/SCSI/Device.hpp"
-#include "castor/tape/tapeserver/SCSI/Exception.hpp"
-#include "castor/tape/tapeserver/SCSI/Structures.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DriveConfig.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/mtio_add.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Exception.hpp"
 
 /**

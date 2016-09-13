@@ -19,7 +19,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/messages/AcsProxyDummy.hpp"
+#include "AcsProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly

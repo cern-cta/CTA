@@ -484,7 +484,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     const int sizeOfIOThreadPoolForZMQ = 1;
     messages::SmartZmqContext
-      zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+      zmqContext(messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, m_log));
 
     messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
@@ -539,7 +539,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
   const int sizeOfIOThreadPoolForZMQ = 1;
   messages::SmartZmqContext
-    zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+    zmqContext(messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, m_log));
 
   messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
@@ -612,28 +612,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     ex.getMessage() << "Caught an unknown exception";
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// instantiateZmqContext
-//------------------------------------------------------------------------------
-void *castor::tape::tapeserver::daemon::ProcessForker::instantiateZmqContext(
-  const int sizeOfIOThreadPoolForZMQ) {
-  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
-  if(NULL == zmqContext) {
-    const std::string message = castor::utils::errnoToString(errno);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
-      " context: " << message;
-    throw ex;
-  }
-
-  std::ostringstream contextAddr;
-  contextAddr << std::hex << zmqContext;
-  std::list<cta::log::Param> params = {cta::log::Param("contextAddr", contextAddr.str())};
-  m_log(cta::log::INFO, "Child of ProcessForker instantiated a ZMQ context", params);
-
-  return zmqContext;
 }
 
 //------------------------------------------------------------------------------
@@ -839,7 +817,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
     const int sizeOfIOThreadPoolForZMQ = 1;
     messages::SmartZmqContext
-      zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+      zmqContext(messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, m_log));
     messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
       zmqContext.get(), driveConfig.getUnitName());
 
