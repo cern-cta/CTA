@@ -70,20 +70,3 @@ castor::tape::tapeserver::daemon::TapeDaemonConfig
   return config;
 }
 
-//------------------------------------------------------------------------------
-// createVdqmHostsFromCastorConf
-//------------------------------------------------------------------------------
-std::vector<std::string> castor::tape::tapeserver::daemon::TapeDaemonConfig::
-  createVdqmHostsFromCastorConf(cta::log::Logger *const log,
-  common::CastorConfiguration &castorConf) {
-  const std::string rawVdqmHosts = castorConf.getConfEntString("TapeServer",
-    "VdqmHosts", log);
-  const std::string trimmedVdqmHosts = utils::trimString(rawVdqmHosts);
-  const std::string singleSpacedVdqmHosts =
-    utils::singleSpaceString(trimmedVdqmHosts);
-
-  std::vector<std::string> vdqmHostsVector;
-  utils::splitString(singleSpacedVdqmHosts, ' ', vdqmHostsVector);
-
-  return vdqmHostsVector;
-}

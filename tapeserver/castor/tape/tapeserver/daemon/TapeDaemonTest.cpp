@@ -23,7 +23,6 @@
 
 #include "common/log/DummyLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
-#include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
 

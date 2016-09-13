@@ -80,13 +80,6 @@ const time_t TAPESERVER_MOUNTTIMEOUT = 900; // 15 minutes
 const time_t TAPESERVER_BLKMOVETIMEOUT = 1800; // 30 minutes
 
 /**
- * The time interval in seconds to wait between attempts to keep the vdqmd
- * daemon synchronized with the state of a tape drive within the catalogue of
- * the tapeserverd daemon.
- */
-const time_t TAPESERVER_VDQMDRIVESYNCINTERVAL = 600; // 10 minutes
-
-/**
  * The compile-time default value for the number of disk threads in 
  * the thread pool serving disk accesses.
  */

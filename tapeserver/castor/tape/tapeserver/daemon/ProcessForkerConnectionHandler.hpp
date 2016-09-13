@@ -27,7 +27,6 @@
 #include "castor/messages/ProcessExited.pb.h"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/tape/reactor/PollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Catalogue.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerFrame.hpp"

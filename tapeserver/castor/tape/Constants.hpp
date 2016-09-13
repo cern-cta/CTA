@@ -33,22 +33,9 @@ namespace castor {
 namespace tape   {
 
   /**
-   * The conservative umask to be used in the RTCOPY protocol when it makes no
-   * sense to send one. The RTCOPY protocol sends umask information when
-   * migrating files from disk to tape and when indicating that more files can
-   * be requested by RTCPD.
-   */
-  const mode_t RTCOPYCONSERVATIVEUMASK = 077;
-
-  /**
    * The full path of the TPCONFIG file which is installed on each tape server.
    */
   const char *const TPCONFIGPATH = "/etc/castor/TPCONFIG";
-
-  /**
-   * The size in bytes of the VMGR error buffer.
-   */
-  const size_t VMGRERRORBUFLEN = 512;
 
 } // namespace tape
 } // namespace castor

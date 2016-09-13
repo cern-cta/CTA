@@ -39,10 +39,6 @@
 #include "scheduler/TapeMount.hpp"
 
 namespace castor {
-namespace legacymsg {
-  class VdqmProxy;
-  class VmgrProxy;
-}
 namespace tape {
 namespace tapeserver {
 namespace daemon {

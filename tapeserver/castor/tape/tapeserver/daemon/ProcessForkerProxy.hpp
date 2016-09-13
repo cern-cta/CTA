@@ -56,7 +56,6 @@ public:
    * Forks a data-transfer session for the specified tape drive.
    *
    * @param driveConfig The configuration of the tape drive.
-   * @param vdqmJob The job received from the vdqmd daemon.
    * @return The process identifier of the newly forked session.
    */
   virtual pid_t forkDataTransfer(const DriveConfig &driveConfig) = 0;

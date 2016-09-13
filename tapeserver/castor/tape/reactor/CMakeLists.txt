@@ -25,23 +25,17 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 # Rules to build the reactor code that is common to both rmcd and tapeserverd
 ################################################################################
 set (REACTOR_SRC_FILES
-  PollEventHandler.cpp
-  PollReactor.cpp
-  PollReactorImpl.cpp
   ZMQPollEventHandler.cpp
   ZMQReactor.cpp)
 add_library (ctatapereactor ${REACTOR_SRC_FILES})
 target_link_libraries (ctatapereactor)
 
 add_library (ctatapereactorutils SHARED
-  DummyPollEventHandler.cpp
-  DummyPollReactor.cpp
   DummyZMQReactor.cpp)
 
 install(TARGETS ctatapereactorutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library (ctatapereactorunittests SHARED
-  PollReactorImplTest.cpp
   ZMQReactorTest.cpp)
 
 install(TARGETS ctatapereactorunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

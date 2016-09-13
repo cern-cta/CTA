@@ -115,18 +115,6 @@ struct TapeDaemonConfig {
   static TapeDaemonConfig createFromCastorConf(
     cta::log::Logger *const log = NULL);
 
-private:
-
-  /**
-   * Gets the trusted vdqm hosts from castor.conf.
-   *
-   * @param log Pointer to NULL or an optional logger object.
-   * @param castorConf Object representing castor.conf.
-   * @return The trusted vdqm hosts.
-   */
-  static std::vector<std::string> createVdqmHostsFromCastorConf(
-    cta::log::Logger *const log, common::CastorConfiguration &castorConf);
-
 }; // TapeDaemonConfig
 
 } // namespace daemon
