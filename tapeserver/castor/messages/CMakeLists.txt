@@ -41,7 +41,6 @@ set(CtaMessageSrcs
   Constants.cpp
   Frame.cpp
   messages.cpp
-  Mutex.cpp
   SmartZmqContext.cpp
   ../../../tapeserver/daemon/TapedProxy.cpp
   TapeserverProxyZmq.cpp
@@ -67,9 +66,7 @@ target_link_libraries(ctamessages
   zmq)
 
 add_library(ctamessagesunittests SHARED
-  MessagesTest.cpp
-  MutexLockerTest.cpp
-  MutexTest.cpp)
+  MessagesTest.cpp)
 install(TARGETS ctamessagesunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_dependencies(ctamessagesunittests ctamessagesprotobuf)

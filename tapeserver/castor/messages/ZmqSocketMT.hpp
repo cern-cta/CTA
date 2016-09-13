@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "Mutex.hpp"
+#include "common/threading/Mutex.hpp"
 #include "ZmqSocket.hpp"
 #include "ZmqSocketST.hpp"
 
@@ -125,7 +125,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  Mutex m_mutex;
+  cta::threading::Mutex m_mutex;
 
   /**
    * The non thread-safe socket to be protected.

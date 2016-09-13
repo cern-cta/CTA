@@ -27,7 +27,7 @@
 #include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/messages.hpp"
-#include "castor/messages/MutexLocker.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -44,7 +44,7 @@ castor::messages::AcsProxyZmq::AcsProxyZmq(const unsigned short serverPort,
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
   
   try {
     const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, librarySlot);
@@ -104,7 +104,7 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
   
   try {
     const Frame rqst = createAcsMountTapeReadWriteFrame(vid, librarySlot);
@@ -164,7 +164,7 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::dismountTape(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
   
   try {
     const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
@@ -224,7 +224,7 @@ castor::messages::Frame castor::messages::AcsProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::AcsProxyZmq::forceDismountTape(const std::string &vid,
   const mediachanger::AcsLibrarySlot &librarySlot) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
   
   try {
     const Frame rqst = createAcsForceDismountTapeFrame(vid, librarySlot);

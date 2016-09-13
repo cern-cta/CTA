@@ -23,16 +23,12 @@
 #include "castor/messages/ArchiveJobFromCTA.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/DeleteLogParams.pb.h"
-#include "castor/messages/MutexLocker.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/LabelError.pb.h"
 #include "castor/messages/messages.hpp"
-#include "castor/messages/MigrationJobFromTapeGateway.pb.h"
-#include "castor/messages/MigrationJobFromWriteTp.pb.h"
 #include "castor/messages/NbFilesOnTape.pb.h"
-#include "castor/messages/RecallJobFromReadTp.pb.h"
-#include "castor/messages/RecallJobFromTapeGateway.pb.h"
 #include "castor/messages/RetrieveJobFromCTA.pb.h"
 #include "castor/messages/ReturnValue.pb.h"
 #include "castor/messages/TapeMountedForRecall.pb.h"
@@ -97,7 +93,7 @@ void castor::messages::TapeserverProxyZmq::reportHeartbeat(uint64_t totalTapeByt
 //------------------------------------------------------------------------------
 uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
   const std::string &vid, const std::string &unitName, const uint32_t nbFiles) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createArchiveJobFromCTAFrame(vid, unitName, nbFiles);
@@ -121,7 +117,7 @@ uint32_t castor::messages::TapeserverProxyZmq::gotArchiveJobFromCTA(
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::gotRetrieveJobFromCTA(
   const std::string &vid, const std::string &unitName) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createRetrieveJobFromCTAFrame(vid, unitName);
@@ -206,7 +202,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::tapeMountedForRecall(
   const std::string &vid, const std::string &unitName) {  
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createTapeMountedForRecallFrame(vid, unitName);
@@ -263,7 +259,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::tapeMountedForMigration(
   const std::string &vid, const std::string &unitName) {  
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createTapeMountedForMigrationFrame(vid, unitName);
@@ -320,7 +316,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //-----------------------------------------------------------------------------
 void  castor::messages::TapeserverProxyZmq::notifyHeartbeat(
   const std::string &unitName, const uint64_t nbBlocksMoved) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createHeartbeatFrame(unitName, nbBlocksMoved);
@@ -378,7 +374,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 void  castor::messages::TapeserverProxyZmq::addLogParams(
   const std::string &unitName,
   const std::list<cta::log::Param> & params) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createAddLogParamsFrame(unitName, params);
@@ -441,7 +437,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 void  castor::messages::TapeserverProxyZmq::deleteLogParams(
   const std::string &unitName,
   const std::list<std::string> & paramNames) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createDeleteLogParamsFrame(unitName, paramNames);
@@ -501,7 +497,7 @@ castor::messages::Frame castor::messages::TapeserverProxyZmq::
 //------------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::labelError(
   const std::string &unitName, const std::string &message) {
-  MutexLocker lock(&m_mutex);
+  cta::threading::MutexLocker lock(m_mutex);
 
   try {
     const Frame rqst = createLabelErrorFrame(unitName, message);

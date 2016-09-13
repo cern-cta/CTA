@@ -23,7 +23,7 @@
 
 #include "common/log/Logger.hpp"
 #include "castor/messages/Frame.hpp"
-#include "castor/messages/Mutex.hpp"
+#include "common/threading/Mutex.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/messages/ZmqSocketST.hpp"
 
@@ -87,7 +87,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  Mutex m_mutex;
+  cta::threading::Mutex m_mutex;
 
   /**
    * The object representing the API of the CASTOR logging system.

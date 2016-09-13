@@ -23,7 +23,7 @@
 
 #include "AcsProxy.hpp"
 #include "Frame.hpp"
-#include "Mutex.hpp"
+#include "common/threading/Mutex.hpp"
 #include "ZmqSocketMT.hpp"
 
 namespace castor {
@@ -91,7 +91,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  Mutex m_mutex;
+  cta::threading::Mutex m_mutex;
    
   /**
    * The TCP/IP port on which the CASTOR ACS daemon is listening for ZMQ
