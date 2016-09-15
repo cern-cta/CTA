@@ -126,7 +126,7 @@ static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ) {
   using namespace castor;
   void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == zmqContext) {
-    const std::string message = utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
     throw ex;

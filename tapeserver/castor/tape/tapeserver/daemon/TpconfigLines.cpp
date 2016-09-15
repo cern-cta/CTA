@@ -24,7 +24,8 @@
 
 #include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
 #include "common/SmartFILEPtr.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include "h/Castor_limits.h"
 
 #include <errno.h>
@@ -49,7 +50,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
         "Failed to parse TPCONFIG file"
         ": Failed to open file"
         ": filename='" << filename << "'"
-        ": " << castor::utils::errnoToString(savedErrno);
+        ": " << cta::utils::errnoToString(savedErrno);
 
       throw ex;
     }
@@ -85,17 +86,17 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
     }
 
     // Left and right trim the line of whitespace
-    line = castor::utils::trimString(std::string(line));
+    line = cta::utils::trimString(std::string(line));
 
     // If the line is not empty
     if(line != "") {
 
       // Replace each occurance of whitespace with a single space
-      line = castor::utils::singleSpaceString(line);
+      line = cta::utils::singleSpaceString(line);
 
       // Split the line into its component data-columns
       std::vector<std::string> columns;
-      castor::utils::splitString(line, ' ', columns);
+      cta::utils::splitString(line, ' ', columns);
 
       // The expected number of data-columns in a TPCONFIG data-line is 4:
       //   unitName dgn devFilename librarySlot
@@ -161,7 +162,7 @@ castor::tape::tapeserver::daemon::TpconfigLines castor::tape::tapeserver::
       "Failed to parse TPCONFIG file"
       ": Failed to read file"
       ": filename='" << filename << "'"
-      ": " << castor::utils::errnoToString(fgetsErrno);
+      ": " << cta::utils::errnoToString(fgetsErrno);
 
     throw ex;
   }

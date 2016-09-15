@@ -140,7 +140,7 @@ void castor::tape::tapeserver::daemon::CatalogueTransferSession::idempotentKill(
   // If the kill failed for a reason other than the fact the process was already
   // dead
   if(killRc && ESRCH != errno) {
-    const std::string errnoStr = castor::utils::errnoToString(errno);
+    const std::string errnoStr = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to kill process"
       ": pid=" << pid << " signal=" << signal << ": " << errnoStr;

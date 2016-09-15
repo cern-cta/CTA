@@ -39,7 +39,7 @@
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/SmartFd.hpp"
 #include "rmc_constants.h"
 
@@ -104,7 +104,7 @@ const char *castor::tape::tapeserver::daemon::TapeDaemon::stateToStr(
 std::string castor::tape::tapeserver::daemon::TapeDaemon::getHostName() const {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to get host name: " << message;
     throw ex;
@@ -137,7 +137,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
 void castor::tape::tapeserver::daemon::TapeDaemon::destroyZmqContext() throw() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
-      const std::string message = castor::utils::errnoToString(errno);
+      const std::string message = cta::utils::errnoToString(errno);
       std::list<cta::log::Param> params = {cta::log::Param("message", message)};
       m_log(cta::log::ERR, "Failed to destroy ZMQ context", params);
     } else {
@@ -218,8 +218,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 // setDumpable
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setDumpable() {
-  castor::utils::setDumpableProcessAttribute(true);
-  const bool dumpable = castor::utils::getDumpableProcessAttribute();
+  cta::utils::setDumpableProcessAttribute(true);
+  const bool dumpable = cta::utils::getDumpableProcessAttribute();
   std::list<cta::log::Param> params = {
     cta::log::Param("dumpable", dumpable ? "true" : "false")};
   m_log(cta::log::INFO, "Got dumpable attribute of process", params);
@@ -259,7 +259,7 @@ pid_t castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker(
 
   // If fork failed
   if(0 > forkRc) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
 
     closeForkerCmdPair(cmdPair);
     closeForkerReaperPair(reaperPair);
@@ -373,7 +373,7 @@ std::pair<int, int>
 void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
   const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.tapeDaemon)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to close TapeDaemon side of cmdPair"
       ": cmdPair.tapeDaemon=" << cmdPair.tapeDaemon << ": " << message;
@@ -381,7 +381,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
   }
 
   if(close(cmdPair.processForker)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to close ProcessForker side of cmdPair"
       ": cmdPair.processForker=" << cmdPair.processForker << ": " << message;
@@ -395,7 +395,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerCmdPair(
 void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
   const ForkerReaperPair &reaperPair) const {
   if(close(reaperPair.tapeDaemon)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to close TapeDaemon side of reaperPair"
       ": reaperPair.tapeDaemon=" << reaperPair.tapeDaemon << ": " << message;
@@ -403,7 +403,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
   }
 
   if(close(reaperPair.processForker)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to close ProcessForker side of reaperPair"
       ": reaperPair.processForker=" << reaperPair.processForker << ": " <<
@@ -418,7 +418,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::closeForkerReaperPair(
 void castor::tape::tapeserver::daemon::TapeDaemon::
   closeProcessForkerSideOfCmdPair(const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.processForker)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "TapeDaemon parent process failed to close"
       " ProcessForker side of cmdPair: cmdPair.processForker=" <<
@@ -434,7 +434,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
   closeProcessForkerSideOfReaperPair(const ForkerReaperPair &reaperPair)
   const {
   if(close(reaperPair.processForker)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "TapeDaemon parent process failed to close"
       " ProcessForker side of reaperPair: reaperPair.processForker=" <<
@@ -449,7 +449,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 void castor::tape::tapeserver::daemon::TapeDaemon::
   closeTapeDaemonSideOfCmdPair(const ForkerCmdPair &cmdPair) const {
   if(close(cmdPair.tapeDaemon)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "ProcessForker process failed to close"
       " TapeDaemon side of cmdPair: cmdPair.tapeDaemon=" << cmdPair.tapeDaemon
@@ -464,7 +464,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 void castor::tape::tapeserver::daemon::TapeDaemon::
   closeTapeDaemonSideOfReaperPair(const ForkerReaperPair &reaperPair) const {
   if(close(reaperPair.tapeDaemon)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "ProcessForker process failed to close"
       " TapeDaemon side of reaperPair: reaperPair.tapeDaemon=" <<
@@ -528,7 +528,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::initZmqContext() {
   const int sizeOfIOThreadPoolForZMQ = 1;
   m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == m_zmqContext) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
     throw ex;

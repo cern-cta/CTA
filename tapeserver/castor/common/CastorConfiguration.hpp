@@ -25,8 +25,9 @@
 
 #include "common/exception/NoEntry.hpp"
 #include "common/log/Logger.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/InvalidConfigEntry.hpp"
 
 #include <string>
 #include <map>
@@ -153,7 +154,7 @@ namespace castor {
           return defaultValue;
         }
 
-        if (!castor::utils::isValidUInt(strValue.c_str())) {
+        if (!cta::utils::isValidUInt(strValue.c_str())) {
           cta::exception::InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<
@@ -195,7 +196,7 @@ namespace castor {
         const std::string &key, cta::log::Logger *const log = NULL)  {
         const std::string strValue = getConfEntString(category, key);
 
-        if (!castor::utils::isValidUInt(strValue.c_str())) {
+        if (!cta::utils::isValidUInt(strValue.c_str())) {
           cta::exception::InvalidConfigEntry ex(category.c_str(),
             key.c_str(), strValue.c_str());
           ex.getMessage() << "Failed to get configuration entry " << category <<

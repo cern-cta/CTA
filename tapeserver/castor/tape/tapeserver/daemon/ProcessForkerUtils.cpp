@@ -24,7 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "common/SmartArrayPtr.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <errno.h>
@@ -288,7 +288,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   const ssize_t writeRc = write(fd, &value, sizeof(value));
 
   if(-1 == writeRc) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to write uint32_t: " << message;
     throw ex;
@@ -370,7 +370,7 @@ void castor::tape::tapeserver::daemon::ProcessForkerUtils::
   const ssize_t writeRc = write(fd, str.c_str(), str.length());
 
   if(-1 == writeRc) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to write string: " << message;
     throw ex;

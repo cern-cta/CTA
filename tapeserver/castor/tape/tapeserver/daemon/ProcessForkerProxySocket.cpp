@@ -26,7 +26,7 @@
 #include "castor/messages/StopProcessForker.pb.h"
 #include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -45,7 +45,7 @@ castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
 castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
   ~ProcessForkerProxySocket() throw() {
   if(-1 == close(m_socketFd)) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     std::list<cta::log::Param> params = {cta::log::Param("socketFd", m_socketFd), 
       cta::log::Param("message", message)};
     m_log(cta::log::ERR,

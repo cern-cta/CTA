@@ -24,6 +24,7 @@
 #include "castor/tape/tapeserver/daemon/CatalogueDrive.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
+#include "common/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "rmc_constants.h"
@@ -930,7 +931,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::shutdown() {
 
       // Kill the non-cleaner session
       if(kill(sessionPid, SIGKILL)) {
-        const std::string message = castor::utils::errnoToString(errno);
+        const std::string message = cta::utils::errnoToString(errno);
         params.push_back(cta::log::Param("message", message));
         m_log(cta::log::ERR, "Failed to kill non-cleaner session whilst shutting"
           " down", params);
@@ -969,7 +970,7 @@ void castor::tape::tapeserver::daemon::CatalogueDrive::killSession() {
   params.push_back(cta::log::Param("TPVID", m_session->getVid()));
 
   if(kill(sessionPid, SIGKILL)) {
-    const std::string errorStr = castor::utils::errnoToString(errno);
+    const std::string errorStr = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "CatalogueDrive failed to kill session: sessionPid=" <<
      sessionPid << " sessionType=" << sessionTypeStr << ": " << errorStr;

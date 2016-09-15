@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include "castor/messages/messages.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "castor/legacymsg/TapeConstants.h"
 
@@ -108,7 +108,7 @@ castor::messages::Frame castor::messages::recvFrame(ZmqSocket &socket) {
 void castor::messages::connectZmqSocketToLocalhost(ZmqSocket &socket,
   const int port) {
   std::string bindingAdress("tcp://127.0.0.1:");
-  bindingAdress += castor::utils::toString(port);
+  bindingAdress += cta::utils::toString(port);
   socket.connect(bindingAdress.c_str());
 }
 

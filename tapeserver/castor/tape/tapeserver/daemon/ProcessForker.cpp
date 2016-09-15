@@ -45,7 +45,7 @@
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
 #include "common/SmartArrayPtr.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/Sqlite.hpp"
@@ -100,7 +100,7 @@ void castor::tape::tapeserver::daemon::ProcessForker::closeCmdReceiverSocket()
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("cmdSocket", m_cmdSocket));
     if(-1 == close(m_cmdSocket)) {
-      const std::string message = castor::utils::errnoToString(errno);
+      const std::string message = cta::utils::errnoToString(errno);
       params.push_back(cta::log::Param("message", message));
       m_log(cta::log::ERR, "Failed to close command receiver socket",
         params);
@@ -172,7 +172,7 @@ bool castor::tape::tapeserver::daemon::ProcessForker::thereIsAPendingMsg() {
     return false;
   case -1: // Error
     {
-      const std::string message = castor::utils::errnoToString(errno);
+      const std::string message = cta::utils::errnoToString(errno);
       std::list<cta::log::Param> params = {cta::log::Param("message", message)};
       m_log(cta::log::ERR,
         "Error detected when checking for a pending ProcessForker message",

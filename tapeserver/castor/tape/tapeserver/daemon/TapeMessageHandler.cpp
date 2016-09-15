@@ -37,7 +37,7 @@
 #include "castor/messages/TapeUnmountStarted.pb.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -129,7 +129,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   }
   std::list<cta::log::Param> params = {
       cta::log::Param("sender identity", 
-              castor::utils::hexDump(adress.getData(),adress.size()))
+              cta::utils::hexDump(adress.getData(),adress.size()))
      };
   m_log(cta::log::DEBUG, "handling event in TapeMessageHandler", params);
   

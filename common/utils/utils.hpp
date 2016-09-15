@@ -140,6 +140,16 @@ namespace utils {
   }
 
   /**
+   * Creates and returns an std::string which is the result of replacing each
+   * occurance of whitespace (a collection of on or more space and tab
+   * characters) with a single space character.
+   *
+   * @param str The original string.
+   * @return    The newly created string with single spaces.
+   */
+  std::string singleSpaceString(const std::string &str) throw();
+  
+  /**
    * C++ wrapper around the setxtarr() function.
    *
    * @param path The path to file to which the extended attribute belongs.
@@ -259,6 +269,15 @@ namespace utils {
    * @param dumpable true if the current program should be dumpable.
    */
   void setDumpableProcessAttribute(const bool dumpable);
+  
+  /**
+   * Returns the hexadecimal dump of the specified memory.
+   *
+   * @param mem Pointer to the memory to be dumped.
+   * @param n The length of the memory to be dumped.
+   * @return The hexadecimal dump.
+   */
+  std::string hexDump(const void *mem, unsigned int n);
 
 } // namespace utils
 

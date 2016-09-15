@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "tapeserver/castor/messages/SmartZmqContext.hpp"
-#include "tapeserver/castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 #include "common/log/Logger.hpp"
 
 #include <errno.h>
@@ -116,7 +116,7 @@ void *castor::messages::SmartZmqContext::release() {
 void* castor::messages::SmartZmqContext::instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ, cta::log::Logger& log) {
   void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == zmqContext) {
-    const std::string message = castor::utils::errnoToString(errno);
+    const std::string message = cta::utils::errnoToString(errno);
     cta::exception::Exception ex;
     ex.getMessage() << "Child of ProcessForker failed to instantiate ZMQ"
       " context: " << message;

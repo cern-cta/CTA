@@ -25,7 +25,7 @@
 #include "castor/mediachanger/LibrarySlotParser.hpp"
 #include "castor/mediachanger/ManualLibrarySlot.hpp"
 #include "castor/mediachanger/ScsiLibrarySlot.hpp"
-#include "castor/utils/utils.hpp"
+#include "common/utils/utils.hpp"
 
 #include <sstream>
 #include <vector>
@@ -116,7 +116,7 @@ castor::mediachanger::AcsLibrarySlot *castor::mediachanger::LibrarySlotParser::
   parseAcsLibrarySlot(const std::string &str) {
   const std::string errMsg("Failed to construct AcsLibrarySlot");
   std::vector<std::string> components;
-  castor::utils::splitString(str, ',', components);
+  cta::utils::splitString(str, ',', components);
   if(4 != components.size()) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": Invalid number of components"
@@ -165,25 +165,25 @@ castor::mediachanger::AcsLibrarySlot *castor::mediachanger::LibrarySlotParser::
     throw ex;
   }
 
-  if(!utils::isValidUInt(acsStr)) {
+  if(!cta::utils::isValidUInt(acsStr)) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": ACS_NUMBER must be an unsigned integer:"
       " value=" << acsStr;
     throw ex;
   }
-  if(!utils::isValidUInt(lsmStr)) {
+  if(!cta::utils::isValidUInt(lsmStr)) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": LSM_NUMBER must be an unsigned integer:"
       " value=" << lsmStr;
     throw ex;
   }
-  if(!utils::isValidUInt(panStr)) {
+  if(!cta::utils::isValidUInt(panStr)) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": PANEL_NUMBER must be an unsigned integer:"
       " value=" << panStr;
     throw ex;
   }
-  if(!utils::isValidUInt(drvStr)) {
+  if(!cta::utils::isValidUInt(drvStr)) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << errMsg << ": TRANSPORT_NUMBER must be an unsigned"
       " integer: value=" << drvStr;
@@ -226,7 +226,7 @@ castor::mediachanger::ScsiLibrarySlot *castor::mediachanger::
     throw ex;
   }
 
-  if(!utils::isValidUInt(drvOrdStr)) {
+  if(!cta::utils::isValidUInt(drvOrdStr)) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot: Drive ordinal " <<
       drvOrdStr << " is not a valid unsigned integer: slot=" << str;

@@ -161,7 +161,7 @@ int castor::io::createListenerSock(
   for(unsigned short port=lowPort; port<=highPort; ++port) {
 
     // Try to bind the socket to the port
-    utils::setBytes(address, '\0');
+    memset(&address, '\0', sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr   = addr;
     address.sin_port   = htons(port);
