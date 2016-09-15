@@ -79,7 +79,7 @@ namespace cta {
      *
      * @return The mount transaction id.
      */
-    virtual uint32_t getNbFiles() const;
+    uint32_t getNbFiles() const override;
     
     /**
      * Report a drive status change

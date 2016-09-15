@@ -19,6 +19,8 @@
 #pragma once
 
 #include "scheduler/MountType.hpp"
+#include <string>
+#include <stdint.h>
 
 namespace cta { namespace common {
 

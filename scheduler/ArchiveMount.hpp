@@ -59,42 +59,43 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    virtual MountType::Enum getMountType() const;
+    MountType::Enum getMountType() const override;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
      *
      * @return The volume identifier of the tape to be mounted.
      */
-    virtual std::string getVid() const;
+    std::string getVid() const override;
     
     /**
-     * Returns the drive namn
+     * Returns the drive name
      * @return The drive name
      */
-    virtual std::string getDrive() const;
+    std::string getDrive() const;
 
     /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const;
+    std::string getMountTransactionId() const override;
 
     /**
      * Indicates that the mount was completed.
+     * This function is overridden in MockArchiveMount for unit tests.
      */
     virtual void complete();
     
     /**
      * Indicates that the mount was cancelled.
      */
-    virtual void abort();
+    void abort() override;
     
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::DriveStatus status);
+    void setDriveStatus(cta::common::DriveStatus status) override;
     
     /**
      * Report that the tape is full.
@@ -122,7 +123,7 @@ namespace cta {
      *
      * @return The mount transaction id.
      */
-    virtual uint32_t getNbFiles() const;
+    uint32_t getNbFiles() const override;
     
     /**
      * Destructor.

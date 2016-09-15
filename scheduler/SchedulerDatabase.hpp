@@ -327,6 +327,12 @@ public:
     virtual void fail() = 0;
     virtual ~RetrieveJob() {}
   };
+
+  /*============ Label management: user side =================================*/
+  // TODO
+  
+  /*============ Label management: tape server side ==========================*/
+  class LabelMount {}; // TODO
   
   /*============ Session management ==========================================*/
   /**
@@ -334,7 +340,7 @@ public:
    * comparison between mounts.
    */
   struct PotentialMount {
-    cta::MountType::Enum type; /**< Is this an archive or retireve? */
+    cta::MountType::Enum type; /**< Is this an archive, retireve or label? */
     std::string vid; /**< The tape VID (for a retieve) */
     std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
     uint64_t priority;    /**< The priority for the mount, defined as the highest priority of all queued jobs */

@@ -28,15 +28,15 @@
 
 #pragma once
 
-#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/Threading.hpp"
-#include "castor/tape/tapeserver/daemon/Session.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "Session.hpp"
+#include "TapeSessionStats.hpp"
+#include "VolumeInfo.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "common/Timer.hpp"
 
 namespace castor     {

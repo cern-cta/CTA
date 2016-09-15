@@ -21,7 +21,8 @@ set (CTA_SCHEDULER_SRC_FILES
   MountType.cpp
   UserRequest.cpp
   OStoreDB/OStoreDB.cpp
-  OStoreDB/OStoreDBWithAgent.cpp)
+  OStoreDB/OStoreDBWithAgent.cpp
+  LabelMount.cpp)
 
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})

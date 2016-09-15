@@ -19,6 +19,7 @@
 #pragma once
 
 #include "scheduler/MountType.hpp"
+#include "common/DriveState.hpp"
 
 #include <string>
 
@@ -43,14 +44,14 @@ namespace cta {
      * @return The volume identifier of the tape to be mounted.
      */
     virtual std::string getVid() const = 0;
-    
+
     /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
     virtual std::string getMountTransactionId() const = 0;    
-    
+
     /**
      * Returns the mount transaction id.
      *
@@ -62,11 +63,16 @@ namespace cta {
      * Indicates that the mount was aborted.
      */
     virtual void abort() = 0;
-
+    
+    /**
+     * Report a drive status change
+     */
+    virtual void setDriveStatus(cta::common::DriveStatus status) = 0;
+    
     /**
      * Destructor.
      */
-    virtual ~TapeMount() throw() = 0;
+    virtual ~TapeMount() throw();
 
   }; // class TapeMount
   

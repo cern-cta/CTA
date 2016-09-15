@@ -119,6 +119,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()));
   case cta::MountType::ARCHIVE:
     return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()));
+  case cta::MountType::LABEL:
+    return executeLabel(lc, dynamic_cast<cta::LabelMount *>(tapeMount.get()));
   default:
     return MARK_DRIVE_AS_UP;
   }
@@ -325,6 +327,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     }
   }
 }
+
+//------------------------------------------------------------------------------
+//DataTransferSession::executeWrite
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& lc, cta::LabelMount* labelMount) {
+  throw 0;
+  // TODO
+}
+
 
 //------------------------------------------------------------------------------
 //DataTransferSession::findDrive

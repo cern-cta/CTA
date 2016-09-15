@@ -31,7 +31,8 @@ namespace cta {
     enum Enum {
       NONE,
       ARCHIVE,
-      RETRIEVE};
+      RETRIEVE,
+      LABEL};
 
     /**
      * Thread safe method that returns the string representation of the

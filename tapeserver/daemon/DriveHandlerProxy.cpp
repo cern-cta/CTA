@@ -27,7 +27,32 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
 
 void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  // TODO
 }
+
+void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) {
+  // TODO
+  throw 0;
+}
+
+void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
+  // TODO
+  throw 0;
+}
+
+void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
+  // TODO
+  throw 0;
+}
+
+void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
+  // TODO
+  throw 0;
+}
+
+
+DriveHandlerProxy::~DriveHandlerProxy() { }
+
 
 
 }}} // namespace cta::tape::daemon

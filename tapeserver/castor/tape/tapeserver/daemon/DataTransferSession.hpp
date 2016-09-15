@@ -25,16 +25,17 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
-#include "castor/tape/tapeserver/daemon/Session.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "DataTransferConfig.hpp"
+#include "DriveConfig.hpp"
+#include "Session.hpp"
+#include "TapeSingleThreadInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/RetrieveMount.hpp"
+#include "scheduler/LabelMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 
@@ -118,6 +119,8 @@ namespace daemon {
     EndOfSessionAction executeRead(cta::log::LogContext & lc, cta::RetrieveMount *retrieveMount);
     /** sub-part of execute for a write session */
     EndOfSessionAction executeWrite(cta::log::LogContext & lc, cta::ArchiveMount *archiveMount);
+    /** sub-part of execute for a label session */
+    EndOfSessionAction executeLabel(cta::log::LogContext & lc, cta::LabelMount *labelMount);
     /** Reference to the MediaChangerFacade, allowing the mounting of the tape
      * by the library. It will be used exclusively by the tape thread. */
     castor::mediachanger::MediaChangerFacade & m_mc;

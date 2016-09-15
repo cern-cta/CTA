@@ -17,6 +17,7 @@
  */
 
 #include "DriveHandler.hpp"
+#include "DriveHandlerProxy.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Errnum.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
@@ -26,7 +27,15 @@
 #include "tapeserver/castor/acs/Constants.hpp"
 #include "tapeserver/castor/mediachanger/MmcProxyLog.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/legacymsg/RmcProxyTcpIp.hpp"
+#include "objectstore/Backend.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/BackendPopulator.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#include "rdbms/Login.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -679,8 +688,83 @@ int DriveHandler::runChild() {
       60);
     return cleanerSession.execute();
   } else {
-    // TODO
-    throw 0;
+    // The next session will be a normal session
+    // Capabilities management.
+    cta::server::ProcessCap capUtils;
+    
+    // Mounting management.
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    castor::messages::SmartZmqContext zmqContext(
+      castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
+        m_processManager.logContext().logger()));
+    castor::messages::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+
+    castor::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
+    // The network timeout of rmc communications should be several minutes due
+    // to the time it takes to mount and unmount tapes
+    const int rmcNetTimeout = 600; // Timeout in seconds
+
+    castor::legacymsg::RmcProxyTcpIp rmc(RMC_PORT, rmcNetTimeout,
+      RMC_MAXRQSTATTEMPTS);
+    
+    castor::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    
+    castor::tape::System::realWrapper sWrapper;
+    
+    castor::tape::tapeserver::daemon::DriveConfig driveConfig;
+    driveConfig.m_unitName = m_configLine.unitName;
+    driveConfig.m_librarySlot = castor::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_devFilename = m_configLine.devFilename;
+    driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
+    
+    cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
+    
+    castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
+    dataTransferConfig.bufsz = m_tapedConfig.bufferSize.value();
+    dataTransferConfig.bulkRequestMigrationMaxBytes = 
+        m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
+    dataTransferConfig.bulkRequestMigrationMaxFiles =
+        m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
+    dataTransferConfig.bulkRequestRecallMaxBytes =
+        m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
+    dataTransferConfig.bulkRequestRecallMaxFiles =
+        m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
+    dataTransferConfig.maxBytesBeforeFlush =
+        m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
+    dataTransferConfig.maxFilesBeforeFlush =
+        m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
+    dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
+    dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
+    dataTransferConfig.remoteFileProtocol = "XROOT";
+    dataTransferConfig.useLbp = true;
+    dataTransferConfig.xrootPrivateKey = "";
+    
+    std::unique_ptr<cta::objectstore::Backend> backend(
+      cta::objectstore::BackendFactory::createBackend(m_tapedConfig.objectStoreURL.value()).release());
+    // If the backend is a VFS, make sure we don't delete it on exit.
+    // If not, nevermind.
+    try {
+      dynamic_cast<cta::objectstore::BackendVFS &>(*backend).noDeleteOnExit();
+    } catch (std::bad_cast &){}
+    cta::objectstore::BackendPopulator backendPopulator(*backend);
+    cta::OStoreDBWithAgent osdb(*backend, backendPopulator.getAgentReference());
+    const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+    const uint64_t nbConns = 1;
+    std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns));
+    cta::Scheduler scheduler(*catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
+  
+    castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
+      cta::utils::getShortHostname(),
+      m_processManager.logContext().logger(),
+      sWrapper,
+      driveConfig,
+      mediaChangerFacade,
+      driveHandlerProxy,
+      capUtils,
+      dataTransferConfig,
+      scheduler);
+
+    return dataTransferSession.execute();
   }
 }
 

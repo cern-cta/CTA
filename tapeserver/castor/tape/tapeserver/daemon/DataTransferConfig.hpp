@@ -49,14 +49,6 @@ struct DataTransferConfig {
   uint32_t nbBufs;
 
   /**
-   * What to do in case of a bad MIR on load. The valid options are:
-   *   REPAIR : SPACE to EOD, REWIND
-   *   IGNORE : simply go on
-   *   CANCEL : cancel the request
-   */
-  std::string tapeBadMIRHandlingRepair;
-
-  /**
    * When the tapebridged daemon requests the tapegatewayd daemon for a set of
    * files to migrate to tape, this parameter defines the maximum number of
    * bytes the set of files should represent.

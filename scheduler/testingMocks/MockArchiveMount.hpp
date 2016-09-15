@@ -49,7 +49,7 @@ namespace cta {
         }
       }
       
-      void complete() {
+      void complete() override {
         completes++;
       }
 
