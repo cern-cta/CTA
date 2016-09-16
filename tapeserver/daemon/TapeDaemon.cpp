@@ -95,7 +95,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   log::LogContext lc(m_log);
   // Create the process manager and signal handler
   ProcessManager pm(lc);
-  std::unique_ptr<SignalHandler> sh;
+  std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
