@@ -584,12 +584,14 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       params.add("exitCode", WEXITSTATUS(processStatus));
       m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
       resetToDefault(PreviousSession::OK);
+      m_processingStatus.forkRequested=true;
     } else {
       params.add("IfSignaled", WIFSIGNALED(processStatus))
             .add("TermSignal", WTERMSIG(processStatus))
             .add("CoreDump", WCOREDUMP(processStatus));
       m_processManager.logContext().log(log::INFO, "Drive subprocess crashed. Will spawn a new one.");
       resetToDefault(PreviousSession::Crashed);
+      m_processingStatus.forkRequested=true;
     }
   }
   return m_processingStatus;
