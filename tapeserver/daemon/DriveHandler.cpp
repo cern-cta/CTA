@@ -202,6 +202,11 @@ void DriveHandler::kill() {
   params.add("unitName", m_configLine.unitName);
   if (m_pid != -1) {
     params.add("SubProcessId", m_pid);
+    // The socket pair will be reopened on the next fork. Clean it up.
+    if (m_socketPair.get()) {
+      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
+      m_socketPair.reset(nullptr);
+    }
     try {
       exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL),"Failed to kill() subprocess");
       int status;
@@ -565,6 +570,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     // It was our process. In all cases we prepare the space for the new session
     // We did collect the exit code of our child process
     // How well did it finish? (exit() or killed?)
+    // The socket pair will be reopened on the next fork. Clean it up.
+    if (m_socketPair.get()) {
+      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
+      m_socketPair.reset(nullptr);
+    }
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
           .add("driveUnit", m_configLine.unitName);
