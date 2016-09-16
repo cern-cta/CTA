@@ -140,6 +140,7 @@ The tape server daemon
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 requires: cta-lib
+requires: xrootd-server
 %description -n cta-frontend
 CERN Tape Archive:
 The xroot plugin
