@@ -130,7 +130,7 @@ namespace daemon {
       m_archiveJob->tapeFile.checksumType = "ADLER32";
       { 
         std::stringstream cs;
-        cs << std::hex << std::showbase << std::uppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
+        cs << "0X" << std::hex << std::noshowbase << std::uppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
         m_archiveJob->tapeFile.checksumValue = cs.str();
       }
       m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
