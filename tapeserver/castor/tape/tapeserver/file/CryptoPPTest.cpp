@@ -221,7 +221,7 @@ namespace unitTests {
     // echo -n 'Any random message will do!' | openssl dgst -sha1 -sign  ~/testRSAPrivate.pem | openssl enc -base64 | tr -d '\n' ; echo
     std::string osslSign("bfqLxACTFS7fMKH5ewNUOaglRlIGCEPWGhx4fRPErFGHtuCi2yWlYFsXIfjBxOT+yCyKRpTnZWGJTbcP72eT7os2qCqIOejAM3nTcsChHN5f3UyADvsi1f7C3DqhYVKVFQPaBdb3zm8IBHsFjmu2EzVE5juc1C9L+ztVmoABptw=");
     std::string CryptoPPSign(castor::tape::diskFile::CryptoPPSigner::sign(msg,CryptoPPKey));
-    std::cout << CryptoPPSign << std::endl;
+    // std::cout << CryptoPPSign << std::endl;
     ASSERT_EQ(osslSign,CryptoPPSign);
     // A few examples generated with openssl's command line:
     // string=`dd if=/dev/urandom bs=40 count=1 2>/dev/null | openssl enc -base64 | tr -d 'n\'`
