@@ -113,6 +113,7 @@ set (COMMON_LIB_SRC_FILES
   threading/System.cpp
   threading/Threading.cpp
   threading/Semaphores.cpp
+  utils/GetOptThreadSafe.cpp
   utils/utils.cpp
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
@@ -154,6 +155,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   threading/ThreadingMTTests.cpp
   threading/ThreadingTests.cpp
   threading/AtomicCounterTest.cpp
+  utils/GetOptThreadSafeTest.cpp
   utils/UtilsTest.cpp
   UserIdentityTest.cpp
   optionalTest.cpp)
