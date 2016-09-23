@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "scheduler/MountType.hpp"
+#include "common/dataStructures/MountType.hpp"
 
 #include <string>
 
@@ -42,7 +42,7 @@ namespace daemon {
       /** The VID we will work on */
       std::string vid;
       /** The mount type: archive or retrieve */
-      cta::MountType::Enum mountType;
+      cta::common::dataStructures::MountType mountType;
       /** The number of files currently on tape*/
       uint32_t nbFiles;
     };

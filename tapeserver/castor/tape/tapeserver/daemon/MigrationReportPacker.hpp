@@ -82,7 +82,7 @@ public:
    * function is to be used by the tape thread when running.
    * @param state the new drive state.
    */
-  virtual void reportDriveStatus(cta::common::DriveStatus status);
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -134,9 +134,9 @@ private:
   };
   
   class ReportDriveStatus : public Report {
-    cta::common::DriveStatus m_status;
+    cta::common::dataStructures::DriveStatus m_status;
   public:
-    ReportDriveStatus(cta::common::DriveStatus status): m_status(status) {}
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {}
     virtual void execute(MigrationReportPacker& reportPacker);
   };
   

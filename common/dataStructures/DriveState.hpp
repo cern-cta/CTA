@@ -18,13 +18,12 @@
 
 #pragma once
 
-#include <list>
-#include <map>
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/DriveStatus.hpp"
-#include "common/dataStructures/MountType.hpp"
+#include "DriveStatus.hpp"
+#include "MountType.hpp"
+#include "DesiredDriveState.hpp"
 
 namespace cta {
 namespace common {
@@ -42,17 +41,26 @@ struct DriveState {
 
   bool operator!=(const DriveState &rhs) const;
 
-  std::string name;
+  std::string driveName;
   std::string host;
   std::string logicalLibrary;
   uint64_t sessionId;
   uint64_t bytesTransferedInSession;
   uint64_t filesTransferedInSession;
-  uint64_t latestBandwidth;
+  double latestBandwidth; /** < Byte per seconds */
   time_t sessionStartTime;
-  time_t currentStateStartTime;
+  time_t mountStartTime;
+  time_t transferStartTime;
+  time_t unloadStartTime;
+  time_t unmountStartTime;
+  time_t drainingStartTime;
+  time_t downOrUpStartTime;
+  time_t cleanupStartTime;
+  time_t lastUpdateTime;
+  time_t startStartTime;
   MountType mountType;
-  DriveStatus status;
+  DriveStatus driveStatus;
+  DesiredDriveState desiredDriveState;
   std::string currentVid;
   std::string currentTapePool;
 

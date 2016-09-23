@@ -136,7 +136,7 @@ namespace unitTests
     virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
     virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
     virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
-    virtual void setDriveStatus(cta::common::DriveStatus status, time_t completionTime) { throw std::runtime_error("Not implemented"); }
+    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) { throw std::runtime_error("Not implemented"); }
   };
   
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
@@ -163,7 +163,7 @@ namespace unitTests
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
-    volume.mountType=cta::MountType::RETRIEVE;
+    volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);
     cta::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, lc);
@@ -225,7 +225,7 @@ namespace unitTests
     castor::messages::TapeserverProxyDummy initialProcess;  
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
-    volume.mountType=cta::MountType::RETRIEVE;
+    volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     cta::server::ProcessCapDummy cap;
     castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, DriveConfig(), "0.0.0.0", volume, lc);  
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, lc);

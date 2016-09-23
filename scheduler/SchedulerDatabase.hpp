@@ -22,21 +22,23 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
-#include "common/DriveState.hpp"
+#include "common/dataStructures/DriveState.hpp"
 #include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
-#include "scheduler/MountType.hpp"
 #include "catalogue/TapeForWriting.hpp"
 
 #include <list>
+#include <limits>
 #include <map>
 #include <stdint.h>
 #include <string>
@@ -167,7 +169,7 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(common::DriveStatus status, time_t completionTime) = 0;
+    virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -221,7 +223,8 @@ public:
    * @param vidsToConsider list of vids to considers. Other vids should not be considered.
    * @return the list of statistics.
    */
-  virtual std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
+  virtual std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
     const std::set<std::string> & vidsToConsider) = 0;
   /**
    * Queues the specified request.
@@ -312,7 +315,7 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
     virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(common::DriveStatus status, time_t completionTime) = 0;
+    virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -340,26 +343,33 @@ public:
    * comparison between mounts.
    */
   struct PotentialMount {
-    cta::MountType::Enum type; /**< Is this an archive, retireve or label? */
-    std::string vid; /**< The tape VID (for a retieve) */
-    std::string tapePool; /**< The name of the tape pool for both archive and retrieve */
-    uint64_t priority;    /**< The priority for the mount, defined as the highest priority of all queued jobs */
-    uint64_t maxDrivesAllowed; /**< The maximum number of drives allowed for this tape pool, defined as the highest value amongst jobs */
-    time_t minArchiveRequestAge; /**< The maximum amount of time to wait before forcing a mount in the absence of enough data. Defined as the smallest value amongst jobs.*/
-    uint64_t filesQueued; /**< The number of files queued for this queue */
-    uint64_t bytesQueued; /**< The amount of data currently queued */
-    time_t oldestJobStartTime; /**< Creation time of oldest request */
-    std::string logicalLibrary; /**< The logical library (for a retrieve) */
-    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing mounts/quota (for faire share of mounts)*/
+    cta::common::dataStructures::MountType type;    /**< Is this an archive, retireve or label? */
+    std::string vid;              /**< The tape VID (for a retieve) */
+    std::string tapePool;         /**< The name of the tape pool for both archive 
+                                   * and retrieve */
+    uint64_t priority;            /**< The priority for the mount, defined as the highest 
+                                   * priority of all queued jobs */
+    uint64_t maxDrivesAllowed;    /**< The maximum number of drives allowed for this 
+                                   * tape pool, defined as the highest value amongst 
+                                   * jobs */
+    time_t minArchiveRequestAge;  /**< The maximum amount of time to wait before 
+                                   * forcing a mount in the absence of enough data. 
+                                   * Defined as the smallest value amongst jobs.*/
+    uint64_t filesQueued;         /**< The number of files queued for this queue */
+    uint64_t bytesQueued;         /**< The amount of data currently queued */
+    time_t oldestJobStartTime;    /**< Creation time of oldest request */
+    std::string logicalLibrary;   /**< The logical library (for a retrieve) */
+    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing 
+                                   * mounts/quota (for faire share of mounts)*/
     
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
         return true;
       if (priority > other.priority)
         return false;
-      if (type == cta::MountType::Enum::ARCHIVE && other.type != cta::MountType::Enum::ARCHIVE)
+      if (type == cta::common::dataStructures::MountType::Archive && other.type != cta::common::dataStructures::MountType::Archive)
         return false;
-      if (other.type == cta::MountType::Enum::ARCHIVE && type != cta::MountType::Enum::ARCHIVE)
+      if (other.type == cta::common::dataStructures::MountType::Archive && type != cta::common::dataStructures::MountType::Archive)
         return true;
       if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
         return true;
@@ -373,7 +383,7 @@ public:
    */
   struct ExistingMount {
     std::string driveName;
-    cta::MountType::Enum type;
+    cta::common::dataStructures::MountType type;
     std::string tapePool;
   };
   
@@ -429,8 +439,42 @@ public:
    *
    * @return The current list of registered drives.
    */
-  virtual std::list<cta::common::DriveState> getDriveStates() const = 0;
-
+  virtual std::list<cta::common::dataStructures::DriveState> getDriveStates() const = 0;
+  
+  /**
+   * Sets the administrative desired state (up/down/force down) for an existing drive.
+   * Will throw an excpeiton is the drive does not exist
+   * @param drive
+   * @param desiredState
+   */
+  virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state) = 0;
+  
+  /**
+   * Sets the drive status in the object store. The drive status will be recorded in all cases,
+   * although some historical information is needed to provide an accurate view of the
+   * current session state. This allows the system to gracefully handle drive entry
+   * deletion at any time (an operator operation).
+   * @param driveInfo Fundamental information about the drive.
+   * @param mountType Mount type (required).
+   * @param status Current drive status (required).
+   * @param reportTime Time of report (required).
+   * @param mountSessionId (optional, required by some statuses).
+   * @param byteTransfered (optional, required by some statuses).
+   * @param filesTransfered (optional, required by some statuses).
+   * @param latestBandwidth (optional, required by some statuses).
+   * @param vid (optional, required by some statuses).
+   * @param tapepool (optional, required by some statuses).
+   */
+  virtual void reportDriveStatus (const common::dataStructures::DriveInfo & driveInfo,
+    cta::common::dataStructures::MountType mountType,
+    common::dataStructures::DriveStatus status, 
+    time_t reportTime,
+    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
+    uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(),
+    uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
+    double latestBandwidth = std::numeric_limits<double>::max(),
+    const std::string & vid = "",
+    const std::string & tapepool = "") = 0;
 }; // class SchedulerDatabase
 
 } // namespace cta

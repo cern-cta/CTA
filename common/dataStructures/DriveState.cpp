@@ -33,13 +33,24 @@ DriveState::DriveState():
   filesTransferedInSession(0),
   latestBandwidth(0),
   sessionStartTime(0),
-  currentStateStartTime(0) {}
+  mountStartTime(0),
+  transferStartTime(0),
+  unloadStartTime(0),
+  unmountStartTime(0),
+  drainingStartTime(0),
+  downOrUpStartTime(0),
+  cleanupStartTime(0),
+  lastUpdateTime(0),
+  startStartTime(0),
+  mountType(dataStructures::MountType::NoMount),
+  driveStatus(dataStructures::DriveStatus::Down),
+  desiredDriveState({false, false}) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool DriveState::operator==(const DriveState &rhs) const {
-  return name==rhs.name
+  return driveName==rhs.driveName
       && host==rhs.host
       && logicalLibrary==rhs.logicalLibrary
       && sessionId==rhs.sessionId
@@ -47,9 +58,18 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && filesTransferedInSession==rhs.filesTransferedInSession
       && latestBandwidth==rhs.latestBandwidth
       && sessionStartTime==rhs.sessionStartTime
-      && currentStateStartTime==rhs.currentStateStartTime
+      && mountStartTime==rhs.mountStartTime
+      && transferStartTime==rhs.transferStartTime
+      && unloadStartTime==rhs.unloadStartTime
+      && unmountStartTime==rhs.unmountStartTime
+      && drainingStartTime==rhs.drainingStartTime
+      && downOrUpStartTime==rhs.downOrUpStartTime
+      && cleanupStartTime==rhs.cleanupStartTime
+      && lastUpdateTime==rhs.lastUpdateTime
+      && startStartTime==rhs.startStartTime
       && mountType==rhs.mountType
-      && status==rhs.status
+      && driveStatus==rhs.driveStatus
+      && desiredDriveState==rhs.desiredDriveState
       && currentVid==rhs.currentVid
       && currentTapePool==rhs.currentTapePool;
 }
@@ -65,7 +85,8 @@ bool DriveState::operator!=(const DriveState &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
-  os << "(name=" << obj.name
+  return
+  os << "(name=" << obj.driveName
      << " host=" << obj.host
      << " logicalLibrary=" << obj.logicalLibrary
      << " sessionId=" << obj.sessionId
@@ -73,12 +94,20 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " filesTransferedInSession=" << obj.filesTransferedInSession
      << " latestBandwidth=" << obj.latestBandwidth
      << " sessionStartTime=" << obj.sessionStartTime
-     << " currentStateStartTime=" << obj.currentStateStartTime
+     << " mountStartTime="  << obj.mountStartTime
+     << " transferStartTime="  << obj.transferStartTime
+     << " unloadStartTime="  << obj.unloadStartTime
+     << " unmountStartTime="  << obj.unmountStartTime
+     << " drainingStartTime="  << obj.drainingStartTime
+     << " downOrUpStartTime="  << obj.downOrUpStartTime
+     << " cleanupStartTime="  << obj.cleanupStartTime
+     << " lastUpdateTime="  << obj.lastUpdateTime
+     << " startStartTime="  << obj.startStartTime
      << " mountType=" << obj.mountType
-     << " status=" << obj.status
+     << " status=" << obj.driveStatus
+     << " desiredState=" << obj.desiredDriveState
      << " currentVid=" << obj.currentVid
      << " currentTapePool=" << obj.currentTapePool << ")";
-  return os;
 }
 
 } // namespace dataStructures

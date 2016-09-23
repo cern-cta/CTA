@@ -259,10 +259,34 @@ cta::common::dataStructures::WriteTestResult cta::Scheduler::write_autoTest(cons
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatus
+// getDesiredDriveState
 //------------------------------------------------------------------------------
-void cta::Scheduler::setDriveStatus(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+cta::common::dataStructures::DesiredDriveState cta::Scheduler::getDesiredDriveState(const std::string& driveName) {
+  auto driveStates = m_db.getDriveStates();
+  for (auto & d: driveStates) {
+    if (d.driveName == driveName) {
+      return d.desiredDriveState;
+    }
+  }
+  throw NoSuchDrive ("In Scheduler::getDesiredDriveState(): no such drive");
+}
+
+//------------------------------------------------------------------------------
+// setDesiredDriveState
+//------------------------------------------------------------------------------
+void cta::Scheduler::setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
+  common::dataStructures::DesiredDriveState desiredDriveState;
+  desiredDriveState.up = up;
+  desiredDriveState.forceDown = force;
+  m_db.setDesiredDriveState(driveName, desiredDriveState);
+}
+
+//------------------------------------------------------------------------------
+// setDesiredDriveState
+//------------------------------------------------------------------------------
+void cta::Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, cta::common::dataStructures::DriveStatus status) {
+  // TODO: mount type should be transmitted too.
+  m_db.reportDriveStatus(driveInfo, type, status, time(NULL));
 }
 
 //------------------------------------------------------------------------------
@@ -325,12 +349,12 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // Build the list of tapes.
   std::set<std::string> tapeSet;
   for (auto &m:mountInfo->potentialMounts) {
-    if (m.type==cta::MountType::RETRIEVE) tapeSet.insert(m.vid);
+    if (m.type==cta::common::dataStructures::MountType::Retrieve) tapeSet.insert(m.vid);
   }
   if (tapeSet.size()) {
     auto tapesInfo=m_catalogue.getTapesByVid(tapeSet);
     for (auto &m:mountInfo->potentialMounts) {
-      if (m.type==cta::MountType::RETRIEVE) {
+      if (m.type==cta::common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
         m.tapePool=tapesInfo[m.vid].tapePoolName;
       }
@@ -342,7 +366,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // We also only want the potential mounts for which we still have 
   // We cannot filter the archives yet
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
-    if (m->type == MountType::RETRIEVE && m->logicalLibrary != logicalLibraryName) {
+    if (m->type == cta::common::dataStructures::MountType::Retrieve && m->logicalLibrary != logicalLibraryName) {
       m = mountInfo->potentialMounts.erase(m);
     } else {
       m++;
@@ -351,7 +375,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
-  typedef std::pair<std::string, cta::MountType::Enum> tpType;
+  typedef std::pair<std::string, cta::common::dataStructures::MountType> tpType;
   std::map<tpType, uint32_t> existingMountsSummary;
   for (auto & em: mountInfo->existingMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
@@ -403,7 +427,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   std::list<cta::catalogue::TapeForWriting> tapeList;
   if (std::count_if(
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
-        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == cta::MountType::ARCHIVE; } )) {
+        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == cta::common::dataStructures::MountType::Archive; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
   }
        
@@ -421,7 +445,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==cta::MountType::ARCHIVE) {
+    if (m->type==cta::common::dataStructures::MountType::Archive) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -439,14 +463,14 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
                 cta::utils::getShortHostname(), 
                 time(NULL)).release());
             internalRet->m_sessionRunning = true;
-            internalRet->setDriveStatus(cta::common::DriveStatus::Starting);
+            internalRet->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
             continue;
           }
         }
       }
-    } else if (m->type==cta::MountType::RETRIEVE) {
+    } else if (m->type==cta::common::dataStructures::MountType::Retrieve) {
       // We know the tape we intend to mount. We have to validate the tape is 
       // actually available to read, and pass on it if no.
       auto drives = m_db.getDriveStates();
@@ -463,7 +487,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
           internalRet->m_sessionRunning = true;
           internalRet->m_diskRunning = true;
           internalRet->m_tapeRunning = true;
-          internalRet->setDriveStatus(cta::common::DriveStatus::Starting);
+          internalRet->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
           return std::unique_ptr<TapeMount> (internalRet.release()); 
         } catch (cta::exception::Exception & ex) {
           std::string debug=ex.getMessageValue();

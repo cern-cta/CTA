@@ -35,7 +35,7 @@ std::string LabelMount::getMountTransactionId() const {
   // TODO
 }
 
-MountType::Enum LabelMount::getMountType() const {
+cta::common::dataStructures::MountType LabelMount::getMountType() const {
   throw 0;
   // TODO
 }
@@ -55,7 +55,7 @@ std::string LabelMount::getVid() const {
   // TODO
 }
 
-void LabelMount::setDriveStatus(cta::common::DriveStatus status) {
+void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
   throw 0;
   // TODO
 }

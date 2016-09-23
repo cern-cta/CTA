@@ -24,7 +24,7 @@
 
 namespace cta { namespace common {
 
-  enum DriveStatus {
+  enum DriveStatusToDecommission {
     Down,
     Up,
     Starting, // This status allows drive register to represent drives committed
@@ -37,8 +37,13 @@ namespace cta { namespace common {
     DrainingToDisk,
     CleaningUp
   };
+  
+  struct DesiredDriveStateToDecommission { 
+    bool up;        ///< Should the drive be up?
+    bool forceDown; ///< Should going down preempt an existig mount?
+  };
 
-  struct DriveState {
+  struct DriveStateToDecommission {
     std::string name;
     std::string logicalLibrary;
     uint64_t sessionId;
@@ -55,10 +60,13 @@ namespace cta { namespace common {
     time_t cleanupStartTime;
     time_t lastUpdateTime;
     time_t startStartTime;
-    cta::MountType::Enum mountType;
-    DriveStatus status;
+    cta::MountTypeToDecommission::Enum mountType;
+    dataStructures::DriveStatus status;
     std::string currentVid;
     std::string currentTapePool;
+    dataStructures::DesiredDriveState desiredDriveState;
   };
   
 }} //namespace cta::common
+
+#error This should have been decomissioned

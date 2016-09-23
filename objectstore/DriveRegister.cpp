@@ -20,15 +20,24 @@
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
-#include "common/DriveState.hpp"
+#include "common/dataStructures/DriveState.hpp"
+#include "common/dataStructures/MountType.hpp"
 #include <set>
 #include <json-c/json.h>
 #include <iostream>
 
-cta::objectstore::DriveRegister::DriveRegister(const std::string & address, Backend & os):
+namespace cta { namespace objectstore {
+
+//------------------------------------------------------------------------------
+// DriveRegister::DriveRegister())
+//------------------------------------------------------------------------------
+DriveRegister::DriveRegister(const std::string & address, Backend & os):
   ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(os, address) { }
 
-cta::objectstore::DriveRegister::DriveRegister(GenericObject& go):
+//------------------------------------------------------------------------------
+// DriveRegister::DriveRegister())
+//------------------------------------------------------------------------------
+DriveRegister::DriveRegister(GenericObject& go):
   ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -36,7 +45,11 @@ cta::objectstore::DriveRegister::DriveRegister(GenericObject& go):
   getPayloadFromHeader();
 }
 
-std::string cta::objectstore::DriveRegister::dump() {  
+//------------------------------------------------------------------------------
+// DriveRegister::dump())
+//------------------------------------------------------------------------------
+std::string DriveRegister::dump() {
+  // TODO: update following structure changes.
   checkPayloadReadable();
   std::stringstream ret;
   ret << "DriveRegister" << std::endl;
@@ -64,10 +77,11 @@ std::string cta::objectstore::DriveRegister::dump() {
     json_object_object_add(jot, "currentvid", json_object_new_string(i->currentvid().c_str()));
     json_object_object_add(jot, "currenttapepool", json_object_new_string(i->currenttapepool().c_str()));
     
-    json_object * creationlog_jot = json_object_new_object();
-    json_object_object_add(creationlog_jot, "host", json_object_new_string(i->creationlog().host().c_str()));
-    json_object_object_add(creationlog_jot, "time", json_object_new_int64(i->creationlog().time()));
-    json_object_object_add(jot, "creationlog", creationlog_jot);
+// TODO: Creation log should be fully supported or dropped.
+//    json_object * creationlog_jot = json_object_new_object();
+//    json_object_object_add(creationlog_jot, "host", json_object_new_string(i->creationlog().host().c_str()));
+//    json_object_object_add(creationlog_jot, "time", json_object_new_int64(i->creationlog().time()));
+//    json_object_object_add(jot, "creationlog", creationlog_jot);
     
     json_object * mounttype_jot = json_object_new_object();
     json_object_object_add(mounttype_jot, "type", json_object_new_int(i->mounttype()));
@@ -85,13 +99,19 @@ std::string cta::objectstore::DriveRegister::dump() {
   return ret.str();
 }
 
-void cta::objectstore::DriveRegister::initialize() {
+//------------------------------------------------------------------------------
+// DriveRegister::initialize())
+//------------------------------------------------------------------------------
+void DriveRegister::initialize() {
   // Setup underlying object
   ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>::initialize();
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumedOwner) {
+//------------------------------------------------------------------------------
+// DriveRegister::garbageCollect())
+//------------------------------------------------------------------------------
+void DriveRegister::garbageCollect(const std::string &presumedOwner) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the drive register creation failed. We have nothing to do.
@@ -120,536 +140,133 @@ void cta::objectstore::DriveRegister::garbageCollect(const std::string &presumed
   remove();
 }
 
-// This operator will be used in the following usage of the templated
-// findElement and removeOccurences
-namespace {
-  bool operator==(const std::string & driveName, 
-    const cta::objectstore::serializers::DriveState & ds) {
-    return ds.drivename() == driveName;
-  }
-}
-
-void cta::objectstore::DriveRegister::addDrive(const std::string & driveName,
-    const std::string & logicalLibrary, const EntryLogSerDeser & creationLog) { 
-  //add logical library to the parameters
-  checkPayloadWritable();
-  // Check that we are not trying to duplicate a drive
-  try {
-    serializers::findElement(m_payload.drives(), driveName);
-    throw DuplicateEntry("In DriveRegister::addDrive: entry already exists");
-  } catch (serializers::NotFound &) {}
-  serializers::DriveState * driveState = m_payload.add_drives();
-  driveState->set_drivename(driveName);
-  driveState->set_logicallibrary(logicalLibrary);
-  driveState->set_lastupdatetime(creationLog.time);
-  driveState->set_mounttype(serializers::MountType::NoMount);
-  creationLog.serialize(*driveState->mutable_creationlog());
-}
-
-cta::objectstore::serializers::DriveStatus 
-  cta::objectstore::DriveRegister::serializeDriveStatus(common::DriveStatus driveStatus) {
-  using common::DriveStatus;
-  switch (driveStatus) {
-    case DriveStatus::Down:
-      return serializers::DriveStatus::Down;
-    case DriveStatus::Up:
-      return serializers::DriveStatus::Up;
-    case DriveStatus::Starting:
-      return serializers::DriveStatus::Starting;
-    case DriveStatus::Mounting:
-      return serializers::DriveStatus::Mounting;
-    case DriveStatus::Transfering:
-      return serializers::DriveStatus::Transfering;
-    case DriveStatus::Unloading:
-      return serializers::DriveStatus::Unloading;
-    case DriveStatus::Unmounting:
-      return serializers::DriveStatus::Unmounting;
-    case DriveStatus::DrainingToDisk:
-      return serializers::DriveStatus::DrainingToDisk;
-    case DriveStatus::CleaningUp:
-      return serializers::DriveStatus::CleaningUp;
-    default:
-      throw exception::Exception("In DriveRegister::serializeDriveState: unexpected DriveStatus");
-  }
-}
-
-cta::common::DriveStatus
-  cta::objectstore::DriveRegister::deserializeDriveStatus(
-    serializers::DriveStatus driveStatus) {
-  using common::DriveStatus;
-  switch (driveStatus) {
-    case serializers::DriveStatus::Down:
-      return DriveStatus::Down;
-    case serializers::DriveStatus::Up:
-      return DriveStatus::Up;
-    case serializers::DriveStatus::Starting:
-      return DriveStatus::Starting;
-    case serializers::DriveStatus::Mounting:
-      return DriveStatus::Mounting;
-    case serializers::DriveStatus::Transfering:
-      return DriveStatus::Transfering;
-    case serializers::DriveStatus::Unloading:
-      return DriveStatus::Unloading;
-    case serializers::DriveStatus::Unmounting:
-      return DriveStatus::Unmounting;
-    case serializers::DriveStatus::DrainingToDisk:
-      return DriveStatus::DrainingToDisk;
-    case serializers::DriveStatus::CleaningUp:
-      return DriveStatus::CleaningUp;
-    default:
-      throw exception::Exception("In DriveRegister::deserializeDriveStatus: unexpected DriveStatus");
-  }
-}
-
-cta::objectstore::serializers::MountType
-  cta::objectstore::DriveRegister::serializeMountType(cta::MountType::Enum mountType) {
-  switch (mountType) {
-    case MountType::NONE:
-      return serializers::MountType::NoMount;
-    case MountType::ARCHIVE:
-      return serializers::MountType::Archive;
-    case MountType::RETRIEVE:
-      return serializers::MountType::Retrieve;
-    default:
-      throw exception::Exception("In DriveRegister::serializeMountType: unexpected MountType");
-  }
-}
-
-cta::MountType::Enum
-  cta::objectstore::DriveRegister::deserializeMountType(serializers::MountType mountType) {
-  switch (mountType) {
-    case serializers::MountType::NoMount:
-      return MountType::NONE;
-    case serializers::MountType::Archive:
-      return MountType::ARCHIVE;
-    case serializers::MountType::Retrieve:
-      return MountType::RETRIEVE;
-    default:
-      throw exception::Exception("In DriveRegister::serializeMountType: unexpected MountType");
-  }
-}
-
-namespace {
-  template <class C>
-  void mergeSecondInfirst(std::set<C> &first, const std::set<C> &second) {
-    for (auto e=second.begin(); e!=second.end(); e++)
-      first.insert(*e);
-  }
-}
-
-void cta::objectstore::DriveRegister::reportDriveStatus(const std::string& driveName,
-  const std::string& logicalLibary, common::DriveStatus status, time_t reportTime,
-  cta::MountType::Enum mountType, uint64_t mountSessionId, uint64_t byteTransfered,
-  uint64_t filesTransfered, double latestBandwidth, const std::string & vid,
-  const std::string & tapepool) {
-  using common::DriveStatus;
-  // Wrap all the parameters together for easier manipulation by sub-functions
-  ReportDriveStatusInputs inputs (driveName, logicalLibary);
-  inputs.mountType = mountType;
-  inputs.byteTransfered = byteTransfered;
-  inputs.filesTransfered = filesTransfered;
-  inputs.latestBandwidth = latestBandwidth;
-  inputs.mountSessionId = mountSessionId;
-  inputs.reportTime = reportTime;
-  inputs.status = status;
-  inputs.vid = vid;
-  inputs.tapepool = tapepool;
-  // Sanity-check the input
-  checkReportDriveStatusInputs(inputs);
-  // Find the drive entry
-  checkPayloadWritable();
-  serializers::DriveState * drive(NULL);
-  {
-    auto dl = m_payload.mutable_drives();
-    for (auto dp = dl->begin(); dp != dl->end(); dp++) {
-      if (dp->drivename() == driveName)
-        drive = &(*dp);
-    }
-  }
-  if (!drive) {
-    // If the new status does not imply that there should already be an existing
-    // session, we just create the drive.
-    std::set<int> alreadyInSessionStatuses = {
-      (int)serializers::DriveStatus::Transfering,
-      (int)serializers::DriveStatus::Unloading,
-      (int)serializers::DriveStatus::Unmounting,
-      (int)serializers::DriveStatus::DrainingToDisk      
-    };
-    if (!alreadyInSessionStatuses.count((int)status)) {
-      // TODO: the creation should be moved to another place to better logging
-      // Explicitely by scheduler? To be decided.
-      EntryLogSerDeser el("name0", "", reportTime);
-      addDrive(driveName, logicalLibary, el);
-    } else {
-      throw NoSuchDrive("In DriveRegister::reportDriveStatus(): No such drive");
-    }
-    // Find the drive again
-    auto dl = m_payload.mutable_drives();
-    for (auto dp = dl->begin(); dp != dl->end(); dp++) {
-      if (dp->drivename() == driveName)
-        drive = &(*dp);
-    }
-    if (!drive) {
-      throw NoSuchDrive("In DriveRegister::reportDriveStatus(): Failed to create the drive");
-    }
-  }
-  switch (status) {
-    case DriveStatus::Down:
-      setDriveDown(inputs, drive);
-      break;
-    case DriveStatus::Up:
-      setDriveUp(inputs, drive);
-      break;
-    case DriveStatus::Starting:
-      setDriveStarting(inputs, drive);
-      break;
-    case DriveStatus::Mounting:
-      setDriveMounting(inputs, drive);
-      break;
-    case DriveStatus::Transfering:
-      setDriveTransfering(inputs, drive);
-      break;
-    case DriveStatus::Unloading:
-      setDriveUnloading(inputs, drive);
-      break;
-    case DriveStatus::Unmounting:
-      setDriveUnmounting(inputs, drive);
-      break;
-    case DriveStatus::DrainingToDisk:
-      setDriveDrainingToDisk(inputs, drive);
-      break;
-    case DriveStatus::CleaningUp:
-      setDriveCleaningUp(inputs, drive);
-      break;
-    default:
-      throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
-  }
-}
-
-void cta::objectstore::DriveRegister::setDriveDown(ReportDriveStatusInputs& inputs, 
-    serializers::DriveState * drive) {
-  // If we were already down, then we only update the last update time.
-  if (drive->drivestatus() == serializers::DriveStatus::Down) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(0);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(inputs.reportTime);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializers::MountType::NoMount);
-  drive->set_drivestatus(serializers::DriveStatus::Down);
-  drive->set_currentvid("");
-  drive->set_currenttapepool("");
-}
-
-void cta::objectstore::DriveRegister::setDriveUp(ReportDriveStatusInputs& inputs, 
-    serializers::DriveState * drive) {
-  // If we were already up, then we only update the last update time.
-  if (drive->drivestatus() == serializers::DriveStatus::Up) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(0);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(inputs.reportTime);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializers::MountType::NoMount);
-  drive->set_drivestatus(serializers::DriveStatus::Up);
-  drive->set_currentvid("");
-  drive->set_currenttapepool("");
-}
-
-void cta::objectstore::DriveRegister::setDriveStarting(ReportDriveStatusInputs& inputs, 
-    serializers::DriveState * drive) {
-  // If we were already starting, then we only update the last update time.
-  if (drive->drivestatus() == serializers::DriveStatus::Starting) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(inputs.reportTime);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Starting);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveMounting(ReportDriveStatusInputs& inputs, 
-    serializers::DriveState * drive) {
-  // If we were already starting, then we only update the last update time.
-  if (drive->drivestatus() == serializers::DriveStatus::Mounting) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  //drive->set_sessionstarttime(inputs.reportTime);
-  drive->set_mountstarttime(inputs.reportTime);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Mounting);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveTransfering(ReportDriveStatusInputs& inputs, 
-    serializers::DriveState * drive) {
-  // If we were already transferring, we update the full statistics
-  if (drive->drivestatus() == serializers::DriveStatus::Transfering) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    drive->set_bytestransferedinsession(inputs.byteTransfered);
-    drive->set_filestransferedinsession(inputs.filesTransfered);
-    drive->set_latestbandwidth(inputs.latestBandwidth);
-    return;
-  }
-  // If we are changing state, we can only come from Mounting.
-  if (drive->drivestatus() != serializers::DriveStatus::Mounting)
-    throw WrongStateTransition("In DriveRegister::setDriveTransfering, transition from wrong state");
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(inputs.byteTransfered);
-  drive->set_filestransferedinsession(inputs.filesTransfered);
-  drive->set_latestbandwidth(inputs.latestBandwidth);
-  //drive->set_sessionstarttime(inputs.reportTime);
-  //drive->set_mountstarttime(inputs.reportTime);
-  drive->set_transferstarttime(inputs.reportTime);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Transfering);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveUnloading(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  if (drive->drivestatus() == serializers::DriveStatus::Unloading) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(inputs.reportTime);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Unloading);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveUnmounting(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  if (drive->drivestatus() == serializers::DriveStatus::Unmounting) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(inputs.reportTime);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::Unmounting);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveDrainingToDisk(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  if (drive->drivestatus() == serializers::DriveStatus::DrainingToDisk) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(inputs.reportTime);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(0);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::DrainingToDisk);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-void cta::objectstore::DriveRegister::setDriveCleaningUp(ReportDriveStatusInputs& inputs, serializers::DriveState* drive) {
-  if (drive->drivestatus() == serializers::DriveStatus::CleaningUp) {
-    drive->set_lastupdatetime(inputs.reportTime);
-    return;
-  }
-  // If we are changing state, then all should be reset. We are not supposed to
-  // know the direction yet.
-  drive->set_logicallibrary(inputs.logicalLibary);
-  drive->set_sessionid(inputs.mountSessionId);
-  drive->set_bytestransferedinsession(0);
-  drive->set_filestransferedinsession(0);
-  drive->set_latestbandwidth(0);
-  drive->set_sessionstarttime(0);
-  drive->set_mountstarttime(0);
-  drive->set_transferstarttime(0);
-  drive->set_unloadstarttime(0);
-  drive->set_unmountstarttime(0);
-  drive->set_drainingstarttime(0);
-  drive->set_downorupstarttime(0);
-  drive->set_cleanupstarttime(inputs.reportTime);
-  drive->set_lastupdatetime(inputs.reportTime);
-  drive->set_mounttype(serializeMountType(inputs.mountType));
-  drive->set_drivestatus(serializers::DriveStatus::CleaningUp);
-  drive->set_currentvid(inputs.vid);
-  drive->set_currenttapepool(inputs.tapepool);
-}
-
-
-void cta::objectstore::DriveRegister::checkReportDriveStatusInputs(
-  ReportDriveStatusInputs& inputs) {
-  using common::DriveStatus;
-    // Depending on the status, we might or might not expect statistics.
-  std::set<int> statusesRequiringStats = {
-    (int)DriveStatus::Transfering,
-    (int)DriveStatus::Unloading,
-    (int)DriveStatus::Unmounting,
-    (int)DriveStatus::DrainingToDisk
-  };
-  // A superset of the previous requires a VID and a mount ID
-  std::set<int> statusesRequiringVid = {
-    (int)DriveStatus::Starting,
-    (int)DriveStatus::Mounting
-  };
-  mergeSecondInfirst(statusesRequiringVid, statusesRequiringStats);
-  // Check we have statistics when we should
-  if (statusesRequiringStats.count((int)inputs.status) && 
-       (inputs.byteTransfered == std::numeric_limits<uint64_t>::max() ||
-        inputs.filesTransfered == std::numeric_limits<uint64_t>::max() ||
-        inputs.latestBandwidth == std::numeric_limits<double>::max()
-       ))
-    throw MissingStatistics("In DriveRegister::reportDriveStatus, statistics missing for status requiring it");
-  if (statusesRequiringVid.count((int)inputs.status) &&
-    (inputs.vid == "" || inputs.tapepool == "" || 
-     inputs.mountSessionId == std::numeric_limits<uint64_t>::max()))
-    throw MissingTapeInfo("In DriveRegister::reportDriveStatus, tape info or session Id missing for status requiring it");
-}
-
-
-auto cta::objectstore::DriveRegister::dumpDrives() -> std::list<common::DriveState> {
+//------------------------------------------------------------------------------
+// DriveRegister::getAllDrivesState())
+//------------------------------------------------------------------------------
+std::list<cta::common::dataStructures::DriveState> DriveRegister::getAllDrivesState() {
+  using cta::common::dataStructures::DriveState;
+  // Get all drives states
   checkPayloadReadable();
-  auto & dl = m_payload.drives();
-  std::list<common::DriveState> ret;
-  for (auto d=dl.begin(); d!=dl.end(); d++) {
-    ret.push_back(common::DriveState());
-    auto & di = ret.back();
-    di.name = d->drivename();
-    di.logicalLibrary = d->logicallibrary();
-    di.sessionId = d->sessionid();
-    di.bytesTransferedInSession = d->bytestransferedinsession();
-    di.filesTransferedInSession = d->filestransferedinsession();
-    di.latestBandwidth = d->latestbandwidth();
-    di.sessionStartTime = d->sessionstarttime();
-    di.mountStartTime = d->mountstarttime();
-    di.transferStartTime = d->transferstarttime();
-    di.unloadStartTime = d->unloadstarttime();
-    di.unmountStartTime = d->unmountstarttime();
-    di.drainingStartTime = d->drainingstarttime();
-    di.downOrUpStartTime = d->downorupstarttime();
-    di.cleanupStartTime = d->cleanupstarttime();
-    di.lastUpdateTime = d->lastupdatetime();    
-    di.mountType = deserializeMountType(d->mounttype());
-    di.status = deserializeDriveStatus(d->drivestatus());
-    di.currentVid = d->currentvid();
-    di.currentTapePool = d->currenttapepool();
+  std::list<cta::common::dataStructures::DriveState> ret;
+  for (auto & d: m_payload.drives()) {
+    ret.push_back(DriveState());
+    ret.back().driveName                   = d.drivename();
+    ret.back().host                        = d.host();
+    ret.back().logicalLibrary              = d.logicallibrary();
+    ret.back().sessionId                   = d.sessionid();
+    ret.back().bytesTransferedInSession    = d.bytestransferedinsession();
+    ret.back().filesTransferedInSession    = d.filestransferedinsession();
+    ret.back().latestBandwidth             = d.latestbandwidth();
+    ret.back().sessionStartTime            = d.sessionstarttime();
+    ret.back().mountStartTime              = d.mountstarttime();
+    ret.back().transferStartTime           = d.transferstarttime();
+    ret.back().unloadStartTime             = d.unloadstarttime();
+    ret.back().unmountStartTime            = d.unmountstarttime();
+    ret.back().drainingStartTime           = d.drainingstarttime();
+    ret.back().downOrUpStartTime           = d.downorupstarttime();
+    ret.back().cleanupStartTime            = d.cleanupstarttime();
+    ret.back().lastUpdateTime              = d.lastupdatetime();
+    ret.back().startStartTime              = d.startstarttime();
+    ret.back().mountType                   = (common::dataStructures::MountType) d.mounttype();
+    ret.back().driveStatus                 = (common::dataStructures::DriveStatus) d.drivestatus();
+    ret.back().desiredDriveState.up        = d.desiredup();
+    ret.back().desiredDriveState.forceDown = d.desiredforcedown();
+    ret.back().currentVid                  = d.currentvid();
+    ret.back().currentTapePool             = d.currenttapepool();
   }
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// DriveRegister::getDriveState())
+//------------------------------------------------------------------------------
+cta::common::dataStructures::DriveState DriveRegister::getDriveState(const std::string& driveName) {
+  using cta::common::dataStructures::DriveState;
+  // Find the drive for which we want the status
+  checkPayloadReadable();
+  for (auto & d: m_payload.drives()) {
+    if (d.drivename() == driveName) {
+      cta::common::dataStructures::DriveState ret;
+      ret.driveName                   = d.drivename();
+      ret.host                        = d.host();
+      ret.logicalLibrary              = d.logicallibrary();
+      ret.sessionId                   = d.sessionid();
+      ret.bytesTransferedInSession    = d.bytestransferedinsession();
+      ret.filesTransferedInSession    = d.filestransferedinsession();
+      ret.latestBandwidth             = d.latestbandwidth();
+      ret.sessionStartTime            = d.sessionstarttime();
+      ret.mountStartTime              = d.mountstarttime();
+      ret.transferStartTime           = d.transferstarttime();
+      ret.unloadStartTime             = d.unloadstarttime();
+      ret.unmountStartTime            = d.unmountstarttime();
+      ret.drainingStartTime           = d.drainingstarttime();
+      ret.downOrUpStartTime           = d.downorupstarttime();
+      ret.cleanupStartTime            = d.cleanupstarttime();
+      ret.lastUpdateTime              = d.lastupdatetime();
+      ret.startStartTime              = d.startstarttime();
+      ret.mountType                   = (common::dataStructures::MountType) d.mounttype();
+      ret.driveStatus                 = (common::dataStructures::DriveStatus) d.drivestatus();
+      ret.desiredDriveState.up        = d.desiredup();
+      ret.desiredDriveState.forceDown = d.desiredforcedown();
+      ret.currentVid                  = d.currentvid();
+      ret.currentTapePool             = d.currenttapepool();
+      return ret;
+    }
+  }
+  throw cta::exception::Exception("In DriveRegister::getDriveState(): no such drive.");
+}
 
-bool cta::objectstore::DriveRegister::isEmpty() {
+//------------------------------------------------------------------------------
+// DriveRegister::setDriveState())
+//------------------------------------------------------------------------------
+void DriveRegister::setDriveState(const cta::common::dataStructures::DriveState driveState) {
+  using cta::common::dataStructures::DriveState;
+  checkPayloadWritable();
+  // Find the drive to update (new or existing)
+  serializers::DriveState * ds = nullptr;
+  for (ssize_t i=0; i<m_payload.mutable_drives()->size(); i++) {
+    if (m_payload.mutable_drives(i)->drivename() == driveState.driveName) {
+      ds = m_payload.mutable_drives(i);
+      goto update;
+    }
+  }
+  // The drive was not found. We will create it.
+  ds = m_payload.mutable_drives()->Add();
+  ds->set_drivename(driveState.driveName);
+update:
+  ds->set_host(driveState.host);
+  ds->set_logicallibrary(driveState.logicalLibrary);
+  ds->set_sessionid(driveState.sessionId);
+  ds->set_bytestransferedinsession(driveState.bytesTransferedInSession);
+  ds->set_filestransferedinsession(driveState.filesTransferedInSession);
+  ds->set_latestbandwidth(driveState.latestBandwidth);
+  ds->set_sessionstarttime(driveState.sessionStartTime);
+  ds->set_mountstarttime(driveState.mountStartTime);
+  ds->set_transferstarttime(driveState.transferStartTime);
+  ds->set_unloadstarttime(driveState.unloadStartTime);
+  ds->set_unmountstarttime(driveState.unmountStartTime);
+  ds->set_drainingstarttime(driveState.drainingStartTime);
+  ds->set_downorupstarttime(driveState.downOrUpStartTime);
+  ds->set_cleanupstarttime(driveState.cleanupStartTime);
+  ds->set_lastupdatetime(driveState.lastUpdateTime);
+  ds->set_startstarttime(driveState.startStartTime);
+  ds->set_mounttype((uint32_t)driveState.mountType);
+  ds->set_drivestatus((uint32_t)driveState.driveStatus);
+  ds->set_desiredup(driveState.desiredDriveState.up);
+  ds->set_desiredforcedown(driveState.desiredDriveState.forceDown);
+  ds->set_currentvid(driveState.currentVid);
+  ds->set_currenttapepool(driveState.currentTapePool);
+}
+
+
+//------------------------------------------------------------------------------
+// DriveRegister::isEmpty())
+//------------------------------------------------------------------------------
+bool DriveRegister::isEmpty() {
   checkPayloadReadable();
   if (m_payload.drives_size())
     return false;
   return true;
 }
 
-
-
-
+}} // namespace cta::objectstore

@@ -21,7 +21,7 @@
 #include "ObjectOps.hpp"
 #include <list>
 #include <limits>
-#include "common/DriveState.hpp"
+#include "common/dataStructures/DriveState.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -41,62 +41,36 @@ public:
   bool isEmpty();
   
   // Drives management =========================================================
-  void addDrive (const std::string & driveName, const std::string & logicalLibrary,
-    const EntryLogSerDeser & creationLog);
-  void removeDrive (const std::string  & name);
-private:
-  cta::MountType::Enum deserializeMountType(serializers::MountType);
-  serializers::MountType serializeMountType(cta::MountType::Enum);
-  common::DriveStatus deserializeDriveStatus(serializers::DriveStatus);
-  serializers::DriveStatus serializeDriveStatus(common::DriveStatus);
-public:
-  CTA_GENERATE_EXCEPTION_CLASS(MissingStatistics);
-  CTA_GENERATE_EXCEPTION_CLASS(MissingTapeInfo);
-  CTA_GENERATE_EXCEPTION_CLASS(MissingSessionInfo);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
-  CTA_GENERATE_EXCEPTION_CLASS(WrongStateTransition);
-  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /**
-   * Report the status of the drive to the DB.
+   * Returns all the drive states stored in the drive registry.
+   * @return a list of all the drive states
    */
-  void reportDriveStatus (const std::string & drive, const std::string & logicalLibary,
-    common::DriveStatus status, time_t reportTime, 
-    cta::MountType::Enum mountType = cta::MountType::NONE,
-    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
-    uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(), 
-    uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
-    double latestBandwidth = std::numeric_limits<double>::max(),
-    const std::string & vid = "", 
-    const std::string & tapepool = "");
-private:
-  /* Collection of smaller scale parts of reportDriveStatus */
-  struct ReportDriveStatusInputs {
-    const std::string & drive;
-    const std::string & logicalLibary;
-    common::DriveStatus status;
-    cta::MountType::Enum mountType;
-    time_t reportTime; 
-    uint64_t mountSessionId;
-    uint64_t byteTransfered;
-    uint64_t filesTransfered;
-    double latestBandwidth;
-    std::string vid;
-    std::string tapepool;
-    ReportDriveStatusInputs(const std::string & d, const std::string & ll):
-      drive(d), logicalLibary(ll) {}
-  };
-  void checkReportDriveStatusInputs(ReportDriveStatusInputs & inputs);
-  void setDriveDown(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveStarting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveMounting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveTransfering(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveUnloading(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveUnmounting(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveDrainingToDisk(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-  void setDriveCleaningUp(ReportDriveStatusInputs & inputs, serializers::DriveState * drive);
-public:
-  std::list<common::DriveState> dumpDrives();
+  std::list<cta::common::dataStructures::DriveState> getAllDrivesState();
+  
+  /**
+   * Query the complete drive state for one drive.
+   * @param driveName
+   * @return complete drive state, or throws an exception if the drive is not
+   * known.
+   */
+  cta::common::dataStructures::DriveState getDriveState(const std::string &driveName);
+  
+  /**
+   * Set the state of a drive. Either creates or overwrites the entry.
+   * @param driveState Full drive state (drive name is part of the structure).
+   */
+  void setDriveState(const cta::common::dataStructures::DriveState driveState);
+
+  /**
+   * Remove the drive from the register.
+   * @param name
+   */
+  void removeDrive (const std::string  & driveName);
+
+  /**
+   * JSON dump of the drive 
+   * @return 
+   */
   std::string dump();
 };
 

@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "scheduler/MountType.hpp"
-#include "common/DriveState.hpp"
+#include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
 
 #include <string>
 
@@ -36,7 +36,7 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    virtual MountType::Enum getMountType() const = 0;
+    virtual cta::common::dataStructures::MountType getMountType() const = 0;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
@@ -67,7 +67,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::DriveStatus status) = 0;
+    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status) = 0;
     
     /**
      * Destructor.

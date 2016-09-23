@@ -42,25 +42,38 @@
 #include <set>
 #include <iostream>
 
-namespace cta {
-  
+namespace cta {  
 using namespace objectstore;
 
+//------------------------------------------------------------------------------
+// OStoreDB::OStoreDB()
+//------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be):
   m_objectStore(be) {}
 
-
+//------------------------------------------------------------------------------
+// OStoreDB::~OStoreDB()
+//------------------------------------------------------------------------------
 OStoreDB::~OStoreDB() throw() {}
 
+//------------------------------------------------------------------------------
+// OStoreDB::setAgentReference()
+//------------------------------------------------------------------------------
 void OStoreDB::setAgentReference(objectstore::AgentReference *agentReference) {
   m_agentReference = agentReference;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::assertAgentAddressSet()
+//------------------------------------------------------------------------------
 void OStoreDB::assertAgentAddressSet() {
   if (!m_agentReference)
     throw AgentNotSet("In OStoreDB::assertAgentSet: Agent address not set");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfo()
+//------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
   //Allocate the getMountInfostructure to return.
@@ -91,7 +104,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
-      m.type = cta::MountType::ARCHIVE;
+      m.type = cta::common::dataStructures::MountType::Archive;
       m.bytesQueued = aqueue.getJobsSummary().bytes;
       m.filesQueued = aqueue.getJobsSummary().files;      
       m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
@@ -101,7 +114,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       m.logicalLibrary = "";
     }
   }
-  // Walk the retrieve queues for stiatistics
+  // Walk the retrieve queues for statistics
   for (auto & rqp: re.dumpRetrieveQueues()) {
     RetrieveQueue rqueue(rqp.address, m_objectStore);
     // debug utility variable
@@ -114,7 +127,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.vid = rqp.vid;
-      m.type = cta::MountType::RETRIEVE;
+      m.type = cta::common::dataStructures::MountType::Retrieve;
       m.bytesQueued = rqueue.getJobsSummary().bytes;
       m.filesQueued = rqueue.getJobsSummary().files;      
       m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
@@ -128,21 +141,21 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
   objectstore::ScopedSharedLock drl(dr);
   dr.fetch();
-  auto dl = dr.dumpDrives();
-  using common::DriveStatus;
+  auto dl = dr.getAllDrivesState();
+  using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {
-    (int)DriveStatus::Starting,
-    (int)DriveStatus::Mounting,
-    (int)DriveStatus::Transfering,
-    (int)DriveStatus::Unloading,
-    (int)DriveStatus::Unmounting,
-    (int)DriveStatus::DrainingToDisk };
+    (int)cta::common::dataStructures::DriveStatus::Starting,
+    (int)cta::common::dataStructures::DriveStatus::Mounting,
+    (int)cta::common::dataStructures::DriveStatus::Transfering,
+    (int)cta::common::dataStructures::DriveStatus::Unloading,
+    (int)cta::common::dataStructures::DriveStatus::Unmounting,
+    (int)cta::common::dataStructures::DriveStatus::DrainingToDisk };
   for (auto d=dl.begin(); d!= dl.end(); d++) {
-    if (activeDriveStatuses.count((int)d->status)) {
+    if (activeDriveStatuses.count((int)d->driveStatus)) {
       tmdi.existingMounts.push_back(ExistingMount());
       tmdi.existingMounts.back().type = d->mountType;
       tmdi.existingMounts.back().tapePool = d->currentTapePool;
-      tmdi.existingMounts.back().driveName = d->name;
+      tmdi.existingMounts.back().driveName = d->driveName;
     }
   }
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
@@ -150,6 +163,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 }
 
 /* Old getMountInfo
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfo()
+//------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
   OStoreDB::getMountInfo() {
   //Allocate the getMountInfostructure to return.
@@ -255,6 +271,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 }
 */
 
+//------------------------------------------------------------------------------
+// OStoreDB::queueArchive()
+//------------------------------------------------------------------------------
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
   assertAgentAddressSet();
@@ -268,7 +287,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aFile.checksumValue = request.checksumValue;
   // TODO: fully fledged archive file should not be the representation of the request.
   aFile.creationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
-  aFile.reconciliationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
+  aFile.reconciliationTime = 0;
   aFile.diskFileId = request.diskFileID;
   aFile.diskFileInfo = request.diskFileInfo;
   aFile.diskInstance = instanceName;
@@ -357,6 +376,9 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::deleteArchiveRequest()
+//------------------------------------------------------------------------------
 void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName, 
   uint64_t fileId) {
   // First of, find the archive request form all the tape pools.
@@ -412,6 +434,9 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
   throw NoSuchArchiveRequest("In OStoreDB::deleteArchiveRequest: ArchiveToFileRequest not found");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::markArchiveRequestForDeletion()
+//------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
   OStoreDB::markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity& requester,
   uint64_t fileId) {
@@ -473,6 +498,9 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
   throw NoSuchArchiveRequest("In OStoreDB::markArchiveRequestForDeletion: ArchiveToFileRequest no found");
   }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveToFileRequestCancelation::complete()
+//------------------------------------------------------------------------------
 void OStoreDB::ArchiveToFileRequestCancelation::complete() {
   if (m_closed)
     throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
@@ -486,6 +514,9 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
   m_closed = true;
   }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation()
+//------------------------------------------------------------------------------
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
     try {
@@ -500,7 +531,9 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 }
 
 
-
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveRequests()
+//------------------------------------------------------------------------------
 //std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
 //  OStoreDB::getArchiveRequests() const {
 //  objectstore::RootEntry re(m_objectStore);
@@ -544,6 +577,9 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 //  return ret;
 //}
 
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobs()
+//------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
   OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
   objectstore::RootEntry re(m_objectStore);
@@ -597,6 +633,9 @@ std::list<cta::common::dataStructures::ArchiveJob>
   throw NoSuchArchiveQueue("In OStoreDB::getArchiveRequests: tape pool not found");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobs()
+//------------------------------------------------------------------------------
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
   OStoreDB::getArchiveJobs() const {
   objectstore::RootEntry re(m_objectStore);
@@ -648,6 +687,9 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveQueueStatistics()
+//------------------------------------------------------------------------------
 std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueueStatistics(
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
   const std::set<std::string> & vidsToConsider) {
@@ -686,7 +728,9 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
   return ret;
 }
 
-
+//------------------------------------------------------------------------------
+// OStoreDB::queueRetrieve()
+//------------------------------------------------------------------------------
 void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
   const std::string &vid) {
@@ -752,17 +796,23 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveRequestsByVid()
+//------------------------------------------------------------------------------
 std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByVid(const std::string& vid) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveRequestsByRequester()
+//------------------------------------------------------------------------------
 std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByRequester(const std::string& vid) const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
-
-
-
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveRequests()
+//------------------------------------------------------------------------------
 std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequests() const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 //  std::map<cta::Tape, std::list<RetrieveRequestDump> > ret;
@@ -802,15 +852,24 @@ std::map<std::string, std::list<RetrieveRequestDump> > OStoreDB::getRetrieveRequ
 //  return ret;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::deleteRetrieveRequest()
+//------------------------------------------------------------------------------
 void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
   const std::string& remoteFile) {
   throw exception::Exception("Not Implemented");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveJobs()
+//------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(const std::string& tapePoolName) const {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getRetrieveJobs()
+//------------------------------------------------------------------------------
 std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB::getRetrieveJobs() const {
   // We will walk all the tapes to get the jobs.
   std::map<std::string, std::list<common::dataStructures::RetrieveJob> > ret;
@@ -848,7 +907,10 @@ std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB:
   return ret;
 }
 
-std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {
+//------------------------------------------------------------------------------
+// OStoreDB::getDriveStates()
+//------------------------------------------------------------------------------
+std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates() const {
   RootEntry re(m_objectStore);
   ScopedSharedLock rel(re);
   re.fetch();
@@ -856,9 +918,417 @@ std::list<cta::common::DriveState> OStoreDB::getDriveStates() const {
   objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
   objectstore::ScopedExclusiveLock drl(dr);
   dr.fetch();
-  return dr.dumpDrives();
+  return dr.getAllDrivesState();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::setDesiredDriveState()
+//------------------------------------------------------------------------------
+void OStoreDB::setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) {
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  auto driveState = dr.getDriveState(drive);
+  driveState.desiredDriveState = desiredState;
+  dr.setDriveState(driveState);
+  dr.commit();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::reportDriveStatus()
+//------------------------------------------------------------------------------
+void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+  cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
+  time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered,
+  uint64_t filesTransfered, double latestBandwidth, const std::string& vid, 
+  const std::string& tapepool) {
+  using common::dataStructures::DriveStatus;
+  // Lock the drive register and try to find the drive entry
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Wrap all the parameters together for easier manipulation by sub-functions
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = mountType;
+  inputs.byteTransfered = byteTransfered;
+  inputs.filesTransfered = filesTransfered;
+  inputs.latestBandwidth = latestBandwidth;
+  inputs.mountSessionId = mountSessionId;
+  inputs.reportTime = reportTime;
+  inputs.status = status;
+  inputs.vid = vid;
+  inputs.tapepool = tapepool;
+  updateDriveStatusInRegitry(dr, driveInfo, inputs);
+  dr.commit();
+}
+
+void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr, 
+  const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs) {
+  using common::dataStructures::DriveStatus;
+  // The drive state might not be present, in which case we have to fill it up with default values.
+  cta::common::dataStructures::DriveState driveState;
+  try { 
+    driveState = dr.getDriveState(driveInfo.driveName);
+  } catch (cta::exception::Exception & ex) {
+    // The drive is missing in the registry. We have to fill the state with default
+    // values, for what that will not be covered later.
+    driveState.driveName = driveInfo.driveName;
+    // host will be reset anyway.
+    // logical library will be reset anyway.
+    driveState.mountType = common::dataStructures::MountType::NoMount;
+    driveState.driveStatus = common::dataStructures::DriveStatus::Unknown;
+    driveState.sessionId = 0;
+    driveState.bytesTransferedInSession = 0;
+    driveState.filesTransferedInSession = 0;
+    driveState.latestBandwidth = 0;
+    driveState.sessionStartTime = 0;
+    driveState.mountStartTime = 0;
+    driveState.transferStartTime = 0;
+    driveState.unloadStartTime = 0;
+    driveState.unmountStartTime = 0;
+    driveState.drainingStartTime = 0;
+    driveState.downOrUpStartTime = 0;
+    driveState.cleanupStartTime = 0;
+    driveState.lastUpdateTime = 0;
+    driveState.startStartTime = 0;
+    driveState.desiredDriveState.up = (inputs.status==DriveStatus::Down?false:true);
+    driveState.desiredDriveState.forceDown = false;
+    driveState.currentTapePool = "";
+    driveState.currentVid = "";
+  }
+  // Set the parameters that we always set
+  driveState.host = driveInfo.host;
+  driveState.logicalLibrary = driveInfo.logicalLibrary;
+  // Set the status
+  switch (inputs.status) {
+    case DriveStatus::Down:
+      setDriveDown(driveState, inputs);
+      break;
+    case DriveStatus::Up:
+      setDriveUpOrMaybeDown(driveState, inputs);
+      break;
+    case DriveStatus::Starting:
+      setDriveStarting(driveState, inputs);
+      break;
+    case DriveStatus::Mounting:
+      setDriveMounting(driveState, inputs);
+      break;
+    case DriveStatus::Transfering:
+      setDriveTransfering(driveState, inputs);
+      break;
+    case DriveStatus::Unloading:
+      setDriveUnloading(driveState, inputs);
+      break;
+    case DriveStatus::Unmounting:
+      setDriveUnmounting(driveState, inputs);
+      break;
+    case DriveStatus::DrainingToDisk:
+      setDriveDrainingToDisk(driveState, inputs);
+      break;
+    case DriveStatus::CleaningUp:
+      setDriveCleaningUp(driveState, inputs);
+      break;
+    default:
+      throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
+  }
+  dr.setDriveState(driveState);
+}
+
+  
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveDown()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  // If we were already down, then we only update the last update time.
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Down) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset.
+  driveState.sessionId=0;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=inputs.reportTime;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=common::dataStructures::MountType::NoMount;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Down;
+  driveState.desiredDriveState.up=false;
+  driveState.desiredDriveState.forceDown=false;
+  driveState.currentVid="";
+  driveState.currentTapePool="";
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveUp()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  using common::dataStructures::DriveStatus;
+  // Decide whether we should be up or down
+  DriveStatus  targetStatus=DriveStatus::Up;
+  if (!driveState.desiredDriveState.up) {
+    driveState.driveStatus = common::dataStructures::DriveStatus::Down;
+  }
+  // If we were already up (or down), then we only update the last update time.
+  if (driveState.driveStatus == targetStatus) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset.
+  driveState.sessionId=0;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=inputs.reportTime;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=common::dataStructures::MountType::NoMount;
+  driveState.driveStatus=targetStatus;
+  driveState.currentVid="";
+  driveState.currentTapePool="";
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveStarting()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  // If we were already starting, then we only update the last update time.
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Starting) {
+    driveState.lastUpdateTime = inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=inputs.reportTime;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveMounting()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  // If we were already starting, then we only update the last update time.
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Mounting) {
+    driveState.lastUpdateTime = inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  //driveState.sessionstarttime=inputs.reportTime;
+  driveState.mountStartTime=inputs.reportTime;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Mounting;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveTransfering()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveTransfering(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  // If we were already transferring, we update the full statistics
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Transfering) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.bytesTransferedInSession=inputs.byteTransfered;
+    driveState.filesTransferedInSession=inputs.filesTransfered;
+    driveState.latestBandwidth=inputs.latestBandwidth;
+    return;
+  }
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=inputs.byteTransfered;
+  driveState.filesTransferedInSession=inputs.filesTransfered;
+  driveState.latestBandwidth=inputs.latestBandwidth;
+  //driveState.sessionstarttime=inputs.reportTime;
+  //driveState.mountstarttime=inputs.reportTime;
+  driveState.transferStartTime=inputs.reportTime;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Transfering;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveUnloading()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveUnloading(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Unloading) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=inputs.reportTime;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Unloading;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveUnmounting()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveUnmounting(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Unmounting) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=inputs.reportTime;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Unmounting;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveDrainingToDisk()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveDrainingToDisk(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::DrainingToDisk) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=inputs.reportTime;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::DrainingToDisk;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveCleaningUp()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::CleaningUp) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=inputs.mountSessionId;
+  driveState.bytesTransferedInSession=0;
+  driveState.filesTransferedInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.cleanupStartTime=inputs.reportTime;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfo::createArchiveMount()
+//------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const catalogue::TapeForWriting & tape, const std::string driveName,
@@ -895,10 +1365,21 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     // The drive is already in-session, to prevent double scheduling before it 
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
-    dr.reportDriveStatus(driveName, logicalLibrary, 
-      cta::common::DriveStatus::Starting, startTime, 
-      cta::MountType::ARCHIVE, privateRet->mountInfo.mountId,
-      0, 0, 0, tape.vid, tape.tapePool);
+    common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName=driveName;
+    driveInfo.logicalLibrary=logicalLibrary;
+    /// TODO! driveInfo.host=???
+    ReportDriveStatusInputs inputs;
+    inputs.mountType = common::dataStructures::MountType::Archive;
+    inputs.byteTransfered = 0;
+    inputs.filesTransfered = 0;
+    inputs.latestBandwidth = 0;
+    inputs.mountSessionId = am.mountInfo.mountId;
+    inputs.reportTime = startTime;
+    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.vid = tape.vid;
+    inputs.tapepool = tape.tapePool;
+    OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
     dr.commit();
   }
   // We committed the scheduling decision. We can now release the scheduling lock.
@@ -909,11 +1390,16 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo()
+//------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
   objectstore::Backend& os, objectstore::AgentReference& a):
    m_lockTaken(false), m_objectStore(os), m_agentReference(a) {}
 
-
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfo::createArchiveMount()
+//------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
@@ -955,10 +1441,18 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     // The drive is already in-session, to prevent double scheduling before it 
     // goes to mount state. If the work to be done gets depleted in the mean time,
     // we will switch back to up.
-    dr.reportDriveStatus(driveName, logicalLibrary, 
-      cta::common::DriveStatus::Starting, startTime, 
-      cta::MountType::RETRIEVE, privateRet->mountInfo.mountId,
-      0, 0, 0, vid, tapePool);
+    common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName=driveName;
+    driveInfo.logicalLibrary=logicalLibrary;
+    /// TODO! driveInfo.host=???
+    ReportDriveStatusInputs inputs;
+    inputs.mountType = common::dataStructures::MountType::Retrieve;
+    inputs.mountSessionId = rm.mountInfo.mountId;
+    inputs.reportTime = startTime;
+    inputs.status = common::dataStructures::DriveStatus::Mounting;
+    inputs.vid = rm.mountInfo.vid;
+    inputs.tapepool = rm.mountInfo.tapePool;
+    OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
     dr.commit();
   }
   // We committed the scheduling decision. We can now release the scheduling lock.
@@ -968,7 +1462,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());
   return ret;
 }
- 
+
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo()
+//------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   // The lock should be released before the objectstore object 
   // m_schedulerGlobalLock gets destroyed. We explicitely release the lock,
@@ -978,13 +1475,22 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   m_schedulerGlobalLock.reset(NULL);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::ArchiveMount()
+//------------------------------------------------------------------------------
 OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::AgentReference& a):
   m_objectStore(os), m_agentReference(a) {}
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::getMountInfo()
+//------------------------------------------------------------------------------
 const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMountInfo() {
   return mountInfo;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::getNextJob()
+//------------------------------------------------------------------------------
 auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::ArchiveJob> {
   // Find the next file to archive
   // Get the archive queue
@@ -1149,6 +1655,9 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
 //  }
 //  return std::unique_ptr<SchedulerDatabase::ArchiveJob>();
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::complete()
+//------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   // When the session is complete, we can reset the status of the drive.
   // Tape will be implicitly released
@@ -1160,24 +1669,44 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   objectstore::ScopedExclusiveLock drl(dr);
   dr.fetch();
   // Reset the drive state.
-  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    cta::common::DriveStatus::Up, completionTime, 
-    cta::MountType::NONE, 0,
-    0, 0, 0, "", "");
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  /// TODO! driveInfo.host=???
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = common::dataStructures::DriveStatus::Up;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::ArchiveJob()
+//------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
   objectstore::Backend& os, objectstore::AgentReference& ar, ArchiveMount & am): m_jobOwned(false),
   m_objectStore(os), m_agentReference(ar), m_archiveRequest(jobAddress, os), m_archiveMount(am) {}
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::RetrieveMount()
+//------------------------------------------------------------------------------
 OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::AgentReference& ar):
   m_objectStore(os), m_agentReference(ar) { }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::getMountInfo()
+//------------------------------------------------------------------------------
 const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo() {
   return mountInfo;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::getNextJob()
+//------------------------------------------------------------------------------
 auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::RetrieveJob> {
   // Find the next file to retrieve
   // Get the tape pool and then tape
@@ -1273,6 +1802,9 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
   }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::complete()
+//------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   // When the session is complete, we can reset the status of the tape and the
   // drive
@@ -1284,15 +1816,26 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   objectstore::ScopedExclusiveLock drl(dr);
   dr.fetch();
   // Reset the drive state.
-  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    cta::common::DriveStatus::Up, completionTime, 
-    cta::MountType::NONE, 0,
-    0, 0, 0, "", "");
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  /// TODO! driveInfo.host=???
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = common::dataStructures::DriveStatus::Up;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
   rel.release();
 }
 
-void OStoreDB::RetrieveMount::setDriveStatus(cta::common::DriveStatus status, time_t completionTime) {
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::setDriveStatus()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
   // We just report the drive status as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
@@ -1302,14 +1845,25 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::DriveStatus status, ti
   objectstore::ScopedExclusiveLock drl(dr);
   dr.fetch();
   // Reset the drive state.
-  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    status, completionTime, 
-    cta::MountType::RETRIEVE, 0,
-    0, 0, 0, getMountInfo().vid, getMountInfo().tapePool);
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  /// TODO! driveInfo.host=???
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = status;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
 }
 
-void OStoreDB::ArchiveMount::setDriveStatus(cta::common::DriveStatus status, time_t completionTime) {
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::setDriveStatus()
+//------------------------------------------------------------------------------
+void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
   // We just report the drive status as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
@@ -1319,13 +1873,24 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::DriveStatus status, tim
   objectstore::ScopedExclusiveLock drl(dr);
   dr.fetch();
   // Reset the drive state.
-  dr.reportDriveStatus(mountInfo.drive, mountInfo.logicalLibrary, 
-    status, completionTime, 
-    cta::MountType::ARCHIVE, 0,
-    0, 0, 0, getMountInfo().vid, getMountInfo().tapePool);
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  /// TODO! driveInfo.host=???
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = status;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::fail()
+//------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::fail() {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
@@ -1384,12 +1949,17 @@ void OStoreDB::ArchiveJob::fail() {
   throw NoSuchArchiveQueue("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::bumpUpTapeFileCount()
+//------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 //  m_archiveMount.setTapeMaxFileCount(newFileCount);
 }
 
-
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::succeed()
+//------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::succeed() {
   // Lock the request and set the job as successful.
   objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
@@ -1410,6 +1980,9 @@ void OStoreDB::ArchiveJob::succeed() {
   ag.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::~ArchiveJob()
+//------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::~ArchiveJob() {
   if (m_jobOwned) {
     // Return the job to the pot if we failed to handle it.
@@ -1426,16 +1999,25 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
   }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::RetrieveJob()
+//------------------------------------------------------------------------------
 OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, 
     objectstore::Backend& os, objectstore::AgentReference& ar, 
     OStoreDB::RetrieveMount& rm): m_jobOwned(false),
   m_objectStore(os), m_agentReference(ar), m_retrieveRequest(jobAddress, os), 
   m_retrieveMount(rm) { }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::fail()
+//------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::fail() {
   throw NotImplemented("");
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::~RetrieveJob()
+//------------------------------------------------------------------------------
 OStoreDB::RetrieveJob::~RetrieveJob() {
 //  if (m_jobOwned) {
 //    // Re-queue the job entirely if we failed to handle it.
@@ -1507,6 +2089,9 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 //  }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::succeed()
+//------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::succeed() {
   // Lock the request and set the job as successful.
   objectstore::ScopedExclusiveLock rtfrl(m_retrieveRequest);
@@ -1528,4 +2113,6 @@ void OStoreDB::RetrieveJob::succeed() {
 }
 
 
-}
+} // namespace cta
+
+

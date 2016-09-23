@@ -41,8 +41,8 @@ cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue,
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::MountType::Enum cta::ArchiveMount::getMountType() const {
-  return MountType::ARCHIVE;
+cta::common::dataStructures::MountType cta::ArchiveMount::getMountType() const {
+  return cta::common::dataStructures::MountType::Archive;
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ cta::ArchiveMount::~ArchiveMount() throw() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setDriveStatus(cta::common::DriveStatus status) {
+void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
 }
 

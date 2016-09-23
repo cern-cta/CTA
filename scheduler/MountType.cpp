@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 // toString
 //------------------------------------------------------------------------------
-const char *cta::MountType::toString(const MountType::Enum enumValue)
+const char *cta::MountTypeToDecommission::toString(const MountTypeToDecommission::Enum enumValue)
   throw() {
   switch(enumValue) {
   case Enum::NONE    : return "NONE";

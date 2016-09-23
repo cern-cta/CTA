@@ -1766,20 +1766,71 @@ void XrdCtaFile::xCom_test() {
 void XrdCtaFile::xCom_drive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " dr/drive up/down (it is a synchronous command):" << std::endl
-       << "\tup   --drive/-d <drive_name>" << std::endl
-       << "\tdown --drive/-d <drive_name> [--force/-f]" << std::endl;  
+  help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
+       << "Set the requested state of the drive. The drive will complete any running mount" << std::endl
+       << "unless it is preempted with the --force option."                                 << std::endl
+       << "\tup <drive_name>"                                                               << std::endl
+       << "\tdown <drive_name> [--force/-f]"                                                << std::endl
+       << ""                                                                                << std::endl
+       << "List the states for one or all drives"                                           << std::endl
+       << "\tls [<drive_name>]"                                                             << std::endl;
+       
+  // We should have at least one sub command. {"cta", "dr/drive", "up/down/ls"}.
+  if (m_requestTokens.size() < 3)
+    throw cta::exception::UserError(help.str());
+  if ("up" == m_requestTokens.at(2)) {
+    // Here the drive name is required in addition
+    if (m_requestTokens.size() != 4)
+      throw cta::exception::UserError(help.str());
+    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), true, false);
+  } else if ("down" == m_requestTokens.at(2)) {
+    // Here the drive name is required in addition
+    bool force;
+    if (m_requestTokens.size() == 4) {
+      force = false;
+    } else if (m_requestTokens.size() == 5) {
+      if (m_requestTokens.at(4) == "-f" || m_requestTokens.at(4) == "--force") {
+        force = true;
+      } else {
+        throw cta::exception::UserError(help.str());
+      }
+    }
+    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), false, force);
+  } else if ("ls" == m_requestTokens.at(2)) {
+    if (m_requestTokens.size() == 3) {
+      // We will dump all the drives.
+      auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
+      if (driveStates.size()) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"drive", "library"};
+        
+        // TODO
+        throw cta::exception::Exception("TODO"); 
+      }
+    } else if (m_requestTokens.size() == 4) {
+      // We will list a single drive.
+      // TODO
+      throw cta::exception::Exception("TODO");
+    } else {
+      throw cta::exception::UserError(help.str());
+    } 
+  } else {
+    throw cta::exception::UserError(help.str());
+  }
+  
+  
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
   optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
   checkOptions(help.str());
   if("up" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), true, false);
+    m_scheduler->setDesiredDriveState(m_cliIdentity, drive.value(), true, false);
   }
   else if("down" == m_requestTokens.at(2)) {
-    m_scheduler->setDriveStatus(m_cliIdentity, drive.value(), false, hasOption("-f", "--force"));
+    m_scheduler->setDesiredDriveState(m_cliIdentity, drive.value(), false, hasOption("-f", "--force"));
   }
+  
   else {
     throw cta::exception::UserError(help.str());
   }
@@ -1929,15 +1980,15 @@ void XrdCtaFile::xCom_listdrivestates() {
   std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(m_cliIdentity);  
   if(result.size()>0) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"logical library","host","drive","status","since","mount","vid","tapepool","session id","since","files","bytes","latest speed"};
+    std::vector<std::string> header = {"logical library","host","drive","status","mount","vid","tapepool","session id","since","files","bytes","latest speed"};
     if(hasOption("-h", "--header")) responseTable.push_back(header);    
     for(auto it = result.cbegin(); it != result.cend(); it++) {
       std::vector<std::string> currentRow;
       currentRow.push_back(it->logicalLibrary);
       currentRow.push_back(it->host);
-      currentRow.push_back(it->name);
-      currentRow.push_back(cta::common::dataStructures::toString(it->status));
-      currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-it->currentStateStartTime)));
+      currentRow.push_back(it->driveName);
+      // TODO: handle timing information.
+      currentRow.push_back(cta::common::dataStructures::toString(it->driveStatus));
       currentRow.push_back(cta::common::dataStructures::toString(it->mountType));
       currentRow.push_back(it->currentVid);
       currentRow.push_back(it->currentTapePool);

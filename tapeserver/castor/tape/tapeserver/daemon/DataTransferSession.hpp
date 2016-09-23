@@ -109,6 +109,11 @@ namespace daemon {
      */
     const DriveConfig m_driveConfig;
     const DataTransferConfig & m_castorConf;
+    /**
+     * The drive information bundle allowing drive register update.
+     * Filled up at construction time.
+     */
+    const cta::common::dataStructures::DriveInfo m_driveInfo;
     /** utility to find the drive on the system. This function logs 
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
@@ -138,7 +143,7 @@ namespace daemon {
     /**
      * Returns the string representation of the specified mount type
      */
-    const char *mountTypeToString(const cta::MountType::Enum mountType) const
+    const char *mountTypeToString(const cta::common::dataStructures::MountType mountType) const
       throw();
   };
 }

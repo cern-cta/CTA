@@ -20,13 +20,20 @@
 
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::MountType type) {
   switch(type) {
-    case cta::common::dataStructures::MountType::archive:
-      return "archive";
-    case cta::common::dataStructures::MountType::retrieve:
-      return "retrieve";
-    case cta::common::dataStructures::MountType::none:
-      return "none";
+    case cta::common::dataStructures::MountType::Archive:
+      return "Archive";
+    case cta::common::dataStructures::MountType::Retrieve:
+      return "Retrieve";
+    case cta::common::dataStructures::MountType::Label:
+      return "Label";
+    case cta::common::dataStructures::MountType::NoMount:
+      return "NoMount";
     default:
       return "UNKNOWN";
   }
+}
+
+std::ostream & cta::common::dataStructures::operator<<(std::ostream &os, 
+  const cta::common::dataStructures::MountType &obj) {
+  return os << toString(obj);
 }

@@ -47,7 +47,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::CleaningUp);
+  m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp);
   // Tell everyone to wrap up the session
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more.
@@ -86,7 +86,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
     if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {      
-      m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Unloading);
+      m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
       m_this.m_drive.unloadTape();
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
     } else {
@@ -97,10 +97,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // In case of manual mode, this will be filtered by the rmc daemon
     // (which will do nothing)
     currentErrorToCount = "Error_tapeDismount";     
-    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Up);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
@@ -109,7 +109,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch(const cta::exception::Exception& ex){
     // Something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exception_message", ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
@@ -121,7 +121,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   } catch (...) {
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_rrp.reportDriveStatus(cta::common::DriveStatus::Down);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
     m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
     try {
       if (currentErrorToCount.size()) {
@@ -177,10 +177,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
-  mountTypeToString(const cta::MountType::Enum mountType) const throw() {
+  mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
   switch(mountType) {
-  case cta::MountType::RETRIEVE: return "RETRIEVE";
-  case cta::MountType::ARCHIVE : return "ARCHIVE";
+  case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
+  case cta::common::dataStructures::MountType::Archive : return "Archive";
+  case cta::common::dataStructures::MountType::Label: return "Label";
   default                      : return "UNKNOWN";
   }
 }
@@ -214,7 +215,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
       currentErrorToCount = "Error_tapeMountForRead";
-      m_rrp.reportDriveStatus(cta::common::DriveStatus::Mounting);
+      m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting);
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
@@ -262,7 +263,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Then we will loop on the tasks as they get from 
       // the task injector
       std::unique_ptr<TapeReadTask> task;
-      m_rrp.reportDriveStatus(cta::common::DriveStatus::Transfering);
+      m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transfering);
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());

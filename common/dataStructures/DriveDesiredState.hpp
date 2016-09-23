@@ -23,21 +23,12 @@
 namespace cta {
 namespace common {
 namespace dataStructures {
-enum DriveStatus {
+enum DriveDesiredState {
   Down,
-  Up,
-  Starting,
-  Mounting,
-  Transfering,
-  Unloading,
-  Unmounting,
-  DrainingToDisk,
-  CleaningUp,
-  Unknown
+  Up
 };
 
-std::string toString(DriveStatus type);
+std::string toString(DriveDesiredState desiredState);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-

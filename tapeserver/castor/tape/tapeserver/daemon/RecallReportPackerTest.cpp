@@ -28,7 +28,6 @@
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
-#include "common/DriveState.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -99,7 +98,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
   rrp.setDiskDone();
   rrp.setTapeDone();
   
-  rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
+  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
   
   rrp.reportEndOfSession();
 //  rrp.reportTestGoingToEnd();
@@ -156,7 +155,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   rrp.setDiskDone();
   rrp.setTapeDone();
   
-  rrp.reportDriveStatus(cta::common::DriveStatus::Unmounting);
+  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
   rrp.reportEndOfSession();
 //  rrp.reportTestGoingToEnd();

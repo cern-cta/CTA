@@ -59,7 +59,7 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    MountType::Enum getMountType() const override;
+    cta::common::dataStructures::MountType getMountType() const override;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
@@ -95,7 +95,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    void setDriveStatus(cta::common::DriveStatus status) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
     
     /**
      * Report that the tape is full.

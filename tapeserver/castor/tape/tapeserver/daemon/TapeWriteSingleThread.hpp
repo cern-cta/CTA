@@ -93,7 +93,7 @@ private:
   /**
    * Returns the string representation of the specified mount type
    */
-  const char *mountTypeToString(const cta::MountType::Enum mountType) const
+  const char *mountTypeToString(const cta::common::dataStructures::MountType mountType) const
     throw();
   
     class TapeCleaning{
@@ -104,7 +104,7 @@ private:
     TapeCleaning(TapeWriteSingleThread& parent, cta::utils::Timer & timer):
       m_this(parent), m_timer(timer) {}
     ~TapeCleaning(){
-      m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::CleaningUp);
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp);
       // This out-of-try-catch variables allows us to record the stage of the 
       // process we're in, and to count the error if it occurs.
       // We will not record errors for an empty string. This will allow us to
@@ -131,7 +131,7 @@ private:
         }
         // in the special case of a "manual" mode tape, we should skip the unload too.
         if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
-          m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Unloading);
+          m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
           m_this.m_drive.unloadTape();
           m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
         } else {
@@ -142,10 +142,10 @@ private:
         // In case of manual mode, this will be filtered by the rmc daemon
         // (which will do nothing)
         currentErrorToCount = "Error_tapeDismount";
-        m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Unmounting);
+        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
         m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
         m_this.m_drive.disableLogicalBlockProtection();
-        m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Up);
+        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
         m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
         m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
           "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
@@ -156,7 +156,7 @@ private:
       catch(const cta::exception::Exception& ex){
         // Notify something failed during the cleaning 
         m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-        m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Down);
+        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
         cta::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue());
         m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
@@ -170,7 +170,7 @@ private:
       } catch (...) {
           // Notify something failed during the cleaning 
           m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-          m_this.m_reportPacker.reportDriveStatus(cta::common::DriveStatus::Down);
+          m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
           m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
           try {
           if (currentErrorToCount.size()) {

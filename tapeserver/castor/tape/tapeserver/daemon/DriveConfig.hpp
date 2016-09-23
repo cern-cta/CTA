@@ -34,6 +34,8 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
+// TODO: turn this class into a struct and remove accessor functions (they are used).
+
 /**
  * Class representing the configuration of a tape drive as specified in the
  * TPCONFIG file.

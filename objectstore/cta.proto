@@ -33,26 +33,6 @@ enum ObjectType {
   GenericObject_t = 1000;
 }
 
-// The types of mounts
-enum MountType {
-  NoMount = 0;
-  Archive = 1;
-  Retrieve = 2;
-}
-
-// The drive statuses
-enum DriveStatus {
-    Down = 0;
-    Up = 1;
-    Starting = 2;
-    Mounting = 3;
-    Transfering = 4;
-    Unloading = 5;
-    Unmounting = 6;
-    DrainingToDisk = 7;
-    CleaningUp = 8;
-};
-
 // The base object header. This will allow introspection and automatic
 // "garbage collection", i.e. returning an unprocessed object belonging
 // to a dead agent to the right queue or container.
@@ -120,7 +100,9 @@ message RetrieveQueuePointer {
 // the admin handled configuration information
 message RootEntry {
   repeated ArchiveQueuePointer archivequeuepointers = 1050;
-  repeated RetrieveQueuePointer retrievequeuepointers = 1060; //new queues by tape vid that will replace the old retrieve queues (these are pointers because queues change often and are volatile and we shouldn't lock th root entry for each change)
+  repeated RetrieveQueuePointer retrievequeuepointers = 1060; //new queues by tape 
+  // vid that will replace the old retrieve queues (these are pointers because queues 
+  // change often and are volatile and we shouldn't lock th root entry for each change)
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
   optional string agentregisterintent = 1090;
@@ -292,25 +274,29 @@ message RetrieveToFileRequest {
 
 message DriveState {
   required string drivename = 5000;
-  required string logicallibrary = 5001;
-  optional uint64 sessionid = 5002;
-  optional uint64 bytestransferedinsession = 5003;
-  optional uint64 filestransferedinsession = 5004;
-  optional double latestbandwidth = 5005;
-  optional uint64 sessionstarttime = 5006;
-  optional uint64 mountstarttime = 5007;
-  optional uint64 transferstarttime = 5008;
-  optional uint64 unloadstarttime = 5009;
-  optional uint64 unmountstarttime = 5010;
-  optional uint64 drainingstarttime = 5011;
-  optional uint64 downorupstarttime = 5012;
-  optional uint64 cleanupstarttime = 5013;
-  optional uint64 lastupdatetime = 5014;
-  required MountType mounttype = 5015;
-  required DriveStatus drivestatus = 5016;
-  optional string currentvid = 5017;
-  optional string currenttapepool = 5018;
-  required EntryLog creationlog = 5019;
+  required string host = 5001;
+  required string logicallibrary = 5002;
+  optional uint64 sessionid = 5003;
+  optional uint64 bytestransferedinsession = 5004;
+  optional uint64 filestransferedinsession = 5005;
+  optional double latestbandwidth = 5006;
+  optional uint64 sessionstarttime = 5007;
+  optional uint64 mountstarttime = 5008;
+  optional uint64 transferstarttime = 5009;
+  optional uint64 unloadstarttime = 5010;
+  optional uint64 unmountstarttime = 5011;
+  optional uint64 drainingstarttime = 5012;
+  optional uint64 downorupstarttime = 5013;
+  optional uint64 cleanupstarttime = 5014;
+  optional uint64 lastupdatetime = 5015;
+  optional uint64 startstarttime = 5016;
+  required uint32 mounttype = 5017;
+  required uint32 drivestatus = 5018;
+  required bool desiredUp = 5019;
+  required bool desiredForceDown = 5020;
+  optional string currentvid = 5021;
+  optional string currenttapepool = 5022;
+// TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
 message DriveRegister {

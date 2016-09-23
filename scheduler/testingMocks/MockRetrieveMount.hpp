@@ -56,7 +56,7 @@ namespace cta {
 
     bool bothSidesComplete() override { return false; }
     
-    void setDriveStatus(cta::common::DriveStatus status) override {};
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
 
 
   private:

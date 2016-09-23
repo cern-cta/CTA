@@ -18,26 +18,25 @@
 
 #pragma once
 
-#include <string>
+#include <ostream>
 
 namespace cta {
 namespace common {
 namespace dataStructures {
-enum DriveStatus {
-  Down,
-  Up,
-  Starting,
-  Mounting,
-  Transfering,
-  Unloading,
-  Unmounting,
-  DrainingToDisk,
-  CleaningUp,
-  Unknown
+
+/**
+ * Structure describing the instructions to the drive from operators.
+ * The values are reset to all false when the drive goes down (including
+ * at startup).
+ */
+struct DesiredDriveState {
+  bool up;        ///< Should the drive be up?
+  bool forceDown; ///< Should going down preempt an existig mount?
+  bool operator==(const DesiredDriveState &rhs) const {
+    return up == rhs.up && forceDown == rhs.forceDown;
+  }
 };
 
-std::string toString(DriveStatus type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+std::ostream &operator<<(std::ostream& os, const DesiredDriveState& obj);
 
+}}} // namespace cta::common::dataStructures

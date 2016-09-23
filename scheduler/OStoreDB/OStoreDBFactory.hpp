@@ -107,16 +107,27 @@ public:
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-
   void queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
     const common::dataStructures::RetrieveFileQueueCriteria &criteria,
     const std::string &vid) override {
     m_OStoreDB.queueRetrieve(rqst, criteria, vid);
   }
   
-  std::list<cta::common::DriveState> getDriveStates() const override {
+  std::list<cta::common::dataStructures::DriveState> getDriveStates() const override {
     return m_OStoreDB.getDriveStates();
   }
+  
+  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) override {
+    return m_OStoreDB.setDesiredDriveState(drive, desiredState);
+  }
+  
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
+    common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 
+    uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override {
+    m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, mountSessionId, byteTransfered, filesTransfered,
+       latestBandwidth, vid, tapepool);
+  }
+
 private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
   cta::OStoreDB m_OStoreDB;

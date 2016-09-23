@@ -76,10 +76,10 @@ namespace unitTests {
     
     /* Check there is no side effect from next record */
     inqBuff[16] = 'X';
-    inqBuff[17] = 'X';
-    inqBuff[18] = 'X';
+    inqBuff[17] = 'Y';
+    inqBuff[18] = 'Z';
     ASSERT_EQ("Virtuals", castor::tape::SCSI::Structures::toString(inq.T10Vendor));
-    ASSERT_EQ("XXX", castor::tape::SCSI::Structures::toString(inq.prodId));
+    ASSERT_EQ("XYZ", castor::tape::SCSI::Structures::toString(inq.prodId));
             
     /* Check that non-full record does not yield too long a string */
     inqBuff[8] = 'T';

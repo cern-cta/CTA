@@ -24,7 +24,6 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "common/DriveState.hpp"
 
 #include <memory>
 #include <numeric>
@@ -131,7 +130,7 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportDriveStatus(cta::common::DriveStatus status) {
+void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status) {
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
 }

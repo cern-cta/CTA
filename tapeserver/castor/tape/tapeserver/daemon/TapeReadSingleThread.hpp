@@ -82,7 +82,7 @@ private:
   /**
    * Returns the string representation of the specified mount type
    */
-  const char *mountTypeToString(const cta::MountType::Enum mountType) const
+  const char *mountTypeToString(const cta::common::dataStructures::MountType mountType) const
     throw();
   
   //RAII class for cleaning tape stuff

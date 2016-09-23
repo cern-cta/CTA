@@ -46,6 +46,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotInitialized);  
   CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
   CTA_GENERATE_EXCEPTION_CLASS(InvalidAddress);
+  CTA_GENERATE_EXCEPTION_CLASS(FailedToSerialize);
 protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 
@@ -266,7 +267,12 @@ public:
     if (!m_existingObject) 
       throw NewObject("In ObjectOps::commit: trying to update a new object");
     // Serialise the payload into the header
-    m_header.set_payload(m_payload.SerializeAsString());
+    try {
+      m_header.set_payload(m_payload.SerializeAsString());
+    } catch (std::exception & stdex) {
+      cta::exception::Exception ex(std::string("In ObjectOps::commit(): failed to serialize: ")+stdex.what());
+      throw ex;
+    }
     // Write the object
     m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
   }

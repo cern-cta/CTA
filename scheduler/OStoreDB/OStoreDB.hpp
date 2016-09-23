@@ -87,7 +87,7 @@ public:
     const MountInfo & getMountInfo() override;
     std::unique_ptr<ArchiveJob> getNextJob() override;
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::DriveStatus status, time_t completionTime) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
   };
   
   /* === Archive Job Handling =============================================== */
@@ -123,7 +123,7 @@ public:
     const MountInfo & getMountInfo() override;
     std::unique_ptr<RetrieveJob> getNextJob() override;
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::DriveStatus status, time_t completionTime) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
   };
   
   /* === Retrieve Job handling ============================================== */
@@ -203,7 +203,77 @@ public:
 
   
   /* === Drive state handling  ============================================== */
-  std::list<cta::common::DriveState> getDriveStates() const override;
+  /**
+   * Get states of all drives.
+   * @return list of all known drive states
+   */
+  std::list<cta::common::dataStructures::DriveState> getDriveStates() const override;
+  
+  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) override;
+  
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
+    common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 
+    uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override;
+  
+  /* --- Private helper part implementing state transition logic -------------*/
+  /*
+   * The drive register should gracefully handle reports of status from the drive
+   * in all conditions, including when the drive's entry is absent. This ensures
+   * that the drive is the leader and register always yields incase of conflicting
+   * information.
+   */
+private:
+  /** Collection of smaller scale parts of reportDriveStatus */
+  struct ReportDriveStatusInputs {
+    common::dataStructures::DriveStatus status;
+    cta::common::dataStructures::MountType mountType;
+    time_t reportTime; 
+    uint64_t mountSessionId;
+    uint64_t byteTransfered;
+    uint64_t filesTransfered;
+    double latestBandwidth;
+    std::string vid;
+    std::string tapepool;
+  };
+  /**
+   * Utility implementing the operation get drive state or create, update, set on an
+   * already locked and fetched DriveRegistry. It in used in reportDriveStatus as well
+   * as implicitly in scheduling and other places.
+   * Those function are static as they will be used by sub classes as well (like 
+   * @param dr
+   * @param inputs
+   */
+  static void updateDriveStatusInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
+    const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case. Going UP means drive is ready. It will be instead marked as
+   * down if this is the requested state */
+  static void setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveStarting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveMounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveTransfering(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveUnloading(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveUnmounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveDrainingToDisk(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveCleaningUp(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  
 private:
   objectstore::Backend & m_objectStore;
   objectstore::AgentReference *m_agentReference = nullptr;

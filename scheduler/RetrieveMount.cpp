@@ -36,8 +36,8 @@ cta::RetrieveMount::RetrieveMount(
 //------------------------------------------------------------------------------
 // getMountType
 //------------------------------------------------------------------------------
-cta::MountType::Enum cta::RetrieveMount::getMountType() const{
-  return MountType::RETRIEVE;
+cta::common::dataStructures::MountType cta::RetrieveMount::getMountType() const{
+  return cta::common::dataStructures::MountType::Retrieve;
 }
 
 //------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ void cta::RetrieveMount::tapeComplete() {
   } else {
     // This is a special case: we have to report the tape server is draining
     // its memory to disk
-    setDriveStatus(cta::common::DriveStatus::DrainingToDisk);
+    setDriveStatus(cta::common::dataStructures::DriveStatus::DrainingToDisk);
   }
 }
 
@@ -126,7 +126,7 @@ void cta::RetrieveMount::abort() {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setDriveStatus(cta::common::DriveStatus status) {
+void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
 }
 

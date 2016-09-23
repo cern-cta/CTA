@@ -18,6 +18,8 @@
 
 #include "common/dataStructures/DriveStatus.hpp"
 
+#include <sstream>
+
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::DriveStatus type) {
   switch(type) {
     case cta::common::dataStructures::DriveStatus::Down:
@@ -38,7 +40,15 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
       return "DrainingToDisk";
     case cta::common::dataStructures::DriveStatus::CleaningUp:
       return "CleaningUp";
+    case cta::common::dataStructures::DriveStatus::Unknown:
+      return "Unknown";
     default:
-      return "UNKNOWN";
+    {
+      std::stringstream ret;
+      ret << "WRONG STATE CODE (" << (uint32_t) type << ")";
+      return ret.str();
+    }
   }
 }
+
+

@@ -95,7 +95,7 @@ struct TapedConfiguration {
     ("taped", "WatchdogNoBlockMoveMaxSecs", 1800, "Compile time default");
   /// Time to wait after scheduling came up idle
   SourcedParameter<time_t> wdIdleSessionTimer = decltype(wdIdleSessionTimer)
-    ("taped", "WatchdogNoBlockMoveMaxSecs", 10, "Compile time default");
+    ("taped", "WatchdogIdleSessionTimer", 10, "Compile time default");
   //----------------------------------------------------------------------------
   // The central storage access configuration
   //---------------------------------------------------------------------------- 

@@ -16,28 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "DesiredDriveState.hpp"
 
-#include <string>
-
-namespace cta {
-namespace common {
-namespace dataStructures {
-enum DriveStatus {
-  Down,
-  Up,
-  Starting,
-  Mounting,
-  Transfering,
-  Unloading,
-  Unmounting,
-  DrainingToDisk,
-  CleaningUp,
-  Unknown
-};
-
-std::string toString(DriveStatus type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
-
+std::ostream &cta::common::dataStructures::operator<<(std::ostream& os, const DesiredDriveState& obj) {
+  std::string upStr(obj.up?"true":"false"),
+          forceStr(obj.forceDown?"true":"false");
+  return os << "(up="  << upStr  << " forceDown="  << forceStr << ")";
+}

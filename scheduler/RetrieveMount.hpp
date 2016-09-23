@@ -58,7 +58,7 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    virtual MountType::Enum getMountType() const;
+    virtual cta::common::dataStructures::MountType getMountType() const;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
@@ -84,7 +84,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::DriveStatus status);
+    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status);
 
     /**
      * Indicates that the disk thread of the mount was completed. This

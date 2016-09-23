@@ -59,7 +59,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_log(log),
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
-    m_castorConf(castorConf), 
+    m_castorConf(castorConf),
+    m_driveInfo({driveConfig.m_unitName, cta::utils::getShortHostname(), driveConfig.m_logicalLibrary}),
     m_mc(mc),
     m_intialProcess(initialProcess),
     m_capUtils(capUtils),
@@ -84,7 +85,26 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
-  // 2a) Get initial information from the client
+  
+  // 2a) Determine if we want to mount at all (for now)
+  while (true) {
+    try {
+      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.m_unitName);
+      if (!desiredState.up) {
+        // We wait a bit before polling the scheduler again.
+        // TODO: parametrize the duration?
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+        sleep (5);
+      } else {
+        break;
+      }
+    } catch (cta::Scheduler::NoSuchDrive & e) {
+      // The object store does not even know about this drive. We will report our state
+      // (default status is down).
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    }
+  }
+  // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
     tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
@@ -92,17 +112,19 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());
     lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down.");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...
   if (!tapeMount.get()) {
     lc.log(cta::log::INFO, "No new mount found!");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
     return MARK_DRIVE_AS_UP;
   }
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.nbFiles=tapeMount->getNbFiles();
-  // 2b) ... and log.
+  // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("TPVID", m_volInfo.vid);
@@ -115,11 +137,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   
   // Depending on the type of session, branch into the right execution
   switch(m_volInfo.mountType) {
-  case cta::MountType::RETRIEVE:
+  case cta::common::dataStructures::MountType::Retrieve:
     return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()));
-  case cta::MountType::ARCHIVE:
+  case cta::common::dataStructures::MountType::Archive:
     return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()));
-  case cta::MountType::LABEL:
+  case cta::common::dataStructures::MountType::Label:
     return executeLabel(lc, dynamic_cast<cta::LabelMount *>(tapeMount.get()));
   default:
     return MARK_DRIVE_AS_UP;
@@ -452,10 +474,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession()
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::DataTransferSession::
-  mountTypeToString(const cta::MountType::Enum mountType) const throw() {
+  mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
   switch(mountType) {
-  case cta::MountType::RETRIEVE: return "RETRIEVE";
-  case cta::MountType::ARCHIVE : return "ARCHIVE";
+  case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
+  case cta::common::dataStructures::MountType::Archive : return "Archive";
+  case cta::common::dataStructures::MountType::Label: return "Label";
   default                      : return "UNKNOWN";
   }
 }

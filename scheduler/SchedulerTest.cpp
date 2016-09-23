@@ -378,7 +378,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   ASSERT_TRUE(found);
 
   // Create the environment for the migration to happen (library + tape) 
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryComment);
   {
@@ -395,15 +395,21 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     notDisabled, notFull, tapeComment);
 
   const bool lbpIsOn = true;
+  const std::string driveName = "tape_drive";
+
   catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
-    ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
@@ -466,7 +472,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
-    ASSERT_EQ(cta::MountType::RETRIEVE, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
@@ -542,7 +548,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
-    ASSERT_EQ(cta::MountType::ARCHIVE, mount.get()->getMountType());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());

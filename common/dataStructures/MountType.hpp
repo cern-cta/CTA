@@ -23,13 +23,16 @@
 namespace cta {
 namespace common {
 namespace dataStructures {
-enum MountType {
-  archive,
-  retrieve,
-  none
+enum class MountType: uint32_t {
+  Archive = 1,
+  Retrieve = 2,
+  Label = 3,
+  NoMount = 0
 };
 
 std::string toString(MountType type);
+
+std::ostream &operator <<(std::ostream& os, const MountType &obj);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

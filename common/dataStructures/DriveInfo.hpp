@@ -23,21 +23,16 @@
 namespace cta {
 namespace common {
 namespace dataStructures {
-enum DriveStatus {
-  Down,
-  Up,
-  Starting,
-  Mounting,
-  Transfering,
-  Unloading,
-  Unmounting,
-  DrainingToDisk,
-  CleaningUp,
-  Unknown
+
+
+/**
+ * This struct holds minimal drive info. It is used to (re-)create the
+ * drive's entry in the register is needed.
+ */
+struct DriveInfo {
+  std::string driveName;
+  std::string host;
+  std::string logicalLibrary;
 };
-
-std::string toString(DriveStatus type);
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
-
+  
+}}} //namespace cta::common::dataStructures
