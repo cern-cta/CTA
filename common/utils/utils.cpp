@@ -590,7 +590,7 @@ std::string getAdler32String(const uint8_t *buf, const uint32_t len)
 {
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
   std::stringstream ret;
-  ret << std::showbase << std::hex << std::setw(8) << std::setfill('0') << std::uppercase
+  ret << "0X" << std::noshowbase << std::hex << std::setw(8) << std::setfill('0') << std::uppercase
       << adler32(checksum, (const Bytef*)buf, len);
   return ret.str();
 }
