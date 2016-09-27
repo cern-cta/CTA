@@ -717,7 +717,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
           countWithCrc32c)) {
           delete[] dataWithCrc32c;
           cta::exception::Errnum::throwOnMinusOne(-1,
-            "Failed ST write in DriveGeneric::writeBlock");
+            "Failed ST write with crc32c in DriveGeneric::writeBlock");
         }
         delete[] dataWithCrc32c;
         break;
@@ -754,7 +754,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
         if(NULL == dataWithCrc32c) {
           throw cta::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
         }
-        ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
+        const ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
           count+SCSI::logicBlockProtectionMethod::CRC32CLength);
         if ( -1 == res ) {
           delete[] dataWithCrc32c;
@@ -815,7 +815,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
           throw cta::exception::MemException("Failed to allocate memory "
             " for a new MemBlock in DriveGeneric::readBlock!");
         }
-        ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
+        const ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
           count+SCSI::logicBlockProtectionMethod::CRC32CLength);
 
         // First handle block too big
@@ -827,7 +827,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
         if (-1 == res) {
           delete[] dataWithCrc32c;
           cta::exception::Errnum::throwOnMinusOne(res,
-            context+": Failed ST read in DriveGeneric::readExactBlock");
+            context+": Failed ST read with crc32c in DriveGeneric::readExactBlock");
         }
         // Handle mismatch
         if ((size_t) (res - SCSI::logicBlockProtectionMethod::CRC32CLength)
