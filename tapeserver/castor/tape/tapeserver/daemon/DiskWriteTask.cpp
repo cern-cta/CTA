@@ -97,7 +97,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         // Write the data.
         currentErrorToCount = "Error_diskWrite";
         m_stats.dataVolume+=mb->m_payload.size();
-        mb->m_payload.write(*writeFile);
+        if (mb->m_payload.size())
+          mb->m_payload.write(*writeFile);
         m_stats.readWriteTime+=localTime.secs(cta::utils::Timer::resetCounter);
         
         checksum = mb->m_payload.adler32(checksum);
