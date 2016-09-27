@@ -310,8 +310,8 @@ namespace daemon {
            .add("dataVolume",m_taskStats.dataVolume)
            .add("headerVolume",m_taskStats.headerVolume)
            .add("driveTransferSpeedMBps",m_taskStats.totalTime?
-             (m_taskStats.dataVolume+m_taskStats.headerVolume)
-                /1000/1000/m_taskStats.totalTime:0.0)
+                  1.0*(m_taskStats.dataVolume+m_taskStats.headerVolume)
+                  /1000/1000/m_taskStats.totalTime:0.0)
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_archiveFile.fileSize)
