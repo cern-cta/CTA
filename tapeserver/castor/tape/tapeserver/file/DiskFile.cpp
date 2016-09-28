@@ -40,7 +40,7 @@ namespace diskFile {
 DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   const std::string & xrootPrivateKeyFile):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
-  m_NoURLRemoteFile("^(.*:)(/.*)$"),
+  m_NoURLRemoteFile("^([^:]*:)(.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLEosFile("^eos://(.*)$"),
@@ -435,7 +435,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
     throw cta::exception::Exception(
       std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL "+
         url));
-  size_t pathPos = url.find("//", schemePos + scheme.size());
+  size_t pathPos = url.find("/", schemePos + scheme.size());
   if (std::string::npos == pathPos) 
     throw cta::exception::Exception(
       std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL "+
