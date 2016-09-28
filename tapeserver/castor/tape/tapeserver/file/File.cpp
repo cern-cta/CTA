@@ -219,8 +219,8 @@ namespace castor {
           throw cta::exception::InvalidArgument(err.str());
         }
         
-        int64_t fSeq_delta = fileToRecall.selectedTapeFile().fSeq 
-            - m_session->getCurrentFseq();
+        const int64_t fSeq_delta = (int64_t)fileToRecall.selectedTapeFile().fSeq
+            - (int64_t)m_session->getCurrentFseq();
         if(fileToRecall.selectedTapeFile().fSeq == 1) { 
           // special case: we can rewind the tape to be faster 
           //(TODO: in the future we could also think of a threshold above 
