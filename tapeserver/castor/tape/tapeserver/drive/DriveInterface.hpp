@@ -31,6 +31,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/TimeOut.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)

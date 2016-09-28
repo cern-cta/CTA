@@ -154,6 +154,8 @@ namespace drive {
      * at least timeoutSeconds or any errors occurred. We consider any not GOOD 
      * SCSI replay with sense keys not equals to NotReady or UnitAttention as 
      * errors.
+     * This method will pass through any exception encountered, and will throw
+     * a TimeOut exception if not tape is found after timeout.
      * 
      * This method will at least query the tape drive once.
      * 

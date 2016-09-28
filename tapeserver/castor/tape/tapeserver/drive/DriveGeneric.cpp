@@ -1178,7 +1178,7 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
   std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
 
   if(GMT_ONLINE(mtInfo.mt_gstat)==0) {
-    cta::exception::Exception ex;
+    cta::exception::TimeOut ex;
     ex.getMessage() << "Tape drive empty after waiting " <<
       timeoutSecond << " seconds.";
     throw ex;

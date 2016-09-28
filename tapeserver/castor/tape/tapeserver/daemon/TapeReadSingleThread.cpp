@@ -67,10 +67,15 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // First check that a tape is actually present in the drive. We can get here
     // after failing to mount (library error) in which case there is nothing to
     // do (and trying to unmount will only lead to a failure.)
+    // We give time to the drive for settling after a mount which might have
+    // just happened. If we time out, then we will simply find no tape in the
+    // drive, which is a fine situation (so timeout exceptions are discarded).
+    // Other exception, where we failed to access the drive somehow are at passed
+    // through.
     const uint32_t waitMediaInDriveTimeout = 60;
     try {
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-    } catch (cta::exception::Exception &) {}
+    } catch (cta::exception::TimeOut &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
       goto done;

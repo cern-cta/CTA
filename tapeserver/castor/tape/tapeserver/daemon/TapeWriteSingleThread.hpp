@@ -120,7 +120,7 @@ private:
         const uint32_t waitMediaInDriveTimeout = 60;
         try {
           m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-        } catch (cta::exception::Exception &) {}
+        } catch (cta::exception::TimeOut &) {}
         if (!m_this.m_drive.hasTapeInPlace()) {
           m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
           goto done;
