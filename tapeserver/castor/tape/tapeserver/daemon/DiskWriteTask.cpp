@@ -206,7 +206,7 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------  
   void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,cta::log::LogContext&  lc){
     using namespace cta::log;
-    if(m_retrieveJob->retrieveRequest.archiveFileID != static_cast<unsigned int>(mb->m_fileid)
+    if(m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid
             || blockId != mb->m_fileBlock  || mb->isFailed() ){
       LogContext::ScopedParam sp[]={
         LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
