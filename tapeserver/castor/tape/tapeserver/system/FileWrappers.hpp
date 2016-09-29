@@ -73,7 +73,7 @@ namespace System {
     virtual int ioctl(unsigned long int request, struct mtop * mt_cmd);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
     virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
-  private:
+  protected:
     struct mtget m_mtStat;
     struct mtop m_mtCmd;
     uint32_t blockID;  
@@ -90,7 +90,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlReadPosition(sg_io_hdr_t * sgio_h);
+    virtual int ioctlReadPosition(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles LOG_SELECT CDB and only checks the CDB for the 
@@ -101,7 +101,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlLogSelect(sg_io_hdr_t * sgio_h);
+    virtual int ioctlLogSelect(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles LOCATE_10 CDB and only checks the CDB for the 
@@ -112,7 +112,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlLocate10(sg_io_hdr_t * sgio_h);
+    virtual int ioctlLocate10(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles LOG_SENSE CDB and prepares the replay with
@@ -123,7 +123,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlLogSense(sg_io_hdr_t * sgio_h);
+    virtual int ioctlLogSense(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles MODE_SENSE_6 CDB and prepares the replay with
@@ -134,7 +134,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlModSense6(sg_io_hdr_t * sgio_h);
+    virtual int ioctlModSense6(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles MODE_SELECT_6 CDB and only checks the CDB for the
@@ -145,7 +145,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlModSelect6(sg_io_hdr_t * sgio_h);
+    virtual int ioctlModSelect6(sg_io_hdr_t * sgio_h);
     
     /**
      * This function handles INQUIRY CDB and prepares the standard inquiry
@@ -156,8 +156,32 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int ioctlInquiry(sg_io_hdr_t * sgio_h);
-    
+    virtual int ioctlInquiry(sg_io_hdr_t * sgio_h) = 0;
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to ReadErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseReadErrorsPage(sg_io_hdr_t * sgio_h) = 0;
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to WriteErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseWriteErrorsPage(sg_io_hdr_t * sgio_h) = 0;
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to NonMediumErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseNonMediumErrorsPage(sg_io_hdr_t * sgio_h) = 0;
+
     /**
      * This function prepares the replay with compression statistics for 
      * LOG SENSE CDB with log page Sequential Access Device Page. We use this 
@@ -168,7 +192,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h);
+    virtual int logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h);
     
     /**
      * This function prepares the replay with compression statistics for 
@@ -180,7 +204,7 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int logSenseDataCompression32h(sg_io_hdr_t * sgio_h);
+    virtual int logSenseDataCompression32h(sg_io_hdr_t * sgio_h);
     
     /**
      * This function prepares the replay with compression statistics for 
@@ -192,7 +216,8 @@ namespace System {
      * @return        Returns 0 in success and 
      *                -1 with appropriate  errno if an error occurred.
      */
-    int logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h);
+    virtual int logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h);
+
     /**
      * This function replies with a pre-cooked error record. As with the real devices,
      * many parameter codes get reported with a flag set to 0, and a few will
@@ -248,6 +273,142 @@ namespace System {
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSelectControlDataProtection(sg_io_hdr_t * sgio_h);
+  };
+
+  /**
+   * Specific st device class for IBM 3592.
+   * Used to test vendor specific features.
+   */
+  class stIBM3592DeviceFile : public stDeviceFile {
+  public:
+    /**
+     * This function handles LOG_SENSE CDB and prepares the replay with
+     * compression data.
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
+     *                ioctl call data
+     * @return        Returns 0 in success and
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    virtual int ioctlLogSense(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to ReadErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseReadErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to WriteErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseWriteErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to NonMediumErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseNonMediumErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to VolumeStatisticsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseVolumeStatisticsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to driveWriteErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseDriveWriteErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to ReadForwardErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseDriveReadForwardErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to ReadBackwardErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseDriveReadBackwardErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to PerformanceCharacteristicsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSensePerformanceCharacteristicsPage(sg_io_hdr_t * sgio_h);
+
+    virtual int ioctlInquiry(sg_io_hdr_t * sgio_h);
+  };
+
+  /**
+   * Specific st device class for Oracle T10000D.
+   * Used to test vendor specific features.
+   */
+  class stOracleT10000Device : public stDeviceFile {
+  public:
+    /**
+     * This function handles LOG_SENSE CDB and prepares the replay with
+     * compression data.
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
+     *                ioctl call data
+     * @return        Returns 0 in success and
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    virtual int ioctlLogSense(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to ReadErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseReadErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to WriteErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseWriteErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to NonMediumErrorsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseNonMediumErrorsPage(sg_io_hdr_t * sgio_h);
+
+    /**
+     * Simulates the response of a LogSense ioctl from the drive to VendorUniqueDriveStatisticsPage.
+     * @param sgio_h The pointer to the sg_io_hdr_t structure with
+                     ioctl call data.
+     * @return       Returns 0 in success and -1 with appropriate errno if an error has occurred.
+     */
+    virtual int logSenseVendorUniqueDriveStatisticsPage(sg_io_hdr_t * sgio_h);
+
+    virtual int ioctlInquiry(sg_io_hdr_t * sgio_h);
   };
 } // namespace System
 } // namespace tape

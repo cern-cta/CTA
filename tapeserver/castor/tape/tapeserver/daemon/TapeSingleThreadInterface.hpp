@@ -203,7 +203,43 @@ protected:
     }
     return true;
   }
-  
+
+  /**
+   * Log SCSI metrics for session.
+   */
+  virtual void logSCSIMetrics() = 0;
+
+  /**
+   * Function iterating through the map of available SCSI metrics and logging them.
+   */
+  void logSCSIStats(const std::string & logTitle, size_t metricsHashLength) {
+    if(metricsHashLength == 0) { // skip logging entirely if hash is empty.
+      m_logContext.log(cta::log::INFO, "SCSI Statistics could not be acquired from drive");
+      return;
+    }
+    m_logContext.log(cta::log::INFO, logTitle);
+  }
+
+  /**
+   * Function appending Tape VID, drive manufacturer and model and firmware version to the Scoped Container passed.
+   */
+  void appendDriveAndTapeInfoToScopedParams(cta::log::ScopedParamContainer &scopedContainer) {
+    drive::deviceInfo di = m_drive.getDeviceInfo();
+    scopedContainer.add("driveManufacturer", di.vendor);
+    scopedContainer.add("driveType", di.product);
+    scopedContainer.add("firmwareVersion", m_drive.getDriveFirmwareVersion());
+  }
+
+  /**
+   * Function appending SCSI Metrics to the Scoped Container passed.
+   */
+  template<class N>
+  static void appendMetricsToScopedParams( cta::log::ScopedParamContainer &scopedContainer, const std::map<std::string,N> & metricsHash) {
+     for(auto it = metricsHash.cbegin(); it != metricsHash.end(); it++) {
+      scopedContainer.add(it->first, it->second);
+     }
+   }
+
   /**
    * Helper virtual function allowing the access to the m_watchdog member
    * in the inherited classes (TapeReadSingleThread and TapeWriteSingleThread)

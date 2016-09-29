@@ -111,12 +111,16 @@ private:
       // prevent counting where error happened upstream.
       // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
       try { m_this.logTapeAlerts(); } catch (...) {}
+      // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
+      try { m_this.logSCSIMetrics(); } catch(...) {}
+
       std::string currentErrorToCount = "Error_tapeUnload";
       try{
         // Do the final cleanup
         // First check that a tape is actually present in the drive. We can get here
         // after failing to mount (library error) in which case there is nothing to
         // do (and trying to unmount will only lead to a failure.)
+
         const uint32_t waitMediaInDriveTimeout = 60;
         try {
           m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
@@ -263,6 +267,11 @@ protected:
   virtual void countTapeLogError(const std::string & error) { 
     m_watchdog.addToErrorCount(error);
   }
+
+  /**
+   * Logs SCSI metrics for write session.
+   */
+  virtual void logSCSIMetrics();
   
 private:
   /**

@@ -453,6 +453,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
   }
+
+  // 10) Check logs
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
+                                               "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
@@ -621,6 +633,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 10) Check the remote files exist and have the correct size
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("trying to position beyond the end of data"));
+
+  // 11) Check logs for drive statistics
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
+                                               "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
@@ -894,6 +918,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
+
+  // 10) Check logs for drive statistics
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
+                                               "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
@@ -1058,6 +1094,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     ASSERT_EQ(sf->adler32(), afs.checksumValue);
     ASSERT_EQ(1000, afs.fileSize);
   }
+
+  // Check logs for drive statistics
+  ASSERT_NE(std::string::npos, temp.find("firmwareVersion=\"123A\" "
+                                         "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
+                                         "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+
+  ASSERT_NE(std::string::npos, temp.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                         "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                         "mountReadTransients=\"10\" "
+                                         "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                         "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 //
@@ -1172,6 +1219,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   ASSERT_EQ(s_vid, sess.getVid());
   // We should no have logged a single successful file read.
   ASSERT_EQ(std::string::npos, logger.getLog().find("MSG=\"File successfully read from disk\""));
+  // Check logs for drive statistics
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
+                                               "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 //
@@ -1303,6 +1362,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     ASSERT_EQ(s_vid, tapes.front().vid);
     ASSERT_EQ(true, tapes.front().full);
   }
+  // Check logs for drive statistics
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
+                                               "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
@@ -1430,6 +1501,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     ASSERT_EQ(s_vid, tapes.front().vid);
     ASSERT_EQ(true, tapes.front().full);
   }
+  // Check logs for drive statistics
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+                                               "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
+                                               "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 #undef TEST_MOCK_DB

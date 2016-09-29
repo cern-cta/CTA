@@ -238,9 +238,18 @@ namespace SCSI {
   class logSensePages {
   public:
     enum {
+      writeErrors                = 0x02,
+      readErrors                 = 0x03,
+      nonMediumErrors            = 0x06,
       sequentialAccessDevicePage = 0x0C,
+      volumeStatistics           = 0x17, // IBM specific page
       tapeAlert                  = 0x2e,
       dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
+      driveWriteErrors           = 0x32, // IBM specific page
+      driveReadForwardErrors     = 0x34, // IBM specific page
+      driveReadBackwardErrors    = 0x36, // IBM specific page
+      performanceCharacteristics = 0x37, // IBM specific page
+      vendorUniqueDriveStatistics= 0x3d, // Oracle T1000D/E specific page
       blockBytesTransferred      = 0x38  // parameters in this page are reset when a cartridge is loaded
     };
   };
@@ -272,7 +281,109 @@ namespace SCSI {
       unitSerialNumber = 0x80 
     };
   };
-  
+ 
+  class writeErrorsDevicePage {
+  public:
+    enum {
+      totalCorrectedErrors        = 0x0003,
+      totalProcessed              = 0x0005,
+      totalUncorrectedErrors      = 0x0006
+    };
+  };
+
+  class readErrorsDevicePage {
+  public:
+    enum {
+      totalCorrectedErrors        = 0x0003,
+      totalProcessed              = 0x0005,
+      totalUncorrectedErrors      = 0x0006
+    };
+  };
+
+  class nonMediumErrorsDevicePage {
+  public:
+    enum {
+      totalCount                  = 0x0000
+    };
+  };
+
+  class volumeStatisticsPage { // IBM 3592 specific
+  public:
+    enum {
+      validityFlag                            = 0x0000,
+      volumeMounts                            = 0x0001,
+      volumeRecoveredWriteDataErrors          = 0x0003,
+      volumeUnrecoveredWriteDataErrors        = 0x0004,
+      volumeRecoveredReadErrors               = 0x0008,
+      volumeUnrecoveredReadErrors             = 0x0009,
+      volumeManufacturingDate                 = 0x0046,
+      BOTPasses                               = 0x0101,
+      MOTPasses                               = 0x0102
+    };
+  };
+
+  class performanceCharacteristicsQualitySummaryPage { // IBM 3592 specific
+  public:
+    enum {
+      driveEfficiency             = 0x0000,
+      mediaEfficiency             = 0x0001,
+      primaryInterfaceEfficiency0 = 0x0011,
+      primaryInterfaceEfficiency1 = 0x0012,
+      libraryInterfaceEfficiency  = 0x001a
+    };
+  };
+
+  class performanceCharacteristicsHostCommandsPage { // IBM 3592 specific
+  public:
+    enum {
+      readPerformanceEfficiency   = 0x03d0,
+      writePerformanceEfficiency  = 0x04d0
+    };
+  };
+
+  class driveWriteErrorsPage { // IBM 3592 specific
+  public:
+    enum {
+      servoTransients             = 0x0001,
+      dataTransients              = 0x0002,
+      servoTemps                  = 0x0006,
+      dataTemps                   = 0x0007,
+      totalRetries                = 0x0008
+    };
+  };
+
+  class driveReadErrorsPage { // IBM 3592 specific (both FW and BW)
+  public:
+    enum {
+      servoTransients             = 0x0001,
+      dataTransients              = 0x0002,
+      servoTemps                  = 0x0006,
+      dataTemps                   = 0x0007,
+      totalRetries                = 0x0015
+    };
+  };
+
+  class vendorUniqueDriveStatistics { // Oracle T10K specific
+  public:
+    enum {
+      // Drive stats
+      readRecoveryRetries         = 0x0104,
+      readTransientConditions     = 0x0105,
+      writeTransientConditions    = 0x0106,
+      servoTepomporaries          = 0x0107,
+      servoTransientConditions    = 0x0108,
+      writeRecoveryRetries        = 0x0112,
+      temporaryDriveErrors        = 0x0203,
+      permanentDriveErrors        = 0x0204,
+
+      // Quality stats
+      tapeEfficiency              = 0x0400,
+      readQualityIndex            = 0x0401,
+      readBackCheckQualityIndex   = 0x0402,
+      writeEfficiency             = 0x0407
+    };
+  };
+
   /**
    * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual
    */

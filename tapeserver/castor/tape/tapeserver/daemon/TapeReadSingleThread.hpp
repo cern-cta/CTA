@@ -150,6 +150,11 @@ private:
     m_watchdog.addToErrorCount(error);
   }
 
+protected:
+  /**
+   * Logs SCSI metrics for read session.
+   */
+  virtual void logSCSIMetrics();
 }; // class TapeReadSingleThread
 
 } // namespace daemon

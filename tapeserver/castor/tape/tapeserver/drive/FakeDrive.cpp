@@ -276,3 +276,62 @@ castor::tape::tapeserver::drive::lbpToUse
 bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
+  std::map<std::string,uint32_t> writeErrorsStats;
+  writeErrorsStats["mountTotalCorrectedWriteErrors"] = 5;
+  writeErrorsStats["mountTotalWriteBytesProcessed"] = 4096;
+  writeErrorsStats["mountTotalUncorrectedWriteErrors"] = 1;
+
+  return writeErrorsStats;
+}
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeReadErrors() {
+  std::map<std::string,uint32_t> readErrorsStats;
+  readErrorsStats["mountTotalCorrectedReadErrors"]= 5;
+  readErrorsStats["mountTotalReadBytesProcessed"] = 4096;
+  readErrorsStats["mountTotalUncorrectedReadErrors"]= 1;
+
+  return readErrorsStats;
+}
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeNonMediumErrors() {
+  std::map<std::string,uint32_t> nonMediumErrorsStats;
+  nonMediumErrorsStats["mountTotalNonMediumErrorCounts"] = 2;
+
+  return nonMediumErrorsStats;
+}
+
+std::map<std::string,float> castor::tape::tapeserver::drive::FakeDrive::getQualityStats() {
+  // Only common IBM and Oracle stats are included in the return value;
+  std::map<std::string,float> qualityStats;
+  qualityStats["lifetimeMediumEfficiencyPrct"] = 100.0;
+  qualityStats["mountReadEfficiencyPrct"] = 100.0;
+  qualityStats["mountWriteEfficiencyPrct"] = 100.0;
+
+  return qualityStats;
+}
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getDriveStats() {
+  std::map<std::string,uint32_t> driveStats;
+
+  driveStats["mountTemps"] = 100;
+  driveStats["mountReadTransients"] = 10;
+  driveStats["mountWriteTransients"] = 10;
+  driveStats["mountTotalReadRetries"] = 25;
+  driveStats["mountTotalWriteRetries"] = 25;
+  driveStats["mountServoTemps"] = 10;
+  driveStats["mountServoTransients"] = 5;
+
+  return driveStats;
+}
+
+std::string castor::tape::tapeserver::drive::FakeDrive::getDriveFirmwareVersion() {
+  return std::string("123A");
+}
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getVolumeStats() {
+  // No available data
+  return std::map<std::string,uint32_t>();
+}
+

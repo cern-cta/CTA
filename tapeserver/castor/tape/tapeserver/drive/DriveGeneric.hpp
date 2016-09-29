@@ -54,6 +54,44 @@ namespace drive {
     virtual compressionStats getCompression()  = 0;
 
     /**
+     * Get write error information from the drive.
+     * @return writeErrorsStats
+     */
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
+
+    /**
+     * Get read error information from the drive.
+     * @return readErrorsStats
+     */
+    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+
+    /**
+     * Get error information (other than read/write) from the drive.
+     */
+    virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
+
+    /**
+     * Get quality-related metrics (ratings, efficiencies) from the drive.
+     */
+    virtual std::map<std::string,float> getQualityStats();
+
+    /**
+     * Get drive error information happened during mount from the drive.
+     */
+    virtual std::map<std::string,uint32_t> getDriveStats();
+
+    /**
+     * Get volume information happened during the mount.
+     */
+    virtual std::map<std::string,uint32_t> getVolumeStats();
+
+    /**
+     * Get the firmware revision of the drive.
+     * Reads it from /proc/scsi/scsi file.
+     */
+    virtual std::string getDriveFirmwareVersion();
+
+    /**
      * Reset all statistics about data movements on the drive.
      * All cumulative and threshold log counter values will be reset to their
      * default values as specified in that pages reset behavior section.
@@ -398,7 +436,11 @@ namespace drive {
     DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() ;
+    virtual compressionStats getCompression();
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors() ;
+    virtual std::map<std::string,uint32_t> getTapeReadErrors() ;
+    virtual std::map<std::string,float> getQualityStats();
+    virtual std::map<std::string,uint32_t> getDriveStats();
   };
   
   /**
@@ -417,6 +459,11 @@ namespace drive {
     virtual void setLogicalBlockProtection(const unsigned char method, 
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite);
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
+    virtual std::map<std::string,float> getQualityStats();
+    virtual std::map<std::string,uint32_t> getDriveStats();
   };
 
   class DriveLTO : public DriveGeneric {
@@ -425,7 +472,7 @@ namespace drive {
     DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() ;
+    virtual compressionStats getCompression();
   };
 
   class DriveIBM3592 : public DriveGeneric {
@@ -434,7 +481,12 @@ namespace drive {
     DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() ;
+    virtual compressionStats getCompression();
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint32_t> getVolumeStats();
+    virtual std::map<std::string,float> getQualityStats();
+    virtual std::map<std::string,uint32_t> getDriveStats();
   };
 
 }}}}

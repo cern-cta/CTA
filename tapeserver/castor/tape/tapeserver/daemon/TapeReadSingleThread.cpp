@@ -57,6 +57,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try { m_this.logTapeAlerts(); } catch (...) {}
+  // Log safely SCSI Metrits
+  try { m_this.logSCSIMetrics(); } catch (...) {}
+
+  // Log safely errors at the end of the session
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -279,6 +283,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         }
       }
     }
+
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
@@ -345,3 +350,59 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
                   /1000/1000/m_stats.totalTime:0.0);
     m_logContext.log(level,msg);  
 }
+
+//------------------------------------------------------------------------------
+//logSCSIMetrics
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
+  try {
+    // mount general statistics
+    cta::log::ScopedParamContainer scopedContainer(m_logContext);
+    appendDriveAndTapeInfoToScopedParams(scopedContainer);
+    // get mount general stats
+    std::map<std::string, uint32_t> scsi_read_metrics_hash = m_drive.getTapeReadErrors();
+    appendMetricsToScopedParams(scopedContainer, scsi_read_metrics_hash);
+    std::map<std::string, uint32_t> scsi_nonmedium_metrics_hash = m_drive.getTapeNonMediumErrors();
+    appendMetricsToScopedParams(scopedContainer, scsi_nonmedium_metrics_hash);
+    logSCSIStats("Logging mount general statistics",
+      scsi_read_metrics_hash.size() + scsi_nonmedium_metrics_hash.size());
+  }
+  catch (const cta::exception::Exception &ex) {
+    cta::log::ScopedParamContainer scoped(m_logContext);
+    scoped.add("exception_message", ex.getMessageValue());
+    m_logContext.log(cta::log::ERR, "Exception in logging mount general statistics");
+  }
+
+  // drive statistic
+  try {
+    cta::log::ScopedParamContainer scopedContainer(m_logContext);
+    appendDriveAndTapeInfoToScopedParams(scopedContainer);
+    // get drive stats
+    std::map<std::string,float> scsi_quality_metrics_hash = m_drive.getQualityStats();
+    appendMetricsToScopedParams(scopedContainer, scsi_quality_metrics_hash);
+    std::map<std::string,uint32_t> scsi_drive_metrics_hash = m_drive.getDriveStats();
+    appendMetricsToScopedParams(scopedContainer, scsi_drive_metrics_hash);
+    logSCSIStats("Logging drive statistics",
+      scsi_quality_metrics_hash.size()+scsi_drive_metrics_hash.size());
+  }
+  catch (const cta::exception::Exception &ex) {
+    cta::log::ScopedParamContainer scoped(m_logContext);
+    scoped.add("exception_message", ex.getMessageValue());
+    m_logContext.log(cta::log::ERR, "Exception in logging drive statistics");
+  }
+
+  // volume statistics
+  try {
+    cta::log::ScopedParamContainer scopedContainer(m_logContext);
+    appendDriveAndTapeInfoToScopedParams(scopedContainer);
+    std::map<std::string,uint32_t> scsi_metrics_hash = m_drive.getVolumeStats();
+    appendMetricsToScopedParams(scopedContainer, scsi_metrics_hash);
+    logSCSIStats("Logging volume statistics", scsi_metrics_hash.size());
+  }
+  catch (const cta::exception::Exception &ex) {
+    cta::log::ScopedParamContainer scoped(m_logContext);
+    scoped.add("exception_message", ex.getMessageValue());
+    m_logContext.log(cta::log::ERR, "Exception in logging volume statistics");
+  }
+}
+

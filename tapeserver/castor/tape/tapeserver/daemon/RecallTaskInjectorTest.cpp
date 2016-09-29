@@ -128,6 +128,8 @@ namespace unitTests
     }
 
     virtual void countTapeLogError(const std::string & error) {};
+    protected:
+      virtual void logSCSIMetrics() {};
   };
   
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {

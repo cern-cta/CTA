@@ -172,7 +172,13 @@ namespace drive {
     
     virtual compressionStats getCompression()  = 0;
     virtual void clearCompressionStats()  = 0;
-    
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors() = 0;
+    virtual std::map<std::string,uint32_t> getTapeReadErrors() = 0;
+    virtual std::map<std::string,uint32_t> getTapeNonMediumErrors() = 0;
+    virtual std::map<std::string,float> getQualityStats() = 0;
+    virtual std::map<std::string,uint32_t> getDriveStats() = 0;
+    virtual std::map<std::string,uint32_t> getVolumeStats() = 0;
+    virtual std::string getDriveFirmwareVersion() = 0;
     virtual deviceInfo getDeviceInfo()  = 0;
     virtual std::string getSerialNumber()  = 0;
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
