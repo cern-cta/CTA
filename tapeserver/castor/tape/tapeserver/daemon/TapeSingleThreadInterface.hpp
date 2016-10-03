@@ -112,8 +112,7 @@ protected:
    */
   void mountTapeReadOnly(){
     cta::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("TPVID",m_volInfo.vid)
-          .add("drive_Slot",m_drive.config.getLibrarySlot().str());
+    scoped.add("drive_Slot",m_drive.config.getLibrarySlot().str());
     try {
       cta::utils::Timer timer;
         m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.getLibrarySlot());
@@ -137,8 +136,7 @@ protected:
    */
   void mountTapeReadWrite(){
     cta::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("TPVID",m_volInfo.vid)
-          .add("drive_Slot",m_drive.config.getLibrarySlot().str());
+    scoped.add("drive_Slot",m_drive.config.getLibrarySlot().str());
     try {
       cta::utils::Timer timer;
         m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.config.getLibrarySlot());
