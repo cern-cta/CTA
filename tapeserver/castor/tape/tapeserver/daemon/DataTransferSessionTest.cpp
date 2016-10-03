@@ -457,10 +457,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -637,10 +637,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 11) Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -922,10 +922,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 10) Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -1083,8 +1083,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   sess.execute();
-  std::string temp = logger.getLog();
-  temp += "";
+  std::string logToCheck = logger.getLog();
+  logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
   for(auto & sf: sourceFiles) {
@@ -1096,11 +1096,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
 
   // Check logs for drive statistics
-  ASSERT_NE(std::string::npos, temp.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                          "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                          "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, temp.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                          "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                          "mountReadTransients=\"10\" "
                                          "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -1222,11 +1222,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -1365,11 +1365,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
@@ -1504,10 +1504,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" lifetimeMediumEfficiencyPrct=\"100\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
                                                "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
                                                "mountReadTransients=\"10\" "
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "

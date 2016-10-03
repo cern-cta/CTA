@@ -228,6 +228,7 @@ protected:
     scopedContainer.add("driveManufacturer", di.vendor);
     scopedContainer.add("driveType", di.product);
     scopedContainer.add("firmwareVersion", m_drive.getDriveFirmwareVersion());
+    scopedContainer.add("serialNumber", m_drive.getDeviceInfo().serialNumber);
   }
 
   /**
