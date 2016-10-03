@@ -946,7 +946,7 @@ drive::compressionStats drive::DriveT10000::getCompression()  {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof (logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof (logPageHeader);
@@ -1033,7 +1033,7 @@ drive::compressionStats drive::DriveLTO::getCompression()  {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof (logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof (logPageHeader);
@@ -1107,7 +1107,7 @@ drive::compressionStats drive::DriveIBM3592::getCompression()  {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof (logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof (logPageHeader);
@@ -1191,7 +1191,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeWriteErrors() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1241,7 +1241,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getTapeWriteErrors() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1291,7 +1291,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeReadErrors() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1342,7 +1342,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getTapeReadErrors() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1392,7 +1392,7 @@ std::map<std::string,uint32_t> drive::DriveGeneric::getTapeNonMediumErrors() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1438,7 +1438,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getVolumeStats() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1518,7 +1518,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getVolumeStats() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1585,7 +1585,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
       SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
         *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-      unsigned char *endPage = dataBuff +
+      const unsigned char *endPage = dataBuff +
         SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1639,7 +1639,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
       SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
         *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-      unsigned char *endPage = dataBuff +
+      const unsigned char *endPage = dataBuff +
         SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1696,7 +1696,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
       SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
         *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-      unsigned char *endPage = dataBuff +
+      const unsigned char *endPage = dataBuff +
         SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1739,7 +1739,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
       SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
         *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-      unsigned char *endPage = dataBuff +
+      const unsigned char *endPage = dataBuff +
         SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1789,7 +1789,7 @@ std::map<std::string,float> drive::DriveT10000::getQualityStats() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1845,7 +1845,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getDriveStats() {
     SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-    unsigned char *endPage = dataBuff +
+    const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1896,7 +1896,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getDriveStats() {
     SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-    unsigned char *endPage = dataBuff +
+    const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -1947,7 +1947,7 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getDriveStats() {
     SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
       *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-    unsigned char *endPage = dataBuff +
+    const unsigned char *endPage = dataBuff +
       SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
@@ -2004,7 +2004,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getDriveStats() {
   SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
     *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
 
-  unsigned char *endPage = dataBuff +
+  const unsigned char *endPage = dataBuff +
     SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
