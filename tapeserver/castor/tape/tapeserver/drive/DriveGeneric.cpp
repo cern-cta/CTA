@@ -1485,6 +1485,74 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getVolumeStats() {
   return volumeStats;
 }
 
+/*
+ * This method looks very close to the IBM's implementation but Oracle has partly implemented
+ * the SCSI page 0x17. This means that the missing values are defined, but have the value of 0.
+ * This is the reason we provide a different method implementation for T10k drives.
+ */
+std::map<std::string,uint32_t> drive::DriveT10000::getVolumeStats() {
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  std::map<std::string,uint32_t> volumeStats;
+  unsigned char dataBuff[1024]; //big enough to fit all the results
+
+  memset(dataBuff, 0, sizeof (dataBuff));
+
+  cdb.pageCode = SCSI::logSensePages::volumeStatistics;
+  cdb.subPageCode = 0x00; // 0x01 // for IBM latest revision drives
+  cdb.PC = 0x01; // Current Cumulative Values
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&dataBuff);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveT10000::getVolumeStats");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getVolumeStats");
+
+  SCSI::Structures::logSenseLogPageHeader_t & logPageHeader =
+    *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+
+  unsigned char *endPage = dataBuff +
+    SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
+
+  unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
+
+  while (logParameter < endPage) { 
+    SCSI::Structures::logSenseParameter_t & logPageParam =
+      *(SCSI::Structures::logSenseParameter_t *) logParameter;
+    switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+      case SCSI::volumeStatisticsPage::validityFlag:
+        volumeStats["validity"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeMounts:
+        volumeStats["lifetimeVolumeMounts"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeRecoveredWriteDataErrors:
+        volumeStats["lifetimeVolumeRecoveredWriteErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeRecoveredReadErrors:
+        volumeStats["lifetimeVolumeRecoveredReadErrors"] = logPageParam.getU64Value();
+        break;
+      case SCSI::volumeStatisticsPage::volumeManufacturingDate:
+        char volumeManufacturingDate[9];
+        for (int i = 0; i < 8; ++i) {
+          volumeManufacturingDate[i] = logPageParam.parameterValue[i];
+        }
+        volumeManufacturingDate[8] = '\0';
+        volumeStats["volumeManufacturingDate"] = std::atoi(volumeManufacturingDate);
+        break;
+    }
+    logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+  }
+  return volumeStats;
+}
+
 std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
@@ -2027,6 +2095,11 @@ std::map<std::string,float> drive::DriveMHVTL::getQualityStats(){
 }
 
 std::map<std::string,uint32_t> drive::DriveMHVTL::getDriveStats() {
+  // No available data
+  return std::map<std::string,uint32_t>();
+}
+
+std::map<std::string,uint32_t> castor::tape::tapeserver::drive::DriveMHVTL::getVolumeStats() {
   // No available data
   return std::map<std::string,uint32_t>();
 }

@@ -437,8 +437,9 @@ namespace drive {
     }
 
     virtual compressionStats getCompression();
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors() ;
-    virtual std::map<std::string,uint32_t> getTapeReadErrors() ;
+    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
   };
@@ -464,6 +465,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
+    virtual std::map<std::string,uint32_t> getVolumeStats();
   };
 
   class DriveLTO : public DriveGeneric {
