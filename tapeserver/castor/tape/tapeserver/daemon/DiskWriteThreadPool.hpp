@@ -106,18 +106,15 @@ private:
   cta::threading::AtomicCounter<int> m_failedWriteCount;
   
   /**
-   * A disk file factory, that will create the proper type of file access class,
-   * depending on the received path
-   */
-  diskFile::DiskFileFactory m_diskFileFactory;
-  
-  /**
    * Private class implementing the worker threads.
    */
   class DiskWriteWorkerThread: private cta::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
-    m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),m_lc(m_parentThreadPool.m_lc)
+    m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),
+    m_lc(m_parentThreadPool.m_lc), 
+    m_diskFileFactory(manager.m_remoteFileProtocol, manager.m_xrootPrivateKeyPath, 
+      manager.m_xrootTimeout)
     {
       // This thread Id will remain for the rest of the thread's lifetime (and 
       // also context's lifetime) so ne need for a scope.
@@ -148,8 +145,13 @@ private:
      * For logging the event
      */
     cta::log::LogContext m_lc;
-    
-    
+
+    /**
+     * A disk file factory, that will create the proper type of file access class,
+     * depending on the received path
+     */
+    diskFile::DiskFileFactory m_diskFileFactory;
+
     virtual void run();
   };
   /**
@@ -181,6 +183,22 @@ private:
 protected:
   /** The (thread safe) queue of tasks */
   cta::threading::BlockingQueue<DiskWriteTask*> m_tasks;
+
+  /**
+   * Parameter selecting the disk transfer protocol
+   */
+  std::string m_remoteFileProtocol;
+  
+  /**
+   * Parameter: path to xroot private key
+   */
+  std::string m_xrootPrivateKeyPath;
+  
+  /**
+   * Parameter: xroot timeout
+   */
+  uint16_t m_xrootTimeout;
+
 private:
   /**
    * Aggregate all threads' stats 

@@ -40,7 +40,9 @@ DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64
     castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
     cta::log::LogContext lc, const std::string & remoteFileProtocol,
     const std::string & xrootPrivateKeyPath, uint16_t xrootTimeout) : 
-    m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath, xrootTimeout),
+    m_remoteFileProtocol(remoteFileProtocol),
+    m_xrootPrivateKeyPath(xrootPrivateKeyPath),
+    m_xrootTimeout(xrootTimeout),
     m_watchdog(migrationWatchDog),
     m_lc(lc),m_maxFilesReq(maxFilesReq),
     m_maxBytesReq(maxBytesReq), m_nbActiveThread(0) {
@@ -166,7 +168,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     task.reset( m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
-      task->execute(m_lc, m_parent.m_diskFileFactory,m_parent.m_watchdog);
+      task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog);
       m_threadStat += task->getTaskStats();
     }
     else {

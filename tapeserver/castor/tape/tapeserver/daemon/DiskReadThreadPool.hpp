@@ -140,18 +140,14 @@ private:
   cta::utils::Timer m_totalTime;
   
   /**
-   * A disk file factory, that will create the proper type of file access class,
-   * depending on the received path
-   */
-  diskFile::DiskFileFactory m_diskFileFactory;
-  
-  /**
    * Subclass of the thread pool's worker thread.
    */
   class DiskReadWorkerThread: private cta::threading::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
-    m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc) {
+    m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
+    m_diskFileFactory(parent.m_remoteFileProtocol, parent.m_xrootPrivateKeyPath,
+      parent.m_xrootTimeout){
        cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
        m_lc.log(cta::log::INFO,"DisReadThread created");
     }
@@ -179,6 +175,12 @@ private:
     /** The execution thread: pops and executes tasks (potentially asking for
      more) and calls task injector's finish() on exit of the last thread. */
     virtual void run();
+
+    /**
+     * A disk file factory, that will create the proper type of file access class,
+     * depending on the received path
+     */
+    diskFile::DiskFileFactory m_diskFileFactory;
   };
   
   /** Container for the threads */
@@ -187,6 +189,21 @@ private:
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
   cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
+
+  /**
+   * Parameter selecting the disk transfer protocol
+   */
+  std::string m_remoteFileProtocol;
+  
+  /**
+   * Parameter: path to xroot private key
+   */
+  std::string m_xrootPrivateKeyPath;
+  
+  /**
+   * Parameter: xroot timeout
+   */
+  uint16_t m_xrootTimeout;
   
   /**
    * Reference to the watchdog, for error reporting.

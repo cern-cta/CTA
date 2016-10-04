@@ -44,7 +44,9 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
   const std::string & remoteFileProtocol,
   const std::string & xrootPrivateKeyPath,
   uint16_t xrootTimeout):
-  m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath, xrootTimeout),
+  m_remoteFileProtocol(remoteFileProtocol),
+  m_xrootPrivateKeyPath(xrootPrivateKeyPath),
+  m_xrootTimeout(xrootTimeout),
   m_reporter(report),m_watchdog(recallWatchDog),m_lc(lc)
 {
   m_lc.pushOrReplace(cta::log::Param("threadCount", nbThread));
@@ -162,7 +164,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     m_threadStat.waitInstructionsTime+=localTime.secs(cta::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
-          m_parentThreadPool.m_diskFileFactory, m_parentThreadPool.m_watchdog)) {
+          m_diskFileFactory, m_parentThreadPool.m_watchdog)) {
         ++m_parentThreadPool.m_failedWriteCount;
         cta::log::ScopedParamContainer logParams(m_lc);
         logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);
