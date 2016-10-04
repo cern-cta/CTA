@@ -42,8 +42,9 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
   RecallWatchDog& recallWatchDog,
   cta::log::LogContext lc,
   const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyPath):
-  m_diskFileFactory(remoteFileProtocol,xrootPrivateKeyPath),
+  const std::string & xrootPrivateKeyPath,
+  uint16_t xrootTimeout):
+  m_diskFileFactory(remoteFileProtocol, xrootPrivateKeyPath, xrootTimeout),
   m_reporter(report),m_watchdog(recallWatchDog),m_lc(lc)
 {
   m_lc.pushOrReplace(cta::log::Param("threadCount", nbThread));

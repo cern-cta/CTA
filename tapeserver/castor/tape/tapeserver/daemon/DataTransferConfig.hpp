@@ -107,6 +107,11 @@ struct DataTransferConfig {
   std::string xrootPrivateKey;
 
   /**
+   * The timeout for all the xroot functions. The default is 0 (no timeout)
+   */
+  uint16_t xrootTimeout;
+
+  /**
    * The boolean variable describing to use on not to use Logical
    * Block Protection.
    */

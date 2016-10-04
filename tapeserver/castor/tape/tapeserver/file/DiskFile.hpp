@@ -54,7 +54,7 @@ namespace castor {
         typedef castor::tape::utils::Regex Regex;
       public:
         DiskFileFactory(const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKey);
+          const std::string & xrootPrivateKey, uint16_t xrootTimeout);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
@@ -69,6 +69,7 @@ namespace castor {
         std::string m_xrootPrivateKeyFile;
         CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
         bool m_xrootPrivateKeyLoaded;
+        const uint16_t m_xrootTimeout;
         static cta::threading::Mutex g_rfioOptionsLock;
         
       public:

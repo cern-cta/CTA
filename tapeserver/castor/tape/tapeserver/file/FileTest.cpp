@@ -267,7 +267,7 @@ namespace unitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
-    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","");
+    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","", 0);
     TempFile sourceFile;
     sourceFile.randomFill(1000);
     TempFile destinationFile(sourceFile.path()+"_dst");

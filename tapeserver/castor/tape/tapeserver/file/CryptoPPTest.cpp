@@ -163,7 +163,7 @@ namespace unitTests {
     }
   private:
     virtual void run() {
-      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath);
+      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0);
       for (int i=0; i<5; i++) {
         // Read keys in parallel and in a loop to test MT protection of the
         // key reading, not protected here.

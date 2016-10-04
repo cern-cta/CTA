@@ -38,7 +38,7 @@ namespace tape {
 namespace diskFile {
 
 DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyFile):
+  const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^([^:]*:)(.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
@@ -48,7 +48,8 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_URLCephFile("^radosStriper://(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootPrivateKeyLoaded(false)
+  m_xrootPrivateKeyLoaded(false),
+  m_xrootTimeout(xrootTimeout)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
@@ -140,7 +141,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootReadFile(regexResult[1]);
+    return new XrootReadFile(regexResult[1], m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -159,14 +160,14 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
     // In the current CASTOR implementation, the xrootd port is hard coded to 1095
     return new XrootC2FSReadFile(
       std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey());
+      xrootPrivateKey(), m_xrootTimeout);
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
     return new XrootC2FSReadFile(
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), regexResult[1]);
+      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
   throw cta::exception::Exception(
       std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
@@ -187,7 +188,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootWriteFile(regexResult[1]);
+    return new XrootWriteFile(regexResult[1], m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
@@ -206,14 +207,14 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
     // In the current CASTOR implementation, the xrootd port is hard coded to 1095
     return new XrootC2FSWriteFile(
       std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey());
+      xrootPrivateKey(), m_xrootTimeout);
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
     return new XrootC2FSWriteFile(
       std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), regexResult[1]);
+      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
   throw cta::exception::Exception(
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
@@ -312,8 +313,8 @@ std::string CryptoPPSigner::sign(const std::string msg,
 // XROOT READ FILE
 //==============================================================================  
 XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
-  const std::string & pool) {
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
+  const std::string & pool): XrootBaseReadFile(timeout) {
   // Setup parent's members
   m_readPosition = 0;
   m_URL = url;
@@ -363,12 +364,13 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   m_signedURL = m_URL + opaqueBloc.str();
   
   // ... and finally open the file
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
     std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")
     +m_URL+" opaqueBlock="+opaqueBloc.str());
 }
 
-XrootReadFile::XrootReadFile(const std::string &xrootUrl) {
+XrootReadFile::XrootReadFile(const std::string &xrootUrl, uint16_t timeout):
+  XrootBaseReadFile(timeout) {
   // Setup parent's variables
   m_readPosition = 0;
   m_URL = xrootUrl + "?eos.ruid=0&eos.rgid=0"; // TODO: the second part of this string has been added by Daniele
@@ -378,13 +380,13 @@ XrootReadFile::XrootReadFile(const std::string &xrootUrl) {
                                                //       m_URL = xrootUrl;
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
     std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+m_URL);
 }
 
 size_t XrootBaseReadFile::read(void *data, const size_t size) const {
   uint32_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret),
+  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret, m_timeout),
     std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
   m_readPosition += ret;
   return ret;
@@ -394,7 +396,7 @@ size_t XrootBaseReadFile::size() const {
   const bool forceStat=true;
   XrdCl::StatInfo *statInfo(NULL);
   size_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo),
+  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
     std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
   ret= statInfo->GetSize();
   delete statInfo;
@@ -403,7 +405,7 @@ size_t XrootBaseReadFile::size() const {
 
 XrootBaseReadFile::~XrootBaseReadFile() throw() {
   try{
-    m_xrootFile.Close();
+    m_xrootFile.Close(m_timeout);
   } catch (...) {}
 }
 
@@ -411,8 +413,9 @@ XrootBaseReadFile::~XrootBaseReadFile() throw() {
 // XROOT WRITE FILE
 //============================================================================== 
 XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey,
-  const std::string & pool){
+  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
+  const std::string & pool):
+  XrootBaseWriteFile(timeout) {
   // Setup parent's members
   m_writePosition = 0;
   m_closeTried = false;
@@ -463,24 +466,27 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   m_signedURL = m_URL + opaqueBloc.str();
   
   // ... and finally open the file for write (deleting any existing one in case)
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write,
+    XrdCl::Access::None, m_timeout),
     std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ")
     +m_URL);
 }
 
-XrootWriteFile::XrootWriteFile(const std::string& xrootUrl) {
+XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout):
+  XrootBaseWriteFile(timeout) {
   // Setup parent's variables
   m_writePosition = 0;
   m_URL = xrootUrl;
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write,
+    XrdCl::Access::None, m_timeout),
     std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
 
 }
 
 void XrootBaseWriteFile::write(const void *data, const size_t size)  {
-  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data),
+  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
     std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
     +m_URL);
   m_writePosition += size;
@@ -490,20 +496,21 @@ void XrootBaseWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
   m_closeTried=true;
-  XrootClEx::throwOnError(m_xrootFile.Close(),
+  XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
     std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
   if(!m_closeTried){
-    m_xrootFile.Close();
+    m_xrootFile.Close(m_timeout);
   }
 }
 
 //==============================================================================
 // EOS READ FILE
 //==============================================================================  
-EosReadFile::EosReadFile(const std::string &eosUrl) {
+EosReadFile::EosReadFile(const std::string &eosUrl, uint16_t timeout):
+  m_timeout(timeout) {
   // Setup parent's variables
   m_readPosition = 0;
   std::stringstream ss;
@@ -511,14 +518,14 @@ EosReadFile::EosReadFile(const std::string &eosUrl) {
   m_URL = ss.str();
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read),
-    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+m_URL);
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
+    std::string("In EosReadFile::EosReadFile failed XrdCl::File::Open() on ")+m_URL);
 }
 
 size_t EosReadFile::read(void *data, const size_t size) const {
   uint32_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret),
-    std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
+  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret,  m_timeout),
+    std::string("In EosReadFile::read failed XrdCl::File::Read() on ")+m_URL);
   m_readPosition += ret;
   return ret;
 }
@@ -527,8 +534,8 @@ size_t EosReadFile::size() const {
   const bool forceStat=true;
   XrdCl::StatInfo *statInfo(NULL);
   size_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo),
-    std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
+  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
+    std::string("In EosReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
   ret= statInfo->GetSize();
   delete statInfo;
   return ret;
@@ -536,14 +543,15 @@ size_t EosReadFile::size() const {
 
 EosReadFile::~EosReadFile() throw() {
   try{
-    m_xrootFile.Close();
+    m_xrootFile.Close(m_timeout);
   } catch (...) {}
 }
 
 //==============================================================================
 // EOS WRITE FILE
 //============================================================================== 
-EosWriteFile::EosWriteFile(const std::string& eosUrl) {
+EosWriteFile::EosWriteFile(const std::string& eosUrl, uint16_t timeout):
+  m_timeout(timeout) {
   // Setup parent's variables
   m_writePosition = 0;
   std::stringstream ss;
@@ -551,13 +559,14 @@ EosWriteFile::EosWriteFile(const std::string& eosUrl) {
   m_URL = ss.str();
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write),
+  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write,
+    XrdCl::Access::None, m_timeout),
     std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
 
 }
 
 void EosWriteFile::write(const void *data, const size_t size)  {
-  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data),
+  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
     std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
     +m_URL);
   m_writePosition += size;
@@ -567,13 +576,13 @@ void EosWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
   m_closeTried=true;
-  XrootClEx::throwOnError(m_xrootFile.Close(),
+  XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
     std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
 }
 
 EosWriteFile::~EosWriteFile() throw() {
   if(!m_closeTried){
-    m_xrootFile.Close();
+    m_xrootFile.Close(m_timeout);
   }
 }
 

@@ -101,7 +101,7 @@ namespace unitTests{
     TestingRetrieveMount trm(std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     RecallMemoryManager mm(10,100,lc);
-    DiskFileFactory fileFactory("RFIO","");
+    DiskFileFactory fileFactory("RFIO","", 0);
     
     cta::MockRetrieveMount mrm;
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));

@@ -132,7 +132,7 @@ namespace unitTests{
     FakeTapeWriteTask ftwt;
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
-    DiskFileFactory fileFactory("RFIO","");
+    DiskFileFactory fileFactory("RFIO","", 0);
     castor::messages::TapeserverProxyDummy tspd;
     MockMigrationWatchDog mmwd(1.0, 1.0, tspd, "", lc);
     drt.execute(lc,fileFactory,mmwd);

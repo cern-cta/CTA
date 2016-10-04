@@ -76,6 +76,7 @@ namespace castor {
       //==============================================================================  
       class XrootBaseReadFile: public ReadFile {
       public:
+        XrootBaseReadFile(uint16_t timeout): m_timeout(timeout) {}
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
         virtual ~XrootBaseReadFile() throw();
@@ -85,18 +86,20 @@ namespace castor {
         // There is no const-correctness with XrdCl...
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
+        const uint16_t m_timeout;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
       };
       
       class XrootReadFile: public XrootBaseReadFile {
       public:
-        XrootReadFile(const std::string &xrootUrl);
+        XrootReadFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
       
       class XrootC2FSReadFile: public XrootBaseReadFile {
       public:
         XrootC2FSReadFile(const std::string &xrootUrl,
           const CryptoPP::RSA::PrivateKey & privateKey,
+          uint16_t timeout = 0,
           const std::string & cephPool = "");
         virtual ~XrootC2FSReadFile() throw () {}
       private:
@@ -105,6 +108,7 @@ namespace castor {
       
       class XrootBaseWriteFile: public WriteFile {
       public:
+        XrootBaseWriteFile(uint16_t timeout): m_timeout(timeout) {}
         virtual void write(const void *data, const size_t size);
         virtual void close();
         virtual ~XrootBaseWriteFile() throw();        
@@ -113,19 +117,21 @@ namespace castor {
         void setURL(const std::string & v) { m_URL = v; }
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
+        const uint16_t m_timeout;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
         bool m_closeTried;      
       };
       
       class XrootWriteFile: public XrootBaseWriteFile {
       public:
-        XrootWriteFile(const std::string &xrootUrl);
+        XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
       
       class XrootC2FSWriteFile: public XrootBaseWriteFile {
       public:
         XrootC2FSWriteFile(const std::string &xrootUrl,
           const CryptoPP::RSA::PrivateKey & privateKey,
+          uint16_t timeout = 0,
           const std::string & cephPool = "");
         virtual ~XrootC2FSWriteFile() throw () {}
       private:
@@ -137,7 +143,7 @@ namespace castor {
       //==============================================================================  
       class EosReadFile: public ReadFile {
       public:
-        EosReadFile(const std::string &eosUrl);
+        EosReadFile(const std::string &eosUrl, uint16_t timeout = 0);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
         virtual ~EosReadFile() throw();
@@ -147,12 +153,13 @@ namespace castor {
         // There is no const-correctness with XrdCl...
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
+        const uint16_t m_timeout;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
       };
       
       class EosWriteFile: public WriteFile {
       public:
-        EosWriteFile(const std::string &eosUrl);
+        EosWriteFile(const std::string &eosUrl,  uint16_t timeout = 0);
         virtual void write(const void *data, const size_t size);
         virtual void close();
         virtual ~EosWriteFile() throw();        
@@ -161,6 +168,7 @@ namespace castor {
         void setURL(const std::string & v) { m_URL = v; }
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
+        const uint16_t m_timeout;
         typedef castor::tape::server::exception::XrootCl XrootClEx;
         bool m_closeTried;      
       };

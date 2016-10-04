@@ -83,6 +83,8 @@ castor::tape::tapeserver::daemon::DataTransferConfig
     "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
     "TapeServer", "XrootPrivateKey", "/etc/castor/xrd_tape_key.pem", log);
+  config.xrootTimeout = castorConf.getConfEntInt(
+    "TapeServer", "XrootTimeout", 0, log);
   const std::string useLBP = castorConf.getConfEntString(
     "TapeServer", "UseLogicalBlockProtection", "no", log);
 
