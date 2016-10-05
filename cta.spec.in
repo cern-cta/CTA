@@ -38,8 +38,7 @@ BuildRequires: cryptopp-devel >= 5.6.2
 %else
 BuildRequires: xrootd-client-devel >= 4.2.3 xrootd-devel >= 4.2
 BuildRequires: xrootd-server-devel >= 4.2 xrootd-private-devel >= 4.2
-BuildRequires: librados2-devel >= 0.80
-BuildRequires: libradosstriper-devel >= 11.0
+BuildRequires: librados-devel >= 11.0, libradosstriper-devel >= 11.0, 
 BuildRequires: protobuf-compiler >= 2.3.0 protobuf-devel >= 2.3.0
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
 BuildRequires: sqlite-devel >= 3.6
