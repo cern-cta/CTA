@@ -442,6 +442,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
+    virtual drive::deviceInfo getDeviceInfo();
   };
   
   /**
@@ -466,6 +467,7 @@ namespace drive {
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
     virtual std::map<std::string,uint32_t> getVolumeStats();
+    virtual drive::deviceInfo getDeviceInfo();
   };
 
   class DriveLTO : public DriveGeneric {

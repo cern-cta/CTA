@@ -124,6 +124,63 @@ drive::deviceInfo drive::DriveGeneric::getDeviceInfo()  {
   return devInfo;
 }
 
+drive::deviceInfo drive::DriveT10000::getDeviceInfo()  {
+  SCSI::Structures::inquiryCDB_t cdb;
+  SCSI::Structures::inquiryData_t inquiryData;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+  deviceInfo devInfo;
+
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquiryData));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&inquiryData);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveT10000::getDeviceInfo");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getDeviceInfo:");
+
+  devInfo.product = SCSI::Structures::toString(inquiryData.prodId);
+  std::string productRevisionMinor = SCSI::Structures::toString(inquiryData.vendorSpecific1).substr(0,4);
+  devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl) + productRevisionMinor;
+  devInfo.vendor = SCSI::Structures::toString(inquiryData.T10Vendor);
+  devInfo.serialNumber = getSerialNumber();
+  devInfo.isPIsupported = inquiryData.protect;
+  return devInfo;
+}
+
+drive::deviceInfo drive::DriveMHVTL::getDeviceInfo()  {
+  SCSI::Structures::inquiryCDB_t cdb;
+  SCSI::Structures::inquiryData_t inquiryData;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+  deviceInfo devInfo;
+
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquiryData));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&inquiryData);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveMHVTL::getDeviceInfo");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getDeviceInfo:");
+
+  devInfo.product = SCSI::Structures::toString(inquiryData.prodId);
+  devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl);
+  devInfo.vendor = SCSI::Structures::toString(inquiryData.T10Vendor);
+  devInfo.serialNumber = getSerialNumber();
+  devInfo.isPIsupported = inquiryData.protect;
+  return devInfo;
+}
+
 /**
  * Information about the serial number of the drive. 
  * @return   Right-aligned ASCII data for the vendor-assigned serial number.
@@ -2041,33 +2098,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getDriveStats() {
 }
 
 std::string drive::DriveGeneric::getDriveFirmwareVersion() {
-  std::ifstream scsiProcFile;
-  try {
-    scsiProcFile.open("/proc/scsi/scsi", std::ios::in);
-    int currentLineNo = 0;
-    std::string line;
-    bool found = false;
-    while (getline(scsiProcFile, line)) {
-      if (std::string::npos != line.find("Type:   Sequential-Access", 0)) {
-        found = true;
-        break;
-      }
-      ++currentLineNo;
-    }
-    if (found) {
-      scsiProcFile.seekg(0, std::ios::beg);
-      for (int i = 0; i < currentLineNo - 2; ++i) {
-        // skipping lines
-        scsiProcFile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      }
-    }
-    getline(scsiProcFile, line);
-    scsiProcFile.close();
-    return line.substr(line.find("Rev:") + 5);
-  }
-  catch(std::ios_base::failure) {
-    return std::string("");
-  }
+  return this->getDeviceInfo().productRevisionLevel;
 }
 
 /*
