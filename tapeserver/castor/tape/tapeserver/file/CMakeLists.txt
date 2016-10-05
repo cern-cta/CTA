@@ -28,6 +28,7 @@ include_directories (${XROOTD_INCLUDE_DIR})
 set(TAPESERVER_FILE_LIBRARY_SRCS
   File.cpp
   DiskFile.cpp
+  RadosStriperPool.cpp
   Structures.cpp
   ../exception/XrootCl.cpp)
 
@@ -42,7 +43,7 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(File
   ${TAPESERVER_FILE_LIBRARY_SRCS})
-target_link_libraries (File XrdCl cryptopp)
+target_link_libraries (File XrdCl cryptopp radosstriper)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   if(GCC_VERSION_GE_4_8_0)

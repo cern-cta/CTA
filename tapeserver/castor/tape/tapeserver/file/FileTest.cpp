@@ -27,6 +27,7 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/ArchiveJob.hpp"
@@ -267,7 +268,8 @@ namespace unitTests {
     const uint32_t block_size = 1024;
     char data1[block_size];
     char data2[block_size];
-    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","", 0);
+    castor::tape::file::RadosStriperPool striperPool;
+    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","", 0, striperPool);
     TempFile sourceFile;
     sourceFile.randomFill(1000);
     TempFile destinationFile(sourceFile.path()+"_dst");

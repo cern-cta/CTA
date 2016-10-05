@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
@@ -132,7 +133,9 @@ namespace unitTests{
     FakeTapeWriteTask ftwt;
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
-    DiskFileFactory fileFactory("RFIO","", 0);
+    castor::tape::file::RadosStriperPool striperPool;
+    DiskFileFactory fileFactory("RFIO", "", 0, striperPool);
+
     castor::messages::TapeserverProxyDummy tspd;
     MockMigrationWatchDog mmwd(1.0, 1.0, tspd, "", lc);
     drt.execute(lc,fileFactory,mmwd);

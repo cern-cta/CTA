@@ -26,13 +26,13 @@
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicCounter.hpp"
-
 #include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/Timer.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
@@ -114,7 +114,7 @@ private:
     m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),
     m_lc(m_parentThreadPool.m_lc), 
     m_diskFileFactory(manager.m_remoteFileProtocol, manager.m_xrootPrivateKeyPath, 
-      manager.m_xrootTimeout)
+      manager.m_xrootTimeout, manager.m_striperPool)
     {
       // This thread Id will remain for the rest of the thread's lifetime (and 
       // also context's lifetime) so ne need for a scope.
@@ -198,6 +198,11 @@ protected:
    * Parameter: xroot timeout
    */
   uint16_t m_xrootTimeout;
+
+  /**
+   * A pool of rados striper connections, to be shared by all threads
+   */
+  castor::tape::file::RadosStriperPool m_striperPool;
 
 private:
   /**

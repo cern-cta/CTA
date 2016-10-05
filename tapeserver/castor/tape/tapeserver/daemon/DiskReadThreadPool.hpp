@@ -26,6 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Threading.hpp"
 #include "common/threading/AtomicCounter.hpp"
@@ -147,7 +148,7 @@ private:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
     m_diskFileFactory(parent.m_remoteFileProtocol, parent.m_xrootPrivateKeyPath,
-      parent.m_xrootTimeout){
+      parent.m_xrootTimeout, parent.m_striperPool){
        cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
        m_lc.log(cta::log::INFO,"DisReadThread created");
     }
@@ -204,7 +205,12 @@ private:
    * Parameter: xroot timeout
    */
   uint16_t m_xrootTimeout;
-  
+
+  /**
+   * A pool of rados striper connections, to be shared by all threads
+   */
+  castor::tape::file::RadosStriperPool m_striperPool;
+
   /**
    * Reference to the watchdog, for error reporting.
    */

@@ -60,5 +60,15 @@ TEST(castor_tape_utils_Regex, OperationalTest) {
   ASSERT_EQ(ret3.size(), 0U);
 }
 
+ 
+TEST(castor_tape_utils_Regex, SubstringMatch) {
+  castor::tape::utils::Regex re("^radosstriper:///([^:]+@[^:]+):(.*)$");
+  std::vector<std::string> ret1;
+  ret1 = re.exec("radosstriper:///user@pool:12345@castorns.7890");
+
+  ASSERT_EQ(ret1.size(), 3U);
+  ASSERT_EQ(ret1[1], "user@pool");
+  ASSERT_EQ(ret1[2], "12345@castorns.7890");
+}
 }
 

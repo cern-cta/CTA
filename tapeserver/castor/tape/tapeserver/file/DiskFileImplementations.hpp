@@ -30,7 +30,7 @@
 #include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <cryptopp/rsa.h>
-
+#include <radosstriper/libradosstriper.hpp>
 
 namespace castor {
   namespace tape {
@@ -176,20 +176,35 @@ namespace castor {
       //==============================================================================
       // RADOS STRIPER FILES
       //==============================================================================
+      // The Rados striper URLs in CASTOR are in the form:
+      // radosstriper:///user@pool:filePath
+      // We will not expect the
       class RadosStriperReadFile: public ReadFile {
       public:
-        RadosStriperReadFile(const std::string &xrootUrl);
+        RadosStriperReadFile(const std::string &fullURL,
+          libradosstriper::RadosStriper * striper,
+          const std::string &osd);
         virtual size_t size() const;
         virtual size_t read(void *data, const size_t size) const;
         virtual ~RadosStriperReadFile() throw();
+      private:
+        libradosstriper::RadosStriper * m_striper;
+        std::string m_osd;
+        mutable size_t m_readPosition;
       };
       
       class RadosStriperWriteFile: public WriteFile {
       public:
-        RadosStriperWriteFile(const std::string &xrootUrl);
+        RadosStriperWriteFile(const std::string &fullURL,
+          libradosstriper::RadosStriper * striper,
+          const std::string &osd);
         virtual void write(const void *data, const size_t size);
         virtual void close();
         virtual ~RadosStriperWriteFile() throw();
+      private:
+        libradosstriper::RadosStriper * m_striper;
+        std::string m_osd;
+        size_t m_writePosition;
       };
     } //end of namespace diskFile
     

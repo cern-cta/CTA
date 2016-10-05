@@ -25,8 +25,10 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include <rados/buffer.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
 #include <algorithm>
@@ -38,18 +40,20 @@ namespace tape {
 namespace diskFile {
 
 DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout):
+  const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
+  castor::tape::file::RadosStriperPool & striperPool):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^([^:]*:)(.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
   m_URLEosFile("^eos://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
-  m_URLCephFile("^radosStriper://(.*)$"),
+  m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
   m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
   m_xrootPrivateKeyLoaded(false),
-  m_xrootTimeout(xrootTimeout)
+  m_xrootTimeout(xrootTimeout),
+  m_striperPool(striperPool)
 {
   // Lowercase the protocol string
   std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
@@ -146,7 +150,9 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperReadFile(regexResult[1]);
+    return new RadosStriperReadFile(regexResult[0],
+      m_striperPool.throwingGetStriper(regexResult[1]),
+      regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -193,7 +199,9 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperWriteFile(regexResult[1]);
+    return new RadosStriperWriteFile(regexResult[0],
+      m_striperPool.throwingGetStriper(regexResult[1]),
+      regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -589,43 +597,67 @@ EosWriteFile::~EosWriteFile() throw() {
 //==============================================================================
 // RADOS STRIPER READ FILE
 //==============================================================================
-RadosStriperReadFile::RadosStriperReadFile(const std::string &url){
-  throw cta::exception::Exception(
-      "RadosStriperReadFile::RadosStriperReadFile is not implemented");
+RadosStriperReadFile::RadosStriperReadFile(const std::string &fullURL,
+  libradosstriper::RadosStriper * striper,
+  const std::string &osd): m_striper(striper),
+  m_osd(osd), m_readPosition(0) {
+    m_URL=fullURL;
 }
 
 size_t RadosStriperReadFile::read(void *data, const size_t size) const {
-  throw cta::exception::Exception(
-      "RadosStriperReadFile::read is not implemented");
+  ::ceph::bufferlist bl;
+  int rc = m_striper->read(m_osd, &bl, size, m_readPosition);
+  if (rc < 0) {
+    throw cta::exception::Errnum(-rc,
+        "In RadosStriperReadFile::read(): failed to striper->read: ");
+  }
+  bl.copy(0, rc, (char *)data);
+  m_readPosition += rc;
+  return rc;
 }
 
 size_t RadosStriperReadFile::size() const {
-  throw cta::exception::Exception(
-      "RadosStriperReadFile::size is not implemented");
+  uint64_t size;
+  time_t time;
+  cta::exception::Errnum::throwOnReturnedErrno(
+      -m_striper->stat(m_osd, &size, &time),
+      "In RadosStriperReadFile::size(): failed to striper->stat(): ");
+  return size;
 }
 
-RadosStriperReadFile::~RadosStriperReadFile() throw() {
-}
+RadosStriperReadFile::~RadosStriperReadFile() throw() {}
 
 //==============================================================================
 // RADOS STRIPER WRITE FILE
 //============================================================================== 
-RadosStriperWriteFile::RadosStriperWriteFile(const std::string &url){
-  throw cta::exception::Exception(
-      "RadosStriperWriteFile::RadosStriperWriteFile is not implemented");
+RadosStriperWriteFile::RadosStriperWriteFile(const std::string &fullURL,
+  libradosstriper::RadosStriper * striper,
+  const std::string &osd): m_striper(striper),
+  m_osd(osd), m_writePosition(0) {
+  m_URL=fullURL;
+  // Truncate the possibly existing file. If the file does not exist, it's fine.
+  int rc=m_striper->trunc(m_osd, 0);
+  if (rc < 0 && rc != -ENOENT) {
+    throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::RadosStriperWriteFile(): "
+        "failed to striper->trunc(): ");
+  }
 }
 
 void RadosStriperWriteFile::write(const void *data, const size_t size)  {
-  throw cta::exception::Exception(
-      "RadosStriperWriteFile::write is not implemented");
+  ::ceph::bufferlist bl;
+  bl.append((char *)data, size);
+  int rc = m_striper->write(m_osd, bl, size, m_writePosition);
+  if (rc) {
+    throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::write(): "
+        "failed to striper->write(): ");
+  }
+  m_writePosition += size;
 }
 
 void RadosStriperWriteFile::close()  {
-  throw cta::exception::Exception(
-      "RadosStriperWriteFile::close is not implemented");
+  // Nothing to do as writes are synchronous
 }
 
-RadosStriperWriteFile::~RadosStriperWriteFile() throw() {
-}
+RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
 
 }}} //end of namespace diskFile

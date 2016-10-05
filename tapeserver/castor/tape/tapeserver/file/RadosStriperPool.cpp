@@ -1,0 +1,160 @@
+/*
+ * The CERN Tape Archive (CTA) project
+ * Copyright (C) 2015  CERN
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "RadosStriperPool.hpp"
+#include <stdexcept>
+#include "common/exception/Errnum.hpp"
+
+namespace {
+//------------------------------------------------------------------------------
+// RAII decorator for librados::Rados for local usage
+//------------------------------------------------------------------------------
+class ReleasingRados: public librados::Rados {
+public:
+  ReleasingRados(): m_released(false) {};
+  void release() { m_released = true; }
+  ~ReleasingRados() { if(!m_released) librados::Rados::shutdown(); }
+private:
+  bool m_released;
+};
+}
+
+namespace castor { 
+namespace tape   {
+namespace file   {
+
+//------------------------------------------------------------------------------
+// Accessor to next striper pool index
+// Note that this is not thread safe, but we do not care
+// as we only want a rough load balancing
+//------------------------------------------------------------------------------
+unsigned int RadosStriperPool::getStriperIdxAndIncrease() {
+  if (m_maxStriperIdx == 0) {
+    // initialization phase :
+    //   - find out the number of objects in the ceph pool
+    //   - allocate corresponding places in the vectors
+    char *value = 0;
+    m_maxStriperIdx = 3;
+    if ((value = getenv("CEPH_NBCONNECTIONS"))) {
+      // TODO: commited for CTA   (value = getconfent("CEPH", "NbConnections", 1))) {
+      m_maxStriperIdx = atoi(value);
+    }
+    for (unsigned int i = 0; i < m_maxStriperIdx; i++) {
+      m_stripers.push_back(StriperDict());
+    }
+  }
+  unsigned int res = m_striperIdx;
+  unsigned nextValue = m_striperIdx+1;
+  if (nextValue >= m_maxStriperIdx) {
+    nextValue = 0;
+  }
+  m_striperIdx = nextValue;
+  return res;
+}
+
+//------------------------------------------------------------------------------
+// RadosStriperPool::throwingGetStriper
+//------------------------------------------------------------------------------
+libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::string& userAtPool) {
+  std::lock_guard<std::mutex> lock{m_mutex};
+  unsigned int striperIdx = getStriperIdxAndIncrease();
+  try {
+    return m_stripers[striperIdx].at(userAtPool);
+  } catch (std::out_of_range &) {
+    // we need to create a new radosStriper, as the requested one is not there yet.
+    // First find the user id (if any given) in the pool string
+    // format is [<userid>@]<poolname>
+    const char* userId = NULL;
+    size_t pos = userAtPool.find('@');
+    std::string user;
+    std::string pool;
+    if (pos != std::string::npos) {
+      user = userAtPool.substr(0, pos);
+      userId = user.c_str();
+      pool = userAtPool.substr(pos + 1);
+    } else {
+      pool = userAtPool;
+    }
+    // Create the Rados object. It will  shutdown automatically when being destructed.
+    ReleasingRados cluster;
+    cta::exception::Errnum::throwOnReturnedErrno(cluster.init(userId),
+        "In RadosStriperPool::throwingGetStriper(): failed to cluster.init(userId): ");
+    cta::exception::Errnum::throwOnReturnedErrno(cluster.conf_read_file(NULL),
+        "In RadosStriperPool::throwingGetStriper(): failed to cluster.conf_read_file(NULL): ");
+    cluster.conf_parse_env(NULL);
+    cta::exception::Errnum::throwOnReturnedErrno(cluster.connect(),
+        "In RadosStriperPool::throwingGetStriper(): failed to cluster.connect(): ");
+    librados::IoCtx ioctx;
+    cta::exception::Errnum::throwOnReturnedErrno(
+        cluster.ioctx_create(pool.c_str(), ioctx),
+        "In RadosStriperPool::throwingGetStriper(): failed to "
+        "cluster.ioctx_create(pool.c_str(), ioctx): ");
+    std::unique_ptr<libradosstriper::RadosStriper> newStriper(
+        new libradosstriper::RadosStriper);
+    cta::exception::Errnum::throwOnReturnedErrno(
+        libradosstriper::RadosStriper::striper_create(ioctx, newStriper.get()),
+        "In RadosStriperPool::throwingGetStriper(): failed to "
+        "libradosstriper::RadosStriper::striper_create(ioctx, newStriper.get()): ");
+    // Past that point we should not automatically release the cluster anymore.
+    cluster.release();
+    // setup file layout
+    newStriper->set_object_layout_stripe_count(4);
+    newStriper->set_object_layout_stripe_unit(32 * 1024 * 1024); // 32 MB
+    newStriper->set_object_layout_object_size(32 * 1024 * 1024); // 32 MB
+    // insert into cache and return value
+    libradosstriper::RadosStriper * ret = newStriper.get();
+    m_stripers[striperIdx][userAtPool] = newStriper.release();
+    return ret;
+  }
+}
+
+//------------------------------------------------------------------------------
+// RadosStriperPool::getStriper
+//------------------------------------------------------------------------------
+libradosstriper::RadosStriper* RadosStriperPool::getStriper(const std::string& userAtPool) {
+  try {
+    return throwingGetStriper(userAtPool);
+  } catch (...) {
+    return NULL;
+  }
+}
+
+//------------------------------------------------------------------------------
+// RadosStriperPool::~RadosStriperPool
+//------------------------------------------------------------------------------
+RadosStriperPool::~RadosStriperPool() {
+  disconnectAll();
+}
+
+//------------------------------------------------------------------------------
+// RadosStriperPool::disconnectAll
+//------------------------------------------------------------------------------
+void RadosStriperPool::disconnectAll() {
+  std::lock_guard<std::mutex> lock{m_mutex};
+  for (auto v = m_stripers.begin(); v != m_stripers.end(); v++) {
+    for (auto i = v->begin(); i != v->end(); i++) {
+      delete i->second;
+    }
+    v->clear();
+  }
+  m_stripers.clear();
+}
+
+} // namespace file
+} // namespace tape
+} // namespace castor

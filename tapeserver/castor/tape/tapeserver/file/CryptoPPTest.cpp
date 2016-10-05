@@ -25,6 +25,7 @@
 #include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
+#include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 
@@ -163,7 +164,9 @@ namespace unitTests {
     }
   private:
     virtual void run() {
-      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0);
+      castor::tape::file::RadosStriperPool striperPool;
+      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0, 
+          striperPool);
       for (int i=0; i<5; i++) {
         // Read keys in parallel and in a loop to test MT protection of the
         // key reading, not protected here.
