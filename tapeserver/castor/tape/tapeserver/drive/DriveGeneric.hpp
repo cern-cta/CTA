@@ -213,47 +213,66 @@ namespace drive {
     virtual void waitUntilReady(const uint32_t timeoutSecond);
     
     virtual bool hasTapeInPlace() {
-
       struct mtget mtInfo;
-
       /* Read drive status */
-      cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
-      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+      const int ioctl_errno = errno;
+      if(-1 == ioctl_rc) {
+        std::ostringstream errMsg;
+        errMsg << "Could not read drive status in hasTapeInPlace: " << m_SCSIInfo.nst_dev;
+        if(EBADF == ioctl_errno) {
+          errMsg << " tapeFD=" << m_tapeFD;
+        }
+        throw cta::exception::Errnum(ioctl_errno, errMsg.str());
+      }
       return GMT_DR_OPEN(mtInfo.mt_gstat) == 0;
     }
     
     virtual bool isWriteProtected()  {
-
       struct mtget mtInfo;
-
       /* Read drive status */
-      cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
-      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+      const int ioctl_errno = errno;
+      if(-1 == ioctl_rc) {
+        std::ostringstream errMsg;
+        errMsg << "Could not read drive status in isWriteProtected: " << m_SCSIInfo.nst_dev;
+        if(EBADF == ioctl_errno) {
+          errMsg << " tapeFD=" << m_tapeFD;
+        }
+        throw cta::exception::Errnum(ioctl_errno, errMsg.str());
+      }
       return GMT_WR_PROT(mtInfo.mt_gstat)!=0;
     }
     
     virtual bool isAtBOT()  {
-
       struct mtget mtInfo;
-
       /* Read drive status */
-      cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
-      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
-
+      const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+      const int ioctl_errno = errno;
+      if(-1 == ioctl_rc) {
+        std::ostringstream errMsg;
+        errMsg << "Could not read drive status in isAtBOT: " << m_SCSIInfo.nst_dev;
+        if(EBADF == ioctl_errno) {
+          errMsg << " tapeFD=" << m_tapeFD;
+        }
+        throw cta::exception::Errnum(ioctl_errno, errMsg.str());
+      }
       return GMT_BOT(mtInfo.mt_gstat)!=0;
     }
     
     virtual bool isAtEOD()  {
-
       struct mtget mtInfo;
-
       /* Read drive status */
-      cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
-      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+      const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+      const int ioctl_errno = errno;
+      if(-1 == ioctl_rc) {
+        std::ostringstream errMsg;
+        errMsg << "Could not read drive status in isAtEOD: " << m_SCSIInfo.nst_dev;
+        if(EBADF == ioctl_errno) {
+          errMsg << " tapeFD=" << m_tapeFD;
+        }
+        throw cta::exception::Errnum(ioctl_errno, errMsg.str());
+      }
       return GMT_EOD(mtInfo.mt_gstat)!=0;
     }    
         

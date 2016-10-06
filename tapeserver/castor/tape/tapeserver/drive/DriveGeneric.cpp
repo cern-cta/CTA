@@ -29,6 +29,8 @@
 #include "common/CRC.hpp"
 #include "common/exception/MemException.hpp"
 
+#include <errno.h>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -2187,9 +2189,18 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
   struct mtget mtInfo;
 
   /* Read drive status */
-  cta::exception::Errnum::throwOnMinusOne(
-  m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo), 
-  std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+  {
+    const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
+    const int ioctl_errno = errno;
+    if(-1 == ioctl_rc) {
+      std::ostringstream errMsg;
+      errMsg << "Could not read drive status in waitUntilReady: " << m_SCSIInfo.nst_dev;
+      if(EBADF == ioctl_errno) {
+        errMsg << " tapeFD=" << m_tapeFD;
+      }
+      throw cta::exception::Errnum(ioctl_errno, errMsg.str());
+    }
+  }
 
   if(GMT_ONLINE(mtInfo.mt_gstat)==0) {
     cta::exception::TimeOut ex;
