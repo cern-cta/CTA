@@ -24,6 +24,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
+#include "common/utils/GetOptThreadSafe.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/RetryableError.hpp"
@@ -1783,55 +1784,55 @@ void XrdCtaFile::xCom_drive() {
     if (m_requestTokens.size() != 4)
       throw cta::exception::UserError(help.str());
     m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), true, false);
+    cmdlineOutput << "Drive " << m_requestTokens.at(3) << " set UP." << std::endl;
   } else if ("down" == m_requestTokens.at(2)) {
-    // Here the drive name is required in addition
-    bool force;
-    if (m_requestTokens.size() == 4) {
-      force = false;
-    } else if (m_requestTokens.size() == 5) {
-      if (m_requestTokens.at(4) == "-f" || m_requestTokens.at(4) == "--force") {
-        force = true;
-      } else {
-        throw cta::exception::UserError(help.str());
-      }
+    // Parse the command line for option and drive name.
+    cta::utils::GetOpThreadSafe::Request req;
+    for (size_t i=2; i<m_requestTokens.size(); i++)
+      req.argv.push_back(m_requestTokens.at(i));
+    req.optstring = { "f" };
+    struct ::option longOptions[] = { { "force", no_argument, 0 , 'f' }, { 0, 0, 0, 0 } };
+    req.longopts = longOptions;
+    auto reply = cta::utils::GetOpThreadSafe::getOpt(req);
+    // We should have one and only one no-option argument, the drive name.
+    if (reply.remainder.size() != 1) {
+      throw cta::exception::UserError(help.str());
     }
-    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), false, force);
+    // Check if the force option was present.
+    bool force=reply.options.size() && (reply.options.at(0).option == "f");
+    m_scheduler->setDesiredDriveState(m_cliIdentity, reply.remainder.at(0), false, force);
+    cmdlineOutput << "Drive " <<  reply.remainder.at(0) << " set DOWN";
+    if (force) {
+      cmdlineOutput << " (forced down)";
+    }
+    cmdlineOutput << "." << std::endl;
   } else if ("ls" == m_requestTokens.at(2)) {
-    if (m_requestTokens.size() == 3) {
-      // We will dump all the drives.
+    if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
+      // We will dump all the drives, and select the one asked for if needed.
+      bool singleDrive = (m_requestTokens.size() == 4);
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = {"drive", "library"};
-        
-        // TODO
-        throw cta::exception::Exception("TODO"); 
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown"};
+        responseTable.push_back(headers);
+        for (auto ds: driveStates) {
+          if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
+          std::vector<std::string> currentRow;
+          currentRow.push_back(ds.driveName);
+          currentRow.push_back(ds.host);
+          currentRow.push_back(ds.logicalLibrary);
+          currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
+          currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
+          currentRow.push_back(ds.desiredDriveState.up?"UP":"DOWN");
+          currentRow.push_back(ds.desiredDriveState.forceDown?"FORCE":"");
+          responseTable.push_back(currentRow);
+        }
+        cmdlineOutput<< formatResponse(responseTable, true);
       }
-    } else if (m_requestTokens.size() == 4) {
-      // We will list a single drive.
-      // TODO
-      throw cta::exception::Exception("TODO");
     } else {
       throw cta::exception::UserError(help.str());
     } 
   } else {
-    throw cta::exception::UserError(help.str());
-  }
-  
-  
-  if(m_requestTokens.size() < 3) {
-    throw cta::exception::UserError(help.str());
-  }
-  optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
-  checkOptions(help.str());
-  if("up" == m_requestTokens.at(2)) {
-    m_scheduler->setDesiredDriveState(m_cliIdentity, drive.value(), true, false);
-  }
-  else if("down" == m_requestTokens.at(2)) {
-    m_scheduler->setDesiredDriveState(m_cliIdentity, drive.value(), false, hasOption("-f", "--force"));
-  }
-  
-  else {
     throw cta::exception::UserError(help.str());
   }
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
