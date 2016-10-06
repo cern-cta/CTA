@@ -215,6 +215,13 @@ namespace SCSI {
    * Helper function turning tape alerts to mixed case compact strings.
    */
   std::string tapeAlertToCompactString(uint16_t parameterCode);
+
+  /**
+   * Checks if the tape alert is critical for the writing session.
+   * @param code The tape alert parameter code.
+   * @return True if it is critical for the writing session or true otherwise.
+   */
+  bool isTapeAlertCriticalForWrite(const uint16_t code);
   
   class Status {
   public:

@@ -350,6 +350,20 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// tapeAlertsCriticalForWrite
+//------------------------------------------------------------------------------
+bool drive::DriveGeneric::tapeAlertsCriticalForWrite(
+  const std::vector<uint16_t> & codes) {
+  for (std::vector<uint16_t>::const_iterator code =  codes.begin(); 
+    code!= codes.end(); code++) {
+      if(SCSI::isTapeAlertCriticalForWrite(*code)) {
+        return true;
+      }
+  }
+  return false;
+}
+
 /**
  * Set the tape density and compression. 
  * We use MODE SENSE/SELECT Device Configuration (10h) mode page.

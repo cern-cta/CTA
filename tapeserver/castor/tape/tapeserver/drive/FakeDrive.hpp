@@ -73,6 +73,7 @@ namespace drive {
     virtual std::vector<uint16_t> getTapeAlertCodes();
     virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) ;
     virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) ;
+    virtual bool tapeAlertsCriticalForWrite(const std::vector<uint16_t> & codes);
     virtual void setDensityAndCompression(bool compression = true, 
     unsigned char densityCode = 0) ;
     virtual void enableCRC32CLogicalBlockProtectionReadOnly() ;

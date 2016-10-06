@@ -943,6 +943,7 @@ int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
       case 0x28:
       case 0x10:
       case 65:
+      case 0x32: // tapeAlertLostStatistics
         data[4] |= 1; /* Set flag */
     }
     i++; data += 5; remaining -=5;

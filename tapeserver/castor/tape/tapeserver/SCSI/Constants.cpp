@@ -290,6 +290,18 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
   }
 }
 
+//------------------------------------------------------------------------------
+// isTapeAlertCriticalForWrite
+//------------------------------------------------------------------------------
+bool castor::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
+  switch(code) {
+    case 0x32: // tapeAlertLostStatistics
+      return false;
+    default:
+      return true;
+  }
+}
+
 /**
  * Turn a SCSI status code into a string
  * @param status

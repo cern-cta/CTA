@@ -839,8 +839,9 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
           std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive (
             castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-          std::vector<std::string> alerts = drive->getTapeAlerts(drive->getTapeAlertCodes());
-          ASSERT_EQ(3U, alerts.size());
+          std::vector<uint16_t> tapeAlertCodes = drive->getTapeAlertCodes();
+          std::vector<std::string> alerts = drive->getTapeAlerts(tapeAlertCodes);
+          ASSERT_EQ(4U, alerts.size());
           ASSERT_FALSE(alerts.end() == 
               find(alerts.begin(), alerts.end(), 
               std::string("Unexpected tapeAlert code: 0x41")));
@@ -848,6 +849,18 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
               std::string("Obsolete tapeAlert code: 0x28")));
           ASSERT_FALSE(alerts.end() == find(alerts.begin(), alerts.end(), 
               std::string("Forced eject")));
+          ASSERT_FALSE(alerts.end() == find(alerts.begin(), alerts.end(),
+              std::string("Lost statistics")));
+          ASSERT_TRUE(drive->tapeAlertsCriticalForWrite(tapeAlertCodes));
+
+          for (std::vector<uint16_t>::const_iterator code =
+            tapeAlertCodes.begin(); code!= tapeAlertCodes.end(); code++) {
+              if(castor::tape::SCSI::isTapeAlertCriticalForWrite(*code)) {
+                ASSERT_NE(0x32U, *code);
+              } else {
+                ASSERT_EQ(0x32U, *code);
+              }
+          }
         }
       }
     }

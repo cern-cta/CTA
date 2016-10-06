@@ -150,6 +150,15 @@ namespace drive {
     virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t> & codes);
 
     /**
+     * Checks if there are tape alerts critical for the writing session present.
+     * @param codes The vector of the tape alert codes returned by drive.
+     * @return True if there are tape alerts critical for the writing session
+     * present and false otherwise.
+     */
+    virtual bool tapeAlertsCriticalForWrite(
+      const std::vector<uint16_t> & codes);
+
+    /**
      * Set the tape density and compression. 
      * We use MODE SENSE/SELECT Device Configuration (10h) mode page.
      * As soon as there is no definition in SPC-4 or SSC-3 it depends on the 

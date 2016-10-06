@@ -213,6 +213,12 @@ private:
   void tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
     cta::utils::Timer & timer);
   
+  /**
+   * After waiting for the drive, we will dump the tape alert log content, if it
+   * is not empty 
+   * @return true if any critical for write alert was detected
+   */
+  bool logAndCheckTapeAlertsForWrite();
 
   virtual void run() ;
   

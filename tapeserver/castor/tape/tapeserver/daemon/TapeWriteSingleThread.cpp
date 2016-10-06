@@ -107,6 +107,37 @@ tapeFlush(const std::string& message,uint64_t bytes,uint64_t files,
   m_reportPacker.reportFlush(m_drive.getCompression());
   m_drive.clearCompressionStats();
 }
+
+//------------------------------------------------------------------------
+//   logAndCheckTapeAlertsForWrite
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeWriteSingleThread::
+logAndCheckTapeAlertsForWrite() {
+  std::vector<uint16_t> tapeAlertCodes = m_drive.getTapeAlertCodes();
+  if (tapeAlertCodes.empty()) return false;
+  size_t alertNumber = 0;
+  // Log tape alerts in the logs.
+  std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
+  for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
+          ta!=tapeAlerts.end();ta++)
+  {
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("tapeAlert",*ta)
+          .add("tapeAlertNumber", alertNumber++)
+          .add("tapeAlertCount", tapeAlerts.size());
+    m_logContext.log(cta::log::WARNING, "Tape alert detected");
+  }
+  // Add tape alerts in the tape log parameters
+  std::vector<std::string> tapeAlertsCompact = 
+    m_drive.getTapeAlertsCompact(tapeAlertCodes);
+  for (std::vector<std::string>::iterator tac=tapeAlertsCompact.begin();
+          tac!=tapeAlertsCompact.end();tac++)
+  {
+    countTapeLogError(std::string("Error_")+*tac);
+  }
+  return(m_drive.tapeAlertsCriticalForWrite(tapeAlertCodes));
+}
+
 //------------------------------------------------------------------------------
 //   isTapeWritable
 //-----------------------------------------------------------------------------
@@ -179,9 +210,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       currentErrorToCount = "Error_tapeLoad";
       waitForDrive();
       currentErrorToCount = "Error_checkingTapeAlert";
-      if (logTapeAlerts()) {
-        throw cta::exception::Exception("Aborting migration session in presence of tape alerts");
+      if(logAndCheckTapeAlertsForWrite()) {
+        throw cta::exception::Exception("Aborting migration session in"
+          " presence of critical tape alerts");
       }
+
       currentErrorToCount = "Error_tapeNotWriteable";
       isTapeWritable();
       
