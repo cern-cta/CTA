@@ -283,7 +283,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Transmit the statistics to the watchdog thread
-        m_watchdog.updateStats(m_stats);
+        m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // Increase local flush counters (session counters are incremented by
         // the task)
         files++;
@@ -304,6 +304,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
+    m_stats.deliveryTime = m_stats.totalTime;
     logWithStats(cta::log::INFO, "Tape thread complete",params);
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStats(m_stats);
@@ -321,7 +322,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_injector->setErrorFlag();
     // We can still update the session stats one last time (unmount timings
     // should have been updated by the RAII cleaner/unmounter).
-    m_watchdog.updateStats(m_stats);
+    m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
     
     // If we reached the end of tape, this is not an error (ENOSPC)
     try {

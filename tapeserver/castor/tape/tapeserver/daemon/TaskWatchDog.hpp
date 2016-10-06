@@ -150,11 +150,20 @@ protected:
     if (m_statsSet) {
       // Build the statistics to be logged
       std::list<Param> paramList;
+      // for delivery time we estimate it ourselves before getting the
+      // final stats at the end of the last disk thread. This allows proper
+      // estimation of statistics for data transfer sessions that get killed
+      // before completion.
+      const double deliveryTime = 
+        m_stats.deliveryTime?m_stats.deliveryTime:m_tapeThreadTimer.secs();
       // total time is a special case. We will estimate it ourselves before
       // getting the final stats (at the end of the thread). This will allow
       // proper estimation of statistics for tape sessions that get killed
       // before completion.
-      double totalTime = m_stats.totalTime?m_stats.totalTime:m_tapeThreadTimer.secs();
+      const double totalTime = m_stats.totalTime?m_stats.totalTime:m_tapeThreadTimer.secs();
+      /** Time beetwen fineshed tape thread and finished disk threads */
+      const double drainingTime = 
+        deliveryTime > totalTime?deliveryTime-totalTime: 0.0;
       paramList.push_back(Param("mountTime", m_stats.mountTime));
       paramList.push_back(Param("positionTime", m_stats.positionTime));
       paramList.push_back(Param("waitInstructionsTime", m_stats.waitInstructionsTime));
@@ -168,6 +177,8 @@ protected:
       paramList.push_back(Param("unmountTime", m_stats.unmountTime));
       paramList.push_back(Param("transferTime", m_stats.transferTime()));
       paramList.push_back(Param("totalTime", totalTime));
+      paramList.push_back(Param("deliveryTime", deliveryTime));
+      paramList.push_back(Param("drainingTime", drainingTime));
       paramList.push_back(Param("dataVolume", m_stats.dataVolume));
       paramList.push_back(Param("filesCount", m_stats.filesCount));
       paramList.push_back(Param("headerVolume", m_stats.headerVolume));
@@ -283,7 +294,28 @@ protected:
     m_blockMovementTimer.reset();
     m_nbOfMemblocksMoved++;
   }
+ 
+  /**
+   * update the watchdog's statistics for the session delivery time
+   * @param a new deliveryTime
+   */
+  void updateStatsDeliveryTime (const double deliveryTime) {
+    cta::threading::MutexLocker locker(m_mutex);
+    m_stats.deliveryTime = deliveryTime;
+  }
   
+  /**
+   * update the watchdog's statistics for the session
+   * @param stats the stats counters collection to push
+   */
+  void updateStatsWithoutDeliveryTime (const TapeSessionStats & stats) {
+    cta::threading::MutexLocker locker(m_mutex);
+    const double savedDeliveryTime = m_stats.deliveryTime;
+    m_stats = stats;
+    m_stats.deliveryTime = savedDeliveryTime;
+    m_statsSet = true;
+  }
+
   /**
    * update the watchdog's statistics for the session
    * @param stats the stats counters collection to push

@@ -276,7 +276,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // it in the while loop
         task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
         // Transmit the statistics to the watchdog thread
-        m_watchdog.updateStats(m_stats);
+        m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)
         if(rs->isCorrupted()) {
           throw cta::exception::Exception ("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
@@ -292,7 +292,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     logWithStat(cta::log::INFO, "Tape thread complete",
             params);
     // Report one last time the stats, after unloading/unmounting.
-    m_watchdog.updateStats(m_stats);
+    m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
   } catch(const cta::exception::Exception& e){
     // We can still update the session stats one last time (unmount timings
     // should have been updated by the RAII cleaner/unmounter).

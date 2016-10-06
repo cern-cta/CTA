@@ -195,6 +195,8 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);
       m_parentThreadPool.logWithStat(cta::log::INFO, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }
+    const double deliveryTime = m_parentThreadPool.m_totalTime.secs();
+    m_parentThreadPool.m_watchdog.updateStatsDeliveryTime(deliveryTime);
   }
 }
 
