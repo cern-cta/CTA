@@ -229,12 +229,96 @@ namespace SCSI {
       TASK_ABORTED = 0x40
     } Status_t;
   };
-  
+ 
+  class HostStatus {
+  public:
+    enum {
+      OK          = 0x00, /* NO error */
+      NO_CONNECT  = 0x01, /* Couldn't connect before timeout period */
+      BUS_BUSY    = 0x02, /* BUS stayed busy through time out period */
+      TIME_OUT    = 0x03, /* TIMED OUT for other reason (often this an
+                           *  unexpected device selection timeout) */
+      BAD_TARGET  = 0x04, /* BAD target, device not responding */
+      ABORT       = 0x05, /* Told to abort for some other reason. From lk
+                           * 2.4.15 the SCSI subsystem supports 16 byte commands
+                           * however few adapter drivers do. Those HBA drivers
+                           * that don't support 16 byte commands will yield this
+                           * error code if a 16 byte command is passed to a SCSI
+                           *  device they control. */
+      PARITY      = 0x06, /* Parity error. Older SCSI parallel buses have a
+                           * parity bit for error detection. This probably
+                           * indicates a cable or termination problem. */
+      ERROR       = 0x07, /* Internal error detected in the host adapter. This
+                           * may not be fatal (and the command may have
+                           * succeeded). The aic7xxx and sym53c8xx adapter
+                           * drivers sometimes report this for data underruns or
+                           * overruns */
+      RESET       = 0x08, /* The SCSI bus (or this device) has been reset. Any
+                           * SCSI device on a SCSI bus is capable of instigating
+                           *  a reset. */
+      BAD_INTR    = 0x09, /* Received an unexpected interrupt */
+      PASSTHROUGH = 0x0a, /* Force command past mid-level */
+      SOFT_ERROR  = 0x0b, /* The low-level driver wants a retry */
+    } HostStatus_t;
+  };
+
+  class DriverStatus {
+  public:
+    enum {
+      OK      = 0x00, /* Typically no suggestion */
+      BUSY    = 0x01,
+      SOFT    = 0x02,
+      MEDIA   = 0x03,
+      ERROR   = 0x04,
+      INVALID = 0x05,
+      TIMEOUT = 0x06, /* Adapter driver is unable to control the SCSI bus
+                       * to its is setting its devices offline
+                       * (and giving up) */
+      HARD    = 0x07,
+      SENSE   = 0x08, /* Implies sense_buffer output */
+      MASK    = 0x0f  /* The mask for driver status codes */
+    } DriverStatus_t;
+  };
+
+  class DriverStatusSuggest {
+  public:
+    enum {
+      RETRY = 0x10,
+      ABORT = 0x20,
+      REMAP = 0x30,
+      DIE   = 0x40,
+      SENSE = 0x80,
+      MASK  = 0xf0    /* The mask for driver status suggestion codes */
+    } DriverStatusSuggest_t;
+  };
+
   /**
    * Helper function turning SCSI status to string
    */
   std::string statusToString(unsigned char status);
-  
+
+  /**
+   * Turn a SCSI host_status code into a string
+   * @param  The host status
+   * @return The string representation for the host status
+   */
+  std::string hostStatusToString(const unsigned short int hostStatus);
+
+  /**
+   * Turn a SCSI driver_status code into a string
+   * @param  The driver status
+   * @return The string representation for the driver status
+   */
+  std::string driverStatusToString(const unsigned short int driverStatus);
+
+  /**
+   * Turn a SCSI driver_status code suggestions into a string
+   * @param  The driver status
+   * @return The string representation for the driver status code suggestions
+   */
+  std::string driverStatusSuggestionsToString(
+    const unsigned short int driverStatus);
+
   class logSensePages {
   public:
     enum {

@@ -684,7 +684,147 @@ namespace unitTests {
       ASSERT_NE(std::string::npos, what.find("In exception validation: "));
     }
   }
-  
+ 
+  TEST(castor_tape_SCSI_Structures, HostException) {
+    castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
+    sgio.status = castor::tape::SCSI::Status::GOOD;
+    sgio.host_status = castor::tape::SCSI::HostStatus::OK;
+    ASSERT_NO_THROW(castor::tape::SCSI::ExceptionLauncher(sgio));
+
+    sgio.host_status = castor::tape::SCSI::HostStatus::NO_CONNECT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::BUS_BUSY;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::TIME_OUT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::BAD_TARGET;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::ABORT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::PARITY;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::ERROR;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::RESET;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::BAD_INTR;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::PASSTHROUGH;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+    sgio.host_status = castor::tape::SCSI::HostStatus::SOFT_ERROR;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::HostException);
+
+    try {
+      castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+      ASSERT_TRUE(false);
+    }
+    catch (castor::tape::SCSI::HostException & ex) {
+      std::string what(ex.getMessageValue());
+      ASSERT_NE(std::string::npos, what.find("SOFT ERROR"));
+      /* We check here that the formatting is also done correctly (space added
+       *  when context not empty */
+      ASSERT_NE(std::string::npos, what.find("In exception validation: "));
+    }
+  }
+
+  TEST(castor_tape_SCSI_Structures, DriverException) {
+    castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
+    sgio.status = castor::tape::SCSI::Status::GOOD;
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::OK;
+    ASSERT_NO_THROW(castor::tape::SCSI::ExceptionLauncher(sgio));
+
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::BUSY;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::SOFT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::MEDIA;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::ERROR;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::INVALID;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::TIMEOUT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::HARD;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+
+    /* sense is a special case*/
+    castor::tape::SCSI::Structures::senseData_t<255> sense;
+    sgio.setSenseBuffer(&sense);
+    /* fill up the ASC part of the */
+    sense.responseCode = 0x70;
+    sense.fixedFormat.ASC = 0x14;
+    sense.fixedFormat.ASCQ = 0x04;
+    sgio.driver_status = castor::tape::SCSI::DriverStatus::SENSE;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    /* add suggestions*/
+    sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::RETRY;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::ABORT;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::REMAP;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::DIE;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+    sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::SENSE;
+    ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio),
+      castor::tape::SCSI::DriverException);
+
+    try {
+      castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+      ASSERT_TRUE(false);
+    }
+    catch (castor::tape::SCSI::DriverException & ex) {
+      std::string what(ex.getMessageValue());
+      ASSERT_NE(std::string::npos, what.find(": SENSE"));
+      ASSERT_NE(std::string::npos, what.find("Driver suggestions:"));
+      ASSERT_NE(std::string::npos, what.find(" RETRY ABORT REMAP DIE SENSE"));
+      ASSERT_NE(std::string::npos, what.find("Block sequence error"));
+      /* We check here that the formatting is also done correctly (space added
+       *  when context not empty */
+      ASSERT_NE(std::string::npos, what.find("In exception validation: "));
+    }
+
+    try {
+      sgio.driver_status = castor::tape::SCSI::DriverStatus::TIMEOUT;
+      castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+      ASSERT_TRUE(false);
+    }
+    catch (castor::tape::SCSI::DriverException & ex) {
+      std::string what(ex.getMessageValue());
+      ASSERT_NE(std::string::npos, what.find(": TIMEOUT"));
+      ASSERT_EQ(std::string::npos, what.find("Driver suggestions:"));
+      ASSERT_EQ(std::string::npos, what.find(" RETRY ABORT REMAP DIE SENSE"));
+      ASSERT_EQ(std::string::npos, what.find("Block sequence error"));
+      /* We check here that the formatting is also done correctly (space added
+       *  when context not empty */
+      ASSERT_NE(std::string::npos, what.find("In exception validation: "));
+    }
+  }
+ 
   TEST(castor_tape_SCSI_Structures, logSenseParameter_t) {  
     unsigned char dataBuff[128];
     memset(dataBuff, random(), sizeof (dataBuff));

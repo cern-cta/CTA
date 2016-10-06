@@ -323,6 +323,97 @@ std::string castor::tape::SCSI::statusToString(unsigned char status)
   }
 }
 
+//------------------------------------------------------------------------------
+// hostStatusToString
+//------------------------------------------------------------------------------
+std::string castor::tape::SCSI::hostStatusToString
+  (const unsigned short int hostStatus) {
+  switch (hostStatus) {
+    case castor::tape::SCSI::HostStatus::OK:
+      return "OK";
+    case castor::tape::SCSI::HostStatus::NO_CONNECT:
+      return "NO CONNECT";
+    case castor::tape::SCSI::HostStatus::BUS_BUSY:
+      return "BUS BUSY";
+    case castor::tape::SCSI::HostStatus::TIME_OUT:
+      return "TIME OUT";
+    case castor::tape::SCSI::HostStatus::BAD_TARGET:
+      return "BAD TARGET";
+    case castor::tape::SCSI::HostStatus::ABORT:
+      return "ABORT";
+    case castor::tape::SCSI::HostStatus::PARITY:
+      return "PARITY";
+    case castor::tape::SCSI::HostStatus::ERROR:
+      return "ERROR";
+    case castor::tape::SCSI::HostStatus::RESET:
+      return "RESET";
+    case castor::tape::SCSI::HostStatus::BAD_INTR:
+      return "BAD INTR";
+    case castor::tape::SCSI::HostStatus::PASSTHROUGH:
+      return "PASSTHROUGH";
+    case castor::tape::SCSI::HostStatus::SOFT_ERROR:
+      return "SOFT ERROR";
+    default:
+      std::stringstream ret;
+      ret << "Unknown host status code: "
+          << std::hex << std::nouppercase << std::showbase
+          << hostStatus;
+      return ret.str();
+  }
+}
+
+//------------------------------------------------------------------------------
+// driverStatusToString
+//------------------------------------------------------------------------------
+std::string castor::tape::SCSI::driverStatusToString
+  (const unsigned short int driverStatus) {
+  switch (driverStatus & castor::tape::SCSI::DriverStatus::MASK) {
+    case castor::tape::SCSI::DriverStatus::OK:
+      return "OK";
+    case castor::tape::SCSI::DriverStatus::BUSY:
+      return "BUSY";
+    case castor::tape::SCSI::DriverStatus::SOFT:
+      return "SOFT";
+    case castor::tape::SCSI::DriverStatus::MEDIA:
+      return "MEDIA";
+    case castor::tape::SCSI::DriverStatus::ERROR:
+      return "ERROR";
+    case castor::tape::SCSI::DriverStatus::INVALID:
+      return "INVALID";
+    case castor::tape::SCSI::DriverStatus::TIMEOUT:
+      return "TIMEOUT";
+    case castor::tape::SCSI::DriverStatus::HARD:
+      return "HARD";
+    case castor::tape::SCSI::DriverStatus::SENSE:
+      return "SENSE";
+    default:
+      std::stringstream ret;
+      ret << "Unknown driver status code: "
+          << std::hex << std::nouppercase << std::showbase
+          << driverStatus;
+      return ret.str();
+  }
+}
+
+//------------------------------------------------------------------------------
+// driverStatusSuggestionsToString
+//------------------------------------------------------------------------------
+std::string castor::tape::SCSI::driverStatusSuggestionsToString
+  (const unsigned short int driverStatus) {
+  std::stringstream ret;
+  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::RETRY)
+    ret << " RETRY";
+  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::ABORT)
+    ret << " ABORT";
+  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::REMAP)
+    ret << " REMAP";
+  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::DIE)
+    ret << " DIE";
+  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::SENSE)
+    ret << " SENSE";
+  return ret.str();
+}
+
 const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] = 
 {
 	{0x0000, "No additional sense information"},
