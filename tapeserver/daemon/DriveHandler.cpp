@@ -697,7 +697,8 @@ int DriveHandler::runChild() {
       sWrapper,
       m_previousVid,
       true,
-      60);
+      60,
+      "");
     return cleanerSession.execute();
   } else {
     // The next session will be a normal session

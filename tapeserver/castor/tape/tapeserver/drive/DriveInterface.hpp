@@ -180,6 +180,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getVolumeStats() = 0;
     virtual std::string getDriveFirmwareVersion() = 0;
     virtual deviceInfo getDeviceInfo()  = 0;
+    virtual std::string getGenericSCSIPath() = 0;
     virtual std::string getSerialNumber()  = 0;
     virtual void positionToLogicalObject(uint32_t blockId)  = 0;
     virtual positionInfo getPositionInfo()  = 0;
@@ -196,6 +197,9 @@ namespace drive {
     virtual void setLogicalBlockProtection(const unsigned char method,
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite) = 0; 
+    virtual void setEncryptionKey(const std::string &encryption_key) = 0;
+    virtual bool clearEncryptionKey() = 0;
+    virtual bool isEncryptionCapEnabled() = 0;
     virtual driveStatus getDriveStatus()  = 0;
     virtual void setSTBufferWrite(bool bufWrite)  = 0;
     

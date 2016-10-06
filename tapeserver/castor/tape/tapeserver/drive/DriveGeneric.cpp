@@ -184,6 +184,14 @@ drive::deviceInfo drive::DriveMHVTL::getDeviceInfo()  {
 }
 
 /**
+ * Generic SCSI path, used for passing to external scripts.
+ * @return    Path to the generic SCSI device file.
+ */
+std::string drive::DriveGeneric::getGenericSCSIPath() {
+  return m_SCSIInfo.sg_dev;
+}
+
+/**
  * Information about the serial number of the drive. 
  * @return   Right-aligned ASCII data for the vendor-assigned serial number.
  */
@@ -560,6 +568,166 @@ drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
   LBPdata.enableLBPforWrite = (1 == controlDataProtection.modePage.LBP_W);
 
   return LBPdata;
+}
+
+//------------------------------------------------------------------------------
+// Encryption interface
+//------------------------------------------------------------------------------
+void drive::DriveGeneric::setEncryptionKey(const std::string &encryption_key) {
+  if(!isEncryptionCapEnabled())
+    throw cta::exception::Exception("In DriveGeneric::setEncryptionKey: Tried to enable encryption on drive "
+                                    "without encryption capabilities enabled.");
+  if (encryption_key.empty())
+    clearEncryptionKey();
+  else {
+    SCSI::Structures::LinuxSGIO_t sgh;
+    SCSI::Structures::encryption::spoutCDB_t cdb;
+    SCSI::Structures::senseData_t<255> senseBuff;
+    SCSI::Structures::encryption::spoutSDEParam_t sps;
+
+    SCSI::Structures::setU16(sps.pageCode, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+    /*
+     * Length is size of the spoutSDEParam_t - (sizeof(sps.pageCode) + sizeof(sps.length))
+     */
+    SCSI::Structures::setU16(sps.length, sizeof(SCSI::Structures::encryption::spoutSDEParam_t) - 4);
+
+    sps.nexusScope = SCSI::encryption::encryptionNexusScopes::scopeLocal; // oracle compatibility
+    sps.encryptionMode = SCSI::encryption::encryptionModes::modeEncrypt;
+    sps.decryptionMode = SCSI::encryption::decryptionModes::modeMixed;
+    sps.algorithmIndex = 0x01;
+    sps.keyFormat = SCSI::encryption::keyFormatTypes::keyFormatNormal;
+    strncpy((char *)sps.keyData, encryption_key.c_str(), SCSI::encryption::ENC_KEY_LENGTH);
+    /*
+     * This means that if the key given is smaller, it's right padded with zeros.
+     * If the key given is bigger, we the first 256-bit are used.
+     */
+
+    cdb.securityProtocol = SCSI::encryption::spoutSecurityProtocolPages::tapeDataEncryption;
+    SCSI::Structures::setU16(cdb.securityProtocolSpecific,
+                             SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+    SCSI::Structures::setU32(cdb.allocationLength, sizeof(SCSI::Structures::encryption::spoutSDEParam_t));
+
+    sgh.setCDB(&cdb);
+    sgh.setDataBuffer(&sps);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.dxfer_direction = SG_DXFER_TO_DEV;
+
+    cta::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+      "Failed SG_IO ioctl in DriveGeneric::setEncryptionKey");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::setEncryptionKey");
+  }
+}
+
+bool drive::DriveGeneric::clearEncryptionKey() {
+  if (!isEncryptionCapEnabled())
+    return false;
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::encryption::spoutCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::encryption::spoutSDEParam_t sps;
+
+  SCSI::Structures::setU16(sps.pageCode, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+
+  sps.nexusScope = SCSI::encryption::encryptionNexusScopes::scopeLocal; // oracle compatibility
+  sps.encryptionMode = SCSI::encryption::encryptionModes::modeDisable;
+  sps.decryptionMode = SCSI::encryption::decryptionModes::modeDisable;
+  sps.algorithmIndex = 0x01;
+  sps.keyFormat = SCSI::encryption::keyFormatTypes::keyFormatNormal;
+
+  /*
+   * Length is size of the spoutSDEParam_t - (sizeof(sps.pageCode) + sizeof(sps.length))
+   */
+  SCSI::Structures::setU16(sps.length, sizeof(SCSI::Structures::encryption::spoutSDEParam_t) - 4);
+
+  cdb.securityProtocol = SCSI::encryption::spoutSecurityProtocolPages::tapeDataEncryption;
+  SCSI::Structures::setU16(cdb.securityProtocolSpecific, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+  SCSI::Structures::setU32(cdb.allocationLength, sizeof(SCSI::Structures::encryption::spoutSDEParam_t));
+
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&sps);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_TO_DEV;
+
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveGeneric::clearEncryptionKey");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::clearEncryptionKey");
+  return true;
+}
+
+bool drive::DriveGeneric::isEncryptionCapEnabled() {
+  return false;
+}
+
+bool drive::DriveIBM3592::isEncryptionCapEnabled() {
+  /*
+   * We are acquiring the encryption capability from the length of the SPIN index page.
+   * If it has one page (only 0x00), then encryption is disabled from the libary.
+   * If it has more pages, the encryption(0x00, 0x20 at the moment of writing), then it is enabled.
+   */
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::encryption::spinCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::encryption::spinPageList_t<20> pl;
+
+  cdb.securityProtocol = SCSI::encryption::spinSecurityProtocolPages::securityProtocolInformation;
+  SCSI::Structures::setU16(cdb.securityProtocolSpecific, 0x0000);
+  SCSI::Structures::setU32(cdb.allocationLength, sizeof(pl));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&pl);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveIBM3592::isEncryptionCapEnabled");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::clearEncryptionKey");
+
+  return SCSI::Structures::toU16(pl.supportedProtocolListLength) > 1;
+}
+
+bool drive::DriveT10000::isEncryptionCapEnabled() {
+  /*
+   * We are acquiring the encryption capability from the inquiry page on Oracle T10k drives
+   * because the SPIN index page is not available when encryption is disabled from
+   * the Oracle libary interface (invalid cdb error).
+   */
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::inquiryCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::inquiryDataT10k_t inqData;
+
+  // EVPD and page code set to zero => standard inquiry
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inqData));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&inqData);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveT10000::isEncryptionCapEnabled");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::clearEncryptionKey");
+
+  unsigned char keyManagement = inqData.keyMgmt; // oracle metric for key management
+
+  return keyManagement != 0x0;
+}
+
+void drive::DriveMHVTL::setEncryptionKey(const std::string &encryption_key) {
+  throw cta::exception::Exception("In DriveMHVTL::setEncryptionKey: Encryption cannot be enabled.");
+}
+
+bool drive::DriveMHVTL::clearEncryptionKey() {
+  return false;
+}
+
+bool drive::DriveMHVTL::isEncryptionCapEnabled() {
+  return false;
 }
 
 /**

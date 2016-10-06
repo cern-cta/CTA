@@ -40,8 +40,8 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   maxBytesBeforeFlush(0),
   maxFilesBeforeFlush(0),
   nbDiskThreads(0),
-  useLbp(false) {
-}
+  useLbp(false),
+  externalEncryptionKeyScript("") {}
 
 //------------------------------------------------------------------------------
 // createFromCastorConf
@@ -93,6 +93,9 @@ castor::tape::tapeserver::daemon::DataTransferConfig
   } else {
     config.useLbp = false;
   }
+
+  config.externalEncryptionKeyScript = castorConf.getConfEntString("TapeServer",
+    "ExternalEncryptionKeyScript", "");
 
   return config;
 }

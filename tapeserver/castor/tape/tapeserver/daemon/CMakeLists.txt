@@ -48,6 +48,7 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   DriveConfig.cpp
   DriveConfigMap.cpp
   EmptyDriveProbe.cpp
+  EncryptionControl.cpp
   TapeServerReporter.cpp
   LabelSession.cpp
   MigrationMemoryManager.cpp

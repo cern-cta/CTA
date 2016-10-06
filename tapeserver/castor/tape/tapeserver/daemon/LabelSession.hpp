@@ -36,6 +36,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
+#include "castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 
 #include <memory>
 
@@ -67,6 +68,9 @@ public:
    * @param lbp The flag that, if set to true, allows labeling a tape with 
    *            logical block protection. This parameter comes from
    *            castor-tape-label command line tool.
+   * @param labelSessionConfig 
+   * @param externalEncryptionKeyScript path to the operator provided script
+   * for encryption key management control.
    */
   LabelSession(
     cta::server::ProcessCap &capUtils,
@@ -78,7 +82,8 @@ public:
     const DriveConfig &driveConfig,
     const bool force,
     const bool lbp,
-    const LabelSessionConfig &labelSessionConfig);
+    const LabelSessionConfig &labelSessionConfig,
+    const std::string & externalEncryptionKeyScript);
   
   /** 
    * Execute the session and return the type of action to be performed
@@ -141,6 +146,11 @@ private:
    * block protection
    */
   const bool m_lbp;
+
+  /** 
+   * Encryption helper object 
+   */
+  EncryptionControl m_encryptionControl;
 
   /** 
    * Execute the session and return the type of action to be performed

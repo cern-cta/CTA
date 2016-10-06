@@ -32,6 +32,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 
 #include <memory>
 
@@ -59,6 +60,8 @@ namespace daemon {
      * false otherwise.
      * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
      * the media to be ready for operations inside the drive.
+     * @param externalEncryptionKeyScript path to the operator provided script
+     * for encryption control.
      */
     CleanerSession(
       cta::server::ProcessCap &capUtils,
@@ -68,8 +71,9 @@ namespace daemon {
       System::virtualWrapper &sysWrapper,
       const std::string &vid,
       const bool waitMediaInDrive,
-      const uint32_t waitMediaInDriveTimeout);
-    
+      const uint32_t waitMediaInDriveTimeout,
+      const std::string & externalEncryptionKeyScript);
+
     /** 
      * Execute the session and return the type of action to be performed
      * immediately after the session has completed.
@@ -123,6 +127,11 @@ namespace daemon {
      * the media to be ready for operations inside the drive.
      */
     const uint32_t m_waitMediaInDriveTimeout;
+
+    /** 
+     * Encryption helper object 
+     */
+    EncryptionControl m_encryptionControl;
 
     /** 
      * Execute the session and return the type of action to be performed

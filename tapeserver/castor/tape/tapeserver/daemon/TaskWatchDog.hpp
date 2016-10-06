@@ -180,6 +180,7 @@ protected:
       paramList.push_back(Param("flushTime", m_stats.flushTime));
       paramList.push_back(Param("unloadTime", m_stats.unloadTime));
       paramList.push_back(Param("unmountTime", m_stats.unmountTime));
+      paramList.push_back(Param("encryptionControlTime", m_stats.encryptionControlTime));
       paramList.push_back(Param("transferTime", m_stats.transferTime()));
       paramList.push_back(Param("totalTime", totalTime));
       paramList.push_back(Param("deliveryTime", deliveryTime));

@@ -109,7 +109,7 @@ namespace unitTests
       const tapeserver::daemon::VolumeInfo& volInfo, 
       cta::server::ProcessCap& cap,
       cta::log::LogContext & lc):
-    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc){}
+    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, ""){}
 
     ~FakeSingleTapeReadThread(){
       const unsigned int size= m_tasks.size();

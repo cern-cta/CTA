@@ -249,8 +249,70 @@ namespace SCSI {
       unsigned char reserved2[22];
       unsigned char vendorSpecific2[1];
     };
-    
-    /**
+   
+   /**
+    * Oracle T10K Inquiry data
+    */
+    class inquiryDataT10k_t {
+    public:
+      inquiryDataT10k_t () { zeroStruct(this); }
+      unsigned char perifDevType : 5;
+      unsigned char perifQualifyer : 3;
+
+      unsigned char : 7;
+      unsigned char RMB : 1;
+
+      unsigned char version;
+
+      unsigned char respDataFmt : 4;
+      unsigned char HiSup : 1;
+      unsigned char normACA : 1;
+      unsigned char RSVD1: 1;
+      unsigned char AERC: 1;
+
+      unsigned char addLength;
+
+      unsigned char protect : 1;
+      unsigned char : 2;
+      unsigned char threePC : 1;
+      unsigned char TPGS : 2;
+      unsigned char ACC : 1;
+      unsigned char SCCS : 1;
+
+      unsigned char : 3;
+      unsigned char mChngr: 1;
+      unsigned char multiP : 1;
+      unsigned char VS1 : 1;
+      unsigned char encServ : 1;
+      unsigned char bQue : 1;
+
+      unsigned char VS2 : 1;
+      unsigned char cmdQue : 1;
+      unsigned char RSVD2: 1;
+      unsigned char linked: 1;
+      unsigned char : 3;
+      unsigned char relAdr : 1;
+
+      char vendorId[8];
+      char prodId[16];
+      char prodRevLvl[8];
+      char vendorSpecific1[14];
+
+      unsigned char keyMgmt;
+
+      unsigned char CSL : 1;
+      unsigned char DCMP : 1;
+      unsigned char volSafe : 1;
+      unsigned char libAtt : 1;
+      unsigned char encr : 1;
+      unsigned char : 3;
+
+      unsigned char reserved1[2];
+
+      unsigned char versionDescriptor[8][2];
+    };
+ 
+   /**
      * Inquiry unit serial number vital product data as described in SPC-4.
      */
     class inquiryUnitSerialNumberData_t {
@@ -1029,7 +1091,86 @@ namespace SCSI {
       /* TODO: add support for other bits. See section 4.5.6
        * of SPC-4 for sense key = NO SENSE. */
     };
-    
+   
+    namespace encryption {
+
+      class spinCDB_t {
+      public:
+        spinCDB_t() {
+          zeroStruct(this);
+          opCode = SCSI::Commands::SECURITY_PROTOCOL_IN;
+        }
+
+        unsigned char opCode;
+        unsigned char securityProtocol;
+        unsigned char securityProtocolSpecific[2];
+        unsigned char reserved[2];
+        unsigned char allocationLength[4];
+        unsigned char reserved2;
+        unsigned char controlByte;
+      };
+
+      class spoutCDB_t {
+      public:
+        spoutCDB_t() {
+          zeroStruct(this);
+          opCode = SCSI::Commands::SECURITY_PROTOCOL_OUT;
+        }
+
+        unsigned char opCode;
+        unsigned char securityProtocol;
+        unsigned char securityProtocolSpecific[2];
+        unsigned char reserved[2];
+        unsigned char allocationLength[4];
+        unsigned char reserved2;
+        unsigned char controlByte;
+      };
+
+      template <int n>
+      class spinPageList_t {
+      public:
+        spinPageList_t() { zeroStruct(this); }
+        unsigned char reserved[6];
+        unsigned char supportedProtocolListLength[2];
+        unsigned char list[n];
+      };
+
+      /**
+       * Security Protocol OUT-Set Data Encryption Page as described in SSC-4.
+       */
+      class spoutSDEParam_t {
+      public:
+        spoutSDEParam_t() {
+          zeroStruct(this);
+          setU16(pageCode, SCSI::encryption::spoutSecurityProtocolSpecificPages::setDataEncryptionPage);
+          setU16(keyLength, SCSI::encryption::ENC_KEY_LENGTH);
+        }
+
+        unsigned char pageCode[2];
+        unsigned char length[2];
+
+        unsigned char lock        : 1;
+        unsigned char             : 4;
+        unsigned char nexusScope  : 3; // Specifies the scope of the data encryption parameters
+
+        unsigned char CKORL       : 1; // Clear key on reservation loss
+        unsigned char CKORP       : 1; // Clear key on reservation preempt
+        unsigned char CKOD        : 1; // Clear key on reservation demount
+        unsigned char SDK         : 1; // Supplemental decryption key
+        unsigned char RDMC        : 2; // Raw decryption mode control
+        unsigned char CEEM        : 2; // Check external encryption mode
+
+        unsigned char encryptionMode;
+        unsigned char decryptionMode;
+        unsigned char algorithmIndex;
+        unsigned char keyFormat;
+        unsigned char kadFormat;
+        unsigned char reserved[7];
+        unsigned char keyLength[2];
+        unsigned char keyData[SCSI::encryption::ENC_KEY_LENGTH];
+      };
+    }
+ 
     template <size_t n>
     /**
      * Extract a string from a fixed size array. This function

@@ -508,7 +508,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       sWrapper,
       rqst.vid(),
       rqst.waitmediaindrive(),
-      rqst.waitmediaindrivetimeout());
+      rqst.waitmediaindrivetimeout(),
+      m_config.dataTransfer.externalEncryptionKeyScript);
     return cleanerSession.execute();
   } catch(cta::exception::Exception &ex) {
     throw ex;
@@ -845,7 +846,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       driveConfig,
       rqst.force(),
       rqst.lbp(),
-      m_config.labelSession);
+      m_config.labelSession,
+      m_config.dataTransfer.externalEncryptionKeyScript);
     return labelsession.execute();
   } catch(cta::exception::Exception &ex) {
     throw ex;

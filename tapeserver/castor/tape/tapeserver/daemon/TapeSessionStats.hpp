@@ -52,7 +52,10 @@ namespace daemon {
     
     /** Unmount time, in seconds. */
     double unmountTime;
-    
+   
+    /** Time spent running encryption control scripts */
+    double encryptionControlTime;
+ 
     /** Cumulated time spent waiting for data blocks. */
     double waitDataTime;
     
@@ -95,9 +98,9 @@ namespace daemon {
     /** Constructor: all defaults are zero */
     TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
     readWriteTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
-    waitDataTime(0.0), waitFreeMemoryTime(0.0), waitInstructionsTime(0.0),
-    waitReportingTime(0.0), totalTime(0.0), deliveryTime(0.0),
-    dataVolume(0), headerVolume(0), filesCount(0) {}
+    encryptionControlTime(0.0), waitDataTime(0.0), waitFreeMemoryTime(0.0),
+    waitInstructionsTime(0.0), waitReportingTime(0.0), totalTime(0.0),
+    deliveryTime(0.0), dataVolume(0), headerVolume(0), filesCount(0) {}
     
     /** Accumulate contents of another stats block */
     void add(const TapeSessionStats& other) {
@@ -108,6 +111,7 @@ namespace daemon {
       flushTime += other.flushTime;
       unloadTime += other.unloadTime;
       unmountTime += other.unmountTime;
+      encryptionControlTime += other.encryptionControlTime;
       waitDataTime += other.waitDataTime;
       waitFreeMemoryTime += other.waitFreeMemoryTime;
       waitInstructionsTime += other.waitInstructionsTime;

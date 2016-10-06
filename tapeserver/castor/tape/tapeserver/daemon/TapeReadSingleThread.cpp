@@ -35,9 +35,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   RecallWatchDog& watchdog,
   cta::log::LogContext&  lc,
   RecallReportPacker &rrp,
-  const bool useLbp) :
+  const bool useLbp,
+  const std::string & externalEncryptionKeyScript) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
-    capUtils, lc),
+    capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
@@ -55,6 +56,16 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   //then we log/notify
   m_this.m_logContext.log(cta::log::DEBUG, "Starting session cleanup. Signalled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
+  // Disable encryption (or at least try)
+  try {
+    if (m_this.m_encryptionControl.disable(m_this.m_drive))
+      m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
+  } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
+    scoped.add("exceptionError", ex.getMessageValue());
+    m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
+  }
+  m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try { m_this.logTapeAlerts(); } catch (...) {}
   // Log safely SCSI Metrits
@@ -227,6 +238,33 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
+      try {
+        currentErrorToCount = "Error_tapeEncryptionEnable";
+        // We want those scoped params to last for the whole mount.
+        // This will allow each session to be logged with its encryption
+        // status:
+        cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
+        {
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.vid,
+                                                             EncryptionControl::SetTag::NO_SET_TAG);
+          if (encryptionStatus.on) {
+            encryptionLogParams.add("encryption", "on")
+              .add("encryptionKey", encryptionStatus.keyName)
+              .add("stdout", encryptionStatus.stdout);
+            m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
+          } else {
+            encryptionLogParams.add("encryption", "off");
+            m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
+          }
+        }
+        m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
+      }
+      catch (cta::exception::Exception ex) {
+        cta::log::ScopedParamContainer params(m_logContext);
+        params.add("ErrorMessage", ex.getMessage().str());
+        m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
+        throw;
+      }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
       std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
@@ -340,6 +378,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
           .add("waitReportingTime", m_stats.waitReportingTime)
           .add("unloadTime", m_stats.unloadTime)
           .add("unmountTime", m_stats.unmountTime)
+          .add("encryptionControlTime", m_stats.encryptionControlTime)
           .add("transferTime", m_stats.transferTime())
           .add("totalTime", m_stats.totalTime)
           .add("dataVolume", m_stats.dataVolume)

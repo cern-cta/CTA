@@ -37,8 +37,9 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         MigrationReportPacker & repPacker,
         cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
-        const bool useLbp): 
-        TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo,capUtils, lc),
+        const bool useLbp, const std::string & externalEncryptionKeyScript):
+        TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo, 
+          capUtils, lc, externalEncryptionKeyScript),
         m_filesBeforeFlush(filesBeforeFlush),
         m_bytesBeforeFlush(bytesBeforeFlush),
         m_drive(drive),
@@ -47,6 +48,98 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_compress(true),
         m_useLbp(useLbp),
         m_watchdog(mwd){}
+
+//------------------------------------------------------------------------------
+//TapeCleaning::~TapeCleaning()
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning(){
+  // Disable encryption (or at least try)
+  try {
+    if (m_this.m_encryptionControl.disable(m_this.m_drive))
+      m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
+  } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
+    scoped.add("exceptionError", ex.getMessageValue());
+    m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
+  }
+  m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
+  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp);
+  // This out-of-try-catch variables allows us to record the stage of the 
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
+  try { m_this.logTapeAlerts(); } catch (...) {}
+  // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
+  try { m_this.logSCSIMetrics(); } catch(...) {}
+  std::string currentErrorToCount = "Error_tapeUnload";
+  try{
+    // Do the final cleanup
+    // First check that a tape is actually present in the drive. We can get here
+    // after failing to mount (library error) in which case there is nothing to
+    // do (and trying to unmount will only lead to a failure.)
+    const uint32_t waitMediaInDriveTimeout = 60;
+    try {
+      m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
+    } catch (cta::exception::TimeOut &) {}
+    if (!m_this.m_drive.hasTapeInPlace()) {
+      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
+      goto done;
+    }
+    // in the special case of a "manual" mode tape, we should skip the unload too.
+    if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
+      m_this.m_drive.unloadTape();
+      m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
+    } else {
+        m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
+    }
+    m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
+    // And return the tape to the library
+    // In case of manual mode, this will be filtered by the rmc daemon
+    // (which will do nothing)
+    currentErrorToCount = "Error_tapeDismount";
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
+    m_this.m_drive.disableLogicalBlockProtection();
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
+    m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
+      "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
+    m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Shutdown,
+      cta::tape::session::SessionType::Archive);
+    m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
+  }
+  catch(const cta::exception::Exception& ex){
+    // Notify something failed during the cleaning 
+    m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
+    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
+    scoped.add("exception_message", ex.getMessageValue());
+    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
+    // As we do not throw exceptions from here, the watchdog signalling has
+    // to occur from here.
+    try {
+      if (currentErrorToCount.size()) {
+        m_this.m_watchdog.addToErrorCount(currentErrorToCount);
+      }
+    } catch (...) {}
+  } catch (...) {
+     // Notify something failed during the cleaning 
+     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
+     m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
+     try {
+       if (currentErrorToCount.size()) {
+         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
+       }
+     } catch (...) {}
+  }
+  done:
+    //then we terminate the global status reporter
+    m_this.m_initialProcess.finish();
+}
+
 //------------------------------------------------------------------------------
 //setlastFseq
 //------------------------------------------------------------------------------
@@ -225,6 +318,34 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("mountTime", m_stats.mountTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
+      try {
+        currentErrorToCount = "Error_tapeEncryptionEnable";
+        // We want those scoped params to last for the whole mount.
+        // This will allow each written file to be logged with its encryption
+        // status:
+        cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
+        {
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.vid,
+                                                             EncryptionControl::SetTag::SET_TAG);
+ 
+          if (encryptionStatus.on) {
+            encryptionLogParams.add("encryption", "on")
+              .add("encryptionKey", encryptionStatus.keyName)
+              .add("stdout", encryptionStatus.stdout);
+            m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
+          } else {
+            encryptionLogParams.add("encryption", "off");
+            m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
+          }
+        }
+        m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
+      }
+      catch (cta::exception::Exception ex) {
+        cta::log::ScopedParamContainer params(m_logContext);
+        params.add("ErrorMessage", ex.getMessage().str());
+        m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
+        throw;
+      }
       currentErrorToCount = "Error_tapePositionForWrite";
       // Then we have to initialize the tape write session
       std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
@@ -396,6 +517,7 @@ int level,const std::string& msg, cta::log::ScopedParamContainer& params){
         .add("flushTime", m_stats.flushTime)
         .add("unloadTime", m_stats.unloadTime)
         .add("unmountTime", m_stats.unmountTime)
+        .add("encryptionControlTime", m_stats.encryptionControlTime)
         .add("transferTime", m_stats.transferTime())
         .add("totalTime", m_stats.totalTime)
         .add("dataVolume", m_stats.dataVolume)

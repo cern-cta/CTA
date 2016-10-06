@@ -66,7 +66,8 @@ public:
           RecallWatchDog& watchdog,
           cta::log::LogContext & lc,
           RecallReportPacker &rrp,
-          const bool useLbp);
+          const bool useLbp,
+          const std::string & externalEncryptionKeyScript);
    
    /**
     * Set the task injector. Has to be done that way (and not in the constructor)

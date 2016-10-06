@@ -103,6 +103,12 @@ namespace drive {
      * @return    The deviceInfo structure with the information about the drive.
      */
     virtual deviceInfo getDeviceInfo() ;
+    
+    /**
+     * Generic SCSI path, used for passing to external scripts.
+     * @return    Path to the generic SCSI device file.
+     */
+    virtual std::string getGenericSCSIPath();
 
     /**
      * Information about the serial number of the drive. 
@@ -127,7 +133,6 @@ namespace drive {
      */
     virtual positionInfo getPositionInfo() ;
     
-  public:
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
      * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
@@ -422,6 +427,30 @@ namespace drive {
      * for reading and the status if LBP enabled for writing.
      */
     virtual LBPInfo getLBPInfo();
+
+    /**
+     * Set an encryption key used by the tape drive to encrypt data written
+     * or decrypt encrypted data read using an SPOUT command.
+     * On AES-256, if the key is less than 32 characters, it pads with zeros.
+     * If the key is more than 32 character, it takes the first 32 characters.
+     * If called on already encryption-enabled drive, it will override the encryption params.
+     * @param encryption_key The key with which the drive should encrypt/decrypt data
+     */
+    virtual void setEncryptionKey(const std::string &encryption_key);
+
+    /**
+     * Clear the encryption parameters from the tape drive using an SPOUT command.
+     * Does not need to check if encryption key is already present or not.
+     * @return true if the device has encrypiton capabilities enabled, false otherwise
+     */
+    virtual bool clearEncryptionKey();
+
+    /**
+     * Check if Encryption capability is enabled by the vendor library inteface.
+     * This function is implemented in a vendor-specific way.
+     * @return true if the encryption capability is enabled, false otherwise.
+     */
+    virtual bool isEncryptionCapEnabled();
     
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
@@ -465,6 +494,7 @@ namespace drive {
     }
 
     virtual compressionStats getCompression();
+    virtual bool isEncryptionCapEnabled();
     virtual std::map<std::string,uint32_t> getTapeWriteErrors();
     virtual std::map<std::string,uint32_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getVolumeStats();
@@ -489,6 +519,9 @@ namespace drive {
     virtual void setLogicalBlockProtection(const unsigned char method, 
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite);
+    virtual void setEncryptionKey(const std::string &encryption_key);
+    virtual bool clearEncryptionKey();
+    virtual bool isEncryptionCapEnabled();
     virtual std::map<std::string,uint32_t> getTapeWriteErrors();
     virtual std::map<std::string,uint32_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
@@ -519,6 +552,7 @@ namespace drive {
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
+    virtual bool isEncryptionCapEnabled();
   };
 
 }}}}

@@ -68,7 +68,8 @@ public:
     cta::log::LogContext & lc,
     MigrationReportPacker & repPacker,
     cta::server::ProcessCap &capUtils,
-    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp);
+    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp,
+    const std::string & externalEncryptionKeyScript);
   
   /**
    * 
@@ -103,85 +104,7 @@ private:
   public:
     TapeCleaning(TapeWriteSingleThread& parent, cta::utils::Timer & timer):
       m_this(parent), m_timer(timer) {}
-    ~TapeCleaning(){
-      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp);
-      // This out-of-try-catch variables allows us to record the stage of the 
-      // process we're in, and to count the error if it occurs.
-      // We will not record errors for an empty string. This will allow us to
-      // prevent counting where error happened upstream.
-      // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
-      try { m_this.logTapeAlerts(); } catch (...) {}
-      // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
-      try { m_this.logSCSIMetrics(); } catch(...) {}
-
-      std::string currentErrorToCount = "Error_tapeUnload";
-      try{
-        // Do the final cleanup
-        // First check that a tape is actually present in the drive. We can get here
-        // after failing to mount (library error) in which case there is nothing to
-        // do (and trying to unmount will only lead to a failure.)
-
-        const uint32_t waitMediaInDriveTimeout = 60;
-        try {
-          m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-        } catch (cta::exception::TimeOut &) {}
-        if (!m_this.m_drive.hasTapeInPlace()) {
-          m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
-          goto done;
-        }
-        // in the special case of a "manual" mode tape, we should skip the unload too.
-        if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {
-          m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
-          m_this.m_drive.unloadTape();
-          m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
-        } else {
-          m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
-        }
-        m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
-        // And return the tape to the library
-        // In case of manual mode, this will be filtered by the rmc daemon
-        // (which will do nothing)
-        currentErrorToCount = "Error_tapeDismount";
-        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
-        m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.getLibrarySlot());
-        m_this.m_drive.disableLogicalBlockProtection();
-        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
-        m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-        m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
-          "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
-        m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Shutdown,
-          cta::tape::session::SessionType::Archive);
-        m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
-      }
-      catch(const cta::exception::Exception& ex){
-        // Notify something failed during the cleaning 
-        m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-        m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
-        cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-        scoped.add("exception_message", ex.getMessageValue());
-        m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
-        // As we do not throw exceptions from here, the watchdog signalling has
-        // to occur from here.
-        try {
-          if (currentErrorToCount.size()) {
-            m_this.m_watchdog.addToErrorCount(currentErrorToCount);
-          }
-        } catch (...) {}
-      } catch (...) {
-          // Notify something failed during the cleaning 
-          m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-          m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
-          m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
-          try {
-          if (currentErrorToCount.size()) {
-            m_this.m_watchdog.addToErrorCount(currentErrorToCount);
-          }
-        } catch (...) {}
-      }
-      done:
-      //then we terminate the global status reporter
-      m_this.m_initialProcess.finish();
-    }
+    ~TapeCleaning();
   };
   /**
    * Will throw an exception if we cant write on the tape

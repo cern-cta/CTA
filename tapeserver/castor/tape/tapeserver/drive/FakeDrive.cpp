@@ -67,6 +67,9 @@ castor::tape::tapeserver::drive::deviceInfo castor::tape::tapeserver::drive::Fak
   devInfo.isPIsupported = true;
   return devInfo;
 }
+std::string castor::tape::tapeserver::drive::FakeDrive::getGenericSCSIPath() {
+  return "/dev/sg_NoSuchDrive";
+}
 std::string castor::tape::tapeserver::drive::FakeDrive::getSerialNumber()  {
   throw cta::exception::Exception("FakeDrive::getSerialNumber Not implemented");
 }
@@ -275,6 +278,18 @@ bool castor::tape::tapeserver::drive::FakeDrive::isTapeBlank() {
 castor::tape::tapeserver::drive::lbpToUse
   castor::tape::tapeserver::drive::FakeDrive::getLbpToUse() {
     return m_lbpToUse;
+}
+
+void castor::tape::tapeserver::drive::FakeDrive::setEncryptionKey(const std::string &encryption_key) {
+  throw cta::exception::Exception("In DriveFakeDrive::setEncryptionKey: Not implemented.");
+}
+
+bool castor::tape::tapeserver::drive::FakeDrive::clearEncryptionKey() {
+  return false;
+}
+
+bool castor::tape::tapeserver::drive::FakeDrive::isEncryptionCapEnabled() {
+  return false;
 }
 
 bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {

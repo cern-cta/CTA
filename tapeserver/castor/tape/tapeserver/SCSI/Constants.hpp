@@ -326,6 +326,135 @@ namespace SCSI {
   std::string driverStatusSuggestionsToString(
     const unsigned short int driverStatus);
 
+  namespace encryption {
+    const unsigned int ENC_KEY_LENGTH = 0x20;
+
+    class spinSecurityProtocolPages {
+    public:
+      enum {
+        securityProtocolInformation = 0x00,
+        tapeDataEncrytpion = 0x20
+      };
+    };
+
+    class spoutSecurityProtocolPages {
+    public:
+      enum{
+        tapeDataEncryption = 0x20
+      };
+    };
+
+    class spoutSecurityProtocolSpecificPages {
+    public:
+      enum {
+        setDataEncryptionPage = 0x10,
+        saEncapsulationPage   = 0x11 // not supported by IBM or Oracle
+      };
+    };
+
+    class encryptionNexusScopes {
+    public:
+      enum {
+        scopePublic     = 0,/* All fields other than the scope field and LOCK bit shall be ignored.
+                                The I_T nexus shall use data encryption parameters that are shared
+                                by other I_T nexuses. If no I_T nexuses are sharing data encryption
+                                parameters, the device server shall use default data encryption parameters. */
+        scopeLocal      = 1,/* The data encryption parameters are unique to the I_T nexus associated
+                               with the SECURITY PROTOCOL OUT command and shall not be shared
+                               with other I_T nexuses.*/
+        scopeAllITNexus = 2 /* The data encryption parameters shall be shared with all I_T nexuses. */
+      };
+    };
+
+    class checkExternalEncryptionMode {
+    public:
+      enum {
+        vendorSpecific    = 0,  /* Vendor specific */
+        noEncryptionCheck = 1,  /* Do not check the encryption mode that was in use when the block
+                                   was written to the medium.*/
+        checkExternal     = 2,  /* On read and verify commands, check the encryption mode that
+                                   was in use when the block was written to the medium. Report an
+                                   error if the block was written in EXTERNAL mode */
+        checkEncrypt      = 3   /* On read and verify commands, check the encryption mode that
+                                   was in use when the block was written to the medium. Report
+                                   an error if the block was written in ENCRYPT mode */
+      };
+    };
+
+    class rawDecryptionModeControl {
+    public:
+      enum {
+        rdmcDefault   = 0,      /* The device server shall mark each encrypted block per the default
+                                 setting for the algorithm  */
+        // value 1 is reserved, according to SSC-3
+        rdmcUnprotect = 2,    /* The device server shall mark each encrypted block written to the
+                                 medium in a format specific manner as enabled for raw decryption
+                                 mode operations. */
+        rdmcProtect   = 3     /* The device server shall mark each encrypted block written to the
+                                 medium in a format specific manner as disabled for raw decryption
+                                 mode operations. */
+      };
+    };
+
+    class encryptionModes {
+    public:
+      enum {
+        modeDisable  = 0,   /* Data encryption is disabled. */
+        modeExternal = 1,   /* The data associated with the WRITE(6) and WRITE(16) commands
+                               has been encrypted by a system that is compatible with the
+                               algorithm specified by the ALGORITHM INDEX field. */
+        modeEncrypt  = 2    /* The device server shall encrypt all data that it receives for
+                               a WRITE(6) or WRITE(16) command using the algorithm specified
+                               in the ALGORITHM INDEX field and the key specified in the KEY field. */
+      };
+    };
+
+    class decryptionModes {
+    public:
+      enum {
+        modeDisable = 0,  /* Data decryption is disabled. If the device server encounters an encrypted
+                             logical block while reading, it shall not allow access to the data. */
+        modeRaw     = 1,  /* Data decryption is disabled. If the device server encounters an encrypted
+                             logical block while reading, it shall pass the encrypted block to the host
+                             without decrypting it. The encrypted block may contain data that is not user data. */
+        modeDecrypt = 2,  /* The device server shall decrypt all data that is read from the medium when
+                             processing a READ(6), READ(16), READ REVERSE(6), READ REVERSE(16), or
+                             RECOVER BUFFERED DATA command or verified when processing a VERIFY(6)
+                             or VERIFY(16) command. The data shall be decrypted using the algorithm specified
+                             in the ALGORITHM INDEX field and the key specified in the KEY field.*/
+        modeMixed   = 3   /* The device server shall decrypt all data that is read from the medium that
+                             the device server determines was encrypted when processing a
+                             READ(6), READ(16), READ REVERSE(6), READ REVERSE(16), or RECOVER BUFFERED DATA
+                             command or verified when processing a VERIFY(6) or VERIFY(16) command.
+                             The data shall be decrypted using the algorithm specified in the ALGORITHM INDEX field
+                             and the key specified in the KEY field.
+                             If the device server encounters unencrypted data when processing a READ(6), READ(16),
+                             READ REVERSE(6), READ REVERSE(16), RECOVER BUFFERED DATA, VERIFY(6), or VERIFY(16)
+                             command, the data shall be processed without decrypting. */
+      };
+    };
+
+    class keyFormatTypes {
+    public:
+      enum {
+        keyFormatNormal    = 0, /* The KEY field contains the key to be used to encrypt or decrypt data. */
+        keyFormatReference = 1, /* The KEY field contains a vendor-specific key reference. */
+        keyFormatWrapped   = 2, /* The KEY field contains the key wrapped by the device server public key. */
+        keyFormatESPSCSI   = 3  /* The KEY field contains a key that is encrypted using ESP-SCSI. */
+      };
+    };
+
+    class keyDescriptorTypes {
+    public:
+      enum {
+        ukad  = 0,  /* Unauthenticated Key Associated Data */
+        akad  = 1,  /* Authenticated Key Associated Data */
+        nonce = 2,  /* Nonce value */
+        meta  = 3   /* Metadata Key Associated data */
+      };
+    };
+  }
+
   class logSensePages {
   public:
     enum {

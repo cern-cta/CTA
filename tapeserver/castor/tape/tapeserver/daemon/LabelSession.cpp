@@ -49,7 +49,8 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   const DriveConfig &driveConfig,
   const bool force,
   const bool lbp,
-  const LabelSessionConfig &labelSessionConfig):
+  const LabelSessionConfig &labelSessionConfig,
+  const std::string & externalEncryptionKeyScript):
   m_capUtils(capUtils),
   m_tapeserver(tapeserver),
   m_mc(mc),
@@ -59,8 +60,8 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   m_driveConfig(driveConfig),
   m_labelSessionConfig (labelSessionConfig),
   m_force(force),
-  m_lbp(lbp){
-}
+  m_lbp(lbp),
+  m_encryptionControl(externalEncryptionKeyScript) {}
 
 //------------------------------------------------------------------------------
 // execute
@@ -132,7 +133,10 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   } else {
     drive.disableLogicalBlockProtection();
   }
-  
+
+  // The label to be written without encryption
+  m_encryptionControl.disable(drive);
+
   mountTape();
   waitUntilTapeLoaded(drive, 60); // 60 = 60 seconds
   

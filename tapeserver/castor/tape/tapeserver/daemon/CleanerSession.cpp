@@ -34,7 +34,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   System::virtualWrapper &sysWrapper,
   const std::string &vid,
   const bool waitMediaInDrive,
-  const uint32_t waitMediaInDriveTimeout):
+  const uint32_t waitMediaInDriveTimeout,
+  const std::string & externalEncryptionKeyScript):
   m_capUtils(capUtils),
   m_mc(mc),
   m_log(log),
@@ -42,8 +43,8 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   m_sysWrapper(sysWrapper),
   m_vid(vid),
   m_waitMediaInDrive(waitMediaInDrive),
-  m_waitMediaInDriveTimeout(waitMediaInDriveTimeout) {
-}
+  m_waitMediaInDriveTimeout(waitMediaInDriveTimeout),
+  m_encryptionControl(externalEncryptionKeyScript) {}
 
 //------------------------------------------------------------------------------
 // execute
@@ -108,6 +109,8 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
     m_log(cta::log::INFO, "Cleaner found tape drive empty", params);
     return; //return immediately if there is no tape
   }
+
+  m_encryptionControl.disable(drive);
 
   rewindDrive(drive);
   drive.disableLogicalBlockProtection();

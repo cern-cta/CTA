@@ -114,6 +114,7 @@ set (COMMON_LIB_SRC_FILES
   threading/System.cpp
   threading/Threading.cpp
   threading/Semaphores.cpp
+  threading/SubProcess.cpp
   utils/GetOptThreadSafe.cpp
   utils/utils.cpp
   utils/strerror_r_wrapper.cpp

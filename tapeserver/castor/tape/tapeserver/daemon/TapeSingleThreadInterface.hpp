@@ -37,6 +37,7 @@
 #include "TapeSessionStats.hpp"
 #include "VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
 
 namespace castor     {
@@ -90,6 +91,9 @@ protected:
   
   /** Session statistics */
   TapeSessionStats m_stats;
+
+  /** Encryption helper object */
+  EncryptionControl m_encryptionControl;
  
   /**
    * This function will try to set the cap_sys_rawio capability that is needed
@@ -297,9 +301,11 @@ public:
     mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
-    cta::server::ProcessCap &capUtils, cta::log::LogContext & lc):m_capUtils(capUtils),
+    cta::server::ProcessCap &capUtils,cta::log::LogContext & lc,          
+    const std::string & externalEncryptionKeyScript):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
-    m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP) {}
+    m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP),
+    m_encryptionControl(externalEncryptionKeyScript) {}
 }; // class TapeSingleThreadInterface
 
 } // namespace daemon

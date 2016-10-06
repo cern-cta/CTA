@@ -118,6 +118,11 @@ struct DataTransferConfig {
   bool useLbp;
 
   /**
+   * The path to the operator provided encyption control script (or empty string)
+   */
+  std::string externalEncryptionKeyScript;
+
+  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */
