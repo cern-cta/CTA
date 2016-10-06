@@ -1856,6 +1856,10 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  // TODO: statistics!
+  inputs.byteTransfered = 0;
+  inputs.filesTransfered = 0;
+  inputs.latestBandwidth = 0;
   OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
 }
@@ -1884,6 +1888,10 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.status = status;
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
+  // TODO: statistics!
+  inputs.byteTransfered = 0;
+  inputs.filesTransfered = 0;
+  inputs.latestBandwidth = 0;
   OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
 }
