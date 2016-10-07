@@ -44,7 +44,8 @@ m_retrieveJob(retrieveJob),m_memManager(mm){
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  lc,
-    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog) {
+    diskFile::DiskFileFactory & fileFactory, RecallWatchDog & watchdog,
+    const int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
   cta::utils::Timer localTime;
@@ -92,6 +93,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(cta::log::INFO, "Opened disk file for writing");
           m_stats.openingTime+=localTime.secs(cta::utils::Timer::resetCounter);
+          watchdog.addParameter(cta::log::Param("stillOpenFileForThread"+
+            std::to_string((long long)threadID), writeFile->URL()));
         }
         
         // Write the data.
@@ -120,6 +123,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
       }
     } //end of while(1)
     logWithStat(cta::log::INFO, "File successfully transfered to disk",lc);
+    watchdog.deleteParameter("stillOpenFileForThread"+
+      std::to_string((long long)threadID));
+
     m_retrieveJob->transferredSize = m_stats.dataVolume;
     m_retrieveJob->transferredChecksumType = "ADLER32";
     { 
@@ -161,7 +167,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     m_retrieveJob->failureMessage = e.getMessageValue();
     reporter.reportFailedJob(std::move(m_retrieveJob));
 
-    
+    watchdog.deleteParameter("stillOpenFileForThread"+
+      std::to_string((long long)threadID));
+
     //got an exception, return false
     return false;
   }

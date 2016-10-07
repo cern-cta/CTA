@@ -49,8 +49,8 @@ public:
           cta::threading::AtomicFlag& errorFlag);
   
   void execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
-    MigrationWatchDog & watchdog);
-    /**
+    MigrationWatchDog & watchdog, const int threadID);
+  /**
    * Return the stats of the tasks. Should be call after execute 
    * (otherwise, it is pointless)
    * @return 

@@ -164,7 +164,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     m_threadStat.waitInstructionsTime+=localTime.secs(cta::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc, 
-          m_diskFileFactory, m_parentThreadPool.m_watchdog)) {
+          m_diskFileFactory, m_parentThreadPool.m_watchdog, m_threadID)) {
         ++m_parentThreadPool.m_failedWriteCount;
         cta::log::ScopedParamContainer logParams(m_lc);
         logParams.add("errorCount", m_parentThreadPool.m_failedWriteCount);

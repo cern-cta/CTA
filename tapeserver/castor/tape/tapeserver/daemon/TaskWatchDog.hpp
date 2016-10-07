@@ -133,7 +133,12 @@ protected:
   /**
    * One offs parameters to be sent to the initial process
    */
-  cta::threading::BlockingQueue<cta::log::Param> m_paramsQueue;
+  cta::threading::BlockingQueue<cta::log::Param> m_toAddParamsQueue;
+
+  /**
+   * One offs parameters to be deleted from the initial process
+   */
+  cta::threading::BlockingQueue<std::string> m_toDeleteParamsQueue;
   
   /**
    * Map of all error counts
@@ -222,10 +227,22 @@ protected:
         std::list<Param> params;
         // This is thread safe because we are the only consumer:
         // a non-zero size guarantees we will find something.
-        while (m_paramsQueue.size())
-          params.push_back(m_paramsQueue.pop());
+        while (m_toAddParamsQueue.size())
+          params.push_back(m_toAddParamsQueue.pop());
         if (params.size()) {
           m_initialProcess.addLogParams(m_driveUnitName, params);
+        }
+      }
+
+      // Send any one-off parameter to delete
+      {
+        std::list<std::string> params;
+        // This is thread safe because we are the only consumer:
+        // a non-zero size guarantees we will find something.
+        while (m_toDeleteParamsQueue.size())
+          params.push_back(m_toDeleteParamsQueue.pop());
+        if (params.size()) {
+          m_initialProcess.deleteLogParams(m_driveUnitName, params);
         }
       }
 
@@ -250,10 +267,18 @@ protected:
       reportStats();
       // Flush the one-of parameters one last time.
       std::list<Param> params;
-      while (m_paramsQueue.size())
-        params.push_back(m_paramsQueue.pop());
+      while (m_toAddParamsQueue.size())
+        params.push_back(m_toAddParamsQueue.pop());
       if (params.size()) {
         m_initialProcess.addLogParams(m_driveUnitName, params);
+      }
+
+      std::list<std::string> paramsToDelete;
+      // Flush the one-of parameters one last time.
+      while (m_toDeleteParamsQueue.size())
+        paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
+      if (params.size()) {
+        m_initialProcess.deleteLogParams(m_driveUnitName, paramsToDelete);
       }
     }
     // We have a race condition here between the processing of this message by
@@ -341,7 +366,14 @@ protected:
    * Queue new parameter to be sent asynchronously to the main thread.
    */
   void addParameter (const cta::log::Param & param) {
-    m_paramsQueue.push(param);
+    m_toAddParamsQueue.push(param);
+  }
+
+ /**
+   * Queue the parameter to be deleted asynchronously in the main thread.
+   */
+  void deleteParameter (const std::string & param) {
+    m_toDeleteParamsQueue.push(param);
   }
   
   /**

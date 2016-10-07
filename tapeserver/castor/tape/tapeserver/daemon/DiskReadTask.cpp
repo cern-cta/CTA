@@ -47,7 +47,7 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 // DiskReadTask::execute
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory & fileFactory,
-    MigrationWatchDog & watchdog) {
+    MigrationWatchDog & watchdog, const int threadID) {
   using cta::log::LogContext;
   using cta::log::Param;
 
@@ -83,6 +83,9 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory 
      
     LogContext::ScopedParam sp(lc, Param("fileId",m_archiveJob->archiveFile.archiveFileID));
     lc.log(cta::log::INFO,"Opened disk file for read");
+
+    watchdog.addParameter(cta::log::Param("stillOpenFileForThread"+
+      std::to_string((long long)threadID), sourceFile->URL()));
     
     while(migratingFileSize>0){
 
@@ -169,6 +172,8 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, diskFile::DiskFileFactory 
     //deal here the number of mem block
     circulateAllBlocks(blockId,mb);
   } //end of catch
+  watchdog.deleteParameter("stillOpenFileForThread"+
+    std::to_string((long long)threadID));
 }
 
 //------------------------------------------------------------------------------

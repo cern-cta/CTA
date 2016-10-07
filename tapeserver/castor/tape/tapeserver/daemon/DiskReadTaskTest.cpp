@@ -138,7 +138,7 @@ namespace unitTests{
 
     castor::messages::TapeserverProxyDummy tspd;
     MockMigrationWatchDog mmwd(1.0, 1.0, tspd, "", lc);
-    drt.execute(lc,fileFactory,mmwd);
+    drt.execute(lc,fileFactory,mmwd, 0);
 
     ASSERT_EQ(original_checksum,ftwt.getChecksum());
     delete ftwt.getFreeBlock();

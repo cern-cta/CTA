@@ -125,7 +125,7 @@ namespace unitTests{
     t.pushDataBlock(NULL);
     castor::messages::TapeserverProxyDummy tspd;
     RecallWatchDog rwd(1,1,tspd,"", lc);
-    t.execute(report,lc,fileFactory,rwd);
+    t.execute(report,lc,fileFactory,rwd, 0);
     ASSERT_EQ(1, report.failedJobs);
   }
 }

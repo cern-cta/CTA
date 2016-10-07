@@ -168,7 +168,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     task.reset( m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (NULL!=task.get()) {
-      task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog);
+      task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog, m_threadID);
       m_threadStat += task->getTaskStats();
     }
     else {
