@@ -83,15 +83,10 @@ public:
   
   /**
    * Indicates that the job failed. Like for complete(), reason for failure
-   * should already be recorded in the object beforehand.
+   * should already be recorded in the object beforehand. Retry policy will
+   * be applied by the scheduler.
    */
   virtual void failed();
-  
-  /**
-   * Indicates that the job should be tried again (typically reaching the end 
-   * of the tape).
-   */
-  void retry();
   
   /**
    * Helper function returning a reference to the currently selected tape file.

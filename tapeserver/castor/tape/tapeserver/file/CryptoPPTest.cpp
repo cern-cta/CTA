@@ -184,7 +184,14 @@ namespace unitTests {
       int tmpFileFd = mkstemp(path);
       cta::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
       m_path = path;
-      cta::exception::Errnum::throwOnMinusOne(write(tmpFileFd, content.c_str(), content.size()));
+      try {
+        cta::exception::Errnum::throwOnMinusOne(write(tmpFileFd, content.c_str(), content.size()));
+      } catch (...) {
+        close (tmpFileFd);
+        ::unlink(m_path.c_str());
+        throw;
+      }
+      close (tmpFileFd);
     }
     ~TempFileForXrootKey() {
       ::unlink(m_path.c_str());

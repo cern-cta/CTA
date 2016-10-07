@@ -85,12 +85,6 @@ public:
    *
    */
   virtual void failed(const cta::exception::Exception &ex);
-
-  /**
-   * Indicates that the job should be tried again (typically reaching the end 
-   * of the tape).
-   */
-  virtual void retry();
   
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;

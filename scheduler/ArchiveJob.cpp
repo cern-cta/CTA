@@ -92,12 +92,4 @@ void cta::ArchiveJob::complete() {
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
   m_dbJob->fail();
-  // TODO: callback on the client to signal the failure
-}
-  
-//------------------------------------------------------------------------------
-// retry
-//------------------------------------------------------------------------------
-void cta::ArchiveJob::retry() {
-  throw std::runtime_error("cta::ArchiveJob::retry(): not implemented");
 }

@@ -50,14 +50,7 @@ void cta::RetrieveJob::complete() {
 // failed
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::failed() {
-  throw std::runtime_error("cta::RetrieveJob::failed(): not implemented");
-}
-  
-//------------------------------------------------------------------------------
-// retry
-//------------------------------------------------------------------------------
-void cta::RetrieveJob::retry() {
-  throw std::runtime_error("cta::RetrieveJob::retry(): not implemented");
+  m_dbJob->fail();
 }
 
 //------------------------------------------------------------------------------
