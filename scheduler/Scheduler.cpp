@@ -322,7 +322,7 @@ std::list<cta::common::dataStructures::RetrieveJob> cta::Scheduler::getPendingRe
 // getDriveStates
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveStates(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  return m_db.getDriveStates();
 }
 
 //------------------------------------------------------------------------------
