@@ -26,6 +26,7 @@
 #include "mediachanger/Header.pb.h"
 #include "mediachanger/ZmqMsg.hpp"
 
+#include <cxxabi.h>
 #include <google/protobuf/message.h>
 #include <string>
 
@@ -92,6 +93,24 @@ private:
    * frame header.
    */
   void calcAndSetHashValueOfBody();
+
+  /**
+   * Determines the demangled type name of the specified object.
+   *
+   * @param t The object.
+   * @return The demangled type name.
+   */  
+  template <class T> static std::string demangledNameOf(const T&t) {
+    std::string responseType = typeid(t).name();
+    int status = -1;
+    char * demangled = abi::__cxa_demangle(responseType.c_str(), NULL, NULL, &status);
+    if (!status) {
+      responseType = demangled; 
+    }
+    free(demangled);
+  
+    return responseType;
+  }
 }; // struct Frame
 
 } // namespace mediachanger

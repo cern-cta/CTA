@@ -101,7 +101,7 @@ void cta::mediachanger::Frame::serializeProtocolBufferIntoBody(
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Frame failed to serialize protocol buffer " <<
-      utils::demangledNameOf(protocolBuffer) << " into frame body: "
+      demangledNameOf(protocolBuffer) << " into frame body: "
       << ne.getMessage().str();
     throw ex;
   }
@@ -116,7 +116,7 @@ void cta::mediachanger::Frame::parseBodyIntoProtocolBuffer(
     cta::exception::Exception ex;
     ex.getMessage() << "Frame failed to parse contents of enclosed ZMQ"
       " message into protocol buffer " <<
-      utils::demangledNameOf(protocolBuffer)
+      demangledNameOf(protocolBuffer)
       << ": ParseFromString() returned false";
     throw ex;
   } 
