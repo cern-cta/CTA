@@ -279,6 +279,30 @@ namespace utils {
    */
   std::string hexDump(const void *mem, unsigned int n);
 
+  /**
+   * Safely copies source string into destination string.  The destination
+   * will always be null terminated if this function is successful.
+   *
+   * @param dst     Destination string.
+   * @param dstSize The size of the destination string including the terminating
+   *                null character.
+   * @param src     Source string.
+   * destination.
+   */
+  void copyString(char *const dst, const size_t dstSize, const std::string &src);
+
+  /**
+   * Safely copies source string into destination string.  The destination
+   * will always be null terminated if this function is successful.
+   *
+   * @param dst Destination string.
+   * @param src Source string.
+   */
+  template<size_t dstSize> void copyString(char (&dst)[dstSize],
+    const std::string &src) {
+    copyString(dst, dstSize, src);
+  }
+
 } // namespace utils
 
 } // namespace cta

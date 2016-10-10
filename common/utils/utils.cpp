@@ -27,6 +27,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/types.h>
 #include <uuid/uuid.h>
@@ -675,6 +676,33 @@ std::string hexDump(const void * mem, unsigned int n ){
 
   }
   return out.str();
+}
+
+//-----------------------------------------------------------------------------
+// copyString
+//-----------------------------------------------------------------------------
+void copyString(char *const dst, const size_t dstSize, const std::string &src) {
+  if(dst == NULL) {
+    cta::exception::Exception ex;
+
+    ex.getMessage() << __FUNCTION__
+      << ": Pointer to destination string is NULL";
+
+    throw ex;
+  }
+
+  if(src.length() >= dstSize) {
+    cta::exception::Exception ex;
+
+    ex.getMessage() << __FUNCTION__
+      << ": Source string is longer than destination.  Source length: "
+      << src.length() << " Max destination length: " << (dstSize - 1);
+
+    throw ex;
+  }
+
+  strncpy(dst, src.c_str(), dstSize);
+  *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
 
 } // namespace utils

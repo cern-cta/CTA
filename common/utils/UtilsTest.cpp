@@ -631,4 +631,21 @@ TEST_F(cta_UtilsTest, testTrimStringContainingLeftAndRightWhiteSpace) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
+TEST_F(cta_UtilsTest, testCopyStringNullDst) {
+  using namespace cta;
+  char dummy[6] = "Dummy";
+
+  ASSERT_THROW(utils::copyString(NULL, 0, dummy),
+    cta::exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, testCopyString) {
+  using namespace cta;
+  char src[12]  = "Hello World";
+  char dst[12];
+
+  utils::copyString(dst, src);
+  ASSERT_EQ(0, strcmp(dst, src));
+}
+
 } // namespace unitTests
