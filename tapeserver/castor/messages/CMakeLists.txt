@@ -31,13 +31,10 @@ add_library(ctamessagesprotobuf
   ${ProtoSources})
 
 add_library(ctamessagesutils SHARED
-  AcsProxyDummy.cpp
   TapeserverProxyDummy.cpp)
 install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(CtaMessageSrcs
-  AcsProxy.cpp
-  AcsProxyZmq.cpp
   Constants.cpp
   Frame.cpp
   messages.cpp

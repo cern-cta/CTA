@@ -16,52 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "LibrarySlot.hpp"
+namespace cta {
 
-namespace castor {
-namespace mediachanger {
+const int CA_MAXVIDLEN = 6; // maximum length for a VID
 
-/**
- * Class representing a slot in a manually operated tape library.
- */
-class ManualLibrarySlot: public LibrarySlot {
-public:
+} // namespace cta
 
-  /**
-   * Constructor.
-   *
-   * Sets all string member-variables to the empty string.
-   */
-  ManualLibrarySlot() throw();
 
-  /**
-   * Constructor.
-   *
-   * Initialises the member variables based on the result of parsing the
-   * specified string representation of the library slot.
-   *
-   * @param str The string representation of the library slot.
-   */
-  ManualLibrarySlot(const std::string &str);
-
-  /**
-   * Destructor.
-   */
-  ~ManualLibrarySlot() throw();
-
-  /**
-   * Creates a clone of this object.
-   *
-   * @return The clone.
-   */
-  LibrarySlot *clone();
-
-}; // class ManualLibrarySlot
-
-} // namespace mediachanger
-} // namespace castor

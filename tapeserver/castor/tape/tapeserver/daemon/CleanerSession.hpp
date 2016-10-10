@@ -25,9 +25,9 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "DriveConfig.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
 #include "Session.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
@@ -65,7 +65,7 @@ namespace daemon {
      */
     CleanerSession(
       cta::server::ProcessCap &capUtils,
-      mediachanger::MediaChangerFacade &mc,
+      cta::mediachanger::MediaChangerFacade &mc,
       cta::log::Logger &log,
       const DriveConfig &driveConfig,
       System::virtualWrapper &sysWrapper,
@@ -93,7 +93,7 @@ namespace daemon {
     /**
      * The object representing the media changer.
      */
-    mediachanger::MediaChangerFacade &m_mc;
+    cta::mediachanger::MediaChangerFacade &m_mc;
     
     /**
      * The logging object     

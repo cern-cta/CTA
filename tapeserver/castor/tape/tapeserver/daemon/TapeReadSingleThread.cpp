@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   castor::tape::tapeserver::drive::DriveInterface& drive,
-  mediachanger::MediaChangerFacade& mc,
+  cta::mediachanger::MediaChangerFacade& mc,
   TapeServerReporter& initialProcess,
   const VolumeInfo& volInfo,
   uint64_t maxFilesRequest,
@@ -96,7 +96,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
       goto done;
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
-    if (mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {      
+    if (cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType()) {      
       m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
       m_this.m_drive.unloadTape();
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
@@ -113,7 +113,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-    m_this.m_logContext.log(cta::log::INFO, mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
+    m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.getLibrarySlot().getLibraryType() ?
       "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
     m_this.m_initialProcess.reportTapeUnmountedForRetrieve();
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);

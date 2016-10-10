@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "common/Constants.hpp"
 #include "h/Castor_limits.h"
 #include <stdint.h>
 
@@ -43,7 +44,7 @@ struct TapeStatDriveEntry {
   uint16_t mode;                       // WRITE_DISABLE or WRITE_ENABLE
   char     lblcode[CA_MAXLBLTYPLEN+1]; // label code: AUL or DMP
   uint16_t tobemounted;                // 1 means tape to be mounted
-  char     vid[CA_MAXVIDLEN+1];
+  char     vid[cta::CA_MAXVIDLEN+1];
   char     vsn[CA_MAXVSNLEN+1];
   uint32_t cfseq;                      // current file sequence number
 

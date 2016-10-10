@@ -51,10 +51,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, manual_drive_slot) {
   ASSERT_EQ("devFilename", config.getDevFilename());
   ASSERT_NO_THROW(config.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot =
+    const cta::mediachanger::LibrarySlot &librarySlot =
       config.getLibrarySlot();
     ASSERT_EQ("manual", librarySlot.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot.getLibraryType());
   }
 }
@@ -72,10 +72,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, copy_constructor) {
   ASSERT_EQ("devFilename1", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot1 =
+    const cta::mediachanger::LibrarySlot &librarySlot1 =
       config1.getLibrarySlot();
     ASSERT_EQ("manual1", librarySlot1.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot1.getLibraryType());
   }
 
@@ -85,10 +85,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, copy_constructor) {
   ASSERT_EQ("devFilename1", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot2 =
+    const cta::mediachanger::LibrarySlot &librarySlot2 =
       config2.getLibrarySlot();
     ASSERT_EQ("manual1", librarySlot2.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot2.getLibraryType());
   }
 }
@@ -106,10 +106,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   ASSERT_EQ("devFilename1", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot1 =
+    const cta::mediachanger::LibrarySlot &librarySlot1 =
       config1.getLibrarySlot();
     ASSERT_EQ("manual1", librarySlot1.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot1.getLibraryType());
   }
 
@@ -123,10 +123,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   ASSERT_EQ("devFilename2", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot2 =
+    const cta::mediachanger::LibrarySlot &librarySlot2 =
       config2.getLibrarySlot();
     ASSERT_EQ("manual2", librarySlot2.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot2.getLibraryType());
   }
 
@@ -137,10 +137,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   ASSERT_EQ("devFilename2", config1.getDevFilename());
   ASSERT_NO_THROW(config1.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot1 =
+    const cta::mediachanger::LibrarySlot &librarySlot1 =
       config2.getLibrarySlot();
     ASSERT_EQ("manual2", librarySlot1.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot1.getLibraryType());
   }
 
@@ -149,10 +149,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveConfigTest, assignment) {
   ASSERT_EQ("devFilename2", config2.getDevFilename());
   ASSERT_NO_THROW(config2.getLibrarySlot());
   {
-    const castor::mediachanger::LibrarySlot &librarySlot2 =
+    const cta::mediachanger::LibrarySlot &librarySlot2 =
       config2.getLibrarySlot();
     ASSERT_EQ("manual2", librarySlot2.str());
-    ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+    ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
       librarySlot2.getLibraryType());
   }
 }

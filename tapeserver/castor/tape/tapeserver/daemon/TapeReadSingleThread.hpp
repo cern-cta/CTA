@@ -58,7 +58,7 @@ public:
    * Constructor:
    */
   TapeReadSingleThread(castor::tape::tapeserver::drive::DriveInterface & drive,
-          castor::mediachanger::MediaChangerFacade &mc,
+          cta::mediachanger::MediaChangerFacade &mc,
           TapeServerReporter & initialProcess,
           const VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,

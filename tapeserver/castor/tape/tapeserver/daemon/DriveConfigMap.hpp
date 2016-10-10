@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 #include "castor/tape/tapeserver/daemon/TpconfigLines.hpp"
-#include "castor/mediachanger/LibrarySlotParser.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
 
 #include <map>
 #include <string>

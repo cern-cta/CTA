@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include "tapeserver/castor/mediachanger/LibrarySlot.hpp"
-#include "tapeserver/castor/mediachanger/LibrarySlotParser.hpp"
+#include "mediachanger/LibrarySlot.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
 
 #include <list>
 #include <string>
@@ -113,7 +113,7 @@ public:
    * @return The library slot in which the tape drive is located, for example:
    * smc@localhost,0
    */
-  const mediachanger::LibrarySlot &getLibrarySlot() const;
+  const cta::mediachanger::LibrarySlot &getLibrarySlot() const;
 
 public:
 
@@ -137,7 +137,7 @@ public:
    * The library slot in which the tape drive is located, for example:
    * smc@localhost,0
    */
-  mediachanger::LibrarySlot *m_librarySlot;
+  cta::mediachanger::LibrarySlot *m_librarySlot;
 
 }; // class DriveConfig
 

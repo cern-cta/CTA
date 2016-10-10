@@ -22,10 +22,6 @@
  *****************************************************************************/
 
 #include "castor/acs/Constants.hpp"
-#include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/mediachanger/MmcProxyLog.hpp"
-#include "castor/messages/AcsProxyZmq.hpp"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/ForkCleaner.pb.h"
 #include "castor/messages/ForkDataTransfer.pb.h"
@@ -44,16 +40,20 @@
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForker.hpp"
 #include "castor/tape/tapeserver/daemon/ProcessForkerUtils.hpp"
-#include "common/SmartArrayPtr.hpp"
-#include "common/utils/utils.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
-#include "rdbms/Sqlite.hpp"
-#include "rdbms/SqliteConn.hpp"
+#include "common/SmartArrayPtr.hpp"
+#include "common/utils/utils.hpp"
+#include "mediachanger/AcsProxyZmq.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/RmcProxyTcpIp.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "rdbms/Sqlite.hpp"
+#include "rdbms/SqliteConn.hpp"
 #include "remotens/EosNS.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -486,18 +486,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::SmartZmqContext
       zmqContext(messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, m_log));
 
-    messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
+    cta::mediachanger::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
-    mediachanger::MmcProxyLog mmc(m_log);
+    cta::mediachanger::MmcProxyLog mmc(m_log);
 
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
 
-    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+    cta::mediachanger::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
       m_config.rmcMaxRqstAttempts);
 
-    mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
     castor::tape::System::realWrapper sWrapper;
     CleanerSession cleanerSession(
@@ -542,18 +542,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   messages::SmartZmqContext
     zmqContext(messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, m_log));
 
-  messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
+  cta::mediachanger::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
-  mediachanger::MmcProxyLog mmc(m_log);
+  cta::mediachanger::MmcProxyLog mmc(m_log);
 
   // The network timeout of rmc communications should be several minutes due
   // to the time it takes to mount and unmount tapes
   const int rmcNetTimeout = 600; // Timeout in seconds
 
-  legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+  cta::mediachanger::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
     m_config.rmcMaxRqstAttempts);
 
-  mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+  cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
   messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
     zmqContext.get(), driveConfig.getUnitName());
@@ -822,18 +822,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     messages::TapeserverProxyZmq tapeserver(m_log, m_config.internalPort,
       zmqContext.get(), driveConfig.getUnitName());
 
-    messages::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
+    cta::mediachanger::AcsProxyZmq acs(acs::ACS_PORT, zmqContext.get());
 
-    mediachanger::MmcProxyLog mmc(m_log);
+    cta::mediachanger::MmcProxyLog mmc(m_log);
 
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
 
-    legacymsg::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
+    cta::mediachanger::RmcProxyTcpIp rmc(m_config.rmcPort, rmcNetTimeout,
       m_config.rmcMaxRqstAttempts);
 
-    mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
 
     castor::tape::System::realWrapper sWrapper;
     LabelSession labelsession(

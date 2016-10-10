@@ -20,7 +20,6 @@ cmake_minimum_required (VERSION 2.6)
 
 add_subdirectory (io)
 add_subdirectory (legacymsg)
-add_subdirectory (mediachanger)
 add_subdirectory (messages)
 add_subdirectory (tape)
 add_subdirectory (utils)

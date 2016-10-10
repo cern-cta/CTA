@@ -21,11 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/RmcProxyDummy.hpp"
 #include "common/log/StringLogger.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/mediachanger/MmcProxyDummy.hpp"
-#include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
@@ -36,6 +32,10 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/utils/utils.hpp"
+#include "mediachanger/AcsProxyDummy.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/MmcProxyDummy.hpp"
+#include "mediachanger/RmcProxyDummy.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
@@ -104,7 +104,7 @@ namespace unitTests
     using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
 
     FakeSingleTapeReadThread(tapeserver::drive::DriveInterface& drive,
-      castor::mediachanger::MediaChangerFacade & mc,
+      cta::mediachanger::MediaChangerFacade & mc,
       tapeserver::daemon::TapeServerReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo, 
       cta::server::ProcessCap& cap,
@@ -156,10 +156,10 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    castor::messages::AcsProxyDummy acs;
-    castor::mediachanger::MmcProxyDummy mmc;
-    castor::legacymsg::RmcProxyDummy rmc;
-    castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+    cta::mediachanger::AcsProxyDummy acs;
+    cta::mediachanger::MmcProxyDummy mmc;
+    cta::mediachanger::RmcProxyDummy rmc;
+    cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
@@ -218,10 +218,10 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    castor::messages::AcsProxyDummy acs;
-    castor::mediachanger::MmcProxyDummy mmc;
-    castor::legacymsg::RmcProxyDummy rmc;
-    castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+    cta::mediachanger::AcsProxyDummy acs;
+    cta::mediachanger::MmcProxyDummy mmc;
+    cta::mediachanger::RmcProxyDummy rmc;
+    cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
     castor::messages::TapeserverProxyDummy initialProcess;  
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";

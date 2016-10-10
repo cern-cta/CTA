@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -71,7 +71,7 @@ protected:
   castor::tape::tapeserver::drive::DriveInterface & m_drive;
   
   /** Reference to the mount interface */
-  mediachanger::MediaChangerFacade & m_mc;
+  cta::mediachanger::MediaChangerFacade & m_mc;
   
   /** Reference to the Global reporting interface */
   TapeServerReporter & m_initialProcess;
@@ -122,7 +122,7 @@ protected:
         m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.getLibrarySlot());
         const std::string modeAsString = "R";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
-        if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
+        if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
           m_drive.config.getLibrarySlot().getLibraryType()) {
           m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
         }
@@ -298,7 +298,7 @@ public:
    * @param lc lc The log context, later on copied
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface & drive,
-    mediachanger::MediaChangerFacade &mc,
+    cta::mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
     cta::server::ProcessCap &capUtils,cta::log::LogContext & lc,          

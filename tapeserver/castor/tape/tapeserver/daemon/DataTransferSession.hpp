@@ -25,9 +25,9 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "tapeserver/castor/mediachanger/MediaChangerFacade.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "DataTransferConfig.hpp"
 #include "DriveConfig.hpp"
 #include "Session.hpp"
@@ -60,7 +60,7 @@ namespace daemon {
       cta::log::Logger & log,
       System::virtualWrapper & sysWrapper,
       const DriveConfig & driveConfig,
-      castor::mediachanger::MediaChangerFacade & mc,
+      cta::mediachanger::MediaChangerFacade & mc,
       cta::tape::daemon::TapedProxy & initialProcess,
       cta::server::ProcessCap &capUtils,
       const DataTransferConfig & castorConf,
@@ -128,7 +128,7 @@ namespace daemon {
     EndOfSessionAction executeLabel(cta::log::LogContext & lc, cta::LabelMount *labelMount);
     /** Reference to the MediaChangerFacade, allowing the mounting of the tape
      * by the library. It will be used exclusively by the tape thread. */
-    castor::mediachanger::MediaChangerFacade & m_mc;
+    cta::mediachanger::MediaChangerFacade & m_mc;
     /** Reference to the tape server's parent process to report detailed status */
     cta::tape::daemon::TapedProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */

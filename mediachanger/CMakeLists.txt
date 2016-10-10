@@ -60,16 +60,16 @@ set (MEDIACHANGER_LIB_SRC_FILES
   ZmqSocketMT.cpp
   ZmqSocketST.cpp)
 
-add_library (ctamediachanger2 SHARED
+add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
 
-target_link_libraries (ctamediachanger2
+target_link_libraries (ctamediachanger
   ctacommon
   protobuf
   ssl
   zmq)
 
-install (TARGETS ctamediachanger2 DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   AcsLibrarySlotTest.cpp
@@ -83,37 +83,37 @@ set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   MountCmdLineTest.cpp
   ScsiLibrarySlotTest.cpp)
 
-add_library (ctamediachangerunittests2 SHARED
+add_library (ctamediachangerunittests SHARED
   ${MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES})
 
-target_link_libraries (ctamediachangerunittests2
-  ctamediachanger2)
+target_link_libraries (ctamediachangerunittests
+  ctamediachanger)
 
-install (TARGETS ctamediachangerunittests2 DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctamediachangerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (MEDIA_CHANGER_MOUNT_SRC_FILES
   MountCmd.cpp
   MountCmdLine.cpp
   MountCmdMain.cpp)
-add_executable (cta-mediachanger-mount2 ${MEDIA_CHANGER_MOUNT_SRC_FILES})
-set_target_properties (cta-mediachanger-mount2 PROPERTIES
+add_executable (cta-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
+set_target_properties (cta-mediachanger-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-target_link_libraries (cta-mediachanger-mount2
+target_link_libraries (cta-mediachanger-mount
   ctacommon
-  ctamediachanger2)
-install (TARGETS cta-mediachanger-mount2 DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-mount2.1cta DESTINATION /usr/share/man/man1)
+  ctamediachanger)
+install (TARGETS cta-mediachanger-mount DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-mount.1cta DESTINATION /usr/share/man/man1)
 
 set (MEDIA_CHANGER_DISMOUNT_SRC_FILES
   DismountCmd.cpp
   DismountCmdLine.cpp
   DismountCmdMain.cpp)
-add_executable (cta-mediachanger-dismount2
+add_executable (cta-mediachanger-dismount
   ${MEDIA_CHANGER_DISMOUNT_SRC_FILES})
-set_target_properties (cta-mediachanger-dismount2 PROPERTIES
+set_target_properties (cta-mediachanger-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-target_link_libraries (cta-mediachanger-dismount2
+target_link_libraries (cta-mediachanger-dismount
   ctacommon
-  ctamediachanger2)
+  ctamediachanger)

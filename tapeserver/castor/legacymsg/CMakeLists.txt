@@ -5,8 +5,6 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 add_library (ctalegacymsg
   TapeLabelRqstMsgBody.cpp
-  RmcProxyTcpIp.cpp
-  RmcMarshal.cpp
   GenericMarshal.cpp
   MessageHeader.cpp
   legacymsg.cpp
@@ -17,11 +15,7 @@ add_library (ctalegacymsg
   TapeStatRequestMsgBody.cpp
   GenericErrorReplyMsgBody.cpp
   GenericReplyMsgBody.cpp
-  TapeStatDriveEntry.cpp
-  RmcProxy.cpp
-  RmcMountMsgBody.cpp
-  RmcUnmountMsgBody.cpp
-  RmcProxyDummy.cpp)
+  TapeStatDriveEntry.cpp)
 
 add_library (ctalegacymsgunittests SHARED
   CommonMarshalTest.cpp

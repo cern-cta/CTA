@@ -61,7 +61,7 @@ public:
    */
   TapeWriteSingleThread(
     castor::tape::tapeserver::drive::DriveInterface & drive, 
-    mediachanger::MediaChangerFacade &mc,
+    cta::mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     MigrationWatchDog & mwd,
     const VolumeInfo& volInfo,

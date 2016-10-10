@@ -21,9 +21,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/mediachanger/LibrarySlotParser.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "common/exception/Exception.cpp"
+#include "mediachanger/LibrarySlotParser.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -43,7 +43,7 @@ castor::tape::tapeserver::daemon::DriveConfig::DriveConfig(
   m_unitName(unitName),
   m_logicalLibrary(logicalLibrary),
   m_devFilename(devFilename),
-  m_librarySlot(mediachanger::LibrarySlotParser::parse(librarySlot)) {
+  m_librarySlot(cta::mediachanger::LibrarySlotParser::parse(librarySlot)) {
 }
 
 //------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ const std::string &castor::tape::tapeserver::daemon::DriveConfig::
 //------------------------------------------------------------------------------
 // getLibrarySlot
 //------------------------------------------------------------------------------
-const castor::mediachanger::LibrarySlot &castor::tape::tapeserver::daemon::
+const cta::mediachanger::LibrarySlot &castor::tape::tapeserver::daemon::
   DriveConfig::getLibrarySlot() const {
   if(0 == m_librarySlot) {
     cta::exception::Exception ex;

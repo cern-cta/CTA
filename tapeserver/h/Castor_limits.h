@@ -57,7 +57,6 @@
 #define	CA_MAXTAPELIBLEN   8	/* maximum length for a tape library name */
 #define	CA_MAXUNMLEN       8	/* maximum length for a drive name */
 #define	CA_MAXUSRNAMELEN  14	/* maximum length for a login name */
-#define	CA_MAXVIDLEN       6	/* maximum length for a VID */
 #define	CA_MAXVSNLEN       6	/* maximum length for a VSN */
 #define CA_MAXCKSUMNAMELEN 15   /* maximum length for a checksum algorithm name */
 #define CA_MAXCKSUMLEN     32   /* maximum length for a checksum value in an asci form */

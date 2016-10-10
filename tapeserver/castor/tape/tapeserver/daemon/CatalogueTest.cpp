@@ -87,7 +87,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
       //       Daniele changed this to DRIVE_STATE_UP while doing the full system test ,because the tpconfig command is 
       //       not working properly.
   ASSERT_NO_THROW(unit1Config.getLibrarySlot());
-  ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+  ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit1Config.getLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("manual@SLOT1"), unit1Config.getLibrarySlot().str());
   
@@ -106,7 +106,7 @@ TEST_F(castor_tape_tapeserver_daemon_CatalogueTest, goodDayPopulate) {
       //       Daniele changed this to DRIVE_STATE_UP while doing the full system test ,because the tpconfig command is 
       //       not working properly.
   ASSERT_NO_THROW(unit2Config.getLibrarySlot());
-  ASSERT_EQ(castor::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
+  ASSERT_EQ(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL,
     unit2Config.getLibrarySlot().getLibraryType());
   ASSERT_EQ(std::string("manual@SLOT2"), unit2Config.getLibrarySlot().str());
 }

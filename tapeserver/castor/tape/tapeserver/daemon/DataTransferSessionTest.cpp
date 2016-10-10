@@ -27,31 +27,31 @@
 #include <inttypes.h>
 #include <gtest/gtest.h>
 
-#include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "common/log/StringLogger.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "castor/mediachanger/MmcProxyDummy.hpp"
-#include "castor/messages/AcsProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
-#include "common/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
-#include "common/utils/utils.hpp"
-#include "scheduler/Scheduler.hpp"
-//#include "smc_struct.h"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/log/StringLogger.hpp"
+#include "common/make_unique.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
+#include "common/threading/Threading.hpp"
+#include "common/utils/utils.hpp"
+#include "mediachanger/AcsProxyDummy.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/MmcProxyDummy.hpp"
+#include "mediachanger/RmcProxyDummy.hpp"
+//#include "smc_struct.h"
 #include "remotens/MockRemoteNS.hpp"
 #include "remotens/MockRemoteFullFS.hpp"
 //#include "scheduler/DummyScheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/MountType.hpp"
 //#include "nameserver/NameServer.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
@@ -438,10 +438,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -631,10 +631,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -793,10 +793,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   DataTransferConfig castorConf;
   castorConf.bufsz = 1024;
   castorConf.nbBufs = 10;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   castor::messages::TapeserverProxyDummy initialProcess;
   cta::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -940,10 +940,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 3;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1008,10 +1008,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 3;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1126,10 +1126,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -1266,10 +1266,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -1400,10 +1400,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -1548,10 +1548,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
-  castor::messages::AcsProxyDummy acs;
-  castor::mediachanger::MmcProxyDummy mmc;
-  castor::legacymsg::RmcProxyDummy rmc;
-  castor::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  cta::mediachanger::AcsProxyDummy acs;
+  cta::mediachanger::MmcProxyDummy mmc;
+  cta::mediachanger::RmcProxyDummy rmc;
+  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);

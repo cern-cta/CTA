@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "mediachanger/Constants.hpp"
+#include "common/Constants.hpp"
 
 #include <stdint.h>
 

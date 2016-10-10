@@ -42,7 +42,7 @@
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   cta::server::ProcessCap &capUtils,
   cta::tape::daemon::TapedProxy &tapeserver,
-  mediachanger::MediaChangerFacade &mc, 
+  cta::mediachanger::MediaChangerFacade &mc, 
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
   cta::log::Logger &log,
   System::virtualWrapper &sysWrapper,
@@ -213,7 +213,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
 // mountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
-  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
+  const cta::mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
 
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("uid", m_request.uid));
@@ -227,7 +227,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
 
   m_log(cta::log::INFO, "Label session mounting tape", params);
   m_mc.mountTapeReadWrite(m_request.vid, librarySlot);
-  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
+  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
     m_log(cta::log::INFO, "Label session did not mounted tape because the media"
       " changer is manual", params);
   } else {
@@ -358,7 +358,7 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
-  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
     m_driveConfig.getLibrarySlot().getLibraryType()) {
     m_log(cta::log::INFO, "Label session not unloading tape because media changer is"
       " manual", params);
@@ -382,7 +382,7 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   const std::string &vid) {
-  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
+  const cta::mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("uid", m_request.uid));
   params.push_back(cta::log::Param("gid", m_request.gid));
@@ -396,7 +396,7 @@ void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   try {
     m_log(cta::log::INFO, "Label session dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
       librarySlot.getLibraryType();
     if(dismountWasManual) {
       m_log(cta::log::INFO, "Label session did not dismount tape because media"

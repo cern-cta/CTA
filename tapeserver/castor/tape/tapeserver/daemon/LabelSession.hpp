@@ -26,8 +26,6 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "castor/mediachanger/MediaChangerFacade.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
@@ -37,6 +35,8 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 #include "castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 
 #include <memory>
 
@@ -75,7 +75,7 @@ public:
   LabelSession(
     cta::server::ProcessCap &capUtils,
     cta::tape::daemon::TapedProxy &tapeserver,
-    mediachanger::MediaChangerFacade &mc,
+    cta::mediachanger::MediaChangerFacade &mc,
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     cta::log::Logger &log,
     System::virtualWrapper &sysWrapper,
@@ -109,7 +109,7 @@ private:
   /**
    * The object representing the media changer.
    */
-  mediachanger::MediaChangerFacade &m_mc;
+  cta::mediachanger::MediaChangerFacade &m_mc;
 
   /**
    * The label request message body

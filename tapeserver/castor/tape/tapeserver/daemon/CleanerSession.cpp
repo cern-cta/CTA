@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   cta::server::ProcessCap &capUtils,
-  mediachanger::MediaChangerFacade &mc,
+  cta::mediachanger::MediaChangerFacade &mc,
   cta::log::Logger &log,
   const DriveConfig &driveConfig,
   System::virtualWrapper &sysWrapper,
@@ -294,7 +294,7 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
   const std::string &vid, drive::DriveInterface &drive) {
-  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
+  const cta::mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("TPVID", vid));
   params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
@@ -302,7 +302,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
 
   // We implement the same policy as with the tape sessions: 
   // if the librarySlot parameter is "manual", do nothing.
-  if(mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
+  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
     m_log(cta::log::INFO, "Cleaner not unloading tape because media changer is"
       " manual", params);
     return;
@@ -325,7 +325,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
   const std::string &vid) {
-  const mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
+  const cta::mediachanger::LibrarySlot &librarySlot = m_driveConfig.getLibrarySlot();
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("TPVID", vid));
   params.push_back(cta::log::Param("unitName", m_driveConfig.getUnitName()));
@@ -333,7 +333,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
 
   try {
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
+    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
       librarySlot.getLibraryType();
     if(dismountWasManual) {
       m_log(cta::log::INFO, "Cleaner did not dismount tape because media changer is"

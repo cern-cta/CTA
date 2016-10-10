@@ -34,8 +34,6 @@ const size_t HOSTNAMEBUFLEN    = 256;
 const int    LISTENBACKLOG     = 2;
 const size_t SERVICENAMEBUFLEN = 256;
 
-const int CA_MAXVIDLEN = 6; // maximum length for a VID
-
 enum ProtocolType {
   PROTOCOL_TYPE_NONE,
   PROTOCOL_TYPE_TAPE

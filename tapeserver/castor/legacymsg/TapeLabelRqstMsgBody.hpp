@@ -24,6 +24,7 @@
 #pragma once
 
 #include "h/Castor_limits.h"
+#include "common/Constants.hpp"
 #include <stdint.h>
 
 namespace castor {
@@ -37,7 +38,7 @@ struct TapeLabelRqstMsgBody {
   uint16_t force; // set to 1 if force==true, 0 otherwise
   uint32_t uid;
   uint32_t gid;
-  char vid[CA_MAXVIDLEN + 1];
+  char vid[cta::CA_MAXVIDLEN + 1];
   char drive[CA_MAXUNMLEN + 1];
   char logicalLibrary[CA_MAXDGNLEN + 1];
 
