@@ -36,7 +36,7 @@ void cta::mediachanger::MmcProxyLog::mountTapeReadOnly(
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual mounted for read-only access",
+  m_log(log::WARNING, "Tape should be manual mounted for read-only access",
     params);
 }
 
@@ -48,7 +48,7 @@ void cta::mediachanger::MmcProxyLog::mountTapeReadWrite(
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual mounted for read/write access",
+  m_log(log::WARNING, "Tape should be manual mounted for read/write access",
     params);
 }
 
@@ -60,7 +60,7 @@ void cta::mediachanger::MmcProxyLog::dismountTape(
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
+  m_log(log::WARNING, "Tape should be manual dismounted", params);
 }
 
 //------------------------------------------------------------------------------
@@ -71,5 +71,5 @@ void cta::mediachanger::MmcProxyLog::forceDismountTape(
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(LOG_WARNING, "Tape should be manual dismounted", params);
+  m_log(log::WARNING, "Tape should be manual dismounted", params);
 }
