@@ -3785,8 +3785,11 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
        mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
-      throw exception::UserError(std::string("Cannot prepare for a new archive file because no mount policy exists for " +
-        diskInstanceName + ":" + user.name + ":" + user.group));
+      exception::UserError ue;
+      ue.getMessage() << "Cannot archive file because there are no mount rules for the requester or their group:"
+        " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
+        user.group;
+      throw ue;
     }
 
     // Now that we have both the archive routes and the mount policy it's safe to
@@ -4047,9 +4050,9 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
       exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because no mount policy exists for the requester:" <<
-        " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" << user.name
-        << ":" << user.group;
+      ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
+        " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
+        diskInstanceName << ":" << user.name << ":" << user.group;
       throw ue;
     }
 
