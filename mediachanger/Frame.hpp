@@ -27,7 +27,6 @@
 #include "mediachanger/ZmqMsg.hpp"
 
 #include <cxxabi.h>
-#include <google/protobuf/message.h>
 #include <string>
 
 namespace cta {
