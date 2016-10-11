@@ -26,7 +26,7 @@
 #include "common/exception/Exception.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/Frame.hpp"
-#include "mediachanger/Header.pb.h"
+#include "mediachanger/MediaChangerHeader.pb.h"
 #include "mediachanger/ZmqMsg.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 
@@ -96,8 +96,8 @@ void connectZmqSocketToLocalhost(ZmqSocket &socket, const int port);
  *  After, the only  fields left are reqtype, bodyhashvalue and bodyhashsignature
  * @return The header
  */
-template <int magic, int protocolType, int protocolVersion> Header genericPreFillHeader() {
-  Header header;
+template <int magic, int protocolType, int protocolVersion> MediaChangerHeader genericPreFillHeader() {
+  MediaChangerHeader header;
   header.set_magic(magic);
   header.set_protocoltype(protocolType);
   header.set_protocolversion(protocolVersion);
@@ -112,7 +112,7 @@ template <int magic, int protocolType, int protocolVersion> Header genericPreFil
  * protocolVersion = protocolVersion::prototype
  * @return 
  */
-Header protoTapePreFillHeader();
+MediaChangerHeader protoTapePreFillHeader();
 
 /**
  * Receives either a good-day reply-message or an exception message from the

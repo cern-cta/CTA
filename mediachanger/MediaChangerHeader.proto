@@ -18,7 +18,7 @@
 
 package cta.mediachanger;
 
-message Header {
+message MediaChangerHeader {
  required uint32 magic = 1;
 
  //see castor::messages::protocolType's anonymous enum for values

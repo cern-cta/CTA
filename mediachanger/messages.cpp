@@ -118,7 +118,7 @@ void connectZmqSocketToLocalhost(ZmqSocket &socket,
 //------------------------------------------------------------------------------
 // preFillHeader
 //------------------------------------------------------------------------------
-Header protoTapePreFillHeader() {
+MediaChangerHeader protoTapePreFillHeader() {
   return genericPreFillHeader<TPMAGIC, PROTOCOL_TYPE_TAPE,
     PROTOCOL_VERSION_1>();
 }

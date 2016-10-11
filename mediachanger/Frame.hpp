@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "mediachanger/Header.pb.h"
+#include "mediachanger/MediaChangerHeader.pb.h"
 #include "mediachanger/ZmqMsg.hpp"
 
 #include <cxxabi.h>
@@ -39,7 +39,7 @@ struct Frame {
   /**
    * The header of the frame.
    */
-  Header header;
+  MediaChangerHeader header;
 
   /**
    * The body of the frame.
