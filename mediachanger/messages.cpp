@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "mediachanger/ExceptionMsg.pb.h"
+#include "mediachanger/MediaChangerExceptionMsg.pb.h"
 #include "mediachanger/messages.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
 
@@ -225,7 +225,7 @@ void recvReplyOrEx(ZmqSocket& socket,
   // If an exception message was received
   if(MSG_TYPE_EXCEPTION == frame.header.msgtype()) {
     // Convert it into a C++ exception and throw it
-    ExceptionMsg exMsg;
+    MediaChangerExceptionMsg exMsg;
     frame.parseBodyIntoProtocolBuffer(exMsg);
     cta::exception::Exception ex;
     ex.getMessage() << exMsg.message();
