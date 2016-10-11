@@ -4515,5 +4515,12 @@ void RdbmsCatalogue::unlockSchema() {
   }
 }
 
+//------------------------------------------------------------------------------
+// ping
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::ping() {
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
 } // namespace catalogue
 } // namespace cta

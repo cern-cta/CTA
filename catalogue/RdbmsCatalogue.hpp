@@ -511,6 +511,14 @@ public:
    */
   void unlockSchema() override;
 
+  /**
+   * Checks that the most trivial query goes through. Returns true on success,
+   * false on failure.
+   * 
+   * @return True if the query went through.
+   */
+  bool ping() override;
+
 protected:
 
   /**
