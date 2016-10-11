@@ -18,6 +18,6 @@
 
 package cta.mediachanger;
 
-message ReturnValue {
+message MediaChangerReturnValue {
   required uint32 value = 1;
 }

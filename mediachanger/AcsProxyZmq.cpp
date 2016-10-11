@@ -19,13 +19,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "mediachanger/AcsMountTapeReadOnly.pb.h"
-#include "mediachanger/AcsMountTapeReadWrite.pb.h"
 #include "mediachanger/AcsDismountTape.pb.h"
 #include "mediachanger/AcsForceDismountTape.pb.h"
-#include "mediachanger/ReturnValue.pb.h"
+#include "mediachanger/AcsMountTapeReadOnly.pb.h"
+#include "mediachanger/AcsMountTapeReadWrite.pb.h"
 #include "mediachanger/AcsProxyZmq.hpp"
 #include "mediachanger/Constants.hpp"
+#include "mediachanger/MediaChangerReturnValue.pb.h"
 #include "mediachanger/messages.hpp"
 
 namespace cta {
@@ -188,7 +188,7 @@ void AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
     const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
-    ReturnValue reply;
+    MediaChangerReturnValue reply;
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
@@ -217,7 +217,7 @@ void AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
     const Frame rqst = createAcsMountTapeReadWriteFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
-    ReturnValue reply;
+    MediaChangerReturnValue reply;
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
@@ -246,7 +246,7 @@ void AcsProxyZmq::dismountTape(const std::string &vid,
     const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
-    ReturnValue reply;
+    MediaChangerReturnValue reply;
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
@@ -275,7 +275,7 @@ void AcsProxyZmq::forceDismountTape(const std::string &vid,
     const Frame rqst = createAcsForceDismountTapeFrame(vid, librarySlot);
     sendFrame(m_serverSocket, rqst);
 
-    ReturnValue reply;
+    MediaChangerReturnValue reply;
     recvTapeReplyOrEx(m_serverSocket, reply);
     if(0 != reply.value()) {
       // Should never get here
