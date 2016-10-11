@@ -7139,7 +7139,7 @@ TEST_P(cta_catalogue_CatalogueTest, lockSchema_unlockSchema_lockSchema) {
 TEST_P(cta_catalogue_CatalogueTest, ping) {
   using namespace cta;
 
-  m_catalogue->ping();
+  ASSERT_TRUE(m_catalogue->ping());
 }
 
 } // namespace unitTests
