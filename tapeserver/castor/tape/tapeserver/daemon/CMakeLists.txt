@@ -130,7 +130,6 @@ add_library(ctatapeserverdaemonunittests SHARED
 )
 
 target_link_libraries(ctatapeserverdaemonunittests
-  ctamediachangerutils
   ctamessagesutils
   ctatapeserverdaemonutils)
   #ctaschedulerutils

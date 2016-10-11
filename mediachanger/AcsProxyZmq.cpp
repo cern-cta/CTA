@@ -28,51 +28,19 @@
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/messages.hpp"
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::mediachanger::AcsProxyZmq::AcsProxyZmq(const unsigned short serverPort,
-  void *const zmqContext) throw():
-  m_serverPort(serverPort),
-  m_serverSocket(zmqContext, ZMQ_REQ) {
-  connectZmqSocketToLocalhost(m_serverSocket, serverPort);
-}
+namespace cta {
+namespace mediachanger {
 
-//------------------------------------------------------------------------------
-// mountTapeReadOnly
-//------------------------------------------------------------------------------
-void cta::mediachanger::AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  
-  try {
-    const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, librarySlot);
-    sendFrame(m_serverSocket, rqst);
+namespace {
 
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      cta::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for read only access: "
-      << librarySlot.str() << ": " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAcsMountTapeReadnOnlyFrame
-//------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
-  createAcsMountTapeReadOnlyFrame(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
+/**
+ * Creates a frame containing an AcsMountTapeReadOnly message.
+ *
+ * @param vid The tape to be mounted.
+ * @param librarySlot The slot in the library that contains the tape drive.
+ * @return The frame.
+ */
+Frame createAcsMountTapeReadOnlyFrame(const std::string &vid, const AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
 
@@ -98,41 +66,14 @@ cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
   }
 }
 
-//------------------------------------------------------------------------------
-// mountTapeReadWrite
-//------------------------------------------------------------------------------
-void cta::mediachanger::AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  
-  try {
-    const Frame rqst = createAcsMountTapeReadWriteFrame(vid, librarySlot);
-    sendFrame(m_serverSocket, rqst);
-
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      cta::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for read/write " 
-      "access: " << librarySlot.str() << ": " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAcsMountTapeReadWriteFrame
-//------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
-  createAcsMountTapeReadWriteFrame(const std::string &vid, 
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
+/**
+ * Creates a frame containing a AcsMountTapeReadWrite message.
+ *
+ * @param vid The tape to be mounted.
+ * @param librarySlot The slot in the library that contains the tape drive.
+ * @return The frame.
+ */
+Frame createAcsMountTapeReadWriteFrame(const std::string &vid, const AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
 
@@ -158,41 +99,14 @@ cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
   }
 }
 
-//------------------------------------------------------------------------------
-// dismountTape
-//------------------------------------------------------------------------------
-void cta::mediachanger::AcsProxyZmq::dismountTape(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  
-  try {
-    const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
-    sendFrame(m_serverSocket, rqst);
-
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      cta::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to dismount tape: " <<
-      librarySlot.str() << ": " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAcsDismountTapeFrame
-//------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
-  createAcsDismountTapeFrame(const std::string &vid, 
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
+/**
+ * Creates a frame containing an AcsDismountTape message.
+ *
+ * @param vid The tape to be dismounted.
+ * @param librarySlot The slot in the library that contains the tape drive.
+ * @return The frame.
+ */
+Frame createAcsDismountTapeFrame(const std::string &vid, const AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
 
@@ -218,41 +132,14 @@ cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
   }
 }
 
-//------------------------------------------------------------------------------
-// forceDismountTape
-//------------------------------------------------------------------------------
-void cta::mediachanger::AcsProxyZmq::forceDismountTape(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  
-  try {
-    const Frame rqst = createAcsForceDismountTapeFrame(vid, librarySlot);
-    sendFrame(m_serverSocket, rqst);
-
-    ReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
-    if(0 != reply.value()) {
-      // Should never get here
-      cta::exception::Exception ex;
-      ex.getMessage() << "Received an unexpected return value"
-        ": expected=0 actual=" << reply.value();
-      throw ex;
-    }
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to force dismount tape: " <<
-      librarySlot.str() << ": " << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// createAcsForceDismountTapeFrame
-//------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
-  createAcsForceDismountTapeFrame(const std::string &vid,
-  const cta::mediachanger::AcsLibrarySlot &librarySlot) {
+/**
+ * Creates a frame containing an AcsForceDismountTape message.
+ *
+ * @param vid The tape to be dismounted.
+ * @param librarySlot The slot in the library that contains the tape drive.
+ * @return The frame.
+ */
+Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySlot &librarySlot) {
   try {
     Frame frame;
   
@@ -277,3 +164,134 @@ cta::mediachanger::Frame cta::mediachanger::AcsProxyZmq::
     throw ex;
   }
 }
+
+} // anonyous namespace
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+AcsProxyZmq::AcsProxyZmq(const unsigned short serverPort,
+  void *const zmqContext) throw():
+  m_serverPort(serverPort),
+  m_serverSocket(zmqContext, ZMQ_REQ) {
+  connectZmqSocketToLocalhost(m_serverSocket, serverPort);
+}
+
+//------------------------------------------------------------------------------
+// mountTapeReadOnly
+//------------------------------------------------------------------------------
+void AcsProxyZmq::mountTapeReadOnly(const std::string &vid,
+  const AcsLibrarySlot &librarySlot) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  
+  try {
+    const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, librarySlot);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      cta::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to mount tape for read only access: "
+      << librarySlot.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// mountTapeReadWrite
+//------------------------------------------------------------------------------
+void AcsProxyZmq::mountTapeReadWrite(const std::string &vid,
+  const AcsLibrarySlot &librarySlot) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  
+  try {
+    const Frame rqst = createAcsMountTapeReadWriteFrame(vid, librarySlot);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      cta::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to mount tape for read/write " 
+      "access: " << librarySlot.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// dismountTape
+//------------------------------------------------------------------------------
+void AcsProxyZmq::dismountTape(const std::string &vid,
+  const AcsLibrarySlot &librarySlot) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  
+  try {
+    const Frame rqst = createAcsDismountTapeFrame(vid, librarySlot);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      cta::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to dismount tape: " <<
+      librarySlot.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// forceDismountTape
+//------------------------------------------------------------------------------
+void AcsProxyZmq::forceDismountTape(const std::string &vid,
+  const AcsLibrarySlot &librarySlot) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  
+  try {
+    const Frame rqst = createAcsForceDismountTapeFrame(vid, librarySlot);
+    sendFrame(m_serverSocket, rqst);
+
+    ReturnValue reply;
+    recvTapeReplyOrEx(m_serverSocket, reply);
+    if(0 != reply.value()) {
+      // Should never get here
+      cta::exception::Exception ex;
+      ex.getMessage() << "Received an unexpected return value"
+        ": expected=0 actual=" << reply.value();
+      throw ex;
+    }
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to request CASTOR ACS daemon to force dismount tape: " <<
+      librarySlot.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+} // namespace mediachanger
+} // namespace cta

@@ -22,7 +22,6 @@
 #pragma once
 
 #include "mediachanger/AcsProxy.hpp"
-#include "mediachanger/Frame.hpp"
 #include "mediachanger/ZmqSocketMT.hpp"
 
 #include <mutex>
@@ -104,46 +103,6 @@ private:
    * Socket connecting this proxy the daemon it represents.
    */
   ZmqSocketMT m_serverSocket;
-
-  /**
-   * Creates a frame containing a AcsMountTapeForRecall message.
-   *
-   * @param vid The tape to be mounted.
-   * @param librarySlot The slot in the library that contains the tape drive.
-   * @return The frame.
-   */
-  Frame createAcsMountTapeReadOnlyFrame(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
-  
-  /**
-   * Creates a frame containing a AcsMountTapeForMigration message.
-   *
-   * @param vid The tape to be mounted.
-   * @param librarySlot The slot in the library that contains the tape drive.
-   * @return The frame.
-   */
-  Frame createAcsMountTapeReadWriteFrame(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
-  
-  /**
-   * Creates a frame containing a AcsDismountTape message.
-   *
-   * @param vid The tape to be dismounted.
-   * @param librarySlot The slot in the library that contains the tape drive.
-   * @return The frame.
-   */
-  Frame createAcsDismountTapeFrame(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
-
-  /**
-   * Creates a frame containing a AcsDismountTape message.
-   *
-   * @param vid The tape to be dismounted.
-   * @param librarySlot The slot in the library that contains the tape drive.
-   * @return The frame.
-   */
-  Frame createAcsForceDismountTapeFrame(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
 
 }; // class AcsProxyZmq
 

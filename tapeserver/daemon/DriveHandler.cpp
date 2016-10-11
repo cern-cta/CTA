@@ -16,26 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DriveHandler.hpp"
-#include "DriveHandlerProxy.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Errnum.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "common/processCap/ProcessCap.hpp"
-#include "tapeserver/castor/messages/SmartZmqContext.hpp"
-#include "tapeserver/castor/messages/AcsProxyZmq.hpp"
-#include "tapeserver/castor/acs/Constants.hpp"
-#include "tapeserver/castor/mediachanger/MmcProxyLog.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "tapeserver/castor/legacymsg/RmcProxyTcpIp.hpp"
+#include "DriveHandler.hpp"
+#include "DriveHandlerProxy.hpp"
+#include "mediachanger/AcsProxyZmq.hpp"
+#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/RmcProxyTcpIp.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendPopulator.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "rdbms/Login.hpp"
-#include "catalogue/CatalogueFactory.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#include "tapeserver/castor/messages/SmartZmqContext.hpp"
+#include "tapeserver/castor/acs/Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -669,23 +670,23 @@ int DriveHandler::runChild() {
     castor::messages::SmartZmqContext zmqContext(
       castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
         m_processManager.logContext().logger()));
-    castor::messages::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+    mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
 
-    castor::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
+    cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
 
-    castor::legacymsg::RmcProxyTcpIp rmc(RMC_PORT, rmcNetTimeout,
-      RMC_MAXRQSTATTEMPTS);
+    cta::mediachanger::RmcProxyTcpIp rmc(cta::mediachanger::RMC_PORT, rmcNetTimeout,
+      cta::mediachanger::RMC_MAXRQSTATTEMPTS);
     
-    castor::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
     
     castor::tape::System::realWrapper sWrapper;
     
     castor::tape::tapeserver::daemon::DriveConfig driveConfig;
     driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = castor::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
     driveConfig.m_devFilename = m_configLine.devFilename;
     driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     
@@ -710,23 +711,23 @@ int DriveHandler::runChild() {
     castor::messages::SmartZmqContext zmqContext(
       castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
         m_processManager.logContext().logger()));
-    castor::messages::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+    mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
 
-    castor::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
+    cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
     // The network timeout of rmc communications should be several minutes due
     // to the time it takes to mount and unmount tapes
     const int rmcNetTimeout = 600; // Timeout in seconds
 
-    castor::legacymsg::RmcProxyTcpIp rmc(RMC_PORT, rmcNetTimeout,
-      RMC_MAXRQSTATTEMPTS);
+    cta::mediachanger::RmcProxyTcpIp rmc(cta::mediachanger::RMC_PORT, rmcNetTimeout,
+      cta::mediachanger::RMC_MAXRQSTATTEMPTS);
     
-    castor::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
     
     castor::tape::System::realWrapper sWrapper;
     
     castor::tape::tapeserver::daemon::DriveConfig driveConfig;
     driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = castor::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
     driveConfig.m_devFilename = m_configLine.devFilename;
     driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     

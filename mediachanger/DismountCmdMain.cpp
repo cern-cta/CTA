@@ -31,6 +31,7 @@
 #include "mediachanger/SmartZmqContext.hpp"
 
 #include <exception>
+#include <google/protobuf/stubs/common.h>
 #include <iostream>
 #include <zmq.h>
 
