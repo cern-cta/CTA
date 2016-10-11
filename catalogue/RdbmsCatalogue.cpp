@@ -4519,7 +4519,15 @@ void RdbmsCatalogue::unlockSchema() {
 // ping
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::ping() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  try {
+    const char *const sql = "SELECT COUNT(*) FROM CTA_CATALOGUE";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    auto rset = stmt->executeQuery();
+    return true;
+  } catch(...) {
+    return false;
+  }
 }
 
 } // namespace catalogue

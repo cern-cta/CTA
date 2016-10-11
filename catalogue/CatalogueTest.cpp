@@ -7136,4 +7136,10 @@ TEST_P(cta_catalogue_CatalogueTest, lockSchema_unlockSchema_lockSchema) {
   ASSERT_TRUE(m_catalogue->schemaIsLocked());
 }
 
+TEST_P(cta_catalogue_CatalogueTest, ping) {
+  using namespace cta;
+
+  m_catalogue->ping();
+}
+
 } // namespace unitTests
