@@ -117,3 +117,5 @@ set_target_properties (cta-mediachanger-dismount PROPERTIES
 target_link_libraries (cta-mediachanger-dismount
   ctacommon
   ctamediachanger)
+install (TARGETS cta-mediachanger-dismount DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-mediachanger-dismount.1cta DESTINATION /usr/share/man/man1)

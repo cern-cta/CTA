@@ -178,7 +178,6 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctaremotens.so
 %attr(0755,root,root) %{_libdir}/libctascheduler.so
 %attr(0755,root,root) %{_libdir}/libctaobjectstore.so
-%attr(0755,root,root) %{_libdir}/libctamediachangerutils.so
 %attr(0755,root,root) %{_libdir}/libctamessages.so
 %attr(0755,root,root) %{_libdir}/libctamessagesutils.so
 %attr(0755,root,root) %{_libdir}/libctardbms.so
