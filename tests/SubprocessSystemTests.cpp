@@ -16,23 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Subprocess.hpp"
+#include "common/threading/SubProcess.hpp"
 
 #include <gtest/gtest.h>
 
 namespace systemTests {  
-TEST(SuprocessHelper, basicTests) {
-  Subprocess sp("echo", std::list<std::string>({"echo", "Hello,", "world."}));
+TEST(SubProcessHelper, basicTests) {
+  cta::threading::SubProcess sp("echo", std::list<std::string>({"echo", "Hello,", "world."}));
   sp.wait();
   ASSERT_EQ("Hello, world.\n", sp.stdout());
   ASSERT_EQ("", sp.stderr());
   ASSERT_EQ(0, sp.exitValue());
-  Subprocess sp2("cat", std::list<std::string>({"cat", "/no/such/file"}));
+  cta::threading::SubProcess sp2("cat", std::list<std::string>({"cat", "/no/such/file"}));
   sp2.wait();
   ASSERT_EQ("", sp2.stdout());
   ASSERT_NE(std::string::npos, sp2.stderr().find("/no/such/file"));
   ASSERT_EQ(1, sp2.exitValue());
-  Subprocess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
+  cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
   sp3.wait();
   ASSERT_EQ("", sp3.stdout());
   ASSERT_EQ(127, sp3.exitValue());

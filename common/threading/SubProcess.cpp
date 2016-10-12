@@ -23,6 +23,7 @@
 
 #include "SubProcess.hpp"
 #include "common/exception/Errnum.hpp"
+#include <memory>
 #include <string.h>
 #include <iostream>
 #include <sys/signal.h>
@@ -98,14 +99,20 @@ SubProcess::SubProcess(const std::string & executable, const std::list<std::stri
   ScopedPosixSpawnAttr attr;
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawnattr_setflags(attr, POSIX_SPAWN_USEVFORK),
       "In Subprocess::Subprocess(): failed to posix_spawnattr_setflags()");
-  char ** cargv = new char*[argv.size()+1];
-  int index = 0;
-  for (auto a=argv.cbegin(); a!=argv.cend(); a++) {
-    cargv[index++] = ::strdup(a->c_str());
+  {
+    std::unique_ptr<char *[]> cargv (new char*[argv.size()+1]);
+    size_t index = 0;
+    std::list<std::unique_ptr<char, void (*)(char *)>> cargvStrings;
+    for (auto a=argv.cbegin(); a!=argv.cend(); a++) {
+      cargv[index] = ::strdup(a->c_str());
+      std::unique_ptr<char, void (*)(char *)> upStr (cargv[index], [](char *s){::free(s);});
+      cargvStrings.emplace_back(std::move(upStr));
+      index++;
+    }
+    cargv[argv.size()] = NULL;
+    int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv.get(), ::environ);
+    cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   }
-  cargv[argv.size()] = NULL;
-  int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv, ::environ);
-  cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   // We are the parent process. Close the write sides of pipes.
   ::close(stdoutPipe[writeSide]);
   ::close(stderrPipe[writeSide]);

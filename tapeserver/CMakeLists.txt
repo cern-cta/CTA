@@ -19,7 +19,6 @@ add_library(cta-tapedSystemTests SHARED
   cta-tapedSystemtests.cpp)
 
 target_link_libraries(cta-tapedSystemTests
-  systemTestHelper
   unitTestHelper
   ctacommon)
 

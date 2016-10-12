@@ -75,14 +75,10 @@ target_link_libraries(cta-unitTests-multiProcess
 add_library(unitTestHelper
   TempFile.cpp)
 
-add_library(systemTestHelper
-  Subprocess.cpp)
-
 add_library(systemTestHelperTests SHARED
   SubprocessSystemTests.cpp)
 
 target_link_libraries(systemTestHelperTests
-  systemTestHelper
   ctacommon)
 
 add_executable(cta-systemTests
@@ -90,7 +86,6 @@ add_executable(cta-systemTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-systemTests
-  systemTestHelper
   systemTestHelperTests
   cta-tapedSystemTests
   gtest
