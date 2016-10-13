@@ -86,6 +86,14 @@ public:
    */
   virtual ~SchedulerDatabase() throw() = 0;
   
+  /*============ Basic IO check: validate object store access ===============*/
+  /**
+   * Validates that the scheduler database is accessible. A trivial operation
+   * will be executed to check.
+   * @return true on success and false on failure.
+   */
+  virtual bool ping() = 0;
+  
   /*============ Archive management: user side ==============================*/
   /**
    * Queues the specified request.

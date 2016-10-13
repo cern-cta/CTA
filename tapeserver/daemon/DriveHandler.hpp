@@ -86,6 +86,8 @@ private:
   SubprocessHandler::ProcessingStatus processDrainingToDisk(serializers::WatchdogMessage & message);
   /** Helper function to handle ClosingDown state report */
   SubprocessHandler::ProcessingStatus processShutingDown(serializers::WatchdogMessage & message);
+  /** Helper function to handle Fatal state report */
+  SubprocessHandler::ProcessingStatus processFatal(serializers::WatchdogMessage & message);
   /** Current session's type */
   session::SessionType m_sessionType=session::SessionType::Undetermined;
   /** Current session's parameters: they are accumulated during session's lifetime

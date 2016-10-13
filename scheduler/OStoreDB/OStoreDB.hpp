@@ -47,6 +47,9 @@ private:
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /*============ Basic IO check: validate object store access ===============*/
+  bool ping() override;
+
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
     friend class OStoreDB;

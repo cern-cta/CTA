@@ -70,7 +70,7 @@ public:
     bool shutdownComplete = false;  ///< Did this process complete its shutdown?
     bool killRequested = false;     ///< Does the process handler require killing all processes
     bool forkRequested = false;     ///< Does the procerss handler request to fork a new process?
-    bool sigChild = false;           ///< Did the process see a SIGCHLD? Used by signal handler only.
+    bool sigChild = false;          ///< Did the process see a SIGCHLD? Used by signal handler only.
     /// Instant of the next timeout for the process handler. Defaults to end of times.
     std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
     /// A extra state variable used in the return value of fork()

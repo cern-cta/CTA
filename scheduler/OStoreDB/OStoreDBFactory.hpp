@@ -51,6 +51,10 @@ public:
   OStoreDBWrapper(const std::string &context, const std::string &URL = "");
   
   ~OStoreDBWrapper() throw () {}
+  
+  bool ping() override {
+    return m_OStoreDB.ping();
+  }
 
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {
     return m_OStoreDB.queueArchive(instanceName, request, criteria);

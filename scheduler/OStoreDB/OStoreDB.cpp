@@ -72,6 +72,21 @@ void OStoreDB::assertAgentAddressSet() {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::ping()
+//------------------------------------------------------------------------------
+bool OStoreDB::ping() {
+  // Validate we can lock and fetch the root entry.
+  try {
+    objectstore::RootEntry re(m_objectStore);
+    objectstore::ScopedSharedLock rel(re);
+    re.fetch();
+    return true;
+  } catch (cta::exception::Exception & ex) {
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 

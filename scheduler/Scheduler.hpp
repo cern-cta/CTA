@@ -77,6 +77,12 @@ public:
    * Destructor.
    */
   ~Scheduler() throw();
+  
+  /**
+   * Validates that the underlying storages are accessible
+   * @return true for success, false for failure
+   */
+  bool ping();
 
   /** 
    * Queue an archive request and return the CTA file ID. 

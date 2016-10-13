@@ -35,6 +35,7 @@
 #include "tapeserver/castor/acs/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 #include <unistd.h>
@@ -126,6 +127,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
   // failed and ask for a shutdown by sending the TERM signal to the parent process
   // This will ensure the shutdown-kill sequence managed by the signal handler without code duplication.
   // Record we no longer ask for fork
+  // TODO: remove this: debug for signal issues: send a SIGHUP for fun, which will be logged
+  // but ignored.
+  ::kill(::getpid(), SIGHUP);
   m_processingStatus.forkRequested = false;
   try {
     // Check we are in the right state (sanity check)
@@ -256,6 +260,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
       return processDrainingToDisk(message);
     case SessionState::ShutingDown:
       return processShutingDown(message);
+    case SessionState::Fatal:
+      return processFatal(message);
     default:
       {
         exception::Exception ex;
@@ -264,6 +270,21 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
         throw ex;
       }
     }
+  } catch(cta::server::SocketPair::PeerDisconnected & ex) {
+    // The peer disconnected: close the socket pair and remove it from the epoll list.
+    if (m_socketPair.get()) {
+      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
+      m_socketPair.reset(nullptr);
+    } else {
+      m_processManager.logContext().log(log::ERR, 
+        "In DriveHandler::processEvent(): internal error. Got a peer disconnect with no socketPair object");
+    }
+    // We expect to be woken up by the child's signal.
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("Message", ex.getMessageValue());
+    m_processManager.logContext().log(log::ERR, 
+        "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
+    return m_processingStatus;
   } catch(cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Message", ex.getMessageValue());
@@ -530,6 +551,22 @@ SubprocessHandler::ProcessingStatus DriveHandler::processShutingDown(serializers
 }
 
 //------------------------------------------------------------------------------
+// DriveHandler::processFatal
+//------------------------------------------------------------------------------
+SubprocessHandler::ProcessingStatus DriveHandler::processFatal(serializers::WatchdogMessage& message) {
+  // This status indicates that the session cannot be run and the server should 
+  // shut down (central storage unavailable).
+  m_sessionState=(SessionState)message.sessionstate();
+  m_sessionType=(SessionType)message.sessiontype();
+  // Set the timeout for this state
+  m_lastStateChangeTime=std::chrono::steady_clock::now();
+  m_processingStatus.nextTimeout=nextTimeout();
+  m_processingStatus.shutdownRequested=true;
+  m_processManager.logContext().log(log::EMERG,
+        "In DriveHandler::processFatal(): shutting down after fatal failure.");
+  return m_processingStatus;
+}
+//------------------------------------------------------------------------------
 // DriveHandler::processLogs
 //------------------------------------------------------------------------------
 void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
@@ -690,6 +727,14 @@ int DriveHandler::runChild() {
     driveConfig.m_devFilename = m_configLine.devFilename;
     driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     
+//    // Before launching the transfer session, we validate that the scheduler is reachable.
+//    if (!scheduler.ping()) {
+//      m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before cleaner. Reporting fatal error.");
+//      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+//      sleep(1);
+//      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+//    }
+    
     castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
       capUtils,
       mediaChangerFacade,
@@ -766,6 +811,14 @@ int DriveHandler::runChild() {
     const uint64_t nbConns = 1;
     std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns));
     cta::Scheduler scheduler(*catalogue, osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
+    
+    // Before launching the transfer session, we validate that the scheduler is reachable.
+    if (!scheduler.ping()) {
+      m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
+      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      sleep(1);
+      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    }
   
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
