@@ -34,7 +34,9 @@ TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
     cta::server::ProcessCap& capUtils): 
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
-    m_programName("cta-taped"), m_hostName(getHostName()) { }
+    m_programName("cta-taped"), m_hostName(getHostName()) { 
+  setCommandLineHasBeenParsed(commandLine.foreground);
+}
 
 TapeDaemon::~TapeDaemon() {
   google::protobuf::ShutdownProtobufLibrary();
