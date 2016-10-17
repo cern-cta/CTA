@@ -49,7 +49,7 @@ RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::l
   m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
   m_tapeThreadComplete(false), m_diskThreadComplete(false)
 {
-
+  
 }
 //------------------------------------------------------------------------------
 //Destructor
