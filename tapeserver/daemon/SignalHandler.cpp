@@ -107,7 +107,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGINT:
   case SIGTERM:
     // We will now require shutdown (if not already done)
-    // record the time to define timeout.
+    // record the time to define timeout. After the timeout expires, we will require kill.
     if (!m_shutdownRequested) {
       m_shutdownRequested=true;
       m_shutdownStartTime=std::chrono::steady_clock::now();
@@ -127,7 +127,12 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   // If the shutdown was not acknowledged (by receiving it ourselves), we ask
   // for it
   ret.shutdownRequested = m_shutdownRequested && !m_shutdownAcknowlegded;
-  ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+  // Compute the timeout if shutdown was requested. Else, it is end of times.
+  if (m_shutdownRequested) {
+    ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;
+  } else {
+    ret.nextTimeout = decltype(ret.nextTimeout)::max();
+  }
   ret.sigChild = m_sigChildPending;
   ret.shutdownComplete = true; // We are always ready to leave.
   return ret;
@@ -143,6 +148,7 @@ void SignalHandler::prepareForFork() {
 
 SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
   // If we reach timeout, it means it's time to kill child processes
+  m_processManager.logContext().log(log::INFO, "In signal handler, initiating subprocess kill after timeout on shutdown");
   SubprocessHandler::ProcessingStatus ret;
   ret.killRequested = true;
   ret.shutdownComplete = true;
