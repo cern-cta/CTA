@@ -50,7 +50,7 @@ ReportPackerInterface<detail::Migration>(lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true), m_archiveMount(archiveMount) {
 }
 //------------------------------------------------------------------------------
-//Destructore
+//Destructor
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker(){
   cta::threading::MutexLocker ml(m_producterProtection);
