@@ -31,8 +31,6 @@
 #include "scheduler/RetrieveMount.hpp"
 
 #include <memory>
-// TODO: remove (RecallReportPacker::ReportDriveStatus allocation debug)
-#include <iostream>
 
 namespace castor {
 namespace tape {
@@ -164,16 +162,9 @@ private:
     cta::common::dataStructures::DriveStatus m_status;
     
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {
-      // TODO: remove when not needed (debug printf for intermittent memory leak in CI)
-      std::cout << ">>>> Allocated a RecallReportPacker::ReportDriveStatus:" << std::hex << this << std::endl;
-    }
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {}
     void execute(RecallReportPacker& reportPacker) override;
     bool goingToEnd() override;
-    // TODO: remove when not needed (debug printf for intermittent memory leak in CI)
-    virtual ~ReportDriveStatus() {  
-      std::cout << "<<<< Deleted a RecallReportPacker::ReportDriveStatus:" << std::hex << this << std::endl;
-    }
   };
   
   class ReportEndofSession : public Report {
