@@ -518,7 +518,7 @@ TEST(castor_tape_drive_Drive, getReadErrors) {
         if (castor::tape::SCSI::Types::tape == i->type) {
           std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
             castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-          std::map<std::string,uint32_t> readErrorsStats =
+          std::map<std::string,uint64_t> readErrorsStats =
             drive->getTapeReadErrors();
           ASSERT_EQ(2, readErrorsStats["mountTotalCorrectedReadErrors"]);
           ASSERT_EQ(2048, readErrorsStats["mountTotalReadBytesProcessed"]);
@@ -561,7 +561,7 @@ TEST(castor_tape_drive_Drive, getWriteErrors) {
         if (castor::tape::SCSI::Types::tape == i->type) {
           std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
             castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-          std::map<std::string,uint32_t> writeErrorsStats =
+          std::map<std::string,uint64_t> writeErrorsStats =
             drive->getTapeWriteErrors();
           ASSERT_EQ(2, writeErrorsStats["mountTotalCorrectedWriteErrors"]);
           ASSERT_EQ(2048, writeErrorsStats["mountTotalWriteBytesProcessed"]);

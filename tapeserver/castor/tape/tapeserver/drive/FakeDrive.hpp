@@ -58,9 +58,9 @@ namespace drive {
     FakeDrive(bool failOnMount) throw ();
     virtual ~FakeDrive() throw(){}
     virtual compressionStats getCompression() ;
-    virtual void clearCompressionStats() ;
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
-    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual void clearCompressionStats();
+    virtual std::map<std::string,uint64_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint64_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();

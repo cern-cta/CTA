@@ -70,15 +70,11 @@ m_tapeFD(-1),  m_sysWrapper(sw), m_lbpToUse(lbpToUse::disabled) {
       std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
 }
 
-/**
- * Reset all statistics about data movements on the drive.
- * All comulative and threshold log counter values will be reset to their
- * default values as specified in that pages reset behavior section.
- */
-void drive::DriveGeneric::clearCompressionStats()  {
+void drive::DriveIBM3592::clearCompressionStats()  {
   SCSI::Structures::logSelectCDB_t cdb;
   cdb.PCR = 1; /* PCR set */
   cdb.PC = 0x3; /* PC = 11b  for T10000 only*/
+  cdb.pageCode = SCSI::logSensePages::blockBytesTransferred;
 
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::LinuxSGIO_t sgh;
@@ -91,6 +87,30 @@ void drive::DriveGeneric::clearCompressionStats()  {
   cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::clearCompressionStats");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
+}
+
+void drive::DriveT10000::clearCompressionStats() {
+  m_compressionStatsBase = getCompressionStats();
+}
+
+void drive::DriveLTO::clearCompressionStats() {
+  SCSI::Structures::logSelectCDB_t cdb;
+  cdb.PCR = 1; /* PCR set */
+  cdb.PC = 0x3; /* PC = 11b  for T10000 only*/
+  cdb.pageCode = SCSI::logSensePages::dataCompression32h;
+
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+
+  sgh.setCDB(&cdb);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_NONE;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveGeneric::clearCompressionStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
 }
 
@@ -1160,6 +1180,19 @@ void drive::DriveGeneric::SCSI_inquiry() {
 
 
 drive::compressionStats drive::DriveT10000::getCompression()  {
+  compressionStats driveCompressionStats = getCompressionStats();
+  // Calculate current compression stats
+  compressionStats toBeReturned;
+  toBeReturned.toHost = driveCompressionStats.toHost - m_compressionStatsBase.toHost;
+  toBeReturned.toTape = driveCompressionStats.toTape - m_compressionStatsBase.toTape;
+  toBeReturned.fromTape = driveCompressionStats.fromTape - m_compressionStatsBase.fromTape;
+  toBeReturned.fromHost = driveCompressionStats.fromHost - m_compressionStatsBase.fromHost;
+
+  return toBeReturned;
+}
+
+drive::compressionStats drive::DriveT10000::getCompressionStats() {
+
   compressionStats driveCompressionStats;
   
   SCSI::Structures::LinuxSGIO_t sgh;
@@ -1213,7 +1246,7 @@ drive::compressionStats drive::DriveT10000::getCompression()  {
   }
 
   return driveCompressionStats;
-      }
+}
 
 void drive::DriveMHVTL::disableLogicalBlockProtection() { }
 
@@ -1379,14 +1412,14 @@ drive::compressionStats drive::DriveIBM3592::getCompression()  {
 //------------------------------------------------------------------------------
 // pre-emptive evaluation statistics (SCSI Statistics)
 //------------------------------------------------------------------------------
-std::map<std::string,uint32_t> drive::DriveGeneric::getTapeWriteErrors() {
+std::map<std::string,uint64_t> drive::DriveGeneric::getTapeWriteErrors() {
   // No available data
-  return std::map<std::string,uint32_t>();
+  return std::map<std::string,uint64_t>();
 }
 
-std::map<std::string,uint32_t> drive::DriveGeneric::getTapeReadErrors() {
+std::map<std::string,uint64_t> drive::DriveGeneric::getTapeReadErrors() {
   // No available data
-  return std::map<std::string,uint32_t>();
+  return std::map<std::string,uint64_t>();
 }
 
 std::map<std::string,float> drive::DriveGeneric::getQualityStats() {
@@ -1404,12 +1437,12 @@ std::map<std::string,uint32_t> drive::DriveGeneric::getVolumeStats() {
   return std::map<std::string,uint32_t>();
 }
 
-std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeWriteErrors() {
+std::map<std::string,uint64_t> drive::DriveIBM3592::getTapeWriteErrors() {
   // SCSI counters get reset after read in DriveIBM3592.
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
-  std::map<std::string,uint32_t> driveWriteErrorStats;
+  std::map<std::string,uint64_t> driveWriteErrorStats;
   unsigned char dataBuff[1024]; //big enough to fit all the results
 
   memset(dataBuff, 0, sizeof (dataBuff));
@@ -1455,11 +1488,11 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeWriteErrors() {
   return driveWriteErrorStats;
 }
 
-std::map<std::string,uint32_t> drive::DriveT10000::getTapeWriteErrors() {
+std::map<std::string,uint64_t> drive::DriveT10000::getTapeWriteErrors() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
-  std::map<std::string,uint32_t> driveWriteErrorStats;
+  std::map<std::string,uint64_t> driveWriteErrorStats;
   unsigned char dataBuff[1024]; //big enough to fit all the results
 
   memset(dataBuff, 0, sizeof (dataBuff));
@@ -1505,11 +1538,11 @@ std::map<std::string,uint32_t> drive::DriveT10000::getTapeWriteErrors() {
   return driveWriteErrorStats;
 }
 
-std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeReadErrors() {
+std::map<std::string,uint64_t> drive::DriveIBM3592::getTapeReadErrors() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
-  std::map<std::string,uint32_t> driveReadErrorStats;
+  std::map<std::string,uint64_t> driveReadErrorStats;
   unsigned char dataBuff[1024]; //big enough to fit all the results
 
   memset(dataBuff, 0, sizeof (dataBuff));
@@ -1556,11 +1589,11 @@ std::map<std::string,uint32_t> drive::DriveIBM3592::getTapeReadErrors() {
   return driveReadErrorStats;
 }
 
-std::map<std::string,uint32_t> drive::DriveT10000::getTapeReadErrors() {
+std::map<std::string,uint64_t> drive::DriveT10000::getTapeReadErrors() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
-  std::map<std::string,uint32_t> driveReadErrorStats;
+  std::map<std::string,uint64_t> driveReadErrorStats;
   unsigned char dataBuff[1024]; //big enough to fit all the results
 
   memset(dataBuff, 0, sizeof (dataBuff));
@@ -2289,14 +2322,14 @@ std::string drive::DriveGeneric::getDriveFirmwareVersion() {
  * Override as not implemented of all SCSI metrics functions for MHVTL virtual drives as SCSI log sense pages
  * are not implemented as vendor(Oracle) specific, but inherits from DriveT10000.
  */
-std::map<std::string,uint32_t> drive::DriveMHVTL::getTapeWriteErrors() {
+std::map<std::string,uint64_t> drive::DriveMHVTL::getTapeWriteErrors() {
   // No available data
-  return std::map<std::string,uint32_t>();
+  return std::map<std::string,uint64_t>();
 }
 
-std::map<std::string,uint32_t> drive::DriveMHVTL::getTapeReadErrors() {
+std::map<std::string,uint64_t> drive::DriveMHVTL::getTapeReadErrors() {
   // No available data
-  return std::map<std::string,uint32_t>();
+  return std::map<std::string,uint64_t>();
 }
 
 std::map<std::string,uint32_t> drive::DriveMHVTL::getTapeNonMediumErrors() {

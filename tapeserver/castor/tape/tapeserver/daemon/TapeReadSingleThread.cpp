@@ -400,7 +400,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
     cta::log::ScopedParamContainer scopedContainer(m_logContext);
     appendDriveAndTapeInfoToScopedParams(scopedContainer);
     // get mount general stats
-    std::map<std::string, uint32_t> scsi_read_metrics_hash = m_drive.getTapeReadErrors();
+    std::map<std::string, uint64_t> scsi_read_metrics_hash = m_drive.getTapeReadErrors();
     appendMetricsToScopedParams(scopedContainer, scsi_read_metrics_hash);
     std::map<std::string, uint32_t> scsi_nonmedium_metrics_hash = m_drive.getTapeNonMediumErrors();
     appendMetricsToScopedParams(scopedContainer, scsi_nonmedium_metrics_hash);

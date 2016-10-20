@@ -58,6 +58,7 @@ castor::tape::tapeserver::drive::compressionStats castor::tape::tapeserver::driv
 void castor::tape::tapeserver::drive::FakeDrive::clearCompressionStats()  {
   m_beginOfCompressStats=m_tape.size();
 }
+
 castor::tape::tapeserver::drive::deviceInfo castor::tape::tapeserver::drive::FakeDrive::getDeviceInfo()  {
   deviceInfo devInfo;
   devInfo.product = "Fake Drv";
@@ -296,8 +297,8 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
 
-std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
-  std::map<std::string,uint32_t> writeErrorsStats;
+std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
+  std::map<std::string,uint64_t> writeErrorsStats;
   writeErrorsStats["mountTotalCorrectedWriteErrors"] = 5;
   writeErrorsStats["mountTotalWriteBytesProcessed"] = 4096;
   writeErrorsStats["mountTotalUncorrectedWriteErrors"] = 1;
@@ -305,8 +306,8 @@ std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTa
   return writeErrorsStats;
 }
 
-std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeReadErrors() {
-  std::map<std::string,uint32_t> readErrorsStats;
+std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeReadErrors() {
+  std::map<std::string,uint64_t> readErrorsStats;
   readErrorsStats["mountTotalCorrectedReadErrors"]= 5;
   readErrorsStats["mountTotalReadBytesProcessed"] = 4096;
   readErrorsStats["mountTotalUncorrectedReadErrors"]= 1;

@@ -57,13 +57,13 @@ namespace drive {
      * Get write error information from the drive.
      * @return writeErrorsStats
      */
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint64_t> getTapeWriteErrors();
 
     /**
      * Get read error information from the drive.
      * @return readErrorsStats
      */
-    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint64_t> getTapeReadErrors();
 
     /**
      * Get error information (other than read/write) from the drive.
@@ -92,11 +92,11 @@ namespace drive {
     virtual std::string getDriveFirmwareVersion();
 
     /**
-     * Reset all statistics about data movements on the drive.
+     * Reset compression statistics about data movements on the drive.
      * All cumulative and threshold log counter values will be reset to their
      * default values as specified in that pages reset behavior section.
      */
-    virtual void clearCompressionStats() ;
+    virtual void clearCompressionStats() = 0;
 
     /**
      * Information about the drive. The vendor id is used in the user labels of the files.
@@ -488,15 +488,20 @@ namespace drive {
   };
 
   class DriveT10000 : public DriveGeneric {
+  protected:
+    compressionStats m_compressionStatsBase;
+    compressionStats getCompressionStats();
   public:
 
     DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
+      castor::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
     }
 
     virtual compressionStats getCompression();
+    virtual void clearCompressionStats();
     virtual bool isEncryptionCapEnabled();
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
-    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint64_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint64_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
@@ -522,8 +527,8 @@ namespace drive {
     virtual void setEncryptionKey(const std::string &encryption_key);
     virtual bool clearEncryptionKey();
     virtual bool isEncryptionCapEnabled();
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
-    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual std::map<std::string,uint64_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint64_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getTapeNonMediumErrors();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
@@ -538,6 +543,7 @@ namespace drive {
     }
 
     virtual compressionStats getCompression();
+    virtual void clearCompressionStats();
   };
 
   class DriveIBM3592 : public DriveGeneric {
@@ -547,8 +553,9 @@ namespace drive {
     }
 
     virtual compressionStats getCompression();
-    virtual std::map<std::string,uint32_t> getTapeWriteErrors();
-    virtual std::map<std::string,uint32_t> getTapeReadErrors();
+    virtual void clearCompressionStats();
+    virtual std::map<std::string,uint64_t> getTapeWriteErrors();
+    virtual std::map<std::string,uint64_t> getTapeReadErrors();
     virtual std::map<std::string,uint32_t> getVolumeStats();
     virtual std::map<std::string,float> getQualityStats();
     virtual std::map<std::string,uint32_t> getDriveStats();
