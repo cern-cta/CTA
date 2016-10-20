@@ -354,11 +354,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::executeWrite
+//DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& lc, cta::LabelMount* labelMount) {
-  throw 0;
+  throw cta::exception::Exception("In DataTransferSession::executeLabel(): not implemented");
   // TODO
 }
 

@@ -26,28 +26,35 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
 }
 
 void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  throw cta::exception::Exception("In DriveHandlerProxy::addLogParams(): not implemented");
   // TODO
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) {
   // TODO
-  throw 0;
+  throw cta::exception::Exception("In DriveHandlerProxy::deleteLogParams(): not implemented");
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
   // TODO
-  throw 0;
+  throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
 }
 
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
   // TODO
-  throw 0;
+  throw cta::exception::Exception("In DriveHandlerProxy::reportHeartbeat(): not implemented");
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
-  // TODO
-  throw 0;
+  serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_totaldiskbytesmoved(0);
+  watchdogMessage.set_totaltapebytesmoved(0);
+  watchdogMessage.set_sessionstate((uint32_t)state);
+  watchdogMessage.set_sessiontype((uint32_t)type);
+ // TODO: add VID.
+  std::string buffer;
+  watchdogMessage.SerializeToString(&buffer);
+  m_socketPair.send(buffer);
 }
 
 
