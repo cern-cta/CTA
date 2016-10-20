@@ -91,6 +91,8 @@ public:
   virtual void kill() = 0;
   /** Instructs the handler to prepare for a fork */
   virtual void prepareForFork() = 0;
+  /** Cleanup anything that should be in the child process */
+  virtual void postForkCleanup() = 0;
   /** Instructs the handler to proceed with the fork it requested (returns 
    * which side of the fork we are in) */
   virtual ProcessingStatus fork() = 0;

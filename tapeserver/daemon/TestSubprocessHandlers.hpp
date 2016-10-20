@@ -75,6 +75,13 @@ public:
     // Nothing to do before fork.
   }
   
+  void postForkCleanup() override {
+    // We are in another subprocesses child processes. We can close our socketpair here without
+    // removing it from poll. The side to close is the parent side.
+    m_socketPairRegistered=false;
+    m_socketPair.close(cta::server::SocketPair::Side::parent);
+  }
+
   int runChild() override {
     if (m_crashingChild) return EXIT_FAILURE;
     // Just wait forever for an echo request
@@ -201,6 +208,8 @@ public:
   }
   
   void prepareForFork() override { }
+  
+  void postForkCleanup() override { }
   
   SubprocessHandler::ProcessingStatus fork() override {
     throw cta::exception::Exception("In ProbeSubprocess::fork(): should not have been called");

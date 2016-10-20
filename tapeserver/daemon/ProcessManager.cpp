@@ -183,7 +183,13 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
       auto newStatus = sp.handler->fork();
       switch (newStatus.forkState) {
       case SubprocessHandler::ForkState::child:
-        // TODO: cleanup other processes (needed?)
+        // We are in the child side.
+        // Instruct all other handlers to proceed with a post-fork cleanup.
+        for (auto & sp2: m_subprocessHandlers) {
+          if (&sp2 != &sp) {
+            sp2.handler->postForkCleanup();
+          }
+        }
         // We are in the child side: run the subprocess and exit.
         m_logContext.log(log::INFO, "In child process. Running child.");
         ::exit(sp.handler->runChild());

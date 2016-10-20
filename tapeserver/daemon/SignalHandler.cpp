@@ -29,6 +29,9 @@ namespace cta {
 namespace tape {
 namespace daemon {
 
+//------------------------------------------------------------------------------
+// SignalHandler::SignalHandler
+//------------------------------------------------------------------------------
 SignalHandler::SignalHandler(ProcessManager& pm):
 SubprocessHandler("signalHandler"), m_processManager(pm) {
   // Block the signals we want to handle.
@@ -48,13 +51,22 @@ SubprocessHandler("signalHandler"), m_processManager(pm) {
   m_processManager.addFile(m_sigFd, this);
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::~SignalHandler
+//------------------------------------------------------------------------------
 SignalHandler::~SignalHandler() {
-  // Deregister the file descriptor from poll
-  m_processManager.removeFile(m_sigFd);
-  // And close the file
-  ::close(m_sigFd);
+  // If we still have a signal handler (this can NOT be the case in a child process),
+  if (m_sigFd!=-1) {
+    // Deregister the file descriptor from poll
+    m_processManager.removeFile(m_sigFd);
+    // And close the file
+    ::close(m_sigFd);
+  }
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::getInitialStatus
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::getInitialStatus() {
   // On initiation, we expect nothing but signals, i.e. default status
   // except we are considered shutdown at all times.
@@ -63,6 +75,9 @@ SubprocessHandler::ProcessingStatus SignalHandler::getInitialStatus() {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::processEvent
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   // We have a signal
   struct ::signalfd_siginfo sigInf;
@@ -138,14 +153,33 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::kill
+//------------------------------------------------------------------------------
 void SignalHandler::kill() {
   // We have nothing to kill: noop.
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::prepareForFork
+//------------------------------------------------------------------------------
 void SignalHandler::prepareForFork() {
   // We have nothing to do: noop.
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::postForkCleanup
+//------------------------------------------------------------------------------
+void SignalHandler::postForkCleanup() {
+  // We should make sure the signalFD will not be altered in the child process.
+  // We do not deregister it from poll
+  ::close(m_sigFd);
+  m_sigFd=-1;
+}
+
+//------------------------------------------------------------------------------
+// SignalHandler::processTimeout
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
   // If we reach timeout, it means it's time to kill child processes
   m_processManager.logContext().log(log::INFO, "In signal handler, initiating subprocess kill after timeout on shutdown");
@@ -155,6 +189,9 @@ SubprocessHandler::ProcessingStatus SignalHandler::processTimeout() {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::processSigChild
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
   // Our sigchild is now acknowledged
   m_sigChildPending = false;
@@ -167,7 +204,9 @@ SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
   return ret;
 }
 
-
+//------------------------------------------------------------------------------
+// SignalHandler::shutdown
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::shutdown() {
   // We received (back) our own shutdown: consider it acknowledged
   m_shutdownAcknowlegded = true;
@@ -181,10 +220,16 @@ SubprocessHandler::ProcessingStatus SignalHandler::shutdown() {
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::fork
+//------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus SignalHandler::fork() {
   throw cta::exception::Exception("Unexpected call to SignalHandler::fork()");
 }
 
+//------------------------------------------------------------------------------
+// SignalHandler::runChild
+//------------------------------------------------------------------------------
 int SignalHandler::runChild() {
   throw cta::exception::Exception("Unexpected call to SignalHandler::runChild()");
 }

@@ -120,6 +120,15 @@ void DriveHandler::prepareForFork() {
 }
 
 //------------------------------------------------------------------------------
+// DriveHandler::prepareForFork
+//------------------------------------------------------------------------------
+void DriveHandler::postForkCleanup() {
+  // We are in the child process of another handler. We can close our socket pair
+  // without re-registering it from poll.
+  m_socketPair.reset(nullptr);
+}
+
+//------------------------------------------------------------------------------
 // DriveHandler::fork
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::fork() {
@@ -127,9 +136,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
   // failed and ask for a shutdown by sending the TERM signal to the parent process
   // This will ensure the shutdown-kill sequence managed by the signal handler without code duplication.
   // Record we no longer ask for fork
-  // TODO: remove this: debug for signal issues: send a SIGHUP for fun, which will be logged
-  // but ignored.
-  ::kill(::getpid(), SIGHUP);
   m_processingStatus.forkRequested = false;
   try {
     // Check we are in the right state (sanity check)
@@ -621,6 +627,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       // a cleanup session.
       params.add("exitCode", WEXITSTATUS(processStatus));
       m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
+      // TODO, handle states: session failure => cleaner => session.
+      // cleaner sessions failure => DOWN.
       resetToDefault(PreviousSession::OK);
       m_processingStatus.forkRequested=true;
     } else {

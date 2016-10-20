@@ -37,6 +37,7 @@ public:
   void kill() override;
   SubprocessHandler::ProcessingStatus processSigChild() override;
   void prepareForFork() override;
+  void postForkCleanup() override;
   SubprocessHandler::ProcessingStatus processEvent() override;
   SubprocessHandler::ProcessingStatus processTimeout() override;
   int runChild() override;
@@ -47,7 +48,7 @@ public:
   }
 private:
   cta::tape::daemon::ProcessManager & m_processManager;
-  int m_sigFd;
+  int m_sigFd=-1;
   bool m_shutdownRequested=false;
   bool m_shutdownAcknowlegded=false;
   bool m_sigChildPending=false;

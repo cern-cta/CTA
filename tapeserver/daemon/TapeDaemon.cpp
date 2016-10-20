@@ -50,7 +50,9 @@ int TapeDaemon::main() {
     exceptionThrowingMain();
   } catch (cta::exception::Exception &ex) {
     // Log the error
-    m_log(log::ERR, "Aborting", {{"Message", ex.getMessage().str()}});
+    m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.", {{"Message", ex.getMessage().str()}});
+    log::LogContext lc(m_log);
+    lc.logBacktrace(log::ERR, ex.backtrace());
     return 1;
   }
   return 0;
@@ -106,10 +108,13 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   }
   // TODO: add the garbage collector once implemented
   // And run the process manager
-  ::exit(pm.run());
-  throw cta::exception::Exception("cta::tape::daemon::TapeDaemon::mainEventLoop: not implemented");
-//  while (handleIOEvents() && handleTick() && handlePendingSignals()) {
-//  }
+  int ret=pm.run();
+  {
+    log::ScopedParamContainer param(lc);
+    param.add("returnValue", ret);
+  }
+  lc.log(log::INFO, "cta-taped exiting.");
+  ::exit(ret);
 }
 
 //------------------------------------------------------------------------------
