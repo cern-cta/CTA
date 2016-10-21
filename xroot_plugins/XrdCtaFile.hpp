@@ -98,11 +98,6 @@ protected:
   cta::common::dataStructures::SecurityIdentity m_cliIdentity;  
   
   /**
-   * The protocol used by the xroot client
-   */
-  std::string m_protocol;  
-  
-  /**
    * Vector containing required options which are missing from the user command
    */
   std::vector<std::string> m_missingRequiredOptions;
