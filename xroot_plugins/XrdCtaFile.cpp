@@ -49,9 +49,22 @@ void XrdCtaFile::checkClient(const XrdSecEntity *client) {
     throw cta::exception::Exception(std::string(__FUNCTION__)+": [ERROR] XrdSecEntity from xroot contains invalid information (nullptr pointer detected!)");
   }
   std::cerr << "Client request-> Username: " << client->name << " Host: " << client->host << " Prot: " << client->prot << std::endl;
-
+  /**
+   * The username here has two meanings depending on the protocol used:
+   * 
+   * 1) Kerberos 5: in this case it is the actual username of the administrator issuing the command
+   * 2) Simple Shared Secret (SSS): in this case it is the name of the instance
+   * 
+   * It is important to remember that we are using kerberos authentication only for admin commands, while for user (EOS)
+   * commands we use SSS. Each EOS instance will receive a separate SSS key which will be named (this means that a
+   * username will be associated to it), for example all the cms EOS instances (1 or more) will receive the same SSS key
+   * with the username "cms" associated to it. Having named keys is important to identify instances and limit crosstalk
+   * as much as possible: a client having a "cms" SSS key will only be authorized to archive/retrieve/update/delete
+   * cms files, or list cms storageclasses.
+   */
   m_cliIdentity.username=client->name;
   m_cliIdentity.host=client->host;
+  m_protocol=client->prot;
 }
 
 //------------------------------------------------------------------------------
@@ -116,6 +129,9 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
 // authorizeAdmin
 //------------------------------------------------------------------------------
 void XrdCtaFile::authorizeAdmin(){
+  if(m_protocol!="krb5") {
+    throw cta::exception::Exception(std::string("[ERROR] Admin commands are possible only through Kerberos 5 protocol authentication. Protocol used for this connection: ")+m_protocol);
+  }
   m_scheduler->authorizeAdmin(m_cliIdentity);
 }
 
