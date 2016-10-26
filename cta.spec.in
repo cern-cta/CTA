@@ -193,8 +193,8 @@ Group: Application/CTA
 CERN Tape Archive:
 Documents and supporting SQL scripts
 %files -n cta-doc
-%doc %{_datarootdir}/%{name}-%{ctaVersion}/sql/create_oracle_catalogue_schema.sql
-%doc %{_datarootdir}/%{name}-%{ctaVersion}/sql/create_sqlite_catalogue_schema.sql
+%attr(0644,root,root) %{_datarootdir}/%{name}-%{ctaVersion}/sql/create_oracle_catalogue_schema.sql
+%attr(0644,root,root) %{_datarootdir}/%{name}-%{ctaVersion}/sql/create_sqlite_catalogue_schema.sql
 
 %package -n cta-systemtests
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
