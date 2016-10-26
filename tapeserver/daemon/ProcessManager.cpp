@@ -171,12 +171,6 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         params.add("SubprocessName", sp.handler->index);
         m_logContext.log(log::INFO, "Subprocess handler requested forking");
       }
-      for (auto & sp2:m_subprocessHandlers) {
-        sp2.handler->prepareForFork();
-        cta::log::ScopedParamContainer params(m_logContext);
-        params.add("SubprocessName", sp2.handler->index);
-        m_logContext.log(log::INFO, "Subprocess handler prepared for forking");
-      }
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
       m_logContext.log(log::INFO, "Subprocess handler will fork");

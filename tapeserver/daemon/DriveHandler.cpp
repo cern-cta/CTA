@@ -115,13 +115,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::getInitialStatus() {
 //------------------------------------------------------------------------------
 // DriveHandler::prepareForFork
 //------------------------------------------------------------------------------
-void DriveHandler::prepareForFork() {
-  // Nothing to do before a fork (ours or other's)
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::prepareForFork
-//------------------------------------------------------------------------------
 void DriveHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
   // without re-registering it from poll.

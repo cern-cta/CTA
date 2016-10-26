@@ -71,10 +71,6 @@ public:
     return ret;
   }
   
-  void prepareForFork() override {
-    // Nothing to do before fork.
-  }
-  
   void postForkCleanup() override {
     // We are in another subprocesses child processes. We can close our socketpair here without
     // removing it from poll. The side to close is the parent side.
@@ -206,8 +202,6 @@ public:
     ret.shutdownComplete = m_shutdownAsked && m_honorShutdown;
     return ret;
   }
-  
-  void prepareForFork() override { }
   
   void postForkCleanup() override { }
   

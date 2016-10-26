@@ -89,8 +89,6 @@ public:
   /** Instructs the handler to kill its subprocess immediately. The process 
    * should be gone upon return. */
   virtual void kill() = 0;
-  /** Instructs the handler to prepare for a fork */
-  virtual void prepareForFork() = 0;
   /** Cleanup anything that should be in the child process */
   virtual void postForkCleanup() = 0;
   /** Instructs the handler to proceed with the fork it requested (returns 
