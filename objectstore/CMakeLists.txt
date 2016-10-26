@@ -87,6 +87,7 @@ install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(makeMinimalVFS makeMinimalVFS.cpp)
 target_link_libraries(makeMinimalVFS
   protobuf ctaobjectstore ctacommon ctautils)
+install(TARGETS makeMinimalVFS DESTINATION usr/bin)
 
 add_executable(listObjectStore listObjectStore.cpp)
 target_link_libraries(listObjectStore
