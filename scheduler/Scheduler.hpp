@@ -204,7 +204,7 @@ public:
    * @param driveName The drive name
    * @param up indicates whether the drive should be put up or down.
    * @param force indicates whether we want to force the drive to be up.
-   */
+   */ //TODO: replace the 2 bools with a structure.
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &driveName, 
     const bool up, const bool force);
