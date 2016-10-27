@@ -88,6 +88,10 @@ BEGIN
 
   IF catalogueSchemaIsLocked() THEN
     DBMS_OUTPUT.PUT_LINE('Aborting drop of catalogue schema objects: Schema is LOCKED');
+    DBMS_OUTPUT.PUT_LINE('See the following command-line tools for more details:');
+    DBMS_OUTPUT.PUT_LINE('cta-catalogue-schema-lock');
+    DBMS_OUTPUT.PUT_LINE('cta-catalogue-schema-status');
+    DBMS_OUTPUT.PUT_LINE('cta-catalogue-schema-unlock');
   ELSE
     FOR i IN 1 .. tables.COUNT LOOP
       dropTableIfExists(tables(i));
