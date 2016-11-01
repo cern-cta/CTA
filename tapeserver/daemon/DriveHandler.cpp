@@ -853,14 +853,26 @@ int DriveHandler::runChild() {
       cta::objectstore::BackendPopulator backendPopulator(*backend);
       osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator.getAgentReference()));
     } catch(cta::exception::Exception &ex) {
+      log::ScopedParamContainer param(m_processManager.logContext());
+      param.add("errorMessage", ex.getMessageValue());
       m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate agent entry. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       sleep(1);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
-    const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
-    const uint64_t nbConns = 1;
-    std::unique_ptr<cta::catalogue::Catalogue> catalogue(cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns));
+    std::unique_ptr<cta::catalogue::Catalogue> catalogue;
+    try {
+      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+      const uint64_t nbConns = 1;
+      catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
+    } catch(cta::exception::Exception &ex) {
+      log::ScopedParamContainer param(m_processManager.logContext());
+      param.add("errorMessage", ex.getMessageValue());
+      m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
+      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      sleep(1);
+      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    }
     cta::Scheduler scheduler(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
     
     // Before launching the transfer session, we validate that the scheduler is reachable.
