@@ -38,6 +38,7 @@
 #include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
 #include "XrdCtaDir.hpp"
+#include "version.h"
 
 #include <memory>
 #include <iostream>
@@ -278,6 +279,10 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   try {
     dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
   } catch (std::bad_cast &){}
+
+  const std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
+  cta::log::Logger &log= *m_log;
+  log(log::INFO, std::string("cta-frontend started"), params);
 }
 
 //------------------------------------------------------------------------------
