@@ -89,10 +89,9 @@ public:
   /*============ Basic IO check: validate object store access ===============*/
   /**
    * Validates that the scheduler database is accessible. A trivial operation
-   * will be executed to check.
-   * @return true on success and false on failure.
+   * will be executed to check. The exception is let through in case of problem.
    */
-  virtual bool ping() = 0;
+  virtual void ping() = 0;
   
   /*============ Archive management: user side ==============================*/
   /**

@@ -4521,16 +4521,11 @@ void RdbmsCatalogue::unlockSchema() {
 //------------------------------------------------------------------------------
 // ping
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::ping() {
-  try {
-    const char *const sql = "SELECT COUNT(*) FROM CTA_CATALOGUE";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    auto rset = stmt->executeQuery();
-    return true;
-  } catch(...) {
-    return false;
-  }
+void RdbmsCatalogue::ping() {
+  const char *const sql = "SELECT COUNT(*) FROM CTA_CATALOGUE";
+  auto conn = m_connPool.getConn();
+  auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+  auto rset = stmt->executeQuery();
 }
 
 } // namespace catalogue

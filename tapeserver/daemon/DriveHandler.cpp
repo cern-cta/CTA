@@ -876,7 +876,11 @@ int DriveHandler::runChild() {
     cta::Scheduler scheduler(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
     
     // Before launching the transfer session, we validate that the scheduler is reachable.
-    if (!scheduler.ping()) {
+    try {
+      scheduler.ping();
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer param (m_processManager.logContext());
+      param.add("errorMessage", ex.getMessageValue());
       m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;

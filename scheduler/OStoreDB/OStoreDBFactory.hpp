@@ -52,8 +52,8 @@ public:
   
   ~OStoreDBWrapper() throw () {}
   
-  bool ping() override {
-    return m_OStoreDB.ping();
+  void ping() override {
+    m_OStoreDB.ping();
   }
 
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria) override {

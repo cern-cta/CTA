@@ -517,7 +517,7 @@ public:
    * 
    * @return True if the query went through.
    */
-  bool ping() override;
+  void ping() override;
 
 protected:
 

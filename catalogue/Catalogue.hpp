@@ -543,12 +543,9 @@ public:
   virtual void unlockSchema() = 0;
 
   /**
-   * Checks that the most trivial query goes through. Returns true on success,
-   * false on failure.
-   * 
-   * @return True if the query went through.
+   * Checks that the most trivial query goes through. Throws an exception if not.
    */
-  virtual bool ping() = 0;
+  virtual void ping() = 0;
 
 }; // class Catalogue
 

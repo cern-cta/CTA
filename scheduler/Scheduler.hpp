@@ -80,9 +80,9 @@ public:
   
   /**
    * Validates that the underlying storages are accessible
-   * @return true for success, false for failure
+   * Lets the exception through in case of failure.
    */
-  bool ping();
+  void ping();
 
   /** 
    * Queue an archive request and return the CTA file ID. 
