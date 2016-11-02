@@ -862,7 +862,7 @@ int DriveHandler::runChild() {
     }
     std::unique_ptr<cta::catalogue::Catalogue> catalogue;
     try {
-      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
       const uint64_t nbConns = 1;
       catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
     } catch(cta::exception::Exception &ex) {

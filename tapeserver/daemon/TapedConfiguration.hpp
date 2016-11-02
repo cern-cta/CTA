@@ -102,9 +102,9 @@ struct TapedConfiguration {
   /// URL of the object store.
   SourcedParameter<std::string> objectStoreURL = decltype(objectStoreURL)
     ("general", "ObjectStoreURL");
-  /// URL of the file catalog
-  SourcedParameter<std::string> fileCatalogURL = decltype(fileCatalogURL)
-    ("general", "FileCatalogURL");
+  /// Path to the file catalog config file
+  SourcedParameter<std::string> fileCatalogConfigFile = decltype(fileCatalogConfigFile)
+    ("general", "FileCatalogConfigFile", "/etc/cta/cta_catalogue_db.conf", "Compile time default");
   
 private:
   /** A private dummy logger which will simplify the implementation of the 

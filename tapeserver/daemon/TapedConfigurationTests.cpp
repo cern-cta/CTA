@@ -33,7 +33,7 @@ TEST(cta_Daemon, TapedConfiguration) {
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
   "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
-  "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
+  "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
   "taped BufferCount 1\n"
   "taped TpConfigPath ");
   TempFile emptyTpConfig;
@@ -44,8 +44,8 @@ TEST(cta_Daemon, TapedConfiguration) {
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
-  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogURL.source());
-  ASSERT_EQ("sqliteFileCatalog:///tmp/dir2", completeConfig.fileCatalogURL.value());
+  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
+  ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
@@ -54,7 +54,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
   "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
-  "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
+  "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
   "taped ArchiveFetchBytesFiles 1,2\n"
   "taped ArchiveFlushBytesFiles              3 , 4 \n"
   "taped RetrieveFetchBytesFiles  5,   6\n"
@@ -70,8 +70,8 @@ TEST(cta_Daemon, TapedConfigurationFull) {
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
-  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogURL.source());
-  ASSERT_EQ("sqliteFileCatalog:///tmp/dir2", completeConfig.fileCatalogURL.value());
+  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
+  ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);
   ASSERT_EQ(3, completeConfig.archiveFlushBytesFiles.value().maxBytes);
