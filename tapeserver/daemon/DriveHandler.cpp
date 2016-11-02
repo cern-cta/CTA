@@ -890,6 +890,12 @@ int DriveHandler::runChild() {
       params.add("Drive", m_configLine.unitName);
       m_processManager.logContext().log(log::INFO, "Setting the drive down at daemon startup");
       try {
+        // Before setting the desired state as down, we have to make sure the drive exists in the registry.
+        // this is done by reporting the drive as down first.
+        cta::common::dataStructures::DriveInfo driveInfo;
+        driveInfo.driveName=driveConfig.m_unitName;
+        driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/);
       } catch (cta::exception::Exception & ex) {
