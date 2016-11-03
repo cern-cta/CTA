@@ -106,6 +106,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
+schedule:
   try {
     tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
   } catch (cta::exception::Exception & e) {
@@ -117,9 +118,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
   // No mount to be done found, that was fast...
   if (!tapeMount.get()) {
-    lc.log(cta::log::INFO, "No new mount found!");
+    lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
-    return MARK_DRIVE_AS_UP;
+    sleep (10);
+    goto schedule;
+    // return MARK_DRIVE_AS_UP;
   }
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();

@@ -848,10 +848,11 @@ int DriveHandler::runChild() {
     } catch (std::bad_cast &){}
     // Create the agent entry in the object store. This could fail (even before ping, so
     // handle failure like a ping failure).
+    std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
     std::unique_ptr<cta::OStoreDBWithAgent> osdb;
     try {
-      cta::objectstore::BackendPopulator backendPopulator(*backend);
-      osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator.getAgentReference()));
+      backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend));
+      osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
     } catch(cta::exception::Exception &ex) {
       log::ScopedParamContainer param(m_processManager.logContext());
       param.add("errorMessage", ex.getMessageValue());
