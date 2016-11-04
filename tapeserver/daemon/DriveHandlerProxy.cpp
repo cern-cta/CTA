@@ -25,14 +25,33 @@ DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPa
   m_socketPair.close(server::SocketPair::Side::parent);  
 }
 
+// TODO: me might want to group the messages to reduce the rate.
+
 void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) {
-  throw cta::exception::Exception("In DriveHandlerProxy::addLogParams(): not implemented");
-  // TODO
+  serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_reportingstate(false);
+  watchdogMessage.set_reportingbytes(false);
+  for (auto & p: params) {
+    auto * lp = watchdogMessage.mutable_addedlogparams()->Add();
+    lp->set_name(p.getName());
+    lp->set_value(p.getValue());
+  }
+  std::string buffer;
+  watchdogMessage.SerializeToString(&buffer);
+  m_socketPair.send(buffer);
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) {
-  // TODO
-  throw cta::exception::Exception("In DriveHandlerProxy::deleteLogParams(): not implemented");
+  serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_reportingstate(false);
+  watchdogMessage.set_reportingbytes(false);
+  for (auto &pn: paramNames) {
+    auto * lpn = watchdogMessage.mutable_deletedlogparams()->Add();
+    *lpn = pn;
+  }
+  std::string buffer;
+  watchdogMessage.SerializeToString(&buffer);
+  m_socketPair.send(buffer);
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
@@ -47,6 +66,8 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
   serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_reportingstate(true);
+  watchdogMessage.set_reportingbytes(false);
   watchdogMessage.set_totaldiskbytesmoved(0);
   watchdogMessage.set_totaltapebytesmoved(0);
   watchdogMessage.set_sessionstate((uint32_t)state);

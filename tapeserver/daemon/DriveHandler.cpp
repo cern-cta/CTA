@@ -247,34 +247,43 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   try {
     serializers::WatchdogMessage message;
     message.ParseFromString(m_socketPair->receive());
+    // Logs are processed in all cases
     processLogs(message);
-    switch((SessionState)message.sessionstate()) {
-    case SessionState::StartingUp:
-      return processStartingUp(message);
-    case SessionState::Checking:
-      return processChecking(message);
-    case SessionState::Scheduling:
-      return processScheduling(message);
-    case SessionState::Mounting:
-      return processMounting(message);
-    case SessionState::Running:
-      return processRunning(message);
-    case SessionState::Unmounting:
-      return processUnmounting(message);
-    case SessionState::DrainingToDisk:
-      return processDrainingToDisk(message);
-    case SessionState::ShutingDown:
-      return processShutingDown(message);
-    case SessionState::Fatal:
-      return processFatal(message);
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "In DriveHandler::processEvent(): unexpected session state:" 
-            << session::toString((SessionState)message.sessionstate());
-        throw ex;
+    // If we report bytes, process the report
+    if (message.reportingbytes()) {
+      processBytes(message);
+    }
+    // If we report a state change, process it (last as this can change the return value)
+    if (message.reportingstate()) {
+      switch((SessionState)message.sessionstate()) {
+      case SessionState::StartingUp:
+        return processStartingUp(message);
+      case SessionState::Checking:
+        return processChecking(message);
+      case SessionState::Scheduling:
+        return processScheduling(message);
+      case SessionState::Mounting:
+        return processMounting(message);
+      case SessionState::Running:
+        return processRunning(message);
+      case SessionState::Unmounting:
+        return processUnmounting(message);
+      case SessionState::DrainingToDisk:
+        return processDrainingToDisk(message);
+      case SessionState::ShutingDown:
+        return processShutingDown(message);
+      case SessionState::Fatal:
+        return processFatal(message);
+      default:
+        {
+          exception::Exception ex;
+          ex.getMessage() << "In DriveHandler::processEvent(): unexpected session state:" 
+              << session::toString((SessionState)message.sessionstate());
+          throw ex;
+        }
       }
     }
+    return m_processingStatus;
   } catch(cta::server::SocketPair::PeerDisconnected & ex) {
     // The peer disconnected: close the socket pair and remove it from the epoll list.
     if (m_socketPair.get()) {
@@ -591,6 +600,13 @@ void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   for (auto & log: message.deletedlogparams()) {
     m_sessionEndContext.erase(log);
   }
+}
+
+//------------------------------------------------------------------------------
+// DriveHandler::processBytes
+//------------------------------------------------------------------------------
+void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
+  throw cta::exception::Exception("In DriveHandler::processBytes(): not implemented");
 }
 
 //------------------------------------------------------------------------------

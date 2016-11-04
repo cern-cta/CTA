@@ -122,6 +122,8 @@ private:
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
   /** Helper function accumulating logs */
   void processLogs(serializers::WatchdogMessage & message);
+  /** Helper function accumulating bytes transferred */
+  void processBytes(serializers::WatchdogMessage & message);
 };
 
 // TODO: remove/merge ChildProcess.
