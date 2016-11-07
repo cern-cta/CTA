@@ -25,7 +25,9 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <stdlib.h>
 #include <string>
+#include <unistd.h>
 
 namespace cta {
 namespace rdbms {
@@ -44,8 +46,31 @@ SqliteStmt::SqliteStmt(
   m_nbAffectedRows(0) {
   m_stmt = nullptr;
   const int nByte = -1; // Read SQL up to first null terminator
-  const int prepareRc = sqlite3_prepare_v2(m_conn.m_conn, sql.c_str(), nByte, &m_stmt, nullptr);
-  if (SQLITE_OK != prepareRc) {
+
+  const uint maxPrepareRetries = 20; // A worst case scenario of 2 seconds
+  for(unsigned int i = 0; i <= maxPrepareRetries; i++) {
+    const int prepareRc = sqlite3_prepare_v2(m_conn.m_conn, sql.c_str(), nByte, &m_stmt, nullptr);
+
+    if(SQLITE_OK == prepareRc) {
+      break;
+    }
+
+    if(SQLITE_LOCKED == prepareRc) {
+      sqlite3_finalize(m_stmt);
+
+      // If the number of retries has not been exceeded
+      if(i < maxPrepareRetries) {
+        // Sleep for a random length of time less than a tenth of a second
+        usleep(random() % 100000);
+
+        // Try to prepare the statement again
+        continue;
+      } else {
+        throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 returned SQLITE_LOCKED the"
+          " maximum number of " + std::to_string(i + 1) + " times"); 
+      }
+    }
+
     const std::string msg = sqlite3_errmsg(m_conn.m_conn);
     sqlite3_finalize(m_stmt);
     throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 failed: " + msg);
