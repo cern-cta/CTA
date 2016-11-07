@@ -965,65 +965,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
-TEST_P(DataTransferSessionTest, DataTransferSessionEmptyOnVolReq) {
-  
-  // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("tapeServerUnitTest", cta::log::DEBUG);
-  
-  setupDefaultCatalogue();
-  // 1) prepare the fake scheduler
-  std::string vid = s_vid;
-  // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
-
-  // 3) Prepare the necessary environment (logger, plus system wrapper), 
-  castor::tape::System::mockWrapper mockSys;
-  mockSys.delegateToFake();
-  mockSys.disableGMockCallsCounting();
-  mockSys.fake.setupForVirtualDriveSLC6();
-  //delete is unnecessary
-  //pointer with ownership will be passed to the application,
-  //which will do the delete 
-  const bool failOnMount=true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
-  
-  // 4) Create the scheduler
-  auto & scheduler = getScheduler();
-  
-  // Always use the same requester
-  const cta::common::dataStructures::SecurityIdentity requester;
-  
-  // 5) Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
-  // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
-
-  // 6) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.nbDiskThreads = 3;
-  cta::mediachanger::AcsProxyDummy acs;
-  cta::mediachanger::MmcProxyDummy mmc;
-  cta::mediachanger::RmcProxyDummy rmc;
-  cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
-  cta::server::ProcessCap capUtils;
-  castor::messages::TapeserverProxyDummy initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  ASSERT_NO_THROW(sess.execute());
-  std::string temp = logger.getLog();
-  temp += "";
-  ASSERT_EQ("", sess.getVid());
-  // We should not have logged any error
-  ASSERT_EQ(std::string::npos, logger.getLog().find("LVL=E"));
-}
-
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
    
   // 0) Prepare the logger for everyone
