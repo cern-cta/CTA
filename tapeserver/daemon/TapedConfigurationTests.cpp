@@ -61,9 +61,9 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   "taped BufferCount 1  \n"
   "taped TpConfigPath ");
   TempFile TpConfig;
-  TpConfig.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1\n"
-      "drive2 lib0 /dev/tape2 lib0slot2");
+  TpConfig.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape2 smc2");
   completeConfFile.stringAppend(TpConfig.path());
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = 

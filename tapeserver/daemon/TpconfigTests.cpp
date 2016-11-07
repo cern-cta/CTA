@@ -68,9 +68,9 @@ TEST(cta_Daemon, Tpconfig_base) {
   }
   
   // Test with several entries (valid file with various extra blanks)
-  tf.stringFill("         drive0 lib0 \t\t\t /dev/tape0       lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1         \n"
-  "drive2 lib0 /dev/tape2 lib0slot2");
+  tf.stringFill("         drive0 lib0 \t\t\t /dev/tape0       smc0\n"
+      "drive1 lib0 /dev/tape1 smc1         \n"
+  "drive2 lib0 /dev/tape2 smc2");
   tpc = cta::tape::daemon::Tpconfig::parseFile(tf.path());
   ASSERT_EQ(3, tpc.size());
   int i=0;
@@ -78,7 +78,7 @@ TEST(cta_Daemon, Tpconfig_base) {
     ASSERT_EQ("drive", t.second.value().unitName.substr(0,5));
     ASSERT_EQ("lib0", t.second.value().logicalLibrary);
     ASSERT_EQ("/dev/tape", t.second.value().devFilename.substr(0,9));
-    ASSERT_EQ("lib0slot", t.second.value().rawLibrarySlot.substr(0,8));
+    ASSERT_EQ("smc", t.second.value().rawLibrarySlot.substr(0,3));
     ASSERT_EQ('0'+i, t.second.value().unitName.back());
     ASSERT_EQ('0'+i, t.second.value().devFilename.back());
     ASSERT_EQ('0'+i, t.second.value().rawLibrarySlot.back());
@@ -89,25 +89,24 @@ TEST(cta_Daemon, Tpconfig_base) {
 TEST(cta_Daemon, Tpconfig_duplicates) {
   TempFile tf;
   // Test duplicate unit name
-  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1\n"
-      "drive0 lib0 /dev/tape2 lib0slot2");
+  tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive0 lib0 /dev/tape2 smc2");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // Test duplicate path
-  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1\n"
-      "drive2 lib0 /dev/tape0 lib0slot2");
+  tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape0 smc2");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // Test duplicate slot
-  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1\n"
-      "drive2 lib0 /dev/tape2 lib0slot0");
+  tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape2 smc0");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // No duplication.
-  // Test duplicate slot
-  tf.stringFill("drive0 lib0 /dev/tape0 lib0slot0\n"
-      "drive1 lib0 /dev/tape1 lib0slot1\n"
-      "drive2 lib0 /dev/tape2 lib0slot2");
+  tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
+      "drive1 lib0 /dev/tape1 smc1\n"
+      "drive2 lib0 /dev/tape2 smc2");
   cta::tape::daemon::Tpconfig::parseFile(tf.path());
 }
 
