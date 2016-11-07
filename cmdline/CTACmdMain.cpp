@@ -37,6 +37,24 @@
 #include <stdexcept>
 
 /**
+ * Returns true if --stderr is on the command-line.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The command-line arguments.
+ */
+static bool stderrIsOnTheCmdLine(const int argc, const char *const *const argv) {
+  for(int i = 1; i < argc; i++) {
+    const std::string arg = argv[i];
+
+    if(arg == "--stderr") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
  * 
  * @param str  The original string
@@ -102,6 +120,7 @@ std::string formatCommandPath(const int argc, const char **argv) {
  */
 int sendCommand(const int argc, const char **argv) {
   
+  const bool writeToStderr = stderrIsOnTheCmdLine(argc, argv);
   int p[2];
   pipe(p); //Pipe to redirect std::out
   int saved_stdout = dup(STDOUT_FILENO); //Saving std::out for later usage (re-redirection)
@@ -151,6 +170,9 @@ int sendCommand(const int argc, const char **argv) {
   while(read(p[0], buf, sizeof(buf)-1)>0) { //read the rest of the answer and pipe it to std::err
     buf[sizeof(buf)-1]=0;
     std::cout<<buf;
+    if(writeToStderr) {
+      std::cerr<<buf;
+    }
     bzero(buf, sizeof(buf));
   }
   close(p[0]);

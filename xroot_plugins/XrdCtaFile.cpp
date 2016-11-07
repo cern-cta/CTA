@@ -2303,6 +2303,14 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " retrieve/r"                                          << std::endl;
   help << programName << " updatefileinfo/ufi"                                  << std::endl;
   help << programName << " updatefilestorageclass/ufsc"                         << std::endl;
+  help << "" << std::endl;
+  help << "Special option for running " << programName << " within the EOS worflow engine:" << std::endl;
+  help << "" << std::endl;
+  help << programName << " ... --stderr" << std::endl;
+  help << "" << std::endl;
+  help << "The option tells " << programName << " to write results to both standard out and standard error." <<
+    std::endl;
+  help << "The option must be specified as the very last command-line argument of " << programName << "." << std::endl;
   return help.str();
 }
 
