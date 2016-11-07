@@ -78,10 +78,10 @@ TEST(cta_Daemon, Tpconfig_base) {
     ASSERT_EQ("drive", t.second.value().unitName.substr(0,5));
     ASSERT_EQ("lib0", t.second.value().logicalLibrary);
     ASSERT_EQ("/dev/tape", t.second.value().devFilename.substr(0,9));
-    ASSERT_EQ("lib0slot", t.second.value().librarySlot.substr(0,8));
+    ASSERT_EQ("lib0slot", t.second.value().rawLibrarySlot.substr(0,8));
     ASSERT_EQ('0'+i, t.second.value().unitName.back());
     ASSERT_EQ('0'+i, t.second.value().devFilename.back());
-    ASSERT_EQ('0'+i, t.second.value().librarySlot.back());
+    ASSERT_EQ('0'+i, t.second.value().rawLibrarySlot.back());
     i++;
   }
 }

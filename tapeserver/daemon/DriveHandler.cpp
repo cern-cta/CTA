@@ -779,7 +779,7 @@ int DriveHandler::runChild() {
     
     castor::tape::tapeserver::daemon::DriveConfig driveConfig;
     driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.rawLibrarySlot);
     driveConfig.m_devFilename = m_configLine.devFilename;
     driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     
@@ -829,7 +829,7 @@ int DriveHandler::runChild() {
     
     castor::tape::tapeserver::daemon::DriveConfig driveConfig;
     driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.librarySlot);
+    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.rawLibrarySlot);
     driveConfig.m_devFilename = m_configLine.devFilename;
     driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     

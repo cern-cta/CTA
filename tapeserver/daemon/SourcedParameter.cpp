@@ -120,7 +120,7 @@ void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"unitName", m_value.unitName});
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
   lc.pushOrReplace({"devFilename", m_value.devFilename});
-  lc.pushOrReplace({"librarySlot", m_value.librarySlot});
+  lc.pushOrReplace({"librarySlot", m_value.rawLibrarySlot});
 }
 
 }}} // namespace cta::tape::daemon

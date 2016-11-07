@@ -18,6 +18,9 @@
 
 #include "tapeserver/daemon/TpconfigLine.hpp"
 #include "common/exception/Exception.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
+
+namespace cta { namespace tape { namespace daemon {
 
 //------------------------------------------------------------------------------
 // Constructor.
@@ -30,7 +33,8 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
   unitName(unitName),
   logicalLibrary(logicalLibrary),
   devFilename(devFilename),
-  librarySlot(librarySlot) {
+  rawLibrarySlot(librarySlot),
+  m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)){
   if (unitName.size() > maxNameLen)
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: unitName too long");
   if (logicalLibrary.size() > maxNameLen)
@@ -40,3 +44,17 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
   if (librarySlot.size() > maxNameLen)
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: librarySlot too long");
 }
+//------------------------------------------------------------------------------
+// Copy constructor.
+//------------------------------------------------------------------------------
+TpconfigLine::TpconfigLine(const TpconfigLine& o): TpconfigLine(o.unitName, o.logicalLibrary,
+    o.devFilename, o.rawLibrarySlot) {}
+
+//------------------------------------------------------------------------------
+// TpconfigLine::librarySlot
+//------------------------------------------------------------------------------
+const cta::mediachanger::LibrarySlot& TpconfigLine::librarySlot() {
+  return *m_librarySlot;
+}
+
+}}} // namespace cta::tape::daemon
