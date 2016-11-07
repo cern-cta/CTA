@@ -87,6 +87,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   
   // 2a) Determine if we want to mount at all (for now)
+schedule:
   while (true) {
     try {
       auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.m_unitName);
@@ -106,7 +107,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   }
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
-schedule:
   try {
     tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
   } catch (cta::exception::Exception & e) {
