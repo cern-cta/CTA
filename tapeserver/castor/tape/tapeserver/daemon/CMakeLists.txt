@@ -30,14 +30,6 @@ find_package(Protobuf REQUIRED)
 find_package( ZLIB REQUIRED )
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
-  Catalogue.cpp
-  CatalogueDrive.cpp
-  CatalogueDriveState.cpp
-  CatalogueSession.cpp
-  CatalogueLabelSession.cpp
-  CatalogueTransferSession.cpp
-  CatalogueCleanerSession.cpp
-  CatalogueConfig.cpp
   CleanerSession.cpp
   DataTransferConfig.cpp
   LabelSessionConfig.cpp
@@ -55,18 +47,10 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
-  ProcessForker.cpp
-  ProcessForkerConnectionHandler.cpp
-  ProcessForkerProxy.cpp
-  ProcessForkerProxySocket.cpp
-  ProcessForkerUtils.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp
   Session.cpp
-  TapeMessageHandler.cpp
-  TapeDaemonConfig.cpp
-  TapeDaemonMain.cpp
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
@@ -86,9 +70,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
        MigrationReportPackerTest.cpp
        ProcessForkerProxyDummy.cpp
        ProcessForkerTest.cpp
-       RecallTaskInjectorTest.cpp
-       TapeDaemon.cpp
-       TapeDaemonTest.cpp)
+       RecallTaskInjectorTest.cpp)
       set_property(SOURCE ${CTATAPESERVERDAEMON_LIBRARY_SRC}
         PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
     endforeach(CTATAPESERVERDAEMON_LIBRARY_SRC)
@@ -101,37 +83,20 @@ add_library(ctaTapeServerDaemon
 target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
-add_executable(cta-tapeserverd TapeDaemon.cpp)
-target_link_libraries(cta-tapeserverd ctaTapeServerDaemon SCSI System Utils 
-  File TapeDrive ctacommon ctatapereactor ${LIBCAP_LIB} ${ZLIB_LIBRARIES} 
-  ctamessages zmq ctaio ctautils)
-install (TARGETS cta-tapeserverd DESTINATION usr/bin)
-
-add_library(ctatapeserverdaemonutils SHARED
-  ProcessForkerProxyDummy.cpp)
-
-install(TARGETS ctatapeserverdaemonutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
 add_library(ctatapeserverdaemonunittests SHARED
-  CatalogueDriveStateTest.cpp
-  CatalogueTest.cpp
   DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
   DriveConfigTest.cpp
   MigrationReportPackerTest.cpp
-  ProcessForkerTest.cpp
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
-  TapeDaemon.cpp
-  TapeDaemonTest.cpp
   TaskWatchDogTest.cpp
 )
 
 target_link_libraries(ctatapeserverdaemonunittests
-  ctamessagesutils
-  ctatapeserverdaemonutils)
+  ctamessagesutils)
   #ctaschedulerutils
 
 install(TARGETS ctatapeserverdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

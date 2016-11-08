@@ -124,18 +124,6 @@ The tape server daemon
 %attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0755,root,root) %{_libdir}/libctamessages.so
 
-%package -n cta-tapeserverd
-Summary: CERN Tape Archive: tapeserver daemon (demo only)
-Group: Application/CTA
-requires: cta-lib
-%description -n cta-tapeserverd
-CERN Tape Archive:
-The tape server daemon
-%files -n cta-tapeserverd
-%defattr(-,root,root)
-%attr(0755,root,root) %{_bindir}/cta-tapeserverd
-%attr(0755,root,root) %{_libdir}/libctamessages.so
-
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
@@ -183,7 +171,6 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctamessagesutils.so
 %attr(0755,root,root) %{_libdir}/libctardbms.so
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverdaemonutils.so
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
 
 %package -n cta-doc
@@ -205,7 +192,6 @@ Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
 %files -n cta-systemtests
-%attr(0755,root,root) %{_bindir}/cta-systemTests
 %attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so
 %attr(0755,root,root) %{_libdir}/libcta-tapedSystemTests.so
 %attr(0755,root,root) %{_bindir}/cta-catalogueUnitTests
