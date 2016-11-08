@@ -24,6 +24,7 @@
 #pragma once
 
 #include <json-c/json.h>
+#include <list>
 #include <map>
 #include <string>
 

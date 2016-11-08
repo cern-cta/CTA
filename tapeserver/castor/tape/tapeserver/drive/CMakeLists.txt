@@ -35,7 +35,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(TapeDrive ${TAPEDRIVE_LIBRARY_SRCS})
-target_link_libraries(TapeDrive SCSI)
+target_link_libraries(TapeDrive SCSI ctatapedaemon)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   if(GCC_VERSION_GE_4_8_0)

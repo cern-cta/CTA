@@ -423,13 +423,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   }
     
   // 6) Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -616,13 +616,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   }
   
   // 6) Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -781,13 +781,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   }
     
   // 7) Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -925,13 +925,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   }
 
   // 7) Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1052,13 +1052,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     }
   }
   // Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1192,13 +1192,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     }
   }
   // Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1326,13 +1326,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     }
   }
   // Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -1474,13 +1474,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     }
   }
   // Report the drive's existence and put it up in the drive register.
-  DriveConfig driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.m_unitName;
-  driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+  driveInfo.driveName=driveConfig.unitName;
+  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.m_unitName, true, false);
+  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
 
   // Create the data transfer session
   DataTransferConfig castorConf;

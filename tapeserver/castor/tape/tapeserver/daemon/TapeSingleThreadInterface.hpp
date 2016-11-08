@@ -116,14 +116,14 @@ protected:
    */
   void mountTapeReadOnly(){
     cta::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("drive_Slot",m_drive.config.getLibrarySlot().str());
+    scoped.add("drive_Slot",m_drive.config.librarySlot().str());
     try {
       cta::utils::Timer timer;
-        m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.getLibrarySlot());
+        m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot());
         const std::string modeAsString = "R";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
-          m_drive.config.getLibrarySlot().getLibraryType()) {
+          m_drive.config.librarySlot().getLibraryType()) {
           m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
         }
     }
@@ -140,10 +140,10 @@ protected:
    */
   void mountTapeReadWrite(){
     cta::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("drive_Slot",m_drive.config.getLibrarySlot().str());
+    scoped.add("drive_Slot",m_drive.config.librarySlot().str());
     try {
       cta::utils::Timer timer;
-        m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.config.getLibrarySlot());
+        m_mc.mountTapeReadWrite(m_volInfo.vid, m_drive.config.librarySlot());
         const std::string modeAsString = "RW";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
         m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");

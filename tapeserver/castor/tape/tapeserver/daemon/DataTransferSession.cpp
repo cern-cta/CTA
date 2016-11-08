@@ -50,7 +50,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const std::string & hostname,
     cta::log::Logger & log,
     System::virtualWrapper & sysWrapper,
-    const DriveConfig & driveConfig,
+    const cta::tape::daemon::TpconfigLine & driveConfig,
     cta::mediachanger::MediaChangerFacade & mc,
     cta::tape::daemon::TapedProxy & initialProcess,
     cta::server::ProcessCap & capUtils,
@@ -60,7 +60,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
     m_castorConf(castorConf),
-    m_driveInfo({driveConfig.m_unitName, cta::utils::getShortHostname(), driveConfig.m_logicalLibrary}),
+    m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.rawLibrarySlot}),
     m_mc(mc),
     m_intialProcess(initialProcess),
     m_capUtils(capUtils),
@@ -90,7 +90,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 schedule:
   while (true) {
     try {
-      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.m_unitName);
+      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName);
       if (!desiredState.up) {
         // We wait a bit before polling the scheduler again.
         // TODO: parametrize the duration?
@@ -108,7 +108,7 @@ schedule:
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
-    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.getLogicalLibrary(), m_driveConfig.getUnitName()).release());
+    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName).release());
   } catch (cta::exception::Exception & e) {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());
@@ -168,7 +168,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // to refer them to each other)
     RecallReportPacker rrp(retrieveMount, lc);
     rrp.disableBulk(); //no bulk needed anymore
-    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
+    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     
     RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -263,7 +263,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(archiveMount, lc);
-    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.getUnitName(),lc);
+    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
     TapeWriteSingleThread twst(*drive,
         m_mc,
         tsr,
@@ -383,16 +383,16 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
  * @return the drive if found, NULL otherwise
  */
 castor::tape::tapeserver::drive::DriveInterface *
-castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConfig
+castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape::daemon::TpconfigLine
   &driveConfig, cta::log::LogContext&  lc, cta::TapeMount *mount) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
   try {
-    driveInfo = dv.findBySymlink(driveConfig.getDevFilename());
+    driveInfo = dv.findBySymlink(driveConfig.devFilename);
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
-    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.devFilename));
     lc.log(cta::log::ERR, "Drive not found on this path");
     
     std::stringstream errMsg;
@@ -404,7 +404,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.devFilename));
     cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("errorMessage", e.getMessageValue()));
     lc.log(cta::log::ERR, "Error looking to path to tape drive");
     
@@ -417,7 +417,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.devFilename));
     lc.log(cta::log::ERR, "Unexpected exception while looking for drive");
     
     std::stringstream errMsg;
@@ -435,7 +435,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return drive.release();
   } catch (cta::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.devFilename));
     cta::log::LogContext::ScopedParam sp10(lc, cta::log::Param("errorMessage", e.getMessageValue()));
     lc.log(cta::log::ERR, "Error opening tape drive");
     
@@ -448,7 +448,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const DriveConf
     return NULL;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.getDevFilename()));
+    cta::log::LogContext::ScopedParam sp09(lc, cta::log::Param("devFilename", driveConfig.devFilename));
     lc.log(cta::log::ERR, "Unexpected exception while opening drive");
     
     std::stringstream errMsg;

@@ -25,7 +25,6 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
@@ -54,7 +53,7 @@ namespace daemon {
      */
     EmptyDriveProbe(
       cta::log::Logger &log,
-      const DriveConfig &driveConfig,
+      const cta::tape::daemon::TpconfigLine &driveConfig,
       System::virtualWrapper &sysWrapper);
     
     /** 
@@ -74,7 +73,7 @@ namespace daemon {
     /**
      * The configuration of the tape drive to be probed.
      */
-    const DriveConfig m_driveConfig;
+    const cta::tape::daemon::TpconfigLine m_driveConfig;
     
     /**
      * The system wrapper used to find the device and instantiate the drive object

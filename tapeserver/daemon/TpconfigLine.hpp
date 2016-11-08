@@ -33,28 +33,28 @@ public:
   /**
    * The unit name of the tape drive.
    */
-  const std::string unitName;
+  std::string unitName;
 
   /**
    * The logical library of the tape drive.
    */
-  const std::string logicalLibrary;
+  std::string logicalLibrary;
 
   /**
    * The filename of the device file of the tape drive.
    */
-  const std::string devFilename;
+  std::string devFilename;
 
   /**
    * The slot in the tape library that contains the tape drive (string encoded).
    */
-  const std::string rawLibrarySlot;
+  std::string rawLibrarySlot;
   
   /**
    * Accessor method to the library slot strcuture.
    * @return reference to the library slot.
    */
-  const cta::mediachanger::LibrarySlot & librarySlot();
+  const cta::mediachanger::LibrarySlot & librarySlot() const;
   
 private:
   /**
@@ -63,6 +63,11 @@ private:
   std::unique_ptr <cta::mediachanger::LibrarySlot> m_librarySlot;
 
 public:
+  /**
+   * Trivial constructor (used in unit tests).
+   */
+  TpconfigLine();
+  
   /**
    * Constructor.
    *
@@ -83,6 +88,13 @@ public:
    * @param o the other TpConfigLine to be copied.
    */
   TpconfigLine(const TpconfigLine& o);
+  
+  /**
+   * Copy operator
+   * @param o the other TpConfigLine to copy.
+   * @return a reference to the object
+   */
+  TpconfigLine& operator=(const TpconfigLine& o);
   static const size_t maxNameLen = 100;
 }; // struct TpconfigLine
 

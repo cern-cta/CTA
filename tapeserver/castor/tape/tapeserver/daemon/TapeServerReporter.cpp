@@ -40,7 +40,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
 TapeServerReporter::TapeServerReporter(
   cta::tape::daemon::TapedProxy& tapeserverProxy,
-  const DriveConfig& driveConfig,
+  const cta::tape::daemon::TpconfigLine& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::daemon::VolumeInfo &volume,
   cta::log::LogContext lc):
@@ -48,8 +48,8 @@ TapeServerReporter::TapeServerReporter(
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
-  m_unitName(driveConfig.getUnitName()),
-  m_logicalLibrary(driveConfig.getLogicalLibrary()),
+  m_unitName(driveConfig.unitName),
+  m_logicalLibrary(driveConfig.logicalLibrary),
   m_volume(volume),
   m_sessionPid(getpid()){
   //change the thread's name in the log

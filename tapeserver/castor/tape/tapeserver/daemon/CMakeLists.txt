@@ -37,8 +37,6 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   DiskReadTask.cpp
   DiskWriteTask.cpp
   DiskWriteThreadPool.cpp
-  DriveConfig.cpp
-  DriveConfigMap.cpp
   EmptyDriveProbe.cpp
   EncryptionControl.cpp
   TapeServerReporter.cpp
@@ -80,7 +78,7 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 add_library(ctaTapeServerDaemon 
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue TapeDrive)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_library(ctatapeserverdaemonunittests SHARED
@@ -88,7 +86,6 @@ add_library(ctatapeserverdaemonunittests SHARED
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
-  DriveConfigTest.cpp
   MigrationReportPackerTest.cpp
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp

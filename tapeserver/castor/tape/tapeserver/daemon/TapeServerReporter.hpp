@@ -25,11 +25,11 @@
 
 #include "common/threading/Threading.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include <memory>
 #include <string>
 #include <stdint.h>
@@ -55,7 +55,7 @@ public:
    */
   TapeServerReporter(
     cta::tape::daemon::TapedProxy& tapeserverProxy,
-    const DriveConfig &driveConfig,
+    const cta::tape::daemon::TpconfigLine &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::daemon::VolumeInfo &volume,
     cta::log::LogContext lc);

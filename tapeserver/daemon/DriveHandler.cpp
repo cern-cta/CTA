@@ -777,12 +777,6 @@ int DriveHandler::runChild() {
     
     castor::tape::System::realWrapper sWrapper;
     
-    castor::tape::tapeserver::daemon::DriveConfig driveConfig;
-    driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.rawLibrarySlot);
-    driveConfig.m_devFilename = m_configLine.devFilename;
-    driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
-    
     // TODO: the cleaner session does not yet report to the scheduler.
 //    // Before launching the transfer session, we validate that the scheduler is reachable.
 //    if (!scheduler.ping()) {
@@ -796,7 +790,7 @@ int DriveHandler::runChild() {
       capUtils,
       mediaChangerFacade,
       m_processManager.logContext().logger(),
-      driveConfig,
+      m_configLine,
       sWrapper,
       m_previousVid,
       true,
@@ -826,12 +820,6 @@ int DriveHandler::runChild() {
     cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
     
     castor::tape::System::realWrapper sWrapper;
-    
-    castor::tape::tapeserver::daemon::DriveConfig driveConfig;
-    driveConfig.m_unitName = m_configLine.unitName;
-    driveConfig.m_librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_configLine.rawLibrarySlot);
-    driveConfig.m_devFilename = m_configLine.devFilename;
-    driveConfig.m_logicalLibrary = m_configLine.logicalLibrary;
     
     cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
     
@@ -914,8 +902,8 @@ int DriveHandler::runChild() {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
         cta::common::dataStructures::DriveInfo driveInfo;
-        driveInfo.driveName=driveConfig.m_unitName;
-        driveInfo.logicalLibrary=driveConfig.m_logicalLibrary;
+        driveInfo.driveName=m_configLine.unitName;
+        driveInfo.logicalLibrary=m_configLine.rawLibrarySlot;
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/);
@@ -932,7 +920,7 @@ int DriveHandler::runChild() {
       cta::utils::getShortHostname(),
       m_processManager.logContext().logger(),
       sWrapper,
-      driveConfig,
+      m_configLine,
       mediaChangerFacade,
       driveHandlerProxy,
       capUtils,

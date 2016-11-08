@@ -24,7 +24,7 @@
 #pragma once
 
 #include "common/exception/Errnum.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/DriveConfig.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/mtio_add.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
@@ -231,9 +231,9 @@ namespace drive {
     virtual bool hasTapeInPlace() = 0;
     
     /**
-     * The configuration of teh tape drive as parsed from the TPCONFIG file.
+     * The configuration of the tape drive as parsed from the TPCONFIG file.
      */
-    daemon::DriveConfig config;
+    cta::tape::daemon::TpconfigLine config;
   };
   
   /**

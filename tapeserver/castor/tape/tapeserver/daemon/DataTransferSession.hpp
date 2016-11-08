@@ -29,7 +29,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "DataTransferConfig.hpp"
-#include "DriveConfig.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include "Session.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
@@ -59,7 +59,7 @@ namespace daemon {
       const std::string & hostname,
       cta::log::Logger & log,
       System::virtualWrapper & sysWrapper,
-      const DriveConfig & driveConfig,
+      const cta::tape::daemon::TpconfigLine & driveConfig,
       cta::mediachanger::MediaChangerFacade & mc,
       cta::tape::daemon::TapedProxy & initialProcess,
       cta::server::ProcessCap &capUtils,
@@ -107,7 +107,7 @@ namespace daemon {
     /**
      * The configuration of the tape drive to be used by this session.
      */
-    const DriveConfig m_driveConfig;
+    const cta::tape::daemon::TpconfigLine m_driveConfig;
     const DataTransferConfig & m_castorConf;
     /**
      * The drive information bundle allowing drive register update.
@@ -118,7 +118,7 @@ namespace daemon {
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
     castor::tape::tapeserver::drive::DriveInterface * findDrive(
-     const DriveConfig &driveConfig, cta::log::LogContext & lc, cta::TapeMount *mount);
+     const cta::tape::daemon::TpconfigLine &driveConfig, cta::log::LogContext & lc, cta::TapeMount *mount);
         
     /** sub-part of execute for the read sessions */
     EndOfSessionAction executeRead(cta::log::LogContext & lc, cta::RetrieveMount *retrieveMount);

@@ -44,6 +44,12 @@ cta::tape::daemon::TpconfigLine::TpconfigLine(
   if (librarySlot.size() > maxNameLen)
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: librarySlot too long");
 }
+
+//------------------------------------------------------------------------------
+// Trivial constructor.
+//------------------------------------------------------------------------------
+TpconfigLine::TpconfigLine() {}
+
 //------------------------------------------------------------------------------
 // Copy constructor.
 //------------------------------------------------------------------------------
@@ -53,8 +59,20 @@ TpconfigLine::TpconfigLine(const TpconfigLine& o): TpconfigLine(o.unitName, o.lo
 //------------------------------------------------------------------------------
 // TpconfigLine::librarySlot
 //------------------------------------------------------------------------------
-const cta::mediachanger::LibrarySlot& TpconfigLine::librarySlot() {
+const cta::mediachanger::LibrarySlot& TpconfigLine::librarySlot() const {
   return *m_librarySlot;
+}
+
+//------------------------------------------------------------------------------
+// TpconfigLine::operator=
+//------------------------------------------------------------------------------
+TpconfigLine& TpconfigLine::operator=(const TpconfigLine& o) {
+  unitName = o.unitName;
+  logicalLibrary = o.logicalLibrary;
+  devFilename = o.devFilename;
+  rawLibrarySlot = o.rawLibrarySlot;
+  m_librarySlot.reset(mediachanger::LibrarySlotParser::parse(rawLibrarySlot));
+  return *this;
 }
 
 }}} // namespace cta::tape::daemon

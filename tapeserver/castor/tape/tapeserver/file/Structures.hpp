@@ -24,6 +24,7 @@
 
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "common/exception/InvalidArgument.hpp"
 #include <string>
 #include <stdexcept>
 

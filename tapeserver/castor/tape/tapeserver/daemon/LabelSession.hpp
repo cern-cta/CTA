@@ -27,7 +27,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "castor/tape/tapeserver/daemon/DriveConfig.hpp"
 #include "castor/tape/tapeserver/daemon/Session.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -79,7 +78,7 @@ public:
     const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
     cta::log::Logger &log,
     System::virtualWrapper &sysWrapper,
-    const DriveConfig &driveConfig,
+    const cta::tape::daemon::TpconfigLine &driveConfig,
     const bool force,
     const bool lbp,
     const LabelSessionConfig &labelSessionConfig,
@@ -129,7 +128,7 @@ private:
   /**
    * The configuration of the tape drive to be used to label a tape.
    */
-  const DriveConfig m_driveConfig;
+  const cta::tape::daemon::TpconfigLine m_driveConfig;
   
   /**
    * The configuration parameters from castor.conf specific for of the tape drive to be used to label a tape.
