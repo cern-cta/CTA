@@ -25,6 +25,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/System.hpp"
+#include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
@@ -87,11 +88,15 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
   
   // 2a) Determine if we want to mount at all (for now)
+  // This variable will allow us to see if we switched from down to up and start a
+  // empty drive probe session if so.
+  bool downUpTransition = false;
 schedule:
   while (true) {
     try {
       auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName);
       if (!desiredState.up) {
+        downUpTransition  = true;
         // We wait a bit before polling the scheduler again.
         // TODO: parametrize the duration?
         m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
@@ -103,6 +108,22 @@ schedule:
       // The object store does not even know about this drive. We will report our state
       // (default status is down).
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    }
+  }
+  // If we get here after seeing a down desired state, we are transitioning  from
+  // down to up. In such a case, we will run an empty 
+  if (downUpTransition) {
+    downUpTransition = false;
+    castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
+    lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
+    if (!emptyDriveProbe.driveIsEmpty()) {
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      cta::common::dataStructures::SecurityIdentity securityIdentity;
+      m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false);
+      lc.log(cta::log::ERR, "A tape was detected in the drive. Putting the drive back down.");
+      goto schedule;
+    } else {
+      lc.log(cta::log::INFO, "No tape detected in the drive. Proceeding with scheduling.");
     }
   }
   // 2b) Get initial mount information
