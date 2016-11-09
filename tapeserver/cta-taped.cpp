@@ -112,6 +112,10 @@ static int exceptionThrowingMain(
 
   // Adjust log mask to the log level potentionally set in the configuration file
   log.setLogMask(globalConfig.logLevel.value());
+  {
+    std::list<cta::log::Param> params = {cta::log::Param("logLevel", globalConfig.logLevel.value())};
+    log(log::INFO, "Set log level", params);
+  }
     
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
