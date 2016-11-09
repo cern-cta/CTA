@@ -21,6 +21,7 @@
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
 
+#include <atomic>
 #include <list>
 #include <map>
 
@@ -123,6 +124,20 @@ public:
     const int priority,
     const std::string &msg,
     const std::list<Param> &params = std::list<Param>());
+
+  /**
+   * Sets the log mask.
+   *
+   * @param logMask The log mask.
+   */
+  void setLogMask(const std::string logMask);
+
+  /**
+   * Sets the log mask.
+   *
+   * @param logMask The log mask.
+   */
+  void setLogMask(const int logMask);
   
   /**
    * Writes the header of a syslog message to teh specifed output stream.
@@ -171,7 +186,7 @@ protected:
   /**
    * The log mask.
    */
-  int m_logMask;
+  std::atomic<int> m_logMask;
 
   /**
    * The maximum message length that the client syslog server can handle.

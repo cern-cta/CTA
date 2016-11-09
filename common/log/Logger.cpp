@@ -17,6 +17,7 @@
  */
 
 #include "common/log/Logger.hpp"
+#include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include <sys/time.h>
@@ -305,6 +306,24 @@ std::map<std::string, int>
   }
 
   return m;
+}
+
+//------------------------------------------------------------------------------
+// setLogMask
+//------------------------------------------------------------------------------
+void Logger::setLogMask(const std::string logMask) {
+  try {
+    setLogMask(toLogLevel(logMask));
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string("Failed to set log mask: ") + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// setLogMask
+//------------------------------------------------------------------------------
+void Logger::setLogMask(const int logMask) {
+  m_logMask = logMask;
 }
 
 } // namespace log
