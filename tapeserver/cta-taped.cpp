@@ -109,6 +109,9 @@ static int exceptionThrowingMain(
   // Parse /etc/cta/cta.conf and /etc/cta/TPCONFIG for global parameters
   const TapedConfiguration globalConfig =
     TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
+
+  // Adjust log mask to the log level potentionally set in the configuration file
+  log.setLogMask(globalConfig.logLevel.value());
     
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
