@@ -90,6 +90,7 @@ set (COMMON_LIB_SRC_FILES
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
+  log/LogLevel.cpp
   log/Message.cpp
   log/Param.cpp
   log/StringLogger.cpp
@@ -143,6 +144,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   dataStructures/StorageClassTest.cpp
   processCap/SmartCapTest.cpp
   log/LogContextTest.cpp
+  log/LogLevelTest.cpp
   log/ParamTest.cpp
   log/SyslogLoggerTest.cpp
   log/StringLoggerTest.cpp
