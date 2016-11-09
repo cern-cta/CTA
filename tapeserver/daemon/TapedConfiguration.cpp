@@ -38,6 +38,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ConfigurationFile cf(generalConfigPath);
   // Extract configuration from parsed config file
   // TpConfig
+  ret.logLevel.setFromConfigurationFile(cf, generalConfigPath);
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
   // Memory management
   ret.bufferSize.setFromConfigurationFile(cf, generalConfigPath);
@@ -60,6 +61,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   
   // If we get here, the configuration file is good enough to be logged.
+  ret.logLevel.log(log);
   ret.tpConfigPath.log(log);
   
   ret.bufferSize.log(log);
