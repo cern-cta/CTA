@@ -46,9 +46,9 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // Basics: tp config
   //----------------------------------------------------------------------------
-  /// Log level
-  SourcedParameter<std::string> logLevel = decltype(logLevel)
-     ("taped", "LogLevel", "DEBUG", "Compile time default");
+  /// The log mask.  Logs with a level lower than this value will be masked.
+  SourcedParameter<std::string> logMask = decltype(logMask)
+     ("taped", "LogMask", "DEBUG", "Compile time default");
   /// Path to the file describing the tape drives (TPCONFIG)
   SourcedParameter<std::string> tpConfigPath = decltype(tpConfigPath)
      ("taped" , "TpConfigPath", "/etc/cta/TPCONFIG", "Compile time default");

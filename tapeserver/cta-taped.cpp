@@ -111,10 +111,10 @@ static int exceptionThrowingMain(
     TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 
   // Adjust log mask to the log level potentionally set in the configuration file
-  log.setLogMask(globalConfig.logLevel.value());
+  log.setLogMask(globalConfig.logMask.value());
   {
-    std::list<cta::log::Param> params = {cta::log::Param("logLevel", globalConfig.logLevel.value())};
-    log(log::INFO, "Set log level", params);
+    std::list<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
+    log(log::INFO, "Set log mask", params);
   }
     
   // Create the object providing utilities for working with UNIX capabilities
