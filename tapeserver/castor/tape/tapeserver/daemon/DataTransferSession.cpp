@@ -135,6 +135,8 @@ schedule:
     localParams.add("errorMessage", e.getMessageValue());
     lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down.");
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    cta::common::dataStructures::SecurityIdentity cliId;
+    m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false);
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...
