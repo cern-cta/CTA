@@ -23,6 +23,8 @@ find_package (libuuid REQUIRED)
 
 add_subdirectory (exception)
 
+include_directories (${XROOTD_INCLUDE_DIR})
+
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
@@ -87,6 +89,7 @@ set (COMMON_LIB_SRC_FILES
   exception/NotAnOwner.cpp
   exception/OutOfMemory.cpp
   exception/TimeOut.cpp
+  exception/XrootCl.cpp
   log/DummyLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
@@ -136,7 +139,8 @@ target_link_libraries (ctacommon
   pthread
   uuid
   z
-  cap)
+  cap
+  XrdCl)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp

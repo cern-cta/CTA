@@ -22,26 +22,24 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "XrootCl.hpp"
+#include <sstream>
 
-#include "common/exception/Exception.hpp"
-#include <xrootd/XrdCl/XrdClXRootDResponses.hh>
+namespace cta { namespace exception {
 
-namespace castor {
-namespace tape {
-namespace server {
-namespace exception {
-  /**
-   * A class turning the XrootCl (xroot 4 object client) error codes
-   * into castor exceptions.
-   */
-  class XrootCl: public cta::exception::Exception {
-  public:
-    XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() throw() {};
-    const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-    static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
-  protected:
-    XrdCl::XRootDStatus m_status;
-  };
-}}}}
+XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
+  std::stringstream w;
+  if (what.size())
+    w << what << " ";
+  w << status.ToString();
+  getMessage().str(w.str());
+}
+
+void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
+{
+  if (!status.IsOK()) {
+    throw XrootCl(status, context);
+  }
+}
+
+}} // namespace cta::exception

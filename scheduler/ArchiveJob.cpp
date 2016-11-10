@@ -83,6 +83,8 @@ void cta::ArchiveJob::complete() {
   m_catalogue.fileWrittenToTape (fileReport);
   //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
+  // We will now report the successful archival to the EOS instance.
+  // if  TODO TODO
   // We can now record the success for the job in the database
   m_dbJob->succeed();
 }

@@ -26,7 +26,7 @@
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/tape/tapeserver/exception/XrootCl.hpp"
+#include "common/exception/XrootCl.hpp"
 #include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <cryptopp/rsa.h>
@@ -87,7 +87,7 @@ namespace castor {
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
         const uint16_t m_timeout;
-        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        typedef cta::exception::XrootCl XrootClEx;
       };
       
       class XrootReadFile: public XrootBaseReadFile {
@@ -118,7 +118,7 @@ namespace castor {
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
         const uint16_t m_timeout;
-        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        typedef cta::exception::XrootCl XrootClEx;
         bool m_closeTried;      
       };
       
@@ -154,7 +154,7 @@ namespace castor {
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
         const uint16_t m_timeout;
-        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        typedef cta::exception::XrootCl XrootClEx;
       };
       
       class EosWriteFile: public WriteFile {
@@ -169,7 +169,7 @@ namespace castor {
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
         const uint16_t m_timeout;
-        typedef castor::tape::server::exception::XrootCl XrootClEx;
+        typedef cta::exception::XrootCl XrootClEx;
         bool m_closeTried;      
       };
       

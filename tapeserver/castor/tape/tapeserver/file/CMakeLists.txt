@@ -29,8 +29,7 @@ set(TAPESERVER_FILE_LIBRARY_SRCS
   File.cpp
   DiskFile.cpp
   RadosStriperPool.cpp
-  Structures.cpp
-  ../exception/XrootCl.cpp)
+  Structures.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   if(GCC_VERSION_GE_4_8_0)
