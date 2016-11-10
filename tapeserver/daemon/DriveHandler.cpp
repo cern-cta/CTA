@@ -79,7 +79,7 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeT
   // Draining to disk is given a grace period of 30 minutes for changing state.
   {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(30))},
   // We expect the process to exit within 5 seconds of getting in this state.
-  {SessionState::ShutingDown, std::chrono::duration_cast<Timeout>(std::chrono::seconds(5))}
+  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::seconds(5))}
 };
 
 //------------------------------------------------------------------------------
@@ -270,7 +270,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
         return processUnmounting(message);
       case SessionState::DrainingToDisk:
         return processDrainingToDisk(message);
-      case SessionState::ShutingDown:
+      case SessionState::ShuttingDown:
         return processShutingDown(message);
       case SessionState::Fatal:
         return processFatal(message);

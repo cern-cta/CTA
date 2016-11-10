@@ -106,7 +106,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType() ?
       "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
-    m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Shutdown,
+    m_this.m_initialProcess.reportState(cta::tape::session::SessionState::ShuttingDown,
       cta::tape::session::SessionType::Archive);
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   }

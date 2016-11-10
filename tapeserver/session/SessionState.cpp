@@ -39,8 +39,8 @@ std::string toString(SessionState state) {
     return "Unmounting";
   case SessionState::DrainingToDisk:
     return "DrainingToDisk";
-  case SessionState::ShutingDown:
-    return "ShutingDown";
+  case SessionState::ShuttingDown:
+    return "ShuttingDown";
   case SessionState::Shutdown:
     return "Shutdown";
   case SessionState::Killed:
