@@ -32,7 +32,6 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 
 #include "scheduler/Scheduler.hpp"
-#include "remotens/MockRemoteNS.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 #include <memory>

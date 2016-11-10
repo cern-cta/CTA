@@ -23,8 +23,6 @@
 #include "common/log/SyslogLogger.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "remotens/EosNS.hpp"
-#include "remotens/RemoteNS.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
 

@@ -45,8 +45,6 @@
 #include "mediachanger/MmcProxyDummy.hpp"
 #include "mediachanger/RmcProxyDummy.hpp"
 //#include "smc_struct.h"
-#include "remotens/MockRemoteNS.hpp"
-#include "remotens/MockRemoteFullFS.hpp"
 //#include "scheduler/DummyScheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/MountType.hpp"

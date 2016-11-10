@@ -78,7 +78,7 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 add_library(ctaTapeServerDaemon 
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon ctaremotens protobuf ctascheduler ctalegacymsg ctacatalogue TapeDrive)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctatapereactor  ctacommon protobuf ctascheduler ctalegacymsg ctacatalogue TapeDrive)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
 add_library(ctatapeserverdaemonunittests SHARED

@@ -39,7 +39,6 @@ target_link_libraries(cta-unitTests
   ctaobjectstore
   ctaobjectstoreunittests
   ctardbmsunittests
-  ctaremotensunittests
   ctaschedulerunittests
   ctaio
   ctadaemonunittests
