@@ -62,6 +62,10 @@ private:
   };
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession=PreviousSession::Initiating;
+  /** Representation of the last know state of the previous session (useful for crashes) */
+  session::SessionState m_previousState = session::SessionState::StartingUp;
+  /** Representation of the last know type of the previous session (useful for crashes) */
+  session::SessionType m_previousType = session::SessionType::Undetermined;
   /** Previous VID, that can help the unmount process */
   std::string m_previousVid;
   /** Representation of the status of the current process. */
@@ -91,6 +95,8 @@ private:
   SubprocessHandler::ProcessingStatus processFatal(serializers::WatchdogMessage & message);
   /** Current session's type */
   session::SessionType m_sessionType=session::SessionType::Undetermined;
+  /** Current session's VID */
+  std::string m_sessionVid;
   /** Current session's parameters: they are accumulated during session's lifetime
    * and logged as session ends */
   log::LogContext m_sessionEndContext;
