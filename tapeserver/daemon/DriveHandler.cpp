@@ -315,6 +315,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
 void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
   m_pid=-1;
   m_previousSession=previousSessionState;
+  m_previousType=m_sessionType;
+  m_previousState=m_previousState;
+  m_previousVid=m_previousVid;
   m_sessionState=SessionState::PendingFork;
   m_sessionType=SessionType::Undetermined;
   m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
@@ -342,11 +345,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::processStartingUp(serializers:
           .add("ActualState", session::toString(m_sessionState))
           .add("ExpectedType", session::toString(SessionType::Undetermined));
     m_processManager.logContext().log(log::WARNING,
-      "In DriveHandler::processStartingUp(): Unexpected session type of status. Killing subprocess if present.");
+      "In DriveHandler::processStartingUp(): Unexpected session type or status. Killing subprocess if present.");
   }
   // Record the new state:
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // kill(), when called by the process manager does not keep track of states,
   // so here we do it.
   m_sessionState = SessionState::Killed;
@@ -375,9 +379,18 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
           .add("NewType", session::toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::WARNING,
         "In DriveHandler::processScheduling(): unexpected previous state/type.");
+  } else if (m_sessionState != SessionState::Scheduling) {
+    // If we see a session state change, it's worth logging (at least in debug mode)
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::DEBUG,
+        "In DriveHandler::processScheduling(): state change.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -400,9 +413,18 @@ SubprocessHandler::ProcessingStatus DriveHandler::processChecking(serializers::W
           .add("NewType", session::toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::WARNING,
         "In DriveHandler::processChecking(): unexpected previous state/type.");
+  } else if (m_sessionState != SessionState::Checking) {
+    // If we see a session state change, it's worth logging (at least in debug mode)
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::DEBUG,
+        "In DriveHandler::processChecking(): state change.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -427,9 +449,19 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
           .add("NewType", session::toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::WARNING,
         "In DriveHandler::processMounting(): unexpected previous state/type.");
+  } else if (m_sessionState != SessionState::Checking) {
+    // If we see a session state change, it's worth logging (at least in debug mode)
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()))
+          .add("VID", message.vid());
+    m_processManager.logContext().log(log::DEBUG,
+        "In DriveHandler::processMounting(): state change.");
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid=message.vid();
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -456,6 +488,14 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
           .add("NewType", session::toString((SessionType)message.sessiontype()));
     m_processManager.logContext().log(log::WARNING,
         "In DriveHandler::processMounting(): unexpected previous state/type.");
+  } else if (m_sessionState != SessionState::Checking) {
+    // If we see a session state change, it's worth logging (at least in debug mode)
+    params.add("PreviousState", session::toString(m_sessionState))
+          .add("PreviousType", session::toString(m_sessionType))
+          .add("NewState", session::toString((SessionState)message.sessionstate()))
+          .add("NewType", session::toString((SessionType)message.sessiontype()));
+    m_processManager.logContext().log(log::DEBUG,
+        "In DriveHandler::processRunning(): state change.");
   }
   // Record session state change time and reset other counters.
   if (m_sessionState!=(SessionState)message.sessionstate()) {
@@ -468,6 +508,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   // Record the state
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid=message.vid();
   // Record data moved totals if needed.
   if (m_totalTapeBytesMoved != message.totaltapebytesmoved()||
       m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
@@ -515,6 +556,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid=message.vid();
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -540,6 +582,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializ
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -565,6 +608,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processShutingDown(serializers
   }
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -581,6 +625,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processFatal(serializers::Watc
   params.add("DriveUnit", m_configLine.unitName);
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
+  m_sessionVid="";
   // Set the timeout for this state
   m_lastStateChangeTime=std::chrono::steady_clock::now();
   m_processingStatus.nextTimeout=nextTimeout();
@@ -662,6 +707,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       params.add("IfSignaled", WIFSIGNALED(processStatus))
             .add("TermSignal", WTERMSIG(processStatus))
             .add("CoreDump", WCOREDUMP(processStatus));
+      // Record the status of the session to decide whether we will run a cleaner on the next one.
+      m_previousState = m_sessionState;
+      m_previousType = m_sessionType;
+      m_previousVid = m_sessionVid;
       resetToDefault(PreviousSession::Crashed);
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
@@ -695,6 +744,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
     m_processManager.logContext().log(log::INFO, "Re-launching child process.");
     m_processingStatus.forkRequested=true;
     m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+    // Record the status of the session for cleanup startup (not needed here)
+    m_previousState = SessionState::Shutdown;
+    m_previousType = SessionType::Undetermined;
+    m_previousVid = "";
     resetToDefault(PreviousSession::Crashed);
     return m_processingStatus;
   }

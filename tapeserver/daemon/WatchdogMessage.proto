@@ -27,11 +27,12 @@ message LogParam {
 
 message WatchdogMessage {
   required bool reportingstate = 20010;
-  required uint32 sessionstate = 20011;
-  required uint32 sessiontype = 20012;
-  required bool reportingbytes = 20013;
-  optional uint64 totaldiskbytesmoved = 20014;
-  optional uint64 totaltapebytesmoved = 20015;
+  optional uint32 sessionstate = 20011;
+  optional uint32 sessiontype = 20012;
+  optional string vid = 20013;
+  required bool reportingbytes = 20014;
+  optional uint64 totaldiskbytesmoved = 20015;
+  optional uint64 totaltapebytesmoved = 20016;
   repeated LogParam addedlogparams = 20017;
   repeated string deletedlogparams = 20018;
 }

@@ -72,7 +72,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   watchdogMessage.set_totaltapebytesmoved(0);
   watchdogMessage.set_sessionstate((uint32_t)state);
   watchdogMessage.set_sessiontype((uint32_t)type);
- // TODO: add VID.
+  watchdogMessage.set_vid(vid);
   std::string buffer;
   watchdogMessage.SerializeToString(&buffer);
   m_socketPair.send(buffer);
