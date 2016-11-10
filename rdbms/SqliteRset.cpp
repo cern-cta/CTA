@@ -21,6 +21,7 @@
 #include "SqliteRset.hpp"
 #include "SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/Errnum.hpp"
 
 #include <cstring>
 #include <sstream>
@@ -218,7 +219,10 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
     if(SQLITE_NULL == idxAndType.colType) {
       return nullopt;
     } else {
-      return optional<std::string>((const char *) sqlite3_column_text(m_stmt.get(), idxAndType.colIdx));
+      const unsigned char * column_text=sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
+      cta::exception::Errnum::throwOnNull(column_text,
+        std::string("In SqliteRset::columnOptionalString(): got NULL column text for ") + colName);
+      return optional<std::string>((const char *) column_text);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
