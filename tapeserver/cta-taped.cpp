@@ -232,11 +232,14 @@ int main(const int argc, char **const argv) {
     std::list<cta::log::Param> params = {
       cta::log::Param("message", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception", params);
+    sleep(1);
   } catch(std::exception &se) {
     std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception", params);
+    sleep(1);
   } catch(...) {
     log(log::ERR, "Caught an unexpected and unknown exception");
+    sleep(1);
   }
 
   google::protobuf::ShutdownProtobufLibrary();
