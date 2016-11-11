@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/Exception.hpp"
 #include "common/log/LogLevel.hpp"
 
 #include <gtest/gtest.h>
@@ -86,6 +87,13 @@ TEST_F(cta_log_LogLevelTest, toLogLevel_USERERR) {
   // It is a convention of CTA to use syslog level of LOG_NOTICE to label
   // user errors.
   ASSERT_EQ(NOTICE, toLogLevel("USERERR"));
+}
+
+TEST_F(cta_log_LogLevelTest, toLogLevel_INVALID_LOG_LEVEL) {
+  using namespace cta;
+  using namespace cta::log;
+
+  ASSERT_THROW(toLogLevel("toLogLevel_INVALID_LOG_LEVEL"), exception::Exception);
 }
 
 } // namespace unitTests
