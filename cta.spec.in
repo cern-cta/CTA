@@ -33,11 +33,14 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
 %if "%{?dist}" == ".slc6" || "%{?dist}" == ".el6"
-BuildRequires: xrootd-client-devel >= 4.2.3 xrootd-devel >= 4.2
+BuildRequires: xrootd-client-devel >= 4.2.3
+BuildRequires: xrootd-devel >= 4.2
 BuildRequires: cryptopp-devel >= 5.6.2
 %else
-BuildRequires: xrootd-client-devel >= 4.2.3 xrootd-devel >= 4.2
-BuildRequires: xrootd-server-devel >= 4.2 xrootd-private-devel >= 4.2
+BuildRequires: xrootd-client-devel  = 1:4.4.1
+BuildRequires: xrootd-devel         = 1:4.4.1
+BuildRequires: xrootd-server-devel  = 1:4.4.1
+BuildRequires: xrootd-private-devel = 1:4.4.1
 BuildRequires: librados-devel >= 11.0, libradosstriper-devel >= 11.0, 
 BuildRequires: protobuf-compiler >= 2.3.0 protobuf-devel >= 2.3.0
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
