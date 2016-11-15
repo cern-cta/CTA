@@ -219,10 +219,14 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
     if(SQLITE_NULL == idxAndType.colType) {
       return nullopt;
     } else {
-      const unsigned char * column_text=sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
-      cta::exception::Errnum::throwOnNull(column_text,
-        std::string("In SqliteRset::columnOptionalString(): got NULL column text for ") + colName);
-      return optional<std::string>((const char *) column_text);
+      const char *const colValue = (const char *)sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
+      if(NULL == colValue) {
+        exception::Exception ex;
+        ex.getMessage() << __FUNCTION__ << " failed: sqlite3_column_text() returned NULL when"
+          " m_colNameToIdxAndType map states otherwise: colName=" << colName << ",colIdx=" << idxAndType.colIdx;
+        throw ex;
+      }
+      return optional<std::string>(colValue);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
