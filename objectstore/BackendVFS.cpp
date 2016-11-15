@@ -227,13 +227,19 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(
   ret->set(::open(path.c_str(), O_RDONLY), path);
 
   if(0 > ret->m_fd) {
-    const std::string errnoStr = utils::errnoToString(errno);
-    exception::Exception ex;
-    ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
-      ": " << errnoStr;
-    // fd=-1, so there will be no need to close the file (when *ret will be destroyed).
-    ret->m_fdSet=false;
-    throw ex;
+    // Create the lock file if missing.
+    if (ENOENT == errno) {
+      ret->set(::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH), path);
+      exception::Errnum::throwOnMinusOne(ret->m_fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
+    } else {
+      const std::string errnoStr = utils::errnoToString(errno);
+      exception::Exception ex;
+      ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
+        ": " << errnoStr;
+      // fd=-1, so there will be no need to close the file (when *ret will be destroyed).
+      ret->m_fdSet=false;
+      throw ex;
+    }
   }
 
   if(::flock(ret->m_fd, LOCK_EX)) {
