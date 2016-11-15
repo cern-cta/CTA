@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 #include "common/threading/Mutex.hpp"
 #include <cryptopp/rsa.h>
 #include <memory>
@@ -54,7 +54,7 @@ namespace castor {
        * Currently, the parameter allows switching between RFIO and XROOT
        */
       class DiskFileFactory {
-        typedef castor::tape::utils::Regex Regex;
+        typedef cta::utils::Regex Regex;
       public:
         DiskFileFactory(const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKey, uint16_t xrootTimeout, 

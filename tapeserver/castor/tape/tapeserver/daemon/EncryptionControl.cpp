@@ -25,7 +25,7 @@
 
 #include "EncryptionControl.hpp"
 #include "common/threading/SubProcess.hpp"
-#include "castor/tape/tapeserver/utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor {

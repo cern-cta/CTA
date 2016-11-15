@@ -117,6 +117,7 @@ set (COMMON_LIB_SRC_FILES
   threading/Semaphores.cpp
   threading/SubProcess.cpp
   utils/GetOptThreadSafe.cpp
+  utils/Regex.cpp
   utils/utils.cpp
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
@@ -135,7 +136,6 @@ target_link_libraries (ctacommon
   pthread
   uuid
   z
-  Utils
   cap)
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
@@ -160,6 +160,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   threading/ThreadingTests.cpp
   threading/AtomicCounterTest.cpp
   utils/GetOptThreadSafeTest.cpp
+  utils/RegexTest.cpp
   utils/UtilsTest.cpp
   UserIdentityTest.cpp
   optionalTest.cpp)

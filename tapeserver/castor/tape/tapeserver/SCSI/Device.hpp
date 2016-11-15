@@ -30,7 +30,7 @@
 #include <dirent.h>
 #include "../system/Wrapper.hpp"
 #include "common/exception/Exception.hpp"
-#include "../utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 #include "Constants.hpp"
 #include <string>
 

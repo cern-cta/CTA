@@ -19,7 +19,7 @@
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -186,7 +186,7 @@ bool BackendVFS::exists(std::string name) {
 std::list<std::string> BackendVFS::list() {
   std::list<std::string> ret;
   // We should not list ., .. and the .<object>.lock files
-  castor::tape::utils::Regex re("^(\\..+\\.lock|\\.{1,2})$");
+  utils::Regex re("^(\\..+\\.lock|\\.{1,2})$");
   ::DIR * dir = ::opendir(m_root.c_str());
   cta::exception::Errnum::throwOnNull(dir);
   while (struct ::dirent * ent=::readdir(dir)) {

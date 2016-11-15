@@ -39,7 +39,6 @@ set(CTEST_OUTPUT_ON_FAILURE 1)
 add_subdirectory(SCSI)
 add_subdirectory(drive)
 add_subdirectory(system)
-add_subdirectory(utils)
 add_subdirectory(file)
 add_subdirectory(daemon)
 

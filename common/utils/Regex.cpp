@@ -25,9 +25,9 @@
 #include "common/exception/Exception.hpp"
 #include <regex.h>
 
-using namespace castor::tape;
+namespace cta { namespace utils {
 
-utils::Regex::Regex(const char * re_str) : m_set(false) {
+Regex::Regex(const char * re_str) : m_set(false) {
   if (int rc = ::regcomp(&m_re, re_str, REG_EXTENDED)) {
     std::string error("Could not compile regular expression: \"");
     error += re_str;
@@ -42,12 +42,12 @@ utils::Regex::Regex(const char * re_str) : m_set(false) {
   m_set = true;
 }
 
-utils::Regex::~Regex() {
+Regex::~Regex() {
   if (m_set)
     ::regfree(&m_re);
 }
 
-std::vector<std::string> utils::Regex::exec(const std::string &s) {
+std::vector<std::string> Regex::exec(const std::string &s) {
   regmatch_t matches[100];
   if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
     std::vector<std::string> ret;
@@ -61,3 +61,5 @@ std::vector<std::string> utils::Regex::exec(const std::string &s) {
   }
   return std::vector<std::string>();
 }
+
+}} // namespace cta::utils

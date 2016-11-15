@@ -17,7 +17,7 @@
  */
 
 #include "common/checksum/Checksum.hpp"
-#include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 #include <sstream>
 
 //------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ cta::Checksum::Checksum(const std::string& url): m_type(CHECKSUMTYPE_NONE) {
   if (url.empty() || url == "-") {
     return;
   }
-  castor::tape::utils::Regex re("^adler32:0[Xx]([[:xdigit:]]+)$");
+  utils::Regex re("^adler32:0[Xx]([[:xdigit:]]+)$");
   auto result = re.exec(url);
   if (result.size()) {
     m_type = CHECKSUMTYPE_ADLER32;

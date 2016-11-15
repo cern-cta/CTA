@@ -20,11 +20,11 @@
 #include "BackendRados.hpp"
 #include "BackendVFS.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/castor/tape/tapeserver/utils/Regex.hpp"
+#include "common/utils/Regex.hpp"
 
 auto cta::objectstore::BackendFactory::createBackend(const std::string& URL)
   -> std::unique_ptr<Backend> {
-  castor::tape::utils::Regex fileRe("^file://(.*)$"),
+  utils::Regex fileRe("^file://(.*)$"),
       radosRe("^rados://([^@]+)@(.*)$");
   std::vector<std::string> regexResult;
   // Is it a file:// URL?

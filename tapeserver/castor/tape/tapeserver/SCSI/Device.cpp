@@ -37,7 +37,7 @@ using namespace castor::tape;
  */
 SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrapper(sysWrapper) {
   std::string sysDevsPath = "/sys/bus/scsi/devices";
-  utils::Regex ifFirstCharIsDigit("^[[:digit:]]");
+  cta::utils::Regex ifFirstCharIsDigit("^[[:digit:]]");
   std::vector<std::string> checkResult;
   DIR* dirp;
   cta::exception::Errnum::throwOnNull(
@@ -142,8 +142,8 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
     tapeDir ="";
   } 
   
-  utils::Regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
-  utils::Regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
+  cta::utils::Regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
+  cta::utils::Regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
   
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;

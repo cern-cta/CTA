@@ -68,7 +68,7 @@ add_library (ctaobjectstore SHARED
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp)
-target_link_libraries(ctaobjectstore Utils rados json-c ctautils)
+target_link_libraries(ctaobjectstore rados json-c ctautils)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

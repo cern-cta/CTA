@@ -51,7 +51,6 @@ target_link_libraries(TapeDriveReadWriteTest
   ctamediachanger
   SCSI
   System
-  Utils
   ctacommon
   #ctaclient
   ctaTapeServerDaemon

@@ -32,8 +32,8 @@ using ::testing::_;
 
 namespace unitTests {
 
-TEST(castor_tape_utils_Regex, BasicFunctionality) {
-  castor::tape::utils::Regex re("a(b)");
+TEST(Regex, BasicFunctionality) {
+  cta::utils::Regex re("a(b)");
   std::vector<std::string> ret1, ret2;
   ret1 = re.exec("1abc");
   ret2 = re.exec("xyz");
@@ -44,8 +44,8 @@ TEST(castor_tape_utils_Regex, BasicFunctionality) {
   ASSERT_EQ(ret2.size(), 0U);
 }
 
-TEST(castor_tape_utils_Regex, OperationalTest) {
-  castor::tape::utils::Regex re("^scsi_tape:(st[[:digit:]]+)$");
+TEST(Regex, OperationalTest) {
+  cta::utils::Regex re("^scsi_tape:(st[[:digit:]]+)$");
   std::vector<std::string> ret1, ret2, ret3;
   ret1 = re.exec("scsi_tape:st1");
   ret2 = re.exec("scsi_tape:st124");
@@ -61,8 +61,8 @@ TEST(castor_tape_utils_Regex, OperationalTest) {
 }
 
  
-TEST(castor_tape_utils_Regex, SubstringMatch) {
-  castor::tape::utils::Regex re("^radosstriper:///([^:]+@[^:]+):(.*)$");
+TEST(Regex, SubstringMatch) {
+  cta::utils::Regex re("^radosstriper:///([^:]+@[^:]+):(.*)$");
   std::vector<std::string> ret1;
   ret1 = re.exec("radosstriper:///user@pool:12345@castorns.7890");
 

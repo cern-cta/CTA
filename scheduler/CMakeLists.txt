@@ -28,7 +28,7 @@ add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ctacommon ctaobjectstore protobuf Utils ctautils)
+target_link_libraries (ctascheduler ctacommon ctaobjectstore protobuf ctautils)
 
 #add_library (ctaschedulerutils SHARED
 #  _old_prototype_DummyScheduler.cpp)

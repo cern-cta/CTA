@@ -31,9 +31,7 @@
  * useful for its destructor which will allow
  * RAII.
  */
-namespace castor {
-namespace tape {
-namespace utils {
+namespace cta { namespace utils {
 
   class Regex {
   public:
@@ -44,6 +42,4 @@ namespace utils {
     regex_t m_re;
     bool m_set;
   }; /* class regex */
-} // namespace Utils
-} // namespace tape
-} // namespace castor
+}} // namespace cta::utils
