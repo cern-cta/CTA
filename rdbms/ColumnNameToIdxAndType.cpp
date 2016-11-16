@@ -50,5 +50,12 @@ bool ColumnNameToIdxAndType::empty() const {
   return m_nameToIdxAndType.empty();
 }
 
+//------------------------------------------------------------------------------
+// clear
+//------------------------------------------------------------------------------
+void ColumnNameToIdxAndType::clear() {
+  m_nameToIdxAndType.clear();
+}
+
 } // namespace rdbms
 } // namespace cta

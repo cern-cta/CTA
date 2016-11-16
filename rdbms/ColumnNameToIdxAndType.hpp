@@ -82,6 +82,11 @@ public:
    */
   bool empty() const;
 
+  /**
+   * Clears the contents of this map.
+   */
+  void clear();
+
 private:
 
   /**
