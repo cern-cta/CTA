@@ -125,9 +125,7 @@ private:
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteRset::SqliteRset(SqliteStmt &stmt):
-  m_stmt(stmt),
-  m_nextHasNotBeenCalled(true) {
+SqliteRset::SqliteRset(SqliteStmt &stmt): m_stmt(stmt) {
 }
 
 //------------------------------------------------------------------------------
@@ -155,12 +153,8 @@ bool SqliteRset::next() {
       throw exception::Exception(Sqlite::rcToStr(stepRc));
     }
 
-    if(m_nextHasNotBeenCalled) {
-      m_nextHasNotBeenCalled = false;
-
-      if(SQLITE_ROW == stepRc) {
-        populateColNameToIdxAndTypeMap();
-      }
+    if(SQLITE_ROW == stepRc) {
+      clearAndPopulateColNameToIdxAndTypeMap();
     }
 
     return SQLITE_ROW == stepRc;
@@ -171,14 +165,16 @@ bool SqliteRset::next() {
 }
 
 //------------------------------------------------------------------------------
-// populateColNameToIdxMap
+// clearAndPopulateColNameToIdxMap
 //------------------------------------------------------------------------------
-void SqliteRset::populateColNameToIdxAndTypeMap() {
+void SqliteRset::clearAndPopulateColNameToIdxAndTypeMap() {
   try {
+    m_colNameToIdxAndType.clear();
+
     const int nbCols = sqlite3_column_count(m_stmt.get());
     for (int i = 0; i < nbCols; i++) {
       // Get the name of the column
-      const char *colName = sqlite3_column_name(m_stmt.get(), i);
+      const char *const colName = sqlite3_column_name(m_stmt.get(), i);
       if (nullptr == colName) {
         std::ostringstream msg;
         msg << "Failed to get column name for column index " << i;

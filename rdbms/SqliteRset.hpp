@@ -102,19 +102,14 @@ private:
   SqliteStmt &m_stmt;
 
   /**
-   * True if the next() method has not yet been called.
-   */
-  bool m_nextHasNotBeenCalled;
-
-  /**
    * Map from column name to column index and type.
    */
   ColumnNameToIdxAndType m_colNameToIdxAndType;
 
   /**
-   * Populates the map from column name to column index and type.
+   * Clears and populates the map from column name to column index and type.
    */
-  void populateColNameToIdxAndTypeMap();
+  void clearAndPopulateColNameToIdxAndTypeMap();
 
 }; // class SqlLiteRset
 
