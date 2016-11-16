@@ -206,6 +206,23 @@ uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
 }
 
 //------------------------------------------------------------------------------
+// setArchiveReportURL
+//------------------------------------------------------------------------------
+void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
+  checkPayloadWritable();
+  m_payload.set_archivereporturl(URL);
+}
+
+//------------------------------------------------------------------------------
+// getArviveReportURL
+//------------------------------------------------------------------------------
+std::string ArchiveRequest::getArchiveReportURL() {
+  checkPayloadReadable();
+  return m_payload.archivereporturl();
+}
+
+
+//------------------------------------------------------------------------------
 // setDiskpoolThroughput
 //------------------------------------------------------------------------------
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {

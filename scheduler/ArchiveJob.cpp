@@ -18,6 +18,7 @@
 
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
+#include "disk/DiskReporterFactory.hpp"
 #include <limits>
 
 //------------------------------------------------------------------------------
@@ -85,8 +86,12 @@ void cta::ArchiveJob::complete() {
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
   // We will now report the successful archival to the EOS instance.
   // if  TODO TODO
-  // We can now record the success for the job in the database
-  m_dbJob->succeed();
+  // We can now record the success for the job in the database.
+  // If this is the last job of the request, we also report the success to the client.
+  if (m_dbJob->succeed()) {
+    std::unique_ptr<disk::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL));
+    reporter->reportArchiveFullyComplete();
+  }
 }
   
 //------------------------------------------------------------------------------

@@ -2029,6 +2029,7 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
   optional<std::string> diskpool = getOptionStringValue("", "--diskpool", true, false);
   optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", true, false);
+  optional<std::string> archiveReportURL = getOptionStringValue("", "-–reportURL", false, true, "");
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2049,6 +2050,7 @@ void XrdCtaFile::xCom_archive() {
   request.requester=originator;
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
+  request.archiveReportURL=archiveReportURL.value();
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request);
   cmdlineOutput << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());

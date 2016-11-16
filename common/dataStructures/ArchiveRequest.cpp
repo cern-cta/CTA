@@ -45,6 +45,7 @@ bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
       && diskFileInfo==rhs.diskFileInfo
       && diskpoolName==rhs.diskpoolName
       && diskpoolThroughput==rhs.diskpoolThroughput
+      && archiveReportURL==rhs.archiveReportURL
       && creationLog==rhs.creationLog;
 }
 
@@ -69,6 +70,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
      << " diskFileInfo=" << obj.diskFileInfo
      << " diskpoolName=" << obj.diskpoolName
      << " diskpoolThroughput=" << obj.diskpoolThroughput
+     << " archiveReportURL=" << obj.archiveReportURL
      << " creationLog=" << obj.creationLog << ")";
   return os;
 }

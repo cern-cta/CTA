@@ -303,6 +303,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.setMountPolicy(criteria.mountPolicy);
   aReq.setDiskpoolName(request.diskpoolName);
   aReq.setDiskpoolThroughput(request.diskpoolThroughput);
+  aReq.setArchiveReportURL(request.archiveReportURL);
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
@@ -632,6 +633,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().instanceName = osar.getArchiveFile().diskInstance;
       ret.back().request.requester = osar.getRequester();
       ret.back().request.srcURL = osar.getSrcURL();
+      ret.back().request.archiveReportURL = osar.getArchiveReportURL();
       ret.back().request.storageClass = osar.getArchiveFile().storageClass;
     }
     return ret;
@@ -687,6 +689,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
       ret[tpp.tapePool].back().instanceName = osar.getArchiveFile().diskInstance;
       ret[tpp.tapePool].back().request.requester = osar.getRequester();
       ret[tpp.tapePool].back().request.srcURL = osar.getSrcURL();
+      ret[tpp.tapePool].back().request.archiveReportURL = osar.getArchiveReportURL();
       ret[tpp.tapePool].back().request.storageClass = osar.getArchiveFile().storageClass;
     }
   }
@@ -1583,6 +1586,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       aql.release();
       privateRet->archiveFile = privateRet->m_archiveRequest.getArchiveFile();
       privateRet->srcURL = privateRet->m_archiveRequest.getSrcURL();
+      privateRet->archiveReportURL = privateRet->m_archiveRequest.getArchiveReportURL();
       privateRet->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
       privateRet->tapeFile.copyNb = job.copyNb;
       privateRet->tapeFile.vid = mountInfo.vid;
@@ -1974,12 +1978,13 @@ void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::succeed()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::succeed() {
+bool OStoreDB::ArchiveJob::succeed() {
   // Lock the request and set the job as successful.
   objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
   m_archiveRequest.fetch();
   std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  if (m_archiveRequest.setJobSuccessful(tapeFile.copyNb)) {
+  bool lastJob=m_archiveRequest.setJobSuccessful(tapeFile.copyNb);
+  if (lastJob) {
     m_archiveRequest.remove();
   } else {
     m_archiveRequest.commit();
@@ -1992,6 +1997,7 @@ void OStoreDB::ArchiveJob::succeed() {
   ag.fetch();
   ag.removeFromOwnership(atfrAddress);
   ag.commit();
+  return lastJob;
 }
 
 //------------------------------------------------------------------------------

@@ -20,10 +20,12 @@
 #include "EOSReporter.hpp"
 #include "NullReporter.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 namespace cta { namespace disk {
 
 DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL) {
+  threading::MutexLocker ml(m_mutex);
   auto regexResult = m_EosUrlRegex.exec(URL);
   if (regexResult.size()) {
     return new EOSReporter(regexResult[1], regexResult[2]);

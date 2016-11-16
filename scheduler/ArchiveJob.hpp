@@ -110,7 +110,7 @@ public:
   /**
    * The remote file information
    */
-  std::string srcURL; 
+  std::string srcURL;
   
   /**
    * The file archive result for the NS

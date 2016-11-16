@@ -59,6 +59,7 @@ struct ArchiveRequest {
   DiskFileInfo diskFileInfo;
   std::string diskpoolName;
   uint64_t diskpoolThroughput;
+  std::string archiveReportURL;
   EntryLog creationLog;
 
 }; // struct ArchiveRequest

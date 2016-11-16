@@ -23,7 +23,6 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"

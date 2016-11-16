@@ -76,6 +76,9 @@ public:
 
   void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
   uint64_t getDiskpoolThroughput();
+  
+  void setArchiveReportURL(const std::string &URL);
+  std::string getArchiveReportURL();
 
   void setRequester(const cta::common::dataStructures::UserIdentity &requester);
   cta::common::dataStructures::UserIdentity getRequester();

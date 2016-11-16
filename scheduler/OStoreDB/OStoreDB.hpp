@@ -99,7 +99,7 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    void succeed() override;
+    bool succeed() override;
     void fail() override;
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
