@@ -2181,7 +2181,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, DISABLED_createTape_1_tape_with_write_log_1_tape_without) {
+TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_without) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
