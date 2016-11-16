@@ -23,8 +23,6 @@ enum ObjectType {
   AgentRegister_t = 1;
   Agent_t = 2;
   DriveRegister_t = 3;
-  ArchiveToFileRequest_t = 4;
-  RetrieveToFileRequest_t = 5;
   SchedulerGlobalLock_t = 6;
   ArchiveRequest_t = 7;
   RetrieveRequest_t = 8;
@@ -197,7 +195,7 @@ message ArchiveFile {
 // ------------- Archive Jobs --------------------------------------------------
 
 // The status of the individual archive jobs. The jobs are materialised 
-// by table entries in the ArchiveToFileRequest.
+// by table entries in the ArchiveRequest.
 // This life cycle represented by the following enum
 
 enum ArchiveJobStatus {
@@ -233,7 +231,7 @@ message ArchiveJobEntry {
 // ------------- Retrieve Jobs -------------------------------------------------
 
 // The status of the individual retrieve jobs. The jobs are materialised 
-// by table entries in the RetrieveToFileRequest.
+// by table entries in the RetrieveRequest.
 // This life cycle represented by the following enum
 
 enum RetrieveJobStatus {
@@ -255,17 +253,6 @@ message RetrieveJobEntry {
   required uint32 retrieswithinmount = 4707;
   required uint64 compressedsize = 4708;
   required uint64 creationtime = 4709;
-}
-
-message RetrieveToFileRequest {
-  required string remotefile = 4800;
-  required ArchiveFile archivefile = 4801;
-  required uint64 size = 4802;
-  repeated RetrieveJobEntry jobs = 4803;
-  required uint64 priority = 4804;
-  required EntryLog log = 4805;
-  required uint64 diskfileid = 4806;
-  optional string retrievetodiraddress = 4807;
 }
 
 // ------------- Drives handling  ----------------------------------------------

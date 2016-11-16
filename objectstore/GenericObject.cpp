@@ -141,7 +141,7 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
       return dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
     case serializers::ArchiveRequest_t:
       return dumpWithType<ArchiveRequest>(this, lock);
-    case serializers::RetrieveToFileRequest_t:
+    case serializers::RetrieveRequest_t:
       return dumpWithType<RetrieveRequest>(this, lock);
     case serializers::SchedulerGlobalLock_t:
       return dumpWithType<SchedulerGlobalLock>(this, lock);

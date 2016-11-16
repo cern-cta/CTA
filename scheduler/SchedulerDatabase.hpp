@@ -61,7 +61,6 @@ namespace archiveRoute {
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
-class RetrieveToFileRequest;
 class SchedulerDatabase;
 class StorageClass;
 class Tape;

@@ -28,12 +28,8 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "scheduler/UserArchiveRequest.hpp"
-#include "scheduler/ArchiveRequest.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveToFileRequest.hpp"
 #include "common/TapePool.hpp"
-#include "RetrieveToFileRequest.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */

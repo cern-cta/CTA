@@ -6,20 +6,16 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
-  UserArchiveRequest.cpp
   TapeMount.cpp
   LogicalLibrary.cpp
   MountType.cpp
   PositioningMethod.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp
-  UserRetrieveRequest.cpp
-  RetrieveToFileRequest.cpp
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   MountType.cpp
-  UserRequest.cpp
   OStoreDB/OStoreDB.cpp
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp)

@@ -20,8 +20,6 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "scheduler/ArchiveRequest.hpp"
-#include "scheduler/RetrieveToFileRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
