@@ -217,7 +217,6 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_libdir}/libctatapeserverdriveunittests.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverfileunittests.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverscsiunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverutilsunittests.so
 %attr(0755,root,root) %{_libdir}/libctautilsunittests.so
 %attr(0755,root,root) %{_libdir}/libctadaemonunittests.so
 %attr(0755,root,root) %{_libdir}/libctamediachangerunittests.so
