@@ -63,7 +63,8 @@ private:
 }
 
 namespace cta { namespace threading {
-SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv) {
+SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv):
+m_childComplete(false) {
   // Sanity checks
   if (argv.size() < 1)
     throw cta::exception::Exception(
@@ -125,19 +126,19 @@ void SubProcess::kill(int signal) {
 }
 
 int SubProcess::exitValue() {
-  if(!m_child)
+  if(!m_childComplete)
     throw cta::exception::Exception("In Subprocess::exitValue: child process not waited for");
   return WEXITSTATUS(m_childStatus);
 }
 
 bool SubProcess::wasKilled() {
-  if(!m_child)
+  if(!m_childComplete)
     throw cta::exception::Exception("In Subprocess::wasKilled: child process not waited for");
   return WIFSIGNALED(m_childStatus);
 }
 
 int SubProcess::killSignal() {
-  if(!m_child)
+  if(!m_childComplete)
     throw cta::exception::Exception("In Subprocess::killSignal: child process not waited for");
   return WTERMSIG(m_childStatus);
 }
@@ -158,13 +159,13 @@ void SubProcess::wait() {
 }
 
 std::string SubProcess::stdout() {
-  if(!m_child)
+  if(!m_childComplete)
     throw cta::exception::Exception("In Subprocess::stdout: child process not waited for");
   return m_stdout;
 }
 
 std::string SubProcess::stderr() {
-  if(!m_child)
+  if(!m_childComplete)
     throw cta::exception::Exception("In Subprocess::stderr: child process not waited for");
   return m_stderr;
 }
