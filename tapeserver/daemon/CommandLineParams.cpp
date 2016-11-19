@@ -29,7 +29,7 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   helpRequested(false){
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
-    { "foregroud", no_argument, NULL, 'f' },
+    { "foreground", no_argument, NULL, 'f' },
     { "config", required_argument, NULL, 'c' },
     { "help", no_argument, NULL, 'h' },
     { "stdout", no_argument, NULL, 's' },
