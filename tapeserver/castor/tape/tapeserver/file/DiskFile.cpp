@@ -421,10 +421,7 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
   const std::string & pool):
   XrootBaseWriteFile(timeout) {
-  // Setup parent's members
-  m_writePosition = 0;
-  m_closeTried = false;
-  // and start opening
+  // Start opening
   using XrdCl::OpenFlags;
   m_URL=url;
   m_signedURL = m_URL;
@@ -480,7 +477,6 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
 XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout):
   XrootBaseWriteFile(timeout) {
   // Setup parent's variables
-  m_writePosition = 0;
   m_URL = xrootUrl;
   // and simply open
   using XrdCl::OpenFlags;
@@ -556,7 +552,7 @@ EosReadFile::~EosReadFile() throw() {
 // EOS WRITE FILE
 //============================================================================== 
 EosWriteFile::EosWriteFile(const std::string& eosUrl, uint16_t timeout):
-  m_timeout(timeout) {
+  m_writePosition(0), m_timeout(timeout), m_closeTried(false) {
   // Setup parent's variables
   m_writePosition = 0;
   std::stringstream ss;

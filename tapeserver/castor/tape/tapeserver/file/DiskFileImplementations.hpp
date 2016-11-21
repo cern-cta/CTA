@@ -108,7 +108,7 @@ namespace castor {
       
       class XrootBaseWriteFile: public WriteFile {
       public:
-        XrootBaseWriteFile(uint16_t timeout): m_timeout(timeout) {}
+        XrootBaseWriteFile(uint16_t timeout): m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
         virtual void write(const void *data, const size_t size);
         virtual void close();
         virtual ~XrootBaseWriteFile() throw();        
