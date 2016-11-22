@@ -1,8 +1,7 @@
 stages:
-  - build:dockerimage
   - build:srpm
   - build:rpm
-#  - build:dockerimage
+  - build:dockerimage
 
 cta_srpm:
   stage: build:srpm

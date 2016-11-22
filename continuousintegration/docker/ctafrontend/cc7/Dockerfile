@@ -27,8 +27,12 @@ FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 ADD ./etc/yum.repos.d/* /etc/yum.repos.d/
 RUN yum install -y yum-plugin-priorities epel-release
 
+# Add previously built rpms
+ADD ../../../../build_rpm/RPM/RPMS /tmp
+#RUN yum -y install cta-frontend cta-debuginfo
+
 # Install needed packages
-RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
+RUN yum -y install cgdb less psmisc lynx strace ltrace
 RUN yum clean all
 
 # Static configuration files
