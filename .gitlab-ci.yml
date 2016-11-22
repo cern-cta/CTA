@@ -5,7 +5,7 @@ build_srpm:
     - cd ..
     - mkdir CTA_build
     - cd CTA_build
-    - cmake -DPackageOnly:Bool=true ../src
+    - cmake -DPackageOnly:Bool=true ../CTA
     - make cta_srpm
 
   artifacts:
