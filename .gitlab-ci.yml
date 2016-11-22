@@ -1,0 +1,12 @@
+build_srpm:
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - yum install -y gcc-c++ cmake make rpm-build
+    - cd ..
+    - mkdir CTA_build
+    - cd CTA_build
+    - cmake -DPackageOnly:Bool=true ../src
+    - make cta_srpm
+  artifacts:
+    paths:
+    - ../CTA_build/RPM/SRPMS/cta-0-0.src.rpm
