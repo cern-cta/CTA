@@ -174,38 +174,6 @@ cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
 }
 
 //------------------------------------------------------------------------------
-// setDiskpoolName
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setDiskpoolName(const std::string &diskpoolName) {
-  checkPayloadWritable();
-  m_payload.set_diskpoolname(diskpoolName);
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolName
-//------------------------------------------------------------------------------
-std::string cta::objectstore::ArchiveRequest::getDiskpoolName() {
-  checkPayloadReadable();
-  return m_payload.diskpoolname();
-}
-
-//------------------------------------------------------------------------------
-// setDiskpoolThroughput
-//------------------------------------------------------------------------------
-void cta::objectstore::ArchiveRequest::setDiskpoolThroughput(const uint64_t diskpoolThroughput) {
-  checkPayloadWritable();
-  m_payload.set_diskpoolthroughput(diskpoolThroughput);
-}
-
-//------------------------------------------------------------------------------
-// getDiskpoolThroughput
-//------------------------------------------------------------------------------
-uint64_t cta::objectstore::ArchiveRequest::getDiskpoolThroughput() {
-  checkPayloadReadable();
-  return m_payload.diskpoolthroughput();
-}
-
-//------------------------------------------------------------------------------
 // setArchiveReportURL
 //------------------------------------------------------------------------------
 void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
@@ -223,7 +191,7 @@ std::string ArchiveRequest::getArchiveReportURL() {
 
 
 //------------------------------------------------------------------------------
-// setDiskpoolThroughput
+// setMountPolicy
 //------------------------------------------------------------------------------
 void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
@@ -231,7 +199,7 @@ void cta::objectstore::ArchiveRequest::setMountPolicy(const cta::common::dataStr
 }
 
 //------------------------------------------------------------------------------
-// setDiskpoolThroughput
+// getMountPolicy
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountPolicy cta::objectstore::ArchiveRequest::getMountPolicy() {
   checkPayloadReadable();
@@ -451,8 +419,6 @@ std::string ArchiveRequest::dump() {
   struct json_object * jo = json_object_new_object();
   json_object_object_add(jo, "checksumtype", json_object_new_string(m_payload.checksumtype().c_str()));
   json_object_object_add(jo, "checksumvalue", json_object_new_string(m_payload.checksumvalue().c_str()));
-  json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
-  json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
   json_object_object_add(jo, "diskfileid", json_object_new_string(m_payload.diskfileid().c_str()));
   json_object_object_add(jo, "instance", json_object_new_string(m_payload.diskinstance().c_str()));
   json_object_object_add(jo, "filesize", json_object_new_int64(m_payload.filesize()));

@@ -87,8 +87,6 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->set_dsturl(retrieveRequest.dstURL);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
   dfisd.serialize(*sr->mutable_diskfileinfo());
-  sr->set_diskpoolname(retrieveRequest.diskpoolName);
-  sr->set_diskpoolthroughput(retrieveRequest.diskpoolThroughput);
   objectstore::EntryLogSerDeser el(retrieveRequest.entryLog);
   el.serialize(*sr->mutable_entrylog());
 }
@@ -106,8 +104,6 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   objectstore::EntryLogSerDeser el(ret.entryLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
-  ret.diskpoolName = m_payload.schedulerrequest().diskpoolname();
-  ret.diskpoolThroughput = m_payload.schedulerrequest().diskpoolthroughput();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
   ret.diskFileInfo = dfisd;
@@ -237,8 +233,6 @@ std::string RetrieveRequest::dump() {
 //  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
 //  json_object_object_add(jo, "creationlog", jaf);
 //  json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
-//  json_object_object_add(jo, "diskpoolname", json_object_new_string(m_payload.diskpoolname().c_str()));
-//  json_object_object_add(jo, "diskpoolthroughput", json_object_new_int64(m_payload.diskpoolthroughput()));
 //  // Object for creation log
 //  json_object * jcl = json_object_new_object();
 //  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));

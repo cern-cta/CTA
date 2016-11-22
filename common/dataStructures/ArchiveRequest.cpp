@@ -27,9 +27,7 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveRequest::ArchiveRequest():
-  fileSize(0),
-  diskpoolThroughput(0) {}
+ArchiveRequest::ArchiveRequest(): fileSize(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -43,8 +41,6 @@ bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
       && checksumValue==rhs.checksumValue
       && storageClass==rhs.storageClass
       && diskFileInfo==rhs.diskFileInfo
-      && diskpoolName==rhs.diskpoolName
-      && diskpoolThroughput==rhs.diskpoolThroughput
       && archiveReportURL==rhs.archiveReportURL
       && creationLog==rhs.creationLog;
 }
@@ -68,8 +64,6 @@ std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
      << " checksumValue=" << obj.checksumValue
      << " storageClass=" << obj.storageClass
      << " diskFileInfo=" << obj.diskFileInfo
-     << " diskpoolName=" << obj.diskpoolName
-     << " diskpoolThroughput=" << obj.diskpoolThroughput
      << " archiveReportURL=" << obj.archiveReportURL
      << " creationLog=" << obj.creationLog << ")";
   return os;

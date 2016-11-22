@@ -70,12 +70,6 @@ public:
   // TODO: ArchiveFile comes with extraneous information. 
   void setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile);
   cta::common::dataStructures::ArchiveFile getArchiveFile();
-
-  void setDiskpoolName(const std::string &diskpoolName);
-  std::string getDiskpoolName();
-
-  void setDiskpoolThroughput(const uint64_t diskpoolThroughput);
-  uint64_t getDiskpoolThroughput();
   
   void setArchiveReportURL(const std::string &URL);
   std::string getArchiveReportURL();

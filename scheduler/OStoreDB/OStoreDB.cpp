@@ -301,8 +301,6 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aFile.storageClass = request.storageClass;
   aReq.setArchiveFile(aFile);
   aReq.setMountPolicy(criteria.mountPolicy);
-  aReq.setDiskpoolName(request.diskpoolName);
-  aReq.setDiskpoolThroughput(request.diskpoolThroughput);
   aReq.setArchiveReportURL(request.archiveReportURL);
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
@@ -626,10 +624,6 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
       ret.back().request.creationLog = osar.getEntryLog();
       ret.back().request.diskFileID = osar.getArchiveFile().diskFileId;
-      ret.back().request.diskpoolName = osar.getDiskpoolName();
-      ret.back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
-      ret.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
-      ret.back().request.fileSize = osar.getArchiveFile().fileSize;
       ret.back().instanceName = osar.getArchiveFile().diskInstance;
       ret.back().request.requester = osar.getRequester();
       ret.back().request.srcURL = osar.getSrcURL();
@@ -682,8 +676,6 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
       ret[tpp.tapePool].back().request.checksumValue = osar.getArchiveFile().checksumValue;
       ret[tpp.tapePool].back().request.creationLog = osar.getEntryLog();
       ret[tpp.tapePool].back().request.diskFileID = osar.getArchiveFile().diskFileId;
-      ret[tpp.tapePool].back().request.diskpoolName = osar.getDiskpoolName();
-      ret[tpp.tapePool].back().request.diskpoolThroughput = osar.getDiskpoolThroughput();
       ret[tpp.tapePool].back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
       ret[tpp.tapePool].back().request.fileSize = osar.getArchiveFile().fileSize;
       ret[tpp.tapePool].back().instanceName = osar.getArchiveFile().diskInstance;
