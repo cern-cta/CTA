@@ -1,4 +1,9 @@
-build:srpm:
+stages:
+  - build:srpm
+  - build:rpm
+
+cta_srpm:
+  stage: build:srpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - yum install -y gcc-c++ cmake make rpm-build
@@ -14,10 +19,9 @@ build:srpm:
   tags:
     - docker
 
-build:rpm:
+cta_rpm:
+  stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
-  dependencies:
-  - build:srpm
   script:
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities
