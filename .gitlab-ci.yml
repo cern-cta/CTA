@@ -1,15 +1,38 @@
-build_srpm:
+build:srpm:
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - yum install -y gcc-c++ cmake make rpm-build
-    - mkdir build
-    - cd build
+    - mkdir build_srpm
+    - cd build_srpm
     - cmake -DPackageOnly:Bool=true ..
     - make cta_srpm
 
   artifacts:
     paths:
-    - build/RPM/SRPMS/
+    - build_srpm/RPM/SRPMS/
+
+  tags:
+    - docker
+
+build:rpm:
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  dependencies:
+  - build:srpm
+  script:
+    - yum install -y gcc-c++ cmake make rpm-build
+    - yum -y install yum-plugin-priorities
+    - echo "Enabling cernonly repo for oracle-instantclient"; yum-config-manager --enable cernonly
+    - echo "Adding Ceph repo"; echo -e "[ceph-internal]\nname=ceph-internal\nenabled=1\nbaseurl=http://castorwww.web.cern.ch/castorwww/repos/ceph/\npriority=4" > /etc/yum.repos.d/ceph-internal.repo
+    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+    - mkdir build_rpm
+    - cd build_rpm
+    - cmake ..
+    - make -j4 && make -j4
+    - make cta_rpm
+
+  artifacts:
+    paths:
+    - build_rpm/RPM/RPMS
 
   tags:
     - docker
