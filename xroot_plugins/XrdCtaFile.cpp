@@ -1860,7 +1860,7 @@ void XrdCtaFile::xCom_listpendingarchives() {
   if(result.size()>0) {
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path","diskpool","diskpool throughput"};
+      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
@@ -1877,8 +1877,6 @@ void XrdCtaFile::xCom_listpendingarchives() {
           currentRow.push_back(jt->request.requester.name);
           currentRow.push_back(jt->request.requester.group);
           currentRow.push_back(jt->request.diskFileInfo.path);
-          currentRow.push_back(jt->request.diskpoolName);
-          currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
           responseTable.push_back(currentRow);
         }
       }
@@ -1927,7 +1925,7 @@ void XrdCtaFile::xCom_listpendingretrieves() {
   if(result.size()>0) {
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path","diskpool","diskpool throughput"};
+      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
       if(hasOption("-h", "--header")) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
@@ -1942,8 +1940,6 @@ void XrdCtaFile::xCom_listpendingretrieves() {
           currentRow.push_back(jt->request.requester.name);
           currentRow.push_back(jt->request.requester.group);
           currentRow.push_back(jt->request.diskFileInfo.path);
-          currentRow.push_back(jt->request.diskpoolName);
-          currentRow.push_back(std::to_string((unsigned long long)jt->request.diskpoolThroughput));
           responseTable.push_back(currentRow);
         }
       }
@@ -2013,7 +2009,7 @@ void XrdCtaFile::xCom_archive() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " a/archive --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
        << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
-       << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl
+       << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
@@ -2027,8 +2023,6 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
-  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", true, false);
-  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", true, false);
   optional<std::string> archiveReportURL = getOptionStringValue("", "-–reportURL", false, true, "");
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
@@ -2042,8 +2036,6 @@ void XrdCtaFile::xCom_archive() {
   cta::common::dataStructures::ArchiveRequest request;
   request.checksumType=checksumtype.value();
   request.checksumValue=checksumvalue.value();
-  request.diskpoolName=diskpool.value();
-  request.diskpoolThroughput=throughput.value();
   request.diskFileInfo=diskFileInfo;
   request.diskFileID=diskid.value();
   request.fileSize=size.value();
@@ -2063,7 +2055,7 @@ void XrdCtaFile::xCom_retrieve() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " r/retrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
-       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --diskpool <diskpool_name> --throughput <diskpool_throughput>" << std::endl
+       << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
@@ -2073,8 +2065,6 @@ void XrdCtaFile::xCom_retrieve() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
-  optional<std::string> diskpool = getOptionStringValue("", "--diskpool", true, false);
-  optional<uint64_t> throughput = getOptionUint64Value("", "--throughput", true, false);
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
@@ -2085,8 +2075,6 @@ void XrdCtaFile::xCom_retrieve() {
   diskFileInfo.owner=diskfileowner.value();
   diskFileInfo.path=diskfilepath.value();
   cta::common::dataStructures::RetrieveRequest request;
-  request.diskpoolName=diskpool.value();
-  request.diskpoolThroughput=throughput.value();
   request.diskFileInfo=diskFileInfo;
   request.archiveFileID=id.value();
   request.requester=originator;

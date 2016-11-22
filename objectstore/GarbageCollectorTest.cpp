@@ -324,8 +324,6 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setOwner(agA.getAddressIfSet());
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
-    ar.setDiskpoolName("");
-    ar.setDiskpoolThroughput(666);
     ar.setArchiveReportURL("");
     ar.setRequester(cta::common::dataStructures::UserIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");

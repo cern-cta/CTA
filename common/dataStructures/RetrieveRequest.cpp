@@ -27,9 +27,7 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetrieveRequest::RetrieveRequest():
-  archiveFileID(0),
-  diskpoolThroughput(0) {}
+RetrieveRequest::RetrieveRequest(): archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -39,8 +37,6 @@ bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
       && diskFileInfo==rhs.diskFileInfo
-      && diskpoolName==rhs.diskpoolName
-      && diskpoolThroughput==rhs.diskpoolThroughput
       && entryLog==rhs.entryLog;
 }
 
@@ -59,8 +55,6 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
      << " diskFileInfo=" << obj.diskFileInfo
-     << " diskpoolName=" << obj.diskpoolName
-     << " diskpoolThroughput=" << obj.diskpoolThroughput
      << " creationLog=" << obj.entryLog << ")";
   return os;
 }

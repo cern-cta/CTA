@@ -328,8 +328,6 @@ message ArchiveRequest {
   required string checksumvalue = 9010;
   required uint64 creationtime = 9015;
   required uint64 reconcilationtime = 9017;
-  required string diskpoolname = 9020;
-  required uint64 diskpoolthroughput = 9030;
   required DiskFileInfo diskfileinfo = 9040;
   required string diskfileid = 9050;
   required string diskinstance = 9055;
@@ -347,8 +345,6 @@ message SchedulerRetrieveRequest {
   required uint64 ArchiveFileId = 9101;
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;
-  required string diskpoolname = 9104;
-  required uint64 diskpoolthroughput = 9105;
   required EntryLog entrylog = 9106;
 }
 

@@ -226,8 +226,6 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.checksumType="ADLER32";
   request.checksumValue="1111";
   request.creationLog=creationLog;
-  request.diskpoolName="diskpool1";
-  request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
   request.fileSize=100*1000*1000;
@@ -280,8 +278,6 @@ TEST_P(SchedulerTest, delete_archive_request) {
   request.checksumType="ADLER32";
   request.checksumValue="1111";
   request.creationLog=creationLog;
-  request.diskpoolName="diskpool1";
-  request.diskpoolThroughput=200*1000*1000;
   request.diskFileInfo=diskFileInfo;
   request.diskFileID="diskFileID";
   request.fileSize=100*1000*1000;
@@ -349,8 +345,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.checksumType="ADLER32";
     request.checksumValue="1234abcd";
     request.creationLog=creationLog;
-    request.diskpoolName="diskpool1";
-    request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
@@ -438,8 +432,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
     request.entryLog = creationLog;
-    request.diskpoolName = "diskpool1";
-    request.diskpoolThroughput = 200*1000*1000;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
@@ -508,8 +500,6 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.checksumType="ADLER32";
     request.checksumValue="1111";
     request.creationLog=creationLog;
-    request.diskpoolName="diskpool1";
-    request.diskpoolThroughput=200*1000*1000;
     request.diskFileInfo=diskFileInfo;
     request.diskFileID="diskFileID";
     request.fileSize=100*1000*1000;
@@ -589,8 +579,6 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
     request.entryLog = creationLog;
-    request.diskpoolName = "diskpool1";
-    request.diskpoolThroughput = 200*1000*1000;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;

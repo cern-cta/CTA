@@ -46,8 +46,6 @@ struct RetrieveRequest {
   uint64_t archiveFileID;
   std::string dstURL;
   DiskFileInfo diskFileInfo;
-  std::string diskpoolName;
-  uint64_t diskpoolThroughput;
   EntryLog entryLog;
 
 }; // struct RetrieveRequest
