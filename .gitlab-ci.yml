@@ -49,7 +49,7 @@ ctafrontend_docker:
   tags:
     - docker-image-build
   script:
-    - echo "Hello world"
+    - ""
   variables:
     TO: gitlab-registry.cern.ch/cta/cta-orchestration
     CONTEXT_DIR: continuousintegration/docker/ctafrontend/cc7
