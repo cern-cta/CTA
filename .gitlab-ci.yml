@@ -51,4 +51,4 @@ ctafrontend_docker:
     - ""
   variables:
     TO: gitlab-registry.cern.ch/cta/cta-orchestration
-    CONTEXT_DIR: continuousintegration/docker/ctafrontend/cc7
+    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
