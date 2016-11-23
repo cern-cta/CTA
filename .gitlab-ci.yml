@@ -3,6 +3,10 @@ stages:
   - build:rpm
   - build:dockerimage
 
+before_script:
+  - export CTA_BUILD_ID=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8)
+  - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+
 cta_srpm:
   stage: build:srpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -10,7 +14,7 @@ cta_srpm:
     - yum install -y gcc-c++ cmake make rpm-build
     - mkdir build_srpm
     - cd build_srpm
-    - cmake -DPackageOnly:Bool=true -DVCS_VERSION=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8) ..
+    - cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ..
     - make cta_srpm
 
   artifacts:
@@ -31,7 +35,7 @@ cta_rpm:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake -DVCS_VERSION=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8) ..
+    - cmake -DVCS_VERSION=${CTA_BUILD_ID} ..
     - make -j4 && make -j4
     - make cta_rpm
 
@@ -50,5 +54,5 @@ ctafrontend_docker:
   script:
     - ""
   variables:
-    TO: gitlab-registry.cern.ch/cta/cta-orchestration
+    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CTA_BUILD_ID}
     DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
