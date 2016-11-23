@@ -25,19 +25,21 @@ FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 
 # my environment variables
 ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
-
+ENV CTAREPODIR="/tmp/repo"
 
 # Manage repos
 ADD ${BASEDIR}/etc/yum.repos.d/* /etc/yum.repos.d/
-RUN yum install -y yum-plugin-priorities epel-release
+RUN yum install -y yum-plugin-priorities createrepo epel-release
 
+# Create local repo for cta artifacts
+RUN mkdir -p ${CTAREPODIR}
 # Add previously built rpms
-ADD build_rpm/RPM /tmp
-# Install them now
-RUN yum -y localinstall /tmp/RPM/RPMS/x86_64/cta-frontend-* /tmp/RPM/RPMS/x86_64/cta-debuginfo-*
+ADD build_rpm/RPM ${CTAREPODIR}
+# Populate local repository and enable it
+RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
 # Install needed packages
-RUN yum -y install cgdb less psmisc lynx strace ltrace
+RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
 RUN yum clean all
 
 # Static configuration files
