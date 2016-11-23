@@ -18,7 +18,7 @@
 #
 # ****************************************************************************/
 
-BASEDIR="continuousintegration/docker/ctafrontend/cc7"
+ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
 
 # CTA frontend
 
