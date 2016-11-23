@@ -18,11 +18,13 @@
 #
 # ****************************************************************************/
 
-ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
-
 # CTA frontend
+# FROM must be the first command in Dockerfile!!
 
 FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
+
+# my environment variables
+ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
 
 
 # Manage repos
