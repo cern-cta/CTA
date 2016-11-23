@@ -32,8 +32,9 @@ ADD ${BASEDIR}/etc/yum.repos.d/* /etc/yum.repos.d/
 RUN yum install -y yum-plugin-priorities epel-release
 
 # Add previously built rpms
-ADD build_rpm/RPM/RPMS /tmp
-#RUN yum -y install cta-frontend cta-debuginfo
+ADD build_rpm/RPM /tmp
+# Install them now
+RUN yum -y localinstall /tmp/RPM/RPMS/x86_64/cta-frontend-* /tmp/RPM/RPMS/x86_64/cta-debuginfo-*
 
 # Install needed packages
 RUN yum -y install cgdb less psmisc lynx strace ltrace
