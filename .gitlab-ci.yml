@@ -10,7 +10,7 @@ cta_srpm:
     - yum install -y gcc-c++ cmake make rpm-build
     - mkdir build_srpm
     - cd build_srpm
-    - cmake -DPackageOnly:Bool=true ..
+    - cmake -DPackageOnly:Bool=true -DVCS_VERSION=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8) ..
     - make cta_srpm
 
   artifacts:
@@ -31,7 +31,7 @@ cta_rpm:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake ..
+    - cmake -DVCS_VERSION=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8) ..
     - make -j4 && make -j4
     - make cta_rpm
 
