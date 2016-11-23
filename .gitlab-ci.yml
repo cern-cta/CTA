@@ -4,7 +4,7 @@ stages:
   - build:dockerimage
 
 before_script:
-  - export CTA_BUILD_ID=$(date +%Y%m%d)git$(echo ${CI_BUILD_REF} | cut -c1-8)
+  - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_BUILD_REF:0:8}
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
 
 cta_srpm:
@@ -54,5 +54,5 @@ ctafrontend_docker:
   script:
     - ""
   variables:
-    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CTA_BUILD_ID}
+    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CI_PIPELINE_ID}git${CI_BUILD_REF:0:8}
     DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
