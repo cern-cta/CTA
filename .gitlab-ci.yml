@@ -62,9 +62,11 @@ ctafrontend_docker:
 ctafrontend_docker_rename:
   stage: rename:dockerimage
   variables:
+    TO: gitlab-registry.cern.ch/cta/cta-orchestration
     REPOSITORY: cta/cta-orchestration
     GITLAB_HOST: gitlab.cern.ch
   script:
+    - printenv
     - export OLDTAG=${CI_PIPELINE_ID}
     - export NEWTAG=${CTA_BUILD_ID}
     - cd continuousintegration/ci_helpers/
