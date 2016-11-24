@@ -54,5 +54,5 @@ ctafrontend_docker:
   script:
     - ""
   variables:
-    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CI_PIPELINE_ID}git${CI_BUILD_REF:0:8}
+    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CI_PIPELINE_ID}
     DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
