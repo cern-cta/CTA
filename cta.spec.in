@@ -232,9 +232,11 @@ Group: Application/CTA
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
 %files -n cta-catalogueutils
+%attr(0755,root,root) %{_bindir}/cta-catalogue-delete-all-data
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-lock
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-status
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-unlock
+%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-delete-all-data.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-lock.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-status.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-unlock.1cta.gz

@@ -78,7 +78,7 @@ add_library (ctainmemorycatalogueunittests SHARED
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue)
 
-install(TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
@@ -90,7 +90,7 @@ add_library (ctacatalogueunittests SHARED
 target_link_libraries (ctacatalogueunittests
   ctacatalogue)
 
-install(TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (FILES cta_catalogue_db.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
@@ -104,7 +104,7 @@ add_executable(cta-catalogue-schema-lock
 target_link_libraries (cta-catalogue-schema-lock
   ctacatalogue)
 
-install(TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
+install (TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-lock.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-unlock
@@ -115,7 +115,7 @@ add_executable(cta-catalogue-schema-unlock
 target_link_libraries (cta-catalogue-schema-unlock
   ctacatalogue)
 
-install(TARGETS cta-catalogue-schema-unlock DESTINATION /usr/bin)
+install (TARGETS cta-catalogue-schema-unlock DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-unlock.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-status
@@ -126,5 +126,16 @@ add_executable(cta-catalogue-schema-status
 target_link_libraries (cta-catalogue-schema-status
   ctacatalogue)
 
-install(TARGETS cta-catalogue-schema-status DESTINATION /usr/bin)
+install (TARGETS cta-catalogue-schema-status DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-status.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-delete-all-data
+  DeleteAllCatalogueDataCmd.cpp
+  DeleteAllCatalogueDataCmdLineArgs.cpp
+  DeleteAllCatalogueDataCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-delete-all-data
+  ctacatalogue)
+
+install (TARGETS cta-catalogue-delete-all-data DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-delete-all-data.1cta DESTINATION /usr/share/man/man1)
