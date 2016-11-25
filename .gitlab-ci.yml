@@ -48,25 +48,24 @@ cta_rpm:
     - docker
 
 
-ctafrontend_docker:
+ctageneric_docker:
   stage: build:dockerimage
   tags:
     - docker-image-build
   script:
     - ""
   variables:
-    TO: gitlab-registry.cern.ch/cta/cta-orchestration:${CI_PIPELINE_ID}
+    TO: gitlab-registry.cern.ch/cta/ctageneric:${CI_PIPELINE_ID}
     DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
 
 
-ctafrontend_docker_rename:
+ctageneric_docker_rename:
   stage: rename:dockerimage
   variables:
-    TO: gitlab-registry.cern.ch/cta/cta-orchestration
-    REPOSITORY: cta/cta-orchestration
+    TO: gitlab-registry.cern.ch/cta/ctageneric
+    REPOSITORY: cta/ctageneric
     GITLAB_HOST: gitlab.cern.ch
   script:
-    - printenv
     - export OLDTAG=${CI_PIPELINE_ID}
     - export NEWTAG=${CTA_BUILD_ID}
     - cd continuousintegration/ci_helpers/

@@ -13,6 +13,11 @@ REPOSITORY=$(echo ${TO} | sed -e 's%[^/]\+/%%')
 
 GITLAB_HOST=gitlab.cern.ch
 
+if [[ "-${OLDTAG}-" == "-${NEWTAG}-" ]]; then
+  echo "The 2 tags are identical: ${OLDTAG}/${NEWTAG} no need to rename"
+  exit 0
+fi
+
 JWT_PULL_PUSH_TOKEN=$(curl -q -u ${DOCKER_LOGIN_USERNAME}:${DOCKER_LOGIN_PASSWORD} \
   "https://${GITLAB_HOST}/jwt/auth?service=container_registry&scope=repository:${REPOSITORY}:pull,push" | cut -d\" -f4 )
 
