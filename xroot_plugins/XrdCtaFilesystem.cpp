@@ -20,6 +20,8 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
@@ -263,7 +265,14 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   
   // Try to instantiate the logging system API
   try {
-    m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
+    std::string loggerURL=m_ctaConf.getConfEntString("Log", "URL", "syslog:");
+    if (loggerURL == "syslog:") {
+      m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
+    } else if (loggerURL == "stdout:") {
+      m_log.reset(new log::StdoutLogger("cta-frontend"));
+    } else {
+      throw cta::exception::Exception(std::string("Unknown log URL: ")+loggerURL);
+    }
   } catch(exception::Exception &ex) {
     throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
   }

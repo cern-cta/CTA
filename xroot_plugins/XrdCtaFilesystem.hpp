@@ -20,7 +20,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/Configuration.hpp"
-#include "common/log/SyslogLogger.hpp"
+#include "common/log/Logger.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
