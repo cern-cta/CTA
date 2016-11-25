@@ -24,6 +24,8 @@
 FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 
 # my environment variables
+ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods"
+ENV LOCALORCHESTRATIONDIR="/opt/ci"
 ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
 ENV CTAREPODIR="/tmp/repo"
 
@@ -32,7 +34,7 @@ ADD ${BASEDIR}/etc/yum.repos.d/* /etc/yum.repos.d/
 RUN yum install -y yum-plugin-priorities createrepo epel-release
 
 # Create local repo for cta artifacts
-RUN mkdir -p ${CTAREPODIR}
+RUN mkdir -p ${CTAREPODIR} ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
@@ -45,6 +47,9 @@ RUN yum -y install cgdb less psmisc lynx strace ltrace && yum clean all
 
 # Static configuration files
 ADD ${BASEDIR}/etc/xrootd/xrootd-cta.cfg /etc/xrootd/xrootd-cta.cfg
+
+# Add orchestration init scripts locally
+ADD ${ORCHESTRATIONDIR}/init ${LOCALORCHESTRATIONDIR}
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
