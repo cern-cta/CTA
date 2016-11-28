@@ -25,7 +25,7 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 InMemoryCatalogueSchema::InMemoryCatalogueSchema(): sql(
-  // CTA_SQL_SCHEMA - The contents of in_memory_schema.cpp go here
+  // CTA_SQL_SCHEMA - The contents of in_memory_catalogue_schema.cpp go here
   ) {
 }
 
