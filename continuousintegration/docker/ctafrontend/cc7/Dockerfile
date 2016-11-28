@@ -18,7 +18,7 @@
 #
 # ****************************************************************************/
 
-# CTA frontend
+# CTA generic image for system tests
 # FROM must be the first command in Dockerfile!!
 
 FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -38,15 +38,15 @@ RUN mkdir -p ${CTAREPODIR} ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
-RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=0\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
 # Install needed packages
 #RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
 RUN yum -y install cgdb less psmisc lynx strace ltrace && yum clean all
 #RUN yum clean all
 
-# Static configuration files
-ADD ${BASEDIR}/etc/xrootd/xrootd-cta.cfg /etc/xrootd/xrootd-cta.cfg
+# Add pod specific configuration
+ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
 # Add orchestration init scripts locally
 ADD ${ORCHESTRATIONDIR}/init ${LOCALORCHESTRATIONDIR}
