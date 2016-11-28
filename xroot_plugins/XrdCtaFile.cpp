@@ -2023,7 +2023,7 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
-  optional<std::string> archiveReportURL = getOptionStringValue("", "-–reportURL", false, true, "");
+  optional<std::string> archiveReportURL = getOptionStringValue("", "--reportURL", false, true, "");
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();
