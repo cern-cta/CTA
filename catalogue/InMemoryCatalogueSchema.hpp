@@ -28,7 +28,7 @@ namespace catalogue {
  * The CMakeLists.txt file of this directory instructs cmake to generate
  * InMemoryCatalogueSchema.cpp from:
  *   - InMemoryCatalogueSchema.before_SQL.cpp
- *   - create_sqlite_catalogue_schema.sql
+ *   - sqlite_catalogue_schema.sql
  *
  * The InMemorySchema.before_SQL.cpp file is not compilable and is therefore
  * difficult for Integrated Developent Environments (IDEs) to handle.
