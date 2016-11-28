@@ -139,3 +139,24 @@ target_link_libraries (cta-catalogue-delete-all-data
 
 install (TARGETS cta-catalogue-delete-all-data DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-delete-all-data.1cta DESTINATION /usr/share/man/man1)
+
+add_custom_command(OUTPUT oracle_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
+  DEPENDS oracle_catalogue_schema.sql)
+
+add_custom_command(OUTPUT OracleCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
+
+add_executable(cta-catalogue-schema-create
+  CreateSchemaCmd.cpp
+  CreateSchemaCmdLineArgs.cpp
+  CreateSchemaCmdMain.cpp
+  OracleCatalogueSchema.cpp
+  SqliteCatalogueSchema.cpp)
+
+target_link_libraries (cta-catalogue-schema-create
+  ctacatalogue)
+
+install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
