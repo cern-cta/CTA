@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/RdbmsCatalogueSchema.hpp"
+#include "catalogue/InMemoryCatalogueSchema.hpp"
 #include "rdbms/SqliteConn.hpp"
 #include "rdbms/SqliteConnFactory.hpp"
 

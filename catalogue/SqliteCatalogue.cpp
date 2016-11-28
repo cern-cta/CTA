@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/RdbmsCatalogueSchema.hpp"
+#include "catalogue/InMemoryCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"

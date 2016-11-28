@@ -24,8 +24,8 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactory.cpp
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
+  InMemoryCatalogueSchema.cpp
   OracleCatalogue.cpp
-  RdbmsCatalogueSchema.cpp
   TapeFileWritten.cpp
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
@@ -41,31 +41,31 @@ target_link_libraries (ctacatalogue
   ctacommon
   ctardbms)
 
-add_custom_command (OUTPUT create_sqlite_catalogue_schema.sql create_oracle_catalogue_schema.sql
-  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql > create_sqlite_catalogue_schema.sql
-  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_trailer.sql > create_oracle_catalogue_schema.sql
+add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql
+  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql > sqlite_catalogue_schema.sql
+  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql > oracle_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/catalogue_common_schema.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_sqlite_catalogue_schema_trailer.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/create_oracle_catalogue_schema_trailer.sql)
+    ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql)
 
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/create_sqlite_catalogue_schema.sql
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sqlite_catalogue_schema.sql
   DESTINATION usr/share/cta-${CTA_VERSION}/sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/create_oracle_catalogue_schema.sql
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.sql
   DESTINATION usr/share/cta-${CTA_VERSION}/sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' create_sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
-  DEPENDS create_sqlite_catalogue_schema.sql)
+  COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
+  DEPENDS sqlite_catalogue_schema.sql)
 
-add_custom_command(OUTPUT RdbmsCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp > RdbmsCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/RdbmsCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
+add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp > InMemoryCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp

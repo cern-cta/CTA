@@ -17,8 +17,8 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/InMemoryCatalogueSchema.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
-#include "catalogue/RdbmsCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
