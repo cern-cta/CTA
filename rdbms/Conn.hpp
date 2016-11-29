@@ -20,7 +20,9 @@
 
 #include "Stmt.hpp"
 
+#include <list>
 #include <memory>
+#include <string>
 
 namespace cta {
 namespace rdbms {
@@ -81,6 +83,15 @@ public:
    * Rolls back the current transaction.
    */
   virtual void rollback() = 0;
+
+  /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  virtual std::list<std::string> getTableNames() = 0;
 
 }; // class Conn
 

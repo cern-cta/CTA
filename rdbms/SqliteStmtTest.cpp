@@ -55,12 +55,13 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
     ASSERT_EQ(0, nbTables);
     ASSERT_FALSE(rset->next());
+    ASSERT_TRUE(conn.getTableNames().empty());
   }
 
   // Create a test table
   {
     const char *const sql =
-      "CREATE TABLE TEST("
+      "CREATE TABLE TEST1("
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
@@ -75,7 +76,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "COUNT(*) NB_TABLES "
       "FROM SQLITE_MASTER "
       "WHERE "
-        "NAME = 'TEST' AND "
+        "NAME = 'TEST1' AND "
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
@@ -83,6 +84,44 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
     const uint64_t nbTables = rset->columnUint64("NB_TABLES");
     ASSERT_EQ(1, nbTables);
     ASSERT_FALSE(rset->next());
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST1", conn.getTableNames().front());
+  }
+
+  // Create a second test table
+  {
+    const char *const sql =
+      "CREATE TABLE TEST2("
+        "COL1 TEXT,"
+        "COL2 TEXT,"
+        "COL3 INTEGER);";
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
+    stmt->executeNonQuery();
+  }
+
+  // Test for the existence of the second test table
+  {
+    const char *const sql =
+      "SELECT "
+        "COUNT(*) NB_TABLES "
+      "FROM SQLITE_MASTER "
+      "WHERE "
+        "NAME = 'TEST2' AND "
+        "TYPE = 'table';";
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
+    auto rset = stmt->executeQuery();
+    ASSERT_TRUE(rset->next());
+    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_EQ(1, nbTables);
+    ASSERT_FALSE(rset->next());
+    const auto tableNames = conn.getTableNames();
+    ASSERT_EQ(2, tableNames.size());
+    auto nameItor = tableNames.begin();
+    ASSERT_EQ("TEST1", *nameItor);
+    nameItor++;
+    ASSERT_EQ("TEST2", *nameItor);
+    nameItor++;
+    ASSERT_EQ(tableNames.end(), nameItor);
   }
 }
 
@@ -90,6 +129,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
   using namespace cta::rdbms;
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
+
+  ASSERT_TRUE(conn.getTableNames().empty());
 
   // Create a test table
   {
@@ -100,6 +141,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
         "COL3 INTEGER);";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST", conn.getTableNames().front());
   }
 
   // Select from the empty table
@@ -122,6 +165,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
 
+  ASSERT_TRUE(conn.getTableNames().empty());
+
   // Create a test table
   {
     const char *const sql =
@@ -129,8 +174,10 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
-     stmt->executeNonQuery();
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
+    stmt->executeNonQuery();
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST", conn.getTableNames().front());
   }
 
   // Insert a row into the test table
@@ -179,6 +226,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
   // Create a connection a memory resident database
   SqliteConn conn(":memory:");
 
+  ASSERT_TRUE(conn.getTableNames().empty());
+
   // Create a test table
   {
     const char *const sql =
@@ -186,8 +235,10 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
         "COL1 TEXT,"
         "COL2 TEXT,"
         "COL3 INTEGER);";
-     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
-     stmt->executeNonQuery();
+    auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
+    stmt->executeNonQuery();
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST", conn.getTableNames().front());
   }
 
   // Insert a row into the test table
@@ -240,6 +291,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
 
   // Create a table in an in-memory resident database
   SqliteConn connForCreate(dbFilename);
+  ASSERT_TRUE(connForCreate.getTableNames().empty());
   {
     const char *const sql =
       "CREATE TABLE TEST("
@@ -248,6 +300,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
         "COL3 INTEGER);";
     auto stmt = connForCreate.createStmt(sql, Stmt::AutocommitMode::ON);
     stmt->executeNonQuery();
+    ASSERT_EQ(1, connForCreate.getTableNames().size());
+    ASSERT_EQ("TEST", connForCreate.getTableNames().front());
   }
 
   // Insert a row but do not commit using a separate connection
@@ -268,6 +322,8 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
 
   // Count the number of rows in the table from within another connection
   SqliteConn connForSelect(dbFilename);
+  ASSERT_EQ(1, connForSelect.getTableNames().size());
+  ASSERT_EQ("TEST", connForSelect.getTableNames().front());
   {
     const char *const sql =
       "SELECT "

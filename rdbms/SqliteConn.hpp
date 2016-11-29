@@ -81,6 +81,15 @@ public:
   virtual void rollback() override;
 
   /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  virtual std::list<std::string> getTableNames() override;
+
+  /**
    * This ia an SqliteConn specific method that prints the database schema to
    * the specified output stream.
    *

@@ -113,5 +113,30 @@ void OcciConn::rollback() {
   }
 }
 
+//------------------------------------------------------------------------------
+// getTableNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getTableNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "TABLE_NAME "
+      "FROM "
+        "USER_TABLES "
+      "ORDER BY "
+        "TABLE_NAME";
+    auto stmt = createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      names.push_back(rset->columnString("TABLE_NAME"));
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 } // namespace rdbms
 } // namespace cta

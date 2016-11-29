@@ -94,6 +94,15 @@ public:
    */
   virtual void rollback() override;
 
+  /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  virtual std::list<std::string> getTableNames() override;
+
 private:
 
   /**

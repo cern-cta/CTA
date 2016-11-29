@@ -166,5 +166,31 @@ void SqliteConn::printSchema(std::ostream &os) {
   }
 }
 
+//------------------------------------------------------------------------------
+// getTableNames
+//------------------------------------------------------------------------------
+std::list<std::string> SqliteConn::getTableNames() {
+  try {
+    const char *const sql =
+      "SELECT "
+        "NAME AS NAME "
+      "FROM "
+        "SQLITE_MASTER "
+      "WHERE "
+        "TYPE = 'table' "
+      "ORDER BY "
+        "NAME;";
+    auto stmt = createStmt(sql, Stmt::AutocommitMode::ON);
+    auto rset = stmt->executeQuery();
+    std::list<std::string> names;
+    while (rset->next()) {
+      names.push_back(rset->columnString("NAME"));
+    }
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 } // namespace rdbms
 } // namespace cta
