@@ -24,7 +24,7 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactory.cpp
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
-  InMemoryCatalogueSchema.cpp
+  SqliteCatalogueSchema.cpp
   OracleCatalogue.cpp
   TapeFileWritten.cpp
   RdbmsCatalogue.cpp
@@ -59,13 +59,13 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.sql
   DESTINATION usr/share/cta-${CTA_VERSION}/sql
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-add_custom_command(OUTPUT in_memory_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > in_memory_catalogue_schema.cpp
+add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
   DEPENDS sqlite_catalogue_schema.sql)
 
-add_custom_command(OUTPUT InMemoryCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r in_memory_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp > InMemoryCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/InMemoryCatalogueSchema.before_SQL.cpp in_memory_catalogue_schema.cpp)
+add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp)
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp

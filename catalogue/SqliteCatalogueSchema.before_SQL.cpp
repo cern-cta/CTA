@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogueSchema.hpp"
+#include "catalogue/SqliteCatalogueSchema.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -24,8 +24,8 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogueSchema::InMemoryCatalogueSchema(): sql(
-  // CTA_SQL_SCHEMA - The contents of in_memory_catalogue_schema.cpp go here
+SqliteCatalogueSchema::SqliteCatalogueSchema(): sql(
+  // CTA_SQL_SCHEMA - The contents of sqlite_catalogue_schema.cpp go here
   ) {
 }
 

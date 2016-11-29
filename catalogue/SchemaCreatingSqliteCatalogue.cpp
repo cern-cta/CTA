@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/InMemoryCatalogueSchema.hpp"
+#include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "rdbms/SqliteConn.hpp"
 #include "rdbms/SqliteConnFactory.hpp"
@@ -41,7 +41,7 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &
 //------------------------------------------------------------------------------
 void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
   try {
-    const InMemoryCatalogueSchema schema;
+    const SqliteCatalogueSchema schema;
     auto conn = m_connPool.getConn();
     conn->executeNonQueries(schema.sql);
   } catch(exception::Exception &ex) {
