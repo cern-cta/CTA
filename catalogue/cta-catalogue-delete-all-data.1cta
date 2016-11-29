@@ -13,7 +13,7 @@
 .\"
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
-.TH CTA-CATALOGUE-SCHEMA-LOCK 1CTA "November 2016" CTA CTA
+.TH CTA-CATALOGUE-DELETE-ALL-DATA 1CTA "November 2016" CTA CTA
 .SH NAME
 cta-catalogue-delete-all-data \- Delete all data in the CTA catalogue
 .SH SYNOPSIS
