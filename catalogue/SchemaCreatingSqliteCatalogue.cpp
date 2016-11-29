@@ -29,24 +29,23 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &filename, const uint64_t nbConns):
   SqliteCatalogue(filename, nbConns) {
-  createCatalogueSchema();
+  try {
+    createCatalogueSchema();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // createCatalogueSchema
 //------------------------------------------------------------------------------
 void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
-  const InMemoryCatalogueSchema schema;
-  std::string::size_type searchPos = 0;
-  std::string::size_type findResult = std::string::npos;
-  auto conn = m_connPool.getConn();
-
-  while(std::string::npos != (findResult = schema.sql.find(';', searchPos))) {
-    const std::string::size_type length = findResult - searchPos + 1;
-    const std::string sql = schema.sql.substr(searchPos, length);
-    searchPos = findResult + 1;
-    auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->executeNonQuery();
+  try {
+    const InMemoryCatalogueSchema schema;
+    auto conn = m_connPool.getConn();
+    conn->executeNonQueries(schema.sql);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

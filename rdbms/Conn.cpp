@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Conn.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/Conn.hpp"
 
-#include <memory>
+#include <string>
 
 namespace cta {
 namespace rdbms {
@@ -28,6 +28,26 @@ namespace rdbms {
 // destructor
 //------------------------------------------------------------------------------
 Conn::~Conn() throw() {
+}
+
+//------------------------------------------------------------------------------
+// executeNonQueries
+//------------------------------------------------------------------------------
+void Conn::executeNonQueries(const std::string &sqlStmts) {
+  try {
+    std::string::size_type searchPos = 0;
+    std::string::size_type findResult = std::string::npos;
+
+    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+      const std::string::size_type length = findResult - searchPos + 1;
+      const std::string sqlStmt = sqlStmts.substr(searchPos, length);
+      searchPos = findResult + 1;
+      executeNonQuery(sqlStmt, rdbms::Stmt::AutocommitMode::ON);
+    }
+
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

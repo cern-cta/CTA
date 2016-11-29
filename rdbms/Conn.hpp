@@ -51,7 +51,20 @@ public:
   virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) = 0;
 
   /**
-   * Convenience function implemented in Conn around Conn::createStmt(),
+   * Convenience method that parses the specified string of multiple SQL
+   * statements and calls executeNonQuery() for each individual statement found.
+   *
+   * Please note that each statement should be a non-query terminated by a
+   * semicolon and that each individual statement will be executed with
+   * autocommit ON.
+   *
+   * @param sqlStmts The SQL statements to be executed.
+   * @param autocommitMode The autocommit mode of the statement.
+   */
+  void executeNonQueries(const std::string &sqlStmts);
+
+  /**
+   * Convenience method that wraps Conn::createStmt() followed by
    * Stmt::executeNonQuery().
    *
    * @param sql The SQL statement.
