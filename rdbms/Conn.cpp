@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 
 #include <string>
@@ -39,10 +40,14 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
     std::string::size_type findResult = std::string::npos;
 
     while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
-      const std::string::size_type length = findResult - searchPos + 1;
-      const std::string sqlStmt = sqlStmts.substr(searchPos, length);
+      // Calculate the length of the current statement without the trailing ';'
+      const std::string::size_type stmtLen = findResult - searchPos;
+      const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
       searchPos = findResult + 1;
-      executeNonQuery(sqlStmt, rdbms::Stmt::AutocommitMode::ON);
+
+      if(0 < sqlStmt.size()) { // Ignore empty statements
+        executeNonQuery(sqlStmt, rdbms::Stmt::AutocommitMode::ON);
+      }
     }
 
   } catch(exception::Exception &ex) {
