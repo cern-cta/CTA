@@ -61,8 +61,9 @@ namespace unitTests {
        int & completes, int &failures):
     MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
     
-    virtual void complete() {
+    virtual bool complete() {
       completesRef++;
+      return false;
     }
     
     

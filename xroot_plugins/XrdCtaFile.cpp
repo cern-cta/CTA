@@ -100,9 +100,10 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
   m_cmdlineReturnCode = rc;
   
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
-  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
-  params.push_back(cta::log::Param("RETURN_CODE", toString(m_cmdlineReturnCode)));
+  params.push_back({"Username", m_cliIdentity.username});
+  params.push_back({"Host", m_cliIdentity.host});
+  params.push_back({"ReturnCode", toString(m_cmdlineReturnCode)});
+  params.push_back({"CommandOutput", m_cmdlineOutput});
   std::stringstream originalRequest;
   for(auto it=m_requestTokens.begin(); it!=m_requestTokens.end(); it++) {
     originalRequest << *it << " ";
@@ -2009,7 +2010,7 @@ void XrdCtaFile::xCom_archive() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " a/archive --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
        << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
-       << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
+       << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --reportURL <reportURL>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
@@ -2023,7 +2024,7 @@ void XrdCtaFile::xCom_archive() {
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
   optional<std::string> diskfilegroup = getOptionStringValue("", "--diskfilegroup", true, false);
   optional<std::string> recoveryblob = getOptionStringValue("", "--recoveryblob", true, false);
-  optional<std::string> archiveReportURL = getOptionStringValue("", "--reportURL", false, true, "");
+  optional<std::string> archiveReportURL = getOptionStringValue("", "--reportURL", false, true, "null:");
   checkOptions(help.str());
   cta::common::dataStructures::UserIdentity originator;
   originator.name=user.value();

@@ -70,9 +70,9 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
   /**
    * Indicates that the job was successful and updates the backend store
-   *
+   * @return true if the archive was also reported to client.
    */
-  virtual void complete();
+  virtual bool complete();
   
   /**
    * Triggers a scheduler update following the failure of the job.
@@ -85,6 +85,12 @@ public:
    *
    */
   virtual void failed(const cta::exception::Exception &ex);
+  
+  /**
+   * Get the URL used for reporting
+   * @return The URL used to report to the disk system.
+   */
+  virtual std::string reportURL();
   
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;

@@ -34,8 +34,9 @@ namespace cta {
       
     ~MockArchiveJob() throw() {} 
 
-    virtual void complete() {
+    virtual bool complete() {
       completes++;
+      return false;
     }
     
     virtual void failed(const cta::exception::Exception& ex) {

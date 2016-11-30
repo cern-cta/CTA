@@ -43,7 +43,7 @@ cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::complete() {
+bool cta::ArchiveJob::complete() {
   // First check that the block Id for the file has been set.
   if (tapeFile.blockId ==
       std::numeric_limits<decltype(tapeFile.blockId)>::max())
@@ -91,7 +91,16 @@ void cta::ArchiveJob::complete() {
   if (m_dbJob->succeed()) {
     std::unique_ptr<disk::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL));
     reporter->reportArchiveFullyComplete();
+    return true;
   }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::reportURL
+//------------------------------------------------------------------------------
+std::string cta::ArchiveJob::reportURL() {
+  return m_dbJob->archiveReportURL;
 }
   
 //------------------------------------------------------------------------------
