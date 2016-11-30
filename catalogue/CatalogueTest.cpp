@@ -21,6 +21,7 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "rdbms/ConnFactoryFactory.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -52,8 +53,12 @@ void cta_catalogue_CatalogueTest::SetUp() {
   using namespace cta::catalogue;
 
   try {
+    const rdbms::Login &login = GetParam()->create();
+    auto connFactory = rdbms::ConnFactoryFactory::create(login);
     const uint64_t nbConns = 2;
-    m_catalogue = CatalogueFactory::create(GetParam()->create(), nbConns);
+
+    m_catalogue = CatalogueFactory::create(login, nbConns);
+    m_conn = connFactory->create();
 
     {
       const std::list<common::dataStructures::AdminUser> adminUsers = m_catalogue->getAdminUsers();

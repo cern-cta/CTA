@@ -21,6 +21,7 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/Conn.hpp"
 #include "rdbms/LoginFactory.hpp"
 
 #include <gtest/gtest.h>
@@ -41,6 +42,12 @@ protected:
   const std::string m_bootstrapComment;
   cta::common::dataStructures::SecurityIdentity m_bootstrapAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
+
+  /**
+   * A general purpose database connection outside of the m_catalogue object to
+   * be used to run tests directly on the underlying "raw" catalogue database.
+   */
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
 
   virtual void SetUp();
 
