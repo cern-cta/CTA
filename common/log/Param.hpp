@@ -55,7 +55,7 @@ public:
    */
   Param (const std::string &name, const double value) throw():
   m_name(name) {
-    char buf[100];
+    char buf[1024];
     std::snprintf(buf, sizeof(buf), "%f", value);
     // Just in case we overflow
     buf[sizeof(buf)-1]='\0';
