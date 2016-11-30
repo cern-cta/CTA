@@ -26,7 +26,7 @@
 namespace cta { namespace objectstore {
 
 BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
-m_user(userId), m_pool(pool), m_cluster(), m_radosCtx() {
+m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtx() {
   cta::exception::Errnum::throwOnNonZero(m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
   try {
@@ -194,6 +194,8 @@ std::string BackendRados::Parameters::toStr() {
 std::string BackendRados::Parameters::toURL() {
   std::stringstream ret;
   ret << "rados://" << m_userId << "@" << m_pool;
+  if (m_namespace.size())
+    ret << ":" << m_namespace;
   return ret.str();
 }
 
@@ -202,6 +204,7 @@ BackendRados::Parameters* BackendRados::getParams() {
   std::unique_ptr<Parameters> ret(new Parameters);
   ret->m_pool = m_pool;
   ret->m_userId = m_user;
+  ret->m_namespace = m_namespace;
   return ret.release();
 }
 

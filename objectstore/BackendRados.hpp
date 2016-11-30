@@ -91,6 +91,7 @@ public:
   private:
     std::string m_userId;
     std::string m_pool;
+    std::string m_namespace;
   };
   
   virtual Parameters * getParams();
@@ -102,6 +103,7 @@ public:
 private:
   std::string m_user;
   std::string m_pool;
+  std::string m_namespace;
   librados::Rados m_cluster;
   librados::IoCtx m_radosCtx;
 };
