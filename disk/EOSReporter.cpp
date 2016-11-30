@@ -22,15 +22,18 @@
 namespace cta { namespace disk {
 
 EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
-m_fs(hostURL) {}
+  m_fs(hostURL), m_query(queryValue) {}
 
 
 void EOSReporter::reportArchiveFullyComplete() {
   auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
   XrdCl::Buffer arg (m_query.size());
   arg.FromString(m_query);
-  cta::exception::XrootCl::throwOnError(m_fs.Query(qcOpaque, arg, nullptr),
+  XrdCl::Buffer * resp = nullptr;
+  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp);
+  delete (resp);
+  cta::exception::XrootCl::throwOnError(status,
       "In EOSReporter::reportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
-}
+} 
 
 }} // namespace cta::disk
