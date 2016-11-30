@@ -7259,4 +7259,43 @@ TEST_P(cta_catalogue_CatalogueTest, ping) {
   m_catalogue->ping();
 }
 
+TEST_P(cta_catalogue_CatalogueTest, schemaTables) {
+  const auto tableNameList = m_conn->getTableNames();
+  std::set<std::string> tableNameSet;
+
+  std::map<std::string, uint32_t> tableNameToListPos;
+  uint32_t listPos = 0;
+  for(auto &tableName: tableNameList) {
+    ASSERT_EQ(tableNameToListPos.end(), tableNameToListPos.find(tableName));
+    tableNameToListPos[tableName] = listPos;
+  }
+
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_HOST"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_USER"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_FILE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_ROUTE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("CTA_CATALOGUE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("LOGICAL_LIBRARY"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("MOUNT_POLICY"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("REQUESTER_GROUP_MOUNT_RULE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("REQUESTER_MOUNT_RULE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("STORAGE_CLASS"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_FILE"));
+  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_POOL"));
+
+  ASSERT_LT(tableNameToListPos.at("ADMIN_HOST")                , tableNameToListPos.at("ADMIN_USER"));
+  ASSERT_LT(tableNameToListPos.at("ADMIN_USER")                , tableNameToListPos.at("ARCHIVE_FILE"));
+  ASSERT_LT(tableNameToListPos.at("ARCHIVE_FILE")              , tableNameToListPos.at("ARCHIVE_ROUTE"));
+  ASSERT_LT(tableNameToListPos.at("ARCHIVE_ROUTE")             , tableNameToListPos.at("CTA_CATALOGUE"));
+  ASSERT_LT(tableNameToListPos.at("CTA_CATALOGUE")             , tableNameToListPos.at("LOGICAL_LIBRARY"));
+  ASSERT_LT(tableNameToListPos.at("LOGICAL_LIBRARY")           , tableNameToListPos.at("MOUNT_POLICY"));
+  ASSERT_LT(tableNameToListPos.at("MOUNT_POLICY")              , tableNameToListPos.at("REQUESTER_GROUP_MOUNT_RULE"));
+  ASSERT_LT(tableNameToListPos.at("REQUESTER_GROUP_MOUNT_RULE"), tableNameToListPos.at("REQUESTER_MOUNT_RULE"));
+  ASSERT_LT(tableNameToListPos.at("REQUESTER_MOUNT_RULE")      , tableNameToListPos.at("STORAGE_CLASS"));
+  ASSERT_LT(tableNameToListPos.at("STORAGE_CLASS")             , tableNameToListPos.at("TAPE"));
+  ASSERT_LT(tableNameToListPos.at("TAPE")                      , tableNameToListPos.at("TAPE_FILE"));
+  ASSERT_LT(tableNameToListPos.at("TAPE_FILE")                 , tableNameToListPos.at("TAPE_POOL"));
+}
+
 } // namespace unitTests
