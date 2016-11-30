@@ -34,7 +34,7 @@ public:
    * @param userId
    * @param pool
    */
-  BackendRados(const std::string & userId, const std::string & pool);
+  BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
   virtual ~BackendRados();
   virtual std::string user() {
     return m_user;

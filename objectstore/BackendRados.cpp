@@ -25,7 +25,7 @@
 
 namespace cta { namespace objectstore {
 
-BackendRados::BackendRados(const std::string & userId, const std::string & pool) :
+BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
 m_user(userId), m_pool(pool), m_cluster(), m_radosCtx() {
   cta::exception::Errnum::throwOnNonZero(m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
@@ -38,6 +38,8 @@ m_user(userId), m_pool(pool), m_cluster(), m_radosCtx() {
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.connect");
     cta::exception::Errnum::throwOnNonZero(m_cluster.ioctx_create(pool.c_str(), m_radosCtx),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.ioctx_create");
+    // An empty string also sets the namespace to default so no need to filter. This function does not fail.
+    m_radosCtx.set_namespace(radosNameSpace);
   } catch (...) {
     m_cluster.shutdown();
     throw;
