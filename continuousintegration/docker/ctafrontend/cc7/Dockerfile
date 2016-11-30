@@ -38,11 +38,12 @@ RUN mkdir -p ${CTAREPODIR} ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
-RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=0\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
 # Install needed packages
 #RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
-RUN yum -y install cgdb less psmisc lynx strace ltrace && yum clean all
+# add cta-cli to get already some RPMs installed
+RUN yum -y install cgdb less psmisc lynx strace ltrace cta-cli && yum clean all
 #RUN yum clean all
 
 # Add pod specific configuration
