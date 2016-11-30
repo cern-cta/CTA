@@ -24,7 +24,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/SmartFd.hpp"
 #include "mediachanger/io.hpp"
-#include "mediachanger/marshall.h"
 
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -197,18 +196,6 @@ TEST_F(cta_mediachanger_IoTest, marshalUint8) {
   ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
 }
 
-TEST_F(cta_mediachanger_IoTest, marshall_BYTE) {
-  const uint8_t v = 0x87;
-  char buf[1];
-  char *ptr = buf;
-
-  memset(buf, '\0', sizeof(buf));
-
-  marshall_BYTE(ptr, v);
-  ASSERT_EQ(buf+1, ptr);
-  ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
-}
-
 static void check16BitsWereMarshalledBigEndian(const char *const buf) {
   ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
   ASSERT_EQ(0x65 & 0xFF, buf[1] & 0xFF);
@@ -234,18 +221,6 @@ TEST_F(cta_mediachanger_IoTest, marshalUint16) {
   memset(buf, '\0', sizeof(buf));
 
   ASSERT_NO_THROW(cta::mediachanger::marshalUint16(v, ptr));
-  ASSERT_EQ(buf+2, ptr);
-  check16BitsWereMarshalledBigEndian(buf);
-}
-
-TEST_F(cta_mediachanger_IoTest, marshall_SHORT) {
-  const uint16_t v = 0x8765;
-  char buf[2];
-  char *ptr = buf;
-
-  memset(buf, '\0', sizeof(buf));
-
-  marshall_SHORT(ptr, v);
   ASSERT_EQ(buf+2, ptr);
   check16BitsWereMarshalledBigEndian(buf);
 }
@@ -281,18 +256,6 @@ TEST_F(cta_mediachanger_IoTest, marshalUint32) {
   check32BitsWereMarshalledBigEndian(buf);
 }
 
-TEST_F(cta_mediachanger_IoTest, marshall_LONG) {
-  const uint32_t v = 0x87654321;
-  char buf[4];
-  char *ptr = buf;
-
-  memset(buf, '\0', sizeof(buf));
-
-  marshall_LONG(ptr, v);
-  ASSERT_EQ(buf+4, ptr);
-  check32BitsWereMarshalledBigEndian(buf);
-}
-
 static void check64BitsWereMarshalledBigEndian(const char *const buf) {
   ASSERT_EQ(0x88 & 0xFF, buf[0] & 0xFF);
   ASSERT_EQ(0x77 & 0xFF, buf[1] & 0xFF);
@@ -312,22 +275,6 @@ TEST_F(cta_mediachanger_IoTest, marshalUint64) {
   memset(buf, '\0', sizeof(buf));
     
   ASSERT_NO_THROW(cta::mediachanger::marshalUint64(v, ptr));
-  ASSERT_EQ(buf+8, ptr);
-  check64BitsWereMarshalledBigEndian(buf);
-}
-
-// The following test MUST call check64BitsWereMarshalledBigEndian() like
-// the marshalUint64 test above in order to prove that the new C++
-// marshalling code of castor::io is compatible with that of the legacy
-// code found in h/mashall.h
-TEST_F(cta_mediachanger_IoTest, marshall_HYPER) {
-  const uint64_t v = 0x8877665544332211LL;
-  char buf[8];
-  char *ptr = buf;
-
-  memset(buf, '\0', sizeof(buf));
-
-  marshall_HYPER(ptr, v);
   ASSERT_EQ(buf+8, ptr);
   check64BitsWereMarshalledBigEndian(buf);
 }
@@ -355,18 +302,6 @@ TEST_F(cta_mediachanger_IoTest, marshalString) {
   checkStringWasMarshalled(buf);
 }
 
-TEST_F(cta_mediachanger_IoTest, marshall_STRING) {
-  const char *const v = "Value";
-  char buf[8];
-  char *ptr = buf;
-
-  memset(buf, 'E', sizeof(buf));
-
-  marshall_STRING(ptr, v);
-  ASSERT_EQ(buf+6, ptr);
-  checkStringWasMarshalled(buf);
-}
-
 TEST_F(cta_mediachanger_IoTest, unmarshalUint8) {
   char buf[] = {'\x87'};
   size_t bufLen = sizeof(buf);
@@ -375,15 +310,6 @@ TEST_F(cta_mediachanger_IoTest, unmarshalUint8) {
   ASSERT_NO_THROW(cta::mediachanger::unmarshalUint8(ptr, bufLen, v));
   ASSERT_EQ(buf+1, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ(0x87, v);
-}
-
-TEST_F(cta_mediachanger_IoTest, unmarshall_BYTE) {
-  char buf[] = {'\x87'};
-  const char *ptr = buf;
-  uint8_t v = 0;
-  unmarshall_BYTE(ptr, v);
-  ASSERT_EQ(buf+1, ptr);
   ASSERT_EQ(0x87, v);
 }
 
@@ -409,15 +335,6 @@ TEST_F(cta_mediachanger_IoTest, unmarshalUint16) {
   ASSERT_EQ((uint16_t)0x8765, v);
 }
 
-TEST_F(cta_mediachanger_IoTest, unmarshall_SHORT) {
-  char buf[] = {'\x87', '\x65'};
-  const char *ptr = buf;
-  uint16_t v = 0;
-  unmarshall_SHORT(ptr, v);
-  ASSERT_EQ(buf+2, ptr);
-  ASSERT_EQ((uint16_t)0x8765, v);
-}
-
 TEST_F(cta_mediachanger_IoTest, unmarshalUint32) {
   char buf[] = {'\x87', '\x65', '\x43', '\x21'};
   size_t bufLen = sizeof(buf);
@@ -426,15 +343,6 @@ TEST_F(cta_mediachanger_IoTest, unmarshalUint32) {
   ASSERT_NO_THROW(cta::mediachanger::unmarshalUint32(ptr, bufLen, v));
   ASSERT_EQ(buf+4, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((uint32_t)0x87654321, v);
-}
-
-TEST_F(cta_mediachanger_IoTest, unmarshall_LONG) {
-  char buf[] = {'\x87', '\x65', '\x43', '\x21'};
-  const char *ptr = buf;
-  uint32_t v = 0;
-  unmarshall_LONG(ptr, v);
-  ASSERT_EQ(buf+4, ptr);
   ASSERT_EQ((uint32_t)0x87654321, v);
 }
 
@@ -460,18 +368,6 @@ TEST_F(cta_mediachanger_IoTest, unmarshalUint64) {
   ASSERT_EQ((uint64_t)0x8877665544332211LL, v);
 }
 
-// The following test MUST be the same as the unmarshalUint64 test above in
-// order to prove that the new C++ un-marshalling code of castor::io is
-// compatible with that of the legacy code found in h/mashall.h
-TEST_F(cta_mediachanger_IoTest, unmarshall_HYPER) {
-  char buf[] = {'\x88', '\x77', '\x66', '\x55', '\x44', '\x33', '\x22', '\x11'};
-  const char *ptr = buf;
-  uint64_t v = 0;
-  unmarshall_HYPER(ptr, v);
-  ASSERT_EQ(buf+8, ptr);
-  ASSERT_EQ((uint64_t)0x8877665544332211LL, v);
-}
-
 TEST_F(cta_mediachanger_IoTest, unmarshalString) {
   char src[] = {'V', 'a', 'l', 'u', 'e', '\0', 'E', 'E'};
   size_t srcLen = sizeof(src);
@@ -482,16 +378,6 @@ TEST_F(cta_mediachanger_IoTest, unmarshalString) {
   ASSERT_NO_THROW(cta::mediachanger::unmarshalString(srcPtr, srcLen, dst, dstLen));
   ASSERT_EQ(src+6, srcPtr);
   ASSERT_EQ((size_t)2, srcLen);
-  ASSERT_EQ(std::string("Value"), std::string(dst));
-}
-
-TEST_F(cta_mediachanger_IoTest, unmarshall_STRING) {
-  char src[] = {'V', 'a', 'l', 'u', 'e', '\0', 'E', 'E'};
-  const char *srcPtr = src;
-  char dst[6];
-
-  unmarshall_STRING(srcPtr, dst);
-  ASSERT_EQ(src+6, srcPtr);
   ASSERT_EQ(std::string("Value"), std::string(dst));
 }
 
