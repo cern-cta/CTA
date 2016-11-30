@@ -41,7 +41,6 @@ public:
    * @return A newly created Login object.
    */
   virtual cta::rdbms::Login create() {
-    using namespace cta::catalogue;
     return cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
   }
 }; // class OracleLoginFactory
