@@ -137,6 +137,8 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
       return dumpWithType<Agent>(this, lock);
     case serializers::DriveRegister_t:
       return dumpWithType<DriveRegister>(this, lock);
+    case serializers::ArchiveQueue_t:
+      return dumpWithType<cta::objectstore::ArchiveQueue>(this, lock);
     case serializers::RetrieveQueue_t:
       return dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
     case serializers::ArchiveRequest_t:

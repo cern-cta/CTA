@@ -420,7 +420,8 @@ std::string ArchiveRequest::dump() {
   json_object_object_add(jo, "checksumtype", json_object_new_string(m_payload.checksumtype().c_str()));
   json_object_object_add(jo, "checksumvalue", json_object_new_string(m_payload.checksumvalue().c_str()));
   json_object_object_add(jo, "diskfileid", json_object_new_string(m_payload.diskfileid().c_str()));
-  json_object_object_add(jo, "instance", json_object_new_string(m_payload.diskinstance().c_str()));
+  json_object_object_add(jo, "diskinstance", json_object_new_string(m_payload.diskinstance().c_str()));
+  json_object_object_add(jo, "archivereporturl", json_object_new_string(m_payload.archivereporturl().c_str()));
   json_object_object_add(jo, "filesize", json_object_new_int64(m_payload.filesize()));
   json_object_object_add(jo, "srcurl", json_object_new_string(m_payload.srcurl().c_str()));
   json_object_object_add(jo, "storageclass", json_object_new_string(m_payload.storageclass().c_str()));
