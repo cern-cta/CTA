@@ -70,5 +70,22 @@ TEST(Regex, SubstringMatch) {
   ASSERT_EQ(ret1[1], "user@pool");
   ASSERT_EQ(ret1[2], "12345@castorns.7890");
 }
+
+TEST(Regex, NestedMatch) {
+  cta::utils::Regex re("^rados://([^@]+)@([^:]+)(|:(.+))$");
+  auto ret1 = re.exec("rados://user@pool:namespace");
+
+  ASSERT_EQ(5U, ret1.size());
+  ASSERT_EQ("user", ret1[1]);
+  ASSERT_EQ("pool", ret1[2]);
+  ASSERT_EQ("namespace", ret1[4]);
+  
+  // The nested match does not show up in the result set if its branch is not met.
+  ret1 = re.exec("rados://user1@pool2");
+  ASSERT_EQ(4U, ret1.size());
+  ASSERT_EQ("user1", ret1[1]);
+  ASSERT_EQ("pool2", ret1[2]);
+  ASSERT_EQ("", ret1[3]);
+}
 }
 
