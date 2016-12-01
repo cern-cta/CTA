@@ -22,8 +22,8 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Structure containing the SQL to create the schema of the in memory CTA
- * database.
+ * Structure containing the SQL to create the schema of the CTA catalogue
+ * database in an SQLite database.
  *
  * The CMakeLists.txt file of this directory instructs cmake to generate
  * SqliteCatalogueSchema.cpp from:
