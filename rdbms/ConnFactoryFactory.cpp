@@ -32,7 +32,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return cta::make_unique<SqliteConnFactory>(":memory:");
+      return cta::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
     case rdbms::Login::DBTYPE_ORACLE:
       return cta::make_unique<OcciConnFactory>(login.username, login.password, login.database);
     case rdbms::Login::DBTYPE_SQLITE:
