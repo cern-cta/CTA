@@ -7267,7 +7267,7 @@ TEST_P(cta_catalogue_CatalogueTest, schemaTables) {
   uint32_t listPos = 0;
   for(auto &tableName: tableNameList) {
     ASSERT_EQ(tableNameToListPos.end(), tableNameToListPos.find(tableName));
-    tableNameToListPos[tableName] = listPos;
+    tableNameToListPos[tableName] = listPos++;
   }
 
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_HOST"));
