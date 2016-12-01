@@ -51,14 +51,6 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql)
 
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sqlite_catalogue_schema.sql
-  DESTINATION usr/share/cta-${CTA_VERSION}/sql
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.sql
-  DESTINATION usr/share/cta-${CTA_VERSION}/sql
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
 add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
   DEPENDS sqlite_catalogue_schema.sql)

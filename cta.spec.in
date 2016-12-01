@@ -176,16 +176,6 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
 
-%package -n cta-doc
-Summary: CERN Tape Archive: Documents and supporting SQL scripts
-Group: Application/CTA
-%description -n cta-doc
-CERN Tape Archive:
-Documents and supporting SQL scripts
-%files -n cta-doc
-%attr(0644,root,root) %{_datarootdir}/%{name}-%{ctaVersion}/sql/oracle_catalogue_schema.sql
-%attr(0644,root,root) %{_datarootdir}/%{name}-%{ctaVersion}/sql/sqlite_catalogue_schema.sql
-
 %package -n cta-systemtests
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
