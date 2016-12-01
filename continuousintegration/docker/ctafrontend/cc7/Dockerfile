@@ -33,6 +33,12 @@ ENV CTAREPODIR="/tmp/repo"
 ADD ${BASEDIR}/etc/yum.repos.d/* /etc/yum.repos.d/
 RUN yum install -y yum-plugin-priorities createrepo epel-release
 
+# where do we want to get xroot from?
+# epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
+# => need to set epel prio to 4: yum-config-manager --setopt="epel.priority=4"
+# or if taking the older version from eos, eos-citrine-depend must be enabled so that
+# the older version of xroot is installed by cta-cli and is not conflicting later when installing eos...
+
 # Create local repo for cta artifacts
 RUN mkdir -p ${CTAREPODIR} ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
