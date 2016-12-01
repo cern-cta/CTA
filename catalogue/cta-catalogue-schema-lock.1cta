@@ -21,19 +21,11 @@ cta-catalogue-schema-lock \- Lock the CTA catalogue schema
 
 .SH DESCRIPTION
 \fBcta-catalogue-schema-lock\fP is a command-line tool that locks the CTA
-catalogue database schema in order to help prevent it from accidently being
-deleted.
+catalogue database schema in order to help prevent the cta-catalogue-schema-drop
+command-line tool from accidently dropping it.
 .P
 This command-line tool sets the contents of the SCHEMA_STATUS column of the
 CTA_CATALOGUE database table to LOCKED.
-.P
-The drop_oracle_catalogue_schema.sql script will abort if it sees the value
-LOCKED in the SCHEMA_STATUS column of the CTA_CATALOGUE database table.
-.P
-Please note that SQLite databases are not protected by this command-line tool
-because the drop_sqlite_catalogue_schema.sql script does not check if the
-schema is locked.  In other words it does not check the contents of the
-SCHEMA_STATUS column of the CTA_CATALOGUE database table.
 .SH ARGUMENTS
 .TP
 \fBdatabaseConnectionFile
