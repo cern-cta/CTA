@@ -181,3 +181,14 @@ target_link_libraries (cta-catalogue-schema-drop
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-database-poll
+  PollDatabaseCmd.cpp
+  PollDatabaseCmdLineArgs.cpp
+  PollDatabaseCmdMain.cpp)
+
+target_link_libraries (cta-database-poll
+  ctacatalogue)
+
+install (TARGETS cta-database-poll DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
