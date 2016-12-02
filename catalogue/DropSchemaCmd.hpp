@@ -27,8 +27,7 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Command-line tool that deletes all the rows of all the tables in the
- * catalogue database except for the CTA_CATALOGUE table.
+ * Command-line tool that drops the schema of the catalogue database.
  */
 class DropSchemaCmd: public CmdLineTool {
 public:
