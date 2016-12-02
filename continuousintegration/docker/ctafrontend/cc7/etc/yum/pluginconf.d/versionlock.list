@@ -1,0 +1,10 @@
+0:eos-client-4.1.11-1.el7.x86_64
+0:eos-server-4.1.11-1.el7.x86_64
+1:xrootd-4.4.0-1.el7.x86_64
+1:xrootd-debuginfo-4.4.0-1.el7.x86_64
+1:xrootd-client-libs-4.4.0-1.el7.x86_64
+1:xrootd-client-4.4.0-1.el7.x86_64
+1:xrootd-selinux-4.4.0-1.el7.noarch
+1:xrootd-server-4.4.0-1.el7.x86_64
+1:xrootd-libs-4.4.0-1.el7.x86_64
+1:xrootd-server-libs-4.4.0-1.el7.x86_64

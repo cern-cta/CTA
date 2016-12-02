@@ -30,8 +30,8 @@ ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
 ENV CTAREPODIR="/tmp/repo"
 
 # Manage repos
-ADD ${BASEDIR}/etc/yum.repos.d/* /etc/yum.repos.d/
-RUN yum install -y yum-plugin-priorities createrepo epel-release
+ADD ${BASEDIR}/etc /etc
+RUN yum install -y yum-plugin-priorities yum-plugin-versionlock createrepo epel-release
 
 # where do we want to get xroot from?
 # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
