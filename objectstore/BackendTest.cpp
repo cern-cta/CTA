@@ -26,7 +26,7 @@ namespace unitTests {
 TEST_P(BackendAbstractTest, BasicReadWrite) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testValue = "1234";
-  const std::string testSecondValue = "1234";
+  const std::string testSecondValue = "12345";
   const std::string testObjectName = "testObject";
   // Check we can verify the absence of an object
   ASSERT_FALSE(m_os->exists(testObjectName));
@@ -54,6 +54,7 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
 TEST_P(BackendAbstractTest, LockingInterface) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testObjectName = "testObject";
+  const std::string nonExistingObject = "thisObjectShouldNotExist";
   m_os->create(testObjectName, "");
   {
     // If we don't scope the object, the release will blow up after
@@ -72,6 +73,16 @@ TEST_P(BackendAbstractTest, LockingInterface) {
       m_os->lockExclusive(testObjectName));
   m_os->remove(testObjectName);
   ASSERT_NO_THROW(lock->release());
+  // The object should be gone
+  ASSERT_FALSE(m_os->exists(testObjectName));
+  // Attempting to lock a non-existing object should fail
+  {
+    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock;
+    ASSERT_THROW(lock.reset(m_os->lockExclusive(nonExistingObject)), cta::exception::Exception);
+    ASSERT_THROW(lock.reset(m_os->lockShared(nonExistingObject)), cta::exception::Exception);
+  }
+  // The object should not be created as a side effect
+  ASSERT_FALSE(m_os->exists(nonExistingObject));
 }
 
 TEST_P(BackendAbstractTest, ParametersInterface) {
@@ -82,12 +93,11 @@ TEST_P(BackendAbstractTest, ParametersInterface) {
 }
 
 cta::objectstore::BackendVFS osVFS;
-#define TEST_RADOS 0
+#define TEST_RADOS 1
 #if TEST_RADOS
-cta::objectstore::BackendRados osRados("tapetest", "tapetest");
-INSTANTIATE_TEST_CASE_P(BackendTest, BackendAbstractTest, ::testing::Values(&osVFS, &osRados));
-#else
-INSTANTIATE_TEST_CASE_P(BackendTest, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osVFS));
+cta::objectstore::BackendRados osRados("cta-eric", "tapetest", "cta-eric");
+INSTANTIATE_TEST_CASE_P(BackendTestRados, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osRados));
 #endif
+INSTANTIATE_TEST_CASE_P(BackendTestVFS, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osVFS));
 
 }
