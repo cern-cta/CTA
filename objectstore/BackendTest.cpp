@@ -93,9 +93,9 @@ TEST_P(BackendAbstractTest, ParametersInterface) {
 }
 
 cta::objectstore::BackendVFS osVFS;
-#define TEST_RADOS 1
+#define TEST_RADOS 0
 #if TEST_RADOS
-cta::objectstore::BackendRados osRados("cta-eric", "tapetest", "cta-eric");
+cta::objectstore::BackendRados osRados("tapetest", "tapetest");
 INSTANTIATE_TEST_CASE_P(BackendTestRados, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osRados));
 #endif
 INSTANTIATE_TEST_CASE_P(BackendTestVFS, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osVFS));
