@@ -220,15 +220,17 @@ void BackendVFS::ScopedLock::release() {
 #endif
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockHelper(
-  std::string name, int type) {
+BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
   ret->set(::open(path.c_str(), O_RDONLY), path);
 
   if(0 > ret->m_fd) {
-    // Create the lock file if missing.
-    if (ENOENT == errno) {
+    // Create the lock file if missing and the main file can be stated.
+    int openErrno = errno;
+    struct ::stat sBuff;
+    int statResult = ::stat((m_root + name).c_str(), &sBuff);
+    if (ENOENT == openErrno && !statResult) {
       ret->set(::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH), path);
       exception::Errnum::throwOnMinusOne(ret->m_fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
     } else {
