@@ -152,6 +152,9 @@ std::string BackendRados::createUniqueClientId() {
 }
 
 BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
+  // In Rados, locking a non-existing object will create it. This is not our intended
+  // behavior. So we test for existence beforehand.
+  if (!exists(name)) throw cta::exception::Errnum(ENOENT, "In BackendRados::lockExclusive(): trying to lock a non-existing object");
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
@@ -169,6 +172,9 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
 }
 
 BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
+  // In Rados, locking a non-existing object will create it. This is not our intended
+  // behavior. So we test for existence beforehand.
+  if (!exists(name)) throw cta::exception::Errnum(ENOENT, "In BackendRados::lockShared(): trying to lock a non-existing object");
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
