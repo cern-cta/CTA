@@ -38,13 +38,15 @@ RUN yum install -y yum-plugin-downloadonly yum-plugin-priorities yum-plugin-vers
 # => need to set epel prio to 4: yum-config-manager --setopt="epel.priority=4"
 # or if taking the older version from eos, eos-citrine-depend must be enabled so that
 # the older version of xroot is installed by cta-cli and is not conflicting later when installing eos...
+# Newer version of CTA requires xroot >= 4.4.1-1...
+# therefore set epel priority to 4...
 
 # Create local repo for cta artifacts
 RUN mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
-RUN yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server
+RUN yum-config-manager --setopt="epel.priority=4"; yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server
 RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
 # Install needed packages
