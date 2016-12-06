@@ -46,7 +46,7 @@ RUN mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
-RUN yum-config-manager --setopt="epel.priority=4"; yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server
+RUN yum-config-manager --enable epel --setopt="epel.priority=4"; yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server
 RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
 # Install needed packages
