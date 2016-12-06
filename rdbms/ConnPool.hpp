@@ -55,6 +55,10 @@ public:
    */
   PooledConn getConn();
 
+private:
+
+  friend PooledConn;
+
   /**
    * Calls commit on the specified database connection and returns it to the
    * pool.
@@ -62,8 +66,6 @@ public:
    * @param conn The connection to be commited and returned to the pool.
    */
   void returnConn(Conn *const conn);
-
-private:
 
   /**
    * The database connection factory.
