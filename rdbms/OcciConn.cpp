@@ -138,5 +138,40 @@ std::list<std::string> OcciConn::getTableNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// updateHealth
+//------------------------------------------------------------------------------
+void OcciConn::updateHealth(const oracle::occi::SQLException &ex) {
+  using namespace oracle;
+
+  // Error codes that identify an unhealthy connection
+  // The majority of these error codes were learnt from CASTOR
+  switch(ex.getErrorCode()) {
+  case    28:
+  case  1003:
+  case  1008:
+  case  1012:
+  case  1033:
+  case  1089:
+  case  2392:
+  case  2399:
+  case  3113:
+  case  3114:
+  case  3135:
+  case 12170:
+  case 12541:
+  case 12571:
+  case 24338:
+  case 12537:
+  case 25401:
+  case 25409:
+  case 32102:
+    setHealthy(false);
+    break;
+  default:
+    break;
+  };
+}
+
 } // namespace rdbms
 } // namespace cta

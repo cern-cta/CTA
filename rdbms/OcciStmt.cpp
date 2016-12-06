@@ -23,7 +23,6 @@
 #include "rdbms/OcciStmt.hpp"
 
 #include <cstring>
-#include <iostream>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -181,11 +180,9 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
 
   try {
     return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+  } catch(occi::SQLException &ex) {
+    m_conn.updateHealth(ex);
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
   }
 }
 
@@ -197,11 +194,9 @@ void OcciStmt::executeNonQuery() {
 
   try {
     m_stmt->executeUpdate();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+  } catch(occi::SQLException &ex) {
+    m_conn.updateHealth(ex);
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
   }
 }
 

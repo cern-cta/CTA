@@ -20,6 +20,7 @@
 
 #include "Stmt.hpp"
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <string>
@@ -92,6 +93,29 @@ public:
    * order.
    */
   virtual std::list<std::string> getTableNames() = 0;
+
+  /**
+   * Returns true if the connection is healthy.
+   *
+   * @return True if the connection is healthy.
+   */
+  bool getHealthy() const;
+
+protected:
+
+  /**
+   * Sets the status of the connection to be either healthy or not healthy.
+   *
+   * @param value True if the connection is healthy.
+   */
+  void setHealthy(const bool value);
+
+private:
+
+  /**
+   * True if the connection's state is healthy.
+   */
+  std::atomic<bool> m_healthy{true};
 
 }; // class Conn
 

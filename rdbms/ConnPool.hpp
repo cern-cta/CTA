@@ -60,8 +60,11 @@ private:
   friend PooledConn;
 
   /**
-   * Calls commit on the specified database connection and returns it to the
-   * pool.
+   * If the specified database connection is healthy, then this method calls
+   * commit on the connection and returns it to the pool.
+   *
+   * If the specified database connection is no healthy, then this method
+   * closes the connection and creates a new one in the connection pool.
    *
    * @param conn The connection to be commited and returned to the pool.
    */

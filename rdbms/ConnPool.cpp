@@ -69,10 +69,24 @@ PooledConn ConnPool::getConn() {
 // returnConn
 //------------------------------------------------------------------------------
 void ConnPool::returnConn(Conn *const conn) {
-  conn->commit();
-  std::unique_lock<std::mutex> lock(m_connsMutex);
-  m_conns.emplace_back(conn);
-  m_connsCv.notify_one();
+  // If the connection is healthy
+  if(conn->getHealthy()) {
+
+    // Commit the connection and put it back in the pool
+    conn->commit();
+    std::unique_lock<std::mutex> lock(m_connsMutex);
+    m_conns.emplace_back(conn);
+    m_connsCv.notify_one();
+
+  // Else the connection is not healthy
+  } else {
+
+    // Close the connection and put a brand new one in the pool
+    delete conn;
+    std::unique_lock<std::mutex> lock(m_connsMutex);
+    m_conns.push_back(m_connFactory.create());
+    m_connsCv.notify_one();
+  }
 }
 
 } // namespace rdbms
