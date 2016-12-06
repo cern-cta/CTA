@@ -20,24 +20,25 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/PooledConn.hpp"
 
-#include <iostream>
-
 namespace cta {
 namespace rdbms {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PooledConn::PooledConn(Conn *const conn, ConnPool *connPool) noexcept:
-  m_connAndPool(conn, connPool) {
+PooledConn::PooledConn(Conn *const conn, ConnPool *pool) noexcept:
+  m_conn(conn),
+  m_pool(pool) {
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// move constructor
 //------------------------------------------------------------------------------
 PooledConn::PooledConn(PooledConn &&other) noexcept:
-  m_connAndPool(other.m_connAndPool) {
-  other.m_connAndPool = ConnAndPool();
+  m_conn(other.m_conn),
+  m_pool(other.m_pool) {
+  other.m_conn = nullptr;
+  other.m_pool = nullptr;
 }
 
 //------------------------------------------------------------------------------
@@ -45,24 +46,11 @@ PooledConn::PooledConn(PooledConn &&other) noexcept:
 //------------------------------------------------------------------------------
 PooledConn::~PooledConn() noexcept {
   try {
-    reset();
-  } catch(...) {
-  }
-}
-
-//------------------------------------------------------------------------------
-// reset
-//------------------------------------------------------------------------------
-void PooledConn::reset(const ConnAndPool &connAndPool) {
-  // If the database connection is not the one already owned
-  if(connAndPool.conn != m_connAndPool.conn) {
     // If this smart database connection currently points to a database connection then return it back to its pool
-    if(nullptr != m_connAndPool.conn) {
-      m_connAndPool.pool->returnConn(m_connAndPool.conn);
+    if(nullptr != m_pool && nullptr != m_conn) {
+      m_pool->returnConn(m_conn);
     }
-
-    // Take ownership of the new database connection
-    m_connAndPool = connAndPool;
+  } catch(...) {
   }
 }
 
@@ -70,41 +58,46 @@ void PooledConn::reset(const ConnAndPool &connAndPool) {
 // get()
 //------------------------------------------------------------------------------
 Conn *PooledConn::get() const noexcept {
-  return m_connAndPool.conn;
+  return m_conn;
 }
 
 //------------------------------------------------------------------------------
 // operator->()
 //------------------------------------------------------------------------------
 Conn *PooledConn::operator->() const noexcept {
-  return m_connAndPool.conn;
+  return m_conn;
 }
 
 //------------------------------------------------------------------------------
 // operator*()
 //------------------------------------------------------------------------------
 Conn &PooledConn::operator*() const {
-  if(nullptr == m_connAndPool.conn) {
+  if(nullptr == m_conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: No database connection");
   }
-  return *m_connAndPool.conn;
+  return *m_conn;
 }
 
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
 PooledConn &PooledConn::operator=(PooledConn &&rhs) {
-  reset(rhs.release());
-  return *this;
-}
+  // If the database connection is not the one already owned
+  if(rhs.m_conn != m_conn) {
+    // If this smart database connection currently points to a database connection then return it back to its pool
+    if(nullptr != m_pool && nullptr != m_conn) {
+      m_pool->returnConn(m_conn);
+    }
 
-//------------------------------------------------------------------------------
-// release
-//------------------------------------------------------------------------------
-PooledConn::ConnAndPool PooledConn::release() noexcept {
-  const ConnAndPool tmp  = m_connAndPool;
-  m_connAndPool = ConnAndPool();
-  return tmp;
+    // Take ownership of the new database connection
+    m_conn = rhs.m_conn;
+    m_pool = rhs.m_pool;
+
+    // Release the database connection from the rhs
+    rhs.m_conn = nullptr;
+    rhs.m_pool = nullptr;
+  }
+  return *this;
 }
 
 } // namespace rdbms

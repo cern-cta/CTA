@@ -40,10 +40,10 @@ public:
    * Constructor.
    *
    * @param conn The database connection.
-   * @param connPool The database connection pool to which the connection
+   * @param pool The database connection pool to which the connection
    * should be returned.
    */
-  PooledConn(Conn *const conn, ConnPool *const connPool) noexcept;
+  PooledConn(Conn *const conn, ConnPool *const pool) noexcept;
 
   /**
    * Deletion of the copy constructor.
@@ -100,46 +100,17 @@ public:
    */
   PooledConn &operator=(PooledConn &&rhs);
 
-  /**
-   * Structure to store a database connection and the pool to which it belongs.
-   */
-  struct ConnAndPool {
-    Conn *conn;
-    ConnPool *pool;
-
-    ConnAndPool() noexcept: conn(nullptr), pool(nullptr) {
-    }
-
-    ConnAndPool(Conn *c, ConnPool *p) noexcept:
-      conn(c),
-      pool(p) {
-    }
-  };
-
-  /**
-   * Takes ownership of the specified database connection.  If this smart
-   * connection already owns a connection that is not the same as the one
-   * specified then the already owned connection will be returned to its pool.
-   *
-   * @param connAndPool The database connection to be owned and the pool to
-   * which it belongs.
-   */
-  void reset(const ConnAndPool &connAndPool = ConnAndPool());
-
-  /**
-   * Releases the owned database connection.
-   *
-   * @return The released database connection and the pool to which it belongs.
-   */
-  ConnAndPool release() noexcept;
-
 private:
 
   /**
-   * The database connection owned by this smart connection and the pool to
-   * which the connection belongs.
+   * The database connection.
    */
-  ConnAndPool m_connAndPool;
+  Conn *m_conn = nullptr;
+
+  /**
+   * The database connection pool to which the m_conn should be returned.
+   */
+  ConnPool *m_pool = nullptr;
 
 }; // class PooledConn
 

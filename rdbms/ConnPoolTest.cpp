@@ -44,10 +44,34 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   ConnPool pool(*connFactory, nbConns);
 
   PooledConn conn = pool.getConn();
+}
+
+TEST_F(cta_rdbms_ConnPoolTest, assignment) {
+  using namespace cta::rdbms;
+
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  auto connFactory = ConnFactoryFactory::create(login);
+  const uint64_t nbConns = 2;
+  ConnPool pool(*connFactory, nbConns);
+
+  PooledConn conn = pool.getConn();
 
   PooledConn conn2(nullptr, nullptr);
 
   conn2 = pool.getConn();
+}
+
+TEST_F(cta_rdbms_ConnPoolTest, moveConstructor) {
+  using namespace cta::rdbms;
+
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  auto connFactory = ConnFactoryFactory::create(login);
+  const uint64_t nbConns = 2;
+  ConnPool pool(*connFactory, nbConns);
+
+  PooledConn conn = pool.getConn();
+
+  PooledConn conn2(std::move(conn));
 }
 
 } // namespace unitTests
