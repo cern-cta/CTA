@@ -59,7 +59,7 @@ public:
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  virtual void close();
+  void close() override;
 
   /**
    * Creates a prepared statement.
@@ -68,17 +68,17 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) override;
+  std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) override;
 
   /**
    * Commits the current transaction.
    */
-  virtual void commit() override;
+  void commit() override;
 
   /**
    * Rolls back the current transaction.
    */
-  virtual void rollback() override;
+  void rollback() override;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -87,7 +87,12 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  virtual std::list<std::string> getTableNames() override;
+  std::list<std::string> getTableNames() override;
+
+  /**
+   * Returns true if this connection is open.
+   */
+  bool isOpen() const override;
 
   /**
    * This ia an SqliteConn specific method that prints the database schema to

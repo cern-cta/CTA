@@ -36,10 +36,9 @@ public:
   /**
    * Constructor.
    *
-   * @param conn The database connection or nullptr if the no rollback should
-   * take place.
+   * @param conn The database connection.
    */
-  AutoRollback(Conn *const conn);
+  AutoRollback(Conn &conn);
 
   /**
    * Prevent copying.
@@ -66,9 +65,14 @@ public:
 private:
 
   /**
+   * True if the automatica rollback has been cancelled.
+   */
+  bool m_cancelled;
+
+  /**
    * The database connection or nullptr if no rollback should take place.
    */
-  Conn *m_conn;
+  Conn &m_conn;
 
 }; // class Login
 

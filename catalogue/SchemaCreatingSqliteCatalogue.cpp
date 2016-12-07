@@ -43,7 +43,7 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
   try {
     const SqliteCatalogueSchema schema;
     auto conn = m_connPool.getConn();
-    conn->executeNonQueries(schema.sql);
+    conn.executeNonQueries(schema.sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

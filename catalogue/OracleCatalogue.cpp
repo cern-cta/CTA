@@ -82,7 +82,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
     auto conn = m_connPool.getConn();
-    auto selectStmt = conn->createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
+    auto selectStmt = conn.createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
@@ -139,19 +139,19 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
-    conn->commit();
+    conn.commit();
 
     return *archiveFile;
   } catch(exception::UserError &) {

@@ -49,8 +49,8 @@ SqliteCatalogue::~SqliteCatalogue() {
 common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
     auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn.get());
-    const auto archiveFile = getArchiveFile(*conn, archiveFileId);
+    rdbms::AutoRollback autoRollback(conn);
+    const auto archiveFile = getArchiveFile(conn, archiveFileId);
 
     if(nullptr == archiveFile.get()) {
       exception::UserError ue;
@@ -69,19 +69,19 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn->createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
 
-    conn->commit();
+    conn.commit();
 
     return *archiveFile;
   } catch(exception::UserError &) {
@@ -96,7 +96,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
-    rdbms::AutoRollback autoRollback(&conn);
+    rdbms::AutoRollback autoRollback(conn);
 
     conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::Stmt::AutocommitMode::OFF);
     uint64_t archiveFileId = 0;

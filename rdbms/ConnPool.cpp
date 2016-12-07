@@ -60,17 +60,21 @@ PooledConn ConnPool::getConn() {
     m_connsCv.wait(lock);
   }
 
-  PooledConn pooledConn(m_conns.front().release(), this);
+  std::unique_ptr<Conn> conn = std::move(m_conns.front());
   m_conns.pop_front();
-  return pooledConn;
+  if(conn->isOpen()) {
+    return PooledConn(std::move(conn), this);
+  } else {
+    return PooledConn(m_connFactory.create(), this);
+  }
 }
 
 //------------------------------------------------------------------------------
 // returnConn
 //------------------------------------------------------------------------------
 void ConnPool::returnConn(Conn *const conn) {
-  // If the connection is healthy
-  if(conn->getHealthy()) {
+  // If the connection is open
+  if(conn->isOpen()) {
 
     // Commit the connection and put it back in the pool
     conn->commit();
@@ -78,13 +82,17 @@ void ConnPool::returnConn(Conn *const conn) {
     m_conns.emplace_back(conn);
     m_connsCv.notify_one();
 
-  // Else the connection is not healthy
+  // Else the connection is closed
   } else {
 
-    // Close the connection and put a brand new one in the pool
-    delete conn;
+    // Close all connections in the pool and put the returning connection back
+    // in the pool.  A closed connection within the pool is reopened when it is
+    // pulled from the pool.
     std::unique_lock<std::mutex> lock(m_connsMutex);
-    m_conns.push_back(m_connFactory.create());
+    for(auto &connInPool : m_conns) {
+      connInPool->close();
+    }
+    m_conns.emplace_back(conn);
     m_connsCv.notify_one();
   }
 }

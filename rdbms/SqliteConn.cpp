@@ -192,5 +192,12 @@ std::list<std::string> SqliteConn::getTableNames() {
   }
 }
 
+//------------------------------------------------------------------------------
+// isOpen
+//------------------------------------------------------------------------------
+bool SqliteConn::isOpen() const {
+  return nullptr != m_conn;
+}
+
 } // namespace rdbms
 } // namespace cta

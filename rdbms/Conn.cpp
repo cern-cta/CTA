@@ -67,19 +67,5 @@ void Conn::executeNonQuery(const std::string &sql, const Stmt::AutocommitMode au
   }
 }
 
-//------------------------------------------------------------------------------
-// setHealthy
-//------------------------------------------------------------------------------
-void Conn::setHealthy(const bool value) {
-  m_healthy = value;
-}
-
-//------------------------------------------------------------------------------
-// getHealthy
-//------------------------------------------------------------------------------
-bool Conn::getHealthy() const {
-  return m_healthy;
-}
-
 } // namespace rdbms
 } // namespace cta

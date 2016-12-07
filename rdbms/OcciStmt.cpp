@@ -181,7 +181,18 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
   try {
     return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(occi::SQLException &ex) {
-    m_conn.updateHealth(ex);
+    if(connShouldBeClosed(ex)) {
+      // Close the statement first and then the connection
+      try {
+        close();
+      } catch(...) {
+      }
+
+      try {
+        m_conn.close();
+      } catch(...) {
+      }
+    }
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
   }
 }
@@ -195,7 +206,18 @@ void OcciStmt::executeNonQuery() {
   try {
     m_stmt->executeUpdate();
   } catch(occi::SQLException &ex) {
-    m_conn.updateHealth(ex);
+    if(connShouldBeClosed(ex)) {
+      // Close the statement first and then the connection
+      try {
+        close();
+      } catch(...) {
+      }
+
+      try {
+        m_conn.close();
+      } catch(...) {
+      }
+    }
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
   }
 }
@@ -219,6 +241,38 @@ oracle::occi::Statement *OcciStmt::get() const {
 //------------------------------------------------------------------------------
 oracle::occi::Statement *OcciStmt::operator->() const {
   return get();
+}
+
+//------------------------------------------------------------------------------
+// connShouldBeClosed
+//------------------------------------------------------------------------------
+bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
+  using namespace oracle;
+
+  switch(ex.getErrorCode()) {
+  case    28:
+  case  1003:
+  case  1008:
+  case  1012:
+  case  1033:
+  case  1089:
+  case  2392:
+  case  2399:
+  case  3113:
+  case  3114:
+  case  3135:
+  case 12170:
+  case 12541:
+  case 12571:
+  case 24338:
+  case 12537:
+  case 25401:
+  case 25409:
+  case 32102:
+    return true;
+  default:
+    return false;
+  };
 }
 
 } // namespace rdbms

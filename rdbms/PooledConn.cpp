@@ -26,15 +26,23 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PooledConn::PooledConn(Conn *const conn, ConnPool *pool) noexcept:
+PooledConn::PooledConn(Conn *const conn, ConnPool *pool):
   m_conn(conn),
+  m_pool(pool) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+PooledConn::PooledConn(std::unique_ptr<Conn> conn, ConnPool *pool):
+  m_conn(conn.release()),
   m_pool(pool) {
 }
 
 //------------------------------------------------------------------------------
 // move constructor
 //------------------------------------------------------------------------------
-PooledConn::PooledConn(PooledConn &&other) noexcept:
+PooledConn::PooledConn(PooledConn &&other):
   m_conn(other.m_conn),
   m_pool(other.m_pool) {
   other.m_conn = nullptr;
@@ -52,30 +60,6 @@ PooledConn::~PooledConn() noexcept {
     }
   } catch(...) {
   }
-}
-
-//------------------------------------------------------------------------------
-// get()
-//------------------------------------------------------------------------------
-Conn *PooledConn::get() const noexcept {
-  return m_conn;
-}
-
-//------------------------------------------------------------------------------
-// operator->()
-//------------------------------------------------------------------------------
-Conn *PooledConn::operator->() const noexcept {
-  return m_conn;
-}
-
-//------------------------------------------------------------------------------
-// operator*()
-//------------------------------------------------------------------------------
-Conn &PooledConn::operator*() const {
-  if(nullptr == m_conn) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: No database connection");
-  }
-  return *m_conn;
 }
 
 //------------------------------------------------------------------------------
@@ -98,6 +82,73 @@ PooledConn &PooledConn::operator=(PooledConn &&rhs) {
     rhs.m_pool = nullptr;
   }
   return *this;
+}
+
+//------------------------------------------------------------------------------
+// close
+//------------------------------------------------------------------------------
+void PooledConn::close() {
+  if(nullptr != m_conn) {
+    m_conn->close();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// createStmt
+//------------------------------------------------------------------------------
+std::unique_ptr<Stmt> PooledConn::createStmt(const std::string &sql,
+  const Stmt::AutocommitMode autocommitMode) {
+  if(nullptr != m_conn) {
+    return m_conn->createStmt(sql, autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void PooledConn::commit() {
+  if(nullptr != m_conn) {
+    m_conn->commit();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void PooledConn::rollback() {
+  if(nullptr != m_conn) {
+    m_conn->rollback();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+} 
+
+//------------------------------------------------------------------------------
+// getTableNames
+//------------------------------------------------------------------------------
+std::list<std::string> PooledConn::getTableNames() {
+  if(nullptr != m_conn) {
+    return m_conn->getTableNames();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// isOpen
+//------------------------------------------------------------------------------
+bool PooledConn::isOpen() const {
+  if(nullptr != m_conn) {
+    return m_conn->isOpen();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
 }
 
 } // namespace rdbms

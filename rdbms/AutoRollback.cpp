@@ -26,7 +26,9 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(Conn *const conn): m_conn(conn) {
+AutoRollback::AutoRollback(Conn &conn):
+  m_cancelled(false),
+  m_conn(conn) {
 }
 
 //------------------------------------------------------------------------------
@@ -34,8 +36,8 @@ AutoRollback::AutoRollback(Conn *const conn): m_conn(conn) {
 //------------------------------------------------------------------------------
 AutoRollback::~AutoRollback() {
   try {
-    if(nullptr != m_conn) {
-      m_conn->rollback();
+    if(!m_cancelled) {
+      m_conn.rollback();
     }
   } catch(...) {
     // Prevent destructor from throwing
@@ -46,7 +48,7 @@ AutoRollback::~AutoRollback() {
 // cancel
 //------------------------------------------------------------------------------
 void AutoRollback::cancel() {
-  m_conn = nullptr;
+  m_cancelled = true;
 }
 
 } // namespace rdbms

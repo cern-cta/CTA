@@ -180,6 +180,15 @@ private:
    */
   oracle::occi::Statement *m_stmt;
 
+  /**
+   * Determines whether or not the connection should be closed based on the
+   * specified Oracle exception.
+   *
+   * @param ex The Oracle exception.
+   * @return True if the connection should be closed.
+   */
+  static bool connShouldBeClosed(const oracle::occi::SQLException &ex);
+
 }; // class OcciStmt
 
 } // namespace rdbms

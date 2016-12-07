@@ -103,6 +103,11 @@ public:
    */
   virtual std::list<std::string> getTableNames() override;
 
+  /**
+   * Returns true if this connection is open.
+   */
+  bool isOpen() const override;
+
 private:
 
   friend OcciStmt;
@@ -121,14 +126,6 @@ private:
    * The OCCI connection.
    */
   oracle::occi::Connection *m_conn;
-
-  /**
-   * Determines whether or not the specified Oracle exception affects the status
-   * of the database connection and updates it accordingly.
-   *
-   * @param ex The Oracle exception.
-   */
-  void updateHealth(const oracle::occi::SQLException &ex);
 
 }; // class OcciConn
 

@@ -53,7 +53,7 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
 
   const auto dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   auto factory = rdbms::ConnFactoryFactory::create(dbLogin); 
-  const uint64_t nbConns = 1;
+  const uint64_t nbConns = 2;
   rdbms::ConnPool connPool(*factory, nbConns);
 
   uint32_t elapsedSeconds = 0;
@@ -61,7 +61,7 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
     try {
       m_out << "Querying the database" << std::endl;
       auto conn = connPool.getConn();
-      conn->getTableNames();
+      conn.getTableNames();
     } catch(exception::Exception &ex) {
       m_out << "Database error: " << ex.getMessage().str() << std::endl;
     }

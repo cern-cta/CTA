@@ -20,6 +20,8 @@
 
 #include "rdbms/Conn.hpp"
 
+#include <memory>
+
 namespace cta {
 namespace rdbms {
 
@@ -33,7 +35,7 @@ class ConnPool;
  * A smart database connection that will automatically return itself to its
  * parent connection pool when it goes out of scope.
  */
-class PooledConn {
+class PooledConn: public Conn {
 public:
 
   /**
@@ -43,7 +45,16 @@ public:
    * @param pool The database connection pool to which the connection
    * should be returned.
    */
-  PooledConn(Conn *const conn, ConnPool *const pool) noexcept;
+  PooledConn(Conn *const conn, ConnPool *const pool);
+
+  /**
+   * Constructor.
+   *
+   * @param conn The database connection.
+   * @param pool The database connection pool to which the connection
+   * should be returned.
+   */
+  PooledConn(std::unique_ptr<Conn> conn, ConnPool *const pool);
 
   /**
    * Deletion of the copy constructor.
@@ -55,7 +66,7 @@ public:
    *
    * @param other The other object.
    */
-  PooledConn(PooledConn &&other) noexcept;
+  PooledConn(PooledConn &&other);
 
   /**
    * Destructor.
@@ -63,29 +74,6 @@ public:
    * Returns the database connection back to its pool.
    */
   ~PooledConn() noexcept;
-
-  /**
-   * Returns the owned database connection.
-   *
-   * @return The owned database connection.
-   */
-  Conn *get() const noexcept;
-  /**
-   * Returns the owned database connection.
-   *
-   * @return The owned database connection.
-   */
-  Conn *operator->() const noexcept;
-
-  /**
-   * Returns the owned database connection.
-   *
-   * This method throws an exception if this smart database connection does not
-   * currently own a database connection.
-   *
-   * @return The owned database connection.
-   */
-  Conn &operator*() const;
 
   /**
    * Deletion of the copy assignment operator.
@@ -99,6 +87,44 @@ public:
    * @return This object.
    */
   PooledConn &operator=(PooledConn &&rhs);
+
+  /**
+   * Idempotent close() method.  The destructor calls this method.
+   */
+  void close() override;
+
+  /**
+   * Creates a prepared statement.
+   *
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
+   * @return The prepared statement.
+   */
+  std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) override;
+
+  /**
+   * Commits the current transaction.
+   */
+  void commit() override;
+
+  /**
+   * Rolls back the current transaction.
+   */
+  void rollback() override;
+
+  /**
+   * Returns the names of all the tables in the database schema in alphabetical
+   * order.
+   *
+   * @return The names of all the tables in the database schema in alphabetical
+   * order.
+   */
+  std::list<std::string> getTableNames() override;
+
+  /**
+   * Returns true if this connection is open.
+   */
+  bool isOpen() const override;
 
 private:
 
