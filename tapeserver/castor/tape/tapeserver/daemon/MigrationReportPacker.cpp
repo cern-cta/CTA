@@ -154,38 +154,48 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
+    std::unique_ptr<cta::ArchiveJob> job;
     try{
       while(!reportPacker.m_successfulArchiveJobs.empty()) {
-        std::unique_ptr<cta::ArchiveJob> job(std::move(reportPacker.m_successfulArchiveJobs.front()));
+        // Get the next job to report and make sure we will not attempt to process it twice.
+        job = std::move(reportPacker.m_successfulArchiveJobs.front());
+        reportPacker.m_successfulArchiveJobs.pop();
+        if (!job.get()) continue;
         cta::log::ScopedParamContainer params(reportPacker.m_lc);
         params.add("archiveFileId", job->archiveFile.archiveFileID)
-                .add("diskInstance", job->archiveFile.diskInstance)
-                .add("diskFileId", job->archiveFile.diskFileId)
-                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+               .add("diskInstance", job->archiveFile.diskInstance)
+               .add("diskFileId", job->archiveFile.diskFileId)
+               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
         if (job->complete()) {
           params.add("reportURL", job->reportURL());
           reportPacker.m_lc.log(cta::log::INFO,"Reported to the client a full file archival");
         } else {
           reportPacker.m_lc.log(cta::log::INFO, "Recorded the partial migration of a file");
         }
-        reportPacker.m_successfulArchiveJobs.pop();
+        job.reset(nullptr);
       }
       reportPacker.m_lc.log(cta::log::INFO,"Reported to the client that a batch of files was written on tape");
     } catch(const cta::exception::Exception& e){
-      LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionMessageValue", e.getMessageValue()))
-      };
-      tape::utils::suppresUnusedVariable(sp);
-      
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("exceptionMessageValue", e.getMessageValue());
+      if (job.get()) {
+        params.add("archiveFileId", job->archiveFile.archiveFileID)
+              .add("diskInstance", job->archiveFile.diskInstance)
+              .add("diskFileId", job->archiveFile.diskFileId)
+              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+      }
       const std::string msg_error="An exception was caught trying to call reportMigrationResults";
       reportPacker.m_lc.log(cta::log::ERR,msg_error);
       throw failedMigrationRecallResult(msg_error);
     } catch(const std::exception& e){
-      LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(reportPacker.m_lc, Param("exceptionWhat",e.what()))
-      };
-      tape::utils::suppresUnusedVariable(sp);
-      
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("exceptionWhat", e.what());
+      if (job.get()) {
+        params.add("archiveFileId", job->archiveFile.archiveFileID)
+              .add("diskInstance", job->archiveFile.diskInstance)
+              .add("diskFileId", job->archiveFile.diskFileId)
+              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+      }
       const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
       reportPacker.m_lc.log(cta::log::ERR,msg_error);
       throw failedMigrationRecallResult(msg_error);
