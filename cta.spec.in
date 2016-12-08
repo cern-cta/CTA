@@ -119,9 +119,13 @@ The xroot plugin
 Summary: CERN Tape Archive: tape daemon
 Group: Application/CTA
 requires: cta-lib
+requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
+%pre -n cta-taped
+/usr/bin/getent group st || /usr/sbin/groupadd -g 1474 st
+/usr/bin/getent passwd stage || /usr/sbin/useradd -s /bin/nologin -c "Stager Staging System" -u 14029 -g 1474 stage
 %files -n cta-taped
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-taped
