@@ -4,3 +4,10 @@
 #   -c             config file location (cta.conf)
 #
 #CTA_TAPED_OPTIONS=
+
+# Environment variables to configue the libXrdCl.so linked with cta-taped
+#
+# These two variables set the authentication mechanism to Simple Shared Secret
+# (SSS) and set the SSS key to be that of the tape server
+export XrdSecPROTOCOL=sss
+export XrdSecSSSKT=/etc/cta/cta_tape_server.keytab
