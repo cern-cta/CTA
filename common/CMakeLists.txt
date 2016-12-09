@@ -91,6 +91,7 @@ set (COMMON_LIB_SRC_FILES
   exception/TimeOut.cpp
   exception/XrootCl.cpp
   log/DummyLogger.cpp
+  log/FileLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp
   log/LogLevel.cpp
@@ -147,6 +148,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   dataStructures/ArchiveFileTest.cpp
   dataStructures/StorageClassTest.cpp
   processCap/SmartCapTest.cpp
+  log/FileLoggerTest.cpp
   log/LogContextTest.cpp
   log/LogLevelTest.cpp
   log/ParamTest.cpp
