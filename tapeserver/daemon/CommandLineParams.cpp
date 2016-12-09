@@ -24,10 +24,10 @@
 namespace cta { namespace daemon {
 
 CommandLineParams::CommandLineParams(int argc, char** argv):
-  foreground(false), logToStdout(false), 
+  foreground(false), logToStdout(false), logToFile(false),
   configFileLocation("/etc/cta/cta.conf"),
   helpRequested(false){
-  struct ::option longopts[5];
+  struct ::option longopts[6];
 
   longopts[0].name = "foreground";
   longopts[0].has_arg = no_argument;
@@ -49,6 +49,11 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   longopts[3].flag = NULL;
   longopts[3].val = 's';
   
+  longopts[4].name = "log-to-file";
+  longopts[3].has_arg = required_argument;
+  longopts[3].flag = NULL;
+  longopts[3].val = 'l';
+  
   memset(&longopts[4], 0, sizeof(struct ::option));
 
   char c;
@@ -57,7 +62,7 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   // Prevent getopt from printing out errors on stdout
   opterr=0;
   // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+fsc:h", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       foreground = true;
@@ -71,6 +76,10 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
     case 'h':
       helpRequested = true;
       break;
+    case 'l':
+      logFilePath = optarg;
+      logToFile = true;
+      break;
     default:
       break;
     }
@@ -78,14 +87,19 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   if (logToStdout && !foreground) {
     throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
   }
+  if (logToFile && logToStdout) {
+    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to both stdout and file");
+  }
 }
 
 std::list<cta::log::Param> CommandLineParams::toLogParams() const {
   std::list<cta::log::Param> ret;
-  ret.push_back(cta::log::Param("foreground", foreground));
-  ret.push_back(cta::log::Param("logToStdout", logToStdout));
-  ret.push_back(cta::log::Param("configFileLocation", configFileLocation));
-  ret.push_back(cta::log::Param("helpRequested", helpRequested));
+  ret.push_back({"foreground", foreground});
+  ret.push_back({"logToStdout", logToStdout});
+  ret.push_back({"logToFile", logToFile});
+  ret.push_back({"logFilePath", logFilePath});
+  ret.push_back({"configFileLocation", configFileLocation});
+  ret.push_back({"helpRequested", helpRequested});
   return ret;
 }
 

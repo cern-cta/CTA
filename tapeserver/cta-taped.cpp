@@ -17,6 +17,7 @@
  */
 
 #include "common/Configuration.hpp"
+#include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -56,10 +57,11 @@ std::string gHelpString =
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground            or -f         \tRemain in the Foreground\n"
-    "\t--stdout                or -s         \tPrint logs to standard output. Required --foreground\n"
-    "\t--config <config-file>  or -c         \tConfiguration file\n"
-    "\t--help                  or -h         \tPrint this help and exit\n"
+    "\t--foreground             or -f         \tRemain in the Foreground\n"
+    "\t--stdout                 or -s         \tPrint logs to standard output. Required --foreground\n"
+    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default syslog)\n"
+    "\t--config <config-file>   or -c         \tConfiguration file\n"
+    "\t--help                   or -h         \tPrint this help and exit\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 
@@ -214,6 +216,8 @@ int main(const int argc, char **const argv) {
   try {
     if (commandLine->logToStdout) {
       logPtr.reset(new log::StdoutLogger("cta-taped"));
+    } else if (commandLine->logToFile) {
+      logPtr.reset(new log::FileLogger("cta-taped", commandLine->logFilePath, log::DEBUG));
     } else {
       logPtr.reset(new log::SyslogLogger("cta-taped", log::DEBUG));
     }

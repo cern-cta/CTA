@@ -33,6 +33,8 @@ struct CommandLineParams{
   CommandLineParams(int argc, char **argv);
   bool foreground;                  ///< Prevents daemonisation
   bool logToStdout;                 ///< Log to stdout instead of syslog. Foreground is required.
+  bool logToFile;                   ///< Log to file intead of syslog.
+  std::string logFilePath;
   std::string configFileLocation;   ///< Location of the configuration file. Defaults to /etc/cta/cta.conf
   bool helpRequested;               ///< Help requested: will print out help and exit.
   std::list<cta::log::Param> toLogParams() const; ///< Convert the command line into set of parameters for logging.
