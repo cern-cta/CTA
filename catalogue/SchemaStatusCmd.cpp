@@ -41,6 +41,12 @@ SchemaStatusCmd::~SchemaStatusCmd() noexcept {
 //------------------------------------------------------------------------------
 int SchemaStatusCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   const SchemaStatusCmdLineArgs cmdLineArgs(argc, argv);
+
+  if(cmdLineArgs.help) {
+    SchemaStatusCmdLineArgs::printUsage(m_out);
+    return 0;
+  }
+
   const auto dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t nbDbConns = 1;
   auto catalogue = CatalogueFactory::create(dbLogin, nbDbConns);

@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-schema-lock \- Lock the CTA catalogue schema
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-lock databaseConnectionFile"
+.BI "cta-catalogue-schema-lock databaseConnectionFile [options]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-schema-lock\fP is a command-line tool that locks the CTA
@@ -31,6 +31,9 @@ CTA_CATALOGUE database table to LOCKED.
 \fBdatabaseConnectionFile
 The path to the configuration file containing the connection details of the
 CTA catalogue database.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES

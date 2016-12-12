@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-schema-status \- Lock the CTA catalogue schema
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-status databaseConnectionFile"
+.BI "cta-catalogue-schema-status databaseConnectionFile [options]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-schema-status\fP is a command-line tool that prints status of
@@ -28,6 +28,9 @@ the CTA catalogue database schema.
 \fBdatabaseConnectionFile
 The path to the configuration file containing the connection details of the
 CTA catalogue database.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES

@@ -46,6 +46,12 @@ CreateSchemaCmd::~CreateSchemaCmd() noexcept {
 //------------------------------------------------------------------------------
 int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   const CreateSchemaCmdLineArgs cmdLineArgs(argc, argv);
+
+  if(cmdLineArgs.help) {
+    cmdLineArgs.printUsage(m_out);
+    return 0;
+  }
+
   const auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   auto factory = rdbms::ConnFactoryFactory::create(login);
   auto conn = factory->create();

@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-delete-all-data \- Delete all data in the CTA catalogue
 .SH SYNOPSIS
-.BI "cta-catalogue-delete-all-data databaseConnectionFile"
+.BI "cta-catalogue-delete-all-data databaseConnectionFile [options]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-delete-all-data\fP is a command-line tool that deletes all the
@@ -31,6 +31,10 @@ SCHEMA_STATUS column of the CTA_CATALOGUE database table.
 \fBdatabaseConnectionFile
 The path to the configuration file containing the connection details of the
 CTA catalogue database.
+.SH OPTIONS
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES

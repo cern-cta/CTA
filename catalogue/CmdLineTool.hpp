@@ -44,6 +44,15 @@ public:
    */
   virtual ~CmdLineTool() noexcept = 0;
 
+  /**
+   * An exception throwing version of main().
+   *
+   * @param argc The number of command-line arguments including the program name.
+   * @param argv The command-line arguments.
+   * @return The exit value of the program.
+   */
+  virtual int exceptionThrowingMain(const int argc, char *const *const argv) = 0;
+
 protected:
 
   /**

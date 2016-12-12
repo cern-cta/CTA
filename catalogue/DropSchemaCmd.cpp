@@ -48,6 +48,12 @@ DropSchemaCmd::~DropSchemaCmd() noexcept {
 //------------------------------------------------------------------------------
 int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   const DropSchemaCmdLineArgs cmdLineArgs(argc, argv);
+
+  if(cmdLineArgs.help) {
+    DropSchemaCmdLineArgs::printUsage(m_out);
+    return 0;
+  }
+
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
 
   // Abort if the schema is already dropped

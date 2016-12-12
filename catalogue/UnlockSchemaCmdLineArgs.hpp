@@ -27,6 +27,11 @@ namespace catalogue {
  */
 struct UnlockSchemaCmdLineArgs {
   /**
+   * True if the usage message should be printed.
+   */
+  bool help;
+
+  /**
    * Path to the file containing the connection details of the catalogue
    * database.
    */
@@ -39,7 +44,7 @@ struct UnlockSchemaCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  UnlockSchemaCmdLineArgs(const int argc, const char *const *const argv);
+  UnlockSchemaCmdLineArgs(const int argc, char *const *const argv);
 
   /**
    * Prints the usage message of the command-line tool.

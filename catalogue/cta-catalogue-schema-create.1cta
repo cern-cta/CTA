@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-schema-create \- Creates the CTA catalogue schema
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-create databaseConnectionFile"
+.BI "cta-catalogue-schema-create databaseConnectionFile [options]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-schema-create\fP is a command-line tool that creates the CTA
@@ -30,6 +30,10 @@ already present in the database schema.
 \fBdatabaseConnectionFile
 The path to the configuration file containing the connection details of the
 CTA catalogue database.
+.SH OPTIONS
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES

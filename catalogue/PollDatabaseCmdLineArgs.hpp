@@ -28,6 +28,11 @@ namespace catalogue {
  */
 struct PollDatabaseCmdLineArgs {
   /**
+   * True if the usage message should be printed.
+   */
+  bool help;
+
+  /**
    * The total number of seconds the cta-database-pollshould run before exiting.
    */
   uint64_t numberOfSecondsToKeepPolling;
@@ -45,7 +50,7 @@ struct PollDatabaseCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  PollDatabaseCmdLineArgs(const int argc, const char *const *const argv);
+  PollDatabaseCmdLineArgs(const int argc, char *const *const argv);
 
   /**
    * Prints the usage message of the command-line tool.

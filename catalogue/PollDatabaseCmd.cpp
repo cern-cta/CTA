@@ -45,6 +45,12 @@ PollDatabaseCmd::~PollDatabaseCmd() noexcept {
 //------------------------------------------------------------------------------
 int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   const PollDatabaseCmdLineArgs cmdLineArgs(argc, argv);
+
+  if(cmdLineArgs.help) {
+    PollDatabaseCmdLineArgs::printUsage(m_out);
+    return 0;
+  }
+
   const auto dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   auto factory = rdbms::ConnFactoryFactory::create(dbLogin); 
   const uint64_t nbConns = 1;
