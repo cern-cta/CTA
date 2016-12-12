@@ -146,6 +146,10 @@ The xroot plugin
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
 
+#Frontend installs libraries so we need ldconfig.
+%post -n cta-frontend -p /sbin/ldconfig
+%postun -n cta-frontend -p /sbin/ldconfig
+
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
@@ -179,6 +183,10 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctardbms.so
 %attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
+
+#CTA-lib installs libraries so we need ldconfig.
+%post -n cta-lib -p /sbin/ldconfig
+%postun -n cta-lib -p /sbin/ldconfig
 
 %package -n cta-systemtests
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
@@ -218,6 +226,10 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_bindir}/makeMinimalVFS
 %attr(0755,root,root) %{_libdir}/libctadaemonunittests-multiprocess.so
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
+
+#cta-systemtests installs libraries so we need ldconfig.
+%post -n cta-systemtests -p /sbin/ldconfig
+%postun -n cta-systemtests -p /sbin/ldconfig
 
 %package -n cta-catalogueutils
 Summary: Utilities to faciliate working with the CTA catalogue
