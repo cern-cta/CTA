@@ -90,12 +90,12 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
     throw ex;
   }
 
-  numberOfSecondsToKeepPolling = utils::toUint64(argv[optind]);
+  dbConfigPath = argv[optind];
 
   // Move on to the next command-line argument
   optind++;
 
-  dbConfigPath = argv[optind];
+  numberOfSecondsToKeepPolling = utils::toUint64(argv[optind]);
 }
 
 //------------------------------------------------------------------------------
@@ -104,14 +104,14 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
 void PollDatabaseCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-database-poll numberOfSecondsToKeepPolling databaseConnectionFile [options]" << std::endl <<
+    "    cta-database-poll databaseConnectionFile numberOfSecondsToKeepPolling [options]" << std::endl <<
     "Where:" << std::endl <<
-    "    numberOfSecondsToKeepPolling" << std::endl <<
-    "        The total number of seconds cta-database-poll should run before" <<  std::endl <<
-    "        exiting." << std::endl <<
     "    databaseConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        catalogue database." << std::endl <<
+    "    numberOfSecondsToKeepPolling" << std::endl <<
+    "        The total number of seconds cta-database-poll should run before" <<  std::endl <<
+    "        exiting." << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl;

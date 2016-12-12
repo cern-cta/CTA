@@ -17,18 +17,18 @@
 .SH NAME
 cta-database-poll \- Polls the specified database every second
 .SH SYNOPSIS
-.BI "cta-database-poll numberOfSecondsToKeepPolling databaseConnectionFile [options]"
+.BI "cta-database-poll databaseConnectionFile numberOfSecondsToKeepPolling [options]"
 .SH DESCRIPTION
 \fBcta-database-poll\fP is a command-line tool that polls the specified database
 every second for the specified total number of seconds.
 .SH ARGUMENTS
 .TP
-\fBnumberOfSecondsToKeepPolling
-The total number of seconds cta-database-poll should run before exiting.
-.TP
 \fBdatabaseConnectionFile
 The path to the configuration file containing the connection details of the
 CTA catalogue database.
+.TP
+\fBnumberOfSecondsToKeepPolling
+The total number of seconds cta-database-poll should run before exiting.
 .SH OPTIONS
 .TP
 \fB\-h, \-\-help
