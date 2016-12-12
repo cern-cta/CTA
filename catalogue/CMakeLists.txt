@@ -192,3 +192,25 @@ target_link_libraries (cta-database-poll
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-admin-user-create
+  CreateAdminUserCmd.cpp
+  CreateAdminUserCmdLineArgs.cpp
+  CreateAdminUserCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-admin-user-create
+  ctacatalogue)
+
+install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-admin-host-create
+  CreateAdminHostCmd.cpp
+  CreateAdminHostCmdLineArgs.cpp
+  CreateAdminHostCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-admin-host-create
+  ctacatalogue)
+
+install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta DESTINATION /usr/share/man/man1)

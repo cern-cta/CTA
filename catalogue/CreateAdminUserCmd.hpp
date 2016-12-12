@@ -18,18 +18,18 @@
 
 #pragma once
 
-#include <istream>
-#include <ostream>
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CmdLineTool.hpp"
 
 namespace cta {
 namespace catalogue {
 
 /**
- * Abstract class implementing common code and data structures for a
- * command-line tool.
+ * Command-line tool that creates an admin user.
  */
-class CmdLineTool {
+class CreateAdminUserCmd: public CmdLineTool {
 public:
+
   /**
    * Constructor.
    *
@@ -37,12 +37,12 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  CmdLineTool(std::istream &inStream, std::ostream &outStream, std::ostream &errStream) noexcept;
+  CreateAdminUserCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
   /**
-   * Pure-virtual destructor to guarantee this class is abstract.
+   * Destructor.
    */
-  virtual ~CmdLineTool() noexcept = 0;
+  ~CreateAdminUserCmd() noexcept;
 
   /**
    * An exception throwing version of main().
@@ -51,40 +51,9 @@ public:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  virtual int exceptionThrowingMain(const int argc, char *const *const argv) = 0;
+  int exceptionThrowingMain(const int argc, char *const *const argv);
 
-protected:
-
-  /**
-   * Standard input stream.
-   */
-  std::istream &m_in;
-
-  /**
-   * Standard output stream.
-   */
-  std::ostream &m_out;
-
-  /**
-   * Standard error stream.
-   */
-  std::ostream &m_err;
-
-  /**
-   * Returns the name of the user running the command-line tool.
-   *
-   * @return The name of the user running the command-line tool.
-   */
-  std::string getUsername() const;
-
-  /**
-   * Returns the name of the host on which the command-line tool is running.
-   *
-   * @return The name of the host on which the command-line tool is running.
-   */
-  std::string getHostname() const;
-
-}; // class CmdLineTool
+}; // class CreateAdminUserCmd
 
 } // namespace catalogue
 } // namespace cta

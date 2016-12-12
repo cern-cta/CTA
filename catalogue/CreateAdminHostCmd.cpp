@@ -16,9 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CmdLineTool.hpp"
-
-#include <unistd.h>
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CreateAdminHostCmd.hpp"
+#include "catalogue/CreateAdminHostCmdLineArgs.hpp"
+#include "common/exception/Exception.hpp"
+#include "rdbms/ConnFactoryFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -26,46 +28,37 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CmdLineTool::CmdLineTool(
+CreateAdminHostCmd::CreateAdminHostCmd(
   std::istream &inStream,
   std::ostream &outStream,
-  std::ostream &errStream) noexcept:
-  m_in(inStream),
-  m_out(outStream),
-  m_err(errStream) {
+  std::ostream &errStream):
+  CmdLineTool(inStream, outStream, errStream) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-CmdLineTool::~CmdLineTool() noexcept {
+CreateAdminHostCmd::~CreateAdminHostCmd() noexcept {
 }
 
 //------------------------------------------------------------------------------
-// getUsername
+// exceptionThrowingMain
 //------------------------------------------------------------------------------
-std::string CmdLineTool::getUsername() const {
-  char buf[256];
+int CreateAdminHostCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+  const CreateAdminHostCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(getlogin_r(buf, sizeof(buf))) {
-    return "UNKNOWN";
-  } else {
-    return buf;
+  if(cmdLineArgs.help) {
+    CreateAdminHostCmdLineArgs::printUsage(m_out);
+    return 0;
   }
-}
 
-//------------------------------------------------------------------------------
-// getHostname
-//------------------------------------------------------------------------------
-std::string CmdLineTool::getHostname() const {
-  char buf[256];
+  const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
+  const uint64_t nbDbConns = 1;
+  auto catalogue = CatalogueFactory::create(dbLogin, nbDbConns);
+  const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
 
-  if(gethostname(buf, sizeof(buf))) {
-    return "UNKNOWN";
-  } else {
-    buf[sizeof(buf) - 1] = '\0';
-    return buf;
-  }
+  catalogue->createAdminHost(adminRunningCommand, cmdLineArgs.adminHostname, cmdLineArgs.comment);
+  return 0;
 }
 
 } // namespace catalogue
