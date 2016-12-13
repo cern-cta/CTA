@@ -38,14 +38,14 @@ static int exceptionThrowingMain(const int argc, char *const *const argv);
 int main(const int argc, char *const *const argv) {
   using namespace cta;
 
-  bool userError = false;
+  bool cmdLineNotParsed = false;
   std::string errorMessage;
 
   try {
     return exceptionThrowingMain(argc, argv);
   } catch(exception::CommandLineNotParsed &ue) {
     errorMessage = ue.getMessage().str();
-    userError = true;
+    cmdLineNotParsed = true;
   } catch(exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -58,7 +58,7 @@ int main(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   std::cerr << "Aborting: " << errorMessage << std::endl;
-  if(userError) {
+  if(cmdLineNotParsed) {
     std::cerr << std::endl;
     catalogue::CreateAdminUserCmdLineArgs::printUsage(std::cerr);
   }
