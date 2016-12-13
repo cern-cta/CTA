@@ -86,11 +86,11 @@ CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *con
   }
 
   if(adminHostname.empty()) {
-    throw exception::Exception("The hostname option must be specified with a non-empty string");
+    throw exception::CommandLineNotParsed("The hostname option must be specified with a non-empty string");
   }
 
   if(comment.empty()) {
-    throw exception::Exception("The comment option must be specified with a non-empty string");
+    throw exception::CommandLineNotParsed("The comment option must be specified with a non-empty string");
   }
 
   // Calculate the number of non-option ARGV-elements

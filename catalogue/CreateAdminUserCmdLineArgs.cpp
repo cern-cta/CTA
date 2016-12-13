@@ -86,11 +86,11 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
   }
 
   if(adminUsername.empty()) {
-    throw exception::Exception("The username option must be specified with a non-empty string");
+    throw exception::CommandLineNotParsed("The username option must be specified with a non-empty string");
   }
 
   if(comment.empty()) {
-    throw exception::Exception("The comment option must be specified with a non-empty string");
+    throw exception::CommandLineNotParsed("The comment option must be specified with a non-empty string");
   }
 
   // Calculate the number of non-option ARGV-elements
