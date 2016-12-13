@@ -50,9 +50,9 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   longopts[3].val = 's';
   
   longopts[4].name = "log-to-file";
-  longopts[3].has_arg = required_argument;
-  longopts[3].flag = NULL;
-  longopts[3].val = 'l';
+  longopts[4].has_arg = required_argument;
+  longopts[4].flag = NULL;
+  longopts[4].val = 'l';
   
   memset(&longopts[4], 0, sizeof(struct ::option));
 
