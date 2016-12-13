@@ -84,7 +84,7 @@ DeleteAllCatalogueDataCmdLineArgs::DeleteAllCatalogueDataCmdLineArgs(const int a
   // Check the number of arguments
   if(nbArgs != 1) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << (argc - 1);
+    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << nbArgs;
     throw ex;
   }
 
