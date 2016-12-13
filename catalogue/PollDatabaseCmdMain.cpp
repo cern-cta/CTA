@@ -19,7 +19,7 @@
 #include "catalogue/PollDatabaseCmd.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/exception/UserError.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 
 #include <iostream>
 
@@ -43,7 +43,7 @@ int main(const int argc, char *const *const argv) {
 
   try {
     return exceptionThrowingMain(argc, argv);
-  } catch(exception::UserError &ue) {
+  } catch(exception::CommandLineNotParsed &ue) {
     errorMessage = ue.getMessage().str();
     userError = true;
   } catch(exception::Exception &ex) {

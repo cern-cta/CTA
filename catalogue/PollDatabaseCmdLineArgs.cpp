@@ -18,7 +18,7 @@
 
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/exception/UserError.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
 
 #include <getopt.h>
@@ -50,13 +50,13 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
       break;
     case ':': // Missing parameter
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
         throw ex;
       }
     case '?': // Unknown option
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         if(0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
@@ -66,7 +66,7 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
       }
     default:
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)opt;
@@ -85,7 +85,7 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
 
   // Check the number of arguments
   if(nbArgs != 2) {
-    exception::UserError ex;
+    exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << (argc - 1);
     throw ex;
   }

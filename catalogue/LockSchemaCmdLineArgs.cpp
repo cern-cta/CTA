@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/LockSchemaCmdLineArgs.hpp"
-#include "common/exception/UserError.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 
 #include <getopt.h>
 #include <ostream>
@@ -48,13 +48,13 @@ LockSchemaCmdLineArgs::LockSchemaCmdLineArgs(const int argc, char *const *const 
       break;
     case ':': // Missing parameter
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
         throw ex;
       }
     case '?': // Unknown option
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         if(0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
@@ -64,7 +64,7 @@ LockSchemaCmdLineArgs::LockSchemaCmdLineArgs(const int argc, char *const *const 
       }
     default:
       {
-        exception::UserError ex;
+        exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)opt;
@@ -83,7 +83,7 @@ LockSchemaCmdLineArgs::LockSchemaCmdLineArgs(const int argc, char *const *const 
 
   // Check the number of arguments
   if(nbArgs != 1) {
-    exception::UserError ex;
+    exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << (argc - 1);
     throw ex;
   }
