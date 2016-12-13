@@ -31,10 +31,10 @@ namespace catalogue {
 CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
   static struct option longopts[] = {
-    {"comment"  , 0, NULL, 'c'},
-    {"help"     , 0, NULL, 'h'},
-    {"hostname" , 0, NULL, 'n'},
-    {NULL       , 0, NULL, 0}
+    {"comment"  , required_argument, NULL, 'c'},
+    {"help"     ,       no_argument, NULL, 'h'},
+    {"hostname" , required_argument, NULL, 'n'},
+    {NULL       ,                 0, NULL,   0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
