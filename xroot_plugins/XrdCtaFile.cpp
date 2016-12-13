@@ -142,10 +142,7 @@ void XrdCtaFile::authorizeAdmin(){
 void XrdCtaFile::dispatchCommand() {
   std::string command(m_requestTokens.at(1));
   
-  //this "bootstrap" command, which is not checked for authorization, will eventually disappear
-  if     ("bs"   == command || "bootstrap"              == command) {xCom_bootstrap();}
-  
-  else if("ad"   == command || "admin"                  == command) {authorizeAdmin(); xCom_admin();}
+  if     ("ad"   == command || "admin"                  == command) {authorizeAdmin(); xCom_admin();}
   else if("ah"   == command || "adminhost"              == command) {authorizeAdmin(); xCom_adminhost();}
   else if("tp"   == command || "tapepool"               == command) {authorizeAdmin(); xCom_tapepool();}
   else if("ar"   == command || "archiveroute"           == command) {authorizeAdmin(); xCom_archiveroute();}
@@ -643,21 +640,6 @@ optional<std::string> XrdCtaFile::EOS2CTAChecksumValue(const optional<std::strin
     return optional<std::string>(CTAChecksumValue);
   }
   return nullopt;
-}
-
-//------------------------------------------------------------------------------
-// xCom_bootstrap
-//------------------------------------------------------------------------------
-void XrdCtaFile::xCom_bootstrap() {
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  help << m_requestTokens.at(0) << " bs/bootstrap --username/-u <user_name> --hostname/-h <host_name> --comment/-m <\"comment\">" << std::endl;
-  optional<std::string> username = getOptionStringValue("-u", "--username", true, false);
-  optional<std::string> hostname = getOptionStringValue("-h", "--hostname", true, false);
-  optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-  checkOptions(help.str());
-  m_catalogue->createBootstrapAdminAndHostNoAuth(m_cliIdentity, username.value(), hostname.value(), comment.value());
-  logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 
 //------------------------------------------------------------------------------
@@ -2266,7 +2248,6 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl;
   help << programName << " archivefile/af           ls"                         << std::endl;
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
-  help << programName << " bootstrap/bs"                                        << std::endl;
   help << programName << " drive/dr                 up/down"                    << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
   help << programName << " listdrivestates/lds"                                 << std::endl;

@@ -191,7 +191,6 @@ protected:
    */
   bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
   
-  void xCom_bootstrap();
   void xCom_admin();
   void xCom_adminhost();
   void xCom_tapepool();
