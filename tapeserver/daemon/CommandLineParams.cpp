@@ -27,34 +27,15 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   foreground(false), logToStdout(false), logToFile(false),
   configFileLocation("/etc/cta/cta.conf"),
   helpRequested(false){
-  struct ::option longopts[6];
-
-  longopts[0].name = "foreground";
-  longopts[0].has_arg = no_argument;
-  longopts[0].flag = NULL;
-  longopts[0].val = 'f';
-
-  longopts[1].name = "config";
-  longopts[1].has_arg = required_argument;
-  longopts[1].flag = NULL;
-  longopts[1].val = 'c';
-
-  longopts[2].name = "help";
-  longopts[2].has_arg = no_argument;
-  longopts[2].flag = NULL;
-  longopts[2].val = 'h';
-  
-  longopts[3].name = "stdout";
-  longopts[3].has_arg = no_argument;
-  longopts[3].flag = NULL;
-  longopts[3].val = 's';
-  
-  longopts[4].name = "log-to-file";
-  longopts[4].has_arg = required_argument;
-  longopts[4].flag = NULL;
-  longopts[4].val = 'l';
-  
-  memset(&longopts[4], 0, sizeof(struct ::option));
+  struct ::option longopts[] = {
+    // { .name, .has_args, .flag, .val } (see getopt.h))
+    { "foregroud", no_argument, NULL, 'f' },
+    { "config", required_argument, NULL, 'c' },
+    { "help", no_argument, NULL, 'h' },
+    { "stdout", no_argument, NULL, 's' },
+    { "log-to-file", required_argument, NULL, 'l' },
+    { NULL, 0, NULL, '\0' }
+  };
 
   char c;
   // Reset getopt's global variables to make sure we start fresh
