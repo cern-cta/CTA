@@ -32,8 +32,8 @@ DeleteAllCatalogueDataCmdLineArgs::DeleteAllCatalogueDataCmdLineArgs(const int a
   help(false) {
 
   static struct option longopts[] = {
-    {"help", 0, NULL, 'h'},
-    {NULL  , 0, NULL, 0}
+    {"help", no_argument, NULL, 'h'},
+    {NULL  ,           0, NULL,   0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
