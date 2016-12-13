@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/CmdLineTool.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 
 #include <unistd.h>
 
@@ -44,7 +45,7 @@ CmdLineTool::~CmdLineTool() noexcept {
 //------------------------------------------------------------------------------
 // getUsername
 //------------------------------------------------------------------------------
-std::string CmdLineTool::getUsername() const {
+std::string CmdLineTool::getUsername() {
   char buf[256];
 
   if(getlogin_r(buf, sizeof(buf))) {
@@ -57,7 +58,7 @@ std::string CmdLineTool::getUsername() const {
 //------------------------------------------------------------------------------
 // getHostname
 //------------------------------------------------------------------------------
-std::string CmdLineTool::getHostname() const {
+std::string CmdLineTool::getHostname() {
   char buf[256];
 
   if(gethostname(buf, sizeof(buf))) {
@@ -66,6 +67,37 @@ std::string CmdLineTool::getHostname() const {
     buf[sizeof(buf) - 1] = '\0';
     return buf;
   }
+}
+
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int CmdLineTool::main(const int argc, char *const *const argv) {
+  bool cmdLineNotParsed = false;
+  std::string errorMessage;
+
+  try {
+    return exceptionThrowingMain(argc, argv);
+  } catch(exception::CommandLineNotParsed &ue) {
+    errorMessage = ue.getMessage().str();
+    cmdLineNotParsed = true;
+  } catch(exception::Exception &ex) {
+    errorMessage = ex.getMessage().str();
+  } catch(std::exception &se) {
+    errorMessage = se.what();
+  } catch(...) {
+    errorMessage = "An unknown exception was thrown";
+  }
+
+  // Reaching this point means the command has failed, an exception was throw
+  // and errorMessage has been set accordingly
+
+  m_err << "Aborting: " << errorMessage << std::endl;
+  if(cmdLineNotParsed) {
+    m_err << std::endl;
+    printUsage(m_err);
+  }
+  return 1;
 }
 
 } // namespace catalogue

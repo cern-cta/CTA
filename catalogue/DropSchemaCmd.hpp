@@ -46,6 +46,8 @@ public:
    */
   ~DropSchemaCmd() noexcept;
 
+private:
+
   /**
    * An exception throwing version of main().
    *
@@ -55,7 +57,12 @@ public:
    */
   int exceptionThrowingMain(const int argc, char *const *const argv) override;
 
-private:
+  /**
+   * Prints the usage message of the command-line tool.
+   *
+   * @param os The output stream to which the usage message is to be printed.
+   */
+  void printUsage(std::ostream &os) override;
 
   /**
    * Unconditionally drops the schema of the catalogue database associated with

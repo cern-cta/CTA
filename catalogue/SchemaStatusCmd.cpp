@@ -43,7 +43,7 @@ int SchemaStatusCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const SchemaStatusCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    SchemaStatusCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -54,6 +54,13 @@ int SchemaStatusCmd::exceptionThrowingMain(const int argc, char *const *const ar
   m_out << (catalogue->schemaIsLocked() ? "LOCKED" : "UNLOCKED") << std::endl;
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void SchemaStatusCmd::printUsage(std::ostream &os) {
+  SchemaStatusCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

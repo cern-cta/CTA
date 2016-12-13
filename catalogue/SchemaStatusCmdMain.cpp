@@ -17,61 +17,13 @@
  */
 
 #include "catalogue/SchemaStatusCmd.hpp"
-#include "catalogue/SchemaStatusCmdLineArgs.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/CommandLineNotParsed.hpp"
 
 #include <iostream>
-
-/**
- * An exception throwing version of main().
- *
- * @param argc The number of command-line arguments including the program name.
- * @param argv The command-line arguments.
- * @return The exit value of the program.
- */
-static int exceptionThrowingMain(const int argc, char *const *const argv);
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
-  using namespace cta;
-
-  bool cmdLineNotParsed = false;
-  std::string errorMessage;
-
-  try {
-    return exceptionThrowingMain(argc, argv);
-  } catch(exception::CommandLineNotParsed &ue) {
-    errorMessage = ue.getMessage().str();
-    cmdLineNotParsed = true;
-  } catch(exception::Exception &ex) {
-    errorMessage = ex.getMessage().str();
-  } catch(std::exception &se) {
-    errorMessage = se.what();
-  } catch(...) {
-    errorMessage = "An unknown exception was thrown";
-  }
-
-  // Reaching this point means the command has failed, an exception was throw
-  // and errorMessage has been set accordingly
-
-  std::cerr << "Aborting: " << errorMessage << std::endl;
-  if(cmdLineNotParsed) {
-    std::cerr << std::endl;
-    catalogue::SchemaStatusCmdLineArgs::printUsage(std::cerr);
-  }
-  return 1;
-}
-
-//------------------------------------------------------------------------------
-// exceptionThrowingMain
-//------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char *const *const argv) {
-  using namespace cta;
-
-  catalogue::SchemaStatusCmd cmd(std::cin, std::cout, std::cerr);
-
-  return cmd.exceptionThrowingMain(argc, argv);
+  cta::catalogue::SchemaStatusCmd cmd(std::cin, std::cout, std::cerr);
+  return cmd.main(argc, argv);
 }

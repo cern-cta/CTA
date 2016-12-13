@@ -43,7 +43,7 @@ int LockSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
   const LockSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    LockSchemaCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -54,6 +54,14 @@ int LockSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
 
   return 0;
 }
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void LockSchemaCmd::printUsage(std::ostream &os) {
+  LockSchemaCmdLineArgs::printUsage(os);
+}
+
 
 } // namespace catalogue
 } // namespace cta

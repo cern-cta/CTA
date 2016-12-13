@@ -47,7 +47,7 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const PollDatabaseCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    PollDatabaseCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -73,6 +73,13 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
   }
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void PollDatabaseCmd::printUsage(std::ostream &os) {
+  PollDatabaseCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

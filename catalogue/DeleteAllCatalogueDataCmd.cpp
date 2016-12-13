@@ -47,7 +47,7 @@ int DeleteAllCatalogueDataCmd::exceptionThrowingMain(const int argc, char *const
   const DeleteAllCatalogueDataCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    DeleteAllCatalogueDataCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -211,6 +211,13 @@ void DeleteAllCatalogueDataCmd::deleteMountPolicies(Catalogue &catalogue) {
     catalogue.deleteMountPolicy(mountPolicy.name);
   }
   m_out << "Deleted " << mountPolicies.size() << " mount policies" << std::endl;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void DeleteAllCatalogueDataCmd::printUsage(std::ostream &os) {
+  DeleteAllCatalogueDataCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

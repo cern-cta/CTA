@@ -50,6 +50,8 @@ public:
    */
   ~PollDatabaseCmd() noexcept;
 
+private:
+
   /**
    * An exception throwing version of main().
    *
@@ -58,6 +60,13 @@ public:
    * @return The exit value of the program.
    */
   int exceptionThrowingMain(const int argc, char *const *const argv) override;
+
+  /**
+   * Prints the usage message of the command-line tool.
+   *
+   * @param os The output stream to which the usage message is to be printed.
+   */
+  void printUsage(std::ostream &os) override;
 
 }; // class PollDatabaseCmd
 

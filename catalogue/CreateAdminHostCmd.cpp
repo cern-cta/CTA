@@ -48,7 +48,7 @@ int CreateAdminHostCmd::exceptionThrowingMain(const int argc, char *const *const
   const CreateAdminHostCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    CreateAdminHostCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -59,6 +59,13 @@ int CreateAdminHostCmd::exceptionThrowingMain(const int argc, char *const *const
 
   catalogue->createAdminHost(adminRunningCommand, cmdLineArgs.adminHostname, cmdLineArgs.comment);
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void CreateAdminHostCmd::printUsage(std::ostream &os) {
+  CreateAdminHostCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

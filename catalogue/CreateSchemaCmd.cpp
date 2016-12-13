@@ -48,7 +48,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const CreateSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    cmdLineArgs.printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -101,6 +101,13 @@ bool CreateSchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn
     }
   }
   return false;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void CreateSchemaCmd::printUsage(std::ostream &os) {
+  CreateSchemaCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

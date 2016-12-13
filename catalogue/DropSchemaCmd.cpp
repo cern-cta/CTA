@@ -50,7 +50,7 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
   const DropSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    DropSchemaCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -121,6 +121,13 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login &dbLogin) {
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void DropSchemaCmd::printUsage(std::ostream &os) {
+  DropSchemaCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

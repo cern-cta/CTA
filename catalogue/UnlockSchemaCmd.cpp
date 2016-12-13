@@ -43,7 +43,7 @@ int UnlockSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const UnlockSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    UnlockSchemaCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -53,6 +53,13 @@ int UnlockSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   catalogue->unlockSchema();
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void UnlockSchemaCmd::printUsage(std::ostream &os) {
+  UnlockSchemaCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

@@ -48,7 +48,7 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
   const CreateAdminUserCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
-    CreateAdminUserCmdLineArgs::printUsage(m_out);
+    printUsage(m_out);
     return 0;
   }
 
@@ -59,6 +59,13 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
 
   catalogue->createAdminUser(adminRunningCommand, cmdLineArgs.adminUsername, cmdLineArgs.comment);
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// printUsage
+//------------------------------------------------------------------------------
+void CreateAdminUserCmd::printUsage(std::ostream &os) {
+  CreateAdminUserCmdLineArgs::printUsage(os);
 }
 
 } // namespace catalogue

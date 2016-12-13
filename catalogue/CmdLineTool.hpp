@@ -45,6 +45,18 @@ public:
   virtual ~CmdLineTool() noexcept = 0;
 
   /**
+   * The object's implementation of main() that should be called from the main()
+   * of the program.
+   *
+   * @param argc The number of command-line arguments including the program name.
+   * @param argv The command-line arguments.
+   * @return The exit value of the program.
+   */
+  int main(const int argc, char *const *const argv);
+
+protected:
+
+  /**
    * An exception throwing version of main().
    *
    * @param argc The number of command-line arguments including the program name.
@@ -53,7 +65,12 @@ public:
    */
   virtual int exceptionThrowingMain(const int argc, char *const *const argv) = 0;
 
-protected:
+  /**
+   * Prints the usage message of the command-line tool.
+   *
+   * @param os The output stream to which the usage message is to be printed.
+   */
+  virtual void printUsage(std::ostream &os) = 0;
 
   /**
    * Standard input stream.
@@ -75,14 +92,14 @@ protected:
    *
    * @return The name of the user running the command-line tool.
    */
-  std::string getUsername() const;
+  static std::string getUsername();
 
   /**
    * Returns the name of the host on which the command-line tool is running.
    *
    * @return The name of the host on which the command-line tool is running.
    */
-  std::string getHostname() const;
+  static std::string getHostname();
 
 }; // class CmdLineTool
 
