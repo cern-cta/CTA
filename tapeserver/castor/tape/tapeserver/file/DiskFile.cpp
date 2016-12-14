@@ -278,6 +278,10 @@ void LocalWriteFile::write(const void *data, const size_t size)  {
   ::write(m_fd, (void *)data, size);
 }
 
+void LocalWriteFile::setChecksum(uint32_t checksum) {
+  // Noop: this is only implemented for rados striper
+}
+
 void LocalWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
@@ -493,6 +497,10 @@ void XrootBaseWriteFile::write(const void *data, const size_t size)  {
   m_writePosition += size;
 }
 
+void XrootBaseWriteFile::setChecksum(uint32_t checksum) {
+  // Noop: this is only implemented for rados striper
+}
+
 void XrootBaseWriteFile::close()  {
   // Multiple close protection
   if (m_closeTried) return;
@@ -645,6 +653,29 @@ void RadosStriperWriteFile::write(const void *data, const size_t size)  {
         "failed to striper->write(): ");
   }
   m_writePosition += size;
+}
+
+void RadosStriperWriteFile::setChecksum(uint32_t checksum) {
+  // Set the checksum type (hardcoded)
+  int rc;
+  std::string checksumType("ADLER32");
+  ::ceph::bufferlist blType;
+  blType.append(checksumType.c_str(), checksumType.size());
+  rc = m_striper->setxattr(m_osd, "user.castor.checksum.type", blType);
+  if (rc) {
+    throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::setChecksum(): "
+        "failed to striper->setxattr(user.castor.checksum.type): ");
+  }
+  // Turn the numeric checksum into a string and set it as checksum value
+  std::stringstream checksumStr;
+  checksumStr << std::hex << std::nouppercase << checksum;
+  ::ceph::bufferlist blChecksum;
+  blChecksum.append(checksumStr.str().c_str(), checksumStr.str().size());
+  rc = m_striper->setxattr(m_osd, "user.castor.checksum.value", blChecksum);
+  if (rc) {
+    throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::setChecksum(): "
+        "failed to striper->setxattr(user.castor.checksum.value): ");
+  }
 }
 
 void RadosStriperWriteFile::close()  {

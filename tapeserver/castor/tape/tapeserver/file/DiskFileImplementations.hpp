@@ -55,6 +55,7 @@ namespace castor {
       public:
         LocalWriteFile(const std::string &path);
         virtual void write(const void *data, const size_t size);
+        virtual void setChecksum(uint32_t checksum);
         virtual void close();
         virtual ~LocalWriteFile() throw();
       private:
@@ -110,6 +111,7 @@ namespace castor {
       public:
         XrootBaseWriteFile(uint16_t timeout): m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
         virtual void write(const void *data, const size_t size);
+        virtual void setChecksum(uint32_t checksum);
         virtual void close();
         virtual ~XrootBaseWriteFile() throw();        
       protected:
@@ -161,6 +163,7 @@ namespace castor {
       public:
         EosWriteFile(const std::string &eosUrl,  uint16_t timeout = 0);
         virtual void write(const void *data, const size_t size);
+        virtual void setChecksum(uint32_t checksum);
         virtual void close();
         virtual ~EosWriteFile() throw();        
       protected:
@@ -199,6 +202,7 @@ namespace castor {
           libradosstriper::RadosStriper * striper,
           const std::string &osd);
         virtual void write(const void *data, const size_t size);
+        virtual void setChecksum(uint32_t checksum);
         virtual void close();
         virtual ~RadosStriperWriteFile() throw();
       private:

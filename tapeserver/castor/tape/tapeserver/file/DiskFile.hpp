@@ -125,6 +125,11 @@ namespace castor {
         virtual void write(const void *data, const size_t size) = 0;
         
         /**
+         * Set the checksum as an extended attribute (only needed for Ceph storage).
+         */
+        virtual void setChecksum(uint32_t checksum) = 0;
+        
+        /**
          * Closes the corresponding file descriptor, which may throw an exception.
          */
         virtual void close() = 0;
