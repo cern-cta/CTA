@@ -269,7 +269,7 @@ namespace unitTests {
     char data1[block_size];
     char data2[block_size];
     castor::tape::file::RadosStriperPool striperPool;
-    castor::tape::diskFile::DiskFileFactory fileFactory("RFIO","", 0, striperPool);
+    castor::tape::diskFile::DiskFileFactory fileFactory("", 0, striperPool);
     TempFile sourceFile;
     sourceFile.randomFill(1000);
     TempFile destinationFile(sourceFile.path()+"_dst");

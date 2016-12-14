@@ -50,14 +50,12 @@ namespace castor {
       
       /**
        * Factory class deciding on the type of read/write file type
-       * based on the url passed and a config paramter.
-       * Currently, the parameter allows switching between RFIO and XROOT
+       * based on the url passed
        */
       class DiskFileFactory {
         typedef cta::utils::Regex Regex;
       public:
-        DiskFileFactory(const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKey, uint16_t xrootTimeout, 
+        DiskFileFactory(const std::string & xrootPrivateKey, uint16_t xrootTimeout, 
           castor::tape::file::RadosStriperPool & striperPool);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
@@ -69,12 +67,10 @@ namespace castor {
         Regex m_URLEosFile;
         Regex m_URLXrootFile;
         Regex m_URLCephFile;
-        std::string m_remoteFileProtocol;
         std::string m_xrootPrivateKeyFile;
         CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
         bool m_xrootPrivateKeyLoaded;
         const uint16_t m_xrootTimeout;
-        static cta::threading::Mutex g_rfioOptionsLock;
         castor::tape::file::RadosStriperPool & m_striperPool;
         
       public:

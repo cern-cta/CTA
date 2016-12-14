@@ -39,8 +39,7 @@ namespace castor {
 namespace tape {
 namespace diskFile {
 
-DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
-  const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
+DiskFileFactory::DiskFileFactory(const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
   castor::tape::file::RadosStriperPool & striperPool):
   m_NoURLLocalFile("^(localhost:|)(/.*)$"),
   m_NoURLRemoteFile("^([^:]*:)(.*)$"),
@@ -49,16 +48,10 @@ DiskFileFactory::DiskFileFactory(const std::string & remoteFileProtocol,
   m_URLEosFile("^eos://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
-  m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
   m_xrootPrivateKeyLoaded(false),
   m_xrootTimeout(xrootTimeout),
-  m_striperPool(striperPool)
-{
-  // Lowercase the protocol string
-  std::transform(m_remoteFileProtocol.begin(), m_remoteFileProtocol.end(),
-    m_remoteFileProtocol.begin(), ::tolower);
-}
+  m_striperPool(striperPool) {}
 
 const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
   if(!m_xrootPrivateKeyLoaded) {
@@ -228,8 +221,6 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
       std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
 }
 
-cta::threading::Mutex DiskFileFactory::g_rfioOptionsLock;
-
 //==============================================================================
 // LOCAL READ FILE
 //==============================================================================  
@@ -287,7 +278,7 @@ void LocalWriteFile::close()  {
   if (m_closeTried) return;
   m_closeTried=true;
   cta::exception::Errnum::throwOnMinusOne(::close(m_fd),
-      std::string("In LocalWriteFile::close failed rfio_close() on ")+m_URL);        
+      std::string("In LocalWriteFile::close failed close() on ")+m_URL);        
 }
 
 LocalWriteFile::~LocalWriteFile() throw() {
@@ -579,6 +570,10 @@ void EosWriteFile::write(const void *data, const size_t size)  {
     std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
     +m_URL);
   m_writePosition += size;
+}
+
+void EosWriteFile::setChecksum(uint32_t checksum) {
+  // Noop: this is only implemented for rados striper
 }
 
 void EosWriteFile::close()  {

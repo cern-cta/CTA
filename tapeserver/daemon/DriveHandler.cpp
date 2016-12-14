@@ -995,7 +995,6 @@ int DriveHandler::runChild() {
         m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
     dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
     dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
-    dataTransferConfig.remoteFileProtocol = "XROOT";
     dataTransferConfig.useLbp = true;
     dataTransferConfig.xrootPrivateKey = "";
     

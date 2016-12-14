@@ -41,10 +41,8 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
   RecallReportPacker& report,
   RecallWatchDog& recallWatchDog,
   cta::log::LogContext lc,
-  const std::string & remoteFileProtocol,
   const std::string & xrootPrivateKeyPath,
   uint16_t xrootTimeout):
-  m_remoteFileProtocol(remoteFileProtocol),
   m_xrootPrivateKeyPath(xrootPrivateKeyPath),
   m_xrootTimeout(xrootTimeout),
   m_reporter(report),m_watchdog(recallWatchDog),m_lc(lc)

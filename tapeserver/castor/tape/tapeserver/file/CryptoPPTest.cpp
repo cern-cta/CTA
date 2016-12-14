@@ -165,7 +165,7 @@ namespace unitTests {
   private:
     virtual void run() {
       castor::tape::file::RadosStriperPool striperPool;
-      castor::tape::diskFile::DiskFileFactory dff("xroot", m_keyPath, 0, 
+      castor::tape::diskFile::DiskFileFactory dff(m_keyPath, 0, 
           striperPool);
       for (int i=0; i<5; i++) {
         // Read keys in parallel and in a loop to test MT protection of the

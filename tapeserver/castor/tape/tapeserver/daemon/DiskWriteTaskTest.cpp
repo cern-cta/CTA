@@ -101,7 +101,7 @@ namespace unitTests{
     MockRecallReportPacker report(&trm,lc);
     RecallMemoryManager mm(10,100,lc);
     castor::tape::file::RadosStriperPool striperPool;
-    DiskFileFactory fileFactory("RFIO","", 0, striperPool);
+    DiskFileFactory fileFactory("", 0, striperPool);
     
     cta::MockRetrieveMount mrm;
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));

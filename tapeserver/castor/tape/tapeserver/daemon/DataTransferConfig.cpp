@@ -79,8 +79,6 @@ castor::tape::tapeserver::daemon::DataTransferConfig
   config.nbDiskThreads = castorConf.getConfEntInt(
     "TapeServer", "NbDiskThreads", 
     castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD, log);
-  config.remoteFileProtocol = castorConf.getConfEntString(
-    "TapeServer", "RemoteFileProtocol", "RFIO", log);
   config.xrootPrivateKey = castorConf.getConfEntString(
     "TapeServer", "XrootPrivateKey", "/etc/castor/xrd_tape_key.pem", log);
   config.xrootTimeout = castorConf.getConfEntInt(

@@ -38,9 +38,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq,
     castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-    cta::log::LogContext lc, const std::string & remoteFileProtocol,
-    const std::string & xrootPrivateKeyPath, uint16_t xrootTimeout) : 
-    m_remoteFileProtocol(remoteFileProtocol),
+    cta::log::LogContext lc, const std::string & xrootPrivateKeyPath, uint16_t xrootTimeout) : 
     m_xrootPrivateKeyPath(xrootPrivateKeyPath),
     m_xrootTimeout(xrootTimeout),
     m_watchdog(migrationWatchDog),

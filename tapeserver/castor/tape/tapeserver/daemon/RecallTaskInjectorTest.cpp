@@ -94,7 +94,7 @@ namespace unitTests
     FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd, 
       cta::log::LogContext & lc):
       DiskWriteThreadPool(1,rrp,
-      rwd,lc, "RFIO","/dev/null", 0){}
+      rwd,lc,"/dev/null", 0){}
     virtual ~FakeDiskWriteThreadPool() {};
   };
 

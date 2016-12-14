@@ -54,8 +54,8 @@ public:
    */
   DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
           castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-          cta::log::LogContext lc, const std::string & remoteFileProtocol,
-          const std::string & xrootPrivateKeyPath, uint16_t xrootTimeout);
+          cta::log::LogContext lc, const std::string & xrootPrivateKeyPath, 
+          uint16_t xrootTimeout);
   
   /**
    * Destructor.
@@ -147,7 +147,7 @@ private:
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
-    m_diskFileFactory(parent.m_remoteFileProtocol, parent.m_xrootPrivateKeyPath,
+    m_diskFileFactory(parent.m_xrootPrivateKeyPath,
       parent.m_xrootTimeout, parent.m_striperPool){
        cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
        m_lc.log(cta::log::INFO,"DisReadThread created");
@@ -190,11 +190,6 @@ private:
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
   cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
-
-  /**
-   * Parameter selecting the disk transfer protocol
-   */
-  std::string m_remoteFileProtocol;
   
   /**
    * Parameter: path to xroot private key

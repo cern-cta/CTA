@@ -96,11 +96,6 @@ struct DataTransferConfig {
   uint32_t nbDiskThreads;
 
   /**
-   * The remote transfer protocol to be used.
-   */
-  std::string remoteFileProtocol;
-
-  /**
    * The location of the file containing the private RSA key to be used when
    * using XROOT as the remote transfer protocol.
    */

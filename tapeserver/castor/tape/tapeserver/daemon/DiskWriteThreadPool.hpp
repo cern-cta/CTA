@@ -57,17 +57,12 @@ public:
    * @param lc reference to a log context object that will be copied at
    * construction time (and then copied further for each thread). There will
    * be no side effect on the caller's logs.
-   * @param remoteFileProtocol a string describing how the bare (no URL)
-   * pathes to files should be interpreted. Default is RFIO, unless the string
-   * is "xroot" (with any case variation) in which case we would use Xroot as a
-   * protocol.
    * @param xrootPrivateKeyPath the path to the xroot private key file.
    */
   DiskWriteThreadPool(int nbThread, 
           RecallReportPacker& reportPacker,
           RecallWatchDog& recallWatchDog,
           cta::log::LogContext lc,
-          const std::string & remoteFileProtocol,
           const std::string & xrootPrivateKeyPath,
           uint16_t xrootTimeout);
   /**
@@ -113,7 +108,7 @@ private:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
     m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),
     m_lc(m_parentThreadPool.m_lc), 
-    m_diskFileFactory(manager.m_remoteFileProtocol, manager.m_xrootPrivateKeyPath, 
+    m_diskFileFactory(manager.m_xrootPrivateKeyPath, 
       manager.m_xrootTimeout, manager.m_striperPool)
     {
       // This thread Id will remain for the rest of the thread's lifetime (and 
@@ -183,11 +178,6 @@ private:
 protected:
   /** The (thread safe) queue of tasks */
   cta::threading::BlockingQueue<DiskWriteTask*> m_tasks;
-
-  /**
-   * Parameter selecting the disk transfer protocol
-   */
-  std::string m_remoteFileProtocol;
   
   /**
    * Parameter: path to xroot private key
