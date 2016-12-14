@@ -38,6 +38,13 @@ OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connectio
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");
   }
+
+  try {
+    const std::string sql = "ALTER SESSION SET recyclebin = OFF";
+    executeNonQuery(sql, Stmt::AutocommitMode::OFF);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
