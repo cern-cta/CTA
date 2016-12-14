@@ -46,6 +46,10 @@ void LogContext::erase(const std::string& paramName) throw() {
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
 }
 
+void LogContext::clear() {
+  m_params.clear();
+}
+
 void LogContext::log(const int priority, const std::string& msg) throw() {
   m_log(priority, msg, m_params);
 }
