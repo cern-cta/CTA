@@ -38,7 +38,6 @@ set(CtaMessageSrcs
   Constants.cpp
   Frame.cpp
   messages.cpp
-  SmartZmqContext.cpp
   ../../../tapeserver/daemon/TapedProxy.cpp
   TapeserverProxyZmq.cpp
   ZmqMsg.cpp

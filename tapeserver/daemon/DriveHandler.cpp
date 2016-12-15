@@ -25,13 +25,13 @@
 #include "mediachanger/AcsProxyZmq.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
 #include "mediachanger/RmcProxyTcpIp.hpp"
+#include "mediachanger/SmartZmqContext.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
-#include "tapeserver/castor/messages/SmartZmqContext.hpp"
 #include "tapeserver/castor/acs/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -918,9 +918,8 @@ int DriveHandler::runChild() {
     
     // Mounting management.
     const int sizeOfIOThreadPoolForZMQ = 1;
-    castor::messages::SmartZmqContext zmqContext(
-      castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
-        m_processManager.logContext().logger()));
+    mediachanger::SmartZmqContext zmqContext(
+      mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
     mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
 
     cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
@@ -962,9 +961,8 @@ int DriveHandler::runChild() {
     
     // Mounting management.
     const int sizeOfIOThreadPoolForZMQ = 1;
-    castor::messages::SmartZmqContext zmqContext(
-      castor::messages::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ, 
-        m_processManager.logContext().logger()));
+    mediachanger::SmartZmqContext zmqContext(
+      mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
     mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
 
     cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
