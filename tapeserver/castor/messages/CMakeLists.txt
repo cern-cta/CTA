@@ -39,7 +39,6 @@ set(CtaMessageSrcs
   Frame.cpp
   messages.cpp
   ../../../tapeserver/daemon/TapedProxy.cpp
-  TapeserverProxyZmq.cpp
   ZmqMsg.cpp
   ZmqSocket.cpp
   ZmqSocketMT.cpp
