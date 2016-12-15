@@ -160,7 +160,7 @@ std::string cta::mediachanger::MountCmdLine::getUsage() throw() {
   return
   "Usage:\n"
   "\n"
-  "  castor-tape-mediachanger-mount [options] VID DRIVE_SLOT\n"
+  "  cta-mediachanger-mount [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"

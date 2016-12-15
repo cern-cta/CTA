@@ -169,7 +169,7 @@ std::string cta::mediachanger::DismountCmdLine::getUsage() throw() {
   return
   "Usage:\n"
   "\n"
-  "  castor-tape-mediachanger-dismount [options] VID DRIVE_SLOT\n"
+  "  cta-mediachanger-dismount [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"

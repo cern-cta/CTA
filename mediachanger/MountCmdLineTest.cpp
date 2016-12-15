@@ -73,7 +73,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, acs) {
   m_argsList.push_back(args);
   args->argc = 3;
   args->argv = new char *[4];
-  args->argv[0] = dupString("castor-tape-mediachanger-mount");
+  args->argv[0] = dupString("cta-mediachanger-mount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("acs1,2,3,4");
   args->argv[3] = NULL;
@@ -97,7 +97,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, copy_constructor) {
   m_argsList.push_back(args);
   args->argc = 3;
   args->argv = new char *[4];
-  args->argv[0] = dupString("castor-tape-mediachanger-mount");
+  args->argv[0] = dupString("cta-mediachanger-mount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("acs1,2,3,4");
   args->argv[3] = NULL;
@@ -128,7 +128,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, assignment) {
   m_argsList.push_back(args1);
   args1->argc = 3;
   args1->argv = new char *[4];
-  args1->argv[0] = dupString("castor-tape-mediachanger-mount");
+  args1->argv[0] = dupString("cta-mediachanger-mount");
   args1->argv[1] = dupString("vid");
   args1->argv[2] = dupString("acs1,2,3,4");
   args1->argv[3] = NULL;
@@ -146,7 +146,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, assignment) {
   m_argsList.push_back(args2);
   args2->argc = 3;
   args2->argv = new char *[4];
-  args2->argv[0] = dupString("castor-tape-mediachanger-mount");
+  args2->argv[0] = dupString("cta-mediachanger-mount");
   args2->argv[1] = dupString("vid");
   args2->argv[2] = dupString("acs5,6,7,8");
   args2->argv[3] = NULL;
@@ -186,7 +186,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, scsi) {
   m_argsList.push_back(args);
   args->argc = 3;
   args->argv = new char *[4];
-  args->argv[0] = dupString("castor-tape-mediachanger-mount");
+  args->argv[0] = dupString("cta-mediachanger-mount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("smc1");
   args->argv[3] = NULL;
