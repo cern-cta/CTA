@@ -94,6 +94,15 @@ public:
    */
   void *release() ;
 
+  /**
+   * Instantiates a ZMQ context.
+   *
+   * @param sizeOfIOThreadPoolForZMQ The size of the thread pool used to perform
+   * IO.  This is usually 1 thread.
+   * @return A pointer to the newly created ZMQ context.
+   */
+  static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ);
+
 private:
 
   /**

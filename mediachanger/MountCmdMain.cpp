@@ -39,15 +39,6 @@
  */
 static int exceptionThrowingMain(const int argc, char *const *const argv);
 
-/**
- * Instantiates a ZMQ context.
- *
- * @param sizeOfIOThreadPoolForZMQ The size of the thread pool used to perform
- * IO.  This is usually 1 thread.
- * @return A pointer to the newly created ZMQ context.
- */
-static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ);
-
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
@@ -82,7 +73,8 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta;
 
   const int sizeOfIOThreadPoolForZMQ = 1;
-  mediachanger::SmartZmqContext zmqContext(instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
+  mediachanger::SmartZmqContext
+    zmqContext(mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
   mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
 
   mediachanger::MmcProxyNotSupported mmc;
@@ -102,19 +94,4 @@ static int exceptionThrowingMain(const int argc, char *const *const argv) {
   mediachanger::MountCmd cmd(std::cin, std::cout, std::cerr, mc);
 
   return cmd.exceptionThrowingMain(argc, argv);
-}
-
-//------------------------------------------------------------------------------
-// instantiateZmqContext
-//------------------------------------------------------------------------------
-static void *instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ) {
-  using namespace cta;
-  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
-  if(NULL == zmqContext) {
-    const std::string message = utils::errnoToString(errno);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
-    throw ex;
-  }
-  return zmqContext;
 }

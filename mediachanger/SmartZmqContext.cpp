@@ -17,6 +17,7 @@
  */
 
 #include "mediachanger/SmartZmqContext.hpp"
+#include "common/utils/utils.hpp"
 
 #include <errno.h>
 #include <unistd.h>
@@ -102,6 +103,19 @@ void *SmartZmqContext::release() {
   m_zmqContext = NULL;
 
   return tmp;
+}
+
+//------------------------------------------------------------------------------
+// instantiateZmqContext
+//------------------------------------------------------------------------------
+void *SmartZmqContext::instantiateZmqContext(const int sizeOfIOThreadPoolForZMQ) {
+  using namespace cta;
+  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
+  if(NULL == zmqContext) {
+    const std::string message = utils::errnoToString(errno);
+    throw exception::Exception(std::string(__FUNCTION__) + ": Failed to instantiate ZMQ context: " + message);
+  }
+  return zmqContext;
 }
 
 } // namespace mediachanger
