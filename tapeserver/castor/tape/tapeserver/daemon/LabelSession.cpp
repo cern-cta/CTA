@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/System.hpp"
