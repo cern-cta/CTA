@@ -51,9 +51,7 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   Session.cpp
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
-  TapeWriteTask.cpp
-  TpconfigLine.cpp
-  TpconfigLines.cpp)
+  TapeWriteTask.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   if(GCC_VERSION_GE_4_8_0)

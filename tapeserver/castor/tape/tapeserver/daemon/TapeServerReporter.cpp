@@ -25,7 +25,6 @@
 #include "common/log/Logger.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 
 #include <sys/types.h>
 #include <unistd.h>
