@@ -24,7 +24,6 @@ add_executable(cta-unitTests
 target_link_libraries(cta-unitTests
   ctainmemorycatalogueunittests
   ctaexceptionunittests
-  ctatapereactorunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests

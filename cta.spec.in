@@ -181,7 +181,6 @@ The shared libraries
 %attr(0755,root,root) %{_libdir}/libctamessages.so
 %attr(0755,root,root) %{_libdir}/libctamessagesutils.so
 %attr(0755,root,root) %{_libdir}/libctardbms.so
-%attr(0755,root,root) %{_libdir}/libctatapereactorutils.so
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
@@ -211,7 +210,6 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_libdir}/libctaobjectstoreunittests.so
 %attr(0755,root,root) %{_libdir}/libctardbmsunittests.so
 %attr(0755,root,root) %{_libdir}/libctaschedulerunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapereactorunittests.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverdaemonunittests.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverdriveunittests.so
 %attr(0755,root,root) %{_libdir}/libctatapeserverfileunittests.so
