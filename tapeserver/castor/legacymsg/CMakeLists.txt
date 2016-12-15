@@ -5,6 +5,4 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver/h)
 
 add_library (ctalegacymsg
   TapeLabelRqstMsgBody.cpp
-  MessageHeader.cpp
-  GenericErrorReplyMsgBody.cpp
-  GenericReplyMsgBody.cpp)
+  MessageHeader.cpp)
