@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/legacymsg/MessageHeader.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/System.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
