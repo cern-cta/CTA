@@ -39,10 +39,6 @@ set(CtaMessageSrcs
   Frame.cpp
   messages.cpp
   ../../../tapeserver/daemon/TapedProxy.cpp
-  ZmqMsg.cpp
-  ZmqSocket.cpp
-  ZmqSocketMT.cpp
-  ZmqSocketST.cpp
 )
 
 add_library(ctamessages SHARED
@@ -57,11 +53,4 @@ target_link_libraries(ctamessages
   ctautils
   ctatapesession
   protobuf
-  ssl
-  zmq)
-
-add_library(ctamessagesunittests SHARED
-  MessagesTest.cpp)
-install(TARGETS ctamessagesunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-add_dependencies(ctamessagesunittests ctamessagesprotobuf)
+  ssl)

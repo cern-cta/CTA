@@ -24,7 +24,6 @@
 #pragma once
 
 #include "castor/messages/Header.pb.h"
-#include "ZmqMsg.hpp"
 #include "tapeserver/castor/utils/utils.hpp"
 
 #include <google/protobuf/message.h>
@@ -52,23 +51,6 @@ struct Frame {
    * Checks the hash value field of the header against the body of the frame.
    */
   void checkHashValueOfBody() const;
-
-  /**
-   * Serializes the frame header to the specified ZMQ message.
-   *
-   * Please note that the specified size of the specified ZMQ message must
-   * match that of the header.
-   *
-   * @param msg Output parameter: The ZMQ message.
-   */
-  void serializeHeaderToZmqMsg(ZmqMsg &msg) const;
-
-  /**
-   * Parses the specified ZMQ message into the frame header.
-   *
-   * @param msg The ZMQ message.
-   */
-  void parseZmqMsgIntoHeader(const ZmqMsg &msg);
 
   /**
    * Serializes the specified protocol buffer into the frame body, calculates

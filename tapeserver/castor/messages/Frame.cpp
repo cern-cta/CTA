@@ -41,50 +41,6 @@ void castor::messages::Frame::checkHashValueOfBody() const {
 }
 
 //------------------------------------------------------------------------------
-// serialiseHeaderToZmqMsg
-//------------------------------------------------------------------------------
-void castor::messages::Frame::serializeHeaderToZmqMsg(ZmqMsg &msg) const {
-  try {
-    if(!header.IsInitialized()) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Frame header is not initialized";
-      throw ex;
-    }
-
-    if(header.ByteSize() != (int)msg.size()) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Size of frame header does not match that of ZMQ"
-        " message: header.ByteSize()=" << header.ByteSize() << " msg.size()="
-        << msg.size();
-      throw ex;
-    }
-
-    if(!header.SerializeToArray(msg.getData(), header.ByteSize())) {
-      cta::exception::Exception ex;
-      ex.getMessage() << "header.SerializeToArray() returned false";
-      throw ex;
-    }
-  } catch(cta::exception::Exception &ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to serialize frame header to ZMQ message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// parseZmqMsgIntoHeader
-//------------------------------------------------------------------------------
-void castor::messages::Frame::parseZmqMsgIntoHeader(const ZmqMsg &msg) {
-  if(!header.ParseFromArray(msg.getData(), msg.size())) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to parse ZMQ message into frame header: "
-      "header.ParseFromArray() returned false";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // serializeProtocolBufferIntoBody
 //------------------------------------------------------------------------------
 void castor::messages::Frame::serializeProtocolBufferIntoBody(
