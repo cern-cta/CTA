@@ -31,7 +31,6 @@
 #include "castor/tape/tapeserver/daemon/TpconfigLine.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "castor/utils/utils.hpp"
 #include "mediachanger/AcsProxyDummy.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "mediachanger/MmcProxyDummy.hpp"

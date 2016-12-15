@@ -23,7 +23,6 @@ include_directories(/usr/include/shift)
 include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 
 set (UTILS_LIB_SRC_FILES
-  utils.cpp
   ../common/CastorConfiguration.cpp)
 
 add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
@@ -31,8 +30,3 @@ add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
 target_link_libraries(ctautils)
 
 install(TARGETS ctautils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-add_library (ctautilsunittests SHARED
-  UtilsTest.cpp)
-
-install(TARGETS ctautilsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

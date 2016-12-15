@@ -29,7 +29,6 @@ target_link_libraries(cta-unitTests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests
   ctatapeserverscsiunittests
-  ctautilsunittests
   ctacommon
   ctacommonunittests
   ctaobjectstore

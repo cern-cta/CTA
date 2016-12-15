@@ -30,7 +30,6 @@
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/Timer.hpp"
-#include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 #include <map>
