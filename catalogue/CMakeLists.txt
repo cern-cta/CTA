@@ -214,3 +214,10 @@ target_link_libraries (cta-catalogue-admin-host-create
 
 install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta DESTINATION /usr/share/man/man1)
+
+set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
+  CreateAdminHostCmdLineArgs.cpp
+  CreateAdminHostCmdLineArgsTest.cpp)
+
+add_library (ctacataloguecmdlineunittests SHARED
+  ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
