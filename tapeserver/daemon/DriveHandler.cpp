@@ -32,7 +32,6 @@
 #include "objectstore/BackendPopulator.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
-#include "tapeserver/castor/acs/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
@@ -920,7 +919,7 @@ int DriveHandler::runChild() {
     const int sizeOfIOThreadPoolForZMQ = 1;
     mediachanger::SmartZmqContext zmqContext(
       mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-    mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+    mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
 
     cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
     // The network timeout of rmc communications should be several minutes due
@@ -963,7 +962,7 @@ int DriveHandler::runChild() {
     const int sizeOfIOThreadPoolForZMQ = 1;
     mediachanger::SmartZmqContext zmqContext(
       mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-    mediachanger::AcsProxyZmq acs(castor::acs::ACS_PORT, zmqContext.get());
+    mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
 
     cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
     // The network timeout of rmc communications should be several minutes due
