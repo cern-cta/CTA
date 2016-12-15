@@ -24,7 +24,6 @@ add_executable(cta-unitTests
 target_link_libraries(cta-unitTests
   ctainmemorycatalogueunittests
   ctaexceptionunittests
-  ctaiounittests
   ctatapereactorunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests
@@ -37,7 +36,6 @@ target_link_libraries(cta-unitTests
   ctaobjectstoreunittests
   ctardbmsunittests
   ctaschedulerunittests
-  ctaio
   ctadaemonunittests
   ctamediachangerunittests
   ${GMOCK_LIB}

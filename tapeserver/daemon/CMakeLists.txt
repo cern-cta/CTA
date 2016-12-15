@@ -40,7 +40,6 @@ target_link_libraries(ctatapedaemon
   ctaTapeServerDaemon
   SCSI
   TapeDrive
-  ctaio
   File)
 
 add_library(ctadaemonunittests SHARED
