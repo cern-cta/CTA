@@ -37,8 +37,6 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 
 target_link_libraries(ctatapedaemon
   ctatapesession
-  ctamessages
-  ctalegacymsg
   ctaTapeServerDaemon
   SCSI
   TapeDrive
