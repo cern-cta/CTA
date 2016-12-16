@@ -217,9 +217,7 @@ install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta 
 
 set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateAdminHostCmdLineArgs.cpp
-  CreateAdminHostCmdLineArgsTest.cpp
-  CreateAdminUserCmdLineArgs.cpp
-  CreateAdminUserCmdLineArgsTest.cpp)
+  CreateAdminHostCmdLineArgsTest.cpp)
 
 add_library (ctacataloguecmdlineunittests SHARED
   ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
