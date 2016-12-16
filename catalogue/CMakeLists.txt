@@ -221,7 +221,9 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateAdminUserCmdLineArgs.cpp
   CreateAdminUserCmdLineArgsTest.cpp
   CreateSchemaCmdLineArgs.cpp
-  CreateSchemaCmdLineArgsTest.cpp)
+  CreateSchemaCmdLineArgsTest.cpp
+  DropSchemaCmdLineArgs.cpp
+  DropSchemaCmdLineArgsTest.cpp)
 
 add_library (ctacataloguecmdlineunittests SHARED
   ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
