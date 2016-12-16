@@ -222,6 +222,8 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateAdminUserCmdLineArgsTest.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdLineArgsTest.cpp
+  DeleteAllCatalogueDataCmdLineArgs.cpp
+  DeleteAllCatalogueDataCmdLineArgsTest.cpp
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdLineArgsTest.cpp
   LockSchemaCmdLineArgs.cpp
