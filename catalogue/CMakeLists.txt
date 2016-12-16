@@ -228,6 +228,8 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   DropSchemaCmdLineArgsTest.cpp
   LockSchemaCmdLineArgs.cpp
   LockSchemaCmdLineArgsTest.cpp
+  PollDatabaseCmdLineArgs.cpp
+  PollDatabaseCmdLineArgsTest.cpp
   UnlockSchemaCmdLineArgs.cpp
   UnlockSchemaCmdLineArgsTest.cpp)
 

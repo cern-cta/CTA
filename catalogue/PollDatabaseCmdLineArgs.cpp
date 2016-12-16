@@ -31,7 +31,8 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+  help(false),
+  numberOfSecondsToKeepPolling(0) {
 
   static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -86,7 +87,7 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
   // Check the number of arguments
   if(nbArgs != 2) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << nbArgs;
+    ex.getMessage() << "Wrong number of command-line arguments: excepted=2 actual=" << nbArgs;
     throw ex;
   }
 
