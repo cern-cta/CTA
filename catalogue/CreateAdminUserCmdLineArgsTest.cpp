@@ -82,7 +82,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, help_short) {
 
   ASSERT_TRUE(cmdLine.help);
   ASSERT_TRUE(cmdLine.dbConfigPath.empty());
-  ASSERT_TRUE(cmdLine.adminUserName.empty());
+  ASSERT_TRUE(cmdLine.adminUsername.empty());
   ASSERT_TRUE(cmdLine.comment.empty());
 }
 
@@ -101,11 +101,11 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, help_long) {
 
   ASSERT_TRUE(cmdLine.help);
   ASSERT_TRUE(cmdLine.dbConfigPath.empty());
-  ASSERT_TRUE(cmdLine.adminUserName.empty());
+  ASSERT_TRUE(cmdLine.adminUsername.empty());
   ASSERT_TRUE(cmdLine.comment.empty());
 }
 
-TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_short) {
+TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, username_short) {
   using namespace cta::catalogue;
 
   Argcv *args = new Argcv();
@@ -114,8 +114,8 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_short) {
   args->argv = new char *[7];
   args->argv[0] = dupString("cta-catalogue-admin-user-create");
   args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = dupString("-n");
-  args->argv[3] = dupString("adminUserName");
+  args->argv[2] = dupString("-u");
+  args->argv[3] = dupString("adminUsername");
   args->argv[4] = dupString("-c");
   args->argv[5] = dupString("comment");
   args->argv[6] = NULL;
@@ -124,11 +124,11 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_short) {
 
   ASSERT_FALSE(cmdLine.help);
   ASSERT_EQ(std::string("dbConfigPath"), cmdLine.dbConfigPath);
-  ASSERT_EQ(std::string("adminUserName"), cmdLine.adminUserName);
+  ASSERT_EQ(std::string("adminUsername"), cmdLine.adminUsername);
   ASSERT_EQ(std::string("comment"), cmdLine.comment);
 }
 
-TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_long) {
+TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, username_long) {
   using namespace cta::catalogue;
 
   Argcv *args = new Argcv();
@@ -137,8 +137,8 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_long) {
   args->argv = new char *[7];
   args->argv[0] = dupString("cta-catalogue-admin-user-create");
   args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = dupString("--hostname");
-  args->argv[3] = dupString("adminUserName");
+  args->argv[2] = dupString("--username");
+  args->argv[3] = dupString("adminUsername");
   args->argv[4] = dupString("--comment");
   args->argv[5] = dupString("comment");
   args->argv[6] = NULL;
@@ -147,7 +147,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, hostname_long) {
 
   ASSERT_FALSE(cmdLine.help);
   ASSERT_EQ(std::string("dbConfigPath"), cmdLine.dbConfigPath);
-  ASSERT_EQ(std::string("adminUserName"), cmdLine.adminUserName);
+  ASSERT_EQ(std::string("adminUsername"), cmdLine.adminUsername);
   ASSERT_EQ(std::string("comment"), cmdLine.comment);
 }
 
