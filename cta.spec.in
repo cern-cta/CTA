@@ -204,6 +204,7 @@ Unit tests and system tests with virtual tape drives
 %attr(0755,root,root) %{_bindir}/cta-valgrindUnitTests.sh
 %attr(0755,root,root) %{_bindir}/cta-unitPlusSystemTests.sh
 %attr(0755,root,root) %{_libdir}/libctacatalogueunittests.so
+%attr(0755,root,root) %{_libdir}/libctacataloguecmdlineunittests.so
 %attr(0755,root,root) %{_libdir}/libctacommonunittests.so
 %attr(0755,root,root) %{_libdir}/libctaexceptionunittests.so
 %attr(0755,root,root) %{_libdir}/libctainmemorycatalogueunittests.so
