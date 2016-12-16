@@ -29,6 +29,7 @@
 #include <exception>
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <uuid/uuid.h>
 
 namespace unitTests {
 
@@ -123,6 +124,119 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_adm
 
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnAdminHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_adminHost);
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
+
+// unit test is disabled as it is pretty long to run.
+TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
+  using namespace cta;
+
+  SchedulerDatabase &db = getDb();
+  
+  // Inject 1000 archive jobs to the db.
+  cta::common::dataStructures::ArchiveFileQueueCriteria afqc;
+  afqc.copyToPoolMap.insert({1, "tapePool"});
+  afqc.fileId = 0;
+  afqc.mountPolicy.name = "mountPolicy";
+  afqc.mountPolicy.archivePriority = 1;
+  afqc.mountPolicy.archiveMinRequestAge = 0;
+  afqc.mountPolicy.retrievePriority = 1;
+  afqc.mountPolicy.retrieveMinRequestAge = 0;
+  afqc.mountPolicy.maxDrivesAllowed = 10;
+  afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
+  afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+  afqc.mountPolicy.comment = "comment";
+  const size_t filesToDo = 100;
+  for (size_t i=0; i<filesToDo; i++) {
+    cta::common::dataStructures::ArchiveRequest ar;
+    ar.archiveReportURL="";
+    ar.checksumType="";
+    ar.creationLog = { "user", "host", time(nullptr)};
+    uuid_t fileUUID;
+    uuid_generate(fileUUID);
+    char fileUUIDStr[37];
+    uuid_unparse(fileUUID, fileUUIDStr);
+    ar.diskFileID = fileUUIDStr;
+    ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
+    ar.diskFileInfo.owner = "user";
+    ar.diskFileInfo.group = "group";
+    // Attempt to create a no valid UTF8 string.
+    ar.diskFileInfo.recoveryBlob = std::string("recoveryBlob") + "\xc3\xb1";
+    ar.fileSize = 1000;
+    ar.requester = { "user", "group" };
+    ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
+    ar.storageClass = "storageClass";
+    afqc.fileId = i;
+    db.queueArchive("eosInstance", ar, afqc);
+  }
+  
+  // Then load all archive jobs into memory
+  // Create mount.
+  auto moutInfo = db.getMountInfo();
+  cta::catalogue::TapeForWriting tfw;
+  tfw.tapePool = "tapePool";
+  tfw.vid = "vid";
+  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  bool done = false;
+  size_t count = 0;
+  while (!done) {
+    auto aj = am->getNextJob();
+    if (aj.get()) {
+      count++;
+      //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
+      aj->succeed();
+    }
+    else
+      done = true;
+  }
+  ASSERT_EQ(filesToDo, count);
+  am->complete(time(nullptr));
+  am.reset(nullptr);
+  moutInfo.reset(nullptr);
+  
+  const size_t filesToDo2 = 1000;
+  for (size_t i=0; i<filesToDo2; i++) {
+    cta::common::dataStructures::ArchiveRequest ar;
+    ar.archiveReportURL="";
+    ar.checksumType="";
+    ar.creationLog = { "user", "host", time(nullptr)};
+    uuid_t fileUUID;
+    uuid_generate(fileUUID);
+    char fileUUIDStr[37];
+    uuid_unparse(fileUUID, fileUUIDStr);
+    ar.diskFileID = fileUUIDStr;
+    ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
+    ar.diskFileInfo.owner = "user";
+    ar.diskFileInfo.group = "group";
+    // Attempt to create a no valid UTF8 string.
+    ar.diskFileInfo.recoveryBlob = std::string("recoveryBlob") + "\xc3\xb1";
+    ar.fileSize = 1000;
+    ar.requester = { "user", "group" };
+    ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
+    ar.storageClass = "storageClass";
+    afqc.fileId = i;
+    db.queueArchive("eosInstance", ar, afqc);
+  }
+  
+  // Then load all archive jobs into memory (2nd pass)
+  // Create mount.
+  moutInfo = db.getMountInfo();
+  am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  done = false;
+  count = 0;
+  while (!done) {
+    auto aj = am->getNextJob();
+    if (aj.get()) {
+      count++;
+      //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
+      aj->succeed();
+    }
+    else
+      done = true;
+  }
+  ASSERT_EQ(filesToDo2, count);
+  am->complete(time(nullptr));
+  am.reset(nullptr);
+  moutInfo.reset(nullptr);
+}
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
