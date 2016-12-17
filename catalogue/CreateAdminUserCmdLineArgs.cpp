@@ -45,13 +45,13 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
   while((opt = getopt_long(argc, argv, ":c:hu:", longopts, NULL)) != -1) {
     switch(opt) {
     case 'c':
-      comment = optarg;
+      comment = optarg ? optarg : "";
       break;
     case 'h':
       help = true;
       break;
     case 'u':
-      adminUsername = optarg;
+      adminUsername = optarg ? optarg : "";
       break;
     case ':': // Missing parameter
       {
