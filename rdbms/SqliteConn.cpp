@@ -33,22 +33,22 @@ namespace rdbms {
 SqliteConn::SqliteConn(const std::string &filename):
   m_transactionInProgress(false) {
   try {
-    m_conn = nullptr;
-    if(sqlite3_open_v2(filename.c_str(), &m_conn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
-      std::string msg = sqlite3_errmsg(m_conn);
-      sqlite3_close(m_conn);
+    m_sqliteConn = nullptr;
+    if(sqlite3_open_v2(filename.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
+      std::string msg = sqlite3_errmsg(m_sqliteConn);
+      sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);
     }
     {
       char *errMsg = nullptr;
-      if(SQLITE_OK != sqlite3_exec(m_conn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
+      if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
         exception::Exception ex;
         ex.getMessage() << "Failed to to set PRAGMA foreign_keys = ON";
         if(nullptr != errMsg) {
           ex.getMessage() << ": " << errMsg;
           sqlite3_free(errMsg);
         }
-        sqlite3_close(m_conn);
+        sqlite3_close(m_sqliteConn);
         throw ex;
       }
     }
@@ -70,9 +70,9 @@ SqliteConn::~SqliteConn() throw() {
 void SqliteConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(nullptr != m_conn) {
-    sqlite3_close(m_conn);
-    m_conn = nullptr;
+  if(nullptr != m_sqliteConn) {
+    sqlite3_close(m_sqliteConn);
+    m_sqliteConn = nullptr;
   }
 }
 
@@ -83,7 +83,7 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt:
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if(nullptr == m_conn) {
+    if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");
     }
 
@@ -101,13 +101,13 @@ void SqliteConn::commit() {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if(nullptr == m_conn) {
+    if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");
     }
 
     if(m_transactionInProgress) {
       char *errMsg = nullptr;
-      if(SQLITE_OK != sqlite3_exec(m_conn, "COMMIT", nullptr, nullptr, &errMsg)) {
+      if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "COMMIT", nullptr, nullptr, &errMsg)) {
         exception::Exception ex;
         ex.getMessage() << "sqlite3_exec failed";
         if(nullptr != errMsg) {
@@ -130,13 +130,13 @@ void SqliteConn::rollback() {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if(nullptr == m_conn) {
+    if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");
     }
 
     if(m_transactionInProgress) {
       char *errMsg = nullptr;
-      if(SQLITE_OK != sqlite3_exec(m_conn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
+      if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
         exception::Exception ex;
         ex.getMessage() << "sqlite3_exec failed";
         if(nullptr != errMsg) {
@@ -210,7 +210,7 @@ std::list<std::string> SqliteConn::getTableNames() {
 // isOpen
 //------------------------------------------------------------------------------
 bool SqliteConn::isOpen() const {
-  return nullptr != m_conn;
+  return nullptr != m_sqliteConn;
 }
 
 } // namespace rdbms

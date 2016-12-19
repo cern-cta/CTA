@@ -115,7 +115,7 @@ private:
   /**
    * The database connection.
    */
-  sqlite3 *m_conn;
+  sqlite3 *m_sqliteConn;
 
   /**
    * True of there is an on-going transaction.

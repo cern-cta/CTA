@@ -49,7 +49,7 @@ SqliteStmt::SqliteStmt(
 
   const uint maxPrepareRetries = 20; // A worst case scenario of 2 seconds
   for(unsigned int i = 0; i <= maxPrepareRetries; i++) {
-    const int prepareRc = sqlite3_prepare_v2(m_conn.m_conn, sql.c_str(), nByte, &m_stmt, nullptr);
+    const int prepareRc = sqlite3_prepare_v2(m_conn.m_sqliteConn, sql.c_str(), nByte, &m_stmt, nullptr);
 
     if(SQLITE_OK == prepareRc) {
       break;
@@ -71,7 +71,7 @@ SqliteStmt::SqliteStmt(
       }
     }
 
-    const std::string msg = sqlite3_errmsg(m_conn.m_conn);
+    const std::string msg = sqlite3_errmsg(m_conn.m_sqliteConn);
     sqlite3_finalize(m_stmt);
     throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 failed: " + msg);
   }
@@ -232,7 +232,7 @@ void SqliteStmt::executeNonQuery() {
       Sqlite::rcToStr(stepRc));
   }
 
-  m_nbAffectedRows = sqlite3_changes(m_conn.m_conn);
+  m_nbAffectedRows = sqlite3_changes(m_conn.m_sqliteConn);
 
   // Throw an exception if the SQL statement returned a result set
   if(SQLITE_ROW == stepRc) {
@@ -254,7 +254,7 @@ uint64_t SqliteStmt::getNbAffectedRows() const {
 void SqliteStmt::beginExclusiveTransaction() {
   try {
     char *errMsg = nullptr;
-    if(SQLITE_OK != sqlite3_exec(m_conn.m_conn, "BEGIN EXCLUSIVE", nullptr, nullptr, &errMsg)) {
+    if(SQLITE_OK != sqlite3_exec(m_conn.m_sqliteConn, "BEGIN EXCLUSIVE", nullptr, nullptr, &errMsg)) {
       exception::Exception ex;
       ex.getMessage() << "sqlite3_exec failed";
       if(nullptr != errMsg) {
