@@ -70,7 +70,7 @@ SqliteConn::~SqliteConn() throw() {
 void SqliteConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_conn != nullptr) {
+  if(nullptr != m_conn) {
     sqlite3_close(m_conn);
     m_conn = nullptr;
   }
@@ -82,6 +82,10 @@ void SqliteConn::close() {
 std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_conn) {
+      throw exception::Exception("Connection is closed");
+    }
 
     return cta::make_unique<SqliteStmt>(autocommitMode , *this, sql);
   } catch(exception::Exception &ex) {
@@ -96,6 +100,11 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt:
 void SqliteConn::commit() {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_conn) {
+      throw exception::Exception("Connection is closed");
+    }
+
     if(m_transactionInProgress) {
       char *errMsg = nullptr;
       if(SQLITE_OK != sqlite3_exec(m_conn, "COMMIT", nullptr, nullptr, &errMsg)) {
@@ -120,6 +129,11 @@ void SqliteConn::commit() {
 void SqliteConn::rollback() {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_conn) {
+      throw exception::Exception("Connection is closed");
+    }
+
     if(m_transactionInProgress) {
       char *errMsg = nullptr;
       if(SQLITE_OK != sqlite3_exec(m_conn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
