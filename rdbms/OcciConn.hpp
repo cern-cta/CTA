@@ -60,22 +60,6 @@ public:
   virtual void close() override;
 
   /**
-   * Returns the underlying OCCI connection.
-   *
-   * This method will always return a valid pointer.
-   *
-   * @return The underlying OCCI connection.
-   */
-  oracle::occi::Connection *get() const;
-
-  /**
-   * An alias for the get() method.
-   *
-   * @return The underlying OCCI connection.
-   */
-  oracle::occi::Connection *operator->() const;
-
-  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
@@ -126,6 +110,13 @@ private:
    * The OCCI connection.
    */
   oracle::occi::Connection *m_occiConn;
+
+  /**
+   * Closes the specified OCCI statement.
+   *
+   * @param stmt The OCCI statement to be closed.
+   */
+  void closeStmt(oracle::occi::Statement *const stmt);
 
 }; // class OcciConn
 

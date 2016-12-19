@@ -64,24 +64,10 @@ OcciConn::~OcciConn() throw() {
 void OcciConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_occiConn != nullptr) {
+  if(nullptr != m_occiConn) {
     m_env->terminateConnection(m_occiConn);
     m_occiConn = nullptr;
   }
-}
-
-//------------------------------------------------------------------------------
-// get
-//------------------------------------------------------------------------------
-oracle::occi::Connection *OcciConn::get() const {
-  return m_occiConn;
-}
-
-//------------------------------------------------------------------------------
-// operator->()
-//------------------------------------------------------------------------------
-oracle::occi::Connection *OcciConn::operator->() const {
-  return get();
 }
 
 //------------------------------------------------------------------------------
@@ -89,7 +75,17 @@ oracle::occi::Connection *OcciConn::operator->() const {
 //------------------------------------------------------------------------------
 std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::AutocommitMode autocommitMode) {
   try {
-    return cta::make_unique<OcciStmt>(autocommitMode, sql, *this);
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_occiConn) {
+       throw exception::Exception("Connection is closed");
+    }
+
+    oracle::occi::Statement *const stmt = m_occiConn->createStatement(sql);
+    if (nullptr == stmt) {
+      throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
+    }
+    return cta::make_unique<OcciStmt>(autocommitMode, sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
@@ -103,7 +99,15 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::Autocom
 //------------------------------------------------------------------------------
 void OcciConn::commit() {
   try {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_occiConn) {
+       throw exception::Exception("Connection is closed");
+    }
+
     m_occiConn->commit();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
@@ -114,7 +118,15 @@ void OcciConn::commit() {
 //------------------------------------------------------------------------------
 void OcciConn::rollback() {
   try {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_occiConn) {
+       throw exception::Exception("Connection is closed");
+    }
+
     m_occiConn->rollback();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
@@ -150,6 +162,29 @@ std::list<std::string> OcciConn::getTableNames() {
 //------------------------------------------------------------------------------
 bool OcciConn::isOpen() const {
   return nullptr != m_occiConn;
+}
+
+//------------------------------------------------------------------------------
+// closeStmt
+//------------------------------------------------------------------------------
+void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
+  try {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if(nullptr == m_occiConn) {
+       throw exception::Exception("Connection is closed");
+    }
+
+    if(nullptr == stmt) {
+      throw exception::Exception("stmt is a nullptr");
+    }
+
+    m_occiConn->terminateStatement(stmt);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
 }
 
 } // namespace rdbms

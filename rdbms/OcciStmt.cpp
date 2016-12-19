@@ -36,15 +36,13 @@ namespace rdbms {
 OcciStmt::OcciStmt(
   const AutocommitMode autocommitMode,
   const std::string &sql,
-  OcciConn &conn) :
+  OcciConn &conn,
+  oracle::occi::Statement *const stmt) :
   Stmt(autocommitMode),
   m_sql(sql),
   m_paramNameToIdx(sql),
-  m_conn(conn) {
-  m_stmt = m_conn->createStatement(sql);
-  if (nullptr == m_stmt) {
-    throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
-  }
+  m_conn(conn),
+  m_stmt(stmt) {
 
   // m_occiConn and m_stmt have been set and m_stmt is not nullptr so it is safe to
   // call close() from now on
@@ -88,7 +86,7 @@ void OcciStmt::close() {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (nullptr != m_stmt) {
-      m_conn->terminateStatement(m_stmt);
+      m_conn.closeStmt(m_stmt);
       m_stmt = nullptr;
     }
   } catch(exception::Exception &ex) {
