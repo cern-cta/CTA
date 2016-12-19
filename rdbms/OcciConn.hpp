@@ -125,7 +125,7 @@ private:
   /**
    * The OCCI connection.
    */
-  oracle::occi::Connection *m_conn;
+  oracle::occi::Connection *m_occiConn;
 
 }; // class OcciConn
 

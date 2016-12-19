@@ -33,7 +33,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
   m_env(env),
-  m_conn(conn) {
+  m_occiConn(conn) {
   if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");
@@ -64,9 +64,9 @@ OcciConn::~OcciConn() throw() {
 void OcciConn::close() {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if(m_conn != nullptr) {
-    m_env->terminateConnection(m_conn);
-    m_conn = nullptr;
+  if(m_occiConn != nullptr) {
+    m_env->terminateConnection(m_occiConn);
+    m_occiConn = nullptr;
   }
 }
 
@@ -74,7 +74,7 @@ void OcciConn::close() {
 // get
 //------------------------------------------------------------------------------
 oracle::occi::Connection *OcciConn::get() const {
-  return m_conn;
+  return m_occiConn;
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::Autocom
 //------------------------------------------------------------------------------
 void OcciConn::commit() {
   try {
-    m_conn->commit();
+    m_occiConn->commit();
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
@@ -114,7 +114,7 @@ void OcciConn::commit() {
 //------------------------------------------------------------------------------
 void OcciConn::rollback() {
   try {
-    m_conn->rollback();
+    m_occiConn->rollback();
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
@@ -149,7 +149,7 @@ std::list<std::string> OcciConn::getTableNames() {
 // isOpen
 //------------------------------------------------------------------------------
 bool OcciConn::isOpen() const {
-  return nullptr != m_conn;
+  return nullptr != m_occiConn;
 }
 
 } // namespace rdbms

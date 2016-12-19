@@ -46,7 +46,7 @@ OcciStmt::OcciStmt(
     throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
   }
 
-  // m_conn and m_stmt have been set and m_stmt is not nullptr so it is safe to
+  // m_occiConn and m_stmt have been set and m_stmt is not nullptr so it is safe to
   // call close() from now on
   try {
     switch(autocommitMode) {
