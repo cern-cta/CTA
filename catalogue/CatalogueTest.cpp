@@ -4978,6 +4978,17 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
   ASSERT_THROW(m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), 0), exception::Exception);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existance_archiveFileId) {
+  using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.archiveFileId = 1234;
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_without_disk_instance) {
   using namespace cta;
 
@@ -5010,6 +5021,8 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_wi
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.storageClass = storageClass.name;
 
@@ -5018,6 +5031,8 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_wi
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_storage_class) {
   using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -5029,6 +5044,8 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_storage_clas
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tape_pool) {
   using namespace cta;
 
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.tapePool = "non_existant_tape_pool";
 
@@ -5037,6 +5054,8 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tape_pool) {
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_vid) {
   using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = "non_existant_vid";
@@ -5449,9 +5468,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = nbArchiveFiles + 1234;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
-      ASSERT_EQ(0, m.size());
+      ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, prefetch), exception::UserError);
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
       ASSERT_EQ(0, summary.totalBytes);

@@ -748,6 +748,27 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
 }
 
 //------------------------------------------------------------------------------
+// archiveFileExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
+      "FROM "
+        "ARCHIVE_FILE "
+      "WHERE "
+        "ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt->executeQuery();
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // archiveRouteExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
@@ -3310,6 +3331,14 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 //------------------------------------------------------------------------------
 std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
+
+  if(searchCriteria.archiveFileId) {
+    auto conn = m_connPool.getConn();
+    if(!archiveFileIdExists(conn, searchCriteria.archiveFileId.value())) {
+      throw exception::UserError(std::string("Archive file with ID ") +
+        std::to_string(searchCriteria.archiveFileId.value()) + " does not exist");
+    }
+  }
 
   if(searchCriteria.storageClass && !searchCriteria.diskInstance) {
     throw exception::UserError(std::string("Storage class ") + searchCriteria.storageClass.value() + " is ambiguous "
