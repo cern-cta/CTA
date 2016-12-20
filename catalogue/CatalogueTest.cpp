@@ -4978,6 +4978,15 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
   ASSERT_THROW(m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), 0), exception::Exception);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tapepool) {
+  using namespace cta;
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.tapePool = "non_existant_tapepool";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_vid) {
   using namespace cta;
 

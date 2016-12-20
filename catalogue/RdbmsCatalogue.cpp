@@ -3311,6 +3311,13 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
 
+  if(searchCriteria.tapePool) {
+    auto conn = m_connPool.getConn();
+    if(!tapePoolExists(conn, searchCriteria.tapePool.value())) {
+      throw exception::UserError(std::string("Tape pool ") + searchCriteria.tapePool.value() + " does not exist");
+    }
+  }
+
   if(searchCriteria.vid) {
     auto conn = m_connPool.getConn();
     if(!tapeExists(conn, searchCriteria.vid.value())) {
