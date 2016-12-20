@@ -3311,6 +3311,19 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
 
+  if(searchCriteria.storageClass && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Storage class ") + searchCriteria.storageClass.value() + " is ambiguous "
+      "without disk instance name");                                              
+  }
+
+  if(searchCriteria.diskInstance && searchCriteria.storageClass) {
+    auto conn = m_connPool.getConn();
+    if(!storageClassExists(conn, searchCriteria.diskInstance.value(), searchCriteria.storageClass.value())) {
+      throw exception::UserError(std::string("Storage class ") + searchCriteria.diskInstance.value() + "::" +
+        searchCriteria.storageClass.value() + " does not exist");
+    }
+  }
+
   if(searchCriteria.tapePool) {
     auto conn = m_connPool.getConn();
     if(!tapePoolExists(conn, searchCriteria.tapePool.value())) {

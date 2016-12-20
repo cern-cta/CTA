@@ -4978,11 +4978,59 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
   ASSERT_THROW(m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), 0), exception::Exception);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tapepool) {
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_without_disk_instance) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
+
+  ASSERT_EQ(1, storageClasses.size());
+
+  {
+    const auto s = storageClasses.front();
+
+    ASSERT_EQ(storageClass.diskInstance, s.diskInstance);
+    ASSERT_EQ(storageClass.name, s.name);
+    ASSERT_EQ(storageClass.nbCopies, s.nbCopies);
+    ASSERT_EQ(storageClass.comment, s.comment);
+
+    const common::dataStructures::EntryLog creationLog = s.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = s.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.storageClass = storageClass.name;
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_storage_class) {
   using namespace cta;
 
   catalogue::TapeFileSearchCriteria searchCriteria;
-  searchCriteria.tapePool = "non_existant_tapepool";
+  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.storageClass = "non_existant_storage_class";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tape_pool) {
+  using namespace cta;
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.tapePool = "non_existant_tape_pool";
 
   ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
 }
@@ -5335,7 +5383,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
-      searchCriteria.storageClass = "storage_class";
+      searchCriteria.diskInstance = storageClass.diskInstance;
+      searchCriteria.storageClass = storageClass.name;
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
