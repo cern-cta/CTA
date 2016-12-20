@@ -49,24 +49,6 @@ RdbmsCatalogue::~RdbmsCatalogue() {
 }
 
 //------------------------------------------------------------------------------
-// createBootstrapAdminAndHostNoAuth
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::createBootstrapAdminAndHostNoAuth(
-  const common::dataStructures::SecurityIdentity &admin,
-  const std::string &username,
-  const std::string &hostName,
-  const std::string &comment) {
-  try {
-    createAdminUser(admin, username, comment);
-    createAdminHost(admin, hostName, comment);
-  } catch(exception::UserError &) {
-    throw;
-  } catch (exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // createAdminUser
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createAdminUser(

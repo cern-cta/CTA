@@ -172,8 +172,6 @@ public:
   // END OF METHODS DIRECTLY INVOLVED IN DATA TRANSFER AND SCHEDULING
   ///////////////////////////////////////////////////////////////////
 
-  void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &hostName, const std::string &comment) override;
-
   void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
   void deleteAdminUser(const std::string &username) override;
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;

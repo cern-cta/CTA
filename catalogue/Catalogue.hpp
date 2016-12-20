@@ -184,7 +184,6 @@ public:
   // END OF METHODS DIRECTLY INVOLVED DATA TRANSFER AND SCHEDULING
   ////////////////////////////////////////////////////////////////
 
-  virtual void createBootstrapAdminAndHostNoAuth(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &hostName, const std::string &comment) = 0;
   virtual void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) = 0;
   virtual void deleteAdminUser(const std::string &username) = 0;
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;

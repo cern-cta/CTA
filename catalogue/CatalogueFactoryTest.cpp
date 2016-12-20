@@ -27,13 +27,11 @@ namespace unitTests {
 
 class cta_catalogue_CatalogueFactoryTest : public ::testing::Test {
 public:
-  cta_catalogue_CatalogueFactoryTest():
-    m_bootstrapComment("bootstrap") {
+  cta_catalogue_CatalogueFactoryTest() {
+    m_localAdmin.username = "local_admin_user";
+    m_localAdmin.host = "local_admin_host";
 
-    m_bootstrapAdminSI.username = "bootstrap_admin_user_name";
-    m_bootstrapAdminSI.host = "bootstrap_host";
-
-    m_admin.username = "admin_user_name";
+    m_admin.username = "admin_user";
     m_admin.host = "admin_host";
   }
 
@@ -45,8 +43,7 @@ protected:
   virtual void TearDown() {
   }
 
-  const std::string m_bootstrapComment;
-  cta::common::dataStructures::SecurityIdentity m_bootstrapAdminSI;
+  cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
 };
 
@@ -62,8 +59,11 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   ASSERT_TRUE(catalogue->getAdminUsers().empty());
   ASSERT_TRUE(catalogue->getAdminHosts().empty());
 
-  catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdminSI.username, m_bootstrapAdminSI.host, m_bootstrapComment);
+  const std::string createAdminUserComment = "Create admin user";
+  catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
+
+  const std::string createAdminHostComment = "Create admin host";
+  catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -71,14 +71,13 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(1, admins.size());
 
     const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    ASSERT_EQ(createAdminUserComment, admin.comment);
 
     const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = admin.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -88,14 +87,13 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(1, hosts.size());
 
     const common::dataStructures::AdminHost host = hosts.front();
-    ASSERT_EQ(m_bootstrapComment, host.comment);
+    ASSERT_EQ(createAdminHostComment, host.comment);
 
     const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, creationLog.host);
 
-    const common::dataStructures::EntryLog lastModificationLog =
-      host.lastModificationLog;
+    const common::dataStructures::EntryLog lastModificationLog = host.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 }

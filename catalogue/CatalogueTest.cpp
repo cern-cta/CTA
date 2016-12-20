@@ -35,11 +35,9 @@ namespace unitTests {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
-  m_bootstrapComment("bootstrap") {
-
-  m_bootstrapAdmin.username = "bootstrap_admin_user_name";
-  m_bootstrapAdmin.host = "bootstrap_host";
+cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest() {
+  m_localAdmin.username = "local_admin_user";
+  m_localAdmin.host = "local_admin_host";
 
   m_admin.username = "admin_user_name";
   m_admin.host = "admin_host";
@@ -236,120 +234,27 @@ std::map<std::string, cta::common::dataStructures::AdminHost> cta_catalogue_Cata
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createBootstrapAdminAndHostNoAuth) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
-
-  {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(1, admins.size());
-
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
-
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost host = hosts.front();
-    ASSERT_EQ(m_bootstrapComment, host.comment);
-
-    const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      host.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-}
-
 TEST_P(cta_catalogue_CatalogueTest, createAdminUser) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
     admins = m_catalogue->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    const common::dataStructures::AdminUser a = admins.front();
 
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  const std::string createAdminUserComment = "Create admin user";
-  m_catalogue->createAdminUser(m_bootstrapAdmin, m_admin.username, createAdminUserComment);
-
-  {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(2, admins.size());
-
-    const common::dataStructures::AdminUser a1 = admins.front();
-    admins.pop_front();
-    const common::dataStructures::AdminUser a2 = admins.front();
-
-    ASSERT_NE(a1, a2);
-    ASSERT_TRUE((a1.name == m_bootstrapAdmin.username && a2.name == m_admin.username) ||
-      (a2.name == m_bootstrapAdmin.username && a1.name == m_admin.username));
-
-    if(a1.name == m_bootstrapAdmin.username) {
-      ASSERT_EQ(m_bootstrapAdmin.username, a1.name);
-      ASSERT_EQ(m_bootstrapComment, a1.comment);
-      ASSERT_EQ(m_admin.username, a1.creationLog.username);
-      ASSERT_EQ(m_admin.host, a1.creationLog.host);
-      ASSERT_EQ(m_admin.username, a1.lastModificationLog.username);
-      ASSERT_EQ(m_admin.host, a1.lastModificationLog.host);
-
-      ASSERT_EQ(m_admin.username, a2.name);
-      ASSERT_EQ(createAdminUserComment, a2.comment);
-      ASSERT_EQ(m_bootstrapAdmin.username, a2.creationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, a2.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdmin.username, a2.lastModificationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, a2.lastModificationLog.host);
-    } else {
-      ASSERT_EQ(m_bootstrapAdmin.username, a2.name);
-      ASSERT_EQ(m_bootstrapComment, a2.comment);
-      ASSERT_EQ(m_admin.username, a2.creationLog.username);
-      ASSERT_EQ(m_admin.host, a2.creationLog.host);
-      ASSERT_EQ(m_admin.username, a2.lastModificationLog.username);
-      ASSERT_EQ(m_admin.host, a2.lastModificationLog.host);
-
-      ASSERT_EQ(m_admin.username, a1.name);
-      ASSERT_EQ(createAdminUserComment, a1.comment);
-      ASSERT_EQ(m_bootstrapAdmin.username, a1.creationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, a1.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdmin.username, a1.lastModificationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, a1.lastModificationLog.host);
-    }
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(createAdminUserComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
   }
 }
 
@@ -358,29 +263,9 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminUser_same_twice) {
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, "comment 1");
 
-  {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(1, admins.size());
-
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
-
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  m_catalogue->createAdminUser(m_bootstrapAdmin, m_admin.username, "comment 1");
-
-  ASSERT_THROW(m_catalogue->createAdminUser(m_bootstrapAdmin, m_admin.username,
+  ASSERT_THROW(m_catalogue->createAdminUser(m_localAdmin, m_admin.username,
     "comment 2"), exception::UserError);
 }
 
@@ -389,27 +274,25 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser) {
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
     admins = m_catalogue->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    const common::dataStructures::AdminUser a = admins.front();
 
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(createAdminUserComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
   }
 
-  m_catalogue->deleteAdminUser(m_bootstrapAdmin.username);
+  m_catalogue->deleteAdminUser(m_admin.username);
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 }
@@ -418,7 +301,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existant) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
-  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_sdmin_user"), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteAdminUser("non_existant_admin_user"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
@@ -426,50 +309,40 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
     admins = m_catalogue->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    const common::dataStructures::AdminUser a = admins.front();
 
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  const std::string createAdminUserComment = "Create admin user";
-  m_catalogue->createAdminUser(m_bootstrapAdmin, m_admin.username, createAdminUserComment);
-
-  {
-    std::map<std::string, common::dataStructures::AdminUser> admins = adminUserListToMap(m_catalogue->getAdminUsers());
-    ASSERT_EQ(2, admins.size());
-
-    const auto itor = admins.find(m_admin.username);
-    ASSERT_FALSE(admins.end() == itor);
-
-    ASSERT_EQ(createAdminUserComment, itor->second.comment);
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(createAdminUserComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyAdminUserComment(m_bootstrapAdmin, m_admin.username, modifiedComment);
+  m_catalogue->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment);
 
   {
-    std::map<std::string, common::dataStructures::AdminUser> admins = adminUserListToMap(m_catalogue->getAdminUsers());
-    ASSERT_EQ(2, admins.size());
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
 
-    const auto itor = admins.find(m_admin.username);
-    ASSERT_FALSE(admins.end() == itor);
+    const common::dataStructures::AdminUser a = admins.front();
 
-    ASSERT_EQ(modifiedComment, itor->second.comment);
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(modifiedComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
   }
 }
 
@@ -479,7 +352,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_nonExtistentAdminUser
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
   const std::string modifiedComment = "Modified comment";
-  ASSERT_THROW(m_catalogue->modifyAdminUserComment(m_bootstrapAdmin, m_admin.username, modifiedComment),
+  ASSERT_THROW(m_catalogue->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment),
     exception::UserError);
 }
 
@@ -488,108 +361,49 @@ TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
-
-  {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(1, admins.size());
-
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
-
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  const std::string createAdminHostComment = "Create host user";
-  const std::string anotherAdminHost = "another_admin_host";
-  m_catalogue->createAdminHost(m_bootstrapAdmin,
-    anotherAdminHost, createAdminHostComment);
+  const std::string createAdminHostComment = "Create admin host";
+  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
     std::list<common::dataStructures::AdminHost> hosts;
     hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(1, hosts.size());
 
-    const common::dataStructures::AdminHost h1 = hosts.front();
-    hosts.pop_front();
-    const common::dataStructures::AdminHost h2 = hosts.front();
+    const common::dataStructures::AdminHost h = hosts.front();
 
-    ASSERT_NE(h1, h2);
-    ASSERT_TRUE(
-      (h1.name == m_bootstrapAdmin.host && h2.name == anotherAdminHost)
-      ||
-      (h2.name == anotherAdminHost && h1.name == m_bootstrapAdmin.host)
-    );
-
-    if(h1.name == m_bootstrapAdmin.host) {
-      ASSERT_EQ(m_bootstrapAdmin.host, h1.name);
-      ASSERT_EQ(m_bootstrapComment, h1.comment);
-      ASSERT_EQ(m_admin.username, h1.creationLog.username);
-      ASSERT_EQ(m_admin.host, h1.creationLog.host);
-      ASSERT_EQ(m_admin.username, h1.lastModificationLog.username);
-      ASSERT_EQ(m_admin.host, h1.lastModificationLog.host);
-
-      ASSERT_EQ(anotherAdminHost, h2.name);
-      ASSERT_EQ(createAdminHostComment, h2.comment);
-      ASSERT_EQ(m_bootstrapAdmin.username, h2.creationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, h2.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdmin.username, h2.lastModificationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, h2.lastModificationLog.host);
-    } else {
-      ASSERT_EQ(m_bootstrapAdmin.host, h2.name);
-      ASSERT_EQ(m_bootstrapComment, h2.comment);
-      ASSERT_EQ(m_admin.username, h2.creationLog.username);
-      ASSERT_EQ(m_admin.host, h2.creationLog.host);
-      ASSERT_EQ(m_admin.username, h2.lastModificationLog.username);
-      ASSERT_EQ(m_admin.host, h2.lastModificationLog.host);
-
-      ASSERT_EQ(anotherAdminHost, h1.name);
-      ASSERT_EQ(createAdminHostComment, h1.comment);
-      ASSERT_EQ(m_bootstrapAdmin.username, h1.creationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, h1.creationLog.host);
-      ASSERT_EQ(m_bootstrapAdmin.username, h1.lastModificationLog.username);
-      ASSERT_EQ(m_bootstrapAdmin.host, h1.lastModificationLog.host);
-    }
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(createAdminHostComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createAdminHost_same_twice) {
   using namespace cta;
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+
+  const std::string createAdminHostComment = "Create admin host";
+  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(1, admins.size());
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = m_catalogue->getAdminHosts();
+    ASSERT_EQ(1, hosts.size());
 
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    const common::dataStructures::AdminHost h = hosts.front();
 
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(createAdminHostComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 
-  const std::string anotherAdminHost = "another_admin_host";
-
-  m_catalogue->createAdminHost(m_bootstrapAdmin, anotherAdminHost, "comment 1");
-
-  ASSERT_THROW(m_catalogue->createAdminHost(m_bootstrapAdmin,
-    anotherAdminHost, "comment 2"), exception::UserError);
+  ASSERT_THROW(m_catalogue->createAdminHost(m_localAdmin, m_admin.host, "comment 2"), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost) {
@@ -597,27 +411,25 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost) {
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  const std::string createAdminHostComment = "Create admin host";
+  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
-    std::list<common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->getAdminUsers();
-    ASSERT_EQ(1, admins.size());
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = m_catalogue->getAdminHosts();
+    ASSERT_EQ(1, hosts.size());
 
-    const common::dataStructures::AdminUser admin = admins.front();
-    ASSERT_EQ(m_bootstrapComment, admin.comment);
+    const common::dataStructures::AdminHost h = hosts.front();
 
-    const common::dataStructures::EntryLog creationLog = admin.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog =
-      admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(createAdminHostComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 
-  m_catalogue->deleteAdminHost(m_bootstrapAdmin.host);
+  m_catalogue->deleteAdminHost(m_admin.host);
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 }
@@ -634,49 +446,40 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminHostComment) {
 
   ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  const std::string createAdminHostComment = "Create admin host";
+  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
-    const std::list<common::dataStructures::AdminHost> hosts = m_catalogue->getAdminHosts();
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = m_catalogue->getAdminHosts();
     ASSERT_EQ(1, hosts.size());
 
-    const common::dataStructures::AdminHost host = hosts.front();
-    ASSERT_EQ(m_bootstrapComment, host.comment);
+    const common::dataStructures::AdminHost h = hosts.front();
 
-    const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_admin.username, creationLog.username);
-    ASSERT_EQ(m_admin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = host.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  const std::string createAdminHostComment = "Create host user";
-  const std::string anotherAdminHost = "another_admin_host";
-  m_catalogue->createAdminHost(m_bootstrapAdmin, anotherAdminHost, createAdminHostComment);
-
-  {
-    std::map<std::string, common::dataStructures::AdminHost> hosts = adminHostListToMap(m_catalogue->getAdminHosts());
-    ASSERT_EQ(2, hosts.size());
-
-    const auto itor = hosts.find(anotherAdminHost);
-    ASSERT_FALSE(hosts.end() == itor);
-
-    ASSERT_EQ(createAdminHostComment, itor->second.comment);
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(createAdminHostComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyAdminHostComment(m_bootstrapAdmin, anotherAdminHost, modifiedComment);
+  m_catalogue->modifyAdminHostComment(m_localAdmin, m_admin.host, modifiedComment);
 
   {
-    std::map<std::string, common::dataStructures::AdminHost> hosts = adminHostListToMap(m_catalogue->getAdminHosts());
-    ASSERT_EQ(2, hosts.size());
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = m_catalogue->getAdminHosts();
+    ASSERT_EQ(1, hosts.size());
 
-    const auto itor = hosts.find(anotherAdminHost);
-    ASSERT_FALSE(hosts.end() == itor);
+    const common::dataStructures::AdminHost h = hosts.front();
 
-    ASSERT_EQ(modifiedComment, itor->second.comment);
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(modifiedComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 }
 
@@ -689,10 +492,47 @@ TEST_P(cta_catalogue_CatalogueTest, isAdmin_false) {
 TEST_P(cta_catalogue_CatalogueTest, isAdmin_true) {
   using namespace cta;
 
-  m_catalogue->createBootstrapAdminAndHostNoAuth(
-    m_admin, m_bootstrapAdmin.username, m_bootstrapAdmin.host, m_bootstrapComment);
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
 
-  ASSERT_TRUE(m_catalogue->isAdmin(m_bootstrapAdmin));
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser a = admins.front();
+
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(createAdminUserComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
+  }
+
+  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
+
+  const std::string createAdminHostComment = "Create admin host";
+  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
+
+  {
+    std::list<common::dataStructures::AdminHost> hosts;
+    hosts = m_catalogue->getAdminHosts();
+    ASSERT_EQ(1, hosts.size());
+
+    const common::dataStructures::AdminHost h = hosts.front();
+
+    ASSERT_EQ(m_admin.host, h.name);
+    ASSERT_EQ(createAdminHostComment, h.comment);
+    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
+  }
+
+  ASSERT_TRUE(m_catalogue->isAdmin(m_admin));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
