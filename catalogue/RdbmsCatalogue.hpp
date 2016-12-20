@@ -458,6 +458,14 @@ public:
     const uint64_t nbArchiveFilesToPrefetch) const override;
 
   /**
+   * Throws a UserError exception if the specified searchCriteria is not valid
+   * due to a user error.
+   *
+   * @param searchCriteria The search criteria.
+   */
+  void checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const;
+
+  /**
    * Returns a summary of the tape files that meet the specified search
    * criteria.
    *
@@ -581,6 +589,18 @@ protected:
    * @return True if the archive file identifier exists.
    */
   bool archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const;
+
+  /**
+   * Returns true if the specified disk file group exists.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the disk
+   * file group belongs.
+   * @param diskFileGroup The name of the disk file group
+   * @return True if the disk file group exists.
+   */
+  bool diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileGroup)
+    const;
 
   /**
    * Returns true if the specified archive route exists.

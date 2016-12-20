@@ -769,6 +769,31 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archi
 }
 
 //------------------------------------------------------------------------------
+// diskFileGroupExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+  const std::string &diskFileGroup) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
+        "DISK_FILE_GROUP AS DISK_FILE_GROUP "
+      "FROM "
+        "ARCHIVE_FILE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "DISK_FILE_GROUP = :DISK_FILE_GROUP";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":DISK_FILE_GROUP", diskFileGroup);
+    auto rset = stmt->executeQuery();
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // archiveRouteExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
@@ -3332,11 +3357,37 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &
 std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
 
+  checkTapeFileSearchCriteria(searchCriteria);
+
+  try {
+    return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkTapeFileSearchCriteria
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const {
+  auto conn = m_connPool.getConn();
+
   if(searchCriteria.archiveFileId) {
-    auto conn = m_connPool.getConn();
     if(!archiveFileIdExists(conn, searchCriteria.archiveFileId.value())) {
       throw exception::UserError(std::string("Archive file with ID ") +
         std::to_string(searchCriteria.archiveFileId.value()) + " does not exist");
+    }
+  }
+
+  if(searchCriteria.diskFileGroup && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskFileGroup.value() + " is ambiguous "
+      "without disk instance name");                                              
+  }
+
+  if(searchCriteria.diskInstance && searchCriteria.diskFileGroup) {
+    if(!diskFileGroupExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileGroup.value())) {
+      throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskInstance.value() + "::" +
+        searchCriteria.diskFileGroup.value() + " does not exist");
     }
   }
 
@@ -3346,7 +3397,6 @@ std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFi
   }
 
   if(searchCriteria.diskInstance && searchCriteria.storageClass) {
-    auto conn = m_connPool.getConn();
     if(!storageClassExists(conn, searchCriteria.diskInstance.value(), searchCriteria.storageClass.value())) {
       throw exception::UserError(std::string("Storage class ") + searchCriteria.diskInstance.value() + "::" +
         searchCriteria.storageClass.value() + " does not exist");
@@ -3354,23 +3404,15 @@ std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFi
   }
 
   if(searchCriteria.tapePool) {
-    auto conn = m_connPool.getConn();
     if(!tapePoolExists(conn, searchCriteria.tapePool.value())) {
       throw exception::UserError(std::string("Tape pool ") + searchCriteria.tapePool.value() + " does not exist");
     }
   }
 
   if(searchCriteria.vid) {
-    auto conn = m_connPool.getConn();
     if(!tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
     }
-  }
-
-  try {
-    return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
