@@ -79,9 +79,14 @@ private:
   ConnFactory &m_connFactory;
 
   /**
-   * The maximum mnumber of database connections within the pool.
+   * The maximum number of database connections within the pool.
    */
   uint64_t m_maxNbConns;
+
+  /**
+   * The number of database connections currently on loan.
+   */
+  uint64_t m_nbConnsOnLoan;
 
   /**
    * Mutex used to serialize access to the database connections within the pool.
