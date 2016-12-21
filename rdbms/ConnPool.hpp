@@ -55,11 +55,6 @@ public:
    */
   PooledConn getConn();
 
-  /**
-   * Closes all the database connections currently in the pool.
-   */
-  void closeAllConns();
-
 private:
 
   friend PooledConn;
