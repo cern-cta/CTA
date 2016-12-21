@@ -597,9 +597,21 @@ protected:
    * @param diskInstanceName The name of the disk instance to which the disk
    * file identifier belongs.
    * @param diskFileId The disk file identifier.
-   * @return True if the archive file identifier exists.
+   * @return True if the disk file identifier exists.
    */
   bool diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileId) const;
+
+  /**
+   * Returns true if the specified disk file path exists.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the disk
+   * file identifier belongs.
+   * @param diskFilePath The disk file path.
+   * @return True if the disk file path exists.
+   */
+  bool diskFilePathExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFilePath)
+    const;
 
   /**
    * Returns true if the specified disk file group exists.

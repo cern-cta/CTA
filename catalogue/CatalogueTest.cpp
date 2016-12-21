@@ -5033,6 +5033,28 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_id
   ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_path_without_instance) {
+  using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskFilePath = "disk_file_path";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_path) {
+  using namespace cta;
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.diskFilePath = "non_existant_disk_file_path";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_without_disk_instance) {
   using namespace cta;
 
