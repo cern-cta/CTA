@@ -71,7 +71,7 @@ private:
    *
    * @param conn The connection to be commited and returned to the pool.
    */
-  void returnConn(Conn *const conn);
+  void returnConn(std::unique_ptr<Conn> conn);
 
   /**
    * The database connection factory.

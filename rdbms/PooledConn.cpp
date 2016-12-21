@@ -35,9 +35,8 @@ PooledConn::PooledConn(std::unique_ptr<Conn> conn, ConnPool *pool):
 // move constructor
 //------------------------------------------------------------------------------
 PooledConn::PooledConn(PooledConn &&other):
-  m_conn(other.m_conn),
+  m_conn(std::move(other.m_conn)),
   m_pool(other.m_pool) {
-  other.m_conn = nullptr;
   other.m_pool = nullptr;
 }
 
@@ -48,7 +47,7 @@ PooledConn::~PooledConn() noexcept {
   try {
     // If this smart database connection currently points to a database connection then return it back to its pool
     if(nullptr != m_pool && nullptr != m_conn) {
-      m_pool->returnConn(m_conn);
+      m_pool->returnConn(std::move(m_conn));
     }
   } catch(...) {
   }
@@ -62,15 +61,13 @@ PooledConn &PooledConn::operator=(PooledConn &&rhs) {
   if(rhs.m_conn != m_conn) {
     // If this smart database connection currently points to a database connection then return it back to its pool
     if(nullptr != m_pool && nullptr != m_conn) {
-      m_pool->returnConn(m_conn);
+      m_pool->returnConn(std::move(m_conn));
     }
 
     // Take ownership of the new database connection
-    m_conn = rhs.m_conn;
+    m_conn = std::move(rhs.m_conn);
     m_pool = rhs.m_pool;
 
-    // Release the database connection from the rhs
-    rhs.m_conn = nullptr;
     rhs.m_pool = nullptr;
   }
   return *this;

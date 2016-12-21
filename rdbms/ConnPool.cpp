@@ -79,7 +79,7 @@ PooledConn ConnPool::getConn() {
 //------------------------------------------------------------------------------
 // returnConn
 //------------------------------------------------------------------------------
-void ConnPool::returnConn(Conn *const conn) {
+void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
   try {
     // If the connection is open
     if(conn->isOpen()) {
@@ -91,14 +91,11 @@ void ConnPool::returnConn(Conn *const conn) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
-      m_conns.emplace_back(conn);
+      m_conns.push_back(std::move(conn));
       m_connsCv.notify_one();
 
     // Else the connection is closed
     } else {
-
-      // Delete the connection
-      delete conn;
 
       // A closed connection is rare and usually means the underlying TCP/IP
       // connection, if there is one, has been lost.  Delete all the connections

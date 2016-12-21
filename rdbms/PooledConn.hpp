@@ -138,12 +138,12 @@ private:
   /**
    * The database connection.
    */
-  Conn *m_conn = nullptr;
+  std::unique_ptr<Conn> m_conn;
 
   /**
    * The database connection pool to which the m_conn should be returned.
    */
-  ConnPool *m_pool = nullptr;
+  ConnPool *m_pool;
 
 }; // class PooledConn
 
