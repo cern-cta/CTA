@@ -591,6 +591,17 @@ protected:
   bool archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const;
 
   /**
+   * Returns true if the specified disk file identifier exists.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the disk
+   * file identifier belongs.
+   * @param diskFileId The disk file identifier.
+   * @return True if the archive file identifier exists.
+   */
+  bool diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileId) const;
+
+  /**
    * Returns true if the specified disk file group exists.
    *
    * @param conn The database connection.

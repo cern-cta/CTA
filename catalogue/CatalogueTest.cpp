@@ -5011,6 +5011,28 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_gr
   ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_id_without_instance) {
+  using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskFileId = "disk_file_id";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_id) {
+  using namespace cta;
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.diskFileId = "non_existant_disk_file_id";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_without_disk_instance) {
   using namespace cta;
 
@@ -5370,6 +5392,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
+      searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileId = "12345687";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);

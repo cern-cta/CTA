@@ -769,6 +769,31 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archi
 }
 
 //------------------------------------------------------------------------------
+// diskFileIdExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+  const std::string &diskFileId) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
+        "DISK_FILE_ID AS DISK_FILE_ID "
+      "FROM "
+        "ARCHIVE_FILE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "DISK_FILE_ID = :DISK_FILE_ID";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":DISK_FILE_ID", diskFileId);
+    auto rset = stmt->executeQuery();
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // diskFileGroupExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
@@ -3381,7 +3406,7 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 
   if(searchCriteria.diskFileGroup && !searchCriteria.diskInstance) {
     throw exception::UserError(std::string("Disk file group ") + searchCriteria.diskFileGroup.value() + " is ambiguous "
-      "without disk instance name");                                              
+      "without disk instance name");
   }
 
   if(searchCriteria.diskInstance && searchCriteria.diskFileGroup) {
@@ -3391,9 +3416,21 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     }
   }
 
+  if(searchCriteria.diskFileId && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file ID ") + searchCriteria.diskFileId.value() + " is ambiguous "
+      "without disk instance name");
+  }
+
+  if(searchCriteria.diskInstance && searchCriteria.diskFileId) {
+    if(!diskFileIdExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileId.value())) {
+      throw exception::UserError(std::string("Disk file ID ") + searchCriteria.diskInstance.value() + "::" +
+        searchCriteria.diskFileId.value() + " does not exist");
+    }
+  }
+
   if(searchCriteria.storageClass && !searchCriteria.diskInstance) {
     throw exception::UserError(std::string("Storage class ") + searchCriteria.storageClass.value() + " is ambiguous "
-      "without disk instance name");                                              
+      "without disk instance name");
   }
 
   if(searchCriteria.diskInstance && searchCriteria.storageClass) {
