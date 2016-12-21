@@ -44,15 +44,6 @@ public:
    * @param pool The database connection pool to which the connection
    * should be returned.
    */
-  PooledConn(Conn *const conn, ConnPool *const pool);
-
-  /**
-   * Constructor.
-   *
-   * @param conn The database connection.
-   * @param pool The database connection pool to which the connection
-   * should be returned.
-   */
   PooledConn(std::unique_ptr<Conn> conn, ConnPool *const pool);
 
   /**

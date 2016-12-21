@@ -26,14 +26,6 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PooledConn::PooledConn(Conn *const conn, ConnPool *pool):
-  m_conn(conn),
-  m_pool(pool) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 PooledConn::PooledConn(std::unique_ptr<Conn> conn, ConnPool *pool):
   m_conn(conn.release()),
   m_pool(pool) {
