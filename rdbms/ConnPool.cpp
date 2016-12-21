@@ -57,8 +57,13 @@ void ConnPool::createConns(const uint64_t nbConns) {
 //------------------------------------------------------------------------------
 PooledConn ConnPool::getConn() {
   std::unique_lock<std::mutex> lock(m_connsMutex);
-  while(m_conns.size() == 0) {
+
+  while(m_conns.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
     m_connsCv.wait(lock);
+  }
+
+  if(m_conns.size() == 0) {
+    m_conns.push_back(m_connFactory.create());
   }
 
   std::unique_ptr<Conn> conn = std::move(m_conns.front());
@@ -92,18 +97,21 @@ void ConnPool::returnConn(Conn *const conn) {
     // Else the connection is closed
     } else {
 
-      // Close all connections in the pool and put the returning connection back
-      // in the pool.  A closed connection within the pool is reopened when it is
-      // pulled from the pool.
+      // Delete the connection
+      delete conn;
+
+      // A closed connection is rare and usually means the underlying TCP/IP
+      // connection, if there is one, has been lost.  Delete all the connections
+      // currently in the pool because their underlying TCP/IP connections may
+      // also have been lost.
       std::unique_lock<std::mutex> lock(m_connsMutex);
-      for(auto &connInPool : m_conns) {
-        connInPool->close();
+      while(!m_conns.empty()) {
+        m_conns.pop_front();
       }
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
-      m_conns.emplace_back(conn);
       m_connsCv.notify_one();
     }
   } catch(exception::Exception &ex) {
