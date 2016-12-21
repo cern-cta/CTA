@@ -84,7 +84,7 @@ SqliteStmt::SqliteStmt(
       break;
     case AutocommitMode::OFF: {
       if(!m_conn.m_transactionInProgress) {
-        beginExclusiveTransaction();
+        beginDeferredTransaction();
         m_conn.m_transactionInProgress = true;
       }
       break;
@@ -249,12 +249,12 @@ uint64_t SqliteStmt::getNbAffectedRows() const {
 }
 
 //------------------------------------------------------------------------------
-// beginExclusiveTransaction
+// beginDeferredTransaction
 //------------------------------------------------------------------------------
-void SqliteStmt::beginExclusiveTransaction() {
+void SqliteStmt::beginDeferredTransaction() {
   try {
     char *errMsg = nullptr;
-    if(SQLITE_OK != sqlite3_exec(m_conn.m_sqliteConn, "BEGIN EXCLUSIVE", nullptr, nullptr, &errMsg)) {
+    if(SQLITE_OK != sqlite3_exec(m_conn.m_sqliteConn, "BEGIN DEFERRED", nullptr, nullptr, &errMsg)) {
       exception::Exception ex;
       ex.getMessage() << "sqlite3_exec failed";
       if(nullptr != errMsg) {

@@ -172,13 +172,13 @@ private:
   uint64_t m_nbAffectedRows;
 
   /**
-   * Begins an SQLite exclusive transaction.
+   * Begins an SQLite deferred transaction.
    *
    * This method is called by the constructor which in turn was called by the
    * SqliteStmt::createStmt() method and assumes that a lock has already been
    * taken on SqliteStmt::m_mutex;
    */
-  void beginExclusiveTransaction();
+  void beginDeferredTransaction();
 
 }; // class SqlLiteStmt
 
