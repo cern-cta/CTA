@@ -48,7 +48,7 @@ SqliteStmt::SqliteStmt(
   const int nByte = -1; // Read SQL up to first null terminator
 
   const uint maxPrepareRetries = 20; // A worst case scenario of 2 seconds
-  for(unsigned int i = 0; i <= maxPrepareRetries; i++) {
+  for(unsigned int i = 1; i <= maxPrepareRetries; i++) {
     const int prepareRc = sqlite3_prepare_v2(m_conn.m_sqliteConn, sql.c_str(), nByte, &m_stmt, nullptr);
 
     if(SQLITE_OK == prepareRc) {
@@ -67,7 +67,7 @@ SqliteStmt::SqliteStmt(
         continue;
       } else {
         throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 returned SQLITE_LOCKED the"
-          " maximum number of " + std::to_string(i + 1) + " times"); 
+          " maximum number of " + std::to_string(i) + " times"); 
       }
     }
 
