@@ -606,11 +606,23 @@ protected:
    *
    * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the disk
-   * file identifier belongs.
+   * file path belongs.
    * @param diskFilePath The disk file path.
    * @return True if the disk file path exists.
    */
   bool diskFilePathExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFilePath)
+    const;
+
+  /**
+   * Returns true if the specified disk file user exists.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the disk
+   * file user belongs.
+   * @param diskFileUSer The name of the disk file user.
+   * @return True if the disk file user exists.
+   */
+  bool diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileUser)
     const;
 
   /**
@@ -619,7 +631,7 @@ protected:
    * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance to which the disk
    * file group belongs.
-   * @param diskFileGroup The name of the disk file group
+   * @param diskFileGroup The name of the disk file group.
    * @return True if the disk file group exists.
    */
   bool diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &diskFileGroup)

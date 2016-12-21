@@ -819,6 +819,31 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &di
 }
 
 //------------------------------------------------------------------------------
+// diskFileUserExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+  const std::string &diskFileUser) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
+        "DISK_FILE_USER AS DISK_FILE_USER "
+      "FROM "
+        "ARCHIVE_FILE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "DISK_FILE_USER = :DISK_FILE_USER";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":DISK_FILE_USER", diskFileUser);
+    auto rset = stmt->executeQuery();
+    return rset->next();
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // diskFileGroupExists
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
@@ -3462,6 +3487,18 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     if(!diskFilePathExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFilePath.value())) {
       throw exception::UserError(std::string("Disk file path ") + searchCriteria.diskInstance.value() + "::" +
         searchCriteria.diskFilePath.value() + " does not exist");
+    }
+  }
+
+  if(searchCriteria.diskFileUser && !searchCriteria.diskInstance) {
+    throw exception::UserError(std::string("Disk file user ") + searchCriteria.diskFileUser.value() + " is ambiguous "
+      "without disk instance name");
+  }
+
+  if(searchCriteria.diskInstance && searchCriteria.diskFileUser) {
+    if(!diskFileUserExists(conn, searchCriteria.diskInstance.value(), searchCriteria.diskFileUser.value())) {
+      throw exception::UserError(std::string("Disk file user ") + searchCriteria.diskInstance.value() + "::" +
+        searchCriteria.diskFileUser.value() + " does not exist");
     }
   }
 

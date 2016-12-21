@@ -5055,6 +5055,28 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_pa
   ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_user_without_instance) {
+  using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskFileUser = "disk_file_user";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_user) {
+  using namespace cta;
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.diskInstance = "non_existant_disk_instance";
+  searchCriteria.diskFileUser = "non_existant_disk_file_user";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileItor(searchCriteria, 1), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_without_disk_instance) {
   using namespace cta;
 
@@ -5429,6 +5451,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
+      searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFilePath = "/public_dir/public_file_10";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
@@ -5443,6 +5466,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
+      searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileUser = "public_disk_user";
       const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
       const auto m = archiveFileItorToMap(*archiveFileItor);
