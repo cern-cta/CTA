@@ -28,11 +28,11 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConnPool::ConnPool(ConnFactory &connFactory, const uint64_t nbConns):
+ConnPool::ConnPool(ConnFactory &connFactory, const uint64_t maxNbConns):
   m_connFactory(connFactory),
-  m_nbConns(nbConns) {
+  m_maxNbConns(maxNbConns) {
   try {
-    createConns(m_nbConns);
+    createConns(m_maxNbConns);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

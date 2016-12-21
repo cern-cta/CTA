@@ -40,9 +40,10 @@ public:
    * Constructor.
    *
    * @param connFactory The database connection factory.
-   * @param nbConns The number of database connections within the pool.
+   * @param maxNbConns The maximum number of database connections within the
+   * pool.
    */
-  ConnPool(ConnFactory &connFactory, const uint64_t nbConns);
+  ConnPool(ConnFactory &connFactory, const uint64_t maxNbConns);
 
   /**
    * Takes a connection from the pool.
@@ -78,9 +79,9 @@ private:
   ConnFactory &m_connFactory;
 
   /**
-   * The number of database connections within the pool.
+   * The maximum mnumber of database connections within the pool.
    */
-  uint64_t m_nbConns;
+  uint64_t m_maxNbConns;
 
   /**
    * Mutex used to serialize access to the database connections within the pool.
