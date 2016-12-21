@@ -46,7 +46,8 @@ SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
+common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName,
+  const uint64_t archiveFileId) {
   try {
     auto conn = m_connPool.getConn();
     rdbms::AutoRollback autoRollback(conn);
@@ -94,7 +95,7 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
+uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
   try {
     rdbms::AutoRollback autoRollback(conn);
 
@@ -127,7 +128,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "

@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AutoRollback.hpp"
-#include "Conn.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/AutoRollback.hpp"
+#include "rdbms/PooledConn.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -26,7 +26,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(Conn &conn):
+AutoRollback::AutoRollback(PooledConn &conn):
   m_cancelled(false),
   m_conn(conn) {
 }

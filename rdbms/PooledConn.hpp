@@ -18,24 +18,23 @@
 
 #pragma once
 
-#include "rdbms/Conn.hpp"
+#include "rdbms/Stmt.hpp"
 
+#include <list>
 #include <memory>
 
 namespace cta {
 namespace rdbms {
 
-/**
- * Forward declaration to avoid circular dependency between PooledDbCon and
- * ConnPool.
- */
+class Conn;
+
 class ConnPool;
 
 /**
- * A smart database connection that will automatically return itself to its
- * parent connection pool when it goes out of scope.
+ * A smart database connection that will automatically return the underlying
+ * database connection to its parent connection pool when it goes out of scope.
  */
-class PooledConn: public Conn {
+class PooledConn {
 public:
 
   /**
@@ -89,28 +88,45 @@ public:
   PooledConn &operator=(PooledConn &&rhs);
 
   /**
-   * Idempotent close() method.  The destructor calls this method.
-   */
-  void close() override;
-
-  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
    * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) override;
+  std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode);
+
+  /**
+   * Convenience method that parses the specified string of multiple SQL
+   * statements and calls executeNonQuery() for each individual statement found.
+   *
+   * Please note that each statement should be a non-query terminated by a
+   * semicolon and that each individual statement will be executed with
+   * autocommit ON.
+   *
+   * @param sqlStmts The SQL statements to be executed.
+   * @param autocommitMode The autocommit mode of the statement.
+   */
+  void executeNonQueries(const std::string &sqlStmts);
+
+  /**
+   * Convenience method that wraps Conn::createStmt() followed by
+   * Stmt::executeNonQuery().
+   *
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
+   */
+  void executeNonQuery(const std::string &sql, const Stmt::AutocommitMode autocommitMode);
 
   /**
    * Commits the current transaction.
    */
-  void commit() override;
+  void commit();
 
   /**
    * Rolls back the current transaction.
    */
-  void rollback() override;
+  void rollback();
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -119,12 +135,12 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  std::list<std::string> getTableNames() override;
+  std::list<std::string> getTableNames();
 
   /**
    * Returns true if this connection is open.
    */
-  bool isOpen() const override;
+  bool isOpen() const;
 
 private:
 

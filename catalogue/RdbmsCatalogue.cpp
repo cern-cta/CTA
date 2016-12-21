@@ -112,7 +112,7 @@ void RdbmsCatalogue::createAdminUser(
 //------------------------------------------------------------------------------
 // adminUserExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const {
+bool RdbmsCatalogue::adminUserExists(rdbms::PooledConn &conn, const std::string adminUsername) const {
   try {
     const char *const sql =
       "SELECT "
@@ -294,7 +294,7 @@ void RdbmsCatalogue::createAdminHost(
 //------------------------------------------------------------------------------
 // adminHostExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::adminHostExists(rdbms::Conn &conn, const std::string adminHost) const {
+bool RdbmsCatalogue::adminHostExists(rdbms::PooledConn &conn, const std::string adminHost) const {
   try {
     const char *const sql =
       "SELECT "
@@ -481,7 +481,7 @@ void RdbmsCatalogue::createStorageClass(
 //------------------------------------------------------------------------------
 // storageClassExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::storageClassExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &storageClassName) const {
   try {
     const char *const sql =
@@ -729,7 +729,7 @@ void RdbmsCatalogue::createTapePool(
 //------------------------------------------------------------------------------
 // tapePoolExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) const {
+bool RdbmsCatalogue::tapePoolExists(rdbms::PooledConn &conn, const std::string &tapePoolName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -750,7 +750,7 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
 //------------------------------------------------------------------------------
 // archiveFileExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const {
+bool RdbmsCatalogue::archiveFileIdExists(rdbms::PooledConn &conn, const uint64_t archiveFileId) const {
   try {
     const char *const sql =
       "SELECT "
@@ -771,7 +771,7 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archi
 //------------------------------------------------------------------------------
 // diskFileIdExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::diskFileIdExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &diskFileId) const {
   try {
     const char *const sql =
@@ -796,7 +796,7 @@ bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &disk
 //------------------------------------------------------------------------------
 // diskFilePathExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::diskFilePathExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &diskFilePath) const {
   try {
     const char *const sql =
@@ -821,7 +821,7 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &di
 //------------------------------------------------------------------------------
 // diskFileUserExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::diskFileUserExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &diskFileUser) const {
   try {
     const char *const sql =
@@ -846,7 +846,7 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &di
 //------------------------------------------------------------------------------
 // diskFileGroupExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::diskFileGroupExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &diskFileGroup) const {
   try {
     const char *const sql =
@@ -871,7 +871,7 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
 //------------------------------------------------------------------------------
 // archiveRouteExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::archiveRouteExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &storageClassName, const uint64_t copyNb) const {
   try {
     const char *const sql =
@@ -1388,7 +1388,7 @@ void RdbmsCatalogue::createLogicalLibrary(
 //------------------------------------------------------------------------------
 // logicalLibraryExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &logicalLibraryName) const {
+bool RdbmsCatalogue::logicalLibraryExists(rdbms::PooledConn &conn, const std::string &logicalLibraryName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1614,7 +1614,7 @@ void RdbmsCatalogue::createTape(
 //------------------------------------------------------------------------------
 // tapeExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const {
+bool RdbmsCatalogue::tapeExists(rdbms::PooledConn &conn, const std::string &vid) const {
   try {
     const char *const sql =
       "SELECT "
@@ -1668,7 +1668,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
 //------------------------------------------------------------------------------
 // getTapes
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &conn,
+std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledConn &conn,
   const TapeSearchCriteria &searchCriteria) const {
   try {
     std::list<common::dataStructures::Tape> tapes;
@@ -2783,7 +2783,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
 common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolicy(
-  rdbms::Conn &conn,
+  rdbms::PooledConn &conn,
   const std::string &diskInstanceName,
   const std::string &requesterGroupName) const {
   try {
@@ -2933,7 +2933,7 @@ void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstan
 //------------------------------------------------------------------------------
 // mountPolicyExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName) const {
+bool RdbmsCatalogue::mountPolicyExists(rdbms::PooledConn &conn, const std::string &mountPolicyName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -2954,7 +2954,7 @@ bool RdbmsCatalogue::mountPolicyExists(rdbms::Conn &conn, const std::string &mou
 //------------------------------------------------------------------------------
 // requesterMountRuleExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::requesterMountRuleExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &requesterName) const {
   try {
     const char *const sql =
@@ -2979,7 +2979,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 // getRequesterMountPolicy
 //------------------------------------------------------------------------------
 common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
-  rdbms::Conn &conn,
+  rdbms::PooledConn &conn,
   const std::string &diskInstanceName,
   const std::string &requesterName) const {
   try {
@@ -3053,7 +3053,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
 //------------------------------------------------------------------------------
 // requesterGroupMountRuleExists
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
+bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &requesterGroupName) const {
   try {
     const char *const sql =
@@ -3367,7 +3367,7 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRow &row) {
+void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const ArchiveFileRow &row) {
   try {
     if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
       throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
@@ -3999,7 +3999,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
 //------------------------------------------------------------------------------
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(rdbms::Conn &conn,
+common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(rdbms::PooledConn &conn,
   const std::string &diskInstanceName, const std::string &storageClassName) const {
   try {
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
@@ -4031,7 +4031,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std::string &diskInstanceName,
+uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::PooledConn &conn, const std::string &diskInstanceName,
   const std::string &storageClassName) const {
   try {
     const char *const sql =
@@ -4129,7 +4129,7 @@ void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
 //------------------------------------------------------------------------------
 // updateTape
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::updateTape(rdbms::Conn &conn, const TapeFileWritten &event) {
+void RdbmsCatalogue::updateTape(rdbms::PooledConn &conn, const TapeFileWritten &event) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -4263,7 +4263,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 // getMountPolicies
 //------------------------------------------------------------------------------
 RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
-  rdbms::Conn &conn,
+  rdbms::PooledConn &conn,
   const std::string &diskInstanceName,
   const std::string &requesterName,
   const std::string &requesterGroupName) const {
@@ -4372,7 +4372,7 @@ bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &adm
 //------------------------------------------------------------------------------
 // userIsAdmin
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::userIsAdmin(rdbms::Conn &conn, const std::string &userName) const {
+bool RdbmsCatalogue::userIsAdmin(rdbms::PooledConn &conn, const std::string &userName) const {
   const char *const sql =
     "SELECT "
       "ADMIN_USER_NAME AS ADMIN_USER_NAME "
@@ -4389,7 +4389,7 @@ bool RdbmsCatalogue::userIsAdmin(rdbms::Conn &conn, const std::string &userName)
 //------------------------------------------------------------------------------
 // hostIsAdmin
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName) const {
+bool RdbmsCatalogue::hostIsAdmin(rdbms::PooledConn &conn, const std::string &hostName) const {
   const char *const sql =
     "SELECT "
       "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
@@ -4450,7 +4450,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 // insertTapeFile
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertTapeFile(
-  rdbms::Conn &conn,
+  rdbms::PooledConn &conn,
   const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
   try {
@@ -4491,7 +4491,7 @@ void RdbmsCatalogue::insertTapeFile(
 //------------------------------------------------------------------------------
 // setTapeLastFseq
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq) {
+void RdbmsCatalogue::setTapeLastFSeq(rdbms::PooledConn &conn, const std::string &vid, const uint64_t lastFSeq) {
   try {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -4519,7 +4519,7 @@ void RdbmsCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, 
 //------------------------------------------------------------------------------
 // getTapeLastFSeq
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
+uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::PooledConn &conn, const std::string &vid) const {
   try {
     const char *const sql =
       "SELECT "
@@ -4544,7 +4544,7 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &v
 //------------------------------------------------------------------------------
 // getArchiveFile
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(rdbms::Conn &conn,
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(rdbms::PooledConn &conn,
   const uint64_t archiveFileId) const {
   try {
     const char *const sql =

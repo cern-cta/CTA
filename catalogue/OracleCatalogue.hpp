@@ -79,7 +79,7 @@ public:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
 
   /**
    * Selects the specified tape within the Tape table for update.
@@ -91,7 +91,7 @@ public:
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
+  common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) override;
 
 }; // class OracleCatalogue
 

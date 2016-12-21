@@ -76,7 +76,7 @@ protected:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
+  virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
 
   /**
    * Selects the specified tape within th eTape table for update.
@@ -88,7 +88,7 @@ protected:
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) override;
+  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) override;
 
 }; // class SqliteCatalogue
 

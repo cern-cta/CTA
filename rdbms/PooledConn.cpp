@@ -85,23 +85,34 @@ PooledConn &PooledConn::operator=(PooledConn &&rhs) {
 }
 
 //------------------------------------------------------------------------------
-// close
-//------------------------------------------------------------------------------
-void PooledConn::close() {
-  if(nullptr != m_conn) {
-    m_conn->close();
-  } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
-  }
-}
-
-//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
 std::unique_ptr<Stmt> PooledConn::createStmt(const std::string &sql,
   const Stmt::AutocommitMode autocommitMode) {
   if(nullptr != m_conn) {
     return m_conn->createStmt(sql, autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeNonQueries
+//------------------------------------------------------------------------------
+void PooledConn::executeNonQueries(const std::string &sqlStmts) {
+  if(nullptr != m_conn) {
+    return m_conn->executeNonQueries(sqlStmts);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void PooledConn::executeNonQuery(const std::string &sql, const Stmt::AutocommitMode autocommitMode) {
+  if(nullptr != m_conn) {
+    return m_conn->executeNonQuery(sql, autocommitMode);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: PooledConn does not contain a connection");
   }

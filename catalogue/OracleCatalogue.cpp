@@ -164,7 +164,7 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
+uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
   try {
     const char *const sql =
       "SELECT "
@@ -186,7 +186,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
+common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
