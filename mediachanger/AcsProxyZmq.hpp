@@ -19,6 +19,7 @@
 #pragma once
 
 #include "mediachanger/AcsProxy.hpp"
+#include "mediachanger/Constants.hpp"
 #include "mediachanger/ZmqSocketMT.hpp"
 
 #include <mutex>
@@ -35,11 +36,11 @@ public:
   /**
    * Constructor.
    *
+   * @param zmqContext The ZMQ context.
    * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
    * listening for ZMQ messages.
-   * @param zmqContext The ZMQ context.
    */
-  AcsProxyZmq(const unsigned short serverPort, void *const zmqContext) throw();
+  AcsProxyZmq(void *const zmqContext, const unsigned short serverPort = ACS_PORT) throw();
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only
@@ -48,8 +49,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const AcsLibrarySlot &librarySlot);
 
   /** 
    * Request the CASTOR ACS daemon to mount the specifed tape for read/write
@@ -58,8 +58,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const AcsLibrarySlot &librarySlot);
 
   /** 
    * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
@@ -68,8 +67,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void dismountTape(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot);
 
   /**
    * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
@@ -79,8 +77,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void forceDismountTape(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot);
 
 private:
   

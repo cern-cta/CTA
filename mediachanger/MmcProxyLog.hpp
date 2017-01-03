@@ -34,7 +34,7 @@ public:
   /**
    * Constructor.
    *
-   * @param log Object representing the API to the CASTOR logging system.
+   * @param log Object representing the API to the CTA logging system.
    */
   MmcProxyLog(log::Logger &log) throw();
 
@@ -48,8 +48,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid,
-    const ManualLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const ManualLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount the specified tape for read/write
@@ -58,8 +57,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid,
-    const ManualLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const ManualLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to dismount the specified tape from the
@@ -68,8 +66,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid,
-    const ManualLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const ManualLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to forcefully dismount the specified tape from
@@ -82,13 +79,12 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void forceDismountTape(const std::string &vid,
-    const ManualLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const ManualLibrarySlot &librarySlot);
 
 private:
 
   /**
-   * Object representing the API to the CASTOR logging system.
+   * Object representing the API to the CTA logging system.
    */
   log::Logger &m_log;
 

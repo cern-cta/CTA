@@ -157,10 +157,10 @@ void cta::mediachanger::MountCmdLine::processOption(const int opt) {
 // getUsage
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::MountCmdLine::getUsage() throw() {
-  return
+  return std::string() +
   "Usage:\n"
   "\n"
-  "  cta-mediachanger-mount [options] VID DRIVE_SLOT\n"
+  "  " + getProgramName() + " [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"
@@ -221,4 +221,11 @@ const cta::mediachanger::LibrarySlot &cta::mediachanger::MountCmdLine::
     throw ex;
   }
   return *m_driveLibrarySlot;
+}
+
+//------------------------------------------------------------------------------
+// getProgramName
+//------------------------------------------------------------------------------
+std::string cta::mediachanger::MountCmdLine::getProgramName() {
+  return "cta-mediachanger-mount";
 }

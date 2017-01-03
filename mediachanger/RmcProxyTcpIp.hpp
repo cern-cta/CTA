@@ -20,6 +20,7 @@
 
 #include "common/SmartFd.hpp"
 #include "common/utils/utils.hpp"
+#include "mediachanger/Constants.hpp"
 #include "mediachanger/io.hpp"
 #include "mediachanger/MessageHeader.hpp"
 #include "mediachanger/RmcMountMsgBody.hpp"
@@ -67,9 +68,9 @@ public:
    * request should be issued.
    */
   RmcProxyTcpIp(
-    const unsigned short rmcPort,
-    const int netTimeout,
-    const unsigned int maxRqstAttempts) throw();
+    const unsigned short rmcPort = RMC_PORT,
+    const int netTimeout = RMC_NET_TIMEOUT,
+    const unsigned int maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS) throw();
 
   /**
    * Destructor.
@@ -86,8 +87,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid,
-    const mediachanger::ScsiLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const ScsiLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -96,8 +96,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid,
-    const mediachanger::ScsiLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const ScsiLibrarySlot &librarySlot);
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -106,8 +105,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid,
-    const mediachanger::ScsiLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const ScsiLibrarySlot &librarySlot);
 
   /**
    * Requests the media changer to forcefully dismount the specified tape from
@@ -120,8 +118,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void forceDismountTape(const std::string &vid,
-    const mediachanger::ScsiLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const ScsiLibrarySlot &librarySlot);
 
 protected:
 

@@ -25,7 +25,6 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 set (MEDIACHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
   AcsProxy.cpp
-  AcsProxyDummy.cpp
   AcsProxyZmq.cpp
   CmdLine.cpp
   CmdLineTool.cpp
@@ -41,7 +40,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   MessageHeader.cpp
   messages.cpp
   MmcProxy.cpp
-  MmcProxyDummy.cpp
   MmcProxyLog.cpp
   MmcProxyNotSupported.cpp
   ${ProtoSources}
@@ -49,12 +47,12 @@ set (MEDIACHANGER_LIB_SRC_FILES
   RmcMarshal.hpp
   RmcMountMsgBody.cpp
   RmcProxy.cpp
-  RmcProxyDummy.cpp
   RmcProxyTcpIp.cpp
   RmcUnmountMsgBody.cpp
   ScsiLibrarySlot.cpp
   SmartZmqContext.cpp
   TapeLibraryType.cpp
+  ZmqContextSingleton.cpp
   ZmqMsg.cpp
   ZmqSocket.cpp
   ZmqSocketMT.cpp
@@ -78,7 +76,6 @@ set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   IoTest.cpp
   LibrarySlotParserTest.cpp
   ManualLibrarySlotTest.cpp
-  MediaChangerFacadeTest.cpp
   MountCmdLine.cpp
   MountCmdLineTest.cpp
   ScsiLibrarySlotTest.cpp)

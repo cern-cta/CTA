@@ -48,8 +48,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeReadOnly(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot) = 0;
+  virtual void mountTapeReadOnly(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
   
   /**
    * Request the CASTOR ACS daemon to mount the specifed tape for read/write
@@ -58,8 +57,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeReadWrite(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot) = 0;
+  virtual void mountTapeReadWrite(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
   
   /**
    * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
@@ -68,8 +66,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void dismountTape(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot) = 0;
+  virtual void dismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
 
   /**
    * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
@@ -82,8 +79,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void forceDismountTape(const std::string &vid,
-    const cta::mediachanger::AcsLibrarySlot &librarySlot) = 0;
+  virtual void forceDismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
 
 }; // class AcsProxy
 

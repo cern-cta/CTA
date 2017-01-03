@@ -112,6 +112,13 @@ public:
    */
   const LibrarySlot &getDriveLibrarySlot() const;
 
+  /**
+   * Return sthe program name.
+   *
+   * @return sthe program name.
+   */
+  static std::string getProgramName();
+
 private:
 
   /**

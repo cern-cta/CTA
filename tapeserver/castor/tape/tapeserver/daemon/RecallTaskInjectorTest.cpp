@@ -21,19 +21,17 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "common/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "mediachanger/AcsProxyDummy.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "common/log/StringLogger.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "mediachanger/MmcProxyDummy.hpp"
-#include "mediachanger/RmcProxyDummy.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
@@ -154,10 +152,8 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    cta::mediachanger::AcsProxyDummy acs;
-    cta::mediachanger::MmcProxyDummy mmc;
-    cta::mediachanger::RmcProxyDummy rmc;
-    cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+    cta::log::DummyLogger dummyLog("dummy");
+    cta::mediachanger::MediaChangerFacade mc(log);
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
@@ -216,10 +212,8 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
-    cta::mediachanger::AcsProxyDummy acs;
-    cta::mediachanger::MmcProxyDummy mmc;
-    cta::mediachanger::RmcProxyDummy rmc;
-    cta::mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+    cta::log::DummyLogger dummyLog("dummy");
+    cta::mediachanger::MediaChangerFacade mc(dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;  
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";

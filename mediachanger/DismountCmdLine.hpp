@@ -109,6 +109,13 @@ public:
    */
   bool getForce() const throw();
 
+  /**
+   * Return sthe program name.
+   *
+   * @return sthe program name.
+   */
+  static std::string getProgramName();
+
 private:
 
   /**

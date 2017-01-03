@@ -22,10 +22,6 @@
 #include "common/processCap/ProcessCap.hpp"
 #include "DriveHandler.hpp"
 #include "DriveHandlerProxy.hpp"
-#include "mediachanger/AcsProxyZmq.hpp"
-#include "mediachanger/MmcProxyLog.hpp"
-#include "mediachanger/RmcProxyTcpIp.hpp"
-#include "mediachanger/SmartZmqContext.hpp"
 #include "objectstore/Backend.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
@@ -916,20 +912,7 @@ int DriveHandler::runChild() {
     cta::server::ProcessCap capUtils;
     
     // Mounting management.
-    const int sizeOfIOThreadPoolForZMQ = 1;
-    mediachanger::SmartZmqContext zmqContext(
-      mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-    mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
-
-    cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
-    // The network timeout of rmc communications should be several minutes due
-    // to the time it takes to mount and unmount tapes
-    const int rmcNetTimeout = 600; // Timeout in seconds
-
-    cta::mediachanger::RmcProxyTcpIp rmc(cta::mediachanger::RMC_PORT, rmcNetTimeout,
-      cta::mediachanger::RMC_MAXRQSTATTEMPTS);
-    
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
     
     castor::tape::System::realWrapper sWrapper;
     
@@ -959,20 +942,7 @@ int DriveHandler::runChild() {
     cta::server::ProcessCap capUtils;
     
     // Mounting management.
-    const int sizeOfIOThreadPoolForZMQ = 1;
-    mediachanger::SmartZmqContext zmqContext(
-      mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-    mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
-
-    cta::mediachanger::MmcProxyLog mmc(m_processManager.logContext().logger());
-    // The network timeout of rmc communications should be several minutes due
-    // to the time it takes to mount and unmount tapes
-    const int rmcNetTimeout = 600; // Timeout in seconds
-
-    cta::mediachanger::RmcProxyTcpIp rmc(cta::mediachanger::RMC_PORT, rmcNetTimeout,
-      cta::mediachanger::RMC_MAXRQSTATTEMPTS);
-    
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(acs, mmc, rmc);
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
     
     castor::tape::System::realWrapper sWrapper;
     

@@ -16,7 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mediachanger/AcsProxyZmq.hpp"
+#include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/RmcProxyTcpIp.hpp"
+#include "mediachanger/ZmqContextSingleton.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
@@ -25,46 +30,37 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MediaChangerFacade::MediaChangerFacade(
-  AcsProxy &acs,
-  MmcProxy &mmc,
-  RmcProxy &rmc) throw():
-  m_acs(acs),
-  m_mmc(mmc),
-  m_rmc(rmc) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-MediaChangerFacade::MediaChangerFacade(
-  AcsProxy &acs,
-  RmcProxy &rmc) throw():
-  m_acs(acs),
-  m_mmc(m_mmcNotSupported),
-  m_rmc(rmc) {
+MediaChangerFacade::MediaChangerFacade(log::Logger &log, void *const zmqContext) throw():
+  m_log(log),
+  m_zmqContext(zmqContext) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void MediaChangerFacade::mountTapeReadOnly(
-  const std::string &vid, const LibrarySlot &slot) {
+void MediaChangerFacade::mountTapeReadOnly(const std::string &vid, const LibrarySlot &slot) {
   try {
     const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.mountTapeReadOnly(vid,
-        dynamic_cast<const AcsLibrarySlot&>(slot));
+      {
+        AcsProxyZmq acs(m_zmqContext);
+        return acs.mountTapeReadOnly(vid, dynamic_cast<const AcsLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.mountTapeReadOnly(vid,
-        dynamic_cast<const ManualLibrarySlot&>(slot));
+      {
+        MmcProxyLog mmc(m_log);
+        return mmc.mountTapeReadOnly(vid, dynamic_cast<const ManualLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_SCSI:
-      // SCSI media-changers to not support read-only mounts
-      return m_rmc.mountTapeReadWrite(vid,
-         dynamic_cast<const ScsiLibrarySlot&>(slot));
+      {
+        RmcProxyTcpIp rmc;
+
+        // SCSI media-changers to not support read-only mounts
+        return rmc.mountTapeReadWrite(vid, dynamic_cast<const ScsiLibrarySlot&>(slot));
+      }
     default:
       {
         // Should never get here
@@ -85,22 +81,27 @@ void MediaChangerFacade::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void MediaChangerFacade::mountTapeReadWrite(
-  const std::string &vid, const LibrarySlot &slot) {
+void MediaChangerFacade::mountTapeReadWrite(const std::string &vid, const LibrarySlot &slot) {
   try {
     const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS: 
-      return m_acs.mountTapeReadWrite(vid,
-        dynamic_cast<const AcsLibrarySlot&>(slot));
+      {
+        AcsProxyZmq acs(m_zmqContext);
+        return acs.mountTapeReadWrite(vid, dynamic_cast<const AcsLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_MANUAL: 
-      return m_mmc.mountTapeReadWrite(vid,
-        dynamic_cast<const ManualLibrarySlot&>(slot));
+      {
+        MmcProxyLog mmc(m_log);
+        return mmc.mountTapeReadWrite(vid, dynamic_cast<const ManualLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.mountTapeReadWrite(vid,
-        dynamic_cast<const ScsiLibrarySlot&>(slot));
+      {
+        RmcProxyTcpIp rmc;
+        return rmc.mountTapeReadWrite(vid, dynamic_cast<const ScsiLibrarySlot&>(slot));
+      }
     default:
       {
         // Should never get here
@@ -121,22 +122,27 @@ void MediaChangerFacade::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void MediaChangerFacade::dismountTape(
-  const std::string &vid, const LibrarySlot &slot) {
+void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot &slot) {
   try {
     const TapeLibraryType libraryType = slot.getLibraryType();
   
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.dismountTape(vid,
-        dynamic_cast<const AcsLibrarySlot&>(slot));
+      {
+        AcsProxyZmq acs(m_zmqContext);
+        return acs.dismountTape(vid, dynamic_cast<const AcsLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.dismountTape(vid,
-        dynamic_cast<const ManualLibrarySlot&>(slot));
+      {
+        MmcProxyLog mmc(m_log);
+        return mmc.dismountTape(vid, dynamic_cast<const ManualLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.dismountTape(vid,
-        dynamic_cast<const ScsiLibrarySlot&>(slot));
+      {
+        RmcProxyTcpIp rmc;
+        return rmc.dismountTape(vid, dynamic_cast<const ScsiLibrarySlot&>(slot));
+      }
     default:
       {
         // Should never get here
@@ -157,22 +163,27 @@ void MediaChangerFacade::dismountTape(
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void MediaChangerFacade::forceDismountTape(
-  const std::string &vid, const LibrarySlot &slot) {
+void MediaChangerFacade::forceDismountTape(const std::string &vid, const LibrarySlot &slot) {
   try {
     const TapeLibraryType libraryType = slot.getLibraryType();
 
     // Dispatch the appropriate helper method depending on library slot type
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return m_acs.forceDismountTape(vid,
-        dynamic_cast<const AcsLibrarySlot&>(slot));
+      {
+        AcsProxyZmq acs(m_zmqContext);
+        return acs.forceDismountTape(vid, dynamic_cast<const AcsLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmc.forceDismountTape(vid,
-        dynamic_cast<const ManualLibrarySlot&>(slot));
+      {
+        MmcProxyLog mmc(m_log);
+        return mmc.forceDismountTape(vid, dynamic_cast<const ManualLibrarySlot&>(slot));
+      }
     case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmc.forceDismountTape(vid,
-        dynamic_cast<const ScsiLibrarySlot&>(slot));
+      {
+        RmcProxyTcpIp rmc;
+        return rmc.forceDismountTape(vid, dynamic_cast<const ScsiLibrarySlot&>(slot));
+      }
     default:
       {
         // Should never get here

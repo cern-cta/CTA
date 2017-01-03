@@ -17,13 +17,10 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "mediachanger/AcsProxyZmq.hpp"
 #include "mediachanger/DismountCmd.hpp"
 #include "mediachanger/DismountCmdLine.hpp"
-#include "mediachanger/RmcProxyTcpIp.hpp"
-#include "mediachanger/MmcProxyNotSupported.hpp"
-#include "mediachanger/SmartZmqContext.hpp"
 
 #include <exception>
 #include <google/protobuf/stubs/common.h>
@@ -73,24 +70,8 @@ int main(const int argc, char *const *const argv) {
 static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta;
 
-  const int sizeOfIOThreadPoolForZMQ = 1;
-  mediachanger::SmartZmqContext
-    zmqContext(mediachanger::SmartZmqContext::instantiateZmqContext(sizeOfIOThreadPoolForZMQ));
-  mediachanger::AcsProxyZmq acs(mediachanger::ACS_PORT, zmqContext.get());
-
-  mediachanger::MmcProxyNotSupported mmc;
-
-  const unsigned short rmcPort = mediachanger::RMC_PORT;
-
-  const unsigned int rmcMaxRqstAttempts = mediachanger::RMC_MAXRQSTATTEMPTS;
-
-  // The network timeout of rmc communications should be several minutes due
-  // to the time it takes to mount and unmount tapes
-  const int rmcNetTimeout = 600; // Timeout in seconds
-
-  mediachanger::RmcProxyTcpIp rmc(rmcPort, rmcNetTimeout, rmcMaxRqstAttempts);
-
-  mediachanger::MediaChangerFacade mc(acs, mmc, rmc);
+  log::StdoutLogger log(mediachanger::DismountCmdLine::getProgramName());
+  mediachanger::MediaChangerFacade mc(log);
   
   mediachanger::DismountCmd cmd(std::cin, std::cout, std::cerr, mc);
 

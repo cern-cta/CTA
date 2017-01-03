@@ -134,6 +134,13 @@ bool cta::mediachanger::DismountCmdLine::getForce() const throw() {
 }
 
 //------------------------------------------------------------------------------
+// getProgramName
+//------------------------------------------------------------------------------
+std::string cta::mediachanger::DismountCmdLine::getProgramName() {
+  return "cta-mediachanger-dismount";
+}
+
+//------------------------------------------------------------------------------
 // processOption
 //------------------------------------------------------------------------------
 void cta::mediachanger::DismountCmdLine::processOption(const int opt) {
@@ -166,10 +173,10 @@ void cta::mediachanger::DismountCmdLine::processOption(const int opt) {
 // getUsage
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::DismountCmdLine::getUsage() throw() {
-  return
+  return std::string() +
   "Usage:\n"
   "\n"
-  "  cta-mediachanger-dismount [options] VID DRIVE_SLOT\n"
+  "  " + getProgramName() + " [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"

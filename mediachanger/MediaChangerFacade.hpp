@@ -18,23 +18,17 @@
 
 #pragma once
 
+#include "common/log/Logger.hpp"
 #include "mediachanger/LibrarySlot.hpp"
-#include "mediachanger/MmcProxy.hpp"
-#include "mediachanger/MmcProxyNotSupported.hpp"
-#include "mediachanger/RmcProxy.hpp"
-#include "mediachanger/AcsProxy.hpp"
+#include "mediachanger/ZmqContextSingleton.hpp"
 
-#include <unistd.h>
-#include <sys/types.h>
+#include <string>
 
 namespace cta {
 namespace mediachanger {
 
 /**
- * Provides a facade to three communications proxies: acs, manual and rmc.
- *
- * This facade will forward requests to mount and dismount tapes to the
- * appropriate communications proxy based on the type of library slot.
+ * A facade to multiple types of tape media changer.
  */
 class MediaChangerFacade {
 public:
@@ -42,21 +36,12 @@ public:
   /**
    * Constructor.
    *
-   * @param acs Proxy object representing the CASTOR ACS daemon.
-   * @param mmc Proxy object representing the manual media-changer.
-   * @param rmc Proxy object representing the rmcd daemon.
+   * @param log Object representing the API to the CTA logging system.
+   * @param zmqContext The ZMQ context.  There is usually one ZMQ context within
+   * a program.  Set this parameter in order for the MediaChangerFacade to share
+   * an already existing ZMQ context.
    */
-  MediaChangerFacade(AcsProxy &acs, MmcProxy &mmc, RmcProxy &rmc) throw();
-
-  /**
-   * Constructor.
-   *
-   * Use this constructor when manual media-changers are not to be supported.
-   *
-   * @param acs Proxy object representing the CASTOR ACS daemon.
-   * @param rmc Proxy object representing the rmcd daemon.
-   */
-  MediaChangerFacade(AcsProxy &acs, RmcProxy &rmc) throw();
+  MediaChangerFacade(log::Logger &log, void *const zmqContext = ZmqContextSingleton::instance()) throw();
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -104,25 +89,14 @@ public:
 private:
 
   /**
-   * Proxy object representing the CASTOR ACS daemon.
+   * Object representing the API to the CTA logging system.
    */
-  AcsProxy &m_acs;
+  log::Logger &m_log;
 
   /**
-   * Proxy object representing the manual media-changer.
+   * The ZMQ context.
    */
-  MmcProxy &m_mmc;
-
-  /**
-   * Proxy object representing the rmcd daemon.
-   */
-  RmcProxy &m_rmc;
-
-  /**
-   * The manual media-changer proxy object that is used when manual
-   * media-changers are not to be supported.
-   */
-  MmcProxyNotSupported m_mmcNotSupported;
+  void *m_zmqContext;
 
 }; // class MediaChangerFacade
 

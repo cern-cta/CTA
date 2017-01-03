@@ -167,8 +167,7 @@ Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySl
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AcsProxyZmq::AcsProxyZmq(const unsigned short serverPort,
-  void *const zmqContext) throw():
+AcsProxyZmq::AcsProxyZmq(void *const zmqContext, const unsigned short serverPort) throw():
   m_serverPort(serverPort),
   m_serverSocket(zmqContext, ZMQ_REQ) {
   connectZmqSocketToLocalhost(m_serverSocket, serverPort);

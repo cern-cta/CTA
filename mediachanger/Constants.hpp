@@ -99,9 +99,15 @@ const unsigned short ACS_PORT = 54521;
 const unsigned short RMC_PORT = 5014;
 
 /**
+ * The network timeout of rmc communications should be several minutes due
+ * to the time it takes to mount and unmount tapes.
+ */
+const int RMC_NET_TIMEOUT = 600; // Timeout in seconds
+
+/**
  * The maximum number of attempts a retriable RMC request should be issued.
  */
-const int RMC_MAXRQSTATTEMPTS = 10;
+const int RMC_MAX_RQST_ATTEMPTS = 10;
 
 /**
  * The magic number to identify taped messages.
