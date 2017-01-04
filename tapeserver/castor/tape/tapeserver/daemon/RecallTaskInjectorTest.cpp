@@ -153,7 +153,7 @@ namespace unitTests
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     cta::log::DummyLogger dummyLog("dummy");
-    cta::mediachanger::MediaChangerFacade mc(log);
+    cta::mediachanger::MediaChangerFacade mc(dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
