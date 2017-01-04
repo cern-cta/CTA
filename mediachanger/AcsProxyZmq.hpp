@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "mediachanger/AcsProxy.hpp"
 #include "mediachanger/Constants.hpp"
+#include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/ZmqSocketMT.hpp"
 
 #include <mutex>
@@ -30,7 +30,7 @@ namespace mediachanger {
 /**
  * Concrete class providing a ZMQ implementation of an AcsProxy.
  */
-class AcsProxyZmq: public AcsProxy {
+class AcsProxyZmq: public MediaChangerProxy {
 public:
 
   /**
@@ -49,7 +49,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid, const AcsLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /** 
    * Request the CASTOR ACS daemon to mount the specifed tape for read/write
@@ -58,7 +58,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid, const AcsLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /** 
    * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
@@ -67,7 +67,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void dismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /**
    * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
@@ -77,7 +77,7 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  void forceDismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
 private:
   

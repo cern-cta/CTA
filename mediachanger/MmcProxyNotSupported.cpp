@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mediachanger/ManualLibrarySlot.hpp"
 #include "mediachanger/MmcProxyNotSupported.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyNotSupported::mountTapeReadOnly(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyNotSupported::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
   cta::exception::Exception ex;
   ex.getMessage() << "Manual mounting is not supported";
   throw ex;
@@ -32,8 +32,7 @@ void cta::mediachanger::MmcProxyNotSupported::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyNotSupported::mountTapeReadWrite(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyNotSupported::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   cta::exception::Exception ex;
   ex.getMessage() << "Manual mounting is not supported";
   throw ex;
@@ -42,8 +41,7 @@ void cta::mediachanger::MmcProxyNotSupported::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyNotSupported::dismountTape(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyNotSupported::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   cta::exception::Exception ex;
   ex.getMessage() << "Manual dismounting is not supported";
   throw ex;
@@ -52,8 +50,7 @@ void cta::mediachanger::MmcProxyNotSupported::dismountTape(
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyNotSupported::forceDismountTape(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyNotSupported::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   cta::exception::Exception ex;
   ex.getMessage() << "Manual dismounting is not supported";
   throw ex;

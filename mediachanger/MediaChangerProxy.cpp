@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mediachanger/MmcProxy.hpp"
+#include "mediachanger/MediaChangerProxy.hpp"
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // destructor
-//------------------------------------------------------------------------------
-cta::mediachanger::MmcProxy::~MmcProxy() throw() {
+//-----------------------------------------------------------------------------
+cta::mediachanger::MediaChangerProxy::~MediaChangerProxy() {
 }

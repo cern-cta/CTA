@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mediachanger/ManualLibrarySlot.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
 
 //------------------------------------------------------------------------------
@@ -28,8 +29,7 @@ cta::mediachanger::MmcProxyLog::MmcProxyLog(log::Logger &log) throw():
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::mountTapeReadOnly(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyLog::mountTapeReadOnly( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
@@ -40,8 +40,7 @@ void cta::mediachanger::MmcProxyLog::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::mountTapeReadWrite(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyLog::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
@@ -52,8 +51,7 @@ void cta::mediachanger::MmcProxyLog::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::dismountTape(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyLog::dismountTape( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
@@ -63,8 +61,7 @@ void cta::mediachanger::MmcProxyLog::dismountTape(
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::forceDismountTape(
-  const std::string &vid, const ManualLibrarySlot &librarySlot) {
+void cta::mediachanger::MmcProxyLog::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};

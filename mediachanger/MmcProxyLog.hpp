@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
-#include "mediachanger/MmcProxy.hpp"
+#include "mediachanger/MediaChangerProxy.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -28,7 +28,7 @@ namespace mediachanger {
  * Concrete class implementing a MmcProxy that simply logs mount and dismount
  * requests.
  */
-class MmcProxyLog: public MmcProxy {
+class MmcProxyLog: public MediaChangerProxy {
 public:
 
   /**
@@ -48,7 +48,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid, const ManualLibrarySlot &librarySlot);
+  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /**
    * Requests the media changer to mount the specified tape for read/write
@@ -57,7 +57,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid, const ManualLibrarySlot &librarySlot);
+  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /** 
    * Requests the media changer to dismount the specified tape from the
@@ -66,7 +66,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid, const ManualLibrarySlot &librarySlot);
+  void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
   /** 
    * Requests the media changer to forcefully dismount the specified tape from
@@ -79,7 +79,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void forceDismountTape(const std::string &vid, const ManualLibrarySlot &librarySlot);
+  void forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
 private:
 

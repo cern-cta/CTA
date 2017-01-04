@@ -22,6 +22,7 @@
 #include "mediachanger/io.hpp"
 #include "mediachanger/RmcMarshal.hpp"
 #include "mediachanger/RmcProxyTcpIp.hpp"
+#include "mediachanger/ScsiLibrarySlot.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -47,8 +48,7 @@ RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::mountTapeReadOnly(
-  const std::string &vid, const mediachanger::ScsiLibrarySlot &librarySlot) {
+void RmcProxyTcpIp::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
   // SCSI libraries do not support read-only mounts
   mountTapeReadWrite(vid, librarySlot);
 }
@@ -56,14 +56,14 @@ void RmcProxyTcpIp::mountTapeReadOnly(
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::mountTapeReadWrite(
-  const std::string &vid, const mediachanger::ScsiLibrarySlot &librarySlot) {
+void RmcProxyTcpIp::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   try {
     RmcMountMsgBody rqstBody;
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    rqstBody.drvOrd = librarySlot.getDrvOrd();
+    const ScsiLibrarySlot &scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
+    rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
   } catch(cta::exception::Exception &ne) {
@@ -79,14 +79,14 @@ void RmcProxyTcpIp::mountTapeReadWrite(
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::dismountTape(const std::string &vid,
-  const mediachanger::ScsiLibrarySlot &librarySlot) {
+void RmcProxyTcpIp::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   try {
     RmcUnmountMsgBody rqstBody;
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    rqstBody.drvOrd = librarySlot.getDrvOrd();
+    const ScsiLibrarySlot &scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
+    rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
     rqstBody.force = 0;
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
@@ -103,8 +103,7 @@ void RmcProxyTcpIp::dismountTape(const std::string &vid,
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::forceDismountTape(const std::string &vid,
-  const mediachanger::ScsiLibrarySlot &librarySlot) {
+void RmcProxyTcpIp::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   // SCSI libraries do not support forced dismounts
   dismountTape(vid, librarySlot);
 }

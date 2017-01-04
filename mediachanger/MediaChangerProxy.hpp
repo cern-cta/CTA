@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "mediachanger/AcsLibrarySlot.hpp"
+#include "mediachanger/LibrarySlot.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -27,19 +27,19 @@ namespace cta {
 namespace mediachanger {
 
 /**
- * Abstract class defining the interface to a proxy object representing the
- * CASTOR ACS daemon.
+ * Abstract class defining the interface to a proxy object representing a
+ * media changer daemon.
  */
-class AcsProxy {
+class MediaChangerProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~AcsProxy()  = 0;
+  virtual ~MediaChangerProxy()  = 0;
 
   /**
-   * Request the CASTOR ACS daemon to mount the specified tape for read-only
+   * Request the media changer daemon to mount the specified tape for read-only
    * access into the tape drive in the specified library slot.
    *
    * Please note that this method provides a best-effort service because not all
@@ -48,28 +48,28 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeReadOnly(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
+  virtual void mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) = 0;
   
   /**
-   * Request the CASTOR ACS daemon to mount the specifed tape for read/write
+   * Request the media changer daemon to mount the specifed tape for read/write
    * access into the tape drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void mountTapeReadWrite(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
+  virtual void mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) = 0;
   
   /**
-   * Request the CASTOR ACS daemon to dismount the specifed tape from the tape
-   * drive in the specified library slot.
+   * Request the media changer daemon to dismount the specifed tape from the
+   * tape drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void dismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
+  virtual void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) = 0;
 
   /**
-   * Request the CASTOR ACS daemon to forcefully dismount the specifed tape
+   * Request the media changer daemon to forcefully dismount the specifed tape
    * from the tape drive in the specified library slot.  Forcefully means
    * rewinding and ejecting the tape if necessary.
    *
@@ -79,9 +79,9 @@ public:
    * @param vid The volume identifier of the tape to be mounted.
    * @param librarySlot The slot in the library that contains the tape drive.
    */
-  virtual void forceDismountTape(const std::string &vid, const AcsLibrarySlot &librarySlot) = 0;
+  virtual void forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) = 0;
 
-}; // class AcsProxy
+}; // class MediaChangerProxy
 
 } // namespace mediachanger
 } // namespace cta

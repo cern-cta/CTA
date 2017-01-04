@@ -20,8 +20,10 @@
 
 #include "common/log/Logger.hpp"
 #include "mediachanger/LibrarySlot.hpp"
+#include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/ZmqContextSingleton.hpp"
 
+#include <memory>
 #include <string>
 
 namespace cta {
@@ -97,6 +99,14 @@ private:
    * The ZMQ context.
    */
   void *m_zmqContext;
+
+  /**
+   * Factory method that creates a media changer proxy object based on the
+   * specified tape library type.
+   *
+   * @param libraryType The type of tape library.
+   */
+  std::unique_ptr<MediaChangerProxy> createMediaChangerProxy(const TapeLibraryType libraryType);
 
 }; // class MediaChangerFacade
 
