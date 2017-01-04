@@ -23,7 +23,6 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
 #include "mediachanger/RmcProxyTcpIp.hpp"
-#include "mediachanger/ZmqContextSingleton.hpp"
 
 namespace cta {
 namespace mediachanger {
