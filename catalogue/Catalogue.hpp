@@ -546,6 +546,14 @@ public:
    */
   virtual void ping() = 0;
 
+  /**
+   * Returns true if the specified tape pool exists.
+   *
+   * @param tapePoolName The name of the tape pool.
+   * @return True if the tape pool exists.
+   */
+  virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
+
 }; // class Catalogue
 
 } // namespace catalogue

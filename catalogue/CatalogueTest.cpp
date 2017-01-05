@@ -782,11 +782,16 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
       
   const std::string tapePoolName = "tape_pool";
+
+  ASSERT_FALSE(m_catalogue->tapePoolExists(tapePoolName));
+
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::string comment = "Create tape pool";
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
+
+  ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
       
   const std::list<common::dataStructures::TapePool> pools =
     m_catalogue->getTapePools();

@@ -729,6 +729,18 @@ void RdbmsCatalogue::createTapePool(
 //------------------------------------------------------------------------------
 // tapePoolExists
 //------------------------------------------------------------------------------
+bool RdbmsCatalogue::tapePoolExists(const std::string &tapePoolName) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return tapePoolExists(conn, tapePoolName);
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// tapePoolExists
+//------------------------------------------------------------------------------
 bool RdbmsCatalogue::tapePoolExists(rdbms::PooledConn &conn, const std::string &tapePoolName) const {
   try {
     const char *const sql =

@@ -575,6 +575,14 @@ protected:
   /**
    * Returns true if the specified tape pool exists.
    *
+   * @param tapePoolName The name of the tape pool.
+   * @return True if the tape pool exists.
+   */
+  bool tapePoolExists(const std::string &tapePoolName) const override;
+
+  /**
+   * Returns true if the specified tape pool exists.
+   *
    * @param conn The database connection.
    * @param tapePoolName The name of the tape pool.
    * @return True if the tape pool exists.
