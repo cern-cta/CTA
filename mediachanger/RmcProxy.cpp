@@ -21,7 +21,7 @@
 #include "mediachanger/CommonMarshal.hpp"
 #include "mediachanger/io.hpp"
 #include "mediachanger/RmcMarshal.hpp"
-#include "mediachanger/RmcProxyTcpIp.hpp"
+#include "mediachanger/RmcProxy.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
 namespace cta {
@@ -30,7 +30,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcProxyTcpIp::RmcProxyTcpIp(
+RmcProxy::RmcProxy(
   const unsigned short rmcPort,
   const int netTimeout,
   const unsigned int maxRqstAttempts) throw():
@@ -42,13 +42,13 @@ RmcProxyTcpIp::RmcProxyTcpIp(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
+RmcProxy::~RmcProxy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
   // SCSI libraries do not support read-only mounts
   mountTapeReadWrite(vid, librarySlot);
 }
@@ -56,7 +56,7 @@ void RmcProxyTcpIp::mountTapeReadOnly(const std::string &vid, const LibrarySlot 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   try {
     RmcMountMsgBody rqstBody;
     rqstBody.uid = geteuid();
@@ -79,7 +79,7 @@ void RmcProxyTcpIp::mountTapeReadWrite(const std::string &vid, const LibrarySlot
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   try {
     RmcUnmountMsgBody rqstBody;
     rqstBody.uid = geteuid();
@@ -103,7 +103,7 @@ void RmcProxyTcpIp::dismountTape(const std::string &vid, const LibrarySlot &libr
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void RmcProxyTcpIp::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   // SCSI libraries do not support forced dismounts
   dismountTape(vid, librarySlot);
 }
@@ -111,7 +111,7 @@ void RmcProxyTcpIp::forceDismountTape(const std::string &vid, const LibrarySlot 
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int RmcProxyTcpIp::connectToRmc()
+int RmcProxy::connectToRmc()
   const {
   const std::string rmcHost = "localhost";
   cta::SmartFd smartConnectSock;
@@ -131,8 +131,7 @@ int RmcProxyTcpIp::connectToRmc()
 //-----------------------------------------------------------------------------
 // writeRmcMountMsg
 //-----------------------------------------------------------------------------
-void RmcProxyTcpIp::writeRmcMountMsg(const int fd,
-  const RmcMountMsgBody &body) {
+void RmcProxy::writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) {
   char buf[RMC_MSGBUFSIZ];
   const size_t len = marshal(buf, body);
 
@@ -149,8 +148,7 @@ void RmcProxyTcpIp::writeRmcMountMsg(const int fd,
 //-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
-MessageHeader
-  RmcProxyTcpIp::readRmcMsgHeader(const int fd) {
+MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
   char buf[12]; // Magic + type + len
   MessageHeader header;
 
@@ -181,8 +179,7 @@ MessageHeader
 //-----------------------------------------------------------------------------
 // writeRmcUnmountMsg
 //-----------------------------------------------------------------------------
-void RmcProxyTcpIp::writeRmcUnmountMsg(const int fd,
-  const RmcUnmountMsgBody &body) {
+void RmcProxy::writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) {
   char buf[RMC_MSGBUFSIZ];
   const size_t len = marshal(buf, body);
 
@@ -199,8 +196,7 @@ void RmcProxyTcpIp::writeRmcUnmountMsg(const int fd,
 //-----------------------------------------------------------------------------
 // rmcReplyTypeToStr
 //-----------------------------------------------------------------------------
-std::string RmcProxyTcpIp::rmcReplyTypeToStr(
-  const int replyType) {
+std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
   std::ostringstream oss;
   switch(replyType) {
   case RMC_RC:
@@ -218,9 +214,7 @@ std::string RmcProxyTcpIp::rmcReplyTypeToStr(
 //-----------------------------------------------------------------------------
 // handleMSG_ERR
 //-----------------------------------------------------------------------------
-std::string RmcProxyTcpIp::handleMSG_ERR(
-  const MessageHeader &header,
-  const int fd) {
+std::string RmcProxy::handleMSG_ERR(const MessageHeader &header, const int fd) {
   char errorBuf[1024];
   const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
     sizeof(errorBuf) : header.lenOrStatus;

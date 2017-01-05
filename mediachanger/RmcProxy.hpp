@@ -55,7 +55,7 @@ namespace mediachanger {
 /**
  * A concrete implementation of the interface to the rmc daemon.
  */
-class RmcProxyTcpIp: public MediaChangerProxy {
+class RmcProxy: public MediaChangerProxy {
 public:
 
   /**
@@ -67,7 +67,7 @@ public:
    * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
    * request should be issued.
    */
-  RmcProxyTcpIp(
+  RmcProxy(
     const unsigned short rmcPort = RMC_PORT,
     const int netTimeout = RMC_NET_TIMEOUT,
     const unsigned int maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS) throw();
@@ -75,7 +75,7 @@ public:
   /**
    * Destructor.
    */
-  ~RmcProxyTcpIp() throw();
+  ~RmcProxy() throw();
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -297,7 +297,7 @@ protected:
    */
   std::string handleMSG_ERR(const MessageHeader &header, const int fd);
 
-}; // class RmcProxyTcpIp
+}; // class RmcProxy
 
 } // namespace mediachanger
 } // namespace cta

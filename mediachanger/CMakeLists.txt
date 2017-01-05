@@ -45,7 +45,7 @@ set (MEDIACHANGER_LIB_SRC_FILES
   RmcMarshal.cpp
   RmcMarshal.hpp
   RmcMountMsgBody.cpp
-  RmcProxyTcpIp.cpp
+  RmcProxy.cpp
   RmcUnmountMsgBody.cpp
   ScsiLibrarySlot.cpp
   TapeLibraryType.cpp

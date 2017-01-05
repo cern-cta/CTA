@@ -23,7 +23,7 @@
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
-#include "mediachanger/RmcProxyTcpIp.hpp"
+#include "mediachanger/RmcProxy.hpp"
 #include "mediachanger/ZmqContextSingleton.hpp"
 
 #include <memory>
@@ -114,7 +114,7 @@ private:
   /**
    * SCSI media changer proxy.
    */
-  RmcProxyTcpIp m_rmcProxy;
+  RmcProxy m_rmcProxy;
 
   /**
    * Returns the media changer proxy for the specified library type.
