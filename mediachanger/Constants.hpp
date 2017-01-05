@@ -86,6 +86,25 @@ enum MsgType {
 #define MSG_DATA        2
 #define RMC_RC          3
 
+/*
+ *------------------------------------------------------------------------
+ * RMC (Remote SCSI media changer server) errors
+ *------------------------------------------------------------------------
+ */
+#define ERMBASEOFF      2200            /* RMC error base offset        */
+#define        ERMCNACT        ERMBASEOFF+1    /* Remote SCSI media changer server not active or service being drained */
+#define        ERMCRBTERR      (ERMBASEOFF+2)  /* Remote SCSI media changer error */
+#define        ERMCUNREC       ERMCRBTERR+1    /* Remote SCSI media changer unrec. error */
+#define        ERMCSLOWR       ERMCRBTERR+2    /* Remote SCSI media changer error (slow retry) */
+#define        ERMCFASTR       ERMCRBTERR+3    /* Remote SCSI media changer error (fast retry) */
+#define        ERMCDFORCE      ERMCRBTERR+4    /* Remote SCSI media changer error (demount force) */
+#define        ERMCDDOWN       ERMCRBTERR+5    /* Remote SCSI media changer error (drive down) */
+#define        ERMCOMSGN       ERMCRBTERR+6    /* Remote SCSI media changer error (ops message) */
+#define        ERMCOMSGS       ERMCRBTERR+7    /* Remote SCSI media changer error (ops message + retry) */
+#define        ERMCOMSGR       ERMCRBTERR+8    /* Remote SCSI media changer error (ops message + wait) */
+#define        ERMCUNLOAD      ERMCRBTERR+9    /* Remote SCSI media changer error (unload + demount) */
+#define ERMMAXERR       ERMBASEOFF+11
+
 /**
  * The default TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
  * connections from the tape server.
