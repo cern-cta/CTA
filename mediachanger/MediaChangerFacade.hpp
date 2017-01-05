@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
+#include "mediachanger/AcsProxyZmq.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
@@ -99,6 +100,11 @@ private:
    * The ZMQ context.
    */
   void *m_zmqContext;
+
+  /**
+   * ACS media changer proxy.
+   */
+  AcsProxyZmq m_acsProxy;
 
   /**
    * Manual media changer proxy.

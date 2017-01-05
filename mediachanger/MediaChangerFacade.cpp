@@ -17,7 +17,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "mediachanger/AcsProxyZmqSingleton.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 
 namespace cta {
@@ -28,6 +27,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 MediaChangerFacade::MediaChangerFacade(log::Logger &log, void *const zmqContext) throw():
   m_zmqContext(zmqContext),
+  m_acsProxy(zmqContext),
   m_mmcProxy(log) {
 }
 
@@ -94,12 +94,7 @@ MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryTyp
   try {
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      // Using AcsProxyZmqSingleton instead of simply having a AcsProxyZmq
-      // member variable (e.g. m_acsProxy) in order to only instantiate an
-      // AcsProxyZmq object if necessary.  Instantiating such as object
-      // results in a one off memory leak related to ZMQ that would cause
-      // valgrind to fail on simple CTA unit-tests.
-      return AcsProxyZmqSingleton::instance(m_zmqContext);
+      return m_acsProxy;
     case TAPE_LIBRARY_TYPE_MANUAL:
       return m_mmcProxy;
     case TAPE_LIBRARY_TYPE_SCSI:
