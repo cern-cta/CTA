@@ -49,7 +49,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   RmcProxyTcpIp.cpp
   RmcUnmountMsgBody.cpp
   ScsiLibrarySlot.cpp
-  SmartZmqContext.cpp
   TapeLibraryType.cpp
   ZmqContextSingleton.cpp
   ZmqMsg.cpp
