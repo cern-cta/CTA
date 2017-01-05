@@ -17,12 +17,8 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
-#include "mediachanger/AcsProxyZmq.hpp"
-#include "mediachanger/Constants.hpp"
+#include "mediachanger/AcsProxyZmqSingleton.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "mediachanger/MmcProxyLog.hpp"
-#include "mediachanger/RmcProxyTcpIp.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -31,8 +27,8 @@ namespace mediachanger {
 // constructor
 //------------------------------------------------------------------------------
 MediaChangerFacade::MediaChangerFacade(log::Logger &log, void *const zmqContext) throw():
-  m_log(log),
-  m_zmqContext(zmqContext) {
+  m_zmqContext(zmqContext),
+  m_mmcProxy(log) {
 }
 
 //------------------------------------------------------------------------------
@@ -40,7 +36,7 @@ MediaChangerFacade::MediaChangerFacade(log::Logger &log, void *const zmqContext)
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadOnly(const std::string &vid, const LibrarySlot &slot) {
   try {
-    return createMediaChangerProxy(slot.getLibraryType())->mountTapeReadOnly(vid, slot);
+    return getProxy(slot.getLibraryType()).mountTapeReadOnly(vid, slot);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read-only access: vid=" << vid << " slot=" << slot.str() << ": " <<
@@ -54,7 +50,7 @@ void MediaChangerFacade::mountTapeReadOnly(const std::string &vid, const Library
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadWrite(const std::string &vid, const LibrarySlot &slot) {
   try {
-    return createMediaChangerProxy(slot.getLibraryType())->mountTapeReadWrite(vid, slot);
+    return getProxy(slot.getLibraryType()).mountTapeReadWrite(vid, slot);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read/write access: vid=" << vid << " slot=" << slot.str() << ": " <<
@@ -68,7 +64,7 @@ void MediaChangerFacade::mountTapeReadWrite(const std::string &vid, const Librar
 //------------------------------------------------------------------------------
 void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot &slot) {
   try {
-    return createMediaChangerProxy(slot.getLibraryType())->dismountTape(vid, slot);
+    return getProxy(slot.getLibraryType()).dismountTape(vid, slot);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape: vid=" << vid << " slot=" << slot.str() << ": " <<
@@ -82,7 +78,7 @@ void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot 
 //------------------------------------------------------------------------------
 void MediaChangerFacade::forceDismountTape(const std::string &vid, const LibrarySlot &slot) {
   try {
-    return createMediaChangerProxy(slot.getLibraryType())->forceDismountTape(vid, slot);
+    return getProxy(slot.getLibraryType()).forceDismountTape(vid, slot);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to force dismount tape: vid=" << vid << " slot=" << slot.str() << ": " <<
@@ -92,17 +88,22 @@ void MediaChangerFacade::forceDismountTape(const std::string &vid, const Library
 }
 
 //------------------------------------------------------------------------------
-// createMediaChangerProxy
+// getProxy
 //------------------------------------------------------------------------------
-std::unique_ptr<MediaChangerProxy> MediaChangerFacade::createMediaChangerProxy(const TapeLibraryType libraryType) {
+MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {
   try {
     switch(libraryType) {
     case TAPE_LIBRARY_TYPE_ACS:
-      return make_unique<AcsProxyZmq>(m_zmqContext);
+      // Using AcsProxyZmqSingleton instead of simply having a AcsProxyZmq
+      // member variable (e.g. m_acsProxy) in order to only instantiate an
+      // AcsProxyZmq object if necessary.  Instantiating such as object
+      // results in a one off memory leak related to ZMQ that would cause
+      // valgrind to fail on simple CTA unit-tests.
+      return AcsProxyZmqSingleton::instance(m_zmqContext);
     case TAPE_LIBRARY_TYPE_MANUAL:
-      return make_unique<MmcProxyLog>(m_log);
+      return m_mmcProxy;
     case TAPE_LIBRARY_TYPE_SCSI:
-      return make_unique<RmcProxyTcpIp>();
+      return m_rmcProxy;
     default:
       // Should never get here
       throw exception::Exception("Library slot has an unexpected library type");

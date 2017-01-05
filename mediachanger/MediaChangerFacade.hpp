@@ -21,6 +21,8 @@
 #include "common/log/Logger.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
+#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/RmcProxyTcpIp.hpp"
 #include "mediachanger/ZmqContextSingleton.hpp"
 
 #include <memory>
@@ -38,10 +40,13 @@ public:
   /**
    * Constructor.
    *
-   * @param log Object representing the API to the CTA logging system.
+   * @param log Object representing the API to the CTA logging system.  This log
+   * object will be used by the manual media changer to communicate with the
+   * tape operator.
    * @param zmqContext The ZMQ context.  There is usually one ZMQ context within
    * a program.  Set this parameter in order for the MediaChangerFacade to share
-   * an already existing ZMQ context.
+   * an already existing ZMQ context.  If this parameter is not set then the
+   * ZmqContextSingleton of the mediachanger namespace will be used.
    */
   MediaChangerFacade(log::Logger &log, void *const zmqContext = ZmqContextSingleton::instance()) throw();
 
@@ -91,22 +96,24 @@ public:
 private:
 
   /**
-   * Object representing the API to the CTA logging system.
-   */
-  log::Logger &m_log;
-
-  /**
    * The ZMQ context.
    */
   void *m_zmqContext;
 
   /**
-   * Factory method that creates a media changer proxy object based on the
-   * specified tape library type.
-   *
-   * @param libraryType The type of tape library.
+   * Manual media changer proxy.
    */
-  std::unique_ptr<MediaChangerProxy> createMediaChangerProxy(const TapeLibraryType libraryType);
+  MmcProxyLog m_mmcProxy;
+
+  /**
+   * SCSI media changer proxy.
+   */
+  RmcProxyTcpIp m_rmcProxy;
+
+  /**
+   * Returns the media changer proxy for the specified library type.
+   */
+  MediaChangerProxy &getProxy(const TapeLibraryType libraryType);
 
 }; // class MediaChangerFacade
 
