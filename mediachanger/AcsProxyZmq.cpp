@@ -169,9 +169,8 @@ Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySl
 // constructor
 //------------------------------------------------------------------------------
 AcsProxyZmq::AcsProxyZmq(void *const zmqContext, const unsigned short serverPort) throw():
-  m_serverPort(serverPort),
-  m_serverSocket(zmqContext, ZMQ_REQ) {
-  connectZmqSocketToLocalhost(m_serverSocket, serverPort);
+  m_zmqContext(zmqContext),
+  m_serverPort(serverPort) {
 }
 
 //------------------------------------------------------------------------------
@@ -182,10 +181,10 @@ void AcsProxyZmq::mountTapeReadOnly(const std::string &vid, const LibrarySlot &l
   
   try {
     const Frame rqst = createAcsMountTapeReadOnlyFrame(vid, dynamic_cast<const AcsLibrarySlot&>(librarySlot));
-    sendFrame(m_serverSocket, rqst);
+    sendFrame(serverSocketInstance(), rqst);
 
     MediaChangerReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
+    recvTapeReplyOrEx(serverSocketInstance(), reply);
     if(0 != reply.value()) {
       // Should never get here
       cta::exception::Exception ex;
@@ -210,10 +209,10 @@ void AcsProxyZmq::mountTapeReadWrite(const std::string &vid, const LibrarySlot &
   
   try {
     const Frame rqst = createAcsMountTapeReadWriteFrame(vid, dynamic_cast<const AcsLibrarySlot&>(librarySlot));
-    sendFrame(m_serverSocket, rqst);
+    sendFrame(serverSocketInstance(), rqst);
 
     MediaChangerReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
+    recvTapeReplyOrEx(serverSocketInstance(), reply);
     if(0 != reply.value()) {
       // Should never get here
       cta::exception::Exception ex;
@@ -238,10 +237,10 @@ void AcsProxyZmq::dismountTape(const std::string &vid, const LibrarySlot &librar
   
   try {
     const Frame rqst = createAcsDismountTapeFrame(vid, dynamic_cast<const AcsLibrarySlot&>(librarySlot));
-    sendFrame(m_serverSocket, rqst);
+    sendFrame(serverSocketInstance(), rqst);
 
     MediaChangerReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
+    recvTapeReplyOrEx(serverSocketInstance(), reply);
     if(0 != reply.value()) {
       // Should never get here
       cta::exception::Exception ex;
@@ -266,10 +265,10 @@ void AcsProxyZmq::forceDismountTape(const std::string &vid, const LibrarySlot &l
   
   try {
     const Frame rqst = createAcsForceDismountTapeFrame(vid, dynamic_cast<const AcsLibrarySlot&>(librarySlot));
-    sendFrame(m_serverSocket, rqst);
+    sendFrame(serverSocketInstance(), rqst);
 
     MediaChangerReturnValue reply;
-    recvTapeReplyOrEx(m_serverSocket, reply);
+    recvTapeReplyOrEx(serverSocketInstance(), reply);
     if(0 != reply.value()) {
       // Should never get here
       cta::exception::Exception ex;
@@ -284,6 +283,17 @@ void AcsProxyZmq::forceDismountTape(const std::string &vid, const LibrarySlot &l
       librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// serverSocketInstance
+//------------------------------------------------------------------------------
+ZmqSocketMT &AcsProxyZmq::serverSocketInstance() {
+  if(nullptr == m_serverSocket) {
+    m_serverSocket.reset(new ZmqSocketMT(m_zmqContext, ZMQ_REQ));
+    connectZmqSocketToLocalhost(*m_serverSocket, m_serverPort);
+  }
+  return *m_serverSocket;
 }
 
 } // namespace mediachanger

@@ -22,6 +22,7 @@
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/ZmqSocketMT.hpp"
 
+#include <memory>
 #include <mutex>
 
 namespace cta {
@@ -80,6 +81,11 @@ public:
   void forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
 
 private:
+
+  /**
+   * The ZMQ context.
+   */
+  void *m_zmqContext;
   
   /**
    * Mutex used to implement a critical section around the enclosed
@@ -94,9 +100,21 @@ private:
   const unsigned short m_serverPort;
 
   /**
-   * Socket connecting this proxy the daemon it represents.
+   * Socket connecting this proxy to the daemon it represents.
    */
-  ZmqSocketMT m_serverSocket;
+  std::unique_ptr<ZmqSocketMT> m_serverSocket;
+
+  /**
+   * Returns the socket instance connecting this proxy to the daemon it
+   * represents.  This method instantiates a socket and connects it if
+   * a socket does not already exist.
+   *
+   * Please note that a lock MUST be taken on m_mutex before calling this
+   * method.
+   *
+   * @return The socket connecting this proxy the daemon it represents.
+   */
+  ZmqSocketMT &serverSocketInstance();
 
 }; // class AcsProxyZmq
 
