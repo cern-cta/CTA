@@ -53,7 +53,7 @@ namespace cta {
 namespace mediachanger {
 
 /**
- * A concrete implementation of the interface to the rmc daemon.
+ * A SCSI media changer proxy.
  */
 class RmcProxy: public MediaChangerProxy {
 public:

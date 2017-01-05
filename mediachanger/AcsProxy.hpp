@@ -29,7 +29,7 @@ namespace cta {
 namespace mediachanger {
 
 /**
- * Concrete class providing a ZMQ implementation of an AcsProxy.
+ * A ZMQ media changer proxy.
  */
 class AcsProxy: public MediaChangerProxy {
 public:
