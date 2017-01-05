@@ -25,10 +25,9 @@ namespace cta {
 namespace mediachanger {
 
 /**
- * Concrete class implementing a MmcProxy that simply logs mount and dismount
- * requests.
+ * Manual media changer proxy that simply logs mount and dismount requests.
  */
-class MmcProxyLog: public MediaChangerProxy {
+class MmcProxy: public MediaChangerProxy {
 public:
 
   /**
@@ -36,7 +35,7 @@ public:
    *
    * @param log Object representing the API to the CTA logging system.
    */
-  MmcProxyLog(log::Logger &log) throw();
+  MmcProxy(log::Logger &log) throw();
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -88,7 +87,7 @@ private:
    */
   log::Logger &m_log;
 
-}; // class MmcProxyLog
+}; // class MmcProxy
 
 } // namespace mediachanger
 } // namespace cta

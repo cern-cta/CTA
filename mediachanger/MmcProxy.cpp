@@ -17,41 +17,42 @@
  */
 
 #include "mediachanger/ManualLibrarySlot.hpp"
-#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/MmcProxy.hpp"
+
+namespace cta {
+namespace mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::MmcProxyLog::MmcProxyLog(log::Logger &log) throw():
+MmcProxy::MmcProxy(log::Logger &log) throw():
   m_log(log) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::mountTapeReadOnly( const std::string &vid, const LibrarySlot &librarySlot) {
+void MmcProxy::mountTapeReadOnly( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual mounted for read-only access",
-    params);
+  m_log(log::WARNING, "Tape should be manual mounted for read-only access", params);
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
+void MmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual mounted for read/write access",
-    params);
+  m_log(log::WARNING, "Tape should be manual mounted for read/write access", params);
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::dismountTape( const std::string &vid, const LibrarySlot &librarySlot) {
+void MmcProxy::dismountTape( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
@@ -61,9 +62,12 @@ void cta::mediachanger::MmcProxyLog::dismountTape( const std::string &vid, const
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void cta::mediachanger::MmcProxyLog::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void MmcProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("TPVID", vid),
     log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Tape should be manual dismounted", params);
 }
+
+} // namespace medichanger
+} // namespace cta

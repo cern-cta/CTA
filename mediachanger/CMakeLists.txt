@@ -39,7 +39,7 @@ set (MEDIACHANGER_LIB_SRC_FILES
   MediaChangerProxy.cpp
   MessageHeader.cpp
   messages.cpp
-  MmcProxyLog.cpp
+  MmcProxy.cpp
   ${ProtoSources}
   RmcMarshal.cpp
   RmcMarshal.hpp

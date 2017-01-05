@@ -22,7 +22,7 @@
 #include "mediachanger/AcsProxy.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
-#include "mediachanger/MmcProxyLog.hpp"
+#include "mediachanger/MmcProxy.hpp"
 #include "mediachanger/RmcProxy.hpp"
 #include "mediachanger/ZmqContextSingleton.hpp"
 
@@ -109,7 +109,7 @@ private:
   /**
    * Manual media changer proxy.
    */
-  MmcProxyLog m_mmcProxy;
+  MmcProxy m_mmcProxy;
 
   /**
    * SCSI media changer proxy.
