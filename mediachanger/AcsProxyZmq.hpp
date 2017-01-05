@@ -20,7 +20,7 @@
 
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
-#include "mediachanger/ZmqSocketMT.hpp"
+#include "mediachanger/ZmqSocket.hpp"
 
 #include <memory>
 #include <mutex>
@@ -102,7 +102,7 @@ private:
   /**
    * Socket connecting this proxy to the daemon it represents.
    */
-  std::unique_ptr<ZmqSocketMT> m_serverSocket;
+  std::unique_ptr<ZmqSocket> m_serverSocket;
 
   /**
    * Returns the socket instance connecting this proxy to the daemon it
@@ -114,7 +114,7 @@ private:
    *
    * @return The socket connecting this proxy the daemon it represents.
    */
-  ZmqSocketMT &serverSocketInstance();
+  ZmqSocket &serverSocketInstance();
 
 }; // class AcsProxyZmq
 

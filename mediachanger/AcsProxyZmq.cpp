@@ -288,9 +288,9 @@ void AcsProxyZmq::forceDismountTape(const std::string &vid, const LibrarySlot &l
 //------------------------------------------------------------------------------
 // serverSocketInstance
 //------------------------------------------------------------------------------
-ZmqSocketMT &AcsProxyZmq::serverSocketInstance() {
+ZmqSocket &AcsProxyZmq::serverSocketInstance() {
   if(nullptr == m_serverSocket) {
-    m_serverSocket.reset(new ZmqSocketMT(m_zmqContext, ZMQ_REQ));
+    m_serverSocket.reset(new ZmqSocket(m_zmqContext, ZMQ_REQ));
     connectZmqSocketToLocalhost(*m_serverSocket, m_serverPort);
   }
   return *m_serverSocket;

@@ -51,9 +51,7 @@ set (MEDIACHANGER_LIB_SRC_FILES
   TapeLibraryType.cpp
   ZmqContextSingleton.cpp
   ZmqMsg.cpp
-  ZmqSocket.cpp
-  ZmqSocketMT.cpp
-  ZmqSocketST.cpp)
+  ZmqSocket.cpp)
 
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
