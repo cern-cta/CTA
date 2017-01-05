@@ -21,7 +21,7 @@
 #include "mediachanger/AcsLibrarySlot.hpp"
 #include "mediachanger/AcsMountTapeReadOnly.pb.h"
 #include "mediachanger/AcsMountTapeReadWrite.pb.h"
-#include "mediachanger/AcsProxyZmq.hpp"
+#include "mediachanger/AcsProxy.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerReturnValue.pb.h"
 #include "mediachanger/messages.hpp"
@@ -168,7 +168,7 @@ Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySl
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AcsProxyZmq::AcsProxyZmq(void *const zmqContext, const unsigned short serverPort) throw():
+AcsProxy::AcsProxy(void *const zmqContext, const unsigned short serverPort) throw():
   m_zmqContext(zmqContext),
   m_serverPort(serverPort) {
 }
@@ -176,7 +176,7 @@ AcsProxyZmq::AcsProxyZmq(void *const zmqContext, const unsigned short serverPort
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void AcsProxyZmq::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
+void AcsProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
   std::lock_guard<std::mutex> lock(m_mutex);
   
   try {
@@ -204,7 +204,7 @@ void AcsProxyZmq::mountTapeReadOnly(const std::string &vid, const LibrarySlot &l
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void AcsProxyZmq::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
+void AcsProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   std::lock_guard<std::mutex> lock(m_mutex);
   
   try {
@@ -232,7 +232,7 @@ void AcsProxyZmq::mountTapeReadWrite(const std::string &vid, const LibrarySlot &
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void AcsProxyZmq::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void AcsProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::lock_guard<std::mutex> lock(m_mutex);
   
   try {
@@ -260,7 +260,7 @@ void AcsProxyZmq::dismountTape(const std::string &vid, const LibrarySlot &librar
 //------------------------------------------------------------------------------
 // forceDismountTape
 //------------------------------------------------------------------------------
-void AcsProxyZmq::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void AcsProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::lock_guard<std::mutex> lock(m_mutex);
   
   try {
@@ -288,7 +288,7 @@ void AcsProxyZmq::forceDismountTape(const std::string &vid, const LibrarySlot &l
 //------------------------------------------------------------------------------
 // serverSocketInstance
 //------------------------------------------------------------------------------
-ZmqSocket &AcsProxyZmq::serverSocketInstance() {
+ZmqSocket &AcsProxy::serverSocketInstance() {
   if(nullptr == m_serverSocket) {
     m_serverSocket.reset(new ZmqSocket(m_zmqContext, ZMQ_REQ));
     connectZmqSocketToLocalhost(*m_serverSocket, m_serverPort);

@@ -24,7 +24,7 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 set (MEDIACHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
-  AcsProxyZmq.cpp
+  AcsProxy.cpp
   CmdLine.cpp
   CmdLineTool.cpp
   CommonMarshal.cpp

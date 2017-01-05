@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
-#include "mediachanger/AcsProxyZmq.hpp"
+#include "mediachanger/AcsProxy.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MmcProxyLog.hpp"
@@ -104,7 +104,7 @@ private:
   /**
    * ACS media changer proxy.
    */
-  AcsProxyZmq m_acsProxy;
+  AcsProxy m_acsProxy;
 
   /**
    * Manual media changer proxy.

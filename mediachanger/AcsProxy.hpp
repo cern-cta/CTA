@@ -31,7 +31,7 @@ namespace mediachanger {
 /**
  * Concrete class providing a ZMQ implementation of an AcsProxy.
  */
-class AcsProxyZmq: public MediaChangerProxy {
+class AcsProxy: public MediaChangerProxy {
 public:
 
   /**
@@ -41,7 +41,7 @@ public:
    * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
    * listening for ZMQ messages.
    */
-  AcsProxyZmq(void *const zmqContext, const unsigned short serverPort = ACS_PORT) throw();
+  AcsProxy(void *const zmqContext, const unsigned short serverPort = ACS_PORT) throw();
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only
@@ -116,7 +116,7 @@ private:
    */
   ZmqSocket &serverSocketInstance();
 
-}; // class AcsProxyZmq
+}; // class AcsProxy
 
 } // namespace mediachanger
 } // namespace cta
