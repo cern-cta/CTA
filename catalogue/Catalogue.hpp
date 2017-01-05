@@ -554,6 +554,14 @@ public:
    */
   virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
 
+  /**
+   * Returns true if the specified tape exists.
+   *
+   * @param vid The volume identifier of the tape.
+   * @return True if the tape exists.
+   */
+  virtual bool tapeExists(const std::string &vid) const = 0;
+
 }; // class Catalogue
 
 } // namespace catalogue

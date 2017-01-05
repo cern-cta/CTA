@@ -1626,6 +1626,18 @@ void RdbmsCatalogue::createTape(
 //------------------------------------------------------------------------------
 // tapeExists
 //------------------------------------------------------------------------------
+bool RdbmsCatalogue::tapeExists(const std::string &vid) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return tapeExists(conn, vid);
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// tapeExists
+//------------------------------------------------------------------------------
 bool RdbmsCatalogue::tapeExists(rdbms::PooledConn &conn, const std::string &vid) const {
   try {
     const char *const sql =

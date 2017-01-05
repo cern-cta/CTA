@@ -1640,6 +1640,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   ASSERT_TRUE(m_catalogue->getTapes().empty());
 
   const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
   const std::string encryptionKey = "encryption_key";
@@ -1653,6 +1656,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
     fullValue, comment);
+
+  ASSERT_TRUE(m_catalogue->tapeExists(vid));
 
   const std::list<common::dataStructures::Tape> tapes =
     m_catalogue->getTapes();

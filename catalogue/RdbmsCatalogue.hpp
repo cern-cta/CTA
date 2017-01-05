@@ -662,6 +662,14 @@ protected:
   /**
    * Returns true if the specified tape exists.
    *
+   * @param vid The volume identifier of the tape.
+   * @return True if the tape exists.
+   */
+  bool tapeExists(const std::string &vid) const override;
+
+  /**
+   * Returns true if the specified tape exists.
+   *
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    * @return True if the tape exists.
