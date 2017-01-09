@@ -59,11 +59,12 @@ OcciStmt::OcciStmt(
     }
   } catch(exception::Exception &ex) {
     close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
-      ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      sql.substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
     close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + se.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      sql.substr(0, c_maxSqlLenInExceptions) + ": " + se.what());
   }
 }
 
@@ -90,10 +91,11 @@ void OcciStmt::close() {
       m_stmt = nullptr;
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + se.what());
   }
 }
 
@@ -128,10 +130,11 @@ void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<u
       m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + se.what());
   }
 }
 
@@ -163,10 +166,11 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
       m_stmt->setNull(paramIdx, oracle::occi::OCCISTRING);
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " +
-      ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + se.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + se.what());
   }
 }
 
@@ -191,7 +195,8 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
       } catch(...) {
       }
     }
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.what());
   }
 }
 
@@ -216,7 +221,8 @@ void OcciStmt::executeNonQuery() {
       } catch(...) {
       }
     }
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSql() + ": " + ex.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.what());
   }
 }
 

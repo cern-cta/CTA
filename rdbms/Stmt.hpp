@@ -177,6 +177,11 @@ protected:
    */
   AutocommitMode m_autoCommitMode;
 
+  /**
+   * The maximum length an SQL statement can have in exception error message.
+   */
+  const uint32_t c_maxSqlLenInExceptions = 80;
+
 }; // class Stmt
 
 } // namespace rdbms
