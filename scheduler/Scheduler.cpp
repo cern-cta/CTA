@@ -309,6 +309,9 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler:
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(const std::string &tapePoolName) const {
+  if(!m_catalogue.tapePoolExists(tapePoolName)) {
+    throw exception::Exception(std::string("Tape pool ") + tapePoolName + " does not exist");
+  }
   return m_db.getArchiveJobs(tapePoolName);
 }
 
@@ -322,7 +325,6 @@ std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-
 std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
