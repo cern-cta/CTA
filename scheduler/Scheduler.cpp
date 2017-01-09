@@ -35,10 +35,12 @@
 #include <random>
 #include <chrono>
 
+namespace cta {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::Scheduler::Scheduler(
+Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
   SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount): 
     m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount), 
@@ -47,12 +49,12 @@ cta::Scheduler::Scheduler(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::Scheduler::~Scheduler() throw() { }
+Scheduler::~Scheduler() throw() { }
 
 //------------------------------------------------------------------------------
 // ping
 //------------------------------------------------------------------------------
-void cta::Scheduler::ping() {
+void Scheduler::ping() {
   m_db.ping();
   m_catalogue.ping();
 }
@@ -60,18 +62,18 @@ void cta::Scheduler::ping() {
 //------------------------------------------------------------------------------
 // authorizeAdmin
 //------------------------------------------------------------------------------
-void cta::Scheduler::authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity){
+void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &cliIdentity){
   if(!(m_catalogue.isAdmin(cliIdentity))) {
     std::stringstream msg;
     msg << "User: " << cliIdentity.username << " on host: " << cliIdentity.host << " is not authorized to execute CTA admin commands";
-    throw cta::exception::UserError(msg.str());
+    throw exception::UserError(msg.str());
   }
 }
 
 //------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
-uint64_t cta::Scheduler::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request) {
+uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::dataStructures::ArchiveRequest &request) {
   auto catalogueInfo = m_catalogue.prepareForNewFile(instanceName, request.storageClass, request.requester);
   m_db.queueArchive(instanceName, request, catalogueInfo);
   return catalogueInfo.fileId;
@@ -80,9 +82,9 @@ uint64_t cta::Scheduler::queueArchive(const std::string &instanceName, const cta
 //------------------------------------------------------------------------------
 // queueRetrieve
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueRetrieve(
+void Scheduler::queueRetrieve(
   const std::string &instanceName,
-  const cta::common::dataStructures::RetrieveRequest &request) {
+  const common::dataStructures::RetrieveRequest &request) {
   // Get the 
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
@@ -98,7 +100,7 @@ void cta::Scheduler::queueRetrieve(
       vids.erase(t.second.vid);
   }
   if (vids.empty())
-    throw cta::exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
+    throw exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
   // Get the statistics for the potential tapes on which we will retrieve.
   auto stats=m_db.getRetrieveQueueStatistics(queueCriteria, vids);
   // Sort the potential queues.
@@ -111,7 +113,7 @@ void cta::Scheduler::queueRetrieve(
       candidateVids.insert(s.vid);
   }
   if (candidateVids.empty())
-    throw cta::exception::Exception("In Scheduler::queueRetrieve(): failed to sort and select candidate VIDs");
+    throw exception::Exception("In Scheduler::queueRetrieve(): failed to sort and select candidate VIDs");
   // We need to get a random number [0, candidateVids.size() -1]
   std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
   std::uniform_int_distribution<size_t> distribution(0, candidateVids.size() -1);
@@ -125,13 +127,13 @@ void cta::Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile cta::Scheduler::deleteArchive(const std::string &instanceName, const cta::common::dataStructures::DeleteArchiveRequest &request) {
+common::dataStructures::ArchiveFile Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
   try {
     m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
-  } catch (cta::exception::Exception &dbEx) {
+  } catch (exception::Exception &dbEx) {
     // The file was apparently not queued. If we fail to remove it from the catalogue, then it is an error.
     return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   }
@@ -139,136 +141,136 @@ cta::common::dataStructures::ArchiveFile cta::Scheduler::deleteArchive(const std
   // Errors are not fatal here (so we filter them out).
   try {
     return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
-  } catch (cta::exception::UserError &) {}
-  return cta::common::dataStructures::ArchiveFile();
+  } catch (exception::UserError &) {}
+  return common::dataStructures::ArchiveFile();
 }
 
 //------------------------------------------------------------------------------
 // cancelRetrieve
 //------------------------------------------------------------------------------
-void cta::Scheduler::cancelRetrieve(const std::string &instanceName, const cta::common::dataStructures::CancelRetrieveRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelRetrieve(const std::string &instanceName, const common::dataStructures::CancelRetrieveRequest &request) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileInfo
 //------------------------------------------------------------------------------
-void cta::Scheduler::updateFileInfo(const std::string &instanceName, const cta::common::dataStructures::UpdateFileInfoRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::updateFileInfo(const std::string &instanceName, const common::dataStructures::UpdateFileInfoRequest &request) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // updateFileStorageClass
 //------------------------------------------------------------------------------
-void cta::Scheduler::updateFileStorageClass(const std::string &instanceName, const cta::common::dataStructures::UpdateFileStorageClassRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::updateFileStorageClass(const std::string &instanceName, const common::dataStructures::UpdateFileStorageClassRequest &request) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // listStorageClass
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::StorageClass> cta::Scheduler::listStorageClass(const std::string &instanceName, const cta::common::dataStructures::ListStorageClassRequest &request) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::StorageClass> Scheduler::listStorageClass(const std::string &instanceName, const common::dataStructures::ListStorageClassRequest &request) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const cta::common::dataStructures::RepackType) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const common::dataStructures::RepackType) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // cancelRepack
 //------------------------------------------------------------------------------
-void cta::Scheduler::cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::RepackInfo> cta::Scheduler::getRepacks(const cta::common::dataStructures::SecurityIdentity &cliIdentity) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks(const common::dataStructures::SecurityIdentity &cliIdentity) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getRepack
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RepackInfo cta::Scheduler::getRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
+common::dataStructures::RepackInfo Scheduler::getRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
 }
 
 //------------------------------------------------------------------------------
 // shrink
 //------------------------------------------------------------------------------
-void cta::Scheduler::shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::shrink(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void cta::Scheduler::queueVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // cancelVerify
 //------------------------------------------------------------------------------
-void cta::Scheduler::cancelVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::cancelVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getVerifys
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::VerifyInfo> cta::Scheduler::getVerifys(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return std::list<cta::common::dataStructures::VerifyInfo>(); 
+std::list<common::dataStructures::VerifyInfo> Scheduler::getVerifys(const common::dataStructures::SecurityIdentity &cliIdentity) const {
+  return std::list<common::dataStructures::VerifyInfo>(); 
 }
 
 //------------------------------------------------------------------------------
 // getVerify
 //------------------------------------------------------------------------------
-cta::common::dataStructures::VerifyInfo cta::Scheduler::getVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+common::dataStructures::VerifyInfo Scheduler::getVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) const {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // readTest
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ReadTestResult cta::Scheduler::readTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
+common::dataStructures::ReadTestResult Scheduler::readTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
         const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output, const std::string &tag) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // writeTest
 //------------------------------------------------------------------------------
-cta::common::dataStructures::WriteTestResult cta::Scheduler::writeTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
+common::dataStructures::WriteTestResult Scheduler::writeTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
         const std::string &inputFile, const std::string &tag) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // write_autoTest
 //------------------------------------------------------------------------------
-cta::common::dataStructures::WriteTestResult cta::Scheduler::write_autoTest(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const uint64_t numberOfFiles, const uint64_t fileSize, const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+common::dataStructures::WriteTestResult Scheduler::write_autoTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
+        const uint64_t numberOfFiles, const uint64_t fileSize, const common::dataStructures::TestSourceType testSourceType, const std::string &tag) const {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getDesiredDriveState
 //------------------------------------------------------------------------------
-cta::common::dataStructures::DesiredDriveState cta::Scheduler::getDesiredDriveState(const std::string& driveName) {
+common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName) {
   auto driveStates = m_db.getDriveStates();
   for (auto & d: driveStates) {
     if (d.driveName == driveName) {
@@ -281,7 +283,7 @@ cta::common::dataStructures::DesiredDriveState cta::Scheduler::getDesiredDriveSt
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void cta::Scheduler::setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
+void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = up;
   desiredDriveState.forceDown = force;
@@ -291,7 +293,7 @@ void cta::Scheduler::setDesiredDriveState(const cta::common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void cta::Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, cta::common::dataStructures::DriveStatus status) {
+void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status) {
   // TODO: mount type should be transmitted too.
   m_db.reportDriveStatus(driveInfo, type, status, time(NULL));
 }
@@ -299,21 +301,21 @@ void cta::Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > cta::Scheduler::getPendingArchiveJobs() const {
+std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler::getPendingArchiveJobs() const {
   return m_db.getArchiveJobs();
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveJob> cta::Scheduler::getPendingArchiveJobs(const std::string &tapePoolName) const {
+std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(const std::string &tapePoolName) const {
   return m_db.getArchiveJobs(tapePoolName);
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta::Scheduler::getPendingRetrieveJobs() const {
+std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler::getPendingRetrieveJobs() const {
   return m_db.getRetrieveJobs();
 }
 
@@ -321,21 +323,21 @@ std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > cta:
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 
-std::list<cta::common::dataStructures::RetrieveJob> cta::Scheduler::getPendingRetrieveJobs(const std::string& vid) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid) const {
+  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::DriveState> cta::Scheduler::getDriveStates(const cta::common::dataStructures::SecurityIdentity &cliIdentity) const {
+std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity) const {
   return m_db.getDriveStates();
 }
 
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
+std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
   // In order to decide the next mount to do, we have to take a global lock on 
   // the scheduling, retrieve a list of all running mounts, queues sizes for 
   // tapes and tape pools, order the candidates by priority
@@ -356,12 +358,12 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // Build the list of tapes.
   std::set<std::string> tapeSet;
   for (auto &m:mountInfo->potentialMounts) {
-    if (m.type==cta::common::dataStructures::MountType::Retrieve) tapeSet.insert(m.vid);
+    if (m.type==common::dataStructures::MountType::Retrieve) tapeSet.insert(m.vid);
   }
   if (tapeSet.size()) {
     auto tapesInfo=m_catalogue.getTapesByVid(tapeSet);
     for (auto &m:mountInfo->potentialMounts) {
-      if (m.type==cta::common::dataStructures::MountType::Retrieve) {
+      if (m.type==common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
         m.tapePool=tapesInfo[m.vid].tapePoolName;
       }
@@ -373,7 +375,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // We also only want the potential mounts for which we still have 
   // We cannot filter the archives yet
   for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
-    if (m->type == cta::common::dataStructures::MountType::Retrieve && m->logicalLibrary != logicalLibraryName) {
+    if (m->type == common::dataStructures::MountType::Retrieve && m->logicalLibrary != logicalLibraryName) {
       m = mountInfo->potentialMounts.erase(m);
     } else {
       m++;
@@ -382,7 +384,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
-  typedef std::pair<std::string, cta::common::dataStructures::MountType> tpType;
+  typedef std::pair<std::string, common::dataStructures::MountType> tpType;
   std::map<tpType, uint32_t> existingMountsSummary;
   for (auto & em: mountInfo->existingMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
@@ -431,14 +433,14 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   
   // Find out if we have any potential archive mount in the list. If so, get the
   // list of tapes from the catalogue.
-  std::list<cta::catalogue::TapeForWriting> tapeList;
+  std::list<catalogue::TapeForWriting> tapeList;
   if (std::count_if(
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
-        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == cta::common::dataStructures::MountType::Archive; } )) {
+        [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::Archive; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
   }
        
-  auto fullTapeList=m_catalogue.getTapes(cta::catalogue::TapeSearchCriteria());
+  auto fullTapeList=m_catalogue.getTapes(catalogue::TapeSearchCriteria());
   for (auto & ftle: fullTapeList) {
     ftle.capacityInBytes++;
   }
@@ -452,7 +454,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
     // If the mount is an archive, we still have to find a tape.
-    if (m->type==cta::common::dataStructures::MountType::Archive) {
+    if (m->type==common::dataStructures::MountType::Archive) {
       // We need to find a tape for archiving. It should be both in the right 
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
@@ -467,17 +469,17 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
-                cta::utils::getShortHostname(), 
+                utils::getShortHostname(), 
                 time(NULL)).release());
             internalRet->m_sessionRunning = true;
-            internalRet->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+            internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
             return std::unique_ptr<TapeMount> (internalRet.release());
-          } catch (cta::exception::Exception & ex) {
+          } catch (exception::Exception & ex) {
             continue;
           }
         }
       }
-    } else if (m->type==cta::common::dataStructures::MountType::Retrieve) {
+    } else if (m->type==common::dataStructures::MountType::Retrieve) {
       // We know the tape we intend to mount. We have to validate the tape is 
       // actually available to read, and pass on it if no.
       auto drives = m_db.getDriveStates();
@@ -489,14 +491,14 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
               m->tapePool,
               driveName,
               logicalLibraryName, 
-              cta::utils::getShortHostname(), 
+              utils::getShortHostname(), 
               time(NULL))));
           internalRet->m_sessionRunning = true;
           internalRet->m_diskRunning = true;
           internalRet->m_tapeRunning = true;
-          internalRet->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+          internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
           return std::unique_ptr<TapeMount> (internalRet.release()); 
-        } catch (cta::exception::Exception & ex) {
+        } catch (exception::Exception & ex) {
           std::string debug=ex.getMessageValue();
           continue;
         }
@@ -505,5 +507,7 @@ std::unique_ptr<cta::TapeMount> cta::Scheduler::getNextMount(const std::string &
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
-  return std::unique_ptr<cta::TapeMount>();
+  return std::unique_ptr<TapeMount>();
 }
+
+} // namespace cta
