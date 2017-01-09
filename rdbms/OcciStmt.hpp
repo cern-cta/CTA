@@ -77,13 +77,6 @@ public:
   virtual void close() override;
 
   /**
-   * Returns the SQL statement.
-   *
-   * @return The SQL statement.
-   */
-  virtual const std::string &getSql() const override;
-
-  /**
    * Binds an SQL parameter.
    *
    * @param paramName The name of the parameter.
@@ -164,11 +157,6 @@ private:
    * Mutex used to serialize access to this object.
    */
   std::mutex m_mutex;
-
-  /**
-   * The SQL statement.
-   */
-  std::string m_sql;
 
   /**
    * Map from SQL parameter name to parameter index.

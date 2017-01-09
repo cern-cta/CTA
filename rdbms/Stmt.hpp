@@ -45,9 +45,10 @@ public:
   /**
    * Constructor.
    *
+   * @param sql The SQL statement.
    * @param autocommitMode The autocommit mode of the statement.
    */
-  Stmt(const AutocommitMode autocommitMode);
+  Stmt(const std::string &sql, const AutocommitMode autocommitMode);
 
   /**
    * Returns the autocommit mode of teh statement.
@@ -91,7 +92,7 @@ public:
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const = 0;
+  const std::string &getSql() const;
 
   /**
    * Binds an SQL parameter.
@@ -173,6 +174,11 @@ public:
 protected:
 
   /**
+   * The SQL statement.
+   */
+  std::string m_sql;
+
+  /**
    * The autocommit mode of the statement.
    */
   AutocommitMode m_autoCommitMode;
@@ -181,6 +187,18 @@ protected:
    * The maximum length an SQL statement can have in exception error message.
    */
   const uint32_t c_maxSqlLenInExceptions = 80;
+
+  /**
+   * Returns the SQL string to be used in an exception message.  The string
+   * will be clipped at a maxmum of c_maxSqlLenInExceptions characters.  If the
+   * string is actually clipped then the three last characters will be an
+   * replaced by an ellipsis of three dots, in other word "...".  These 3
+   * characters will indicate to the reader of the exception message that the
+   * SQL statement has been clipped.
+   *
+   * @return The SQL string to be used in an exception message.
+   */
+  std::string getSqlForException() const;
 
 }; // class Stmt
 

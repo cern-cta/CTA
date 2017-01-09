@@ -39,9 +39,8 @@ SqliteStmt::SqliteStmt(
   const AutocommitMode autocommitMode,
   SqliteConn &conn,
   const std::string &sql):
-  Stmt(autocommitMode),
+  Stmt(sql, autocommitMode),
   m_conn(conn),
-  m_sql(sql),
   m_paramNameToIdx(sql),
   m_nbAffectedRows(0) {
   m_stmt = nullptr;
@@ -49,7 +48,7 @@ SqliteStmt::SqliteStmt(
 
   const uint maxPrepareRetries = 20; // A worst case scenario of 2 seconds
   for(unsigned int i = 1; i <= maxPrepareRetries; i++) {
-    const int prepareRc = sqlite3_prepare_v2(m_conn.m_sqliteConn, sql.c_str(), nByte, &m_stmt, nullptr);
+    const int prepareRc = sqlite3_prepare_v2(m_conn.m_sqliteConn, m_sql.c_str(), nByte, &m_stmt, nullptr);
 
     if(SQLITE_OK == prepareRc) {
       break;
@@ -66,14 +65,15 @@ SqliteStmt::SqliteStmt(
         // Try to prepare the statement again
         continue;
       } else {
-        throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 returned SQLITE_LOCKED the"
-          " maximum number of " + std::to_string(i) + " times"); 
+        throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+          ": sqlite3_prepare_v2 returned SQLITE_LOCKED the maximum number of " + std::to_string(i) + " times"); 
       }
     }
 
     const std::string msg = sqlite3_errmsg(m_conn.m_sqliteConn);
     sqlite3_finalize(m_stmt);
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: sqlite3_prepare_v2 failed: " + msg);
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+      ": sqlite3_prepare_v2 failed: " + msg);
   }
 
   // m_stmt has been set so it is safe to call close() from now on
@@ -94,12 +94,12 @@ SqliteStmt::SqliteStmt(
     }
   } catch(exception::Exception &ex) {
     close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      sql.substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+      ex.getMessage().str());
   } catch(std::exception &se) {
     close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      sql.substr(0, c_maxSqlLenInExceptions) + ": " + se.what());
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+      se.what());
   }
 }
 
@@ -132,16 +132,9 @@ void SqliteStmt::close() {
 sqlite3_stmt *SqliteStmt::get() const {
   if(nullptr == m_stmt) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSql().substr(0, c_maxSqlLenInExceptions) + ": nullptr pointer");
+      getSqlForException() + ": nullptr pointer");
   }
   return m_stmt;
-}
-
-//------------------------------------------------------------------------------
-// getSql
-//------------------------------------------------------------------------------
-const std::string &SqliteStmt::getSql() const {
-  return m_sql;
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +165,7 @@ void SqliteStmt::bindOptionalUint64(const std::string &paramName, const optional
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str());
+      getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -208,7 +201,7 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + ex.getMessage().str()); 
+      getSqlForException() + ": " + ex.getMessage().str()); 
   }
 }
 
@@ -230,7 +223,7 @@ void SqliteStmt::executeNonQuery() {
   // Throw an exception if the call to sqlite3_step() failed
   if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSql().substr(0, c_maxSqlLenInExceptions) + ": " + Sqlite::rcToStr(stepRc));
+      getSqlForException() + ": " + Sqlite::rcToStr(stepRc));
   }
 
   m_nbAffectedRows = sqlite3_changes(m_conn.m_sqliteConn);
@@ -238,7 +231,7 @@ void SqliteStmt::executeNonQuery() {
   // Throw an exception if the SQL statement returned a result set
   if(SQLITE_ROW == stepRc) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSql().substr(0, c_maxSqlLenInExceptions) + ": The SQL statment returned a result set");
+      getSqlForException() + ": The SQL statment returned a result set");
   }
 }
 

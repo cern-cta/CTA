@@ -24,13 +24,37 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Stmt::Stmt(const AutocommitMode autocommitMode): m_autoCommitMode(autocommitMode) {
+Stmt::Stmt(const std::string &sql, const AutocommitMode autocommitMode):
+  m_sql(sql),
+  m_autoCommitMode(autocommitMode) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 Stmt::~Stmt() throw() {
+}
+
+//------------------------------------------------------------------------------
+// getSql
+//------------------------------------------------------------------------------
+const std::string &Stmt::getSql() const {
+  return m_sql;
+}
+
+//------------------------------------------------------------------------------
+// getSqlForException
+//------------------------------------------------------------------------------
+std::string Stmt::getSqlForException() const {
+  if(m_sql.length() <= c_maxSqlLenInExceptions) {
+    return m_sql;
+  } else {
+    if(c_maxSqlLenInExceptions >= 3) {
+      return m_sql.substr(0, c_maxSqlLenInExceptions - 3) + "...";
+    } else {
+      return std::string("..."). substr(0, c_maxSqlLenInExceptions);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

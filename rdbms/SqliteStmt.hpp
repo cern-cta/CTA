@@ -72,13 +72,6 @@ public:
   sqlite3_stmt *get() const;
 
   /**
-   * Returns the SQL statement.
-   *
-   * @return The SQL statement.
-   */
-  virtual const std::string &getSql() const override;
-
-  /**
    * Binds an SQL parameter.
    *
    * @param paramName The name of the parameter.
@@ -150,11 +143,6 @@ private:
    * The SQL connection.
    */
   SqliteConn &m_conn;
-
-  /**
-   * The SQL statement.
-   */
-  std::string m_sql;
 
   /**
    * Map from SQL parameter name to parameter index.
