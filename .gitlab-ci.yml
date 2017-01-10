@@ -1,6 +1,7 @@
 stages:
   - build:srpm
   - build:rpm
+  - test:valgrind
   - build:dockerimage
   - rename:dockerimage
 
@@ -42,6 +43,18 @@ cta_rpm:
   artifacts:
     paths:
     - build_rpm/RPM/RPMS
+
+  tags:
+    - docker
+
+cta_valgrind:
+  stage: test:valgrind
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
+    - yum -y install yum-plugin-priorities sqlite-debuginfo
+    - yum -y --nogpgcheck localinstall build_rpm/RPM/RPMS/x86_64/cta-systemtests* build_rpm/RPM/RPMS/x86_64/cta-debuginfo*
+    - /usr/bin/cta-unitPlusSystemTests.sh
 
   tags:
     - docker
