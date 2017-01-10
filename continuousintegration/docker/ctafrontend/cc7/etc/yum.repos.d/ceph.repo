@@ -1,6 +1,0 @@
-[ceph]
-gpgcheck=0
-name=Ceph repository
-enabled=1
-priority=3
-baseurl=http://linuxsoft.cern.ch/mirror/download.ceph.com/rpm-jewel/el7/x86_64/

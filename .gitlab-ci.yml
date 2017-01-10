@@ -32,7 +32,6 @@ cta_rpm:
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities
-    - echo "Adding Ceph repo"; echo -e "[ceph-internal]\nname=ceph-internal\nenabled=1\nbaseurl=http://castorwww.web.cern.ch/castorwww/repos/ceph/\npriority=3" > /etc/yum.repos.d/ceph-internal.repo
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
