@@ -31,8 +31,7 @@ cta_rpm:
   script:
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities
-    - echo "Enabling cernonly repo for oracle-instantclient"; yum-config-manager --enable cernonly
-    - echo "Adding Ceph repo"; echo -e "[ceph-internal]\nname=ceph-internal\nenabled=1\nbaseurl=http://castorwww.web.cern.ch/castorwww/repos/ceph/\npriority=4" > /etc/yum.repos.d/ceph-internal.repo
+    - cp continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
