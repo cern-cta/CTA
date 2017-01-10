@@ -22,7 +22,7 @@ cta_srpm:
     paths:
     - build_srpm/RPM/SRPMS/
 
-  tags:
+  tags
     - docker
 
 cta_rpm:
@@ -31,6 +31,8 @@ cta_rpm:
   script:
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities
+    - ls -l
+    - ls continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/
     - cp continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
