@@ -49,11 +49,15 @@ cta_rpm:
 
 cta_valgrind:
   stage: test:valgrind
+  variables:
+    CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
-    - yum -y install yum-plugin-priorities sqlite-debuginfo
-    - yum -y --nogpgcheck localinstall build_rpm/RPM/RPMS/x86_64/cta-systemtests* build_rpm/RPM/RPMS/x86_64/cta-debuginfo*
+    - yum -y install yum-plugin-priorities createrepo
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
     - /usr/bin/cta-unitPlusSystemTests.sh
 
   tags:
