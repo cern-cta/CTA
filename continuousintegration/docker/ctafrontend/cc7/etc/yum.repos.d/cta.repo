@@ -1,6 +1,0 @@
-[cta-master]
-name=CTA master
-baseurl=http://dss-ci-repo.web.cern.ch/dss-ci-repo/cta/master/cc-7/x86_64/
-gpgcheck=0
-enabled=0
-
