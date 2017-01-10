@@ -22,7 +22,7 @@ cta_srpm:
     paths:
     - build_srpm/RPM/SRPMS/
 
-  tags
+  tags:
     - docker
 
 cta_rpm:
