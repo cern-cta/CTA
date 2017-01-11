@@ -145,7 +145,8 @@ int sendCommand(const int argc, const char **argv) {
     }
     if(bytesRead != 1) {
       throw std::runtime_error(std::string("Failed to read first byte from ") + cmdPath +
-        ": Expected to read exactly 1 byte, actually read " + std::to_string(bytesRead) + " bytes");
+        ": Expected to read exactly 1 byte, actually read " +
+        std::to_string((long long unsigned int)bytesRead) + " bytes");
     }
     rc = rc_char - '0';
   }
