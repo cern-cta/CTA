@@ -632,7 +632,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
     }
     return ret;
   }
-  throw NoSuchArchiveQueue("In OStoreDB::getArchiveRequests: tape pool not found");
+  return std::list<cta::common::dataStructures::ArchiveJob>();
 }
 
 //------------------------------------------------------------------------------
