@@ -217,3 +217,84 @@
    ...
 }
 
+{
+   pthread_mutex_tests_centos73
+   Helgrind:Misc
+   fun:mutex_lock_WRK
+   fun:pthread_mutex_lock
+   fun:_ZN3cta9threading5Mutex4lockEv
+   fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_tests2_centos73
+   Helgrind:PthAPIerror
+   fun:mutex_unlock_WRK
+   fun:pthread_mutex_unlock
+   fun:_ZN3cta9threading5Mutex6unlockEv
+   fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_tests3_centos73
+   Helgrind:PthAPIerror
+   fun:mutex_lock_WRK
+   fun:pthread_mutex_lock
+   fun:_ZN3cta9threading5Mutex4lockEv
+   fun:_ZN9unitTests67cta_threading_MutexLocker_locks_and_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_tests4_centos73
+   Helgrind:Misc
+   fun:mutex_lock_WRK
+   fun:pthread_mutex_lock
+   fun:_ZN3cta9threading5Mutex4lockEv
+   fun:_ZN9unitTests67cta_threading_MutexLocker_locks_and_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_tests5_centos73
+   Helgrind:UnlockUnlocked
+   fun:mutex_unlock_WRK
+   fun:pthread_mutex_unlock
+   fun:_ZN3cta9threading5Mutex6unlockEv
+   fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_tests6_centos73
+   Helgrind:PthAPIerror
+   fun:mutex_lock_WRK
+   fun:pthread_mutex_lock
+   fun:_ZN3cta9threading5Mutex4lockEv
+   fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv
+   ...
+}
+
+{
+   pthread_mutex_spurious_error_centos73
+   Helgrind:Race
+   fun:my_memcmp
+   fun:mutex_destroy_WRK
+   fun:pthread_mutex_destroy
+   fun:_ZN3cta9threading5MutexD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon12DataPipelineD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD0Ev
+   fun:_ZNKSt14default_deleteIN6castor4tape10tapeserver6daemon13TapeWriteTaskEEclEPS4_
+   fun:_ZNSt10unique_ptrIN6castor4tape10tapeserver6daemon13TapeWriteTaskESt14default_deleteIS4_EE5resetEPS4_
+   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+}
+
+
+
+
+
