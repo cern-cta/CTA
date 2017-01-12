@@ -129,7 +129,7 @@ int sendCommand(const int argc, const char **argv) {
   {
     const XrdCl::XRootDStatus openStatus = xrootFile.Open(cmdPath, XrdCl::OpenFlags::Read);
     if(!openStatus.IsOK()) {
-      throw std::runtime_error(std::string("Failed to open ") + cmdPath + ": " + openStatus.GetErrorMessage());
+      throw std::runtime_error(std::string("Failed to open ") + cmdPath + ": " + openStatus.ToStr());
     }
   }
 
@@ -141,7 +141,7 @@ int sendCommand(const int argc, const char **argv) {
     const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, 1, &rc_char, bytesRead);
     if(!readStatus.IsOK()) {
       throw std::runtime_error(std::string("Failed to read first byte from ") + cmdPath + ": " +
-        readStatus.GetErrorMessage());
+        readStatus.ToStr());
     }
     if(bytesRead != 1) {
       throw std::runtime_error(std::string("Failed to read first byte from ") + cmdPath +
@@ -161,7 +161,7 @@ int sendCommand(const int argc, const char **argv) {
       memset(buf, 0, sizeof(buf));
       const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, sizeof(buf - 1), buf, bytesRead);
       if(!readStatus.IsOK()) {
-        throw std::runtime_error(std::string("Failed to read ") + cmdPath + ": " + readStatus.GetErrorMessage());
+        throw std::runtime_error(std::string("Failed to read ") + cmdPath + ": " + readStatus.ToStr());
       }
 
       if(bytesRead > 0) {
@@ -180,7 +180,7 @@ int sendCommand(const int argc, const char **argv) {
   {
     const XrdCl::XRootDStatus closeStatus = xrootFile.Close();
     if(!closeStatus.IsOK()) {
-      throw std::runtime_error(std::string("Failed to close ") + cmdPath + ": " + closeStatus.GetErrorMessage());
+      throw std::runtime_error(std::string("Failed to close ") + cmdPath + ": " + closeStatus.ToStr());
     }
   }
 
