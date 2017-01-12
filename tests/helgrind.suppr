@@ -284,14 +284,7 @@
    fun:mutex_destroy_WRK
    fun:pthread_mutex_destroy
    fun:_ZN3cta9threading5MutexD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon12DataPipelineD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD0Ev
-   fun:_ZNKSt14default_deleteIN6castor4tape10tapeserver6daemon13TapeWriteTaskEEclEPS4_
-   fun:_ZNSt10unique_ptrIN6castor4tape10tapeserver6daemon13TapeWriteTaskESt14default_deleteIS4_EE5resetEPS4_
-   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
-   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
-   fun:mythread_wrapper
+   ...
 }
 
 
