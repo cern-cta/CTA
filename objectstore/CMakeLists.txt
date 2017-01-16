@@ -84,15 +84,17 @@ target_link_libraries(ctaobjectstoreunittests
   protobuf rados ctacommon gtest ctaobjectstore)
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-add_executable(makeMinimalVFS makeMinimalVFS.cpp)
-target_link_libraries(makeMinimalVFS
+add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
+target_link_libraries(cta-objectstore-initialize
   protobuf ctaobjectstore ctacommon ctautils)
-install(TARGETS makeMinimalVFS DESTINATION usr/bin)
 
-add_executable(listObjectStore listObjectStore.cpp)
-target_link_libraries(listObjectStore
+add_executable(cta-objectstore-list cta-objectstore-list.cpp)
+target_link_libraries(cta-objectstore-list
   protobuf ctaobjectstore ctacommon)
 
-add_executable(dumpObject dumpObject.cpp)
-target_link_libraries(dumpObject
+add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
+target_link_libraries(cta-objectstore-dump-object
   protobuf ctaobjectstore ctacommon)
+
+install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
+  DESTINATION usr/bin)
