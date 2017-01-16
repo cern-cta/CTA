@@ -51,7 +51,7 @@ int main(int argc, char ** argv) {
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    cta::objectstore::AgentReference agr("makeMinimalVFS");
+    cta::objectstore::AgentReference agr("cta-objectstore-initialize");
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
     cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));

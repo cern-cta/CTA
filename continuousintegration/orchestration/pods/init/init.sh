@@ -10,7 +10,7 @@ cat ${LIBRARY_CONFIG}
 
 rm -rf ${objectstore}
 mkdir -p ${objectstore}
-  makeMinimalVFS ${objectstore}
+  cta-objectstore-initialize ${objectstore}
   chmod -R 777 ${objectstore}
 
 rm -rf ${catdbdir}
