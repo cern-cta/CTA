@@ -55,7 +55,7 @@ cta_valgrind:
   script:
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
     - yum -y install yum-plugin-priorities createrepo
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
