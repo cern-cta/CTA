@@ -22,6 +22,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/log/FileLogger.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
@@ -270,6 +271,8 @@ XrdCtaFilesystem::XrdCtaFilesystem():
       m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
     } else if (loggerURL == "stdout:") {
       m_log.reset(new log::StdoutLogger("cta-frontend"));
+    } else if (loggerURL.substr(0, 5) == "file:") {
+      m_log.reset(new log::FileLogger("cta-frontend", loggerURL.substr(5), log::DEBUG));
     } else {
       throw cta::exception::Exception(std::string("Unknown log URL: ")+loggerURL);
     }
