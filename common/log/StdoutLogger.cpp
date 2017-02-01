@@ -43,7 +43,7 @@ void StdoutLogger::prepareForFork() {}
 // reducedSyslog
 //------------------------------------------------------------------------------
 void StdoutLogger::reducedSyslog(const std::string & msg) {
-  printf("%s", msg.c_str());
+  printf("%s\n", msg.c_str());
 }
 
 } // namespace log

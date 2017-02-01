@@ -60,7 +60,7 @@ void FileLogger::reducedSyslog(const std::string & msg) {
   if (-1 == m_fd)
     throw cta::exception::Exception("In FileLogger::reducedSyslog(): file is not properly initialized");
   // Prepare the string to print (for size)
-  std::string m = msg.substr(0, m_maxMsgLen);
+  std::string m = msg.substr(0, m_maxMsgLen) + "\n";
   
   // enter critical section
   threading::MutexLocker lock(m_mutex);

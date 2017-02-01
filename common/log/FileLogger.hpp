@@ -70,7 +70,9 @@ protected:
   /**
    * A reduced version of syslog.  This method is able to set the message
    * timestamp.  This is necessary when logging messages asynchronously of there
-   * creation, such as when retrieving logs from the DB.
+   * creation, such as when retrieving logs from the DB. This function truncates 
+   * the message if necessary. It also adds a new line at the end of the message 
+   * if needed.
    *
    * @param msg The message to be logged.
    */

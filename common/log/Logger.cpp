@@ -153,9 +153,6 @@ void Logger::writeLogMsg(
 
   // Append raw parameters
   os << rawParams;
-
-  // Terminate the string
-  os << "\n";
 }
 
 //-----------------------------------------------------------------------------
