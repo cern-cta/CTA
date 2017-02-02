@@ -39,6 +39,10 @@ SqliteConn::SqliteConn(const std::string &filename):
       sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);
     }
+
+    // Give SQLite upto 10 seconds to avoid a busy error
+    sqlite3_busy_timeout(m_sqliteConn, 10000);
+
     {
       char *errMsg = nullptr;
       if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
