@@ -22,6 +22,7 @@
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
@@ -156,6 +157,17 @@ public:
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
+  
+  /**
+   * Find or create an archive queue, and return it locked and fetched to the caller
+   * (ArchiveQueue and ScopedExclusiveLock objects are provided empty)
+   * @param archiveQueue the ArchiveQueue object, empty
+   * @param archiveQueueLock the lock, not initialized
+   * @param tapePool the name of the needed tape pool
+   */
+  void getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue & archiveQueue, 
+    cta::objectstore::ScopedExclusiveLock & archiveQueueLock,
+    const std::string & tapePool);
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);

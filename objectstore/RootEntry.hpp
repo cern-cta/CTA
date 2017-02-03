@@ -34,6 +34,9 @@ class GenericObject;
   
 class RootEntry: public ObjectOps<serializers::RootEntry, serializers::RootEntry_t> {
 public:
+  // The conventional address of the root entry
+  static const std::string address; // = "root"
+  
   // Constructor
   RootEntry(Backend & os);
   RootEntry(GenericObject & go);

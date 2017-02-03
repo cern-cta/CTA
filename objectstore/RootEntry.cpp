@@ -31,10 +31,12 @@
 
 namespace cta { namespace objectstore {
 
+const std::string RootEntry::address("root");
+
 // construtor, when the backend store exists.
 // Checks the existence and correctness of the root entry
 RootEntry::RootEntry(Backend & os):
-  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, "root") {}
+  ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, address) {}
 
 RootEntry::RootEntry(GenericObject& go): 
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {

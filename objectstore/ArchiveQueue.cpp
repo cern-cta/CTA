@@ -29,6 +29,9 @@ namespace cta { namespace objectstore {
 ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os, address) { }
 
+ArchiveQueue::ArchiveQueue(Backend& os):
+  ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os) { }
+
 ArchiveQueue::ArchiveQueue(GenericObject& go):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object

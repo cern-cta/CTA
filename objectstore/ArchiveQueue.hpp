@@ -40,6 +40,9 @@ public:
   // Constructor
   ArchiveQueue(const std::string & address, Backend & os);
   
+  // Undefined object constructor
+  ArchiveQueue(Backend & os);
+  
   // Upgrader form generic object
   ArchiveQueue(GenericObject & go);
 

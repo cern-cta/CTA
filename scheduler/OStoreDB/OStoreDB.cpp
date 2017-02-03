@@ -167,7 +167,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   return ret;
 }
-
 /* Old getMountInfo
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
@@ -278,6 +277,45 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 */
 
 //------------------------------------------------------------------------------
+// OStoreDB::getLockedAndFetchedArchiveQueue()
+//------------------------------------------------------------------------------
+void OStoreDB::getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue& archiveQueue,
+  cta::objectstore::ScopedExclusiveLock& archiveQueueLock, const std::string& tapePool) {
+  // TODO: if necessary, we could use a singleton caching object here to accelerate
+  // lookups.
+  // Getting a locked AQ is the name of the game.
+  // Try and find an existing one first, create if needed
+  for (size_t i=0; i<5; i++) {
+    {
+      RootEntry re (m_objectStore);
+      ScopedSharedLock rel(re);
+      re.fetch();
+      try {
+        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool));
+      } catch (cta::exception::Exception & ex) {
+        rel.release();
+        ScopedExclusiveLock rexl(re);
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, *m_agentReference));
+      }
+    }
+    try {
+      archiveQueueLock.lock(archiveQueue);
+      archiveQueue.fetch();
+      return;
+    } catch (cta::exception::Exception & ex) {
+      // We have a (rare) opportunity for a race condition, where we identify the
+      // queue and it gets deleted before we manage to lock it.
+      // The locking of fetching will fail in this case.
+      // We hence allow ourselves to retry a couple times.
+      continue;
+    }
+  }
+  throw cta::exception::Exception(std::string(
+      "In OStoreDB::getLockedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
+      + tapePool);
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
@@ -305,21 +343,18 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
-  // We will need to identity tapepools is order to construct the request
-  RootEntry re(m_objectStore);
-  // TODO: need a softer locking, and a conbined usage of addOrGetArchiveQueueAndCommit and getArchiveQueue.
-  ScopedExclusiveLock rel(re);
-  re.fetch();
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto & copy:criteria.copyToPoolMap) {
-    std::string aqaddr = re.addOrGetArchiveQueueAndCommit(copy.second, *m_agentReference);
+    ArchiveQueue aq(m_objectStore);
+    ScopedExclusiveLock aql;
+    getLockedAndFetchedArchiveQueue(aq, aql, copy.second);
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    aReq.addJob(copy.first, copy.second, aqaddr, hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    aReq.addJob(copy.first, copy.second, aq.getAddressIfSet(), hardcodedRetriesWithinMount, hardcodedTotalRetries);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy.first;
     jl.back().tapePool = copy.second;
-    jl.back().ArchiveQueueAddress = aqaddr;
+    jl.back().ArchiveQueueAddress = aq.getAddressIfSet();
   }
   if (jl.empty()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
@@ -342,7 +377,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       objectstore::ArchiveQueue aq(j.ArchiveQueueAddress, m_objectStore);
       ScopedExclusiveLock aql(aq);
       aq.fetch();
-      if (aq.getOwner() != re.getAddressIfSet())
+      if (aq.getOwner() != RootEntry::address)
           throw NoSuchArchiveQueue("In OStoreDB::queue: non-existing archive queue found "
               "(dangling pointer): canceling request creation.");
       aq.addJob(j, aReq.getAddressIfSet(), aReq.getArchiveFile().archiveFileID, 
