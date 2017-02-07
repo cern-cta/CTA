@@ -78,7 +78,6 @@ else
     echo "objectstore content will be wiped"
 fi
 
-exit 0
 
 echo "Creating ${instance} instance"
 
