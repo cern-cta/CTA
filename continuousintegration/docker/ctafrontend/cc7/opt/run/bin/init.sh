@@ -9,12 +9,12 @@ yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-cata
 yum clean packages
 
 echo "Using this configuration for library:"
-/shared/bin/init_library.sh
+/opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
 echo "Creating objectstore"
-/shared/bin/init_objectstore.sh
+/opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
 if [ "$OBJECTSTORETYPE" == "file" ]; then
@@ -33,7 +33,7 @@ else
 fi
 
 echo "Creating DB"
-/shared/bin/init_database.sh
+/opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
 if [ "$DATABASETYPE" == "sqlite" ]; then

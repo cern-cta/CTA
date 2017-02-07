@@ -7,11 +7,11 @@ yum-config-manager --enable castor
 # Install missing RPMs
 yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server
 
-/shared/bin/init_pod.sh
+/opt/run/bin/init_pod.sh
 
 # source library configuration file
 echo "Using this configuration for library:"
-/shared/bin/init_library.sh
+/opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 

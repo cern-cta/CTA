@@ -58,8 +58,8 @@ RUN yum -y install cgdb less psmisc lynx strace ltrace cta-cli && yum clean all
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
-# Add orchestration init scripts locally
-ADD ${ORCHESTRATIONDIR}/init ${LOCALORCHESTRATIONDIR}
+# Add orchestration run scripts locally
+ADD ${BASEDIR}/opt /opt
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /

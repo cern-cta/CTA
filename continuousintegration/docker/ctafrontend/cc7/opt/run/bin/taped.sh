@@ -7,10 +7,10 @@ yum-config-manager --enable castor
 # Install missing RPMs
 yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server ceph-common
 
-/shared/bin/init_pod.sh
+/opt/run/bin/init_pod.sh
 
 echo "Using this configuration for library:"
-/shared/bin/init_library.sh
+/opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
@@ -21,11 +21,11 @@ mkdir -p /etc/castor
 
 tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 
-/shared/bin/init_objectstore.sh
+/opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
 echo "Configuring database"
-/shared/bin/init_database.sh
+/opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
 echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf

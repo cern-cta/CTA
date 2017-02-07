@@ -9,7 +9,7 @@ yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 
 yes | cp -r /opt/ci/ctafrontend/etc / 
 
-/shared/bin/init_objectstore.sh
+/opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
 echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
@@ -17,7 +17,7 @@ echo "Catalogue NumberOfConnections 1" >>/etc/cta/cta-frontend.conf
 echo "Log URL file:/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 
-/shared/bin/init_database.sh
+/opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
 echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
