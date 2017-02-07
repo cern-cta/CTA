@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: init
+  name: ctacli
   labels:
-    k8s-app: cta-init
+    k8s-app: ctacli
 spec:
   restartPolicy: Never
   containers:
-  - name: ctainit
-    image: gitlab-registry.cern.ch/cta/ctageneric:%CTA_BUILD_ID
+  - name: ctacli
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
     - name: MY_NAME
@@ -21,21 +21,13 @@ spec:
           fieldPath: metadata.namespace
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
-    - name: objectstore
-      value: "/shared/$(INSTANCE_NAME)/objectstore"
-    - name: catdbdir
-      value: "/shared/$(INSTANCE_NAME)/catdb"
-    - name: catdbfile
-      value: "catdb"
-    - name: LIBRARY_CONFIG
-      value: "/shared/$(INSTANCE_NAME)/libraryconfig"
-    command: ['/opt/ci/init/init.sh']
+    - name: TERM
+      value: "xterm"
+    command: ['/opt/run/bin/ctacli.sh']
     args: ["none"]
     volumeMounts:
     - mountPath: /shared
       name: shared
-    - mountPath: /library
-      name: mylibrary
     securityContext:
       privileged: true
 
@@ -43,6 +35,4 @@ spec:
   - name: shared
     hostPath:
       path: /opt/cta
-  - name: mylibrary
-    persistentVolumeClaim:
-      claimName: claimlibrary
+

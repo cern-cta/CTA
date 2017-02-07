@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctafrontend
+  labels:
+    k8s-app: ctafrontend
+spec:
+  selector:
+    k8s-app: ctafrontend
+  clusterIP: None
+  ports:
+  - name: ctafrontend
+    port: 10955
+    protocol: TCP
