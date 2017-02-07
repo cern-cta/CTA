@@ -2026,7 +2026,8 @@ void XrdCtaFile::xCom_archive() {
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
   request.archiveReportURL=archiveReportURL.value();
-  uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request);
+  log::LogContext lc(m_log);
+  uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request, lc);
   cmdlineOutput << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
@@ -2062,7 +2063,8 @@ void XrdCtaFile::xCom_retrieve() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.dstURL=dsturl.value();
-  m_scheduler->queueRetrieve(m_cliIdentity.username, request);
+  log::LogContext lc(m_log);
+  m_scheduler->queueRetrieve(m_cliIdentity.username, request, lc);
   logRequestAndSetCmdlineResult(cta::common::dataStructures::FrontendReturnCode::ok, cmdlineOutput.str());
 }
 

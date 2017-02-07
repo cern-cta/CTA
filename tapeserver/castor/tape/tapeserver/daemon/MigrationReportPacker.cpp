@@ -185,7 +185,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
       }
       const std::string msg_error="An exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(cta::log::ERR,msg_error);
+      reportPacker.m_lc.log(cta::log::ERR, msg_error);
       throw failedMigrationRecallResult(msg_error);
     } catch(const std::exception& e){
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
@@ -197,7 +197,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
       }
       const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(cta::log::ERR,msg_error);
+      reportPacker.m_lc.log(cta::log::ERR, msg_error);
       throw failedMigrationRecallResult(msg_error);
     }
   } else {

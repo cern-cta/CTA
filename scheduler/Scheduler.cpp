@@ -23,6 +23,7 @@
 #include "ArchiveMount.hpp"
 #include "RetrieveMount.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 
@@ -73,9 +74,46 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &c
 //------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
-uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::dataStructures::ArchiveRequest &request) {
+uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::dataStructures::ArchiveRequest &request,
+    log::LogContext & lc) {
+  cta::utils::Timer t;
+  using utils::postEllipsis;
+  using utils::midEllipsis;
   auto catalogueInfo = m_catalogue.prepareForNewFile(instanceName, request.storageClass, request.requester);
+  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   m_db.queueArchive(instanceName, request, catalogueInfo);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("instanceName", instanceName)
+     .add("storageClass", request.storageClass)
+     .add("diskFileID", request.diskFileID)
+     .add("fileSize", request.fileSize)
+     .add("fileId", catalogueInfo.fileId);
+  for (auto & ctp: catalogueInfo.copyToPoolMap) {
+    std::stringstream tp;
+    tp << "tapePool" << ctp.first;
+    spc.add(tp.str(), ctp.second);
+  }
+  spc.add("policyName", catalogueInfo.mountPolicy.name)
+     .add("policyArchiveMinAge", catalogueInfo.mountPolicy.archiveMinRequestAge)
+     .add("policyArchivePriority", catalogueInfo.mountPolicy.archivePriority)
+     .add("policyMaxDrives", catalogueInfo.mountPolicy.maxDrivesAllowed)
+     .add("diskFilePath", request.diskFileInfo.path)
+     .add("diskFileOwner", request.diskFileInfo.owner)
+     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
+     .add("checksumValue", request.checksumValue)
+     .add("checksumType", request.checksumType)
+     .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
+     .add("creationHost", request.creationLog.host)
+     .add("creationTime", request.creationLog.time)
+     .add("creationUser", request.creationLog.username)
+     .add("requesterName", request.requester.name)
+     .add("requesterGroup", request.requester.group)
+     .add("srcURL", midEllipsis(request.srcURL, 50, 15))
+     .add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "Queued archive request");
   return catalogueInfo.fileId;
 }
 
@@ -84,7 +122,11 @@ uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::
 //------------------------------------------------------------------------------
 void Scheduler::queueRetrieve(
   const std::string &instanceName,
-  const common::dataStructures::RetrieveRequest &request) {
+  const common::dataStructures::RetrieveRequest &request,
+  log::LogContext & lc) {
+  using utils::postEllipsis;
+  using utils::midEllipsis;
+  utils::Timer t;
   // Get the 
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
@@ -101,6 +143,7 @@ void Scheduler::queueRetrieve(
   }
   if (vids.empty())
     throw exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
+  auto catalogueTime = t.secs(utils::Timer::resetCounter);
   // Get the statistics for the potential tapes on which we will retrieve.
   auto stats=m_db.getRetrieveQueueStatistics(queueCriteria, vids);
   // Sort the potential queues.
@@ -122,6 +165,45 @@ void Scheduler::queueRetrieve(
   std::advance(it, index);
   std::string selectedVid=*it;
   m_db.queueRetrieve(request, queueCriteria, selectedVid);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("archiveFileID", request.archiveFileID)
+     .add("instanceName", instanceName)
+     .add("diskFilePath", request.diskFileInfo.path)
+     .add("diskFileOwner", request.diskFileInfo.owner)
+     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
+     .add("dstURL", request.dstURL)
+     .add("creationHost", request.entryLog.host)
+     .add("creationTime", request.entryLog.time)
+     .add("creationUser", request.entryLog.username)
+     .add("requesterName", request.requester.name)
+     .add("requesterGroup", request.requester.group)
+     .add("criteriaArchiveFileId", queueCriteria.archiveFile.archiveFileID)
+     .add("criteriaChecksumType", queueCriteria.archiveFile.checksumType)
+     .add("criteriaChecksumValue", queueCriteria.archiveFile.checksumValue)
+     .add("criteriaCreationTime", queueCriteria.archiveFile.creationTime)
+     .add("criteriaDiskFileId", queueCriteria.archiveFile.diskFileId)
+     .add("criteriaDiskFilePath", queueCriteria.archiveFile.diskFileInfo.path)
+     .add("criteriaDiskFileOwner", queueCriteria.archiveFile.diskFileInfo.owner)
+     .add("criteriaDiskRecoveryBlob", postEllipsis(queueCriteria.archiveFile.diskFileInfo.recoveryBlob, 20))
+     .add("criteriaDiskInstance", queueCriteria.archiveFile.diskInstance)
+     .add("criteriaFileSize", queueCriteria.archiveFile.fileSize)
+     .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
+     .add("storageClass", queueCriteria.archiveFile.storageClass);
+  for (auto & tf:queueCriteria.archiveFile.tapeFiles) {
+    std::stringstream tc;
+    tc << "tapeCopy" << tf.first;
+    spc.add(tc.str(), tf.second);
+  }
+  spc.add("selectedVid", selectedVid)
+     .add("policyName", queueCriteria.mountPolicy.name)
+     .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
+     .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
+     .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
+     .add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "Queued retrieve request");
 }
 
 //------------------------------------------------------------------------------

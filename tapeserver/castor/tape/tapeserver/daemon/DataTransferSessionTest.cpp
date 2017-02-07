@@ -305,6 +305,7 @@ protected:
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -414,7 +415,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
-      scheduler.queueRetrieve(diskInstance, rReq);
+      scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
     
@@ -476,6 +477,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -605,7 +607,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
-      scheduler.queueRetrieve(diskInstance, rReq);
+      scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
   
@@ -659,6 +661,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -768,7 +771,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
-      scheduler.queueRetrieve(diskInstance, rReq);
+      scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
     
@@ -800,6 +803,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -910,7 +914,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       std::list<std::string> archiveFilePaths;
-      scheduler.queueRetrieve(diskInstance, rReq);
+      scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
 
@@ -957,6 +961,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
    
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1036,7 +1041,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar));
+      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
     }
   }
   // Report the drive's existence and put it up in the drive register.
@@ -1093,6 +1098,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1172,7 +1178,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar));
+      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
       // Delete the file: the migration will fail.
       sourceFiles.clear();
     }
@@ -1226,6 +1232,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1306,7 +1313,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar));
+      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
     }
   }
   // Report the drive's existence and put it up in the drive register.
@@ -1371,6 +1378,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::LogContext logContext(logger);
   
   setupDefaultCatalogue();
   // 1) prepare the fake scheduler
@@ -1452,7 +1460,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar));
+      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
     }
   }
   // Report the drive's existence and put it up in the drive register.
