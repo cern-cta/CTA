@@ -53,7 +53,7 @@ void StringLogger::reducedSyslog(const std::string & msg) {
   m_log << msg.substr(0, m_maxMsgLen) << std::endl;
 
   // Uncomment this to get the logs printed to stdout during unit tests.
-  // printf (msg.substr(0, m_maxMsgLen).c_str());
+  // printf ("%s\n", msg.substr(0, m_maxMsgLen).c_str());
 }
 
 } // namespace log
