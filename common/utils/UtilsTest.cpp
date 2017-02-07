@@ -648,4 +648,14 @@ TEST_F(cta_UtilsTest, testCopyString) {
   ASSERT_EQ(0, strcmp(dst, src));
 }
 
+TEST_F(cta_UtilsTest, ellipses) {
+  using namespace cta::utils;
+  
+  ASSERT_EQ("1234567890", postEllipsis("1234567890", 12));
+  ASSERT_EQ("1234567[...]", postEllipsis("1234567890ABCDEF", 12));
+  ASSERT_EQ("1234567890", midEllipsis("1234567890", 12));
+  ASSERT_EQ("123[...]CDEF", midEllipsis("1234567890ABCDEF", 12));
+  ASSERT_EQ("1[...]ABCDEF", midEllipsis("1234567890ABCDEF", 12, 1));
+}
+
 } // namespace unitTests

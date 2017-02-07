@@ -260,6 +260,32 @@ std::string trimString(const std::string &s) throw() {
 }
 
 //------------------------------------------------------------------------------
+// postEllipsis
+//------------------------------------------------------------------------------
+std::string postEllipsis(const std::string &s, size_t maxSize) {
+  std::string ellipsis = "[...]";
+  if (maxSize < ellipsis.size())
+    throw cta::exception::Exception("In cta::utils::postEllipsis(): maxSize cannot be smaller than ellipsis size");
+  if (s.size() <= maxSize)
+    return s;
+  return s.substr(0, maxSize - ellipsis.size()) + ellipsis;
+}
+
+//------------------------------------------------------------------------------
+// midEllipsis
+//------------------------------------------------------------------------------
+std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSize) {
+  std::string ellipsis = "[...]";
+  if (maxSize < ellipsis.size() + beginingSize)
+    throw cta::exception::Exception("In cta::utils::midEllipsis(): maxSize cannot be smaller than ellipsis size + beginingSize");
+  if (s.size() <= maxSize)
+    return s;
+  if (!beginingSize)
+    beginingSize = (maxSize - ellipsis.size()) / 2;
+  return s.substr(0, beginingSize) + ellipsis + s.substr(s.size() - maxSize + ellipsis.size() + beginingSize);
+}
+
+//------------------------------------------------------------------------------
 // singleSpaceString
 //------------------------------------------------------------------------------
 std::string singleSpaceString(const std::string &str) throw() {

@@ -109,8 +109,31 @@ namespace utils {
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  std::string trimString(const std::string &s) throw();
+  std::string trimString(const std::string &s) noexcept;
+  
+  /**
+   * Returns a string with an ellipsis in the end if necessary so that the 
+   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * identical to s if it fits the maximum size.
+   * @param s the string
+   * @param maxSize
+   * @return the ellipsed string
+   */
+  std::string postEllipsis(const std::string &s, size_t maxSize);
 
+  /**
+   * Returns a string with an ellipsis in the middle if necessary so that the 
+   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * identical to s if it fits the maximum size. The parts before and after the
+   * ellipsis are evenly distributed, unless beginingSize is set to a non zero 
+   * value. 
+   * @param s the string
+   * @param maxSize
+   * @param beginingSize
+   * @return the ellipsed string
+   */
+  
+  std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSize = 0);
   /**
    * Returns uuid in the form of a string.
    *
