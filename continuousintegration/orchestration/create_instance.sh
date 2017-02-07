@@ -12,7 +12,7 @@ keepDatabase=1
 keepObjectstore=1
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-D] [-O]
+Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-p <gitlab pipeline ID>] [-D] [-O]
 
 Options:
   -D	wipe database content during initialization phase (database content is kept by default)
@@ -21,7 +21,7 @@ EOF
 exit 1
 }
 
-while getopts "n:o:d:t:DO" o; do
+while getopts "n:o:d:p:DO" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -33,6 +33,9 @@ while getopts "n:o:d:t:DO" o; do
             ;;
         n)
             instance=${OPTARG}
+            ;;
+	p)
+            pipelineid=${OPTARG}
             ;;
         O)
             keepObjectstore=0
@@ -53,8 +56,13 @@ fi
 
 
 COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
-imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
+if [ -z "${pipelineid}" ]; then
+  echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
+  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
+else
+  echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
+  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
+fi
 if [ "${imagetag}" == "" ]; then
   echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
   exit 1

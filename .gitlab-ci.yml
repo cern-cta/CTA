@@ -4,6 +4,7 @@ stages:
   - test:valgrind
   - build:dockerimage
   - rename:dockerimage
+  - systemtests
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_BUILD_REF:0:8}
@@ -87,3 +88,21 @@ ctageneric_docker_rename:
     - export NEWTAG=${CTA_BUILD_ID}
     - cd continuousintegration/ci_helpers/
     - ./rename_tag.sh
+
+
+archiveretrieve:
+  stage: systemtests
+  script:
+    - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - echo "Creating systemtest instance using sqlite and local objectstore"
+    - cd continuousintegration/orchestration/; ./create_instance.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -D -O 2>&1 | tee -a ../../create_instance.log
+    - cd tests; ./systest.sh 2>&1 | tee -a ../../../systest.sh.log
+    - cd ../; ./delete_instance.sh -n ${NAMESPACE} 2>&1 | tee -a ../../delete_instance.log
+  artifacts:
+    paths:
+    - create_instance.log
+    - systest.sh.log
+    - delete_instance.log
+  tags:
+    - kubernetes
+    - mhvtl
