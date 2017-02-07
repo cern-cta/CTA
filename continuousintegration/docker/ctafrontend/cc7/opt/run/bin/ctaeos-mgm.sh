@@ -9,7 +9,7 @@ yum-config-manager --enable eos-citrine
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
 
 # fix reverse DNS for EOS
-/opt/ci/init_pod.sh
+/opt/run/bin/init_pod.sh
 
 # copy needed template configuration files (nice to get all lines for logs)
 yes | cp -r /opt/ci/ctaeos/etc /
