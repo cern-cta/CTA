@@ -109,7 +109,7 @@ namespace utils {
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  std::string trimString(const std::string &s) noexcept;
+  std::string trimString(const std::string &s) throw();
   
   /**
    * Returns a string with an ellipsis in the end if necessary so that the 
