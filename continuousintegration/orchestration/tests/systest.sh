@@ -6,7 +6,21 @@
 EOSINSTANCE=ctaeos
 
 tempdir=$(mktemp -d) # temporary directory for system test related config
-kubectl --namespace ${NAMESPACE} exec tpsrv -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' > ${tempdir}/library-rc.sh
+echo -n "Reading library configuration from tpsrv"
+SECONDS_PASSED=0
+while test 0 = $(kubectl --namespace ${NAMESPACE} exec tpsrv -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' | tee ${tempdir}/library-rc.sh | wc -l); do
+  sleep 1
+  echo -n .
+  let SECONDS_PASSED=SECONDS_PASSED+1
+
+  if test ${SECONDS_PASSED} == 30; then
+    echo "FAILED"
+    echo "Timed out after ${SECONDS_PASSED} seconds waiting for file to be archived to tape"
+    exit 1
+  fi
+done
+echo "OK"
+
 echo "Using this configuration for library:"
 cat ${tempdir}/library-rc.sh
 . ${tempdir}/library-rc.sh
