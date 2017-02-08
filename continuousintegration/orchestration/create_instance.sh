@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#instance=$1
 # defaults objectstore to file
 config_objectstore="./objectstore-file.yaml"
 # defaults DB to sqlite
@@ -69,6 +68,11 @@ if [ "${imagetag}" == "" ]; then
 fi
 echo "Creating instance using docker image with tag: ${imagetag}"
 
+# Create temporary directory for modified pod files
+poddir=$(mktemp -d)
+cp pod-* ${poddir}
+sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
     exit 1
@@ -124,7 +128,7 @@ done
 
 echo "creating pods in instance"
 
-kubectl	create -f pod-init.yaml --namespace=${instance}
+kubectl	create -f ${poddir}/pod-init.yaml --namespace=${instance}
 
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
@@ -141,7 +145,7 @@ echo OK
 echo "Launching pods"
 
 for podname in ctacli tpsrv ctaeos ctafrontend kdc; do
-  kubectl create -f pod-${podname}.yaml --namespace=${instance}
+  kubectl create -f ${poddir}/pod-${podname}.yaml --namespace=${instance}
 done
 
 echo -n "Waiting for other pods"
