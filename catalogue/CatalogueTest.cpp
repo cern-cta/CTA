@@ -5254,6 +5254,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const uint64_t nbArchiveFiles = 10;
   const uint64_t archiveFileSize = 1000;
   const uint64_t compressedFileSize = 800;
+
+  std::list<catalogue::TapeFileWritten> tapeFilesWrittenCopy1;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
@@ -5279,13 +5281,11 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     fileWritten.compressedSize = compressedFileSize;
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
-    m_catalogue->filesWrittenToTape(std::list<catalogue::TapeFileWritten>{fileWritten});
+    tapeFilesWrittenCopy1.push_back(fileWritten);
+  }
+  m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
 
-    // Tape copy 2 written to tape
-    fileWritten.vid = vid2;
-    fileWritten.copyNb = 2;
-    m_catalogue->filesWrittenToTape(std::list<catalogue::TapeFileWritten>{fileWritten});
-
+  {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
     const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
     ASSERT_EQ(2, tapes.size());
@@ -5293,13 +5293,61 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       auto it = vidToTape.find(vid1);
       ASSERT_NE(vidToTape.end(), it);
       ASSERT_EQ(vid1, it->second.vid);
-      ASSERT_EQ(i, it->second.lastFSeq);
+      ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
     {
       auto it = vidToTape.find(vid2);
       ASSERT_NE(vidToTape.end(), it);
       ASSERT_EQ(vid2, it->second.vid);
-      ASSERT_EQ(i, it->second.lastFSeq);
+      ASSERT_EQ(0, it->second.lastFSeq);
+    }
+  }
+
+  std::list<catalogue::TapeFileWritten> tapeFilesWrittenCopy2;
+  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + i);
+    std::ostringstream diskFilePath;
+    diskFilePath << "/public_dir/public_file_" << i;
+
+    // Tape copy 2 written to tape
+    catalogue::TapeFileWritten fileWritten;
+    fileWritten.archiveFileId = i;
+    fileWritten.diskInstance = storageClass.diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileUser = "public_disk_user";
+    fileWritten.diskFileGroup = "public_disk_group";
+    fileWritten.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumType = checksumType;
+    fileWritten.checksumValue = checksumValue;
+    fileWritten.storageClassName = storageClass.name;
+    fileWritten.vid = vid2;
+    fileWritten.fSeq = i;
+    fileWritten.blockId = i * 100;
+    fileWritten.compressedSize = compressedFileSize;
+    fileWritten.copyNb = 2;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy2.push_back(fileWritten);
+  }
+  m_catalogue->filesWrittenToTape(std::list<catalogue::TapeFileWritten>{tapeFilesWrittenCopy2});
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(2, tapes.size());
+    {
+      auto it = vidToTape.find(vid1);
+      ASSERT_NE(vidToTape.end(), it);
+      ASSERT_EQ(vid1, it->second.vid);
+      ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
+    }
+    {
+      auto it = vidToTape.find(vid2);
+      ASSERT_NE(vidToTape.end(), it);
+      ASSERT_EQ(vid2, it->second.vid);
+      ASSERT_EQ(nbArchiveFiles, it->second.lastFSeq);
     }
   }
 
