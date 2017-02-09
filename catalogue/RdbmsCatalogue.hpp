@@ -112,11 +112,11 @@ public:
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
   /**
-   * Notifies the catalogue that a file has been written to tape.
+   * Notifies the catalogue that the specified files have been written to tape.
    *
-   * @param event The tape file written event.
+   * @param events The tape file written events.
    */
-  void fileWrittenToTape(const TapeFileWritten &event) override;
+  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -1019,6 +1019,15 @@ protected:
     rdbms::PooledConn &conn,
     const std::string &diskInstanceName,
     const std::string &storageClassName) const;
+
+private:
+
+  /**
+   * Notifies the catalogue that a file has been written to tape.
+   *
+   * @param event The tape file written event.
+   */
+  void fileWrittenToTape(const TapeFileWritten &event);
 
 }; // class RdbmsCatalogue
 

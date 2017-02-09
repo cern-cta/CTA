@@ -124,11 +124,11 @@ public:
   virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
   /**
-   * Notifies the catalogue that a file has been written to tape.
+   * Notifies the catalogue that the specified files have been written to tape.
    *
-   * @param event The tape file written event.
+   * @param events The tape file written events.
    */
-  virtual void fileWrittenToTape(const TapeFileWritten &event) = 0;
+  virtual void filesWrittenToTape(const std::list<TapeFileWritten> &event) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in

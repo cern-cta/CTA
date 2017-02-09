@@ -4080,6 +4080,19 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::PooledConn &conn, con
 }
 
 //------------------------------------------------------------------------------
+// filesWrittenToTape
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &events) {
+  try {
+    for(const auto &event : events) {
+      fileWrittenToTape(event);
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
