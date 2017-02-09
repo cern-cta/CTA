@@ -16,6 +16,7 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   MountType.cpp
+  OStoreDB/MemQueues.cpp
   OStoreDB/OStoreDB.cpp
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp)

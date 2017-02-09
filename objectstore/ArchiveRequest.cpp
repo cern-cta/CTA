@@ -65,6 +65,18 @@ void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_maxtotalretries(maxTotalRetries);
 }
 
+void ArchiveRequest::setJobArchiveQueueAddress(uint16_t copyNumber, const std::string& queueAddress) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  for (auto j=jl->begin(); j!=jl->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_archivequeueaddress(queueAddress);
+      return;
+    }
+  }
+  throw NoSuchJob("In ArchiveRequest::setJobArchiveQueueAddress(): job not found");
+}
+
 bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();

@@ -34,8 +34,13 @@ namespace objectstore {
   class Backend;
   class Agent;
 }
+
+namespace ostoredb {
+  class MemArchiveQueue;
+}
   
 class OStoreDB: public SchedulerDatabase {
+  friend class cta::ostoredb::MemArchiveQueue;
 public:
   OStoreDB(objectstore::Backend & be);
   virtual ~OStoreDB() throw();
@@ -157,7 +162,8 @@ public:
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
-  
+
+private:
   /**
    * Find or create an archive queue, and return it locked and fetched to the caller
    * (ArchiveQueue and ScopedExclusiveLock objects are provided empty)
@@ -168,7 +174,8 @@ public:
   void getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue & archiveQueue, 
     cta::objectstore::ScopedExclusiveLock & archiveQueueLock,
     const std::string & tapePool);
-
+  
+public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
   virtual void deleteArchiveRequest(const std::string &diskInstanceName, uint64_t fileId) override;

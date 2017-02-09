@@ -17,6 +17,7 @@
  */
 
 #include "OStoreDB.hpp"
+#include "MemQueues.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
@@ -345,16 +346,12 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.setEntryLog(request.creationLog);
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto & copy:criteria.copyToPoolMap) {
-    ArchiveQueue aq(m_objectStore);
-    ScopedExclusiveLock aql;
-    getLockedAndFetchedArchiveQueue(aq, aql, copy.second);
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    aReq.addJob(copy.first, copy.second, aq.getAddressIfSet(), hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    aReq.addJob(copy.first, copy.second, "archive queue address to be set later", hardcodedRetriesWithinMount, hardcodedTotalRetries);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy.first;
     jl.back().tapePool = copy.second;
-    jl.back().ArchiveQueueAddress = aq.getAddressIfSet();
   }
   if (jl.empty()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
@@ -374,20 +371,9 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   std::list<std::string> linkedTapePools;
   try {
     for (auto &j: aReq.dumpJobs()) {
-      objectstore::ArchiveQueue aq(j.ArchiveQueueAddress, m_objectStore);
-      ScopedExclusiveLock aql(aq);
-      aq.fetch();
-      if (aq.getOwner() != RootEntry::address)
-          throw NoSuchArchiveQueue("In OStoreDB::queue: non-existing archive queue found "
-              "(dangling pointer): canceling request creation.");
-      aq.addJob(j, aReq.getAddressIfSet(), aReq.getArchiveFile().archiveFileID, 
-        aReq.getArchiveFile().fileSize, aReq.getMountPolicy(),
-        aReq.getEntryLog().time);
-      // Now that we have the tape pool handy, get the retry limits from it and 
-      // assign them to the job
-      aq.commit();
+      ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this);
       linkedTapePools.push_back(j.ArchiveQueueAddress);
-      aReq.setJobOwner(j.copyNb, aq.getAddressIfSet());
+      aReq.setJobOwner(j.copyNb, j.ArchiveQueueAddress);
     }
   } catch (NoSuchArchiveQueue &) {
     // Unlink the request from already connected tape pools
