@@ -7,8 +7,8 @@ config_database="./database-sqlite.yaml"
 
 # By default keep Database and keep Objectstore
 # default should not make user loose data if he forgot the option
-keepDatabase=1
-keepObjectstore=1
+keepdatabase=1
+keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-p <gitlab pipeline ID>] [-D] [-O]
@@ -37,10 +37,10 @@ while getopts "n:o:d:p:DO" o; do
             pipelineid=${OPTARG}
             ;;
         O)
-            keepObjectstore=0
+            keepobjectstore=0
             ;;
         D)
-            keepDatabase=0
+            keepdatabase=0
             ;;
         *)
             usage
@@ -78,13 +78,13 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-if [ $keepDatabase == 1 ] ; then
+if [ $keepdatabase == 1 ] ; then
     echo "DB content will be kept"
 else
     echo "DB content will be wiped"
 fi
 
-if [ $keepObjectstore == 1 ] ; then 
+if [ $keepobjectstore == 1 ] ; then 
     echo "objecstore content will be kept"
 else
     echo "objectstore content will be wiped"
@@ -96,7 +96,7 @@ echo "Creating ${instance} instance"
 kubectl create namespace ${instance} || exit 1
 
 
-kubectl --namespace ${instance} create configmap init --from-literal=keepDatabase=${keepDatabase} --from-literal=keepObjectstore=${keepObjectstore}
+kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 
 
 echo "creating configmaps in instance"

@@ -25,12 +25,12 @@ spec:
       valueFrom:
         configMapKeyRef:
           name: init
-          key: keepDatabase
+          key: keepdatabase
     - name: KEEP_OBJECTSTORE
       valueFrom:
         configMapKeyRef:
           name: init
-          key: keepObjectstore
+          key: keepobjectstore
     command: ['/opt/run/bin/init.sh']
     args: ["none"]
     volumeMounts:
