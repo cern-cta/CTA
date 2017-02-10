@@ -27,6 +27,12 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+echo "Getting stdout logs of pods"
+mkdir -p ../../pod_logs/${instance}
+for podcontainer in "init -c ctainit" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv -c taped" "tpsrv -c rmcd"; do
+  kubectl --namespace ${instance} logs ${podcontainer} > ../../pod_logs/${instance}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
+done
+
 
 echo "Deleting ${instance} instance"
 
