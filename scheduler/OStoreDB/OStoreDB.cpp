@@ -357,13 +357,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
   }
   // We create the object here
-  {
-    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-    objectstore::ScopedExclusiveLock agl(ag);
-    ag.fetch();
-    ag.addToOwnership(aReq.getAddressIfSet());
-    ag.commit();
-  }
+  m_agentReference->addToOwnership(aReq.getAddressIfSet(), m_objectStore);
   aReq.setOwner(m_agentReference->getAgentAddress());
   aReq.insert();
   ScopedExclusiveLock arl(aReq);
@@ -393,13 +387,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.commit();
   arl.release();
   // And remove reference from the agent
-  {
-    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-    objectstore::ScopedExclusiveLock al(ag);
-    ag.fetch();
-    ag.removeFromOwnership(aReq.getAddressIfSet());
-    ag.commit();
-  }
+  m_agentReference->removeFromOwnership(aReq.getAddressIfSet(), m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -429,11 +417,7 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
         // Upgrade the lock to an exclusive one.
         arl.release();
         ScopedExclusiveLock arxl(ar);
-        objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-        objectstore::ScopedExclusiveLock agl(ag);
-        ag.fetch();
-        ag.addToOwnership(ar.getAddressIfSet());
-        ag.commit();
+        m_agentReference->addToOwnership(ar.getAddressIfSet(), m_objectStore);
         ar.fetch();
         ar.setAllJobsFailed();
         for (auto j:ar.dumpJobs()) {
@@ -447,11 +431,10 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
             aq2.removeJob(ar.getAddressIfSet());
             aq2.commit();
           } catch (...) {}
-          ar.setJobOwner(j.copyNb, ag.getAddressIfSet());
+          ar.setJobOwner(j.copyNb, m_agentReference->getAgentAddress());
         }
         ar.remove();
-        ag.removeFromOwnership(ar.getAddressIfSet());
-        ag.commit();
+        m_agentReference->removeFromOwnership(ar.getAddressIfSet(), m_objectStore);
         // We found and deleted the job: return.
         return;
       }
@@ -491,12 +474,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
         tar.fetch();
         if (tar.getArchiveFile().archiveFileID == fileId) {
           // Point the agent to the request
-          cta::objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-          ScopedExclusiveLock agl(ag);
-          ag.fetch();
-          ag.addToOwnership(arp->address);
-          ag.commit();
-          agl.release();
+          m_agentReference->addToOwnership(arp->address, m_objectStore);
           // Mark all jobs are being pending NS deletion (for being deleted them selves) 
           tatfrl.release();
           ar.setAddress(arp->address);
@@ -532,13 +510,9 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
     throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
   // We just need to delete the object and forget it
   m_request.remove();
-  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock al (ag);
-  ag.fetch();
-  ag.removeFromOwnership(m_request.getAddressIfSet());
-  ag.commit();
+  m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
   m_closed = true;
-  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation()
@@ -546,12 +520,8 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
     try {
-      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-      m_request.garbageCollect(ag.getAddressIfSet());
-      objectstore::ScopedExclusiveLock al (ag);
-      ag.fetch();
-      ag.removeFromOwnership(m_request.getAddressIfSet());
-      ag.commit();
+      m_request.garbageCollect(m_agentReference.getAgentAddress());
+      m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
     } catch (...) {}
   }
 }
@@ -768,13 +738,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   rReq.setSchedulerRequest(rqst);
   rReq.setRetrieveFileQueueCriteria(criteria);
   // Point to the request in the agent
-  {
-    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-    ScopedExclusiveLock agl(ag);
-    ag.fetch();
-    ag.addToOwnership(rReq.getAddressIfSet());
-    ag.commit();
-  }
+  m_agentReference->addToOwnership(rReq.getAddressIfSet(), m_objectStore);
   // Set an arbitrary copy number so we can serialize. Garbage collection we re-choose 
   // the tape file number and override it in case of problem (and we will set it further).
   rReq.setActiveCopyNumber(1);
@@ -809,13 +773,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   rReq.commit();
   rrl.release();
   // And relinquish ownership form agent
-  {
-    objectstore::Agent ag(m_agentReference->getAgentAddress(), m_objectStore);
-    ScopedExclusiveLock agl(ag);
-    ag.fetch();
-    ag.removeFromOwnership(rReq.getAddressIfSet());
-    ag.commit();
-  }
+  m_agentReference->removeFromOwnership(rReq.getAddressIfSet(), m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -1582,14 +1540,9 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       }
       // Take ownership of the job
       // Add to ownership
-      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-      objectstore::ScopedExclusiveLock al(ag);
-      ag.fetch();
-      ag.addToOwnership(privateRet->m_archiveRequest.getAddressIfSet());
-      ag.commit();
-      al.release();
+      m_agentReference.addToOwnership(privateRet->m_archiveRequest.getAddressIfSet(), m_objectStore);
       // Make the ownership official (for this job within the request)
-      privateRet->m_archiveRequest.setJobOwner(job.copyNb, ag.getAddressIfSet());
+      privateRet->m_archiveRequest.setJobOwner(job.copyNb, m_agentReference.getAgentAddress());
       privateRet->m_archiveRequest.commit();
       // Remove the job from the archive queue
       aq.removeJob(privateRet->m_archiveRequest.getAddressIfSet());
@@ -1798,14 +1751,9 @@ auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase:
       }
       // Take ownership of the job
       // Add to ownership
-      objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-      objectstore::ScopedExclusiveLock al(ag);
-      ag.fetch();
-      ag.addToOwnership(privateRet->m_retrieveRequest.getAddressIfSet());
-      ag.commit();
-      al.release();
+      m_agentReference.addToOwnership(privateRet->m_retrieveRequest.getAddressIfSet(), m_objectStore);
       // Make the ownership official
-      privateRet->m_retrieveRequest.setOwner(ag.getAddressIfSet());
+      privateRet->m_retrieveRequest.setOwner(m_agentReference.getAgentAddress());
       privateRet->m_retrieveRequest.commit();
       // Remove the job from the archive queue
       rq.removeJob(privateRet->m_retrieveRequest.getAddressIfSet());
@@ -1933,11 +1881,7 @@ void OStoreDB::ArchiveJob::fail() {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
-    objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-    objectstore::ScopedExclusiveLock al(ag);
-    ag.fetch();
-    ag.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-    ag.commit();
+    m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
     m_jobOwned = false;
     return;
   }
@@ -1965,11 +1909,7 @@ void OStoreDB::ArchiveJob::fail() {
           m_archiveRequest.commit();
           arl.release();
           // We just have to remove the ownership from the agent and we're done.
-          objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-          objectstore::ScopedExclusiveLock al(ag);
-          ag.fetch();
-          ag.removeFromOwnership(ag.getAddressIfSet());
-          ag.commit();
+          m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
           m_jobOwned = false;
           return;
         }
@@ -2005,11 +1945,7 @@ bool OStoreDB::ArchiveJob::succeed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership from agent
-  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock al(ag);
-  ag.fetch();
-  ag.removeFromOwnership(atfrAddress);
-  ag.commit();
+  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);
   return lastJob;
 }
 
@@ -2024,11 +1960,7 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress());
     atfrl.release();
     // Remove ownership from agent
-    objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-    objectstore::ScopedExclusiveLock al(ag);
-    ag.fetch();
-    ag.removeFromOwnership(m_archiveRequest.getAddressIfSet());
-    ag.commit();
+    m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
   }
 }
 
@@ -2138,11 +2070,7 @@ void OStoreDB::RetrieveJob::succeed() {
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership form the agent
-  objectstore::Agent ag(m_agentReference.getAgentAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock al(ag);
-  ag.fetch();
-  ag.removeFromOwnership(rtfrAddress);
-  ag.commit();
+  m_agentReference.removeFromOwnership(rtfrAddress, m_objectStore);
 }
 
 

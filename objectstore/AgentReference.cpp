@@ -68,7 +68,7 @@ void AgentReference::addToOwnership(const std::string& objectAddress, objectstor
   queueAndExecuteAction(a, backend);
 }
 
-void AgentReference::removeFromOnership(const std::string& objectAddress, objectstore::Backend& backend) {
+void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Remove, objectAddress, std::promise<void>()};
   queueAndExecuteAction(a, backend);
 }
@@ -119,6 +119,7 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
     // Off we go! Add the actions to the queue
     try {
       objectstore::Agent ag(m_agentAddress, backend);
+      objectstore::ScopedExclusiveLock agl(ag);
       ag.fetch();
       // First we apply our own modification
       appyAction(action, ag);

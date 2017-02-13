@@ -65,7 +65,7 @@ public:
    * The execution order is guaranteed.
    * @param objectAddress
    */
-  void removeFromOnership(const std::string &objectAddress, objectstore::Backend& backend);
+  void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend);
 
   /**
    * Gets the address of the Agent object generated on construction.

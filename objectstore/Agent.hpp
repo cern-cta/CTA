@@ -28,6 +28,7 @@ namespace cta { namespace objectstore {
   
 class GenericObject;
 class AgentReference;
+class GarbageCollector;
 
 /**
  * Class containing agent information and managing the update of the 
@@ -40,6 +41,7 @@ class AgentReference;
 
 class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class AgentReference;
+  friend class GarbageCollector;
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   Agent(GenericObject & go);
@@ -104,12 +106,12 @@ public:
     bool m_present;
   };*/
   
-//private:
+private:
   void addToOwnership(std::string name);
   
   void removeFromOwnership(std::string name);
   
-//public:
+public:
   std::list<std::string> getOwnershipList();
   
   std::string dump();

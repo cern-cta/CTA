@@ -108,11 +108,8 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     arName = agrA.nextId("AgentRegister");
     cta::objectstore::AgentRegister ar(arName, be);
     ar.initialize();
-    ar.setOwner(agA.getAddressIfSet());
-    cta::objectstore::ScopedExclusiveLock agl(agA);
-    agA.fetch();
-    agA.addToOwnership(arName);
-    agA.commit();
+    ar.setOwner(agrA.getAgentAddress());
+    agrA.addToOwnership(arName, be);
     ar.insert();
   }
   // Create the garbage colletor and run it twice.
@@ -166,10 +163,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     cta::objectstore::ArchiveQueue aq(tpName, be);
     aq.initialize("SomeTP");
     aq.setOwner(agA.getAddressIfSet());
-    cta::objectstore::ScopedExclusiveLock agl(agA);
-    agA.fetch();
-    agA.addToOwnership(tpName);
-    agA.commit();
+    agrA.addToOwnership(tpName, be);
     aq.insert();
   }
   // Create the garbage colletor and run it twice.
@@ -223,10 +217,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     cta::objectstore::DriveRegister dr(tpName, be);
     dr.initialize();
     dr.setOwner(agA.getAddressIfSet());
-    cta::objectstore::ScopedExclusiveLock agl(agA);
-    agA.fetch();
-    agA.addToOwnership(tpName);
-    agA.commit();
+    agrA.addToOwnership(tpName, be);
     dr.insert();
   }
   // Create the garbage colletor and run it twice.
@@ -298,10 +289,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   {
     // -just referenced
     std::string atfrAddr = agrA.nextId("ArchiveRequest");
-    cta::objectstore::ScopedExclusiveLock agl(agA);
-    agA.fetch();
-    agA.addToOwnership(atfrAddr);
-    agA.commit();
+    agrA.addToOwnership(atfrAddr, be);
     if (pass < 1) { pass++; continue; }
     // - created, but not linked to tape pools. Those jobs will be queued by the garbage
     // collector.

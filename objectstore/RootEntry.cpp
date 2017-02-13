@@ -105,16 +105,11 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   // Insert the archive queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   std::string archiveQueueAddress = agentRef.nextId("archiveQueue");
-  // TODO Do we expect the agent to be passed locked or not: to be clarified.
-  Agent agent(agentRef.getAgentAddress(), m_objectStore);
-  ScopedExclusiveLock agl(agent);
-  agent.fetch();
-  agent.addToOwnership(archiveQueueAddress);
-  agent.commit();
+  agentRef.addToOwnership(archiveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   aq.initialize(tapePool);
-  aq.setOwner(agent.getAddressIfSet());
+  aq.setOwner(agentRef.getAgentAddress());
   aq.setBackupOwner("root");
   aq.insert();
   ScopedExclusiveLock tpl(aq);
@@ -129,8 +124,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   aq.setBackupOwner(getAddressIfSet());
   aq.commit();
   // ... and clean up the agent
-  agent.removeFromOwnership(archiveQueueAddress);
-  agent.commit();
+  agentRef.removeFromOwnership(archiveQueueAddress, m_objectStore);
   return archiveQueueAddress;
 }
 
@@ -226,16 +220,11 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   std::string retrieveQueueAddress = agentRef.nextId("retriveQueue");
-  // TODO Do we expect the agent to be passed locked or not: to be clarified.
-  Agent agent(agentRef.getAgentAddress(), m_objectStore);
-  ScopedExclusiveLock agl(agent);
-  agent.fetch();
-  agent.addToOwnership(retrieveQueueAddress);
-  agent.commit();
+  agentRef.addToOwnership(retrieveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
   rq.initialize(vid);
-  rq.setOwner(agent.getAddressIfSet());
+  rq.setOwner(agentRef.getAgentAddress());
   rq.setBackupOwner("root");
   rq.insert();
   ScopedExclusiveLock tpl(rq);
@@ -250,8 +239,7 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   rq.setBackupOwner(getAddressIfSet());
   rq.commit();
   // ... and clean up the agent
-  agent.removeFromOwnership(retrieveQueueAddress);
-  agent.commit();
+  agentRef.removeFromOwnership(retrieveQueueAddress, m_objectStore);
   return retrieveQueueAddress;
 }
 
@@ -335,18 +323,13 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
   try {
     return getDriveRegisterAddress();
   } catch (NotAllocated &) {
-    // decide on the object's name and add to agent's intent. We expect the
-    // agent to be passed locked.
+    // decide on the object's name and add to agent's intent.
     std::string drAddress (agentRef.nextId("driveRegister"));
-    Agent agent(agentRef.getAgentAddress(), m_objectStore);
-    ScopedExclusiveLock agl(agent);
-    agent.fetch();
-    agent.addToOwnership(drAddress);
-    agent.commit();
+    agentRef.addToOwnership(drAddress, m_objectStore);
     // Then create the drive register object
     DriveRegister dr(drAddress, m_objectStore);
     dr.initialize();
-    dr.setOwner(agent.getAddressIfSet());
+    dr.setOwner(agentRef.getAgentAddress());
     dr.setBackupOwner(getAddressIfSet());
     dr.insert();
     // Take a lock on drive registry
@@ -361,8 +344,7 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
     dr.setBackupOwner(getAddressIfSet());
     dr.commit();
     //... and clean up the agent
-    agent.removeFromOwnership(drAddress);
-    agent.commit();
+    agentRef.removeFromOwnership(drAddress, m_objectStore);
     return drAddress;
   }
 }
@@ -548,18 +530,13 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agen
   try {
     return getSchedulerGlobalLock();
   } catch (NotAllocated &) {
-    // decide on the object's name and add to agent's intent. We expect the
-    // agent to be passed locked.
+    // decide on the object's name and add to agent's intent.
     std::string sglAddress (agentRef.nextId("schedulerGlobalLock"));
-    Agent agent(agentRef.getAgentAddress(), m_objectStore);
-    ScopedExclusiveLock agl(agent);
-    agent.fetch();
-    agent.addToOwnership(sglAddress);
-    agent.commit();
+    agentRef.addToOwnership(sglAddress, m_objectStore);
     // Then create the drive register object
     SchedulerGlobalLock sgl(sglAddress, m_objectStore);
     sgl.initialize();
-    sgl.setOwner(agent.getAddressIfSet());
+    sgl.setOwner(agentRef.getAgentAddress());
     sgl.setBackupOwner(getAddressIfSet());
     sgl.insert();
     // Take a lock on scheduler global lock
@@ -574,8 +551,7 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agen
     sgl.setBackupOwner(getAddressIfSet());
     sgl.commit();
     //... and clean up the agent
-    agent.removeFromOwnership(sglAddress);
-    agent.commit();
+    agentRef.removeFromOwnership(sglAddress, m_objectStore);
     return sglAddress;
   }
 }
