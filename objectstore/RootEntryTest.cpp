@@ -73,7 +73,8 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::AgentReference agr("UnitTests");
+  agr.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -140,6 +141,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::AgentReference agr("UnitTests"); 
+  agr.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -241,7 +243,8 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   }
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::AgentReference agr("UnitTests");
+  agr.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 

@@ -63,6 +63,10 @@ std::string AgentReference::nextId(const std::string& childType) {
   return id.str();
 }
 
+void AgentReference::setQueueFlushTimeout(std::chrono::duration<uint64_t, std::milli> timeout) {
+  m_queueFlushTimeout = timeout;
+}
+
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Add, objectAddress, std::promise<void>()};
   queueAndExecuteAction(a, backend);
@@ -107,7 +111,7 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
     ulq.unlock();
     ulGlobal.unlock();
     // We wait for time or size of queue
-    q.promise.get_future().wait_for(std::chrono::milliseconds(100));
+    q.promise.get_future().wait_for(m_queueFlushTimeout);
     // Make sure we are not listed anymore a the queue taking jobs (this would happen
     // in case of timeout.
     ulGlobal.lock();

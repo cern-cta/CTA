@@ -140,7 +140,6 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   cta::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  std::unique_ptr<cta::SchedulerDatabase> mdb(new cta::OStoreDBWrapper<cta::objectstore::BackendVFS>("UnitTest"));
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
