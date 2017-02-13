@@ -1,10 +1,9 @@
 stages:
   - build:srpm
   - build:rpm
-  - test:valgrind
   - build:dockerimage
   - rename:dockerimage
-  - systemtests
+  - test
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_BUILD_REF:0:8}
@@ -49,7 +48,7 @@ cta_rpm:
     - docker
 
 cta_valgrind:
-  stage: test:valgrind
+  stage: test
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -91,7 +90,7 @@ ctageneric_docker_rename:
 
 
 archiveretrieve:
-  stage: systemtests
+  stage: test
   script:
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - cd continuousintegration/orchestration/; ./run_systemtest.sh  -s tests/systest.sh
