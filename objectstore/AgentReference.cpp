@@ -17,6 +17,7 @@
  */
 
 #include "AgentReference.hpp"
+#include "Agent.hpp"
 #include "common/exception/Errnum.hpp"
 
 #include <sstream>
@@ -47,6 +48,9 @@ AgentReference::AgentReference(const std::string & clientType) {
     << std::setw(2) << localNow.tm_min << ":"
     << std::setw(2) << localNow.tm_sec;
   m_agentAddress = aid.str();
+  // Initialize the serialization token for queued actions
+  m_nextQueueExecutionPromise.reset(new std::promise<void>);
+  m_nextQueueExecutionPromise->set_value();
 }
 
 std::string AgentReference::getAgentAddress() {
@@ -59,4 +63,99 @@ std::string AgentReference::nextId(const std::string& childType) {
   return id.str();
 }
 
-}}
+void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
+  Action a{AgentOperation::Add, objectAddress, std::promise<void>()};
+  queueAndExecuteAction(a, backend);
+}
+
+void AgentReference::removeFromOnership(const std::string& objectAddress, objectstore::Backend& backend) {
+  Action a{AgentOperation::Remove, objectAddress, std::promise<void>()};
+  queueAndExecuteAction(a, backend);
+}
+
+void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend& backend) {
+  // First, we need to determine if a queue exists or not.
+  // If so, we just use it, and if not, we create and serve it.
+  std::unique_lock<std::mutex> ulGlobal(m_currentQueueMutex);
+  if (m_currentQueue) {
+    // There is already a queue
+    std::unique_lock<std::mutex> ulQueue(m_currentQueue->mutex);
+    m_currentQueue->queue.push_back(&action);
+    // If this is time to run, wake up the serving thread
+    if (m_currentQueue->queue.size() + 1 >= m_maxQueuedItems) {
+      m_currentQueue->promise.set_value();
+      m_currentQueue = nullptr;
+    }
+    // Release the locks and wait for action execution
+    ulQueue.unlock();
+    ulGlobal.unlock();
+    action.promise.get_future().get();
+  } else {
+    // There is not queue, so we need to create and serve it ourselves
+    ActionQueue q;
+    // Lock the queue
+    std::unique_lock<std::mutex> ulq(q.mutex);
+    // Get it referenced
+    m_currentQueue = &q;
+    // Get our execution promise and leave one behind
+    std::unique_ptr<std::promise<void>> promiseForThisQueue(m_nextQueueExecutionPromise.release());
+    // Leave a promise behind for the next queue
+    m_nextQueueExecutionPromise.reset(new std::promise<void>);
+    // Keep a pointer to it, so we will signal our own completion to our successor queue.
+    std::promise<void> * promiseForNextQueue = m_nextQueueExecutionPromise.get();
+    // We can now unlock the queue and the general lock: queuing is open.
+    ulq.unlock();
+    ulGlobal.unlock();
+    // We wait for time or size of queue
+    q.promise.get_future().wait_for(std::chrono::milliseconds(100));
+    // Make sure we are not listed anymore a the queue taking jobs (this would happen
+    // in case of timeout.
+    ulGlobal.lock();
+    if (m_currentQueue == &q)
+      m_currentQueue = nullptr;
+    ulGlobal.unlock();
+    // Make sure no leftover thread is still writing to the queue.
+    ulq.lock();
+    // Off we go! Add the actions to the queue
+    try {
+      objectstore::Agent ag(m_agentAddress, backend);
+      ag.fetch();
+      // First we apply our own modification
+      appyAction(action, ag);
+      // Then those of other threads
+      for (auto a: q.queue)
+        appyAction(*a, ag);
+      // and commit
+      ag.commit();
+    } catch (...) {
+      // Something wend wrong: , we release the next batch of changes
+      promiseForNextQueue->set_value();
+      // We now pass the exception to all threads
+      for (auto a: q.queue)
+        a->promise.set_exception(std::current_exception());
+      // And to our own caller
+      throw;
+    }
+    // Things went well. We pass the token to the next queue
+    promiseForNextQueue->set_value();
+    // and release the other threads
+    for (auto a: q.queue)
+      a->promise.set_value();
+  }
+}
+
+void AgentReference::appyAction(Action& action, objectstore::Agent& agent) {
+  switch (action.op) {
+  case AgentOperation::Add:
+    agent.addToOwnership(action.objectAddress);
+    break;
+  case AgentOperation::Remove:
+    agent.removeFromOwnership(action.objectAddress);
+    break;
+  default:
+    throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
+  }
+}
+
+
+}} // namespace cta::objectstore

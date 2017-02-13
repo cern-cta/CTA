@@ -25,7 +25,7 @@ namespace cta { namespace objectstore {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be), m_agentReference("OStoreDBFactory") {
+BackendPopulator::BackendPopulator(cta::objectstore::Backend & be): m_backend(be), m_agentReference("OStoreDBFactoryAgent") {
   cta::objectstore::RootEntry re(m_backend);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();

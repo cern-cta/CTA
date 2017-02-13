@@ -18,11 +18,15 @@
 
 #pragma once
 
-#include "common/threading/Mutex.hpp"
+#include "objectstore/Backend.hpp"
 #include <atomic>
 #include <string>
+#include <future>
+#include <list>
 
 namespace cta { namespace objectstore {
+
+class Agent;
 
 /**
  * A class allowing the passing of the address of an Agent object, plus a thread safe
@@ -48,6 +52,22 @@ public:
   std::string nextId(const std::string & childType);
   
   /**
+   * Adds an object address to the referenced agent. The additions and removals
+   * are queued in memory so that several threads can share the same access.
+   * The execution order is guaranteed.
+   * @param objectAddress
+   */
+  void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  
+  /**
+   * Removes an object address from the referenced agent. The additions and removals
+   * are queued in memory so that several threads can share the same access.
+   * The execution order is guaranteed.
+   * @param objectAddress
+   */
+  void removeFromOnership(const std::string &objectAddress, objectstore::Backend& backend);
+
+  /**
    * Gets the address of the Agent object generated on construction.
    * @return the agent object address.
    */
@@ -55,6 +75,61 @@ public:
 private:
   std::atomic<uint64_t> m_nextId;
   std::string m_agentAddress;
+  
+  /**
+   * An enumeration describing all the queueable operations
+   */
+  enum class AgentOperation: char {
+    Add,
+    Remove
+  };
+  
+  /**
+   * An operation with its parameter and promise
+   */
+  struct Action {
+    AgentOperation op;
+    const std::string & objectAddress;
+    std::promise<void> promise;
+  };
+  
+  /**
+   * The queue with the lock and flush control 
+   */
+  struct ActionQueue {
+    std::mutex mutex;
+    std::list<Action *> queue;
+    std::promise<void> promise;
+  };
+  
+  /**
+   * Helper function applying the action to the already fetched agent.
+   * @param action
+   * @param agent
+   */
+  void appyAction(Action &action, objectstore::Agent & agent);
+  
+  /**
+   * The global function actually doing the job: creates a queue if needed, add
+   * the action to it and flushes them based on time and count. Uses an algorithm
+   * similar to queueing in ArchiveQueues and RetrieveQeueues.
+   * @param action the action
+   */
+  void queueAndExecuteAction(Action& action, objectstore::Backend& backend);
+  
+  std::mutex m_currentQueueMutex;
+  ActionQueue * m_currentQueue = nullptr;
+  /**
+   * This pointer holds a promise that will be picked up by the thread managing 
+   * the a queue in memory (promise(n)). The same thread will leave a fresh promise 
+   * (promise(n+1) in this pointer for the next thread to pick up. The thread will
+   * then wait for promise(n) to be fullfilled to flush to queue to the object store
+   * and will fullfill promise(n+1) after doing so.
+   * This will ensure that the queues will be flushed in order, one at a time.
+   * One at a time also minimize contention on the object store.
+   */
+  std::unique_ptr<std::promise<void>> m_nextQueueExecutionPromise;
+  const size_t m_maxQueuedItems = 100;
 };
 
 }} 
