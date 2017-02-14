@@ -421,6 +421,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
+    archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.copyNb = 1;
     archiveJob->complete();
     archiveJob.reset(archiveMount->getNextJob(lc).release());
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
