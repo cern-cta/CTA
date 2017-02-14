@@ -25,6 +25,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
+#include "common/log/DummyLogger.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -128,6 +129,8 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_use
 // unit test is disabled as it is pretty long to run.
 TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
   using namespace cta;
+  log::DummyLogger dl("");
+  log::LogContext lc(dl);
 
   SchedulerDatabase &db = getDb();
   
@@ -165,7 +168,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
     ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
     ar.storageClass = "storageClass";
     afqc.fileId = i;
-    db.queueArchive("eosInstance", ar, afqc);
+    db.queueArchive("eosInstance", ar, afqc, lc);
   }
   
   // Then load all archive jobs into memory
@@ -178,7 +181,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
   bool done = false;
   size_t count = 0;
   while (!done) {
-    auto aj = am->getNextJob();
+    auto aj = am->getNextJob(lc);
     if (aj.get()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
@@ -213,7 +216,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
     ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
     ar.storageClass = "storageClass";
     afqc.fileId = i;
-    db.queueArchive("eosInstance", ar, afqc);
+    db.queueArchive("eosInstance", ar, afqc, lc);
   }
   
   // Then load all archive jobs into memory (2nd pass)
@@ -223,7 +226,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
   done = false;
   count = 0;
   while (!done) {
-    auto aj = am->getNextJob();
+    auto aj = am->getNextJob(lc);
     if (aj.get()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;

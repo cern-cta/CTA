@@ -35,6 +35,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 
 #include <list>
@@ -99,9 +100,11 @@ public:
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to queue the request.
+   * @param logContext context allowing logging db operation
    */
   virtual void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) = 0;
+    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria,
+    log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
@@ -173,7 +176,7 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
-    virtual std::unique_ptr<ArchiveJob> getNextJob() = 0;
+    virtual std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual ~ArchiveMount() {}

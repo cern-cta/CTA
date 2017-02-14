@@ -95,12 +95,12 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 //------------------------------------------------------------------------------
 // getNextJob
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob() {
+std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob(log::LogContext &logContext) {
   // Check we are still running the session
   if (!m_sessionRunning)
     throw SessionNotRunning("In ArchiveMount::getNextJob(): trying to get job from complete/not started session");
   // try and get a new job from the DB side
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob().release());
+  std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob(logContext).release());
   if (!dbJob.get())
     return std::unique_ptr<cta::ArchiveJob>();
   // We have something to archive: prepare the response

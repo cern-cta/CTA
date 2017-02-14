@@ -81,7 +81,7 @@ uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::
   using utils::midEllipsis;
   auto catalogueInfo = m_catalogue.prepareForNewFile(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
-  m_db.queueArchive(instanceName, request, catalogueInfo);
+  m_db.queueArchive(instanceName, request, catalogueInfo, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)

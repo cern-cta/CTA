@@ -320,7 +320,7 @@ void OStoreDB::getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue& a
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-        const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) {
+        const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   // Construct the return value immediately
   cta::objectstore::ArchiveRequest aReq(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
@@ -363,11 +363,18 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   ScopedExclusiveLock arl(aReq);
   // We can now enqueue the requests
   std::list<std::string> linkedTapePools;
+  std::string currentTapepool;
   try {
     for (auto &j: aReq.dumpJobs()) {
+      currentTapepool = j.tapePool;
       ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this);
       linkedTapePools.push_back(j.ArchiveQueueAddress);
       aReq.setJobOwner(j.copyNb, j.ArchiveQueueAddress);
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", j.tapePool)
+            .add("queueObject", j.ArchiveQueueAddress)
+            .add("jobObject", aReq.getAddressIfSet());
+      logContext.log(log::INFO, "In OStoreDB::queueArchive(): added job to queue");
     }
   } catch (NoSuchArchiveQueue &) {
     // Unlink the request from already connected tape pools
@@ -379,6 +386,10 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       aq.commit();
       aReq.remove();
     }
+    log::ScopedParamContainer params(logContext);
+    params.add("tapepool", currentTapepool)
+          .add("jobObject", aReq.getAddressIfSet());
+    logContext.log(log::INFO, "In OStoreDB::queueArchive(): failed to enqueue job");
     throw;
   }
   // The request is now fully set. As it's multi-owned, we do not set the owner,
@@ -1471,7 +1482,7 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::getNextJob()
 //------------------------------------------------------------------------------
-auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::ArchiveJob> {
+auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::unique_ptr<SchedulerDatabase::ArchiveJob> {
   // Find the next file to archive
   // Get the archive queue
   objectstore::RootEntry re(m_objectStore);
@@ -1490,9 +1501,9 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
   // Try and open the archive queue. It could be gone by now.
   try {
     objectstore::ArchiveQueue aq(aqAddress, m_objectStore);
-    objectstore::ScopedExclusiveLock aql;
+    objectstore::ScopedExclusiveLock aqlock;
     try {
-      aql.lock(aq);
+      aqlock.lock(aq);
       aq.fetch();
     } catch (cta::exception::Exception & ex) {
       // The queue is now absent. We can remove its reference in the root entry.
@@ -1505,10 +1516,19 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       re.fetch();
       try {
         re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJob(): de-referenced missing queue from root entry");
       } catch (RootEntry::ArchivelQueueNotEmpty & ex) {
         // TODO: improve: if we fail here we could retry to fetch a job.
-        return nullptr;
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet())
+              .add("Message", ex.getMessageValue());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJob(): could not de-referenced missing queue from root entry");
       }
+      return nullptr;
     }
     // Pop jobs until we find one actually belonging to the queue.
     // Any job not really belonging is an uncommitted pop, which we will
@@ -1549,7 +1569,7 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       // We can commit and release the archive queue lock, we will only fill up
       // memory structure from here on.
       aq.commit();
-      aql.release();
+      aqlock.release();
       privateRet->archiveFile = privateRet->m_archiveRequest.getArchiveFile();
       privateRet->srcURL = privateRet->m_archiveRequest.getSrcURL();
       privateRet->archiveReportURL = privateRet->m_archiveRequest.getArchiveReportURL();
@@ -1561,16 +1581,34 @@ auto OStoreDB::ArchiveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::
       privateRet->m_jobOwned = true;
       privateRet->m_mountId = mountInfo.mountId;
       privateRet->m_tapePool = mountInfo.tapePool;
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", mountInfo.tapePool)
+            .add("queueObject", aq.getAddressIfSet())
+            .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet());
+      logContext.log(log::INFO, "In ArchiveMount::getNextJob(): poped job from queue");
       return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
     }
     // If we get here, we exhausted the queue. We can now remove it. 
     // removeArchiveQueueAndCommit is safe, as it checks whether the queue is empty 
-    // before deleting it.
-    aq.remove();
-    objectstore::RootEntry re(m_objectStore);
-    objectstore::ScopedExclusiveLock rel (re);
-    re.fetch();
-    re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+    // before deleting it. It will throw an exception in such a case (allowing us to
+    // log such instance.) We need to release the lock here
+    aqlock.release();
+    try {
+      objectstore::RootEntry re(m_objectStore);
+      objectstore::ScopedExclusiveLock rel (re);
+      re.fetch();
+      re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", mountInfo.tapePool)
+            .add("queueObject", aq.getAddressIfSet());
+      logContext.log(log::INFO, "In ArchiveMount::getNextJob(): deleted empty queue");
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", mountInfo.tapePool)
+            .add("queueObject", aq.getAddressIfSet())
+            .add("Message", ex.getMessageValue());
+      logContext.log(log::INFO, "In ArchiveMount::getNextJob(): could not delete a presumably empty queue");
+    }
     return nullptr;
   } catch (cta::exception::Exception & ex){
     return nullptr;

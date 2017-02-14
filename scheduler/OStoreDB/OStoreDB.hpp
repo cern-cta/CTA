@@ -94,7 +94,7 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::unique_ptr<ArchiveJob> getNextJob() override;
+    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
   };
@@ -161,7 +161,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria) override;
+    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
 private:
   /**

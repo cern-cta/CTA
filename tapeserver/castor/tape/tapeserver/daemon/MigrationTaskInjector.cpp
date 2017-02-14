@@ -106,7 +106,7 @@ namespace daemon {
       uint64_t files=0;
       uint64_t bytes=0;
       while(files<=m_maxFiles && bytes<=m_maxBytes) {
-        std::unique_ptr<cta::ArchiveJob> job=m_archiveMount.getNextJob();
+        std::unique_ptr<cta::ArchiveJob> job=m_archiveMount.getNextJob(m_lc);
         if(!job.get()) break;
         files++;
         bytes+=job->archiveFile.fileSize;
@@ -167,7 +167,7 @@ namespace daemon {
         uint64_t files=0;
         uint64_t bytes=0;
         while(files<=req.filesRequested && bytes<=req.bytesRequested) {
-          std::unique_ptr<cta::ArchiveJob> job=m_parent.m_archiveMount.getNextJob();
+          std::unique_ptr<cta::ArchiveJob> job=m_parent.m_archiveMount.getNextJob(m_parent.m_lc);
           if(!job.get()) break;
           files++;
           bytes+=job->archiveFile.archiveFileID;

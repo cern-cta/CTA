@@ -415,14 +415,14 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob().release());
+    archiveJob.reset(archiveMount->getNextJob(lc).release());
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
     archiveJob->tapeFile.checksumValue = "1234abcd";
     archiveJob->complete();
-    archiveJob.reset(archiveMount->getNextJob().release());
+    archiveJob.reset(archiveMount->getNextJob(lc).release());
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
     archiveMount->complete();
   }
@@ -554,7 +554,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     // The file should be retried 10 times
     for (int i=0; i<=5; i++) {
-      std::unique_ptr<cta::ArchiveJob> archiveJob(archiveMount->getNextJob());
+      std::unique_ptr<cta::ArchiveJob> archiveJob(archiveMount->getNextJob(lc));
       if (!archiveJob.get()) {
         int __attribute__((__unused__)) debugI=i;
       }
@@ -565,7 +565,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     }
     // Then the request should be gone
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob().release());
+    archiveJob.reset(archiveMount->getNextJob(lc).release());
     ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
   }
 }

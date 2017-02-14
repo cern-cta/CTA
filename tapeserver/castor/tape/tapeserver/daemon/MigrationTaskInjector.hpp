@@ -38,9 +38,9 @@ namespace tapeserver{
 namespace daemon {
 
 /**
- * This classis responsible for creating the tasks in case of a recall job
+ * This class is responsible for creating the tasks in case of a recall job
  */
-class MigrationTaskInjector /*: public TaskInjector*/ {  
+class MigrationTaskInjector {  
 public:
 
   /**

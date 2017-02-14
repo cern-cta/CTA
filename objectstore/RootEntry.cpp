@@ -161,7 +161,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     // Check the archive queue is empty
     if (!aq.isEmpty()) {
       throw ArchivelQueueNotEmpty ("In RootEntry::removeArchiveQueueAndCommit(): trying to "
-          "remove a non-empty tape pool");
+          "remove a non-empty archive queue");
     }
     // We can delete the queue
     aq.remove();
