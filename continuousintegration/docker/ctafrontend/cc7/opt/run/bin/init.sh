@@ -77,6 +77,7 @@ else
     mtx -f /dev/${LIBRARYDEVICE} load ${tapeslot} ${driveslot}
     cd /tmp
       echo "VOL1${vid}                           CASTOR                                    3">label.file
+      mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
       dd if=label.file of=/dev/${DRIVEDEVICES[${driveslot}]} bs=80 count=1
       mt -f /dev/${DRIVEDEVICES[${driveslot}]} rewind
     mtx -f /dev/${LIBRARYDEVICE} unload ${tapeslot} ${driveslot}
