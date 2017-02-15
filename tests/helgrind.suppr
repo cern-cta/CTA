@@ -307,5 +307,21 @@
    ...
 }
 
+{
+   Stack_allocated_object_deletion_probably_coincidence_of_address
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+   ...
+}
 
+{
+   Objects_passed_form_thread_to_thread
+   Helgrind:Race
+   ...
+   fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
+   fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
+   ...
+}
 
