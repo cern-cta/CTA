@@ -112,7 +112,7 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
               .add("addedJobs", addedJobs)
               .add("waitTime", waitTime)
               .add("enqueueTime", timer.secs());
-        logContext.log(log::INFO, "In MemArchiveQueue::sharedAddToArchiveQueue");
+        logContext.log(log::INFO, "In MemArchiveQueue::sharedAddToArchiveQueue(): add batch of jobs to the queue.");
       }
       // And finally release all the user threads
       for (auto &maqr: maq.m_requests) {
@@ -120,6 +120,15 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
       }
       // Done!
     } catch (...) {
+      try {
+        std::rethrow_exception(std::current_exception());
+      } catch (cta::exception::Exception &ex) {
+        log::ScopedParamContainer params(logContext);
+        params.add("message", ex.getMessageValue());
+        logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got an exception writing. Will propagate to other threads.");
+      } catch (...) {
+        logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got a non cta exption writing. Will propagate to other threads.");
+      }
       size_t exceptionsNotPassed = 0;
       // Something went wrong. We should inform the other threads
       for (auto & maqr: maq.m_requests) {
@@ -138,6 +147,11 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
           err << "In MemArchiveQueue::sharedAddToArchiveQueue(), in main thread, failed to notify "
               << exceptionsNotPassed << " other threads out of  " << maq.m_requests.size()
               << " : " << ex.what();
+          log::ScopedParamContainer params(logContext);
+          params.add("what", ex.what())
+                .add("exceptionsNotPassed", exceptionsNotPassed);
+          logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): Failed to propagate exceptions to other threads.");
+
           throw cta::exception::Exception(err.str());
         }
       } else
