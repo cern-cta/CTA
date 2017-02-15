@@ -48,7 +48,9 @@ AgentReference::AgentReference(const std::string & clientType) {
     << std::setw(2) << localNow.tm_min << ":"
     << std::setw(2) << localNow.tm_sec;
   m_agentAddress = aid.str();
-  // Initialize the serialization token for queued actions
+  // Initialize the serialization token for queued actions (lock will make helgrind 
+  // happy, but not really needed
+  std::unique_lock<std::mutex> ulg(m_currentQueueMutex);
   m_nextQueueExecutionPromise.reset(new std::promise<void>);
   m_nextQueueExecutionPromise->set_value();
 }
@@ -70,7 +72,7 @@ void AgentReference::setQueueFlushTimeout(std::chrono::duration<uint64_t, std::m
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Add, objectAddress, std::promise<void>()};
   queueAndExecuteAction(a, backend);
-}
+} 
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Remove, objectAddress, std::promise<void>()};

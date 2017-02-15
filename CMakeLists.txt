@@ -159,10 +159,10 @@ add_custom_target(fullunittests
   tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
   COMMAND valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests
-  COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
+  COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
   COMMAND valgrind --track-fds=yes --child-silent-after-fork=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --suppressions=tests/valgrind.suppr tests/cta-unitTests-multiProcess
-  COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests-multiProcess
+  COMMAND valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests-multiProcess
   
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
@@ -175,8 +175,8 @@ add_custom_target(valgrind
   COMMENT "Running unit tests with memory leak detection" VERBATIM)
 
 add_custom_target(helgrind
-  valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
-  COMMAND valgrind --tool=helgrind -v --child-silent-after-fork=yes --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests-multiProcess
+  valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests
+  COMMAND valgrind --tool=helgrind -v --child-silent-after-fork=yes --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1 --suppressions=tests/helgrind.suppr tests/cta-unitTests-multiProcess
   
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection" VERBATIM)

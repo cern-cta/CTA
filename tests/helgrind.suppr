@@ -287,7 +287,25 @@
    ...
 }
 
+{
+   heap_address_collision
+   Helgrind:Race
+   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
+   ...
+}
 
+{
+   dubious_cond_var_in_promise
+   Helgrind:Misc
+   fun:pthread_cond_broadcast_WRK
+   fun:pthread_cond_broadcast@*
+   fun:_ZNSt18condition_variable10notify_allEv
+   fun:_ZNSt13__future_base11_State_base13_M_set_resultESt8functionIFSt10unique_ptrINS_12_Result_baseENS3_8_DeleterEEvEEb
+   ...
+}
 
 
 
