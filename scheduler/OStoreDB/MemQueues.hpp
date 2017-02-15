@@ -21,6 +21,7 @@
 
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveQueue.hpp"
+#include "common/log/LogContext.hpp"
 
 #include <future>
 
@@ -57,9 +58,12 @@ public:
    * 
    * @param job to be added to the ArchiveQueue (contains the tape pool name)
    * @param archiveRequest the request itself.
+   * @param oStoreDB reference to the object store, allowing creation of the queue
+   * if needed
+   * @param logContext log context to log addition of jobs to the queue.
    */
   static void sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump & job,
-    objectstore::ArchiveRequest & archiveRequest, OStoreDB & oStoreDB);
+    objectstore::ArchiveRequest & archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext);
   
 private:
   /** Mutex that should be locked before attempting any operation */

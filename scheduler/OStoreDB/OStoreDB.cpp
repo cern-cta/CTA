@@ -367,7 +367,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   try {
     for (auto &j: aReq.dumpJobs()) {
       currentTapepool = j.tapePool;
-      ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this);
+      ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this, logContext);
       linkedTapePools.push_back(j.ArchiveQueueAddress);
       aReq.setJobOwner(j.copyNb, j.ArchiveQueueAddress);
       log::ScopedParamContainer params(logContext);
