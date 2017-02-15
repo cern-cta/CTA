@@ -29,6 +29,23 @@ namespace cta {
 // Forward declaration
 class OStoreDB;
   namespace ostoredb {
+/**
+ * A container to which the ownership of the archive queue (and more important,
+ * its lock) will be passed. This container will be passed as a shared pointer
+ * to the caller of sharedAddToArchiveQueue, so they can delete their copy AFTER
+ * updating the ownership of their requests.
+ */
+class SharedQueueLock {
+  friend class MemArchiveQueue;
+public:
+  SharedQueueLock(log::LogContext & logContext): m_logContext(logContext) {}
+  ~SharedQueueLock();
+private:
+  std::unique_ptr<objectstore::ScopedExclusiveLock> m_lock;
+  std::unique_ptr<objectstore::ArchiveQueue> m_queue;
+  log::LogContext & m_logContext;
+  utils::Timer m_timer;
+};
 
 class MemArchiveQueueRequest {
   friend class MemArchiveQueue;
@@ -38,7 +55,7 @@ public:
 private:
   objectstore::ArchiveRequest::JobDump & m_job;
   objectstore::ArchiveRequest & m_archiveRequest;
-  std::promise<void> m_promise;
+  std::promise<std::shared_ptr<SharedQueueLock>> m_promise;
 };
 
 class MemArchiveQueue {
@@ -62,7 +79,7 @@ public:
    * if needed
    * @param logContext log context to log addition of jobs to the queue.
    */
-  static void sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump & job,
+  static std::shared_ptr<SharedQueueLock> sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump & job,
     objectstore::ArchiveRequest & archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext);
   
 private:

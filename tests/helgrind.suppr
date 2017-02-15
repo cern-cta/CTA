@@ -288,16 +288,6 @@
 }
 
 {
-   heap_address_collision
-   Helgrind:Race
-   ...
-   fun:_ZNSt7promiseIvED1Ev
-   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
-   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
-   ...
-}
-
-{
    dubious_cond_var_in_promise
    Helgrind:Misc
    fun:pthread_cond_broadcast_WRK
@@ -308,20 +298,10 @@
 }
 
 {
-   Stack_allocated_object_deletion_probably_coincidence_of_address
+   Locks taken from 2 objects
    Helgrind:Race
    ...
-   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
-   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
-   ...
-}
-
-{
-   Objects_passed_form_thread_to_thread
-   Helgrind:Race
-   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZNKSt14default_deleteISt7promiseIvEEclEPS1_
    fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
    fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
-   ...
-}
-

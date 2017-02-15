@@ -26,7 +26,7 @@ std::mutex MemArchiveQueue::g_mutex;
 
 std::map<std::string, MemArchiveQueue *> MemArchiveQueue::g_queues;
 
-void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump& job, 
+std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump& job, 
     objectstore::ArchiveRequest& archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext) {
   // 1) Take the global lock (implicit in the constructor)
   std::unique_lock<std::mutex> ul(g_mutex);
@@ -48,7 +48,7 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
     ulq.unlock();
     ul.unlock();
     // Wait for our request completion (this could throw, if there was a problem)
-    maqr.m_promise.get_future().get();
+    return maqr.m_promise.get_future().get();
   } catch (std::out_of_range &) {
     utils::Timer timer;
     // The queue for our tape pool does not exist. We will create it, wait for 
@@ -75,8 +75,11 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
     double waitTime = timer.secs(utils::Timer::resetCounter);
     // We can now proceed with the queuing of the jobs.
     try {
-      objectstore::ArchiveQueue aq(oStoreDB.m_objectStore);
-      objectstore::ScopedExclusiveLock aql;
+      std::shared_ptr<SharedQueueLock> ret(new SharedQueueLock(logContext));
+      ret->m_queue.reset(new objectstore::ArchiveQueue(oStoreDB.m_objectStore));
+      ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
+      auto & aq = *ret->m_queue;
+      auto & aql = *ret->m_lock;
       oStoreDB.getLockedAndFetchedArchiveQueue(aq, aql, job.tapePool);
       size_t aqSizeBefore=aq.dumpJobs().size();
       size_t addedJobs=1;
@@ -112,13 +115,16 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
               .add("addedJobs", addedJobs)
               .add("waitTime", waitTime)
               .add("enqueueTime", timer.secs());
-        logContext.log(log::INFO, "In MemArchiveQueue::sharedAddToArchiveQueue(): add batch of jobs to the queue.");
+        logContext.log(log::INFO, "In MemArchiveQueue::sharedAddToArchiveQueue(): added batch of jobs to the queue.");
       }
+      // We will also count how much time we mutually wait for the other threads.
+      ret->m_timer.reset();
       // And finally release all the user threads
       for (auto &maqr: maq.m_requests) {
-        maqr->m_promise.set_value();
+        maqr->m_promise.set_value(ret);
       }
       // Done!
+      return ret;
     } catch (...) {
       try {
         std::rethrow_exception(std::current_exception());
@@ -160,6 +166,13 @@ void MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDu
   }
 }
 
+SharedQueueLock::~SharedQueueLock() {
+  m_lock->release();
+  log::ScopedParamContainer params(m_logContext);
+  params.add("objectQueue", m_queue->getAddressIfSet())
+        .add("waitAndUnlockTime", m_timer.secs());
+  m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
+}
 
 void MemArchiveQueue::add(MemArchiveQueueRequest& request) {
   m_requests.emplace_back(&request); 
