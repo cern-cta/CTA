@@ -1548,6 +1548,11 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
         // If the archive job does not belong to the queue, it's again a missed pop
         if (privateRet->m_archiveRequest.getJobOwner(job.copyNb) != aq.getAddressIfSet()) {
           aq.removeJob(privateRet->m_archiveRequest.getAddressIfSet());
+          log::ScopedParamContainer params(logContext);
+          params.add("tapepool", mountInfo.tapePool)
+                .add("queueObject", aq.getAddressIfSet())
+                .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet());
+          logContext.log(log::INFO, "In ArchiveMount::getNextJob(): skipped orphaned job from the queue.");
           continue;
         }
       } catch (cta::exception::Exception &) {
@@ -1585,7 +1590,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
       params.add("tapepool", mountInfo.tapePool)
             .add("queueObject", aq.getAddressIfSet())
             .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet());
-      logContext.log(log::INFO, "In ArchiveMount::getNextJob(): poped job from queue");
+      logContext.log(log::INFO, "In ArchiveMount::getNextJob(): popped job from queue");
       return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
     }
     // If we get here, we exhausted the queue. We can now remove it. 

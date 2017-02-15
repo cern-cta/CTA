@@ -104,7 +104,7 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
     // Get it referenced
     m_currentQueue = &q;
     // Get our execution promise and leave one behind
-    std::unique_ptr<std::promise<void>> promiseForThisQueue(m_nextQueueExecutionPromise.release());
+    std::unique_ptr<std::promise<void>> promiseForThisQueue(std::move(m_nextQueueExecutionPromise));
     // Leave a promise behind for the next queue
     m_nextQueueExecutionPromise.reset(new std::promise<void>);
     // Keep a pointer to it, so we will signal our own completion to our successor queue.
@@ -120,6 +120,8 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
     if (m_currentQueue == &q)
       m_currentQueue = nullptr;
     ulGlobal.unlock();
+    // Wait for previous queue to complete
+    promiseForThisQueue->get_future().get();
     // Make sure no leftover thread is still writing to the queue.
     ulq.lock();
     // Off we go! Add the actions to the queue
