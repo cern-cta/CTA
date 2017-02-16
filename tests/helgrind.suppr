@@ -298,10 +298,44 @@
 }
 
 {
-   Locks taken from 2 objects
+   destruction_of_stack_object_probably_safe
    Helgrind:Race
    ...
    fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+   fun:_ZN3cta8OStoreDB12ArchiveMount10getNextJobERNS_3log10LogContextE
+   ...
+}
+
+{
+   helgrind_reports_q_mutex_while_we_hold_m_currentQueueMutex_as_well_in_add
+   Helgrind:Race
+   ...
    fun:_ZNKSt14default_deleteISt7promiseIvEEclEPS1_
    fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
    fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
+   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
+   ...
+}
+
+{
+   helgrind_reports_q_mutex_while_we_hold_m_currentQueueMutex_as_well_in_remove
+   Helgrind:Race
+   ...
+   fun:_ZNKSt14default_deleteISt7promiseIvEEclEPS1_
+   fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
+   fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+   ...
+}
+
+{
+   helgrind_reports_stack_allocated_objects_constructor_in_race
+   Helgrind:Race
+   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
+   ...
+}
