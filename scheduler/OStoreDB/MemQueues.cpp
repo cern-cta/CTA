@@ -96,12 +96,12 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
       for (auto &maqr: maq.m_requests) {
         // Add the job
         auto af = maqr->m_archiveRequest.getArchiveFile();
-        aq.addJob(job, archiveRequest.getAddressIfSet(), af.archiveFileID,
+        aq.addJob(maqr->m_job, maqr->m_archiveRequest.getAddressIfSet(), af.archiveFileID,
             af.fileSize, maqr->m_archiveRequest.getMountPolicy(), 
             maqr->m_archiveRequest.getEntryLog().time);
         // Back reference the queue in the job and archive request
         maqr->m_job.ArchiveQueueAddress = aq.getAddressIfSet();
-        archiveRequest.setJobArchiveQueueAddress(maqr->m_job.copyNb, aq.getAddressIfSet());
+        maqr->m_archiveRequest.setJobArchiveQueueAddress(maqr->m_job.copyNb, aq.getAddressIfSet());
         addedJobs++;
       }
       // We can now commit the multi-request addition to the object store
