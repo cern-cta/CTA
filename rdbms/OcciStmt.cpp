@@ -167,6 +167,36 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
 }
 
 //------------------------------------------------------------------------------
+// setNbParamSets
+//------------------------------------------------------------------------------
+void OcciStmt::setNbParamSets(const uint32_t nbParamSets) {
+  try {
+    m_stmt->setMaxIterations(nbParamSets);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// startNextParamSet
+//------------------------------------------------------------------------------
+void OcciStmt::startNextParamSet() {
+  try {
+    m_stmt->addIteration();
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+      getSqlForException() + ": " + se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
 std::unique_ptr<Rset> OcciStmt::executeQuery() {

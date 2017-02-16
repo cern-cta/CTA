@@ -64,7 +64,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OcciStmt() throw() override;
+  ~OcciStmt() throw() override;
 
   /**
    * Prevent copying the object.
@@ -74,7 +74,7 @@ public:
   /**
    * Idempotent close() method.  The destructor calls this method.
    */
-  virtual void close() override;
+  void close() override;
 
   /**
    * Binds an SQL parameter.
@@ -82,7 +82,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) override;
+  void bindUint64(const std::string &paramName, const uint64_t paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -90,7 +90,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
+  void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
 
   /** 
    * Binds an SQL parameter of type string.
@@ -102,7 +102,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bindString(const std::string &paramName, const std::string &paramValue) override;
+  void bindString(const std::string &paramName, const std::string &paramValue) override;
 
   /** 
    * Binds an SQL parameter of type optional-string.
@@ -114,7 +114,21 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) override;
+  void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) override;
+
+  /**
+   * Sets the total number of parameter sets that will be entered for the next
+   * execution of this statement.
+   *
+   * @param nbParamSets The total numer of parameter sets
+   */
+  void setNbParamSets(const uint32_t nbParamSets) override;
+
+  /**
+   * Starts the next parameter set to be be entered for the next execution of
+   * this statement.
+   */
+  void startNextParamSet() override;
 
   /**
    *  Executes the statement and returns the result set.
@@ -122,12 +136,12 @@ public:
    *  @return The result set.  Please note that it is the responsibility of the
    *  caller to free the memory associated with the result set.
    */
-  virtual std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<Rset> executeQuery() override;
 
   /**
    * Executes the statement.
    */
-  virtual void executeNonQuery() override;
+  void executeNonQuery() override;
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -135,7 +149,7 @@ public:
    *
    * @return The number of affected rows.
    */
-  virtual uint64_t getNbAffectedRows() const override;
+  uint64_t getNbAffectedRows() const override;
 
   /**
    * Returns the underlying OCCI result set.
