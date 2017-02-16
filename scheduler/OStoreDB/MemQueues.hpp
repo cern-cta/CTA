@@ -43,7 +43,7 @@ public:
 private:
   std::unique_ptr<objectstore::ScopedExclusiveLock> m_lock;
   std::unique_ptr<objectstore::ArchiveQueue> m_queue;
-  log::LogContext & m_logContext;
+  log::LogContext m_logContext;
   utils::Timer m_timer;
 };
 
