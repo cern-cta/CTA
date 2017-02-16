@@ -73,8 +73,10 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeT
   {SessionState::Unmounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
   // Draining to disk is given a grace period of 30 minutes for changing state.
   {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(30))},
-  // We expect the process to exit within 5 seconds of getting in this state.
-  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::seconds(5))}
+  // We expect the process to exit within 5 minutes of getting in this state. This state
+  // potentially covers the draining of metadata to central storage (if not faster that 
+  // unmounting the tape).
+  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))}
 };
 
 //------------------------------------------------------------------------------
@@ -292,7 +294,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     // We expect to be woken up by the child's signal.
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Message", ex.getMessageValue());
-    m_processManager.logContext().log(log::ERR, 
+    m_processManager.logContext().log(log::DEBUG, 
         "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch(cta::exception::Exception & ex) {
