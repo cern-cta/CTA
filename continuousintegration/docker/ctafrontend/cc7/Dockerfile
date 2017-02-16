@@ -24,36 +24,59 @@
 FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 
 # my environment variables
-ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods"
-ENV LOCALORCHESTRATIONDIR="/opt/ci"
-ENV BASEDIR="continuousintegration/docker/ctafrontend/cc7"
-ENV CTAREPODIR="/tmp/repo"
+ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
+    LOCALORCHESTRATIONDIR="/opt/ci" \
+    BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
+    CTAREPODIR="/tmp/repo"
 
-# Manage repos
+# Manage repos before running yum
 ADD ${BASEDIR}/etc /etc
-RUN yum install -y yum-plugin-downloadonly yum-plugin-priorities yum-plugin-versionlock createrepo epel-release
 
-# where do we want to get xroot from?
-# epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
-# => need to set epel prio to 4: yum-config-manager --setopt="epel.priority=4"
-# or if taking the older version from eos, eos-citrine-depend must be enabled so that
-# the older version of xroot is installed by cta-cli and is not conflicting later when installing eos...
-# Newer version of CTA requires xroot >= 4.4.1-1...
-# therefore set epel priority to 4...
+RUN yum install -y \
+      yum-plugin-downloadonly \
+      yum-plugin-priorities \
+      yum-plugin-versionlock \
+      createrepo epel-release \
+  && \
+    # where do we want to get xroot from?
+    # epel version is more recent but eos-citrine-depend repo has a higher priority (4) than epel
+    # => need to set epel prio to 4: yum-config-manager --setopt="epel.priority=4"
+    # or if taking the older version from eos, eos-citrine-depend must be enabled so that
+    # the older version of xroot is installed by cta-cli and is not conflicting later when installing eos...
+    # Newer version of CTA requires xroot >= 4.4.1-1...
+    # therefore set epel priority to 4...
+    # Create local repo for cta artifacts and to cache RPMs locally
+    mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
 
-# Create local repo for cta artifacts
-RUN mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
 # Add previously built rpms
 ADD build_rpm/RPM ${CTAREPODIR}
-# Populate local repository and enable it
-RUN yum-config-manager --enable epel --setopt="epel.priority=4"; yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server
-RUN createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
 
-# Install needed packages
-#RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
-# add cta-cli to get already some RPMs installed
-RUN yum -y install cgdb less psmisc lynx strace ltrace cta-cli && yum clean all
-#RUN yum clean all
+# Populate local repository and enable it
+RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
+  && \
+    yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 \
+      eos-client \
+      eos-server \
+      xrootd-client \
+      xrootd-debuginfo \
+      xrootd-server \
+  && \
+    createrepo ${CTAREPODIR} \
+  && \
+    echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
+  && \
+    # Install needed packages
+    #RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
+    # add cta-cli to get already some RPMs installed
+    yum -y install cgdb \
+      less \
+      psmisc \
+      lynx \
+      strace \
+      ltrace \
+      cta-cli \
+  && \
+    yum clean all
 
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
@@ -63,4 +86,5 @@ ADD ${BASEDIR}/opt /opt
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
+
 ENTRYPOINT ["/run.sh"]
