@@ -17,6 +17,7 @@
  */
 
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace cta {
@@ -43,14 +44,14 @@ public:
    * @param paramNAme The name of the SQL parameter.
    * @return The index of the SQL parameter.
    */
-  unsigned int getIdx(const std::string &paramName) const;
+  uint32_t getIdx(const std::string &paramName) const;
 
 private:
 
   /**
    * Map from SQL parameter name to parameter index.
    */
-  std::map<std::string, unsigned int> m_nameToIdx;
+  std::map<std::string, uint32_t> m_nameToIdx;
 
   /**
    * Returns true if the specified character is a valid parameter name

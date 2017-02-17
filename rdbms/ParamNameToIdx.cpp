@@ -30,7 +30,7 @@ namespace rdbms {
 ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
   bool waitingForAParam = true;
   std::ostringstream paramName;
-  unsigned int paramIdx = 1;
+  uint32_t paramIdx = 1;
 
   for(const char *ptr = sql.c_str(); ; ptr++) {
     if(waitingForAParam) {
@@ -81,7 +81,7 @@ bool ParamNameToIdx::isValidParamNameChar(const char c) {
 //------------------------------------------------------------------------------
 // getIdx
 //------------------------------------------------------------------------------
-unsigned int ParamNameToIdx::getIdx(const std::string &paramName) const {
+uint32_t ParamNameToIdx::getIdx(const std::string &paramName) const {
   auto itor = m_nameToIdx.find(paramName);
   if(itor == m_nameToIdx.end()) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: The SQL parameter " + paramName +
