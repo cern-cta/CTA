@@ -112,20 +112,6 @@ public:
   void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) override;
 
   /**
-   * Sets the total number of parameter sets that will be entered for the next
-   * execution of this statement.
-   *
-   * @param nbParamSets The total numer of parameter sets
-   */
-  void setNbParamSets(const uint32_t nbParamSets) override;
-
-  /**
-   * Starts the next parameter set to be be entered for the next execution of
-   * this statement.
-   */
-  void startNextParamSet() override;
-
-  /**
    * Executes the statement and returns the result set.
    *
    * @return The result set.  Please note that it is the responsibility of the

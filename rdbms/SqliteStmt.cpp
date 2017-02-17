@@ -206,20 +206,6 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 }
 
 //------------------------------------------------------------------------------
-// setNbParamSets
-//------------------------------------------------------------------------------
-void SqliteStmt::setNbParamSets(const uint32_t nbParamSets) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
-// startNextParamSet
-//------------------------------------------------------------------------------
-void SqliteStmt::startNextParamSet() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
-}
-
-//------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
 std::unique_ptr<Rset> SqliteStmt::executeQuery() {

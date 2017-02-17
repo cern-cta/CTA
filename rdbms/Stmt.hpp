@@ -151,20 +151,6 @@ public:
   virtual void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) = 0;
 
   /**
-   * Sets the total number of parameter sets that will be entered for the next
-   * execution of this statement.
-   *
-   * @param nbParamSets The total numer of parameter sets
-   */
-  virtual void setNbParamSets(const uint32_t nbParamSets) = 0;
-
-  /**
-   * Starts the next parameter set to be be entered for the next execution of
-   * this statement.
-   */
-  virtual void startNextParamSet() = 0;
-
-  /**
    *  Executes the statement and returns the result set.
    *
    *  @return The result set.  Please note that it is the responsibility of the
