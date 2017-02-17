@@ -15,6 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
+# OCCI support is on by default
+set (OCCI_SUPPORT ON)
+
+# Switch OCCI support off if using gcc 5.1 or higher
+if (CMAKE_COMPILER_IS_GNUCC)
+    if (GCC_VERSION VERSION_GREATER 5.0)
+        message(STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
+        set (OCCI_SUPPORT OFF)
+    endif (GCC_VERSION VERSION_GREATER 5.0)
+endif (CMAKE_COMPILER_IS_GNUCC)
+
+if(OCCI_SUPPORT)
+    find_package (oracle-instantclient REQUIRED)
+    include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+endif(OCCI_SUPPORT)
+
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 set (CATALOGUE_LIB_SRC_FILES
