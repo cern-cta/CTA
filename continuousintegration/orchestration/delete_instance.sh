@@ -27,12 +27,22 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-echo "Getting stdout logs of pods"
-mkdir -p ../../pod_logs/${instance}
+# Collect the logs
+###
+
+# First in a temporary directory so that we can get the logs on the gitlab runner if something bad happens
+# indeed if the system test fails, artifacts are not collected for the build
+tmpdir=$(mktemp -d -t ${instance}_delete_XXXX)
+echo "Collecting stdout logs of pods to ${tmpdir}"
 for podcontainer in "init -c ctainit" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv -c taped" "tpsrv -c rmcd"; do
-  kubectl --namespace ${instance} logs ${podcontainer} > ../../pod_logs/${instance}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
+  kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
 done
 
+if [ -z "${CI_PIPELINE_ID}" ]; then
+	# we are in the context of a CI run => save artifacts in the directory structure of the build
+	mkdir -p ../../pod_logs/${instance}
+	cp -r ${tmpdir}/* ../../pod_logs/${instance}
+fi
 
 echo "Deleting ${instance} instance"
 
