@@ -27,7 +27,6 @@
 #include "rdbms/AutoRollback.hpp"
 
 #include <ctype.h>
-#include <iostream>
 #include <memory>
 #include <time.h>
 
@@ -3391,7 +3390,8 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const ArchiveFileRow &row) {
+void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const rdbms::Stmt::AutocommitMode autocommitMode,
+  const ArchiveFileRow &row) {
   try {
     if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
       throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
@@ -3428,7 +3428,7 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const ArchiveFil
         ":STORAGE_CLASS_NAME,"
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME)";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    auto stmt = conn.createStmt(sql, autocommitMode);
 
     stmt->bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
     stmt->bindString(":DISK_INSTANCE_NAME", row.diskInstance);
@@ -4080,93 +4080,15 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::PooledConn &conn, con
 }
 
 //------------------------------------------------------------------------------
-// filesWrittenToTape
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &events) {
-  try {
-    for(const auto &event : events) {
-      fileWrittenToTape(event);
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// fileWrittenToTape
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::fileWrittenToTape(const TapeFileWritten &event) {
-  try {
-    if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
-    if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
-    if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
-    if(event.diskFileUser.empty()) throw exception::Exception("diskFileUser is an empty string");
-    if(event.diskFileGroup.empty()) throw exception::Exception("diskFileGroup is an empty string");
-    if(event.diskFileRecoveryBlob.empty()) throw exception::Exception("diskFileRecoveryBlob is an empty string");
-    if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
-    if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");
-    if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
-    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
-    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
-
-    const time_t now = time(nullptr);
-    std::lock_guard<std::mutex> m_lock(m_mutex);
-
-    auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn);
-    const common::dataStructures::Tape tape = selectTapeForUpdate(conn, event.vid);
-
-    const uint64_t expectedFSeq = tape.lastFSeq + 1;
-    if(expectedFSeq != event.fSeq) {
-      exception::Exception ex;
-      ex.getMessage() << "FSeq mismatch for tape " << event.vid << ": expected=" << expectedFSeq << " actual=" <<
-        event.fSeq;
-      throw ex;
-    }
-    updateTape(conn, event);
-
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, event.archiveFileId);
-
-    // If the archive file does not already exist
-    if(nullptr == archiveFile.get()) {
-      // Create one
-      ArchiveFileRow row;
-      row.archiveFileId = event.archiveFileId;
-      row.diskFileId = event.diskFileId;
-      row.diskInstance = event.diskInstance;
-      row.size = event.size;
-      row.checksumType = event.checksumType;
-      row.checksumValue = event.checksumValue;
-      row.storageClassName = event.storageClassName;
-      row.diskFilePath = event.diskFilePath;
-      row.diskFileUser = event.diskFileUser;
-      row.diskFileGroup = event.diskFileGroup;
-      row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-      insertArchiveFile(conn, row);
-    } else {
-      throwIfCommonEventDataMismatch(*archiveFile, event);
-    }
-
-    // Create the tape file
-    common::dataStructures::TapeFile tapeFile;
-    tapeFile.vid            = event.vid;
-    tapeFile.fSeq           = event.fSeq;
-    tapeFile.blockId        = event.blockId;
-    tapeFile.compressedSize = event.compressedSize;
-    tapeFile.copyNb         = event.copyNb;
-    tapeFile.creationTime   = now;
-    insertTapeFile(conn, tapeFile, event.archiveFileId);
-
-    conn.commit();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // updateTape
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::updateTape(rdbms::PooledConn &conn, const TapeFileWritten &event) {
+void RdbmsCatalogue::updateTape(
+  rdbms::PooledConn &conn,
+  const rdbms::Stmt::AutocommitMode autocommitMode,
+  const std::string &vid,
+  const uint64_t lastFSeq,
+  const uint64_t compressedBytesWritten,
+  const std::string &tapeDrive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -4177,11 +4099,11 @@ void RdbmsCatalogue::updateTape(rdbms::PooledConn &conn, const TapeFileWritten &
         "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
         "VID = :VID";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
-    stmt->bindString(":VID", event.vid);
-    stmt->bindUint64(":LAST_FSEQ", event.fSeq);
-    stmt->bindUint64(":DATA_IN_BYTES", event.compressedSize);
-    stmt->bindString(":LAST_WRITE_DRIVE", event.tapeDrive);
+    auto stmt = conn.createStmt(sql, autocommitMode);
+    stmt->bindString(":VID", vid);
+    stmt->bindUint64(":LAST_FSEQ", lastFSeq);
+    stmt->bindUint64(":DATA_IN_BYTES", compressedBytesWritten);
+    stmt->bindString(":LAST_WRITE_DRIVE", tapeDrive);
     stmt->bindUint64(":LAST_WRITE_TIME", now);
     stmt->executeNonQuery();
   } catch(exception::Exception &ex) {
@@ -4488,6 +4410,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertTapeFile(
   rdbms::PooledConn &conn,
+  const rdbms::Stmt::AutocommitMode autocommitMode,
   const common::dataStructures::TapeFile &tapeFile,
   const uint64_t archiveFileId) {
   try {
@@ -4509,7 +4432,7 @@ void RdbmsCatalogue::insertTapeFile(
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::ON);
+    auto stmt = conn.createStmt(sql, autocommitMode);
 
     stmt->bindString(":VID", tapeFile.vid);
     stmt->bindUint64(":FSEQ", tapeFile.fSeq);
@@ -4755,6 +4678,32 @@ void RdbmsCatalogue::ping() {
   auto conn = m_connPool.getConn();
   auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
   auto rset = stmt->executeQuery();
+}
+
+//------------------------------------------------------------------------------
+// checkTapeWrittenFilesAreSet
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event) {
+  try {
+    if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
+    if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
+    if(event.diskFilePath.empty()) throw exception::Exception("diskFilePath is an empty string");
+    if(event.diskFileUser.empty()) throw exception::Exception("diskFileUser is an empty string");
+    if(event.diskFileGroup.empty()) throw exception::Exception("diskFileGroup is an empty string");
+    if(event.diskFileRecoveryBlob.empty()) throw exception::Exception("diskFileRecoveryBlob is an empty string");
+    if(0 == event.size) throw exception::Exception("size is 0");
+    if(event.checksumType.empty()) throw exception::Exception("checksumType is an empty string");
+    if(event.checksumValue.empty()) throw exception::Exception("checksumValue is an empty string");
+    if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
+    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
+    if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
+    if(0 == event.blockId && event.fSeq != 1) throw exception::Exception("blockId is 0 and fSeq is not 1");
+    if(0 == event.compressedSize) throw exception::Exception("compressedSize is 0");
+    if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
+    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string("TapeFileWrittenEvent is invalid: ") + ex.getMessage().str());
+  }
 }
 
 } // namespace catalogue

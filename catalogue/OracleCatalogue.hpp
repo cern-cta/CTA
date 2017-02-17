@@ -82,16 +82,21 @@ public:
   uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
 
   /**
-   * Selects the specified tape within the Tape table for update.
+   * Notifies the catalogue that the specified files have been written to tape.
    *
-   * This method must be implemented by the sub-classes of RdbmsCatalogue
-   * because some database technologies directly support SELECT FOR UPDATE
-   * whilst others do not.
+   * @param events The tape file written events.
+   */
+  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
+
+private:
+
+  /**
+   * Selects the specified tape within the Tape table for update.
    *
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) override;
+  common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid);
 
 }; // class OracleCatalogue
 

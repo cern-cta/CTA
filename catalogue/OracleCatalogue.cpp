@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
@@ -273,6 +274,109 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledC
     return tape;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// filesWrittenToTape
+//------------------------------------------------------------------------------
+void OracleCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &events) {
+  try {
+    if(events.empty()) {
+      return;
+    }
+
+    const auto &firstEvent = events.front();
+    checkTapeFileWrittenFieldsAreSet(firstEvent);
+    const time_t now = time(nullptr);
+    std::lock_guard<std::mutex> m_lock(m_mutex);
+    auto conn = m_connPool.getConn();
+    rdbms::AutoRollback autoRollback(conn);
+
+    const auto tape = selectTapeForUpdate(conn, firstEvent.vid);
+    uint64_t expectedFSeq = tape.lastFSeq + 1;
+    uint64_t totalCompressedBytesWritten = 0;
+
+    for(const auto &event: events) {
+      checkTapeFileWrittenFieldsAreSet(firstEvent);
+
+      if(event.vid != firstEvent.vid) {
+        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=event.vid");
+      }
+
+      if(expectedFSeq != event.fSeq) {
+        exception::Exception ex;
+        ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
+          firstEvent.fSeq;
+        throw ex;
+      }
+      expectedFSeq++;
+        
+      totalCompressedBytesWritten += event.compressedSize;
+    }
+
+    const TapeFileWritten &lastEvent = events.back();
+    updateTape(conn, rdbms::Stmt::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+      lastEvent.tapeDrive);
+
+    const char *const sql =
+      "INSERT INTO TAPE_FILE("
+        "VID,"
+        "FSEQ,"
+        "BLOCK_ID,"
+        "COMPRESSED_SIZE_IN_BYTES,"
+        "COPY_NB,"
+        "CREATION_TIME,"
+        "ARCHIVE_FILE_ID)"
+      "VALUES("
+        ":VID,"
+        ":FSEQ,"
+        ":BLOCK_ID,"
+        ":COMPRESSED_SIZE_IN_BYTES,"
+        ":COPY_NB,"
+        ":CREATION_TIME,"
+        ":ARCHIVE_FILE_ID)";
+
+    for(const auto &event: events) {
+      checkTapeFileWrittenFieldsAreSet(firstEvent);
+
+      std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, event.archiveFileId);
+
+      // If the archive file does not already exist
+      if(nullptr == archiveFile.get()) {
+        // Create one
+        ArchiveFileRow row;
+        row.archiveFileId = event.archiveFileId;
+        row.diskFileId = event.diskFileId;
+        row.diskInstance = event.diskInstance;
+        row.size = event.size;
+        row.checksumType = event.checksumType;
+        row.checksumValue = event.checksumValue;
+        row.storageClassName = event.storageClassName;
+        row.diskFilePath = event.diskFilePath;
+        row.diskFileUser = event.diskFileUser;
+        row.diskFileGroup = event.diskFileGroup;
+        row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
+        insertArchiveFile(conn, rdbms::Stmt::AutocommitMode::OFF, row);
+      } else {
+        throwIfCommonEventDataMismatch(*archiveFile, event);
+      }
+
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      stmt->bindString(":VID", event.vid);
+      stmt->bindUint64(":FSEQ", event.fSeq);
+      stmt->bindUint64(":BLOCK_ID", event.blockId);
+      stmt->bindUint64(":COMPRESSED_SIZE_IN_BYTES", event.compressedSize);
+      stmt->bindUint64(":COPY_NB", event.copyNb);
+      stmt->bindUint64(":CREATION_TIME", now);
+      stmt->bindUint64(":ARCHIVE_FILE_ID", event.archiveFileId);
+      stmt->executeNonQuery();
+    } // for(const auto &event: events)
+
+    conn.commit();
+
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
 }
 

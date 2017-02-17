@@ -76,19 +76,32 @@ protected:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
 
   /**
-   * Selects the specified tape within th eTape table for update.
+   * Notifies the catalogue that the specified files have been written to tape.
    *
-   * This method must be implemented by the sub-classes of RdbmsCatalogue
-   * because some database technologies directly support SELECT FOR UPDATE
-   * whilst others do not.
+   * @param events The tape file written events.
+   */
+  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
+
+private:
+
+  /**
+   * Notifies the catalogue that a file has been written to tape.
+   *
+   * @param conn The database connection.
+   * @param event The tape file written event.
+   */
+  void fileWrittenToTape(rdbms::PooledConn &conn, const TapeFileWritten &event);
+
+  /**
+   * Selects the specified tape within the Tape table.
    *
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) override;
+  common::dataStructures::Tape selectTape(rdbms::PooledConn &conn, const std::string &vid);
 
 }; // class SqliteCatalogue
 

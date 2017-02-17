@@ -112,13 +112,6 @@ public:
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
   /**
-   * Notifies the catalogue that the specified files have been written to tape.
-   *
-   * @param events The tape file written events.
-   */
-  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
-
-  /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to archive files.
    *
@@ -775,9 +768,11 @@ protected:
    * ArchiveFile table.
    *
    * @param conn The database connection.
+   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param row The row to be inserted.
    */
-  void insertArchiveFile(rdbms::PooledConn &conn, const ArchiveFileRow &row);
+  void insertArchiveFile(rdbms::PooledConn &conn, const rdbms::Stmt::AutocommitMode autocommitMode,
+    const ArchiveFileRow &row);
 
   /**
    * Creates the database schema.
@@ -824,12 +819,14 @@ protected:
    * Inserts the specified tape file into the Tape table.
    *
    * @param conn The database connection.
+   * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param tapeFile The tape file.
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
   void insertTapeFile(
     rdbms::PooledConn &conn,
+    const rdbms::Stmt::AutocommitMode autocommitMode,
     const common::dataStructures::TapeFile &tapeFile,
     const uint64_t archiveFileId);
 
@@ -852,13 +849,24 @@ protected:
   uint64_t getTapeLastFSeq(rdbms::PooledConn &conn, const std::string &vid) const;
 
   /**
-   * Updates the appropriate tape based on the occurrence of the specified
-   * event.
+   * Updates the specified tape with the specified information.
    *
    * @param conn The database connection.
-   * @param event
+   * @param autocommitMode The autocommit mode of the update statement.
+   * @param vid The volume identifier of the tape.
+   * @param lastFSeq The sequence number of the last tape file written to the
+   * tape.
+   * @param compressedBytesWritten The number of compressed bytes written to
+   * the tape.
+   * @param tapeDrive The name of the tape drive that last wrote to the tape.
    */
-  void updateTape(rdbms::PooledConn &conn, const TapeFileWritten &event);
+  void updateTape(
+    rdbms::PooledConn &conn,
+    const rdbms::Stmt::AutocommitMode autocommitMode,
+    const std::string &vid,
+    const uint64_t lastFSeq,
+    const uint64_t compressedBytesWritten,
+    const std::string &tapeDrive);
 
   /**
    * Returns the specified archive file or a nullptr pointer if it does not
@@ -912,18 +920,6 @@ protected:
    * the catalogue.
    */
   virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) = 0;
-
-  /**
-   * Selects the specified tape within the Tape table for update.
-   *
-   * This method must be implemented by the sub-classes of RdbmsCatalogue
-   * because some database technologies directly support SELECT FOR UPDATE
-   * whilst others do not.
-   *
-   * @param conn The database connection.
-   * @param vid The volume identifier of the tape.
-   */
-  virtual common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) = 0;
 
   /**
    * Nested class used to implement the getArchiveFileItor() method.
@@ -1020,14 +1016,13 @@ protected:
     const std::string &diskInstanceName,
     const std::string &storageClassName) const;
 
-private:
-
   /**
-   * Notifies the catalogue that a file has been written to tape.
+   * Throws an exception if one of the fields of the specified event have not
+   * been set.
    *
-   * @param event The tape file written event.
+   * @param event The evnt to be checked.
    */
-  void fileWrittenToTape(const TapeFileWritten &event);
+  void checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event);
 
 }; // class RdbmsCatalogue
 
