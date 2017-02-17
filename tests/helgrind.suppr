@@ -298,10 +298,61 @@
 }
 
 {
-   Locks taken from 2 objects
+   destruction_of_stack_object_probably_safe
    Helgrind:Race
    ...
    fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+   fun:_ZN3cta8OStoreDB12ArchiveMount10getNextJobERNS_3log10LogContextE
+   ...
+}
+
+{
+   helgrind_reports_q_mutex_while_we_hold_m_currentQueueMutex_as_well_in_add
+   Helgrind:Race
+   ...
    fun:_ZNKSt14default_deleteISt7promiseIvEEclEPS1_
    fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
    fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
+   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
+   ...
+}
+
+{
+   helgrind_reports_q_mutex_while_we_hold_m_currentQueueMutex_as_well_in_remove
+   Helgrind:Race
+   ...
+   fun:_ZNKSt14default_deleteISt7promiseIvEEclEPS1_
+   fun:_ZNSt10unique_ptrISt7promiseIvESt14default_deleteIS1_EED1Ev
+   fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionERNS1_6ActionERNS0_7BackendE
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+   ...
+}
+
+{
+   helgrind_reports_stack_allocated_objects_constructor_in_race
+   Helgrind:Race
+   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZN3cta11objectstore14AgentReference19removeFromOwnershipERKSsRNS0_7BackendE
+   ...
+}
+
+{
+   shared_pointer_destructor
+   Helgrind:Race
+   fun:my_memcmp
+   fun:pthread_cond_destroy_WRK
+   fun:pthread_cond_destroy@*
+   fun:_ZNSt13__future_base11_State_baseD1Ev
+   fun:_ZN9__gnu_cxx13new_allocatorINSt13__future_base11_State_baseEE7destroyIS2_EEvPT_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE10_S_destroyIS1_EENSt9enable_ifIXsrNS3_16__destroy_helperIT_EE5valueEvE4typeERS2_PS7_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE7destroyIS1_EEvRS2_PT_
+   fun:_ZNSt23_Sp_counted_ptr_inplaceINSt13__future_base11_State_baseESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrINSt13__future_base11_State_baseELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
+}
