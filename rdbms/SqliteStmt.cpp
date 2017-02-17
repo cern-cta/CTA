@@ -152,7 +152,7 @@ void SqliteStmt::bindUint64(const std::string &paramName, const uint64_t paramVa
 //------------------------------------------------------------------------------
 void SqliteStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
-    const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
+    const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
     if(paramValue) {
       bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64) paramValue.value());
@@ -188,7 +188,7 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
         " An optional string parameter should either have a non-empty string value or no value at all.");
     }
-    const unsigned int paramIdx = m_paramNameToIdx.getIdx(paramName);
+    const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
     if(paramValue) {
       bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.value().c_str(), -1, SQLITE_TRANSIENT);

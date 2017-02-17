@@ -96,6 +96,14 @@ public:
   const std::string &getSql() const;
 
   /**
+   * Returns the index of the specified SQL parameter.
+   *
+   * @param paramName The name of the SQL parameter.
+   * @return The index of the SQL parameter.
+   */
+  uint32_t getParamIdx(const std::string &paramName) const;
+
+  /**
    * Binds an SQL parameter.
    *
    * @param paramName The name of the parameter.
@@ -180,11 +188,6 @@ protected:
   std::string m_sql;
 
   /**
-   * Map from SQL parameter name to parameter index.
-   */
-  ParamNameToIdx m_paramNameToIdx;
-
-  /**
    * The autocommit mode of the statement.
    */
   AutocommitMode m_autoCommitMode;
@@ -205,6 +208,13 @@ protected:
    * @return The SQL string to be used in an exception message.
    */
   std::string getSqlForException() const;
+
+private:
+
+  /**
+   * Map from SQL parameter name to parameter index.
+   */
+  ParamNameToIdx m_paramNameToIdx;
 
 }; // class Stmt
 

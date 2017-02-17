@@ -26,8 +26,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 Stmt::Stmt(const std::string &sql, const AutocommitMode autocommitMode):
   m_sql(sql),
-  m_paramNameToIdx(sql),
-  m_autoCommitMode(autocommitMode) {
+  m_autoCommitMode(autocommitMode),
+  m_paramNameToIdx(sql) {
 }
 
 //------------------------------------------------------------------------------
@@ -41,6 +41,13 @@ Stmt::~Stmt() throw() {
 //------------------------------------------------------------------------------
 const std::string &Stmt::getSql() const {
   return m_sql;
+}
+
+//------------------------------------------------------------------------------
+// getParamIdx
+//------------------------------------------------------------------------------
+uint32_t Stmt::getParamIdx(const std::string &paramName) const {
+  return m_paramNameToIdx.getIdx(paramName);
 }
 
 //------------------------------------------------------------------------------

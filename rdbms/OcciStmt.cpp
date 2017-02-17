@@ -113,7 +113,7 @@ void OcciStmt::bindUint64(const std::string &paramName, const uint64_t paramValu
 //------------------------------------------------------------------------------
 void OcciStmt::bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
   try {
-    const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
+    const unsigned paramIdx = getParamIdx(paramName);
     if(paramValue) {
       // Bind integer as a string in order to support 64-bit integers
       m_stmt->setString(paramIdx, std::to_string(paramValue.value()));
@@ -150,7 +150,7 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
         " An optional string parameter should either have a non-empty string value or no value at all."); 
     }
 
-    const unsigned paramIdx = m_paramNameToIdx.getIdx(paramName);
+    const unsigned paramIdx = getParamIdx(paramName);
     if(paramValue) {
       m_stmt->setString(paramIdx, paramValue.value());
     } else {
