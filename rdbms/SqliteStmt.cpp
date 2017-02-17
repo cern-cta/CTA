@@ -41,7 +41,6 @@ SqliteStmt::SqliteStmt(
   const std::string &sql):
   Stmt(sql, autocommitMode),
   m_conn(conn),
-  m_paramNameToIdx(sql),
   m_nbAffectedRows(0) {
   m_stmt = nullptr;
   const int nByte = -1; // Read SQL up to first null terminator

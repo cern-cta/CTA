@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "rdbms/ParamNameToIdx.hpp"
 #include "rdbms/Stmt.hpp"
 
 #include <map>
@@ -143,11 +142,6 @@ private:
    * The SQL connection.
    */
   SqliteConn &m_conn;
-
-  /**
-   * Map from SQL parameter name to parameter index.
-   */
-  ParamNameToIdx m_paramNameToIdx;
 
   /**
    * The prepared statement.

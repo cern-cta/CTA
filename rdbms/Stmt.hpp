@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/optional.hpp"
+#include "rdbms/ParamNameToIdx.hpp"
 #include "rdbms/Rset.hpp"
 
 #include <memory>
@@ -177,6 +178,11 @@ protected:
    * The SQL statement.
    */
   std::string m_sql;
+
+  /**
+   * Map from SQL parameter name to parameter index.
+   */
+  ParamNameToIdx m_paramNameToIdx;
 
   /**
    * The autocommit mode of the statement.

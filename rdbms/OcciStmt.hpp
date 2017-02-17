@@ -19,7 +19,6 @@
 #pragma once
 
 #include "rdbms/Stmt.hpp"
-#include "rdbms/ParamNameToIdx.hpp"
 
 #include <memory>
 #include <mutex>
@@ -157,11 +156,6 @@ private:
    * Mutex used to serialize access to this object.
    */
   std::mutex m_mutex;
-
-  /**
-   * Map from SQL parameter name to parameter index.
-   */
-  ParamNameToIdx m_paramNameToIdx;
 
   /**
    * The database connection.

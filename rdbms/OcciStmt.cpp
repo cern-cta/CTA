@@ -39,7 +39,6 @@ OcciStmt::OcciStmt(
   OcciConn &conn,
   oracle::occi::Statement *const stmt) :
   Stmt(sql, autocommitMode),
-  m_paramNameToIdx(sql),
   m_conn(conn),
   m_stmt(stmt) {
 
