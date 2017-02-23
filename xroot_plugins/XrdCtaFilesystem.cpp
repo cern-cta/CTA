@@ -77,8 +77,29 @@ namespace cta { namespace xrootPlugins {
 int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
 {
   (void)cmd; (void)args; (void)eInfo; (void)client;
-  eInfo.setErrInfo(ENOTSUP, "Not supported.");
-  return SFS_ERROR;
+
+  if(SFS_FSCTL_PLUGIN != cmd) {
+    eInfo.setErrInfo(ENOTSUP, "Not supported: cmd != SFS_FSCTL_PLUGIN");
+    return SFS_ERROR;
+  }
+
+  std::unique_ptr<char []> arg1(new char[args.Arg1Len + 1]);
+  strncpy(arg1.get(), args.Arg1, args.Arg1Len);
+  arg1[args.Arg1Len] = '\0';
+
+  std::unique_ptr<char []> arg2(new char[args.Arg2Len + 1]);
+  strncpy(arg2.get(), args.Arg2, args.Arg2Len);
+  arg2[args.Arg2Len] = '\0';
+
+  std::list<cta::log::Param> params;
+  params.push_back({"arg1", arg1.get()});
+  params.push_back({"arg2", arg2.get()});
+  params.push_back({"client->host", client->host});
+  params.push_back({"client->name", client->name});
+
+  (*m_log)(log::INFO, "FSctl called", params);
+
+  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
