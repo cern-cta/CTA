@@ -20,15 +20,15 @@ set (OCCI_SUPPORT ON)
 
 # Switch OCCI support off if using gcc 5.1 or higher
 if (CMAKE_COMPILER_IS_GNUCC)
-    if (GCC_VERSION VERSION_GREATER 5.0)
-        message(STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
-        set (OCCI_SUPPORT OFF)
-    endif (GCC_VERSION VERSION_GREATER 5.0)
+  if (GCC_VERSION VERSION_GREATER 5.0)
+    message(STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
+    set (OCCI_SUPPORT OFF)
+  endif (GCC_VERSION VERSION_GREATER 5.0)
 endif (CMAKE_COMPILER_IS_GNUCC)
 
 if(OCCI_SUPPORT)
-    find_package (oracle-instantclient REQUIRED)
-    include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+  find_package (oracle-instantclient REQUIRED)
+  include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 endif(OCCI_SUPPORT)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
@@ -37,16 +37,25 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileItor.cpp
   Catalogue.cpp
-  CatalogueFactory.cpp
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
   SqliteCatalogueSchema.cpp
-  OracleCatalogue.cpp
   TapeFileWritten.cpp
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   TapeForWriting.cpp)
+
+if (OCCI_SUPPORT)
+  set (CATALOGUE_LIB_SRC_FILES
+    ${CATALOGUE_LIB_SRC_FILES}
+    CatalogueFactory.cpp
+    OracleCatalogue.cpp)
+else (OCCI_SUPPORT)
+  set (CATALOGUE_LIB_SRC_FILES
+    ${CATALOGUE_LIB_SRC_FILES}
+    CatalogueFactory_OCCI_SUPPORT_OFF.cpp)
+endif (OCCI_SUPPORT)
 
 add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES})
