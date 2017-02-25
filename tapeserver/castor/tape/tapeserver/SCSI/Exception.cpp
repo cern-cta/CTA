@@ -112,13 +112,13 @@ castor::tape::SCSI::Exception::Exception(
       w << ": " << sense->getSenseKeyString();
     } catch (Exception &ex) {
       w << ": In addition, failed to get Sense Key string: "
-              << ex.getMessage();
+              << ex.getMessage().str();
     }
     try {
       w << ": " << sense->getACSString();
     } catch (Exception &ex) {
       w << ": In addition, failed to get ACS string: "
-              << ex.getMessage();
+              << ex.getMessage().str();
     }
   }
   setWhat(w.str());
@@ -159,13 +159,13 @@ castor::tape::SCSI::DriverException::DriverException(
       w << ": " << sense->getSenseKeyString();
     } catch (Exception &ex) {
       w << ": In addition, failed to get Sense Key string: "
-              << ex.getMessage();
+              << ex.getMessage().str();
     }
     try {
       w << ": " << sense->getACSString();
     } catch (Exception &ex) {
       w << ": In addition, failed to get ACS string: "
-              << ex.getMessage();
+              << ex.getMessage().str();
     }
   }
 
