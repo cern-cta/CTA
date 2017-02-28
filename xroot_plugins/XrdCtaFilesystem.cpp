@@ -45,7 +45,9 @@
 #include <memory>
 #include <iostream>
 #include <pwd.h>
+#include <stdlib.h>
 #include <sstream>
+#include <string.h>
 #include <sys/types.h>
 
 XrdVERSIONINFO(XrdSfsGetFileSystem,XrdCta)
@@ -99,7 +101,25 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 
   (*m_log)(log::INFO, "FSctl called", params);
 
-  return SFS_OK;
+  const size_t sizeOfMsg = 10*1024*1024;
+  char *const msg = static_cast<char *>(malloc(sizeOfMsg));
+  if(nullptr == msg) {
+    (*m_log)(log::ERR, "FSctl failed to allocate reply message");
+  }
+  memset(msg, '\0', sizeOfMsg);
+  char msgTxt[] = "Reply from CTA";
+  strncpy(msg, msgTxt, sizeOfMsg);
+  msg[sizeOfMsg - 1] = '\0';
+  // buf takes ownership of msg
+  XrdOucBuffer *buf = new XrdOucBuffer(msg, sizeOfMsg);
+  if(nullptr == buf) {
+    (*m_log)(log::ERR, "FSctl failed to allocate reply buffer");
+  }
+
+  // eInfo takes ownership of buf
+  eInfo.setErrInfo(buf->BuffSize(), buf);
+
+  return SFS_DATA;
 }
 
 //------------------------------------------------------------------------------
