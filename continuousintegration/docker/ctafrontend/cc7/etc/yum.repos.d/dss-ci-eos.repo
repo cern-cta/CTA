@@ -1,0 +1,6 @@
+[dss-ci-eos]
+name=DSS CI EOS repo
+baseurl=https://dss-ci-repo.web.cern.ch/dss-ci-repo/eos/citrine-depend/el-7-x86_64/
+priority=1
+gpgcheck=0
+enabled=1
