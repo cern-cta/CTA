@@ -37,7 +37,6 @@ cta_rpm:
     - mkdir build_rpm
     - cd build_rpm
     - cmake -DVCS_VERSION=${CTA_BUILD_ID} ..
-    - make -j4 && make -j4
     - make cta_rpm
 
   artifacts:
