@@ -17,7 +17,7 @@
 //
 //
 // @author Castor Dev team, castor-dev@cern.ch
-
+syntax = "proto2";
 package castor.messages;
 
 message StopProcessForker {
