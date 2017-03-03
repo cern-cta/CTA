@@ -30,7 +30,8 @@ cta_rpm:
   stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/centos-cernonly.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo /etc/yum.repos.d/
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
