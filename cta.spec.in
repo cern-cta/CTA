@@ -142,7 +142,7 @@ CERN Tape Archive:
 The xroot plugin
 %files -n cta-frontend
 %defattr(-,root,root)
-#%attr(0755,root,root) %{_libdir}/libctafrontendmessages.so
+%attr(0755,root,root) %{_libdir}/libctafrontendmessages.so
 %attr(0755,root,root) %{_libdir}/libXrdCtaOfs.so
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf

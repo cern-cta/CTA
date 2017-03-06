@@ -19,6 +19,7 @@
 #include "common/make_unique.hpp"
 #include "xroot_plugins/FakeEosCmd.hpp"
 #include "xroot_plugins/FakeEosCmdLineArgs.hpp"
+#include "xroot_plugins/messages/notification.pb.h"
 
 #include <iostream>
 #include <stdint.h>
