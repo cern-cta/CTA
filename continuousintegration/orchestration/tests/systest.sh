@@ -1,6 +1,32 @@
 #!/bin/bash
 
-#@param NAMESPACE must be defined outside 
+usage() { cat <<EOF 1>&2
+Usage: $0 -n <namespace>
+EOF
+exit 1
+}
+
+while getopts "n:" o; do
+    case "${o}" in
+        n)
+            NAMESPACE=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ -z "${NAMESPACE}" ]; then
+    usage
+fi
+
+if [ ! -z "${error}" ]; then
+    echo -e "ERROR:\n${error}"
+    exit 1
+fi
+
 
 # eos instance identified by SSS username
 EOSINSTANCE=ctaeos

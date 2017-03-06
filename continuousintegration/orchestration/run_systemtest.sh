@@ -13,7 +13,7 @@ orchestration_dir=${PWD}
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -s <systemtest_script> [-p <gitlab pipeline ID>]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>]
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -22,11 +22,21 @@ EOF
 exit 1
 }
 
-while getopts "s:" o; do
+# options that must be passed to create_instance
+# always delete DB and OBJECTSTORE for tests
+CREATE_OPTS="-D -O"
+
+while getopts "n:s:p:" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
             test -f ${systemtest_script} || error="${error}Objectstore configmap file ${config_objectstore} does not exist\n"
+            ;;
+        n)
+            namespace=${OPTARG}
+            ;;
+        p)
+            CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
             ;;
         *)
             usage
@@ -34,6 +44,12 @@ while getopts "s:" o; do
     esac
 done
 shift $((OPTIND-1))
+
+
+if [ -z "${namespace}" ]; then
+    echo "a namespace is mandatory" 1>&2
+    usage
+fi
 
 if [ -z "${systemtest_script}" ]; then
     echo "a systemtest script is mandatory" 1>&2 
@@ -56,19 +72,19 @@ function execute_log {
   if [ "${execute_log_rc}" != "0" ]; then
     echo "FAILURE: cleaning up environment"
     cd ${orchestration_dir}
-    ./delete_instance.sh -n ${NAMESPACE}
+    ./delete_instance.sh -n ${namespace}
     exit 1
   fi
 }
 
 # create instance
-execute_log "./create_instance.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -D -O 2>&1" "${orchestration_dir}/../../create_instance.log"
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${orchestration_dir}/../../create_instance.log"
 
 # launch system test
 cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) 2>&1" "${orchestration_dir}/../../systests.sh.log"
+execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${orchestration_dir}/../../systests.sh.log"
 cd ${orchestration_dir}
 
 # delete instance
-./delete_instance.sh -n ${NAMESPACE}
+./delete_instance.sh -n ${namespace}
 exit $?
