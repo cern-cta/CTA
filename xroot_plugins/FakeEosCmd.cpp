@@ -67,8 +67,10 @@ int FakeEosCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   std::cout << "status.IsError()=" << (status.IsError() ? "true" : "false") << std::endl;
   std::cout << "status.IsFatal()=" << (status.IsFatal() ? "true" : "false") << std::endl;
   std::cout << "status.IsOK()=" << (status.IsOK() ? "true" : "false") << std::endl;
-  std::cout << "response->GetSize()=" << response->GetSize() << std::endl;
-  std::cout << "response->ToString()=" << response->ToString() << std::endl;
+  if(nullptr != smartResponse.get()) {
+    std::cout << "response->GetSize()=" << response->GetSize() << std::endl;
+    std::cout << "response->ToString()=" << response->ToString() << std::endl;
+  }
   return 0;
 }
 

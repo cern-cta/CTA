@@ -101,6 +101,13 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 
   (*m_log)(log::INFO, "FSctl called", params);
 
+  if(strcmp(arg1.get(), "/eos_cta_interface") && strcmp(arg1.get(), "/eos_cta_interface/")) {
+    std::ostringstream msg;
+    msg << arg1.get() << " does not exist";
+    eInfo.setErrInfo(ENOENT, msg.str().c_str());
+    return SFS_ERROR;
+  }
+
   const size_t sizeOfMsg = 10*1024*1024;
   char *const msg = static_cast<char *>(malloc(sizeOfMsg));
   if(nullptr == msg) {
