@@ -112,7 +112,7 @@ void FakeEosCmdLineArgs::printUsage(std::ostream &os) {
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<
     "Example:" << std::endl <<
-    "    cta-xroot_plugins-fakeeos localhost 10955 /my_dir" << std::endl;
+    "    cta-xrootd_plugins-fakeeos localhost 10955 /my_dir" << std::endl;
 }
 
 } // namespace xroot_plugins
