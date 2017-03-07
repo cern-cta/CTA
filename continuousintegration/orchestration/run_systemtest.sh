@@ -10,10 +10,15 @@ set -o pipefail
 execute_log_rc=0
 # orchestration directory so that we can come back here and launch delete_instance during cleanup
 orchestration_dir=${PWD}
+# keep or drop namespace after systemtest_script? By default drop it.
+keepnamespace=0
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k]
+
+Options:
+  -k    keep namespace after systemtest_script run if successful
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -26,7 +31,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:" o; do
+while getopts "n:s:p:k" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -37,6 +42,9 @@ while getopts "n:s:p:" o; do
             ;;
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
+            ;;
+        k)
+            keepnamespace=1
             ;;
         *)
             usage
@@ -85,6 +93,9 @@ cd $(dirname ${systemtest_script})
 execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${orchestration_dir}/../../systests.sh.log"
 cd ${orchestration_dir}
 
-# delete instance
+# delete instance?
+if [ $keepnamespace == 1 ] ; then
+  exit 0
+fi
 ./delete_instance.sh -n ${namespace}
 exit $?
