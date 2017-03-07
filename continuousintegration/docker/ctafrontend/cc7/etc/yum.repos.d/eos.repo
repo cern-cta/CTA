@@ -15,7 +15,6 @@ enabled=1
 [eos-citrine-depend]
 name=EOS Citrine
 baseurl=http://dss-ci-repo.web.cern.ch/dss-ci-repo/eos/citrine-depend/el-7-x86_64/
-exclude=protobuf*
 gpgcheck=0
 priority=4
 enabled=1
