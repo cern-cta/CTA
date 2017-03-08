@@ -1,13 +1,37 @@
 # Launching a CTA test instance
 
 A CTA test instance is a kubernetes namespace.
-Basically it is a cluster of pods on its own DNS subdomain, this means that inside a CTA namespace `ping frontend` will ping the CTA frontend in the current instance, same for `mgm` and other services defined in the namespace.
+Basically it is a cluster of *pods* on its own DNS sub-domain, this means that inside a CTA namespace `ping ctafrontend` will ping *ctafrontend.<namespace>.cluster.local* i.e. the CTA frontend in the current instance, same for `ctaeos` and other services defined in the namespace.
+
+Before going further, if you are completely new to `kubernetes`, you can have a look at this [CS3 workshop presentation](https://www.youtube.com/watch?v=0GMspkhavlM).
+The web based presentation is available [here](http://jleduc.web.cern.ch/jleduc/mypresentations/170131_cs3_kubernetes-CTA.html).
 
 ## setting up the CTA `kubernetes` infrastructure
 
 All the needed tools are self contained in the `CTA` repository.
 It allows to version the system tests and all the required tools with the code being tested.
 Therefore setting up the system test infrastructure only means to checkout `CTA` repository on a kubernetes cluster: a `ctadev` system for example.
+
+## Everything in one go *aka* the **Big Shortcut**
+
+This is basically the command that is run by the `gitlab CI` in the [CI pipeline](https://gitlab.cern.ch/cta/CTA/pipelines) executed at every commit during the `test` stage in the `archieveretrieve` build.
+[Here](https://gitlab.cern.ch/cta/CTA/builds/258112) is an example of successfully executed `archieveretrieve` build.
+Only one command is run in this build:
+```
+$ cd continuousintegration/orchestration/; \
+./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/systest.sh
+```
+
+`CI_PIPELINE_ID` is not needed to run this command interactively: you can just launch:
+```
+[root@ctadevjulien CTA]# cd continuousintegration/orchestration/
+[root@ctadevjulien orchestration]# ./run_systemtest.sh -n mynamespace -s tests/systest.sh
+```
+
+But be careful: this command instantiate a CTA test instance, runs the tests and **immediately deletes it**.
+If you want to keep it after the test script run is over, just add the `-k` flag to the command.
+
+The following sections just explain what happens during the system test step and gives a few tricks and useful kubernetes commands.
 
 ## List existing test instances
 
@@ -203,7 +227,7 @@ OK: all tests passed
 
 If something goes wrong, please check the logs from the various containers running on the pods that were defined during dev meetings:
 1. `init`
-  * Initialises the system, e.g. labels tapes using cat, creates/wipes the catalogue database, creates/wipes the CTA object store and makes sure all drives are empty and tapes are back in their home slots.
+  * Initializes the system, e.g. labels tapes using cat, creates/wipes the catalog database, creates/wipes the CTA object store and makes sure all drives are empty and tapes are back in their home slots.
 2. `kdc`
   * Runs the KDC server for authenticating EOS end-users and CTA tape operators.
 3. `eoscli`
@@ -232,7 +256,7 @@ If something goes wrong, please check the logs from the various containers runni
 ## logs
 
 An interesting feature is to collect the logs from the various processes running in containers on the various pods.
-Kubernetes allows to collect `stdout` and `stderr` from any container and add timestamps to ease post-mortem analysis.
+Kubernetes allows to collect `stdout` and `stderr` from any container and add time stamps to ease post-mortem analysis.
 
 Those are the logs of the `init` pod first container:
 ```
@@ -364,6 +388,6 @@ kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/admin1.keytab adm
 # Gitlab CI integration
 
 Configure the Runners for `cta` project and add some specific tags for tape library related jobs. I chose `mhvtl` and `kubernetes` for ctadev runners.
-This allows to use those specific runners for CTA tapelibrary specific tests, while others can use shared runners.
+This allows to use those specific runners for CTA tape library specific tests, while others can use shared runners.
 
-A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user, which makes it impossible to run some tests as `root` inside the pods has not the priviledges to run all the commands needed.
+A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user, which makes it impossible to run some tests as `root` inside the pods has not the privileges to run all the commands needed.
