@@ -91,10 +91,9 @@ else
 fi
 
 
-echo "Creating ${instance} instance"
+echo -n "Creating ${instance} instance "
 
-kubectl create namespace ${instance} || exit 1
-
+kubectl create namespace ${instance} || (echo "FAILED"; exit 1)
 
 kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 
@@ -112,21 +111,22 @@ for ((i=0; i<120; i++)); do
   kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
   sleep 1
 done
-kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || exit 1
+kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || (echo "TIMED OUT"; exit 1)
+echo "OK"
 LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o yaml| grep -i volumeName | sed -e 's%.*sg%sg%')
 
 kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
 
-echo "got library: ${LIBRARY_DEVICE}"
+echo "Got library: ${LIBRARY_DEVICE}"
 
-echo "creating services in instance"
+echo "Creating services in instance"
 
 for service_file in *svc\.yaml; do
   kubectl create -f ${service_file} --namespace=${instance}
 done
 
 
-echo "creating pods in instance"
+echo "Creating pods in instance"
 
 kubectl	create -f ${poddir}/pod-init.yaml --namespace=${instance}
 
@@ -138,8 +138,7 @@ for ((i=0; i<400; i++)); do
 done
 
 # initialization went wrong => exit now with error
-kubectl get pod init -a --namespace=${instance} | grep -q Completed || exit 1
-
+kubectl get pod init -a --namespace=${instance} | grep -q Completed || (echo "TIMED OUT"; exit 1)
 echo OK
 
 echo "Launching pods"
@@ -157,6 +156,7 @@ for ((i=0; i<240; i++)); do
 done
 
 if [[ $(kubectl get pods -a --namespace=${instance} | grep -v init | tail -n+2 | grep -q -v Running) ]]; then
+  echo "TIMED OUT"
   echo "Some pods have not been initialized properly:"
   kubectl get pods -a --namespace=${instance}
   exit 1
@@ -171,16 +171,16 @@ for ((i=0; i<300; i++)); do
   sleep 1
 done
 
-[ "`kubectl --namespace=${instance} exec kdc -- bash -c "[ -f /root/kdcReady ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || (echo "Failed to configure KDC."; exit 1)
+[ "`kubectl --namespace=${instance} exec kdc -- bash -c "[ -f /root/kdcReady ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || (echo "TIMED OUT"; echo "Failed to configure KDC."; exit 1)
 echo OK
 
-echo -n "Configuring KDC clients (frontend, cli)... "
+echo -n "Configuring KDC clients (frontend, cli...) "
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf" 
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc cat /root/admin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/admin1.keytab"
 kubectl --namespace=${instance} exec kdc cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/cta-frontend.keytab"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/admin1.keytab admin1@TEST.CTA
-echo Done
+echo OK
 
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli klist
@@ -192,9 +192,9 @@ for ((i=0; i<300; i++)); do
   [ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/ctafrontend_SSS_c.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/ctafrontend_SSS_c.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || (echo "Failed to retrieve cta frontend SSS key"; exit 1)
+[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/ctafrontend_SSS_c.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || (echo "TIMED OUT"; echo "Failed to retrieve cta frontend SSS key"; exit 1)
 kubectl --namespace=${instance} exec ctafrontend -- cat /etc/ctafrontend_SSS_c.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/ctafrontend_SSS_c.keytab; chmod 600 /etc/ctafrontend_SSS_c.keytab; chown daemon /etc/ctafrontend_SSS_c.keytab"
-echo Done
+echo OK
 
 
 echo -n "Waiting for EOS to be configured"
@@ -203,7 +203,7 @@ for ((i=0; i<300; i++)); do
   kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" && break
   sleep 1
 done
-kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" || exit 1
+kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" || (echo "TIMED OUT"; exit 1)
 echo OK
 
 echo "Instance ${instance} successfully created:"

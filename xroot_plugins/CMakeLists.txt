@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-#add_subdirectory(messages)
+add_subdirectory(messages)
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package (xrootd REQUIRED)
@@ -38,4 +38,5 @@ set (FAKE_EOS_CMD_SRC_FILES
   FakeEosCmdMain.cpp)
 
 add_executable (cta-xrootd_plugins-fakeeos ${FAKE_EOS_CMD_SRC_FILES})
-target_link_libraries (cta-xrootd_plugins-fakeeos ctacommon)
+add_dependencies (cta-xrootd_plugins-fakeeos generate_notification.pb.h)
+target_link_libraries (cta-xrootd_plugins-fakeeos ctacommon ctafrontendmessages)
