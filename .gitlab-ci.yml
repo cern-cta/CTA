@@ -20,6 +20,7 @@ cta_srpm:
     - make cta_srpm
 
   artifacts:
+    expire_in: 30 days
     paths:
     - build_srpm/RPM/SRPMS/
 
@@ -40,6 +41,7 @@ cta_rpm:
     - make cta_rpm
 
   artifacts:
+    expire_in: 30 days
     paths:
     - build_rpm/RPM/RPMS
 
@@ -94,6 +96,7 @@ archiveretrieve:
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/systest.sh
   artifacts:
+    expire_in: 30 days
     paths:
     - pod_logs
   tags:
