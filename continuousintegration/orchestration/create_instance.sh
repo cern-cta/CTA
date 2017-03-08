@@ -11,7 +11,8 @@ keepdatabase=1
 keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-p <gitlab pipeline ID>] [-D] [-O]
+Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>]
+      [-p <gitlab pipeline ID> | -b <build tree>] [-D] [-O]
 
 Options:
   -D	wipe database content during initialization phase (database content is kept by default)
@@ -22,7 +23,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:p:DO" o; do
+while getopts "n:o:d:p:b:DO" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -37,6 +38,9 @@ while getopts "n:o:d:p:DO" o; do
             ;;
 	p)
             pipelineid=${OPTARG}
+            ;;
+        b)
+            buildtree=${OPTARG}
             ;;
         O)
             keepobjectstore=0
@@ -55,30 +59,50 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
+if [ ! -z "$(pipelineid)" && ! -z "${buildtree}" ]; then
+    usage
+fi
 
-COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-if [ -z "${pipelineid}" ]; then
-  echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
+if [ ! -z "(buildtree)" ]; then
+    # We are going to run with generic images against a build tree.
+    echo "Creating instance for build tree in ${buildtree}"
+
+    # Create temporary directory for modified pod files
+    poddir=$(mktemp -d)
+    cp pod-* ${poddir}
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:).*/\1/"
+
+    if [ ! -z "${error}" ]; then
+        echo -e "ERROR:\n${error}"
+        exit 1
+    fi
 else
-  echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
-  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
-fi
-if [ "${imagetag}" == "" ]; then
-  echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
-  exit 1
-fi
-echo "Creating instance using docker image with tag: ${imagetag}"
+    # We are going to run with repository based images (they have rpms embedded)
+    COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
+    if [ -z "${pipelineid}" ]; then
+      echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
+      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
+    else
+      echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
+      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
+    fi
+    if [ "${imagetag}" == "" ]; then
+      echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
+      exit 1
+    fi
+    echo "Creating instance using docker image with tag: ${imagetag}"
 
-# Create temporary directory for modified pod files
-poddir=$(mktemp -d)
-cp pod-* ${poddir}
-sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+    # Create temporary directory for modified pod files
+    poddir=$(mktemp -d)
+    cp pod-* ${poddir}
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
 
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
+    if [ ! -z "${error}" ]; then
+        echo -e "ERROR:\n${error}"
+        exit 1
+    fi
 fi
+
 
 if [ $keepdatabase == 1 ] ; then
     echo "DB content will be kept"

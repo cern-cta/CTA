@@ -1,0 +1,52 @@
+# Should we run with another limit on the core file size other than the default?
+DAEMON_COREFILE_LIMIT=unlimited
+
+# Disable the KRB5 replay cache
+export KRB5RCACHETYPE=none
+
+# What roles should the xroot daemon run for. For each role you can overwrite
+# the default options using a dedicate sysconfig file
+# e.g. /etc/sysconfig/xrd.<role>. The role based mechanism allows for
+# multiple xrd's running with different options to be controlled via
+# the same initd script
+
+XRD_ROLES="mq mgm fst"
+
+# ------------------------------------------------------------------
+# EOS Configuration
+# ------------------------------------------------------------------
+
+# The EOS instance name
+export EOS_INSTANCE_NAME=DUMMY_INSTANCE_TO_REPLACE
+
+# The EOS configuration to load after daemon start
+export EOS_AUTOLOAD_CONFIG=default
+
+# The EOS broker URL 
+export EOS_BROKER_URL=root://DUMMY_HOST_TO_REPLACE:1097//eos/
+
+# The EOS host geo location tag used to sort hosts into geographical (rack) locations 
+export EOS_GEOTAG="DUMMY_HOST_TO_REPLACE"
+
+# The fully qualified hostname of MGM master1
+export EOS_MGM_MASTER1=DUMMY_HOST_TO_REPLACE
+
+# The fully qualified hostname of MGM master2
+export EOS_MGM_MASTER2=DUMMY_HOST_TO_REPLACE
+
+# The alias which selects master 1 or 2
+export EOS_MGM_ALIAS=DUMMY_HOST_TO_REPLACE
+
+# The mail notification in case of fail-over
+export EOS_MAIL_CC="none@mail.cern.ch"
+export EOS_NOTIFY="mail -s `date +%s`-`hostname`-eos-notify $EOS_MAIL_CC"
+
+# Changel minimum file system size setting - default is to have atleast 5 GB free on a partition
+export EOS_FS_FULL_SIZE_IN_GB=5
+
+# define the log file where you want to grep
+export EOS_TTY_BROADCAST_LISTEN_LOGFILE="/var/log/eos/mgm/xrdlog.mgm"
+
+# define the log file regex you want to broad cast to all consoles
+export EOS_TTY_BROACAST_EGREP="\"CRIT|ALERT|EMERG|PROGRESS\""
+
