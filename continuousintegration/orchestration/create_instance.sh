@@ -105,7 +105,7 @@ kubectl create -f ${config_database} --namespace=${instance}
 
 
 echo -n "Requesting an unused MHVTL library"
-kubectl create -f /opt/kubernetes/CTA/library/library_claim.yaml --namespace=${instance}
+kubectl create -f ./pvc_library_mhvtl.yaml --namespace=${instance}
 for ((i=0; i<120; i++)); do
   echo -n "."
   kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
