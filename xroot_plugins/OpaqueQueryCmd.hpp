@@ -27,7 +27,7 @@ namespace xroot_plugins {
 /**
  * Command-line tool to emulate EOS sending CTA a message.
  */
-class FakeEosCmd: public CmdLineTool {
+class OpaqueQueryCmd: public CmdLineTool {
 public:
 
   /**
@@ -37,12 +37,12 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  FakeEosCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  OpaqueQueryCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
   /**
    * Destructor.
    */
-  ~FakeEosCmd() noexcept;
+  ~OpaqueQueryCmd() noexcept;
 
 private:
 
@@ -62,7 +62,7 @@ private:
    */
   void printUsage(std::ostream &os) override;
 
-}; // class FakeEosCmd
+}; // class OpaqueQueryCmd
 
 } // namespace xroot_plugins
 } // namespace cta

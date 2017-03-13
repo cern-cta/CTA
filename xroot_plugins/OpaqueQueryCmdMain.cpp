@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "xroot_plugins/FakeEosCmd.hpp"
+#include "xroot_plugins/OpaqueQueryCmd.hpp"
 
 #include <iostream>
 
@@ -24,6 +24,6 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
-  cta::xroot_plugins::FakeEosCmd cmd(std::cin, std::cout, std::cerr);
+  cta::xroot_plugins::OpaqueQueryCmd cmd(std::cin, std::cout, std::cerr);
   return cmd.main(argc, argv);
 }

@@ -18,7 +18,7 @@
 
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
-#include "xroot_plugins/FakeEosCmdLineArgs.hpp"
+#include "xroot_plugins/OpaqueQueryCmdLineArgs.hpp"
 
 #include <getopt.h>
 #include <ostream>
@@ -29,7 +29,7 @@ namespace xroot_plugins {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FakeEosCmdLineArgs::FakeEosCmdLineArgs(const int argc, char *const *const argv):
+OpaqueQueryCmdLineArgs::OpaqueQueryCmdLineArgs(const int argc, char *const *const argv):
   ctaPort(0),
   help(false) {
 
@@ -104,10 +104,10 @@ FakeEosCmdLineArgs::FakeEosCmdLineArgs(const int argc, char *const *const argv):
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void FakeEosCmdLineArgs::printUsage(std::ostream &os) {
+void OpaqueQueryCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-xroot_plugins-fakeeos [options] ctaHost ctaPort queryFilename" << std::endl <<
+    "    cta-xroot_plugins-opaque-query [options] ctaHost ctaPort queryFilename" << std::endl <<
     "Where:" << std::endl <<
     "    ctaHost" << std::endl <<
     "        The network name of the host on which the CTA front end is running" << std::endl <<
@@ -120,10 +120,10 @@ void FakeEosCmdLineArgs::printUsage(std::ostream &os) {
     "        Prints this usage message" << std::endl <<
     "Example 1:" << std::endl <<
     "    echo -n -e 'Hello\\n\\x00World' > query.txt" << std::endl <<
-    "    cta-xrootd_plugins-fakeeos localhost 10955 query.txt" << std::endl <<
+    "    cta-xrootd_plugins-opaque-query localhost 10955 query.txt" << std::endl <<
     "Example 2:" << std::endl <<
     "    cta-xrootd_plugins-write-notification-msg notification.msg" << std::endl <<
-    "    cta-xrootd_plugins-fakeeos localhost 10955 notification.msg" << std::endl;
+    "    cta-xrootd_plugins-opaque-query localhost 10955 notification.msg" << std::endl;
 }
 
 } // namespace xroot_plugins

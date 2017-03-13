@@ -17,8 +17,8 @@
  */
 
 #include "common/make_unique.hpp"
-#include "xroot_plugins/FakeEosCmd.hpp"
-#include "xroot_plugins/FakeEosCmdLineArgs.hpp"
+#include "xroot_plugins/OpaqueQueryCmd.hpp"
+#include "xroot_plugins/OpaqueQueryCmdLineArgs.hpp"
 #include "xroot_plugins/messages/notification.pb.h"
 
 #include <fstream>
@@ -35,21 +35,21 @@ namespace xroot_plugins {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FakeEosCmd::FakeEosCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
+OpaqueQueryCmd::OpaqueQueryCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
 CmdLineTool(inStream, outStream, errStream) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-FakeEosCmd::~FakeEosCmd() noexcept {
+OpaqueQueryCmd::~OpaqueQueryCmd() noexcept {
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int FakeEosCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
-  const FakeEosCmdLineArgs cmdLineArgs(argc, argv);
+int OpaqueQueryCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+  const OpaqueQueryCmdLineArgs cmdLineArgs(argc, argv);
 
   if(cmdLineArgs.help) {
     printUsage(m_out);
@@ -89,8 +89,8 @@ int FakeEosCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void FakeEosCmd::printUsage(std::ostream &os) {
-  FakeEosCmdLineArgs::printUsage(os);
+void OpaqueQueryCmd::printUsage(std::ostream &os) {
+  OpaqueQueryCmdLineArgs::printUsage(os);
 }
 
 } // namespace xroot_plugins

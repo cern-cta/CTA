@@ -29,7 +29,7 @@ namespace xroot_plugins {
  * Structure to store the command-line arguments of the command-line tool
  * named cta-xroot_plugins-fake-eos.
  */
-struct FakeEosCmdLineArgs {
+struct OpaqueQueryCmdLineArgs {
   /**
    * The name of the host on which the CTA front end is running.
    */
@@ -62,7 +62,7 @@ struct FakeEosCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  FakeEosCmdLineArgs(const int argc, char *const *const argv);
+  OpaqueQueryCmdLineArgs(const int argc, char *const *const argv);
 
   /**
    * Prints the usage message of the command-line tool.
