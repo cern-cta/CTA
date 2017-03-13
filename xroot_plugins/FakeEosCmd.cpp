@@ -21,6 +21,7 @@
 #include "xroot_plugins/FakeEosCmdLineArgs.hpp"
 #include "xroot_plugins/messages/notification.pb.h"
 
+#include <fstream>
 #include <iostream>
 #include <stdint.h>
 #include <string>
@@ -52,6 +53,15 @@ int FakeEosCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
     printUsage(m_out);
     return 0;
   }
+
+  std::ifstream queryFileStream(cmdLineArgs.queryFilename, std::ios_base::binary);
+  if(!queryFileStream) {
+    m_err << "Failed to open " << cmdLineArgs.queryFilename << std::endl;
+    return 1;
+  }
+  std::vector<char> queryFileContents(
+    (std::istreambuf_iterator<char>(queryFileStream)),
+    (std::istreambuf_iterator<char>()));
 
   const std::string protocol = "xroot";
   const std::string fsUrl = protocol + ":" + "//" + cmdLineArgs.ctaHost + ":" + std::to_string(cmdLineArgs.ctaPort);
@@ -112,10 +122,10 @@ int FakeEosCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
   (*notification.mutable_directory()->mutable_xattr())["notification_directory_attr1"] = "directory_xattr1_value";
   (*notification.mutable_directory()->mutable_xattr())["notification_directory_attr2"] = "directory_xattr2_value";
 
-  XrdCl::Buffer arg(cmdLineArgs.queryArg.size());
-  arg.FromString(cmdLineArgs.queryArg);
+  XrdCl::Buffer arg;
+  arg.Append(&queryFileContents[0], queryFileContents.size(), 0);
   XrdCl::Buffer *response = nullptr;
-  const XrdCl::XRootDStatus status = fs.Query(XrdCl::QueryCode::OpaqueFile, arg, response);
+  const XrdCl::XRootDStatus status = fs.Query(XrdCl::QueryCode::Opaque, arg, response);
   std::unique_ptr<XrdCl::Buffer> smartResponse(response);
 
   std::cout << "status.ToStr()=" << status.ToStr() << std::endl;

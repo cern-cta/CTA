@@ -41,10 +41,14 @@ struct FakeEosCmdLineArgs {
   uint16_t ctaPort;
 
   /**
-   * The query argument to be sent to teh cTA front end using
-   * XrdCl::FileSystem::Query().
+   * The name of the file containing the query argument to be sent to the CTA
+   * front end using:
+   *
+   *     XrdCl::FileSystem::Query(XrdCl::QueryCode::Opaque, arg, response)
+   *
+   * Where arg is the contents of the named file.
    */
-  std::string queryArg;
+  std::string queryFilename;
 
   /**
    * True if the usage message should be printed.

@@ -80,8 +80,8 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 {
   (void)cmd; (void)args; (void)eInfo; (void)client;
 
-  if(SFS_FSCTL_PLUGIN != cmd) {
-    eInfo.setErrInfo(ENOTSUP, "Not supported: cmd != SFS_FSCTL_PLUGIN");
+  if(SFS_FSCTL_PLUGIO != cmd) {
+    eInfo.setErrInfo(ENOTSUP, "Not supported: cmd != SFS_FSCTL_PLUGIO");
     return SFS_ERROR;
   }
 
@@ -94,19 +94,21 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
   arg2[args.Arg2Len] = '\0';
 
   std::list<cta::log::Param> params;
+  params.push_back({"args.Arg1Len", args.Arg1Len});
   params.push_back({"arg1", arg1.get()});
+  params.push_back({"args.Arg2Len", args.Arg2Len});
   params.push_back({"arg2", arg2.get()});
   params.push_back({"client->host", client->host});
   params.push_back({"client->name", client->name});
 
   (*m_log)(log::INFO, "FSctl called", params);
 
-  if(strcmp(arg1.get(), "/eos_cta_interface") && strcmp(arg1.get(), "/eos_cta_interface/")) {
-    std::ostringstream msg;
-    msg << arg1.get() << " does not exist";
-    eInfo.setErrInfo(ENOENT, msg.str().c_str());
-    return SFS_ERROR;
-  }
+//if(strcmp(arg1.get(), "/eos_cta_interface") && strcmp(arg1.get(), "/eos_cta_interface/")) {
+//  std::ostringstream msg;
+//  msg << arg1.get() << " does not exist";
+//  eInfo.setErrInfo(ENOENT, msg.str().c_str());
+//  return SFS_ERROR;
+//}
 
   const size_t sizeOfMsg = 10*1024*1024;
   char *const msg = static_cast<char *>(malloc(sizeOfMsg));

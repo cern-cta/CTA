@@ -98,7 +98,7 @@ FakeEosCmdLineArgs::FakeEosCmdLineArgs(const int argc, char *const *const argv):
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string("Invalid CTA port number: " + ex.getMessage().str()));
   }
-  queryArg = argv[optind+2];
+  queryFilename = argv[optind+2];
 }
 
 //------------------------------------------------------------------------------
@@ -107,12 +107,20 @@ FakeEosCmdLineArgs::FakeEosCmdLineArgs(const int argc, char *const *const argv):
 void FakeEosCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-xroot_plugins-fakeeos [options] ctaHost ctaPort queryArg" << std::endl <<
+    "    cta-xroot_plugins-fakeeos [options] ctaHost ctaPort queryFilename" << std::endl <<
+    "Where:" << std::endl <<
+    "    ctaHost" << std::endl <<
+    "        The network name of the host on which the CTA front end is running" << std::endl <<
+    "    ctaPort" << std::endl <<
+    "        The TCP/IP port on which the CTA front end is listening for connections" << std::endl <<
+    "    queryFilename"  << std::endl <<
+    "        The name of file containing the query blob to be sent to the CTA front end" << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<
     "Example:" << std::endl <<
-    "    cta-xrootd_plugins-fakeeos localhost 10955 /eos_cta_interface" << std::endl;
+    "    echo -n -e 'Hello\\n\\x00World' > query.txt" << std::endl <<
+    "    cta-xrootd_plugins-fakeeos localhost 10955 query.txt" << std::endl;
 }
 
 } // namespace xroot_plugins
