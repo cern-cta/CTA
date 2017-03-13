@@ -26,8 +26,6 @@ spec:
     command: ['/opt/run/bin/ctafrontend.sh']
     args: ["none"]
     volumeMounts:
-    - mountPath: /dev/log
-      name: dev-log
     - mountPath: /shared
       name: shared
     - mountPath: /etc/config/objectstore
@@ -36,6 +34,8 @@ spec:
       name: mydatabase
     - mountPath: /etc/config/library
       name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
     securityContext:
       # RW access needed to volumes
       privileged: true
@@ -44,9 +44,6 @@ spec:
       name: ctafrontend
       protocol: TCP
   volumes:
-  - name: dev-log
-    hostPath:
-      path: /dev/log
   - name: shared
     hostPath:
       path: /opt/cta
@@ -59,3 +56,6 @@ spec:
   - name: mylibrary
     configMap:
       name: library-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs

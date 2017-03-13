@@ -11,6 +11,12 @@ spec:
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
+    - name: MY_CONTAINER
+      value: "rmcd"
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
     - name: MY_NAMESPACE
       valueFrom:
         fieldRef:
@@ -26,6 +32,8 @@ spec:
       name: shared
     - mountPath: /etc/config/library
       name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
     securityContext:
       privileged: true
 
@@ -33,6 +41,8 @@ spec:
     image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
     stdin: true
     env:
+    - name: MY_CONTAINER
+      value: "taped"
     - name: MY_NAME
       valueFrom:
         fieldRef:
@@ -58,6 +68,8 @@ spec:
       name: mydatabase
     - mountPath: /etc/config/library
       name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
     securityContext:
       privileged: true
 
@@ -74,3 +86,6 @@ spec:
   - name: mylibrary
     configMap:
       name: library-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs

@@ -42,6 +42,8 @@ spec:
       name: mydatabase
     - mountPath: /etc/config/library
       name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
     securityContext:
       privileged: true
 
@@ -58,3 +60,6 @@ spec:
   - name: mylibrary
     configMap:
       name: library-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs

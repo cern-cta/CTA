@@ -37,6 +37,7 @@ echo "Collecting stdout logs of pods to ${tmpdir}"
 for podcontainer in "init -c ctainit" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv -c taped" "tpsrv -c rmcd"; do
   kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
 done
+kubectl --namespace ${instance} exec ctacli -- tar -C /mnt/logs -zcf - . > ${tmpdir}/varlog.tgz
 
 if [ -z "${CI_PIPELINE_ID}" ]; then
 	# we are in the context of a CI run => save artifacts in the directory structure of the build
@@ -55,6 +56,8 @@ done
 
 echo OK
 
+# this now useless as dummy NFS PV were replaced by local volumes
+# those are recycled automatically
 ./recycle_librarydevice_PV.sh
 
 echo "Status of library pool after test:"

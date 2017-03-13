@@ -1,5 +1,7 @@
 #!/bin/bash
 
+/opt/run/bin/init_pod.sh
+
 # Install missing RPMs (kdc)
 yum -y install heimdal-server heimdal-workstation
 

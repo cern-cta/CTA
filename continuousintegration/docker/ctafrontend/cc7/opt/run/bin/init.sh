@@ -1,5 +1,7 @@
 #!/bin/sh 
 
+/opt/run/bin/init_pod.sh
+
 # enable cta repository from previously built artifacts
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph

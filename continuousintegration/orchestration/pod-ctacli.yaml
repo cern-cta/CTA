@@ -28,6 +28,8 @@ spec:
     volumeMounts:
     - mountPath: /shared
       name: shared
+    - mountPath: /mnt/logs
+      name: logstorage
     securityContext:
       privileged: true
 
@@ -35,4 +37,6 @@ spec:
   - name: shared
     hostPath:
       path: /opt/cta
-
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs

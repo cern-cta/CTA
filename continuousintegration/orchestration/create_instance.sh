@@ -119,6 +119,9 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 
 echo "Got library: ${LIBRARY_DEVICE}"
 
+echo -n "Requesting an unused log volume"
+kubectl create -f ./pvc_logs.yaml --namespace=${instance}
+
 echo "Creating services in instance"
 
 for service_file in *svc\.yaml; do
