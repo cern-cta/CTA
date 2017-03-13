@@ -25,9 +25,9 @@ namespace cta {
 namespace xroot_plugins {
 
 /**
- * Command-line tool to emulate EOS sending CTA a message.
+ * Command-line tool for writing a notification message to a file.
  */
-class FakeEosCmd: public CmdLineTool {
+class WriteNotificationMsgCmd: public CmdLineTool {
 public:
 
   /**
@@ -37,12 +37,12 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  FakeEosCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  WriteNotificationMsgCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
 
   /**
    * Destructor.
    */
-  ~FakeEosCmd() noexcept;
+  ~WriteNotificationMsgCmd() noexcept;
 
 private:
 
@@ -62,7 +62,7 @@ private:
    */
   void printUsage(std::ostream &os) override;
 
-}; // class FakeEosCmd
+}; // class WriteNotificationMsgCmd
 
 } // namespace xroot_plugins
 } // namespace cta

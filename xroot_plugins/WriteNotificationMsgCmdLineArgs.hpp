@@ -18,51 +18,50 @@
 
 #pragma once
 
-#include "xroot_plugins/CmdLineTool.hpp"
-#include "rdbms/Conn.hpp"
+#include <ostream>
+#include <stdint.h>
+#include <string>
 
 namespace cta {
 namespace xroot_plugins {
 
 /**
- * Command-line tool to emulate EOS sending CTA a message.
+ * Structure to store the command-line arguments of the command-line tool
+ * named cta-write-notification-msg.
  */
-class FakeEosCmd: public CmdLineTool {
-public:
+struct WriteNotificationMsgCmdLineArgs {
+  /**
+   * The name of the file to which the notification message should be written.
+   */
+  std::string filename;
 
   /**
-   * Constructor.
+   * True if the JSON representation of the notification message should be
+   * written to standard out.
+   */
+  bool writeJsonToStdOut;
+
+  /**
+   * True if the usage message should be printed.
+   */
+  bool help;
+
+  /**
+   * Constructor that parses the specified command-line arguments.
    *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
+   * @param argc The number of command-line arguments including the name of the
+   * executable.
+   * @param argv The vector of command-line arguments.
    */
-  FakeEosCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
-
-  /**
-   * Destructor.
-   */
-  ~FakeEosCmd() noexcept;
-
-private:
-
-  /**
-   * An exception throwing version of main().
-   *
-   * @param argc The number of command-line arguments including the program name.
-   * @param argv The command-line arguments.
-   * @return The exit value of the program.
-   */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  WriteNotificationMsgCmdLineArgs(const int argc, char *const *const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
-
-}; // class FakeEosCmd
+  static void printUsage(std::ostream &os);
+};
 
 } // namespace xroot_plugins
 } // namespace cta

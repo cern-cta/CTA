@@ -39,4 +39,14 @@ set (FAKE_EOS_CMD_SRC_FILES
 
 add_executable (cta-xrootd_plugins-fakeeos ${FAKE_EOS_CMD_SRC_FILES})
 add_dependencies (cta-xrootd_plugins-fakeeos generate_notification.pb.h)
-target_link_libraries (cta-xrootd_plugins-fakeeos ctacommon ctafrontendmessages)
+target_link_libraries (cta-xrootd_plugins-fakeeos ctacommon)
+
+set (WRITE_NOTIFICATION_MSG_CMD_SRC_FILES
+  CmdLineTool.cpp
+  WriteNotificationMsgCmd.cpp
+  WriteNotificationMsgCmdLineArgs.cpp
+  WriteNotificationMsgCmdMain.cpp)
+
+add_executable (cta-xrootd_plugins-write-notification-msg ${WRITE_NOTIFICATION_MSG_CMD_SRC_FILES})
+add_dependencies (cta-xrootd_plugins-write-notification-msg generate_notification.pb.h)
+target_link_libraries (cta-xrootd_plugins-write-notification-msg ctacommon ctafrontendmessages)
