@@ -106,6 +106,8 @@ OpaqueQueryCmdLineArgs::OpaqueQueryCmdLineArgs(const int argc, char *const *cons
 //------------------------------------------------------------------------------
 void OpaqueQueryCmdLineArgs::printUsage(std::ostream &os) {
   os <<
+    "Description:" << std::endl <<
+    "    Sends an xrootd \"opaque query\" message to the CTA front end" << std::endl <<
     "Usage:" << std::endl <<
     "    cta-xroot_plugins-opaque-query [options] ctaHost ctaPort queryFilename" << std::endl <<
     "Where:" << std::endl <<

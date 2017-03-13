@@ -123,6 +123,8 @@ WriteNotificationMsgCmdLineArgs::WriteNotificationMsgCmdLineArgs(const int argc,
 //------------------------------------------------------------------------------
 void WriteNotificationMsgCmdLineArgs::printUsage(std::ostream &os) {
   os <<
+    "Description:" << std::endl <<
+    "    Writes a \"notification\" message to the specified file" << std::endl <<
     "Usage:" << std::endl <<
     "    cta-xroot_plugins-write-notification-msg filename" << std::endl <<
     "    cta-xroot_plugins-write-notification-msg -h|--help" << std::endl <<
