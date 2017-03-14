@@ -65,3 +65,18 @@ message notification {
   md file = 4;          //< file meta data
   md directory = 5;     //< directory meta data
 }
+
+message xattr {
+  enum Operation { GET = 0; ADD = 1; SET = 2; DELETE = 3;}
+  fixed64 fid = 1;               //< file id
+  map<string, string> xattrs = 2; //< xattribute map
+  Operation op = 3;              //< operation to execute for this xattr map
+}
+
+message tapereplica {
+   enum Status { OFFTAPE = 0; ONTAPE = 1; ONTAPESAVE  = 2;}
+   fixed64 fid = 1;   //< file  id
+   Status status = 2; //< state state for file ID
+   fixed64 size = 3;  //< File size as recorded on tape for cross check
+   checksum cks = 4;   //< File checksum as computer while writing to tape
+}
