@@ -39,8 +39,9 @@ for podcontainer in "init -c ctainit" "ctacli -c ctacli" "ctaeos -c mgm" "ctafro
 done
 kubectl --namespace ${instance} exec ctacli -- tar -C /mnt/logs -zcf - . > ${tmpdir}/varlog.tgz
 
-if [ -z "${CI_PIPELINE_ID}" ]; then
+if [ ! -z "${CI_PIPELINE_ID}" ]; then
 	# we are in the context of a CI run => save artifacts in the directory structure of the build
+        echo "Saving logs as artifacts"
 	mkdir -p ../../pod_logs/${instance}
 	cp -r ${tmpdir}/* ../../pod_logs/${instance}
 fi

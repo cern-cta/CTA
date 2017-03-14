@@ -70,6 +70,10 @@ if [ ! -z "${error}" ]; then
 fi
 
 
+log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
+mkdir -p ${log_dir}
+
+
 function execute_log {
   mycmd=$1
   logfile=$2
@@ -86,11 +90,11 @@ function execute_log {
 }
 
 # create instance
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${orchestration_dir}/../../create_instance.log"
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log"
 
 # launch system test
 cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${orchestration_dir}/../../systests.sh.log"
+execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log"
 cd ${orchestration_dir}
 
 # delete instance?
