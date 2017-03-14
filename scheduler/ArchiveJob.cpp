@@ -18,7 +18,7 @@
 
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "disk/DiskReporterFactory.hpp"
+#include "eos/DiskReporterFactory.hpp"
 #include <limits>
 
 //------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ bool cta::ArchiveJob::complete() {
   // We can now record the success for the job in the database.
   // If this is the last job of the request, we also report the success to the client.
   if (m_dbJob->succeed()) {
-    std::unique_ptr<disk::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL));
+    std::unique_ptr<eos::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL));
     reporter->reportArchiveFullyComplete();
     return true;
   }

@@ -19,7 +19,7 @@ cmake_minimum_required (VERSION 2.6)
 find_package (xrootdclient REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_library (ctadisk
+add_library (ctaeos
   DiskReporter.cpp
   DiskReporterFactory.cpp
   EOSReporter.cpp)

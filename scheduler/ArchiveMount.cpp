@@ -77,7 +77,7 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::disk::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
+cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
 }
 

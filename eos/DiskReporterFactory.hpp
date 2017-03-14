@@ -24,7 +24,7 @@
 
 #include <string>
 
-namespace cta { namespace disk {
+namespace cta { namespace eos {
 
 class DiskReporterFactory {
 public:

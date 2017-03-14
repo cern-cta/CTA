@@ -16,20 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "EOSReporter.hpp"
+#include "common/exception/XrootCl.hpp"
 
-#include "DiskReporter.hpp"
-#include <XrdCl/XrdClFileSystem.hh>
+namespace cta { namespace eos {
 
-namespace cta { namespace disk {
+EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
+  m_fs(hostURL), m_query(queryValue) {}
 
-class EOSReporter: public DiskReporter {
-public:
-  EOSReporter(const std::string & hostURL, const std::string & queryValue);
-  void reportArchiveFullyComplete() override;
-private:
-  XrdCl::FileSystem m_fs;
-  std::string m_query;
-};
+
+void EOSReporter::reportArchiveFullyComplete() {
+  auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
+  XrdCl::Buffer arg (m_query.size());
+  arg.FromString(m_query);
+  XrdCl::Buffer * resp = nullptr;
+  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp);
+  delete (resp);
+  cta::exception::XrootCl::throwOnError(status,
+      "In EOSReporter::reportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
+} 
 
 }} // namespace cta::disk

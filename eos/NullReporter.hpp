@@ -18,12 +18,14 @@
 
 #pragma once
 
-namespace cta { namespace disk {
+#include "DiskReporter.hpp"
 
-class DiskReporter {
+namespace cta { namespace eos {
+
+class NullReporter: public DiskReporter {
 public:
-  virtual void reportArchiveFullyComplete() = 0;
-  virtual ~DiskReporter() {};
+  NullReporter() {};
+  void reportArchiveFullyComplete() override {};
 };
 
-}} // name space cta::clientsystem
+}} // namespace cta::disk

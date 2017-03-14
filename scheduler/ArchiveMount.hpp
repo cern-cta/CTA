@@ -23,7 +23,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "disk/DiskReporterFactory.hpp"
+#include "eos/DiskReporterFactory.hpp"
 
 #include <memory>
 #include <atomic>
@@ -131,7 +131,7 @@ namespace cta {
      * @param URL: report address
      * @return poitner to the reporter created.
      */
-    disk::DiskReporter * createDiskReporter(std::string & URL);
+    eos::DiskReporter * createDiskReporter(std::string & URL);
     
     /**
      * Destructor.
@@ -157,7 +157,7 @@ namespace cta {
     
   private:
     /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
-    disk::DiskReporterFactory m_reporterFactory;
+    eos::DiskReporterFactory m_reporterFactory;
   }; // class ArchiveMount
 
 } // namespace cta

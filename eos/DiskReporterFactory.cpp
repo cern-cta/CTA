@@ -22,7 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/threading/MutexLocker.hpp"
 
-namespace cta { namespace disk {
+namespace cta { namespace eos {
 
 DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL) {
   threading::MutexLocker ml(m_mutex);
