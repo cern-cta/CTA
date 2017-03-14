@@ -81,7 +81,14 @@ int OpaqueQueryCmd::exceptionThrowingMain(const int argc, char *const *const arg
   std::cout << "status.IsOK()=" << (status.IsOK() ? "true" : "false") << std::endl;
   if(nullptr != smartResponse.get()) {
     std::cout << "response->GetSize()=" << response->GetSize() << std::endl;
-    std::cout << "response->ToString()=" << response->ToString() << std::endl;
+
+    std::ofstream responseFileStream(cmdLineArgs.responseFilename, std::ios_base::binary);
+    if(!responseFileStream) {
+      std::cerr << "Failed to open " << cmdLineArgs.responseFilename << std::endl;
+    }
+    const char *buf = smartResponse->GetBuffer();
+    const uint32_t bufSize = smartResponse->GetSize();
+    responseFileStream.write(buf, bufSize);
   }
   return 0;
 }

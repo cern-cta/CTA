@@ -41,14 +41,20 @@ struct OpaqueQueryCmdLineArgs {
   uint16_t ctaPort;
 
   /**
-   * The name of the file containing the query argument to be sent to the CTA
-   * front end using:
+   * The name of the file containing binary the query argument to be sent to the
+   * CTA front end using:
    *
    *     XrdCl::FileSystem::Query(XrdCl::QueryCode::Opaque, arg, response)
    *
    * Where arg is the contents of the named file.
    */
   std::string queryFilename;
+
+  /**
+   * The name of the file to which the binary response from the CTA front end
+   * will be written.
+   */
+  std::string responseFilename;
 
   /**
    * True if the usage message should be printed.

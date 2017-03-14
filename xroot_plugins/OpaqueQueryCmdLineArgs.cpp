@@ -75,16 +75,22 @@ OpaqueQueryCmdLineArgs::OpaqueQueryCmdLineArgs(const int argc, char *const *cons
     } // switch(opt)
   } // while getopt_long()
 
+  // Calculate the number of non-option ARGV-elements
+  const int actualNbArgs = argc - optind;
+
+  if(help && actualNbArgs > 0) {
+    exception::CommandLineNotParsed ex;
+    ex.getMessage() << "A command-line argument cannot be specified with the -h|--help option";
+    throw ex;
+  }
+
   // There is no need to continue parsing when the help option is set
   if(help) {
     return;
   }
 
-  // Calculate the number of non-option ARGV-elements
-  const int actualNbArgs = argc - optind;
-
   // Check the number of arguments
-  const int expectedNbArgs = 3;
+  const int expectedNbArgs = 4;
   if(actualNbArgs != expectedNbArgs) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: excepted=" << expectedNbArgs << " actual=" <<
@@ -99,6 +105,7 @@ OpaqueQueryCmdLineArgs::OpaqueQueryCmdLineArgs(const int argc, char *const *cons
     throw exception::Exception(std::string("Invalid CTA port number: " + ex.getMessage().str()));
   }
   queryFilename = argv[optind+2];
+  responseFilename = argv[optind+3];
 }
 
 //------------------------------------------------------------------------------
@@ -109,7 +116,7 @@ void OpaqueQueryCmdLineArgs::printUsage(std::ostream &os) {
     "Description:" << std::endl <<
     "    Sends an xrootd \"opaque query\" message to the CTA front end" << std::endl <<
     "Usage:" << std::endl <<
-    "    cta-xroot_plugins-opaque-query [options] ctaHost ctaPort queryFilename" << std::endl <<
+    "    cta-xroot_plugins-opaque-query [options] ctaHost ctaPort queryFilename responseFileName" << std::endl <<
     "Where:" << std::endl <<
     "    ctaHost" << std::endl <<
     "        The network name of the host on which the CTA front end is running" << std::endl <<
@@ -117,15 +124,17 @@ void OpaqueQueryCmdLineArgs::printUsage(std::ostream &os) {
     "        The TCP/IP port on which the CTA front end is listening for connections" << std::endl <<
     "    queryFilename"  << std::endl <<
     "        The name of file containing the query blob to be sent to the CTA front end" << std::endl <<
+    "    responseFilename" << std::endl <<
+    "        The name of file to which the binary responce from the CTA front end will be written" << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<
     "Example 1:" << std::endl <<
-    "    echo -n -e 'Hello\\n\\x00World' > query.txt" << std::endl <<
-    "    cta-xrootd_plugins-opaque-query localhost 10955 query.txt" << std::endl <<
+    "    echo -n -e 'Hello\\n\\x00World' > strange.msg" << std::endl <<
+    "    cta-xrootd_plugins-opaque-query localhost 10955 strange.msg response.msg" << std::endl <<
     "Example 2:" << std::endl <<
     "    cta-xrootd_plugins-write-notification-msg notification.msg" << std::endl <<
-    "    cta-xrootd_plugins-opaque-query localhost 10955 notification.msg" << std::endl;
+    "    cta-xrootd_plugins-opaque-query localhost 10955 notification.msg response.msg" << std::endl;
 }
 
 } // namespace xroot_plugins
