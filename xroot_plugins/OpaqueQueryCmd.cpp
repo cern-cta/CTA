@@ -27,8 +27,6 @@
 #include <string>
 #include <XrdCl/XrdClFileSystem.hh>
 
-#include <google/protobuf/util/json_util.h>
-
 namespace cta {
 namespace xroot_plugins {
 
