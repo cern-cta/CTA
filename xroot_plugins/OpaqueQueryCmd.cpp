@@ -17,9 +17,9 @@
  */
 
 #include "common/make_unique.hpp"
+#include "eos/messages/notification.pb.h"
 #include "xroot_plugins/OpaqueQueryCmd.hpp"
 #include "xroot_plugins/OpaqueQueryCmdLineArgs.hpp"
-#include "xroot_plugins/messages/notification.pb.h"
 
 #include <fstream>
 #include <iostream>

@@ -20,13 +20,11 @@ find_package(Protobuf REQUIRED)
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
-set (CTA_FRONT_END_MESSAGES_SRC_FILES
-  ${ProtoSources})
+set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
-add_library (ctafrontendmessages SHARED
-  ${CTA_FRONT_END_MESSAGES_SRC_FILES})
+add_library (ctaeosmessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
 
-target_link_libraries (ctafrontendmessages
+target_link_libraries (ctaeosmessages
   protobuf)
 
-install (TARGETS ctafrontendmessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctaeosmessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
