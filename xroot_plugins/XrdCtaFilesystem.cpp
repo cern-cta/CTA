@@ -37,6 +37,7 @@
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdSec/XrdSecEntity.hh"
 #include "XrdVersion.hh"
+#include "xroot_plugins/messages/notification.pb.h"
 #include "xroot_plugins/XrdCtaFilesystem.hpp"
 #include "xroot_plugins/XrdCtaFile.hpp"
 #include "XrdCtaDir.hpp"
@@ -85,30 +86,33 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     return SFS_ERROR;
   }
 
-  std::unique_ptr<char []> arg1(new char[args.Arg1Len + 1]);
-  strncpy(arg1.get(), args.Arg1, args.Arg1Len);
-  arg1[args.Arg1Len] = '\0';
+  {
+    std::list<cta::log::Param> params;
+    params.push_back({"args.Arg1Len", args.Arg1Len});
+    params.push_back({"args.Arg2Len", args.Arg2Len});
+    params.push_back({"client->host", client->host});
+    params.push_back({"client->name", client->name});
+    (*m_log)(log::INFO, "FSctl called", params);
+  }
 
-  std::unique_ptr<char []> arg2(new char[args.Arg2Len + 1]);
-  strncpy(arg2.get(), args.Arg2, args.Arg2Len);
-  arg2[args.Arg2Len] = '\0';
+  if(args.Arg1 == nullptr || args.Arg1Len == 0) {
+    eInfo.setErrInfo(EINVAL, "Did not receive a query argument");
+    return SFS_ERROR;
+  }
 
-  std::list<cta::log::Param> params;
-  params.push_back({"args.Arg1Len", args.Arg1Len});
-  params.push_back({"arg1", arg1.get()});
-  params.push_back({"args.Arg2Len", args.Arg2Len});
-  params.push_back({"arg2", arg2.get()});
-  params.push_back({"client->host", client->host});
-  params.push_back({"client->name", client->name});
+  const std::string query(args.Arg1, args.Arg1Len);
+  eos::wfe::notification notification;
+  notification.ParseFromString(query);
 
-  (*m_log)(log::INFO, "FSctl called", params);
-
-//if(strcmp(arg1.get(), "/eos_cta_interface") && strcmp(arg1.get(), "/eos_cta_interface/")) {
-//  std::ostringstream msg;
-//  msg << arg1.get() << " does not exist";
-//  eInfo.setErrInfo(ENOENT, msg.str().c_str());
-//  return SFS_ERROR;
-//}
+  {
+    std::list<cta::log::Param> params;
+    params.push_back({"wf.event", notification.wf().event()});
+    params.push_back({"wf.queue",  notification.wf().queue()});
+    params.push_back({"wf.wfname", notification.wf().wfname()});
+    params.push_back({"eosfid", notification.file().fid()});
+    params.push_back({"eoslpath", notification.file().lpath()});
+    (*m_log)(log::INFO, "FSctl received notification message", params);
+  }
 
   const size_t sizeOfMsg = 10*1024*1024;
   char *const msg = static_cast<char *>(malloc(sizeOfMsg));
