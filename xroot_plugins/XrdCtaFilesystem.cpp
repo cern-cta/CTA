@@ -28,7 +28,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/TapePool.hpp"
-#include "eos/messages/notification.pb.h"
+#include "eos/messages/eos_messages.pb.h"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "scheduler/LogicalLibrary.hpp"

@@ -17,7 +17,7 @@
  */
 
 #include "common/make_unique.hpp"
-#include "eos/messages/notification.pb.h"
+#include "eos/messages/eos_messages.pb.h"
 #include "xroot_plugins/WriteNotificationMsgCmd.hpp"
 #include "xroot_plugins/WriteNotificationMsgCmdLineArgs.hpp"
 
