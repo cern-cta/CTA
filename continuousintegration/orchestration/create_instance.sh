@@ -59,18 +59,18 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
-if [ ! -z "$(pipelineid)" && ! -z "${buildtree}" ]; then
+if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" ]; then
     usage
 fi
 
-if [ ! -z "(buildtree)" ]; then
+if [ ! -z "${buildtree}" ]; then
     # We are going to run with generic images against a build tree.
     echo "Creating instance for build tree in ${buildtree}"
 
     # Create temporary directory for modified pod files
     poddir=$(mktemp -d)
     cp pod-* ${poddir}
-    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:).*/\1/"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:\).*/\1 buildtree-runner/"
 
     if [ ! -z "${error}" ]; then
         echo -e "ERROR:\n${error}"
