@@ -32,9 +32,8 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 # Manage repos before running yum
 ADD ${BASEDIR}/etc /etc
 
-RUN yum update -y \
-  && \
-      yum install -y \
+# yum update could be added at some point.
+RUN yum install -y \
       yum-plugin-downloadonly \
       yum-plugin-priorities \
       yum-plugin-versionlock \
