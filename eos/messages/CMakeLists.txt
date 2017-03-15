@@ -26,5 +26,3 @@ add_library (ctaeosmessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
 
 target_link_libraries (ctaeosmessages
   protobuf)
-
-install (TARGETS ctaeosmessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
