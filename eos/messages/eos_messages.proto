@@ -2,8 +2,10 @@ syntax = "proto3";
 package eos.wfe;
 
 message Id {
-  fixed64 n = 1;         // identity number
-  string name = 2;       // identity name 
+  fixed64 uid = 1;      //< user identity number
+  string username = 2;  //< user name 
+  fixed64 gid = 3;      //< group identity number
+  string groupname = 4; //< group name
 }
 
 message Checksum {
