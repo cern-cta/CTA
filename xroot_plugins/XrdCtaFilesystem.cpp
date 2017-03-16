@@ -99,7 +99,7 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
   }
 
   const std::string query(args.Arg1, args.Arg1Len);
-  eos::wfe::notification notification;
+  eos::wfe::Notification notification;
   if(!notification.ParseFromString(query)) {
     eInfo.setErrInfo(EINVAL, "Failed to parse notification message");
     return SFS_ERROR;

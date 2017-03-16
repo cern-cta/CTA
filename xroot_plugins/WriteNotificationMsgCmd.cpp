@@ -55,7 +55,7 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
     return 0;
   }
 
-  eos::wfe::notification notification;
+  eos::wfe::Notification notification;
   notification.mutable_wf()->set_event("notification_workflow_event");
   notification.mutable_wf()->set_queue("notification_workflow_queue");
   notification.mutable_wf()->set_wfname("notification_workflow_wfname");
