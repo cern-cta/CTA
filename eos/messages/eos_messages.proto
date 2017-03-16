@@ -108,8 +108,8 @@ message Error {
 // contents. The type field of this wrapper message provides the required
 // metadata.
 message Wrapper {
-  enum Type {NOTIFICATION = 0; XATTR = 1; TAPEREPLICA = 2;}
-  Type type = 1;
+  enum Type {NONE = 0; NOTIFICATION = 1; XATTR = 2; TAPEREPLICA = 3;}
+  Type type = 1;                 //< Default value is NONE
   Error error = 2;
   Notification notification = 3;
   Xattr xattr = 4;
