@@ -81,6 +81,13 @@ message Tapereplica {
    Checksum cks = 4;   //< File checksum as computer while writing to tape
 }
 
+message Error {
+  enum Audience { EOSLOG = 0; ENDUSER = 1;}
+  Audience audience = 1; //< The intended audience of the error message
+  fixed64 code = 2;      //< Zero means success, non-zero means error
+  string message = 3;    //< An empty if success, else an error message
+}
+
 // The following message is used to wrap all messages sent between EOS and its
 // peers.
 //
@@ -103,7 +110,8 @@ message Tapereplica {
 message Wrapper {
   enum Type {NOTIFICATION = 0; XATTR = 1; TAPEREPLICA = 2;}
   Type type = 1;
-  Notification notification = 2;
-  Xattr xattr = 3;
-  Tapereplica tapereplica = 4;
+  Error error = 2;
+  Notification notification = 3;
+  Xattr xattr = 4;
+  Tapereplica tapereplica = 5;
 }
