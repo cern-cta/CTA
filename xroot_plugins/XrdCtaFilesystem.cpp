@@ -98,34 +98,62 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     return SFS_ERROR;
   }
 
-  const std::string query(args.Arg1, args.Arg1Len);
-  eos::wfe::Notification notification;
-  if(!notification.ParseFromString(query)) {
-    eInfo.setErrInfo(EINVAL, "Failed to parse notification message");
+  const std::string msgBuffer(args.Arg1, args.Arg1Len);
+  eos::wfe::Wrapper msg;
+  if(!msg.ParseFromString(msgBuffer)) {
+    eInfo.setErrInfo(EINVAL, "Failed to parse incoming wrapper message");
     return SFS_ERROR;
   }
 
+  return processWrapperMsg(msg, eInfo, client);
+}
+
+//------------------------------------------------------------------------------
+// processWrapperMsg
+//------------------------------------------------------------------------------
+int XrdCtaFilesystem::processWrapperMsg(const eos::wfe::Wrapper &msg, XrdOucErrInfo &eInfo,
+  const XrdSecEntity *client) {
+  switch(msg.type()) {
+  case eos::wfe::Wrapper::NONE:
+    eInfo.setErrInfo(EINVAL, "Cannot process a wrapped message of type NONE");
+  case eos::wfe::Wrapper::NOTIFICATION:
+    return processNotificationMsg(msg.notification(), eInfo, client);
+  default:
+    {
+      std::ostringstream errMsg;
+      errMsg << "Cannot process a wrapped message with a numeric type value of " << msg.type();
+      eInfo.setErrInfo(EINVAL, errMsg.str().c_str());
+    }
+    return SFS_ERROR;
+  }
+}
+
+//------------------------------------------------------------------------------
+// processNotificationMsg
+//------------------------------------------------------------------------------
+int XrdCtaFilesystem::processNotificationMsg(const eos::wfe::Notification &msg, XrdOucErrInfo &eInfo,
+  const XrdSecEntity *client) {
   {
     std::list<cta::log::Param> params;
-    params.push_back({"wf.event", notification.wf().event()});
-    params.push_back({"wf.queue",  notification.wf().queue()});
-    params.push_back({"wf.wfname", notification.wf().wfname()});
-    params.push_back({"eosfid", notification.file().fid()});
-    params.push_back({"eoslpath", notification.file().lpath()});
-    (*m_log)(log::INFO, "FSctl received notification message", params);
+    params.push_back({"wf.event", msg.wf().event()});
+    params.push_back({"wf.queue",  msg.wf().queue()});
+    params.push_back({"wf.wfname", msg.wf().wfname()});
+    params.push_back({"eosfid", msg.file().fid()});
+    params.push_back({"eoslpath", msg.file().lpath()});
+    (*m_log)(log::INFO, "Processing notification message", params);
   }
 
-  const size_t sizeOfMsg = 10*1024*1024;
-  char *const msg = static_cast<char *>(malloc(sizeOfMsg));
-  if(nullptr == msg) {
+  const size_t sizeOfReply = 10*1024*1024;
+  char *const reply = static_cast<char *>(malloc(sizeOfReply));
+  if(nullptr == reply) {
     (*m_log)(log::ERR, "FSctl failed to allocate reply message");
   }
-  memset(msg, '\0', sizeOfMsg);
-  char msgTxt[] = "Reply from CTA";
-  strncpy(msg, msgTxt, sizeOfMsg);
-  msg[sizeOfMsg - 1] = '\0';
+  memset(reply, '\0', sizeOfReply);
+  char replyTxt[] = "Reply from CTA";
+  strncpy(reply, replyTxt, sizeOfReply);
+  reply[sizeOfReply - 1] = '\0';
   // buf takes ownership of msg
-  XrdOucBuffer *buf = new XrdOucBuffer(msg, sizeOfMsg);
+  XrdOucBuffer *buf = new XrdOucBuffer(reply, sizeOfReply);
   if(nullptr == buf) {
     (*m_log)(log::ERR, "FSctl failed to allocate reply buffer");
   }

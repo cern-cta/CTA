@@ -97,6 +97,27 @@ protected:
    * The logger.
    */
   std::unique_ptr<log::Logger> m_log;
+
+  /**
+   * Processes the specified wrapper message.
+   *
+   * @param msg The message.
+   * @param eInfo Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return Same semantic as the XrdCtaFilesystem::FSctl() method.
+   */
+  int processWrapperMsg(const eos::wfe::Wrapper &msg, XrdOucErrInfo &eInfo, const XrdSecEntity *client);
+
+  /**
+   * Processes the specified notification message.
+   *
+   * @param msg The message.
+   * @param eInfo Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return Same semantic as the XrdCtaFilesystem::FSctl() method.
+   */
+  int processNotificationMsg(const eos::wfe::Notification &msg, XrdOucErrInfo &eInfo, const XrdSecEntity *client);
+
 }; // XrdCtaFilesystem
 
 }}
