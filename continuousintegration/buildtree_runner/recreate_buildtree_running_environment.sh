@@ -20,7 +20,7 @@ yum-config-manager --add-repo=./castor.repo
 ################################################################################
 ### Make sure necessary packages are installed.
 echo Installing mhvtl and tape utils...
-yum install -y kmod-mhvtl mhvtl-utils lsscsi mt-st mtx sg3_utils
+yum install -y kmod-mhvtl mhvtl-utils lsscsi mt-st mtx sg3_utils jq
 
 ################################################################################
 ### puppet:///modules/hg_cta/00-cta-tape.rules
@@ -67,4 +67,8 @@ sleep 2
 echo Generating kubernetes persistent volumes
 bash -x ./generate_librarydevice_PV.sh
 
-
+################################################################################
+### puppet:///modules/hg_cta/generate_PV.sh
+echo Generating the log persistent volume
+sudo kubectl create -f ./log_PV.yaml
+sudo kubectl get persistentvolumes -l type=logs

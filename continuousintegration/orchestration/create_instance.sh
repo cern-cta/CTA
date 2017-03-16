@@ -70,7 +70,7 @@ if [ ! -z "${buildtree}" ]; then
     # Create temporary directory for modified pod files
     poddir=$(mktemp -d)
     cp pod-* ${poddir}
-    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:\).*/\1 buildtree-runner/"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner\n\1PullPolicy: Never/"
 
     if [ ! -z "${error}" ]; then
         echo -e "ERROR:\n${error}"
