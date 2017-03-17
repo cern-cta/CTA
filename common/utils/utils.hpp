@@ -132,8 +132,18 @@ namespace utils {
    * @param beginingSize
    * @return the ellipsed string
    */
-  
   std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSize = 0);
+  
+  /**
+   * Returns a string with an ellipsis in the beginning if necessary so that the 
+   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * identical to s if it fits the maximum size.
+   * @param s the string
+   * @param maxSize
+   * @return the ellipsed string
+   */
+  std::string preEllipsis(const std::string &s, size_t maxSize);
+  
   /**
    * Returns uuid in the form of a string.
    *

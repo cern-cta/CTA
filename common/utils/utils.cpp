@@ -286,6 +286,18 @@ std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSiz
 }
 
 //------------------------------------------------------------------------------
+// preEllipsis
+//------------------------------------------------------------------------------
+std::string preEllipsis(const std::string &s, size_t maxSize) {
+  std::string ellipsis = "[...]";
+  if (maxSize < ellipsis.size())
+    throw cta::exception::Exception("In cta::utils::postEllipsis(): maxSize cannot be smaller than ellipsis size");
+  if (s.size() <= maxSize)
+    return s;
+  return ellipsis + s.substr(s.size() - maxSize + ellipsis.size());
+}
+
+//------------------------------------------------------------------------------
 // singleSpaceString
 //------------------------------------------------------------------------------
 std::string singleSpaceString(const std::string &str) throw() {

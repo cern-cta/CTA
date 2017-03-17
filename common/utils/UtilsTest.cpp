@@ -656,6 +656,7 @@ TEST_F(cta_UtilsTest, ellipses) {
   ASSERT_EQ("1234567890", midEllipsis("1234567890", 12));
   ASSERT_EQ("123[...]CDEF", midEllipsis("1234567890ABCDEF", 12));
   ASSERT_EQ("1[...]ABCDEF", midEllipsis("1234567890ABCDEF", 12, 1));
+  ASSERT_EQ("[...]0ABCDEF", preEllipsis("1234567890ABCDEF", 12));
 }
 
 } // namespace unitTests
