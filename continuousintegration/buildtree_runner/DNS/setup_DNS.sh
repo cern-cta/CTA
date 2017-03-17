@@ -17,7 +17,7 @@ perl -p -i -e 's/<%= \@my_ipaddress -%>/'"${my_ipaddress}"'/' ${dnspoddir}/pod-d
 perl -p -i -e 's/<%= \@upper_level_dns -%>/'"${upper_level_dns}"'/' ${dnspoddir}/pod-dns.yaml
 
 
-kubectl create -f ${dnspoddir}/kube-system_ns.yaml
+kubectl create -f ./kube-system_ns.yaml
 
 kubectl create -f ${dnspoddir}/dns-svc.yaml
 
