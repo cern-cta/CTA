@@ -4009,7 +4009,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     }
 
     // Now that we have both the archive routes and the mount policy it's safe to
-    // consume an archive file identifier
+    // consume an archive file identifierarchiveFileId
     const uint64_t archiveFileId = getNextArchiveFileId(conn);
 
     return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId, copyToPoolMap, mountPolicy);

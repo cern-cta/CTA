@@ -52,9 +52,17 @@ message Service {
 }
 
 message Workflow {
-  string event = 1;      //< event
+  enum EventType {
+    NONE = 0;
+    OPENR = 1;
+    OPENW = 2;
+    CLOSER = 3;
+    CLOSEW = 4;
+    DELETE = 5;
+    PREPARE = 6;}
+  EventType event = 1;   //< event, default value is NONE
   string queue = 2;      //< queue
-  string wfname = 3;   //< workflow
+  string wfname = 3;     //< workflow
   string vpath = 4;      //< vpath
   Service instance = 5;  //< instance information
   fixed64 timestamp = 6; //< event timestamp

@@ -21,13 +21,14 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/Configuration.hpp"
 #include "common/log/Logger.hpp"
+#include "common/make_unique.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
-
 #include "XrdSfs/XrdSfsInterface.hh"
 
+#include <google/protobuf/util/json_util.h>
 #include <memory>
 
 
@@ -99,24 +100,112 @@ protected:
   std::unique_ptr<log::Logger> m_log;
 
   /**
+   * A deleter for instances of the XrdOucBuffer class.
+   *
+   * The destructor of the XrdOucBuffer class is private.  The Recycle()
+   * method can be called on an instance of the XrdOucBuffer class in order to
+   * effective delete that instance.
+   */
+  struct XrdOucBufferDeleter {
+    void operator()(XrdOucBuffer* buf) {
+      buf->Recycle();
+    }
+  };
+
+  /**
+   * Convenience typedef for an std::unique_ptr type that can delete instances
+   * of the XrdOucBuffer class.
+   */
+  typedef std::unique_ptr<XrdOucBuffer, XrdOucBufferDeleter> UniqueXrdOucBuffer;
+
+  /**
+   * Convenience method to create a UniqueXrdOucBuffer.
+   */
+  static UniqueXrdOucBuffer make_UniqueXrdOucBuffer(const size_t bufSize) {
+    char *const cbuf = static_cast<char *>(malloc(bufSize));
+    if(nullptr == cbuf) {
+      cta::exception::Exception ex;
+      ex.getMessage() << __FUNCTION__ << " failed: Failed to malloc " << bufSize << " bytes";
+      throw ex;
+    }
+    XrdOucBuffer *xbuf = new XrdOucBuffer(cbuf, bufSize);
+    if(nullptr == xbuf) {
+      cta::exception::Exception ex;
+      ex.getMessage() << __FUNCTION__ << " failed: Failed to allocate an XrdOucBuffer";
+      throw ex;
+    }
+    return UniqueXrdOucBuffer(xbuf);
+  }
+
+  /**
    * Processes the specified wrapper message.
    *
    * @param msg The message.
-   * @param eInfo Same semantic as the XrdCtaFilesystem::FSctl() method.
    * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
    */
-  int processWrapperMsg(const eos::wfe::Wrapper &msg, XrdOucErrInfo &eInfo, const XrdSecEntity *client);
+  UniqueXrdOucBuffer processWrapperMsg(const eos::wfe::Wrapper &msg, const XrdSecEntity *const client);
 
   /**
    * Processes the specified notification message.
    *
    * @param msg The message.
-   * @param eInfo Same semantic as the XrdCtaFilesystem::FSctl() method.
    * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
    */
-  int processNotificationMsg(const eos::wfe::Notification &msg, XrdOucErrInfo &eInfo, const XrdSecEntity *client);
+  UniqueXrdOucBuffer processNotificationMsg(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+
+  /**
+   * Processes the specified CLOSEW event.
+   *
+   * @param msg The notification message.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
+   */
+  UniqueXrdOucBuffer processCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+
+  /**
+   * Processes the specified CLOSEW event triggered by an EOS user writing a
+   * file to disk, as opposed to a tape server.
+   *
+   * A user uses the "default" workflow when they write a file to disk.  A tape
+   * server uses the "cta" workflow when it writes a file to disk.
+   *
+   * @param msg The message.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
+   */
+  UniqueXrdOucBuffer processDefaultCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+
+  /**
+   * Return the JSON representation of teh specified Google protocol buffer
+   * message.
+   * @param protobufMsg The Google protocol buffer message.
+   * @return The JSON string.
+   */
+  template <typename T> static std::string toJson(T protobufMsg) {
+    google::protobuf::util::JsonPrintOptions jsonPrintOptions;
+    jsonPrintOptions.add_whitespace = false;
+    jsonPrintOptions.always_print_primitive_fields = false;
+    std::string json;
+    google::protobuf::util::MessageToJsonString(protobufMsg, &json, jsonPrintOptions);
+    return json;
+  }
+
+  /**
+   * Returns the CTA_StorageClass of the specified directory.
+   *
+   * This method throws an exception if the specified directory does not have a
+   * CTA_StorageClass.
+   *
+   * @param dir The directory.
+   * @return The storage class.
+   */
+  std::string getDirStorageClass(const eos::wfe::Md &dir) const;
 
 }; // XrdCtaFilesystem
 

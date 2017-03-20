@@ -57,9 +57,9 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
 
   eos::wfe::Wrapper wrapper;
   wrapper.set_type(eos::wfe::Wrapper::NOTIFICATION);
-  wrapper.mutable_notification()->mutable_wf()->set_event("notification_workflow_event");
+  wrapper.mutable_notification()->mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
   wrapper.mutable_notification()->mutable_wf()->set_queue("notification_workflow_queue");
-  wrapper.mutable_notification()->mutable_wf()->set_wfname("notification_workflow_wfname");
+  wrapper.mutable_notification()->mutable_wf()->set_wfname("default");
   wrapper.mutable_notification()->mutable_wf()->set_vpath("notification_workflow_vpath");
   wrapper.mutable_notification()->mutable_wf()->mutable_instance()->set_name("notification_instance_name");
   wrapper.mutable_notification()->mutable_wf()->mutable_instance()->set_url("notification_instance_url");
@@ -116,6 +116,7 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
   wrapper.mutable_notification()->mutable_directory()->set_lpath("notification_directory_lpath");
   (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["notification_directory_attr1"] = "directory_xattr1_value";
   (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["notification_directory_attr2"] = "directory_xattr2_value";
+  (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["CTA_StorageClass"] = "CTA_StorageClass";
 
   if(cmdLineArgs.writeJsonToStdOut) {
     google::protobuf::util::JsonPrintOptions options;

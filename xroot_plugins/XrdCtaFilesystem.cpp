@@ -26,7 +26,6 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "common/TapePool.hpp"
 #include "eos/messages/eos_messages.pb.h"
 #include "objectstore/RootEntry.hpp"
@@ -77,91 +76,185 @@ namespace cta { namespace xrootPlugins {
 //------------------------------------------------------------------------------
 // FSctl
 //------------------------------------------------------------------------------
-int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)
-{
-  if(SFS_FSCTL_PLUGIO != cmd) {
-    eInfo.setErrInfo(ENOTSUP, "Not supported: cmd != SFS_FSCTL_PLUGIO");
+int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client) {
+  std::ostringstream errMsg;
+
+  try {
+    if (SFS_FSCTL_PLUGIO != cmd) {
+      eInfo.setErrInfo(ENOTSUP, "Not supported: cmd != SFS_FSCTL_PLUGIO");
+      return SFS_ERROR;
+    }
+
+    {
+      std::list<cta::log::Param> params;
+      params.push_back({"args.Arg1Len", args.Arg1Len});
+      params.push_back({"args.Arg2Len", args.Arg2Len});
+      params.push_back({"client->host", client->host});
+      params.push_back({"client->name", client->name});
+      (*m_log)(log::INFO, "FSctl called", params);
+    }
+
+    if (args.Arg1 == nullptr || args.Arg1Len == 0) {
+      throw cta::exception::Exception("Did not receive a query argument");
+    }
+
+    const std::string msgBuffer(args.Arg1, args.Arg1Len);
+    eos::wfe::Wrapper msg;
+    if (!msg.ParseFromString(msgBuffer)) {
+      throw cta::exception::Exception("Failed to parse incoming wrapper message");
+    }
+
+    auto reply = processWrapperMsg(msg, client);
+    eInfo.setErrInfo(reply->BuffSize(), reply.release());
+  } catch(cta::exception::Exception &ex) {
+    errMsg << __FUNCTION__ << " failed: " << ex.getMessage().str();
+  } catch(std::exception &se) {
+    errMsg << __FUNCTION__ << " failed: " << se.what();
+  } catch(...) {
+    errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
+  }
+
+  try {
+    eos::wfe::Wrapper wrapper;
+    wrapper.set_type(eos::wfe::Wrapper::ERROR);
+    eos::wfe::Error *const error = wrapper.mutable_error();
+    error->set_audience(eos::wfe::Error::EOSLOG);
+    error->set_code(ECANCELED);
+    error->set_message(errMsg.str());
+
+    std::string replyString = wrapper.SerializeAsString();
+    auto reply = make_UniqueXrdOucBuffer(replyString.size());
+    memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
+
+    eInfo.setErrInfo(replyString.size(), reply.release());
+    return SFS_DATA;
+  } catch(...) {
+    eInfo.setErrInfo(ECANCELED, "Failed to create reply eos::wfe::Error message");
     return SFS_ERROR;
   }
-
-  {
-    std::list<cta::log::Param> params;
-    params.push_back({"args.Arg1Len", args.Arg1Len});
-    params.push_back({"args.Arg2Len", args.Arg2Len});
-    params.push_back({"client->host", client->host});
-    params.push_back({"client->name", client->name});
-    (*m_log)(log::INFO, "FSctl called", params);
-  }
-
-  if(args.Arg1 == nullptr || args.Arg1Len == 0) {
-    eInfo.setErrInfo(EINVAL, "Did not receive a query argument");
-    return SFS_ERROR;
-  }
-
-  const std::string msgBuffer(args.Arg1, args.Arg1Len);
-  eos::wfe::Wrapper msg;
-  if(!msg.ParseFromString(msgBuffer)) {
-    eInfo.setErrInfo(EINVAL, "Failed to parse incoming wrapper message");
-    return SFS_ERROR;
-  }
-
-  return processWrapperMsg(msg, eInfo, client);
 }
 
 //------------------------------------------------------------------------------
 // processWrapperMsg
 //------------------------------------------------------------------------------
-int XrdCtaFilesystem::processWrapperMsg(const eos::wfe::Wrapper &msg, XrdOucErrInfo &eInfo,
-  const XrdSecEntity *client) {
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processWrapperMsg(const eos::wfe::Wrapper &msg,
+  const XrdSecEntity *const client) {
   switch(msg.type()) {
   case eos::wfe::Wrapper::NONE:
-    eInfo.setErrInfo(EINVAL, "Cannot process a wrapped message of type NONE");
+    throw cta::exception::Exception("Cannot process a wrapped message of type NONE");
   case eos::wfe::Wrapper::NOTIFICATION:
-    return processNotificationMsg(msg.notification(), eInfo, client);
+    return processNotificationMsg(msg.notification(), client);
   default:
     {
-      std::ostringstream errMsg;
-      errMsg << "Cannot process a wrapped message with a numeric type value of " << msg.type();
-      eInfo.setErrInfo(EINVAL, errMsg.str().c_str());
+      cta::exception::Exception ex;
+      ex.getMessage() << "Cannot process a wrapped message with a numeric type value of " << msg.type();
+      throw ex;
     }
-    return SFS_ERROR;
   }
 }
 
 //------------------------------------------------------------------------------
 // processNotificationMsg
 //------------------------------------------------------------------------------
-int XrdCtaFilesystem::processNotificationMsg(const eos::wfe::Notification &msg, XrdOucErrInfo &eInfo,
-  const XrdSecEntity *client) {
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processNotificationMsg(const eos::wfe::Notification &msg,
+  const XrdSecEntity *const client) {
   {
     std::list<cta::log::Param> params;
     params.push_back({"wf.event", msg.wf().event()});
     params.push_back({"wf.queue",  msg.wf().queue()});
     params.push_back({"wf.wfname", msg.wf().wfname()});
-    params.push_back({"eosfid", msg.file().fid()});
-    params.push_back({"eoslpath", msg.file().lpath()});
+    params.push_back({"fid", msg.file().fid()});
+    params.push_back({"path", msg.file().lpath()});
     (*m_log)(log::INFO, "Processing notification message", params);
   }
 
-  const size_t sizeOfReply = 10*1024*1024;
-  char *const reply = static_cast<char *>(malloc(sizeOfReply));
-  if(nullptr == reply) {
-    (*m_log)(log::ERR, "FSctl failed to allocate reply message");
+  switch(msg.wf().event()) {
+  case eos::wfe::Workflow::NONE:
+    throw cta::exception::Exception("Cannot process a NONE workflow event");
+  case eos::wfe::Workflow::CLOSEW:
+    return processCLOSEW(msg, client);
+  default:
+    {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Workflow events with numeric value " << msg.wf().event() << " are not supported";
+      throw ex;
+    }
   }
-  memset(reply, '\0', sizeOfReply);
-  char replyTxt[] = "Reply from CTA";
-  strncpy(reply, replyTxt, sizeOfReply);
-  reply[sizeOfReply - 1] = '\0';
-  // buf takes ownership of msg
-  XrdOucBuffer *buf = new XrdOucBuffer(reply, sizeOfReply);
-  if(nullptr == buf) {
-    (*m_log)(log::ERR, "FSctl failed to allocate reply buffer");
+}
+
+//------------------------------------------------------------------------------
+// processCLOSEW
+//------------------------------------------------------------------------------
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processCLOSEW(const eos::wfe::Notification &msg,
+  const XrdSecEntity *const client) {
+  if(msg.wf().wfname() == "default") {
+    return processDefaultCLOSEW(msg, client);
+  } else {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Cannot process a CLOSEW event for a " << msg.wf().wfname() << " workflow";
+    throw ex;
   }
+}
 
-  // eInfo takes ownership of buf
-  eInfo.setErrInfo(buf->BuffSize(), buf);
+//------------------------------------------------------------------------------
+// processDefaultCLOSEW
+//------------------------------------------------------------------------------
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processDefaultCLOSEW(const eos::wfe::Notification &msg,
+const XrdSecEntity *const client) {
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.recoveryBlob = toJson(msg);
+  diskFileInfo.group = msg.file().owner().groupname();
+  diskFileInfo.owner = msg.file().owner().username();
+  diskFileInfo.path = msg.file().lpath();
 
-  return SFS_DATA;
+  cta::common::dataStructures::UserIdentity requester;
+  requester.name = msg.cli().user().username();
+  requester.group = msg.cli().user().groupname();
+
+  std::ostringstream archiveReportURL;
+  archiveReportURL << "eosQuery://" << msg.wf().instance().name() << "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" <<
+  std::hex << msg.file().fid() <<
+    "&mgm.logid=cta&mgm.event=archived&mgm.workflow=default&mgm.path=/eos/wfe/passwd&mgm.ruid=0&mgm.rgid=0";
+
+  cta::common::dataStructures::ArchiveRequest request;
+  request.checksumType = msg.file().cks().name();
+  request.checksumValue = msg.file().cks().value();
+  request.diskFileInfo = diskFileInfo;
+  request.diskFileID = msg.file().fid();
+  request.fileSize = msg.file().size();
+  request.requester = requester;
+  request.srcURL = msg.turl();
+  request.storageClass = getDirStorageClass(msg.directory());
+  request.archiveReportURL = archiveReportURL.str();
+
+  log::LogContext lc(*m_log);
+  const uint64_t archiveFileId = m_scheduler->queueArchive(msg.cli().user().username(), request, lc);
+
+  eos::wfe::Wrapper wrapper;
+  wrapper.set_type(eos::wfe::Wrapper::XATTR);
+  eos::wfe::Xattr *const xattr = wrapper.mutable_xattr();
+  xattr->set_fid(msg.file().fid());
+  xattr->set_op(eos::wfe::Xattr::ADD);
+  (*xattr->mutable_xattrs())["sys.archiveFileId"] = std::to_string(archiveFileId);
+
+  std::string replyString = wrapper.SerializeAsString();
+  auto reply = make_UniqueXrdOucBuffer(replyString.size());
+  memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
+
+  return reply;
+}
+
+//------------------------------------------------------------------------------
+// getDirStorageClass
+//------------------------------------------------------------------------------
+std::string XrdCtaFilesystem::getDirStorageClass(const eos::wfe::Md &dir) const {
+  const auto itor = dir.xattr().find("CTA_StorageClass");
+  if(itor == dir.xattr().end()) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Directory " << dir.lpath() << " has no CTA_StorageClass";
+    throw ex;
+  }
+  return itor->second;
 }
 
 //------------------------------------------------------------------------------
