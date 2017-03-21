@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "eos/messages/eos_messages.pb.h"
 #include "xroot_plugins/WriteNotificationMsgCmd.hpp"
@@ -25,6 +26,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <string>
+#include <unistd.h>
 
 #include <google/protobuf/util/json_util.h>
 
@@ -61,12 +63,12 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
   wrapper.mutable_notification()->mutable_wf()->set_queue("notification_workflow_queue");
   wrapper.mutable_notification()->mutable_wf()->set_wfname("default");
   wrapper.mutable_notification()->mutable_wf()->set_vpath("notification_workflow_vpath");
-  wrapper.mutable_notification()->mutable_wf()->mutable_instance()->set_name("notification_instance_name");
+  wrapper.mutable_notification()->mutable_wf()->mutable_instance()->set_name("eosdev");
   wrapper.mutable_notification()->mutable_wf()->mutable_instance()->set_url("notification_instance_url");
   wrapper.mutable_notification()->mutable_wf()->set_timestamp(1100);
   wrapper.mutable_notification()->set_turl("notification_turl");
   wrapper.mutable_notification()->mutable_cli()->mutable_user()->set_uid(1111);
-  wrapper.mutable_notification()->mutable_cli()->mutable_user()->set_username("notification_cli_user_username");
+  wrapper.mutable_notification()->mutable_cli()->mutable_user()->set_username(getUsername());
   wrapper.mutable_notification()->mutable_cli()->mutable_user()->set_gid(1122);
   wrapper.mutable_notification()->mutable_cli()->mutable_user()->set_groupname("notification_cli_user_groupname");
   wrapper.mutable_notification()->mutable_cli()->mutable_sec()->set_host("notification_cli_sec_host");
@@ -116,7 +118,7 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
   wrapper.mutable_notification()->mutable_directory()->set_lpath("notification_directory_lpath");
   (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["notification_directory_attr1"] = "directory_xattr1_value";
   (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["notification_directory_attr2"] = "directory_xattr2_value";
-  (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["CTA_StorageClass"] = "CTA_StorageClass";
+  (*wrapper.mutable_notification()->mutable_directory()->mutable_xattr())["CTA_StorageClass"] = "single";
 
   if(cmdLineArgs.writeJsonToStdOut) {
     google::protobuf::util::JsonPrintOptions options;
@@ -137,6 +139,21 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
   wrapper.SerializeToOstream(&messageFileStream);
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// getUsername
+//------------------------------------------------------------------------------
+std::string WriteNotificationMsgCmd::getUsername() {
+  char buf[128];
+
+  if(0 != getlogin_r(buf, sizeof(buf))) {
+    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: getlogin_r() failed");
+  }
+
+  buf[sizeof(buf) - 1] = '\0';
+
+  return buf;
 }
 
 //------------------------------------------------------------------------------

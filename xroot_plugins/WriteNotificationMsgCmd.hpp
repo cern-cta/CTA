@@ -56,6 +56,11 @@ private:
   int exceptionThrowingMain(const int argc, char *const *const argv) override;
 
   /**
+   * Returns the  name of the current UNIX user.
+   */
+  static std::string getUsername();
+
+  /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
