@@ -105,7 +105,8 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     }
 
     auto reply = processWrapperMsg(msg, client);
-    eInfo.setErrInfo(reply->BuffSize(), reply.release());
+    const int replySize = reply->BuffSize();
+    eInfo.setErrInfo(replySize, reply.release());
   } catch(cta::exception::Exception &ex) {
     errMsg << __FUNCTION__ << " failed: " << ex.getMessage().str();
   } catch(std::exception &se) {
@@ -126,7 +127,8 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     auto reply = make_UniqueXrdOucBuffer(replyString.size());
     memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
 
-    eInfo.setErrInfo(replyString.size(), reply.release());
+    const int replySize = reply->BuffSize();
+    eInfo.setErrInfo(replySize, reply.release());
     return SFS_DATA;
   } catch(...) {
     eInfo.setErrInfo(ECANCELED, "Failed to create reply eos::wfe::Error message");
@@ -228,7 +230,7 @@ const XrdSecEntity *const client) {
   request.archiveReportURL = archiveReportURL.str();
 
   log::LogContext lc(*m_log);
-  const uint64_t archiveFileId = m_scheduler->queueArchive(msg.cli().user().username(), request, lc);
+  const uint64_t archiveFileId = m_scheduler->queueArchive(msg.wf().instance().name(), request, lc);
 
   eos::wfe::Wrapper wrapper;
   wrapper.set_type(eos::wfe::Wrapper::XATTR);
