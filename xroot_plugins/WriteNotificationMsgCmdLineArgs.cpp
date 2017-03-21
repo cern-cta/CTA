@@ -20,6 +20,7 @@
 #include "common/utils/utils.hpp"
 #include "xroot_plugins/WriteNotificationMsgCmdLineArgs.hpp"
 
+#include <algorithm>
 #include <getopt.h>
 #include <ostream>
 
@@ -30,6 +31,7 @@ namespace xroot_plugins {
 // constructor
 //------------------------------------------------------------------------------
 WriteNotificationMsgCmdLineArgs::WriteNotificationMsgCmdLineArgs(const int argc, char *const *const argv):
+  wfEvent(eos::wfe::Workflow::NONE),
   writeJsonToStdOut(false),
   help(false) {
 
@@ -100,22 +102,50 @@ WriteNotificationMsgCmdLineArgs::WriteNotificationMsgCmdLineArgs(const int argc,
     throw ex;
   }
 
-  // There is no need to continue parsing if either the help or json option is
-  // set
-  if(help || writeJsonToStdOut) {
+  // There is no need to continue parsing if the help option is set
+  if(help) {
     return;
   }
 
-  // Check the number of arguments
-  const int expectedNbArgs = 1;
-  if(actualNbArgs != expectedNbArgs) {
-    exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=" << expectedNbArgs << " actual=" <<
-      actualNbArgs;
-    throw ex;
-  }
+  if(writeJsonToStdOut) {
+    // Check the number of arguments
+    const int expectedNbArgs = 1;
+    if(actualNbArgs != expectedNbArgs) {
+      exception::CommandLineNotParsed ex;
+      ex.getMessage() << "Wrong number of command-line arguments with the -j|--json argument: excepted=" <<
+        expectedNbArgs << " actual=" << actualNbArgs;
+      throw ex;
+    }
 
-  filename = argv[optind];
+    wfEvent = parseWfEvent(argv[optind]);
+  } else {
+    // Check the number of arguments
+    const int expectedNbArgs = 2;
+    if (actualNbArgs != expectedNbArgs) {
+      exception::CommandLineNotParsed ex;
+      ex.getMessage() << "Wrong number of command-line arguments: excepted=" << expectedNbArgs << " actual=" <<
+      actualNbArgs;
+      throw ex;
+    }
+
+    wfEvent = parseWfEvent(argv[optind]);
+    filename = argv[optind + 1];
+  }
+}
+
+//------------------------------------------------------------------------------
+// parseWfEvent
+//------------------------------------------------------------------------------
+eos::wfe::Workflow::EventType WriteNotificationMsgCmdLineArgs::parseWfEvent(std::string str) {
+  std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+
+  if(str == "CLOSEW") {
+    return eos::wfe::Workflow::CLOSEW;
+  } else if(str == "PREPARE") {
+    return eos::wfe::Workflow::PREPARE;
+  } else {
+    throw cta::exception::Exception(std::string("Unknown workflow event: event=") + str);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -126,10 +156,13 @@ void WriteNotificationMsgCmdLineArgs::printUsage(std::ostream &os) {
     "Description:" << std::endl <<
     "    Writes a \"notification\" message to the specified file" << std::endl <<
     "Usage:" << std::endl <<
-    "    cta-xroot_plugins-write-notification-msg filename" << std::endl <<
+    "    cta-xroot_plugins-write-notification-msg event filename" << std::endl <<
+    "    cta-xroot_plugins-write-notification-msg event -j|--json" << std::endl <<
     "    cta-xroot_plugins-write-notification-msg -h|--help" << std::endl <<
-    "    cta-xroot_plugins-write-notification-msg -j|--json" << std::endl <<
     "Where:" << std::endl <<
+    "    event" << std::endl <<
+    "        The type of the workflow event which is case insensitive and can" << std::endl <<
+    "        either be CLOSEW or PREPARE" << std::endl <<
     "    filename"  << std::endl <<
     "        The name of file to which the notification message will be written."  << std::endl <<
     "        Please note that this file will be overwritten if it already exists." << std::endl <<
@@ -139,7 +172,7 @@ void WriteNotificationMsgCmdLineArgs::printUsage(std::ostream &os) {
     "    -j, --json" << std::endl <<
     "        Prints the JSON representation of the notification message to standard out" << std::endl <<
     "Example:" << std::endl <<
-    "    cta-xrootd_plugins-write-notification-msg notification.msg" << std::endl <<
+    "    cta-xrootd_plugins-write-notification-msg CLOSEW notification.msg" << std::endl <<
     "    cat notification.msg | protoc --decode_raw" << std::endl;
 }
 

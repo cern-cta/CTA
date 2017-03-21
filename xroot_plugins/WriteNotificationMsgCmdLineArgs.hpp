@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "eos/messages/eos_messages.pb.h"
+
 #include <ostream>
 #include <stdint.h>
 #include <string>
@@ -30,6 +32,11 @@ namespace xroot_plugins {
  * named cta-write-notification-msg.
  */
 struct WriteNotificationMsgCmdLineArgs {
+  /**
+   * The workflow event type of the notification message.
+   */
+  eos::wfe::Workflow::EventType wfEvent;
+
   /**
    * The name of the file to which the notification message should be written.
    */
@@ -54,6 +61,16 @@ struct WriteNotificationMsgCmdLineArgs {
    * @param argv The vector of command-line arguments.
    */
   WriteNotificationMsgCmdLineArgs(const int argc, char *const *const argv);
+
+  /**
+   * Parses the specified event string.
+   *
+   * Parsing is case insensitive.
+   *
+   * @param str The string to be parsed.
+   * @return The numeric equivalent of the string.
+   */
+  static eos::wfe::Workflow::EventType parseWfEvent(std::string str);
 
   /**
    * Prints the usage message of the command-line tool.

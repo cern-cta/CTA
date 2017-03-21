@@ -18,7 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
-#include "eos/messages/eos_messages.pb.h"
+
 #include "xroot_plugins/WriteNotificationMsgCmd.hpp"
 #include "xroot_plugins/WriteNotificationMsgCmdLineArgs.hpp"
 
@@ -59,7 +59,7 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
 
   eos::wfe::Wrapper wrapper;
   wrapper.set_type(eos::wfe::Wrapper::NOTIFICATION);
-  wrapper.mutable_notification()->mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
+  wrapper.mutable_notification()->mutable_wf()->set_event(cmdLineArgs.wfEvent);
   wrapper.mutable_notification()->mutable_wf()->set_queue("notification_workflow_queue");
   wrapper.mutable_notification()->mutable_wf()->set_wfname("default");
   wrapper.mutable_notification()->mutable_wf()->set_vpath("notification_workflow_vpath");
