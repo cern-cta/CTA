@@ -107,6 +107,7 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     auto reply = processWrapperMsg(msg, client);
     const int replySize = reply->BuffSize();
     eInfo.setErrInfo(replySize, reply.release());
+    return SFS_DATA;
   } catch(cta::exception::Exception &ex) {
     errMsg << __FUNCTION__ << " failed: " << ex.getMessage().str();
   } catch(std::exception &se) {
@@ -115,6 +116,7 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
   }
 
+  // Reaching this point means an exception was thrown and errMsg has been set
   try {
     eos::wfe::Wrapper wrapper;
     wrapper.set_type(eos::wfe::Wrapper::ERROR);
