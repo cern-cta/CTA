@@ -175,8 +175,18 @@ XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processNotificationMsg(co
   switch(msg.wf().event()) {
   case eos::wfe::Workflow::NONE:
     throw cta::exception::Exception("Cannot process a NONE workflow event");
+  case eos::wfe::Workflow::OPENR:
+    throw cta::exception::Exception("Cannot process a OPENR workflow event");
+  case eos::wfe::Workflow::OPENW:
+    throw cta::exception::Exception("Cannot process a OPENW workflow event");
+  case eos::wfe::Workflow::CLOSER:
+    throw cta::exception::Exception("Cannot process a CLOSER workflow event");
   case eos::wfe::Workflow::CLOSEW:
     return processCLOSEW(msg, client);
+  case eos::wfe::Workflow::DELETE:
+    throw cta::exception::Exception("Cannot process a DELETE workflow event");
+  case eos::wfe::Workflow::PREPARE:
+    return processPREPARE(msg, client);
   default:
     {
       cta::exception::Exception ex;
@@ -228,11 +238,12 @@ const XrdSecEntity *const client) {
   request.fileSize = msg.file().size();
   request.requester = requester;
   request.srcURL = msg.turl();
-  request.storageClass = getDirStorageClass(msg.directory());
+  request.storageClass = getDirXattr("CTA_StorageClass", msg.directory());
   request.archiveReportURL = archiveReportURL.str();
 
+  const std::string diskInstance = msg.wf().instance().name();
   log::LogContext lc(*m_log);
-  const uint64_t archiveFileId = m_scheduler->queueArchive(msg.wf().instance().name(), request, lc);
+  const uint64_t archiveFileId = m_scheduler->queueArchive(diskInstance, request, lc);
 
   eos::wfe::Wrapper wrapper;
   wrapper.set_type(eos::wfe::Wrapper::XATTR);
@@ -249,13 +260,81 @@ const XrdSecEntity *const client) {
 }
 
 //------------------------------------------------------------------------------
-// getDirStorageClass
+// getDirXattr
 //------------------------------------------------------------------------------
-std::string XrdCtaFilesystem::getDirStorageClass(const eos::wfe::Md &dir) const {
-  const auto itor = dir.xattr().find("CTA_StorageClass");
+std::string XrdCtaFilesystem::getDirXattr(const std::string &attributeName, const eos::wfe::Md &dir) {
+  const auto itor = dir.xattr().find(attributeName);
   if(itor == dir.xattr().end()) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Directory " << dir.lpath() << " has no CTA_StorageClass";
+    ex.getMessage() << "Directory " << dir.lpath() << " has no attribute named " << attributeName;
+    throw ex;
+  }
+  return itor->second;
+}
+
+//------------------------------------------------------------------------------
+// processPREPARE
+//------------------------------------------------------------------------------
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processPREPARE(const eos::wfe::Notification &msg,
+  const XrdSecEntity *const client) {
+  if(msg.wf().wfname() == "default") {
+    return processDefaultPREPARE(msg, client);
+  } else {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Cannot process a PREPARE event for a " << msg.wf().wfname() << " workflow";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// processDefaultPREPARE
+//------------------------------------------------------------------------------
+XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processDefaultPREPARE(const eos::wfe::Notification &msg,
+  const XrdSecEntity *const client) {
+  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+  diskFileInfo.recoveryBlob = toJson(msg);
+  diskFileInfo.group = msg.file().owner().groupname();
+  diskFileInfo.owner = msg.file().owner().username();
+  diskFileInfo.path = msg.file().lpath();
+
+  cta::common::dataStructures::UserIdentity requester;
+  requester.name = msg.cli().user().username();
+  requester.group = msg.cli().user().groupname();
+
+  const std::string archiveFileIdStr = getFileXattr("sys.archiveFileId", msg.file());
+
+  cta::common::dataStructures::RetrieveRequest request;
+  request.diskFileInfo = diskFileInfo;
+  request.archiveFileID = cta::utils::toUint64(archiveFileIdStr);
+  request.requester = requester;
+  request.dstURL = msg.turl();
+
+  const std::string diskInstance = msg.wf().instance().name();
+  log::LogContext lc(*m_log);
+  m_scheduler->queueRetrieve(diskInstance, request, lc);
+
+  eos::wfe::Wrapper wrapper;
+  wrapper.set_type(eos::wfe::Wrapper::ERROR); // Actually success - error code will be 0
+  eos::wfe::Error *const error = wrapper.mutable_error();
+  error->set_audience(eos::wfe::Error::EOSLOG);
+  error->set_code(0);
+  error->set_message("");
+
+  std::string replyString = wrapper.SerializeAsString();
+  auto reply = make_UniqueXrdOucBuffer(replyString.size());
+  memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
+
+  return reply;
+}
+
+//------------------------------------------------------------------------------
+// getFileXattr
+//------------------------------------------------------------------------------
+std::string XrdCtaFilesystem::getFileXattr(const std::string &attributeName, const eos::wfe::Md &file) {
+  const auto itor = file.xattr().find(attributeName);
+  if(itor == file.xattr().end()) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "File " << file.lpath() << " has no attribute named " << attributeName;
     throw ex;
   }
   return itor->second;

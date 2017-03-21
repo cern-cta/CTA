@@ -158,7 +158,7 @@ protected:
   UniqueXrdOucBuffer processNotificationMsg(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
 
   /**
-   * Processes the specified CLOSEW event.
+   * Processes the specified CLOSEW workflow event.
    *
    * @param msg The notification message.
    * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
@@ -168,8 +168,8 @@ protected:
   UniqueXrdOucBuffer processCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
 
   /**
-   * Processes the specified CLOSEW event triggered by an EOS user writing a
-   * file to disk, as opposed to a tape server.
+   * Processes the specified CLOSEW workflow event triggered by an EOS user
+   * writing a file to disk, as opposed to a tape server writing a file to disk.
    *
    * A user uses the "default" workflow when they write a file to disk.  A tape
    * server uses the "cta" workflow when it writes a file to disk.
@@ -180,6 +180,26 @@ protected:
    * client.
    */
   UniqueXrdOucBuffer processDefaultCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+
+  /**
+   * Processes the specified PREPARE workflow event.
+   *
+   * @param msg The notification message.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
+   */
+  UniqueXrdOucBuffer processPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+
+  /**
+   * Processes the specified PREPARE workflow event for a default workflow.
+   *
+   * @param msg The notification message.
+   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
+   * @return The result in the form of an XrdOucBuffer to be sent back to the
+   * client.
+   */
+  UniqueXrdOucBuffer processDefaultPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
 
   /**
    * Return the JSON representation of teh specified Google protocol buffer
@@ -197,15 +217,28 @@ protected:
   }
 
   /**
-   * Returns the CTA_StorageClass of the specified directory.
+   * Returns the value of the specified attribute of the specified directory.
    *
-   * This method throws an exception if the specified directory does not have a
-   * CTA_StorageClass.
+   * This method throws an exception if the specified directory does not have
+   * the specified attribute.
    *
+   * @param attributeName The name pf the attribute.
    * @param dir The directory.
    * @return The storage class.
    */
-  std::string getDirStorageClass(const eos::wfe::Md &dir) const;
+  static std::string getDirXattr(const std::string &attributeName, const eos::wfe::Md &dir);
+
+  /**
+   * Returns the value of the specified attribute of the specified file.
+   *
+   * This method throws an exception if the specified file does not have the
+   * specified attribute.
+   *
+   * @param attributeName The name pf the attribute.
+   * @param file The file.
+   * @return The storage class.
+   */
+  static std::string getFileXattr(const std::string &attributeName, const eos::wfe::Md &file);
 
 }; // XrdCtaFilesystem
 

@@ -97,6 +97,9 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
   wrapper.mutable_notification()->mutable_file()->set_lpath("notification_file_lpath");
   (*wrapper.mutable_notification()->mutable_file()->mutable_xattr())["notification_file_xattr1"] = "file_xattr1_value";
   (*wrapper.mutable_notification()->mutable_file()->mutable_xattr())["notification_file_xattr2"] = "file_xattr2_value";
+  if(eos::wfe::Workflow::PREPARE == cmdLineArgs.wfEvent) {
+    (*wrapper.mutable_notification()->mutable_file()->mutable_xattr())["sys.archiveFileId"] = "1";
+  }
   wrapper.mutable_notification()->mutable_directory()->set_fid(2277);
   wrapper.mutable_notification()->mutable_directory()->set_pid(2288);
   wrapper.mutable_notification()->mutable_directory()->mutable_ctime()->set_sec(2299);
