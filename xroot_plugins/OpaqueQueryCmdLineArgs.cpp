@@ -133,7 +133,7 @@ void OpaqueQueryCmdLineArgs::printUsage(std::ostream &os) {
     "    echo -n -e 'Hello\\n\\x00World' > strange.msg" << std::endl <<
     "    cta-xrootd_plugins-opaque-query localhost 10955 strange.msg response.msg" << std::endl <<
     "Example 2:" << std::endl <<
-    "    cta-xrootd_plugins-write-notification-msg notification.msg" << std::endl <<
+    "    cta-xrootd_plugins-write-notification-msg CLOSEW notification.msg" << std::endl <<
     "    cta-xrootd_plugins-opaque-query localhost 10955 notification.msg response.msg" << std::endl;
 }
 
