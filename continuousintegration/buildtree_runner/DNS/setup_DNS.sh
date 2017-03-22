@@ -3,7 +3,8 @@
 echo "Setting up DNS..."
 
 dns_clusterip='10.254.199.254'
-dns_domainname=`hostname -d`
+#dns_domainname=`hostname -d`
+dns_domainname=cluster.local
 my_ipaddress=`ifconfig docker0  | perl -e 'while(<>) { if (/inet\s+(\S+)\s/) { print $1."\n"; } }'`
 sudo systemctl stop firewalld
 sudo systemctl disable firewalld
