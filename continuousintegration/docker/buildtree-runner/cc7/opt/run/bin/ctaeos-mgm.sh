@@ -1,13 +1,5 @@
 #!/bin/sh 
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable eos-citrine-commit
-yum-config-manager --enable eos-citrine-depend
-yum-config-manager --enable eos-citrine
-
-# Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
-
 # fix reverse DNS for EOS
 /opt/run/bin/init_pod.sh
 

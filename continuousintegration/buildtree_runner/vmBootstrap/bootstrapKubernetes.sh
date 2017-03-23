@@ -56,7 +56,5 @@ sudo kubectl create -f ${dnspoddir}/pod-dns.yaml
 
 rm -rf ${dnspoddir}
 
-echo "DONE"
+echo "DONE. A reboot might be necessary to get kubernetes networking to work..."
 
-echo Creating the docker image...
-(cd ~/CTA; sudo docker build . -f continuousintegration/docker/buildtree-runner/cc7/Dockerfile -t buildtree-runner)

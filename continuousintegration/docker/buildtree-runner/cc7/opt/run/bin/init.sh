@@ -1,13 +1,5 @@
 #!/bin/sh 
 
-# enable cta repository from previously built artifacts
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-
-# install needed packages
-yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
-yum clean packages
-
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh

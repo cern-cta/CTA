@@ -1,12 +1,5 @@
 #!/bin/sh 
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-
-# Install missing RPMs
-# cta-catalogueutils is needed to delete the db at the end of instance
-yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
-
 yes | cp -r /opt/ci/ctafrontend/etc / 
 
 /opt/run/bin/init_objectstore.sh

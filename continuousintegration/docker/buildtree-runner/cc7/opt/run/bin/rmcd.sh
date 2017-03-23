@@ -1,12 +1,5 @@
 #!/bin/sh 
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-yum-config-manager --enable castor
-
-# Install missing RPMs
-yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server
-
 /opt/run/bin/init_pod.sh
 
 # source library configuration file

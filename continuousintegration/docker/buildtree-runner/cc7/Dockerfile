@@ -52,7 +52,8 @@ RUN yum install -y \
 # Create local repo for cta artifacts and to cache RPMs locally
 
 
-# Populate local repository and enable it
+# Populate local repository and enable it, then install any rpm that is needed for
+# any container.
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     yum install -y\
@@ -69,6 +70,14 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       lynx \
       strace \
       ltrace \
+      heimdal-server \
+      heimdal-workstation \
+      ceph-common \
+      mt-st \
+      mtx \
+      lsscsi \
+      sg3_utils \
+      castor-rmc-server \
   && \
     yum clean all
 

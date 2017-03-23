@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Install missing RPMs (kdc)
-yum -y install heimdal-server heimdal-workstation
-
 # Init the kdc store
 echo -n "Initing kdc... "
 /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited TEST.CTA || (echo Failed. ; exit 1)
