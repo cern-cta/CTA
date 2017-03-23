@@ -50,9 +50,9 @@ perl -p -i -e 's/<%= \@dns_domainname -%>/'"${dns_domainname}"'/' ${dnspoddir}/p
 perl -p -i -e 's/<%= \@my_ipaddress -%>/'"${docker_ipaddress}"'/' ${dnspoddir}/pod-dns.yaml
 perl -p -i -e 's/<%= \@upper_level_dns -%>/'"${upper_level_dns}"'/' ${dnspoddir}/pod-dns.yaml
 
-kubectl create -f .DNS/kube-system_ns.yaml
-kubectl create -f ${dnspoddir}/dns-svc.yaml
-kubectl create -f ${dnspoddir}/pod-dns.yaml
+sudo kubectl create -f .DNS/kube-system_ns.yaml
+sudo kubectl create -f ${dnspoddir}/dns-svc.yaml
+sudo kubectl create -f ${dnspoddir}/pod-dns.yaml
 
 rm -rf ${dnspoddir}
 
