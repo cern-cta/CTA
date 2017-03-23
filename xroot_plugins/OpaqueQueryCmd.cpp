@@ -73,7 +73,6 @@ int OpaqueQueryCmd::exceptionThrowingMain(const int argc, char *const *const arg
   const XrdCl::XRootDStatus status = fs.Query(XrdCl::QueryCode::Opaque, arg, response);
   std::unique_ptr<XrdCl::Buffer> smartResponse(response);
 
-  std::cout << "status.ToStr()=" << status.ToStr() << std::endl;
   std::cout << "status.IsError()=" << (status.IsError() ? "true" : "false") << std::endl;
   std::cout << "status.IsFatal()=" << (status.IsFatal() ? "true" : "false") << std::endl;
   std::cout << "status.IsOK()=" << (status.IsOK() ? "true" : "false") << std::endl;

@@ -2,8 +2,10 @@ syntax = "proto3";
 package eos.wfe;
 
 message Id {
-  fixed64 n = 1;         // identity number
-  string name = 2;       // identity name 
+  fixed64 uid = 1;      //< user identity number
+  string username = 2;  //< user name 
+  fixed64 gid = 3;      //< group identity number
+  string groupname = 4; //< group name
 }
 
 message Checksum {
@@ -50,9 +52,17 @@ message Service {
 }
 
 message Workflow {
-  string event = 1;      //< event
+  enum EventType {
+    NONE = 0;
+    OPENR = 1;
+    OPENW = 2;
+    CLOSER = 3;
+    CLOSEW = 4;
+    DELETE = 5;
+    PREPARE = 6;}
+  EventType event = 1;   //< event
   string queue = 2;      //< queue
-  string wfname = 3;   //< workflow
+  string wfname = 3;     //< workflow
   string vpath = 4;      //< vpath
   Service instance = 5;  //< instance information
   fixed64 timestamp = 6; //< event timestamp
@@ -67,14 +77,14 @@ message Notification {
 }
 
 message Xattr {
-  enum Operation { GET = 0; ADD = 1; SET = 2; DELETE = 3;}
+  enum Operation { NONE = 0; GET = 1; ADD = 2; SET = 3; DELETE = 4;}
   fixed64 fid = 1;               //< file id
   map<string, string> xattrs = 2; //< xattribute map
   Operation op = 3;              //< operation to execute for this xattr map
 }
 
 message Tapereplica {
-   enum Status { OFFTAPE = 0; ONTAPE = 1; ONTAPESAVE = 2;}
+   enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3;}
    fixed64 fid = 1;   //< file  id
    Status status = 2; //< state state for file ID
    fixed64 size = 3;  //< File size as recorded on tape for cross check
@@ -82,7 +92,7 @@ message Tapereplica {
 }
 
 message Error {
-  enum Audience { EOSLOG = 0; ENDUSER = 1;}
+  enum Audience { NONE = 0; EOSLOG = 1; ENDUSER = 2;}
   Audience audience = 1; //< The intended audience of the error message
   fixed64 code = 2;      //< Zero means success, non-zero means error
   string message = 3;    //< An empty if success, else an error message
@@ -109,7 +119,7 @@ message Error {
 // metadata.
 message Wrapper {
   enum Type {NONE = 0; ERROR = 1; NOTIFICATION = 2; XATTR = 3; TAPEREPLICA = 4;}
-  Type type = 1;                 //< Default value is NONE
+  Type type = 1;
   Error error = 2;
   Notification notification = 3;
   Xattr xattr = 4;

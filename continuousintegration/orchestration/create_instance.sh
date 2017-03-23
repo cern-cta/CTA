@@ -4,6 +4,8 @@
 config_objectstore="./objectstore-file.yaml"
 # defaults DB to sqlite
 config_database="./database-sqlite.yaml"
+# default library model
+model="mhvtl"
 
 # By default keep Database and keep Objectstore
 # default should not make user loose data if he forgot the option
@@ -11,8 +13,12 @@ keepdatabase=1
 keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
+<<<<<<< HEAD
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>]
       [-p <gitlab pipeline ID> | -b <build tree>] [-D] [-O]
+=======
+Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-p <gitlab pipeline ID>] [-D] [-O] [-m [mhvtl|ibm]]
+>>>>>>> origin/master
 
 Options:
   -D	wipe database content during initialization phase (database content is kept by default)
@@ -23,7 +29,11 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
+<<<<<<< HEAD
 while getopts "n:o:d:p:b:DO" o; do
+=======
+while getopts "n:o:d:p:DOm:" o; do
+>>>>>>> origin/master
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -32,6 +42,10 @@ while getopts "n:o:d:p:b:DO" o; do
         d)
             config_database=${OPTARG}
             test -f ${config_database} || error="${error}Database configmap file ${config_database} does not exist\n"
+            ;;
+        m)
+            model=${OPTARG}
+            if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then error="${error}Library model ${model} does not exist\n"; fi 
             ;;
         n)
             instance=${OPTARG}
@@ -130,8 +144,8 @@ kubectl create -f ${config_objectstore} --namespace=${instance}
 kubectl create -f ${config_database} --namespace=${instance}
 
 
-echo -n "Requesting an unused MHVTL library"
-kubectl create -f ./pvc_library_mhvtl.yaml --namespace=${instance}
+echo -n "Requesting an unused ${model} library"
+kubectl create -f ./pvc_library_${model}.yaml --namespace=${instance}
 for ((i=0; i<120; i++)); do
   echo -n "."
   kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound && break
