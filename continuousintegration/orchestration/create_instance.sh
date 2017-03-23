@@ -13,12 +13,8 @@ keepdatabase=1
 keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
-<<<<<<< HEAD
-Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>]
-      [-p <gitlab pipeline ID> | -b <build tree>] [-D] [-O]
-=======
-Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] [-p <gitlab pipeline ID>] [-D] [-O] [-m [mhvtl|ibm]]
->>>>>>> origin/master
+Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
+      [-p <gitlab pipeline ID> | -b <build tree>] [-D] [-O] [-m [mhvtl|ibm]]
 
 Options:
   -D	wipe database content during initialization phase (database content is kept by default)
@@ -29,11 +25,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-<<<<<<< HEAD
-while getopts "n:o:d:p:b:DO" o; do
-=======
-while getopts "n:o:d:p:DOm:" o; do
->>>>>>> origin/master
+while getopts "n:o:d:p:b:DOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
