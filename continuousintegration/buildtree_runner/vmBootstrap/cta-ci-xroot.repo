@@ -1,0 +1,6 @@
+[cta-ci-xroot]
+name=CTA CI repo xroot cache
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/xroot/
+priority=4
+gpgcheck=0
+enabled=1
