@@ -16,7 +16,7 @@ sudo systemctl enable kubelet
 sudo systemctl start kubelet
 sudo perl -p -i -e 's/^(KUBE_ADMISSION_CONTROL)/#$1/' /etc/kubernetes/apiserver
 sudo perl -p -i -e 's/^(KUBE_API_ARGS=).*$/$1"--allow_privileged=true"/' /etc/kubernetes/apiserver
-sudo perl -p -i -e 's/^(KUBE_PROXY_ARGS=).*$/$1"--healthz-port=0 --master=http://127.0.0.1:8080 --oom-score-adj=-999 --proxy-mode=userspace --proxy-port-range=0-0"/' /etc/kubernetes/proxy
+sudo perl -p -i -e 's/^(KUBE_PROXY_ARGS=).*$/$1"--healthz-port=0 --master=http:\/\/127.0.0.1:8080 --oom-score-adj=-999 --proxy-mode=userspace --proxy-port-range=0-0"/' /etc/kubernetes/proxy
 sudo systemctl enable kube-apiserver
 sudo systemctl start kube-apiserver
 sudo systemctl enable kube-proxy
@@ -42,7 +42,7 @@ echo docker_ipaddress=${docker_ipaddress}
 echo upper_level_dns=${upper_level_dns}
 
 dnspoddir=$(mktemp -d)
-cp DNS/dns-svc.yaml DNS/pod-dns.yaml ${dnspoddir}
+cp kubernetes/dns-svc.yaml kubernetes/pod-dns.yaml ${dnspoddir}
 
 perl -p -i -e 's/<%= \@dns_clusterip -%>/'"${dns_clusterip}"'/' ${dnspoddir}/dns-svc.yaml
 
@@ -50,7 +50,7 @@ perl -p -i -e 's/<%= \@dns_domainname -%>/'"${dns_domainname}"'/' ${dnspoddir}/p
 perl -p -i -e 's/<%= \@my_ipaddress -%>/'"${docker_ipaddress}"'/' ${dnspoddir}/pod-dns.yaml
 perl -p -i -e 's/<%= \@upper_level_dns -%>/'"${upper_level_dns}"'/' ${dnspoddir}/pod-dns.yaml
 
-sudo kubectl create -f .DNS/kube-system_ns.yaml
+sudo kubectl create -f kubernetes/kube-system_ns.yaml
 sudo kubectl create -f ${dnspoddir}/dns-svc.yaml
 sudo kubectl create -f ${dnspoddir}/pod-dns.yaml
 
