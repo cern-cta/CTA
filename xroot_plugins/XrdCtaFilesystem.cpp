@@ -57,7 +57,7 @@ extern "C"
   XrdSfsFileSystem *XrdSfsGetFileSystem (XrdSfsFileSystem* native_fs, XrdSysLogger* lp, const char* configfn)
   {
     try {
-      return new cta::xrootPlugins::XrdCtaFilesystem();
+      return new cta::xroot_plugins::XrdCtaFilesystem();
     } catch (cta::exception::Exception &ex) {
       std::cerr << "[ERROR] Could not load the CTA xroot plugin. CTA exception caught: " << ex.getMessageValue() << "\n";
       return nullptr;
@@ -71,7 +71,7 @@ extern "C"
   }
 }
 
-namespace cta { namespace xrootPlugins {
+namespace cta { namespace xroot_plugins {
 
 //------------------------------------------------------------------------------
 // FSctl
@@ -105,7 +105,8 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     }
 
     auto reply = processWrapperMsg(msg, client);
-    const int replySize = reply->BuffSize();
+
+    const int replySize = reply->DataLen();
     eInfo.setErrInfo(replySize, reply.release());
     return SFS_DATA;
   } catch(cta::exception::Exception &ex) {
@@ -118,6 +119,11 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
 
   // Reaching this point means an exception was thrown and errMsg has been set
   try {
+    {
+      std::list<cta::log::Param> params;
+      params.push_back({"errMsg", errMsg.str()});
+      (*m_log)(log::ERR, "FSctl encountered an unexpected exception", params);
+    }
     eos::wfe::Wrapper wrapper;
     wrapper.set_type(eos::wfe::Wrapper::ERROR);
     eos::wfe::Error *const error = wrapper.mutable_error();
@@ -126,10 +132,9 @@ int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eIn
     error->set_message(errMsg.str());
 
     std::string replyString = wrapper.SerializeAsString();
-    auto reply = make_UniqueXrdOucBuffer(replyString.size());
-    memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
+    auto reply = make_UniqueXrdOucBuffer(replyString.size(), replyString.c_str());
 
-    const int replySize = reply->BuffSize();
+    const int replySize = reply->DataLen();
     eInfo.setErrInfo(replySize, reply.release());
     return SFS_DATA;
   } catch(...) {
@@ -253,10 +258,7 @@ const XrdSecEntity *const client) {
   (*xattr->mutable_xattrs())["sys.archiveFileId"] = std::to_string(archiveFileId);
 
   std::string replyString = wrapper.SerializeAsString();
-  auto reply = make_UniqueXrdOucBuffer(replyString.size());
-  memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
-
-  return reply;
+  return make_UniqueXrdOucBuffer(replyString.size(), replyString.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -278,7 +280,8 @@ std::string XrdCtaFilesystem::getDirXattr(const std::string &attributeName, cons
 XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processPREPARE(const eos::wfe::Notification &msg,
   const XrdSecEntity *const client) {
   if(msg.wf().wfname() == "default") {
-    return processDefaultPREPARE(msg, client);
+    auto reply = processDefaultPREPARE(msg, client);
+    return UniqueXrdOucBuffer(reply.release());
   } else {
     cta::exception::Exception ex;
     ex.getMessage() << "Cannot process a PREPARE event for a " << msg.wf().wfname() << " workflow";
@@ -321,10 +324,7 @@ XrdCtaFilesystem::UniqueXrdOucBuffer XrdCtaFilesystem::processDefaultPREPARE(con
   error->set_message("");
 
   std::string replyString = wrapper.SerializeAsString();
-  auto reply = make_UniqueXrdOucBuffer(replyString.size());
-  memcpy(reply->Buffer(), replyString.c_str(), replyString.size());
-
-  return reply;
+  return make_UniqueXrdOucBuffer(replyString.size(), replyString.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -517,6 +517,7 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 // constructor
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
+  m_xrdOucBuffPool(1024, 65536), // XrdOucBuffPool(minsz, maxsz)
   m_ctaConf("/etc/cta/cta-frontend.conf"),
   m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
   m_backendPopulator(*m_backend),

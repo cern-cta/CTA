@@ -26,13 +26,13 @@
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "XrdSfs/XrdSfsInterface.hh"
 
 #include <google/protobuf/util/json_util.h>
 #include <memory>
+#include <XrdSfs/XrdSfsInterface.hh>
 
 
-namespace cta { namespace xrootPlugins { 
+namespace cta { namespace xroot_plugins {
 /**
  * This class is the entry point for the xroot plugin: it is returned by 
  * XrdSfsGetFileSystem when the latter is called by the xroot server to load the
@@ -63,6 +63,17 @@ public:
   ~XrdCtaFilesystem();
   
 protected:
+
+  /**
+   * The XrdCtaFilesystem's own buffer pool that avoids the need to rely on the
+   * implicit buffer pool created by the constructor of XrdOucBuffer.
+   *
+   * The constructor of XrdOucBuffer creates a globally unique buffer pool for
+   * all one-time buffers.  The code used to make the buffer pool globally
+   * unqiue is not guaranteed to be thread-safe.  The XrdCtaFilesystem therefore
+   * creates its own buffer pool in a thread safe manner.
+   */
+  XrdOucBuffPool m_xrdOucBuffPool;
   
   /**
    * The CTA configuration
@@ -119,21 +130,22 @@ protected:
   typedef std::unique_ptr<XrdOucBuffer, XrdOucBufferDeleter> UniqueXrdOucBuffer;
 
   /**
-   * Convenience method to create a UniqueXrdOucBuffer.
+   * Convenience method to allocate an XrdOucBuffer, copy in the specified data
+   * and then wrap the XrdOucBuffer in a UniqueXrdOucBuffer.
+   *
+   * @param dataSize The size of the data to be copied into the XrdOucBuffer.
+   * @param data A pointer to the data to be copied into the XrdOucBuffer.
    */
-  static UniqueXrdOucBuffer make_UniqueXrdOucBuffer(const size_t bufSize) {
-    char *const cbuf = static_cast<char *>(malloc(bufSize));
-    if(nullptr == cbuf) {
-      cta::exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: Failed to malloc " << bufSize << " bytes";
-      throw ex;
-    }
-    XrdOucBuffer *xbuf = new XrdOucBuffer(cbuf, bufSize);
+  UniqueXrdOucBuffer make_UniqueXrdOucBuffer(const size_t dataSize, const char *const data) {
+    XrdOucBuffer *const xbuf = m_xrdOucBuffPool.Alloc(dataSize);
     if(nullptr == xbuf) {
       cta::exception::Exception ex;
       ex.getMessage() << __FUNCTION__ << " failed: Failed to allocate an XrdOucBuffer";
       throw ex;
     }
+
+    memcpy(xbuf->Buffer(), data, dataSize);
+    xbuf->SetLen(dataSize);
     return UniqueXrdOucBuffer(xbuf);
   }
 
@@ -199,7 +211,7 @@ protected:
    * @return The result in the form of an XrdOucBuffer to be sent back to the
    * client.
    */
-  UniqueXrdOucBuffer processDefaultPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
+   UniqueXrdOucBuffer processDefaultPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
 
   /**
    * Return the JSON representation of teh specified Google protocol buffer
