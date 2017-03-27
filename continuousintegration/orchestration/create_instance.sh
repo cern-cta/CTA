@@ -14,9 +14,13 @@ keepobjectstore=1
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
-      [-p <gitlab pipeline ID> | -b <build tree>] [-D] [-O] [-m [mhvtl|ibm]]
+      [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ]  \
+      [-D] [-O] [-m [mhvtl|ibm]]
 
 Options:
+  -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
+        containers.
+  -B    The subdirectory within the -b directory where the build tree is.
   -D	wipe database content during initialization phase (database content is kept by default)
   -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
 EOF
@@ -25,7 +29,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:p:b:DOm:" o; do
+while getopts "n:o:d:p:b:B:DOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -47,6 +51,9 @@ while getopts "n:o:d:p:b:DOm:" o; do
             ;;
         b)
             buildtree=${OPTARG}
+            ;;
+        B)
+            buildtreesubdir=${OPTARG}
             ;;
         O)
             keepobjectstore=0
@@ -70,6 +77,10 @@ if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" ]; then
 fi
 
 if [ ! -z "${buildtree}" ]; then
+    # We need to know the subdir as well
+    if [ -z "${buildtreesubdir}" ]; then
+      usage
+    fi
     # We are going to run with generic images against a build tree.
     echo "Creating instance for build tree in ${buildtree}"
 
@@ -129,6 +140,7 @@ kubectl create namespace ${instance} || die "FAILED"
 
 kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 
+kubectl --namespace ${instance} create configmap buildtree --from-literal=base=${buildtree} --from-literal=subdir=${buildtreesubdir}
 
 echo "creating configmaps in instance"
 

@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -e
 
 # This script recreates an environment similar to the one created by 
 # it-puppet-hostgroup-cta profiles.
@@ -11,16 +11,6 @@ rm -rf /etc/mhvtl
 rm -rf /opt/mhvtl
 rm -rf /opt/kubernetes/CTA/library
 mkdir -p /opt/mhvtl
-
-################################################################################
-### Add castor repo for MHVTL latest
-echo Adding castor repo...
-yum-config-manager --add-repo=./castor.repo
-
-################################################################################
-### Make sure necessary packages are installed.
-echo Installing mhvtl and tape utils...
-yum install -y kmod-mhvtl mhvtl-utils lsscsi mt-st mtx sg3_utils jq
 
 ################################################################################
 ### puppet:///modules/hg_cta/00-cta-tape.rules
@@ -45,7 +35,7 @@ echo mhvtl config pre-run
 ls -lR /opt/mhvtl
 
 echo Running mhvtl config generator...
-bash -x ./generate_mhvtl_config.sh
+./generate_mhvtl_config.sh
 
 echo mhvtl config post run
 ls -lR /opt/mhvtl
@@ -65,7 +55,7 @@ sleep 2
 ################################################################################
 ### puppet:///modules/hg_cta/generate_librarydevice_PV.sh
 echo Generating kubernetes persistent volumes
-bash -x ./generate_librarydevice_PV.sh
+./generate_librarydevice_PV.sh
 
 ################################################################################
 ### puppet:///modules/hg_cta/generate_PV.sh

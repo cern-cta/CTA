@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 LIBRARY_DIR=/opt/kubernetes/CTA/library
 

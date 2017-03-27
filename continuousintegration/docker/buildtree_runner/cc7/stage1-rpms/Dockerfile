@@ -26,7 +26,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 # my environment variables
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     LOCALORCHESTRATIONDIR="/opt/ci" \
-    BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
+    BASEDIR="continuousintegration/docker/buildtree_runner/cc7" \
     CTAREPODIR="/tmp/repo"
 
 # Manage repos before running yum
@@ -53,7 +53,7 @@ RUN yum install -y \
 
 
 # Populate local repository and enable it, then install any rpm that is needed for
-# any container.
+# any container. Finally add needed directories.
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     yum install -y\
@@ -79,13 +79,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       sg3_utils \
       castor-rmc-server \
   && \
-    yum clean all
-
-# Add pod specific configuration
-ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
-
-# Add orchestration run scripts locally
-ADD ${BASEDIR}/opt /opt
+    yum clean all \
+  && \
+    mkdir -pv /etc/cta
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
