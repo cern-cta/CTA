@@ -72,6 +72,25 @@ protected:
    * all one-time buffers.  The code used to make the buffer pool globally
    * unique is not guaranteed to be thread-safe.  The XrdCtaFilesystem therefore
    * creates its own buffer pool in a thread safe manner.
+   *
+   * It turns out that the C++ compiler will under certain circumstances add an
+   * implicit guard around the initialisation of a static local variable.  The
+   * creation of the globally unique buffer pool for all on-time buffers IS
+   * THREAD SAFE on CentOS Linux release 7.3.1611 (Core) with XRootD version
+   * 4.4.1-1.
+   * \code
+   * > cat /etc/redhat-release
+   * CentOS Linux release 7.3.1611 (Core)
+   * >
+   * > rpm -qf /lib64/libXrdUtils.so.2
+   * xrootd-libs-4.4.1-1.el7.x86_64
+   * >
+   * > gdb /lib64/libXrdUtils.so.2 -batch -ex 'disassemble XrdOucBuffer::XrdOucBuffer(char*, int)' -ex quit | grep nullPool | head -n 1
+   * 0x0000000000033a72 <+2>:	cmpb   $0x0,0x258447(%rip)        # 0x28bec0 <_ZGVZN12XrdOucBufferC1EPciE8nullPool>
+   * > c++filt _ZGVZN12XrdOucBufferC1EPciE8nullPool
+   * guard variable for XrdOucBuffer::XrdOucBuffer(char*, int)::nullPool
+   * >
+   * \endcode
    */
   XrdOucBuffPool m_xrdOucBuffPool;
   
