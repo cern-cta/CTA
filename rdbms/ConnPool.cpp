@@ -84,8 +84,33 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
     // If the connection is open
     if(conn->isOpen()) {
 
-      // Commit the connection and put it back in the pool
-      conn->commit();
+      // Try to commit the connection and put it back in the pool
+      try {
+        conn->commit();
+      } catch(...) {
+        // If the commit failed then close the connection
+        try {
+          conn->close();
+        } catch(...) {
+          // Ignore any exceptions
+        }
+
+        // A closed connection is rare and usually means the underlying TCP/IP
+        // connection, if there is one, has been lost.  Delete all the connections
+        // currently in the pool because their underlying TCP/IP connections may
+        // also have been lost.
+        std::unique_lock<std::mutex> lock(m_connsMutex);
+        while(!m_conns.empty()) {
+          m_conns.pop_front();
+        }
+        if(0 == m_nbConnsOnLoan) {
+          throw exception::Exception("Would have reached -1 connections on loan");
+        }
+        m_nbConnsOnLoan--;
+        m_connsCv.notify_one();
+        return;
+      }
+
       std::unique_lock<std::mutex> lock(m_connsMutex);
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
