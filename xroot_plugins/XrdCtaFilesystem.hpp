@@ -70,7 +70,7 @@ protected:
    *
    * The constructor of XrdOucBuffer creates a globally unique buffer pool for
    * all one-time buffers.  The code used to make the buffer pool globally
-   * unqiue is not guaranteed to be thread-safe.  The XrdCtaFilesystem therefore
+   * unique is not guaranteed to be thread-safe.  The XrdCtaFilesystem therefore
    * creates its own buffer pool in a thread safe manner.
    */
   XrdOucBuffPool m_xrdOucBuffPool;
