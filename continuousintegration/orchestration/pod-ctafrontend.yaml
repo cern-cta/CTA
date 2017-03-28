@@ -21,6 +21,16 @@ spec:
           fieldPath: metadata.namespace
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
+    - name: BUILDTREE_BASE
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: base
+    - name: BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: subdir
     - name: TERM
       value: "xterm"
     command: ['/opt/run/bin/ctafrontend.sh']

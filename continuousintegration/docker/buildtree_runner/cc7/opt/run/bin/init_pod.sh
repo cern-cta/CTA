@@ -8,3 +8,6 @@ echo "DONE"
 #echo -n "Yum should resolve names using IPv4 DNS: "
 #echo "ip_resolve=IPv4" >> /etc/yum.conf
 #echo "DONE"
+
+# Here we will symlink the builtree's contents to /usr/bin and /usr/lib64.
+/opt/run/bin/mkSymlinks.sh

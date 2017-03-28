@@ -70,7 +70,7 @@ tail -F /cta-taped.log &
 # working correctly
 echo BUILDTREE_BASE=${BUILDTREE_BASE}
 echo BUILDTREE_SUBDIR=${BUILDTREE_SUBDIR}
-runuser -c "${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/tapeserver/cta-taped ${CTA_TAPED_OPTIONS}"
+runuser -c "/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}"
 
 echo "taped died"
 

@@ -1,5 +1,7 @@
 #!/bin/sh 
 
+/opt/run/bin/init_pod.sh
+
 yes | cp -r /opt/ci/ctafrontend/etc / 
 
 /opt/run/bin/init_objectstore.sh

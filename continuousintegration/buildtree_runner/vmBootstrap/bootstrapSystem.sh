@@ -9,6 +9,7 @@ passwd eric
 cat >> /etc/sudoers << EOFsudoers
 eric ALL=(ALL) NOPASSWD: ALL
 EOFsudoers
+chmod a+rx ~eric
 sudo -u eric cp /vmBootstrap/gitScripts/.git-* ~eric/
 cat /vmBootstrap/gitScripts/bash_profile.hook >> ~eric/.bash_profile
 sudo -u eric cp /vmBootstrap/tigConf/tigrc ~eric/.tigrc

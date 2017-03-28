@@ -21,6 +21,16 @@ spec:
       valueFrom:
         fieldRef:
           fieldPath: metadata.namespace
+    - name: BUILDTREE_BASE
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: base
+    - name: BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: subdir
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
     - name: TERM

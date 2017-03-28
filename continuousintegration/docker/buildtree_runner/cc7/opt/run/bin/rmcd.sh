@@ -9,6 +9,7 @@ cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
 # to get rmcd logs to stdout
+mkdir -p /var/log/castor
 mkfifo /var/log/castor/rmcd_legacy.log
 for ((;;)); do cat </var/log/castor/rmcd_legacy.log; done &
 disown

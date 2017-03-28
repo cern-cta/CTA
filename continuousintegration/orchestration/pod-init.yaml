@@ -31,6 +31,16 @@ spec:
         configMapKeyRef:
           name: init
           key: keepobjectstore
+    - name: BUILDTREE_BASE
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: base
+    - name: BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: subdir
     command: ['/opt/run/bin/init.sh']
     args: ["none"]
     volumeMounts:

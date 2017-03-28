@@ -56,6 +56,8 @@ RUN yum install -y \
 # any container. Finally add needed directories.
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
+    yum-config-manager --enable castor \
+  && \
     yum install -y\
       eos-client \
       eos-server \
@@ -81,6 +83,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       protobuf3 \
       cryptopp \
       json-c \
+      castor-rmc-server \
   && \
     yum clean all \
   && \
