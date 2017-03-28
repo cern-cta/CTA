@@ -60,5 +60,6 @@ echo Generating kubernetes persistent volumes
 ################################################################################
 ### puppet:///modules/hg_cta/generate_PV.sh
 echo Generating the log persistent volume
+mkdir -pv /shared/logs
 sudo kubectl create -f ./log_PV.yaml
 sudo kubectl get persistentvolumes -l type=logs
