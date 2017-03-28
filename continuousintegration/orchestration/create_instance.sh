@@ -89,6 +89,10 @@ if [ ! -z "${buildtree}" ]; then
     cp pod-* ${poddir}
     sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner\n\1PullPolicy: Never/"
 
+    # Add the build tree mount point the pods (volume mount then volume).
+    sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumeMounts:\)|\1\2\n\1- mountPath: ${buildtree}\n\1  name: buildtree\n\1  readOnly: true|"
+    sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumes:\)|\1\2\n\1- name: buildtree\n\1  hostPath:\n\1    path: ${buildtree}|"
+
     if [ ! -z "${error}" ]; then
         echo -e "ERROR:\n${error}"
         exit 1

@@ -78,6 +78,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       lsscsi \
       sg3_utils \
       castor-rmc-server \
+      protobuf3 \
+      cryptopp \
+      json-c \
   && \
     yum clean all \
   && \
