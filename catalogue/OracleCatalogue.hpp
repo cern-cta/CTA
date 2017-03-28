@@ -19,6 +19,10 @@
 #pragma once
 
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "rdbms/OcciColumn.hpp"
+
+#include <occi.h>
+#include <string.h>
 
 namespace cta {
 namespace catalogue {
@@ -97,6 +101,28 @@ private:
    * @param vid The volume identifier of the tape.
    */
   common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid);
+
+  struct TapeFileBatch {
+    size_t nbRows;
+    rdbms::OcciColumn vid;
+    rdbms::OcciColumn fSeq;
+    rdbms::OcciColumn blockId;
+    rdbms::OcciColumn compressedSize;
+    rdbms::OcciColumn copyNb;
+    rdbms::OcciColumn creationTime;
+    rdbms::OcciColumn archiveFileId;
+
+    TapeFileBatch(const size_t nbRowsValue):
+      nbRows(nbRowsValue),
+      vid("VID", nbRows),
+      fSeq("FSEQ", nbRows),
+      blockId("BLOCK_ID", nbRows),
+      compressedSize("COMPRESSED_SIZE_IN_BYTES", nbRows),
+      copyNb("COPY_NB", nbRows),
+      creationTime("CREATION_TIME", nbRows),
+      archiveFileId("ARCHIVE_FILE_ID", nbRows) {
+    }
+  };
 
 }; // class OracleCatalogue
 

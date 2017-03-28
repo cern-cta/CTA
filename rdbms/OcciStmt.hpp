@@ -40,6 +40,8 @@ class OcciConn;
  */
 class OcciRset;
 
+class OcciColumn;
+
 /**
  * A convenience wrapper around an OCCI prepared statement.
  */
@@ -149,6 +151,13 @@ public:
    * @return The underlying OCCI result set.
    */
   oracle::occi::Statement *operator->() const;
+
+  /**
+   * Sets the specified column data for a batch-based database access.
+   *
+   * @param The column data.
+   */
+  void setColumn(OcciColumn &col);
 
 private:
 

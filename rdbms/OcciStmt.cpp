@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "rdbms/OcciColumn.hpp"
 #include "rdbms/OcciConn.hpp"
 #include "rdbms/OcciRset.hpp"
 #include "rdbms/OcciStmt.hpp"
@@ -236,6 +237,16 @@ oracle::occi::Statement *OcciStmt::get() const {
 //------------------------------------------------------------------------------
 oracle::occi::Statement *OcciStmt::operator->() const {
   return get();
+}
+
+//------------------------------------------------------------------------------
+// setColumn
+//------------------------------------------------------------------------------
+void OcciStmt::setColumn(OcciColumn &col) {
+  const std::string paramName = std::string(":") + col.getColName();
+  const auto paramIdx = getParamIdx(paramName);
+  m_stmt->setDataBuffer(paramIdx, col.getBuffer(), oracle::occi::OCCI_SQLT_STR,
+    col.getMaxFieldLength(), col.getFieldLengths());
 }
 
 //------------------------------------------------------------------------------

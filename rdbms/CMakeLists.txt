@@ -59,6 +59,7 @@ if (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES
     ${RDBMS_LIB_SRC_FILES}
     ConnFactoryFactory.cpp
+    OcciColumn.cpp
     OcciConn.cpp
     OcciConnFactory.cpp
     OcciEnv.cpp
@@ -89,11 +90,20 @@ target_link_libraries (ctardbms
 
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
-  ConnPoolTest.cpp
-  LoginTest.cpp
-  ParamNameToIdxTest.cpp
-  SqliteStmtTest.cpp)
+if (OCCI_SUPPORT)
+  set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
+    ConnPoolTest.cpp
+    LoginTest.cpp
+    OcciColumnTest.cpp
+    ParamNameToIdxTest.cpp
+    SqliteStmtTest.cpp)
+else (OCCI_SUPPORT)
+  set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
+    ConnPoolTest.cpp
+    LoginTest.cpp
+    ParamNameToIdxTest.cpp
+    SqliteStmtTest.cpp)
+endif (OCCI_SUPPORT)
 
 add_library (ctardbmsunittests SHARED
   ${RDBMS_UNIT_TESTS_LIB_SRC_FILES})
