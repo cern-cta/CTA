@@ -16,6 +16,7 @@ sudo systemctl enable kubelet
 sudo systemctl start kubelet
 sudo perl -p -i -e 's/^(KUBE_ADMISSION_CONTROL)/#$1/' /etc/kubernetes/apiserver
 sudo perl -p -i -e 's/^(KUBE_API_ARGS=).*$/$1"--allow_privileged=true"/' /etc/kubernetes/apiserver
+sudo perl -p -i -e 's/^(KUBE_API_ADDRESS=).*$/$1"--insecure-bind-address=0.0.0.0"/' /etc/kubernetes/apiserver
 sudo perl -p -i -e 's/^(KUBE_PROXY_ARGS=).*$/$1"--healthz-port=0 --master=http:\/\/127.0.0.1:8080 --oom-score-adj=-999 --proxy-mode=userspace --proxy-port-range=0-0"/' /etc/kubernetes/proxy
 sudo systemctl enable kube-apiserver
 sudo systemctl start kube-apiserver

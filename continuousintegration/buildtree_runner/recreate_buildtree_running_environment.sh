@@ -5,7 +5,7 @@
 
 # (Re-)create the mhvtl environment
 echo Wiping mhvtl and kubernetes library info...
-systemctl stop mhvtl
+systemctl stop mhvtl || true
 sleep 2
 rm -rf /etc/mhvtl
 rm -rf /opt/mhvtl
@@ -61,5 +61,6 @@ echo Generating kubernetes persistent volumes
 ### puppet:///modules/hg_cta/generate_PV.sh
 echo Generating the log persistent volume
 mkdir -pv /shared/logs
+sudo kubectl delete pv log
 sudo kubectl create -f ./log_PV.yaml
 sudo kubectl get persistentvolumes -l type=logs
