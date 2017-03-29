@@ -127,11 +127,12 @@ public:
           stillReading = false;
         }
         localStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-        localStats.dataVolume += mb->m_payload.size();
+        auto blockSize = mb->m_payload.size();
+        localStats.dataVolume += blockSize;
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb=NULL;
-        watchdog.notify();
+        watchdog.notify(blockSize);
         localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.

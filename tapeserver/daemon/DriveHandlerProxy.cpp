@@ -60,8 +60,14 @@ void DriveHandlerProxy::labelError(const std::string& unitName, const std::strin
 }
 
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
-  // TODO
-  throw cta::exception::Exception("In DriveHandlerProxy::reportHeartbeat(): not implemented");
+  serializers::WatchdogMessage watchdogMessage;
+  watchdogMessage.set_reportingstate(false);
+  watchdogMessage.set_reportingbytes(true);
+  watchdogMessage.set_totaltapebytesmoved(totalTapeBytesMoved);
+  watchdogMessage.set_totaldiskbytesmoved(totalDiskBytesMoved);
+  std::string buffer;
+  watchdogMessage.SerializeToString(&buffer);
+  m_socketPair.send(buffer);
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {

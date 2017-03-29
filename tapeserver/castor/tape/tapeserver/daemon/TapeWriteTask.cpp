@@ -113,7 +113,7 @@ namespace daemon {
         
         m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
         m_taskStats.dataVolume += mb->m_payload.size();
-        watchdog.notify();
+        watchdog.notify(mb->m_payload.size());
         ++memBlockId;
       }
       

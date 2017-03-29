@@ -247,7 +247,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     message.ParseFromString(m_socketPair->receive());
     // Logs are processed in all cases
     processLogs(message);
-    // If we report bytes, process the report
+    // If we report bytes, process the report (this is a heartbeat)
     if (message.reportingbytes()) {
       processBytes(message);
     }
@@ -499,29 +499,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   if (m_sessionState!=(SessionState)message.sessionstate()) {
     m_lastStateChangeTime=std::chrono::steady_clock::now();
     m_lastDataMovementTime=std::chrono::steady_clock::now();
-    // heartbeat is update further down.
+    m_lastHeartBeatTime=std::chrono::steady_clock::now();
   }
-  // In all cases, this is a heartbeat.
-  m_lastHeartBeatTime=std::chrono::steady_clock::now();
-  // Record the state
+  // Record the state in all cases. Child process knows better.
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
   m_sessionVid=message.vid();
-  // Record data moved totals if needed.
-  if (m_totalTapeBytesMoved != message.totaltapebytesmoved()||
-      m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
-    if (message.totaltapebytesmoved()<m_totalTapeBytesMoved||
-        message.totaldiskbytesmoved()<m_totalDiskBytesMoved) {
-      params.add("PreviousTapeBytesMoved", m_totalTapeBytesMoved)
-            .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
-            .add("NewTapeBytesMoved", message.totaltapebytesmoved())
-            .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_processManager.logContext().log(log::WARNING, "In DriveHandler::processRunning(): total bytes moved going backwards");
-    }
-    m_totalTapeBytesMoved=message.totaltapebytesmoved();
-    m_totalDiskBytesMoved=message.totaldiskbytesmoved();
-    m_lastDataMovementTime=std::chrono::steady_clock::now();
-  }
   // We can now compute the timeout and check for potential exceeding of timeout
   m_processingStatus.nextTimeout = nextTimeout();
   return m_processingStatus;
@@ -649,7 +632,25 @@ void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
 // DriveHandler::processBytes
 //------------------------------------------------------------------------------
 void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
-  throw cta::exception::Exception("In DriveHandler::processBytes(): not implemented");
+  // In all cases, this is a heartbeat.
+  m_lastHeartBeatTime=std::chrono::steady_clock::now();
+
+  // Record data moved totals if needed.
+  if (m_totalTapeBytesMoved != message.totaltapebytesmoved()||
+      m_totalDiskBytesMoved != message.totaldiskbytesmoved()) {
+    if (message.totaltapebytesmoved()<m_totalTapeBytesMoved||
+        message.totaldiskbytesmoved()<m_totalDiskBytesMoved) {
+      log::ScopedParamContainer params(m_processManager.logContext());
+      params.add("PreviousTapeBytesMoved", m_totalTapeBytesMoved)
+            .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
+            .add("NewTapeBytesMoved", message.totaltapebytesmoved())
+            .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
+      m_processManager.logContext().log(log::WARNING, "In DriveHandler::processRunning(): total bytes moved going backwards");
+    }
+    m_totalTapeBytesMoved=message.totaltapebytesmoved();
+    m_totalDiskBytesMoved=message.totaldiskbytesmoved();
+    m_lastDataMovementTime=std::chrono::steady_clock::now();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -768,7 +769,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   } catch (...) {}
   try {
     decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
-        m_lastStateChangeTime + m_heartbeatTimeouts.at(m_sessionState);
+        m_lastHeartBeatTime + m_heartbeatTimeouts.at(m_sessionState);
     std::chrono::duration<double> timeToTimeout = nextTimeout - now;
     params.add("BeforeHeartbeatTimeout_s", timeToTimeout.count());
   } catch (...) {}

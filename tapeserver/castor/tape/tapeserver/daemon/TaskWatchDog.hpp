@@ -54,7 +54,7 @@ protected:
    *  Number of blocks we moved since the last update. Has to be atomic because it is 
    *  updated from the outside 
    */
-  uint64_t m_nbOfMemblocksMoved;
+  uint64_t m_TapeBytesMovedMoved;
   
   /**
    * Statistics of the current session
@@ -252,9 +252,8 @@ protected:
         cta::threading::MutexLocker locker(m_mutex);
         m_lc.log(cta::log::DEBUG,"going to report");
         m_reportTimer.reset();
-        m_initialProcess.reportHeartbeat(m_nbOfMemblocksMoved, 0);
+        m_initialProcess.reportHeartbeat(m_TapeBytesMovedMoved, 0);
         reportStats();
-        m_nbOfMemblocksMoved=0;
       } 
       else{
         usleep(m_pollPeriod*1000*1000);
@@ -304,7 +303,7 @@ protected:
          cta::tape::daemon::TapedProxy& initialProcess,
           const std::string & driveUnitName,
          cta::log::LogContext&  lc, double pollPeriod = 0.1):
-  m_nbOfMemblocksMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
+  m_TapeBytesMovedMoved(0), m_statsSet(false), m_pollPeriod(pollPeriod),
   m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), 
   m_initialProcess(initialProcess), m_driveUnitName(driveUnitName),
   m_fileBeingMoved(false), m_lc(lc) {
@@ -314,10 +313,10 @@ protected:
   /**
    * notify the watchdog a mem block has been moved
    */
-  void notify(){
+  void notify(uint64_t movedBytes){
     cta::threading::MutexLocker locker(m_mutex);
     m_blockMovementTimer.reset();
-    m_nbOfMemblocksMoved++;
+    m_TapeBytesMovedMoved+=movedBytes;
   }
  
   /**
