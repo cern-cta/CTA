@@ -23,6 +23,7 @@
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "DriveHandler.hpp"
+#include "GarbageCollectorHandler.hpp"
 #include <google/protobuf/service.h>
 #include <limits.h>
 
@@ -106,7 +107,9 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
     std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
     pm.addHandler(std::move(dh));
   }
-  // TODO: add the garbage collector once implemented
+  // Create the garbage collector
+  std::unique_ptr<GarbageCollectorHandler> gc(new GarbageCollectorHandler(m_globalConfiguration, pm));
+  pm.addHandler(std::move(gc));
   // And run the process manager
   int ret=pm.run();
   {

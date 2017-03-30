@@ -320,7 +320,17 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::shutdown() {
   return m_processingStatus;
 }
 
-
-
+//------------------------------------------------------------------------------
+// GarbageCollectorHandler::runChild
+//------------------------------------------------------------------------------
+GarbageCollectorHandler::~GarbageCollectorHandler() {
+  // If we still have a child process (should not), just stop it the hard way.
+  if (-1 != m_pid) {
+    cta::log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("pid", m_pid);
+    ::kill(m_pid, SIGKILL);
+    m_processManager.logContext().log(log::WARNING, "In GarbageCollectorHandler::~GarbageCollectorHandler(): killed leftover subprocess");
+  }
+}
 
 }}} // namespace cta::tape::daemon
