@@ -238,6 +238,9 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::processTimeout() {
 // GarbageCollectorHandler::runChild
 //------------------------------------------------------------------------------
 int GarbageCollectorHandler::runChild() {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // We are in the child process. It is time to open connections to the catalogue
   // and object store, and run the garbage collector.
   // We do not have to care for previous crashed sessions as we will garbage
@@ -296,7 +299,7 @@ int GarbageCollectorHandler::runChild() {
   pollList["0"]=m_socketPair.get();
   do {
     m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::runChild(): About to run a GC pass.");
-    gc.runOnePass();
+    gc.runOnePass(lc);
     server::SocketPair::poll(pollList, s_pollInterval, server::SocketPair::Side::parent);
   } while (!m_socketPair->pollFlag());
   m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");

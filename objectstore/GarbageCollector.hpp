@@ -22,6 +22,7 @@
 #include "Agent.hpp"
 #include "AgentWatchdog.hpp"
 #include "AgentRegister.hpp"
+#include "common/log/LogContext.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.
@@ -37,17 +38,17 @@ class GarbageCollector {
 public:
   GarbageCollector(Backend & os, Agent & agent);
   
-  void runOnePass();
+  void runOnePass(log::LogContext & lc);
   
-  void aquireTargets();
+  void aquireTargets(log::LogContext & lc);
   
-  void trimGoneTargets();
+  void trimGoneTargets(log::LogContext & lc);
   
-  void checkHeartbeats();
+  void checkHeartbeats(log::LogContext & lc);
   
-  void cleanupDeadAgent(const std::string & name);
+  void cleanupDeadAgent(const std::string & name, log::LogContext & lc);
   
-  void reinjectOwnedObject();
+  void reinjectOwnedObject(log::LogContext & lc);
 private:
   Backend & m_objectStore;
   Agent & m_ourAgent;

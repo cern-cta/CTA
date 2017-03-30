@@ -20,6 +20,7 @@
 #include "BackendVFS.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
@@ -33,6 +34,9 @@
 namespace unitTests {
 
 TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
   cta::objectstore::BackendVFS be;
@@ -67,8 +71,8 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   gcAgent.insertAndRegisterSelf();
   {
     cta::objectstore::GarbageCollector gc(be, gcAgent);
-    gc.runOnePass();
-    gc.runOnePass();
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
@@ -81,6 +85,9 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
 }
 
 TEST(ObjectStore, GarbageCollectorRegister) {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
@@ -122,8 +129,8 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   gcAgent.insertAndRegisterSelf();
   {
     cta::objectstore::GarbageCollector gc(be, gcAgent);
-    gc.runOnePass();
-    gc.runOnePass();
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
   }
   ASSERT_FALSE(be.exists(arName));
   // Unregister gc's agent
@@ -137,6 +144,9 @@ TEST(ObjectStore, GarbageCollectorRegister) {
 }
 
 TEST(ObjectStore, GarbageCollectorArchiveQueue) {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
@@ -179,8 +189,8 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   gcAgent.insertAndRegisterSelf();
   {
     cta::objectstore::GarbageCollector gc(be, gcAgent);
-    gc.runOnePass();
-    gc.runOnePass();
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
@@ -194,6 +204,9 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
 }
 
 TEST(ObjectStore, GarbageCollectorDriveRegister) {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
@@ -236,8 +249,8 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   gcAgent.insertAndRegisterSelf();
   {
     cta::objectstore::GarbageCollector gc(be, gcAgent);
-    gc.runOnePass();
-    gc.runOnePass();
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
@@ -251,6 +264,9 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
 }
 
 TEST(ObjectStore, GarbageCollectorArchiveRequest) {
+  // We will need a log object 
+  cta::log::DummyLogger dl("unitTest");
+  cta::log::LogContext lc(dl);
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
@@ -388,8 +404,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   gcAgent.insertAndRegisterSelf();
   {
     cta::objectstore::GarbageCollector gc(be, gcAgent);
-    gc.runOnePass();
-    gc.runOnePass();
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
   }
   // All 4 requests should be linked in both tape pools
   {
