@@ -40,6 +40,26 @@ if(CMAKE_COMPILER_IS_GNUCC)
   endif(GCC_VERSION_GE_4_8_0)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
+if(CMAKE_COMPILER_IS_GNUCC)
+  if(GCC_VERSION_GE_4_8_0)
+    set_property(SOURCE BasicReadWriteTest.cpp
+      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
+  endif(GCC_VERSION_GE_4_8_0)
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_executable(BasicReadWriteTest
+  BasicReadWriteTest.cpp)
+
+target_link_libraries(BasicReadWriteTest
+  TapeDrive
+  ctamediachanger
+  SCSI
+  System
+  ctacommon
+  ctaTapeServerDaemon
+  gtest
+  pthread)
+
 add_library(File
   ${TAPESERVER_FILE_LIBRARY_SRCS})
 target_link_libraries (File XrdCl cryptopp radosstriper)

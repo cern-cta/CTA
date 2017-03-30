@@ -739,6 +739,13 @@ namespace SCSI {
    * Addition for the mode page Length for the Control Data Protection Mode Page
    */
   const unsigned char controlDataProtectionModePageLengthAddition = 4; 
+  
+  class modeRAO {
+  public:
+    enum {
+      DEFAULT_RRAO_ALLOCATION = 64000
+    };
+  };
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

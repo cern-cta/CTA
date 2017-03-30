@@ -297,6 +297,10 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
 
+void castor::tape::tapeserver::drive::FakeDrive::queryRAO(char *filename)  {
+  throw cta::exception::Exception("In DriveFakeDrive::queryRAO: Not implemented.");
+}
+
 std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
   std::map<std::string,uint64_t> writeErrorsStats;
   writeErrorsStats["mountTotalCorrectedWriteErrors"] = 5;

@@ -31,6 +31,9 @@
 
 #include <errno.h>
 
+#include <string>
+#include <map>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -748,6 +751,156 @@ bool drive::DriveMHVTL::clearEncryptionKey() {
 
 bool drive::DriveMHVTL::isEncryptionCapEnabled() {
   return false;
+}
+
+SCSI::Structures::RAO::udsLimitsPage_t drive::DriveGeneric::getLimitUDS() {
+    SCSI::Structures::LinuxSGIO_t sgh;
+    SCSI::Structures::RAO::recieveRAO_t cdb;
+    SCSI::Structures::senseData_t<127> senseBuff;
+    unsigned char dataBuff[4];
+
+    SCSI::Structures::setU32(cdb.allocationLength, SCSI::modeRAO::DEFAULT_RRAO_ALLOCATION);
+    if (this->getDeviceInfo().vendor.substr(0, 3) == "IBM") {
+      cdb.serviceAction = 0x11;
+      std::cout << "vendor IBM" << std::endl;
+    }
+    else if (this->getDeviceInfo().vendor.substr(0, 3) == "STK") {
+      cdb.serviceAction = 0x1d;
+    }
+
+    cdb.udsLimits = 1;
+
+    sgh.setCDB(&cdb);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.setDataBuffer(&dataBuff);
+    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+            "Failed SG_IO ioctl in DriveGeneric::getLimitUDS");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::getLimitUDS");
+
+    SCSI::Structures::RAO::udsLimitsPage_t & limits =
+            *(SCSI::Structures::RAO::udsLimitsPage_t *) dataBuff;        
+
+    return limits;
+}
+
+void drive::DriveGeneric::generateRAO(std::map<std::string, SCSI::Structures::RAO::blockLims> blocks,
+                                     int maxSupported) {
+    SCSI::Structures::LinuxSGIO_t sgh;
+    SCSI::Structures::RAO::generateRAO_t cdb;
+    SCSI::Structures::senseData_t<127> senseBuff;
+    //unsigned char dataBuff[1024];
+
+    int udSize = std::min((int) blocks.size(), maxSupported);
+    SCSI::Structures::RAO::udsDescriptor *ud = new SCSI::Structures::RAO::udsDescriptor[udSize];
+
+    auto it = blocks.begin();
+    for (int i = 0;i < udSize;++i) {
+      memcpy(ud[i].udsName, it->first.c_str(), sizeof(ud[i].udsName));
+      
+      SCSI::Structures::setU64(ud[i].beginLogicalObjID, it->second.begin);
+      SCSI::Structures::setU64(ud[i].endLogicalObjID, it->second.end);
+      ++it;
+    }
+
+    SCSI::Structures::RAO::generateRAOParams_t params;
+    int real_params_len = sizeof(params) - (2000 - udSize) *
+                          sizeof(SCSI::Structures::RAO::udsDescriptor);
+
+    if (this->getDeviceInfo().vendor.substr(0, 3) == "IBM")
+      cdb.serviceAction = 0x11;
+    else if (this->getDeviceInfo().vendor.substr(0, 3) == "STK")
+      cdb.serviceAction = 0x1d;
+
+    SCSI::Structures::setU32(cdb.paramsListLength, real_params_len);
+    SCSI::Structures::setU32(params.additionalData, udSize * sizeof(*ud));
+    memcpy(&params.userDataSegmentDescriptors, ud, udSize * sizeof(*ud));
+    
+    sgh.setCDB(&cdb);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.setDataBuffer(&params);
+    sgh.dxfer_direction = SG_DXFER_TO_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+            "Failed SG_IO ioctl in DriveGeneric::requestRAO");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::requestRAO");
+}
+
+void drive::DriveGeneric::receiveRAO(int offset, int allocationLength) {
+    
+    SCSI::Structures::LinuxSGIO_t sgh;
+    SCSI::Structures::RAO::recieveRAO_t cdb;
+    SCSI::Structures::senseData_t<255> senseBuff;
+    unsigned char dataBuff[64008];
+
+    cdb.udsLimits = 0;
+
+    if (this->getDeviceInfo().vendor.substr(0, 3) == "IBM")
+      cdb.serviceAction = 0x11;
+    else if (this->getDeviceInfo().vendor.substr(0, 3) == "STK")
+      cdb.serviceAction = 0x1d;
+
+    SCSI::Structures::setU32(cdb.allocationLength, allocationLength);
+    SCSI::Structures::setU32(cdb.raoListOffset, offset);
+
+    sgh.setCDB(&cdb);
+    sgh.setSenseBuffer(&senseBuff);
+    sgh.setDataBuffer(&dataBuff);
+    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+    /* Manage both system error and SCSI errors. */
+    cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+            "Failed SG_IO ioctl in DriveGeneric::getRAO");
+    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::getRAO");
+
+    SCSI::Structures::RAO::raoList & params =
+            *(SCSI::Structures::RAO::raoList *) dataBuff;
+
+    uint32_t desc_list_len = SCSI::Structures::toU32(params.raoDescriptorListLength);
+    for (uint32_t i = 0;i < desc_list_len / sizeof(SCSI::Structures::RAO::udsDescriptor);++i) {
+        std::cout << params.udsDescriptors[i].udsName << ":" << SCSI::Structures::toU64(params.udsDescriptors[i].beginLogicalObjID) <<
+      ":" << SCSI::Structures::toU64(params.udsDescriptors[i].endLogicalObjID)  << std::endl;
+    }
+}
+
+std::vector<std::string> split(std::string to_split, std::string delimiter) {
+  std::vector<std::string> toBeReturned;
+  int pos = 0;
+  while ((pos = to_split.find(delimiter)) != -1) {
+    std::string token = to_split.substr(0, pos);
+    toBeReturned.push_back(token);
+    to_split.erase(0, pos + delimiter.length());
+  }
+  toBeReturned.push_back(to_split);
+  return toBeReturned;
+}
+
+void drive::DriveGeneric::queryRAO(char *filename) {
+    std::map<std::string, SCSI::Structures::RAO::blockLims> files;
+    std::ifstream ns_file_pick(filename);
+      if (ns_file_pick.is_open()) {
+        std::string line;
+        while (getline(ns_file_pick, line)) {
+          std::vector<std::string> tokens = split(line, ":");
+          SCSI::Structures::RAO::blockLims lims;
+          lims.begin = std::stoi(tokens[1]);
+          lims.end = std::stoi(tokens[2]);
+          files[tokens[0]] = lims;
+        }
+      }
+      else {
+        throw -1;
+      }
+    
+    SCSI::Structures::RAO::udsLimitsPage_t limits = getLimitUDS();
+    generateRAO(files, limits.maxSupported);
+    receiveRAO(0, (new SCSI::modeRAO())->DEFAULT_RRAO_ALLOCATION);
 }
 
 /**

@@ -173,6 +173,16 @@ namespace SCSI {
     }
 
     /**
+     * Helper function setting in place a 64 bits SCSI number from a value
+     * expressed in the local endianness.
+     * @param t pointer to the char array at the 64 bits value position.
+     * @param val the value.
+     */
+    inline void setU64(unsigned char(& t)[8], uint64_t val) {
+        *((uint64_t *) t) = htobe64(val);
+    }
+    
+    /**
      * Inquiry CDB as described in SPC-4.
      */
     class inquiryCDB_t {
@@ -1169,6 +1179,139 @@ namespace SCSI {
         unsigned char keyLength[2];
         unsigned char keyData[SCSI::encryption::ENC_KEY_LENGTH];
       };
+    }
+    
+    namespace RAO {
+        
+       /**
+        * Receive RAO Command Descriptor Block (CDB)
+        */
+       class recieveRAO_t {
+       public:
+         recieveRAO_t() {
+           zeroStruct(this);
+           opcode = SCSI::Commands::MAINTENANCE_IN;
+         }
+         unsigned char opcode;
+
+         unsigned char serviceAction   :5;
+         unsigned char                 :2;
+         unsigned char udsLimits       :1;
+
+         unsigned char raoListOffset[4];
+
+         unsigned char allocationLength[4];
+
+         unsigned char udsType         :3;
+         unsigned char                 :5;
+
+         unsigned char control;
+
+       };
+
+       /**
+        * UDS (User Data Segments) limits page
+        */
+       class udsLimitsPage_t {
+       public:
+         udsLimitsPage_t() {
+           zeroStruct(this);
+         }
+         int maxSupported;
+         int maxSize;
+       };
+
+       /**
+        * Generate RAO CDB
+        */
+       class generateRAO_t {
+       public:
+         generateRAO_t() {
+           zeroStruct(this);
+           opcode = SCSI::Commands::MAINTENANCE_OUT;
+           raoProcess = 2;
+         }
+         unsigned char opcode;
+
+         unsigned char serviceAction   :5;
+         unsigned char                 :3;
+
+         unsigned char raoProcess      :3;
+         unsigned char                 :5;
+
+         unsigned char udsType         :3;
+         unsigned char                 :5;
+
+         unsigned char reserved[2];
+
+         unsigned char paramsListLength[4];
+
+         unsigned char reserved2;
+
+         unsigned char control;
+
+       };
+
+       class udsDescriptor {
+       public:
+         udsDescriptor() {
+           zeroStruct(this);
+           setU16(descriptorLength, 0x1e);
+         }
+         unsigned char descriptorLength[2];
+         unsigned char reserved[3];
+         unsigned char udsName[10];
+         unsigned char partitionNumber;
+         unsigned char beginLogicalObjID[8];
+         unsigned char endLogicalObjID[8];
+       };
+
+       /**
+        * RAO list struct
+        */
+       class raoList {
+       public:
+         raoList() {
+           zeroStruct(this);
+         }
+         unsigned char raoProcess      :3;
+         unsigned char                 :5;
+
+         unsigned char status          :3;
+         unsigned char                 :5;
+
+         unsigned char res[2];
+
+         unsigned char raoDescriptorListLength[4];
+
+         udsDescriptor udsDescriptors[2000];
+
+       };
+
+       /**
+        * Generate RAO parameters
+        */
+       class generateRAOParams_t {
+       public:
+         generateRAOParams_t() {
+           zeroStruct(this);
+         }
+         unsigned char res[4];
+         unsigned char additionalData[4];
+         udsDescriptor userDataSegmentDescriptors[2000];
+       };
+       
+       /**
+        * Block Limits
+        */
+       class blockLims {
+       public:
+         blockLims() {
+           zeroStruct(this);
+         }
+         int begin;
+         int end;
+       };
     }
  
     template <size_t n>

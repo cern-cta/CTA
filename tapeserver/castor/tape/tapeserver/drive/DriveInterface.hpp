@@ -230,6 +230,8 @@ namespace drive {
     virtual lbpToUse getLbpToUse() = 0;
     virtual bool hasTapeInPlace() = 0;
     
+    virtual void queryRAO(char *filename) = 0;
+
     /**
      * The configuration of the tape drive as parsed from the TPCONFIG file.
      */
