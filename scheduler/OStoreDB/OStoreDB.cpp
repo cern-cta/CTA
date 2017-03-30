@@ -1534,6 +1534,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
     // Pop jobs until we find one actually belonging to the queue.
     // Any job not really belonging is an uncommitted pop, which we will
     // re-do here.
+    bool aqUpdated = false;
     while (aq.dumpJobs().size()) {
       // First take a lock on and download the job
       // If the request is not around anymore, we will just move the the next
@@ -1554,6 +1555,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
                 .add("queueObject", aq.getAddressIfSet())
                 .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet());
           logContext.log(log::INFO, "In ArchiveMount::getNextJob(): skipped orphaned job from the queue.");
+          aqUpdated=true;
           continue;
         }
       } catch (cta::exception::Exception &) {
@@ -1594,6 +1596,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
       logContext.log(log::INFO, "In ArchiveMount::getNextJob(): popped job from queue");
       return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
     }
+    if (aqUpdated) aq.commit();
     // If we get here, we exhausted the queue. We can now remove it. 
     // removeArchiveQueueAndCommit is safe, as it checks whether the queue is empty 
     // before deleting it. It will throw an exception in such a case (allowing us to
