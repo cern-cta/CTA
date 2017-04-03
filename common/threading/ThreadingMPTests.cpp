@@ -17,7 +17,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "Threading.hpp"
+#include "Thread.hpp"
 #include "ChildProcess.hpp"
 
 /* This is a collection of multi process unit tests, which can (and should)

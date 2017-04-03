@@ -26,6 +26,7 @@
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "objectstore/AgentHeartbeatThread.hpp"
 
 #include <google/protobuf/util/json_util.h>
 #include <memory>
@@ -123,6 +124,11 @@ protected:
    * The scheduler.
    */
   std::unique_ptr<cta::Scheduler> m_scheduler;
+  
+  /**
+   * The agent heartbeat thread
+   */
+  std::unique_ptr<objectstore::AgentHeartbeatThread> m_agentHeartbeat;
   
   /**
    * The logger.

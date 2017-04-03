@@ -554,12 +554,17 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   const std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
   cta::log::Logger &log= *m_log;
   log(log::INFO, std::string("cta-frontend started"), params);
+  
+  // Start the heartbeat thread for the agent object
+  m_agentHeartbeat = cta::make_unique<objectstore::AgentHeartbeatThread> (m_backendPopulator.getAgentReference(), *m_backend);
+  m_agentHeartbeat->startThread();
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::~XrdCtaFilesystem() {
+  m_agentHeartbeat->stopAndWaitThread();
 }
 
 }}

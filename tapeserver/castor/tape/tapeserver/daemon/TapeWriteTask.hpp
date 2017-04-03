@@ -29,7 +29,7 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/threading/AtomicFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"

@@ -21,7 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include <gtest/gtest.h>
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/threading/AtomicCounter.hpp"
 namespace unitTests {
   struct ThreadPlus : public cta::threading::Thread{

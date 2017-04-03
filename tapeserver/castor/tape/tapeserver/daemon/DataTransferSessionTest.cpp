@@ -39,7 +39,7 @@
 #include "common/log/StringLogger.hpp"
 #include "common/make_unique.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 //#include "smc_struct.h"

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "common/threading/MutexLocker.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 
 namespace cta {
 namespace threading {

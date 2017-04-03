@@ -26,6 +26,7 @@
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendPopulator.hpp"
+#include "objectstore/AgentHeartbeatThread.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
@@ -306,7 +307,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   }
 }
 
-
 //------------------------------------------------------------------------------
 // DriveHandler::resetToDefault
 //------------------------------------------------------------------------------
@@ -328,7 +328,6 @@ void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
   m_processingStatus.shutdownRequested = false;
   m_processingStatus.sigChild = false;
 }
-
 
 //------------------------------------------------------------------------------
 // DriveHandler::processStartingUp
@@ -694,12 +693,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       // Child process exited properly. The new child process will not need to start
       // a cleanup session.
       params.add("exitCode", WEXITSTATUS(processStatus));
-      m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
+        m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will spawn a new one.");
         resetToDefault(PreviousSession::Up);
         m_processingStatus.forkRequested=true;
       } else {
+        m_processManager.logContext().log(log::INFO, "Drive subprocess exited. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested=false;
       }
     } else {
@@ -724,10 +724,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       m_sessionEndContext.pushOrReplace({"killSignal", WTERMSIG(processStatus)});
       m_sessionEndContext.pushOrReplace({"status", "failure"});
     }
+    // In all cases we log the end of the session.
+    m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
+    m_sessionEndContext.clear();
   }
-  // In all cases we log the end of the session.
-  m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
-  m_sessionEndContext.clear();
   return m_processingStatus;
 }
 
@@ -853,6 +853,10 @@ int DriveHandler::runChild() {
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
+  
+  // The object store is accessible, let's turn the agent heartbeat on.
+  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend);
+  agentHeartbeat.startThread();
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
@@ -1004,7 +1008,9 @@ int DriveHandler::runChild() {
       dataTransferConfig,
       scheduler);
 
-    return dataTransferSession.execute();
+    auto ret = dataTransferSession.execute();
+    agentHeartbeat.stopAndWaitThread();
+    return ret;
   }
 }
 

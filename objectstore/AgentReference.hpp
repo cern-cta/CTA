@@ -72,6 +72,12 @@ public:
    * @param objectAddress
    */
   void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  
+  /**
+   * Bumps up the heart beat of the agent. This action is queued in memory like the
+   * additions and removals from ownership.
+   */
+  void bumpHeatbeat(objectstore::Backend& backend);
 
   /**
    * Gets the address of the Agent object generated on construction.
@@ -87,7 +93,8 @@ private:
    */
   enum class AgentOperation: char {
     Add,
-    Remove
+    Remove,
+    Heartbeat
   };
   
   /**

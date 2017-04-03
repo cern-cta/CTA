@@ -15,6 +15,7 @@ add_library(ctatapedaemon
   ConfigurationFile.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
+  GarbageCollectorHandler.cpp
   SignalHandler.cpp
   SourcedParameter.cpp
   SubprocessHandler.cpp

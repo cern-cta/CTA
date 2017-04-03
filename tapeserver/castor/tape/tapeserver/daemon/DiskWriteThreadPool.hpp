@@ -24,7 +24,7 @@
 #pragma once
 
 #include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/threading/AtomicCounter.hpp"
 #include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"

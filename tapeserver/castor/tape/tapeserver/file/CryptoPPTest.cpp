@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"

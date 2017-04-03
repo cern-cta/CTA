@@ -117,7 +117,7 @@ set (COMMON_LIB_SRC_FILES
   threading/Mutex.cpp
   threading/SocketPair.cpp
   threading/System.cpp
-  threading/Threading.cpp
+  threading/Thread.cpp
   threading/Semaphores.cpp
   threading/SubProcess.cpp
   utils/GetOptThreadSafe.cpp

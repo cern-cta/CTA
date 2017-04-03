@@ -32,7 +32,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "Session.hpp"
 #include "TapeSessionStats.hpp"
 #include "VolumeInfo.hpp"

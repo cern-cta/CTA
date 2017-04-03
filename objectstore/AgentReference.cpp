@@ -79,6 +79,12 @@ void AgentReference::removeFromOwnership(const std::string& objectAddress, objec
   queueAndExecuteAction(a, backend);
 }
 
+void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
+  Action a{AgentOperation::Heartbeat, "", std::promise<void>()};
+  queueAndExecuteAction(a, backend);
+}
+
+
 void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend& backend) {
   // First, we need to determine if a queue exists or not.
   // If so, we just use it, and if not, we create and serve it.
@@ -161,6 +167,8 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent) {
   case AgentOperation::Remove:
     agent.removeFromOwnership(action.objectAddress);
     break;
+  case AgentOperation::Heartbeat:
+    agent.bumpHeartbeat();
   default:
     throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
   }

@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 

@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"

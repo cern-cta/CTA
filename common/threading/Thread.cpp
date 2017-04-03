@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Threading.hpp"
+#include "Thread.hpp"
 #include <errno.h>
 #include <typeinfo>
 #include <stdlib.h>

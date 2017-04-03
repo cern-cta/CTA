@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/threading/AtomicCounter.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"

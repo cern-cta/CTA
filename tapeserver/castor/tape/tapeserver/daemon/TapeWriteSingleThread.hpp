@@ -32,7 +32,7 @@
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Threading.hpp"
+#include "common/threading/Thread.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "common/Timer.hpp"
 
