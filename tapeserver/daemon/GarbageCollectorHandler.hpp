@@ -56,7 +56,7 @@ private:
   /** A socketpair to ask the child process to gracefully shut down */
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
   /** The poll period for the garbage collector */
-  static const time_t s_pollInterval = 30;
+  static const time_t s_pollInterval = 10;
 };
 
 }}} // namespace cta::tape::daemon

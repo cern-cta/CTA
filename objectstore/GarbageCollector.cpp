@@ -21,7 +21,7 @@
 #include <algorithm>
 
 namespace cta { namespace objectstore {
-const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 2;
+const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 5;
 
 GarbageCollector::GarbageCollector(Backend & os, Agent & agent): 
   m_objectStore(os), m_ourAgent(agent), m_agentRegister(os) {
@@ -180,7 +180,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
        // Call GenericOpbject's garbage collect method, which in turn will
        // delegate to the object type's garbage collector.
        go.garbageCollect(goLock, address);
-       lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");       
+       lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
      } else {
        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
      }
@@ -190,6 +190,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
    }
    // We now processed all the owned objects. We can delete the agent's entry
    agent.removeAndUnregisterSelf();
+   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent entry removed.");
  }
 
 
