@@ -180,9 +180,10 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::processSigChild() {
       // a cleanup session.
       params.add("exitCode", WEXITSTATUS(processStatus));
       // If we are shutting down, we should not request a new session.
-      if (m_shutdownInProgress) {
+      if (!m_shutdownInProgress) {
         m_processManager.logContext().log(log::INFO, "Garbage collector subprocess exited. Will spawn a new one.");
         m_processingStatus.forkRequested=true;
+        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
       } else {
         m_processManager.logContext().log(log::INFO, "Garbage collector subprocess exited. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested=false;
@@ -194,9 +195,10 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::processSigChild() {
             .add("TermSignal", WTERMSIG(processStatus))
             .add("CoreDump", WCOREDUMP(processStatus));
       // If we are shutting down, we should not request a new session.
-      if (m_shutdownInProgress) {
+      if (!m_shutdownInProgress) {
         m_processManager.logContext().log(log::INFO, "Garbage collector subprocess crashed. Will spawn a new one.");
         m_processingStatus.forkRequested=true;
+        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
       } else {
         m_processManager.logContext().log(log::INFO, "Garbage collector subprocess crashed. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested=false;
@@ -276,13 +278,15 @@ int GarbageCollectorHandler::runChild() {
     {
       log::ScopedParamContainer param(m_processManager.logContext());
       param.add("errorMessage", ex.getMessageValue());
-      m_processManager.logContext().log(log::CRIT, "In GarbageCollectorHandler::runChild(): contact central storage. Waiting for shutdown.");
+      m_processManager.logContext().log(log::CRIT, 
+          "In GarbageCollectorHandler::runChild(): contact central storage. Waiting for shutdown.");
     }
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
     // Wait forever (negative timeout) for something to come from parent process.
     server::SocketPair::poll(pollList, -1, server::SocketPair::Side::parent);
-    m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::runChild(): Received shutdown message after failure to contact storage. Exiting.");
+    m_processManager.logContext().log(log::INFO,
+        "In GarbageCollectorHandler::runChild(): Received shutdown message after failure to contact storage. Exiting.");
     return EXIT_FAILURE; 
   }
   
@@ -295,14 +299,30 @@ int GarbageCollectorHandler::runChild() {
   objectstore::GarbageCollector gc(*backend, ag);
   
   // Run the gc in a loop
-  server::SocketPair::pollMap pollList;
-  pollList["0"]=m_socketPair.get();
-  do {
-    m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::runChild(): About to run a GC pass.");
-    gc.runOnePass(lc);
-    server::SocketPair::poll(pollList, s_pollInterval, server::SocketPair::Side::parent);
-  } while (!m_socketPair->pollFlag());
-  m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");
+  try {
+    server::SocketPair::pollMap pollList;
+    pollList["0"]=m_socketPair.get();
+    bool receivedMessage=false;
+    do {
+      m_processManager.logContext().log(log::INFO, 
+          "In GarbageCollectorHandler::runChild(): About to run a GC pass.");
+      gc.runOnePass(lc);
+      try {
+        server::SocketPair::poll(pollList, s_pollInterval, server::SocketPair::Side::parent);
+        receivedMessage=true;
+      } catch (server::SocketPair::Timeout & ex) {}
+    } while (!receivedMessage);
+    m_processManager.logContext().log(log::INFO,
+        "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");
+  } catch (cta::exception::Exception & ex) {
+    {
+      log::ScopedParamContainer params(m_processManager.logContext());
+      params.add("Message", ex.getMessageValue());
+      m_processManager.logContext().log(log::ERR, 
+          "In GarbageCollectorHandler::runChild(): received an exception. Backtrace follows.");
+    }
+    m_processManager.logContext().logBacktrace(log::ERR, ex.backtrace());
+  }
   agentHeartbeat.stopAndWaitThread();
   return EXIT_SUCCESS;
 }
