@@ -266,7 +266,7 @@ int GarbageCollectorHandler::runChild() {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector"));
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;

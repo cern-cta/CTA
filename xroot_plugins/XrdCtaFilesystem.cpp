@@ -520,7 +520,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_xrdOucBuffPool(1024, 65536), // XrdOucBuffPool(minsz, maxsz)
   m_ctaConf("/etc/cta/cta-frontend.conf"),
   m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
-  m_backendPopulator(*m_backend),
+  m_backendPopulator(*m_backend, "Frontend"),
   m_scheddb(*m_backend, m_backendPopulator.getAgentReference()) {
   using namespace cta;
   

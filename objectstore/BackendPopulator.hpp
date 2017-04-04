@@ -32,8 +32,8 @@ public:
    * 
    * @param be The objectstore backend
    */
-  BackendPopulator(cta::objectstore::Backend & be);
-
+  BackendPopulator(cta::objectstore::Backend & be, const std::string &agentType="OStoreDBFactoryAgent");
+  
   /**
    * Destructor
    */

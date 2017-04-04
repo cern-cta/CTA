@@ -819,7 +819,9 @@ int DriveHandler::runChild() {
   std::unique_ptr<cta::objectstore::BackendPopulator> backendPopulator;
   std::unique_ptr<cta::OStoreDBWithAgent> osdb;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend));
+    std::string processName="DriveProcess-";
+    processName+=m_configLine.unitName;
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName));
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
