@@ -328,7 +328,7 @@ int GarbageCollectorHandler::runChild() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::runChild
+// GarbageCollectorHandler::shutdown
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus GarbageCollectorHandler::shutdown() {
   // We will signal the shutdown to the child process by sending a byte over the 
@@ -344,7 +344,7 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::shutdown() {
 }
 
 //------------------------------------------------------------------------------
-// GarbageCollectorHandler::runChild
+// GarbageCollectorHandler::~GarbageCollectorHandler
 //------------------------------------------------------------------------------
 GarbageCollectorHandler::~GarbageCollectorHandler() {
   // If we still have a child process (should not), just stop it the hard way.
