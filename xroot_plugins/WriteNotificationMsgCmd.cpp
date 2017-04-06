@@ -19,17 +19,17 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
-
 #include "xroot_plugins/WriteNotificationMsgCmd.hpp"
 #include "xroot_plugins/WriteNotificationMsgCmdLineArgs.hpp"
 
 #include <fstream>
+#include <google/protobuf/util/json_util.h>
 #include <iostream>
+#include <pwd.h>
 #include <stdint.h>
 #include <string>
+#include <sys/types.h>
 #include <unistd.h>
-
-#include <google/protobuf/util/json_util.h>
 
 namespace cta {
 namespace xroot_plugins {
@@ -149,17 +149,23 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
 // getUsername
 //------------------------------------------------------------------------------
 std::string WriteNotificationMsgCmd::getUsername() {
-  char buf[128];
-  const int getLoginRet = getlogin_r(buf, sizeof(buf));
+  const uid_t uid = geteuid();
+  struct passwd pw;
+  char buf[1024];
+  struct passwd *result = nullptr;
+  const int ret = getpwuid_r(uid, &pw, buf, sizeof(buf), &result);
 
-  if(0 != getLoginRet) {
-    const std::string errorMsg = utils::errnoToString(getLoginRet);
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: getlogin_r() failed: " + errorMsg);
+  if (nullptr != result) {
+    return result->pw_name;
+  } else {
+    std::string errMsg;
+    if(0 != ret) {
+      errMsg = std::string("getpwuid_r() failed: ") + utils::errnoToString(ret);
+    } else {
+      errMsg = "Username not found in password database";
+    }
+    throw exception::Exception(std::string("Failed to determine username: ") + errMsg);
   }
-
-  buf[sizeof(buf) - 1] = '\0';
-
-  return buf;
 }
 
 //------------------------------------------------------------------------------
