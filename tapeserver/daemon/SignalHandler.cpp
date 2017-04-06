@@ -189,7 +189,6 @@ SubprocessHandler::ProcessingStatus SignalHandler::processSigChild() {
   // Our sigchild is now acknowledged
   m_sigChildPending = false;
   SubprocessHandler::ProcessingStatus ret;
-  ret.shutdownRequested = m_shutdownRequested;
   ret.shutdownComplete = true;
   if (m_shutdownRequested) {
     ret.nextTimeout = m_shutdownStartTime+m_timeoutDuration;

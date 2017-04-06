@@ -227,6 +227,7 @@ void DriveHandler::kill() {
       m_sessionEndContext.pushOrReplace({"status", "failure"});
       m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
       m_sessionEndContext.clear();
+      m_pid=-1;
     } catch (exception::Exception & ex) {
       params.add("Exception", ex.getMessageValue());
       m_processManager.logContext().log(log::ERR, "In DriveHandler::kill(): failed to kill existing subprocess");
@@ -668,7 +669,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
-  } catch (exception::Exception ex) {
+  } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
           .add("driveUnit", m_configLine.unitName)
@@ -727,6 +728,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     // In all cases we log the end of the session.
     m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
     m_sessionEndContext.clear();
+    // And record we do not have a process anymore.
+    m_pid = -1;
   }
   return m_processingStatus;
 }
