@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/utils/utils.hpp"
 
 #include "xroot_plugins/WriteNotificationMsgCmd.hpp"
 #include "xroot_plugins/WriteNotificationMsgCmdLineArgs.hpp"
@@ -149,9 +150,11 @@ int WriteNotificationMsgCmd::exceptionThrowingMain(const int argc, char *const *
 //------------------------------------------------------------------------------
 std::string WriteNotificationMsgCmd::getUsername() {
   char buf[128];
+  const int getLoginRet = getlogin_r(buf, sizeof(buf));
 
-  if(0 != getlogin_r(buf, sizeof(buf))) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: getlogin_r() failed");
+  if(0 != getLoginRet) {
+    const std::string errorMsg = utils::errnoToString(getLoginRet);
+    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: getlogin_r() failed: " + errorMsg);
   }
 
   buf[sizeof(buf) - 1] = '\0';
