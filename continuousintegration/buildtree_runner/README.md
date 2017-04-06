@@ -70,7 +70,7 @@ The test instance can then be created by running (typically):
 
 ```
 cd ~/CTA/continuousintegration/orchestration
-./create_instance.sh -n ctatest -b /home/eric -B CTA-build
+./create_instance.sh -n ctatest -b /home/eric -B CTA-build -D -O
 ```
 
 and the tests will run like in the continuous integration environment.
