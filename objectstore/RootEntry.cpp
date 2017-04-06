@@ -82,6 +82,11 @@ void RootEntry::removeIfEmpty() {
   remove();
 }
 
+void RootEntry::garbageCollect(const std::string& presumedOwner) {
+  // The root entry cannot be garbage collected.
+  throw ForbiddenOperation("In RootEntry::garbageCollect(): RootEntry cannot be garbage collected");
+}
+
 // =============================================================================
 // ========== Archive queues manipulations =====================================
 // =============================================================================

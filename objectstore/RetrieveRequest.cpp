@@ -46,6 +46,10 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
+void RetrieveRequest::garbageCollect(const std::string& presumedOwner) {
+  throw cta::exception::Exception("In RetrieveRequest::garbageCollect(): not implemented.");
+}
+
 void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();

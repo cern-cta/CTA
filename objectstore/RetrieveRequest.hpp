@@ -42,6 +42,7 @@ public:
   RetrieveRequest(const std::string & address, Backend & os);
   RetrieveRequest(GenericObject & go);
   void initialize();
+  void garbageCollect(const std::string &presumedOwner) override;
   // Job management ============================================================
   void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);

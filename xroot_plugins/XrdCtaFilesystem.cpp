@@ -556,7 +556,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   log(log::INFO, std::string("cta-frontend started"), params);
   
   // Start the heartbeat thread for the agent object
-  m_agentHeartbeat = cta::make_unique<objectstore::AgentHeartbeatThread> (m_backendPopulator.getAgentReference(), *m_backend);
+  m_agentHeartbeat = cta::make_unique<objectstore::AgentHeartbeatThread> (m_backendPopulator.getAgentReference(), *m_backend, *m_log);
   m_agentHeartbeat->startThread();
 }
 

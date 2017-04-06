@@ -17,6 +17,7 @@
  */
 
 #include "AgentHeartbeatThread.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -32,8 +33,17 @@ void AgentHeartbeatThread::stopAndWaitThread() {
 // AgentHeartbeatThread::stopAndWaitThread
 //------------------------------------------------------------------------------
 void AgentHeartbeatThread::run() {
-  while (std::future_status::ready != m_exit.get_future().wait_for(m_heartRate)) {
-    m_agentReference.bumpHeatbeat(m_backend);
+  log::LogContext lc(m_logger);
+  try {
+    while (std::future_status::ready != m_exit.get_future().wait_for(m_heartRate)) {
+      m_agentReference.bumpHeatbeat(m_backend);
+    }
+  } catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("Message", ex.getMessageValue());
+    lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting.");
+    lc.logBacktrace(log::ERR, ex.backtrace());
+    ::exit(EXIT_FAILURE);
   }
 }
 

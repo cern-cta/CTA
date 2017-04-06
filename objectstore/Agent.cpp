@@ -107,6 +107,11 @@ bool cta::objectstore::Agent::isEmpty() {
   return true;
 }
 
+void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner) {
+  throw cta::exception::Exception("In Agent::garbageCollect(): not implemented.");
+}
+
+
 
 /*void cta::objectstore::Agent::create() {
   if (!m_setupDone)

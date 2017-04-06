@@ -111,13 +111,10 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
       params.add("agentAddress", ag.getAddressIfSet())
             .add("gcAgentAddress", m_ourAgent.getAddressIfSet());
       lc.log(log::INFO, "In GarbageCollector::aquireTargets(): started tracking an untracked agent");
-      // And we can remove the now dangling pointer from the agent register
-      // (we hold an exclusive lock all along)
-      m_agentRegister.trackAgent(ag.getAddressIfSet());
-      m_agentRegister.commit();
       // Agent is officially our, we can remove it from the untracked agent's
       // list
       m_agentRegister.trackAgent(ag.getAddressIfSet());
+      m_agentRegister.commit();
       // Agent is now officially ours, let's track it. We have the release the 
       // lock to the agent before constructing the watchdog, which builds
       // its own agent objects (and need to lock the object store representation)
@@ -179,7 +176,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
        go.fetch();
        // Call GenericOpbject's garbage collect method, which in turn will
        // delegate to the object type's garbage collector.
-       go.garbageCollect(goLock, address);
+       go.garbageCollectDispatcher(goLock, address);
        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
      } else {
        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");

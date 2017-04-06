@@ -43,6 +43,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotAllocated);
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
+  CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
   
   // In memory initialiser
   void initialize();
@@ -52,6 +53,9 @@ public:
   
   // Safe remover
   void removeIfEmpty();
+  
+  // Garbage collection (disallowed for root entry).
+  void garbageCollect(const std::string &presumedOwner) override;
   
   // ArchiveQueue handling  ====================================================
   CTA_GENERATE_EXCEPTION_CLASS(ArchivelQueueNotEmpty);

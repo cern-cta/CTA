@@ -86,21 +86,37 @@ namespace {
   }
 }
 
-void GenericObject::garbageCollect(ScopedExclusiveLock& lock, 
+void GenericObject::garbageCollect(const std::string& presumedOwner) {
+  throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
+}
+
+void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock, 
     const std::string &presumedOwner) {
   checkHeaderWritable();
   switch(m_header.type()) {
     case serializers::AgentRegister_t:
       garbageCollectWithType<AgentRegister>(this, lock, presumedOwner);
       break;
+    case serializers::Agent_t:
+      garbageCollectWithType<Agent>(this, lock, presumedOwner);
+      break;
     case serializers::DriveRegister_t:
       garbageCollectWithType<DriveRegister>(this, lock, presumedOwner);
+      break;
+    case serializers::SchedulerGlobalLock_t:
+      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner);
       break;
     case serializers::ArchiveRequest_t:
       garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner);
       break;
+    case serializers::RetrieveRequest_t:
+      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner);
+      break;
     case serializers::ArchiveQueue_t:
       garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner);
+      break;
+    case serializers::RetrieveQueue_t:
+      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner);
       break;
     default: {
       std::stringstream err;

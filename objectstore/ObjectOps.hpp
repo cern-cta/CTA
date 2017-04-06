@@ -250,6 +250,8 @@ protected:
   
   ObjectOps(Backend & os): ObjectOpsBase(os) {}
   
+  virtual ~ObjectOps() {}
+  
 public:
   void fetch() {
     // Check that the object is locked, one way or another
@@ -281,10 +283,7 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  void garbageCollect(const std::string &presumedOwner) {
-    throw WrongTypeForGarbageCollection("In ObjectOps::garbageCollect. "
-      "This function should have been overloaded in derived class");
-  }
+  virtual void garbageCollect(const std::string &presumedOwner) = 0;
   
 protected:
   

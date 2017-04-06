@@ -28,11 +28,8 @@ public:
   GenericObject(const std::string & name, Backend & os):
     ObjectOps<serializers::GenericObject, serializers::GenericObject_t>(os, name) {};
     
-  class ForbiddenOperation: public cta::exception::Exception {
-  public:
-    ForbiddenOperation(const std::string & w): cta::exception::Exception(w) {}
-  };
-    
+  CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
+  
   /** Overload of ObjectOps's implementation: this special object tolerates all
    * types of objects */
   void fetch();
@@ -52,6 +49,10 @@ public:
    * Object is only used to manipulate existing objects */
   void initialize();
   
+  /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
+   * Object cannot be garbage collected as-is */
+  void garbageCollect(const std::string& presumedOwner) override;
+  
   /** This dispatcher function will call the object's garbage collection function.
    * It also handles the passed lock and returns is unlocked.
    * The object is expected to be passed exclusive locked and already fetched.
@@ -60,7 +61,7 @@ public:
    * @param lock reference to the generic object's lock
    * @param presumedOwner address of the agent which pointed to the object
    */
-  void garbageCollect(ScopedExclusiveLock & lock, const std::string &presumedOwner);
+  void garbageCollectDispatcher(ScopedExclusiveLock & lock, const std::string &presumedOwner);
   
   /** This dispatcher function will call the object's dump.
    * It also handles the passed lock.
@@ -70,11 +71,6 @@ public:
   std::string dump(ScopedSharedLock & lock);
   
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
-  /**
-   * This static function is a helper that will garbage collect the object at 
-   * the given address
-   */
-  static void garbageCollect(const std::string & address);
   
   /**
    * This method will extract contents of the generic object's header and

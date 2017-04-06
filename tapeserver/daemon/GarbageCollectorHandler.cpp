@@ -291,7 +291,7 @@ int GarbageCollectorHandler::runChild() {
   }
   
   // The object store is accessible, let's turn the agent heartbeat on.
-  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend);
+  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, m_processManager.logContext().logger());
   agentHeartbeat.startThread();
   
   // Create the garbage collector itself

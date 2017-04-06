@@ -20,6 +20,7 @@
 
 #include "AgentReference.hpp"
 #include "common/threading/Thread.hpp"
+#include "common/log/Logger.hpp"
 
 #include <future>
 #include <chrono>
@@ -36,8 +37,8 @@ public:
    * Constructor
    * @param agentReference reference to the agent object.
    */
-  AgentHeartbeatThread(AgentReference & agentReference, Backend & backend):
-    m_backend(backend) , m_agentReference(agentReference) {}
+  AgentHeartbeatThread(AgentReference & agentReference, Backend & backend, log::Logger & logger):
+    m_backend(backend) , m_agentReference(agentReference), m_logger(logger) {}
   
   /**
    * Start the thread
@@ -64,6 +65,9 @@ private:
   
   /// The heartbeat update rate.
   std::chrono::seconds const m_heartRate = std::chrono::seconds(30);
+  
+  /// The logging context
+  log::Logger & m_logger;
 };
 
 }} // namespace cta::objectstore

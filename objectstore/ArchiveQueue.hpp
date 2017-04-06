@@ -97,7 +97,7 @@ public:
  
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   // Garbage collection
-  void garbageCollect(const std::string &presumedOwner);
+  void garbageCollect(const std::string &presumedOwner) override;
   
   std::string dump();
 };

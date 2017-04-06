@@ -192,13 +192,6 @@ void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFile
   } while (found);
 }
 
-
-
-
-
-
-
-
-
-
-
+void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner) {
+  throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
+}

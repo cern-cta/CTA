@@ -169,6 +169,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent) {
     break;
   case AgentOperation::Heartbeat:
     agent.bumpHeartbeat();
+    break;
   default:
     throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
   }

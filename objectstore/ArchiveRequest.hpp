@@ -95,7 +95,7 @@ public:
   };
   
   std::list<JobDump> dumpJobs();
-  void garbageCollect(const std::string &presumedOwner);
+  void garbageCollect(const std::string &presumedOwner) override;
   std::string  dump();
 };
 

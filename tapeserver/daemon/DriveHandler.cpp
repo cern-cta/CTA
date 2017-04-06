@@ -857,7 +857,7 @@ int DriveHandler::runChild() {
   }
   
   // The object store is accessible, let's turn the agent heartbeat on.
-  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend);
+  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, m_processManager.logContext().logger());
   agentHeartbeat.startThread();
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
