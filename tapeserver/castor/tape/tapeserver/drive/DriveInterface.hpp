@@ -33,6 +33,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeOut.hpp"
 
+#include <list>
+
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
  * to allow unit testing against system wrapper.
@@ -230,7 +232,7 @@ namespace drive {
     virtual lbpToUse getLbpToUse() = 0;
     virtual bool hasTapeInPlace() = 0;
     
-    virtual void queryRAO(char *filename) = 0;
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files) = 0;
 
     /**
      * The configuration of the tape drive as parsed from the TPCONFIG file.

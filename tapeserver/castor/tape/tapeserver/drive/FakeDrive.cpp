@@ -297,7 +297,8 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
 
-void castor::tape::tapeserver::drive::FakeDrive::queryRAO(char *filename)  {
+void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
+            std::list<SCSI::Structures::RAO::blockLims> &files)  {
   throw cta::exception::Exception("In DriveFakeDrive::queryRAO: Not implemented.");
 }
 

@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <memory>
 #include <string>
+#include <list>
 
 char gen_random() {
     static const char alphanum[] =
@@ -68,6 +69,18 @@ public:
       "", cta::common::dataStructures::TapeFile()) {
   }
 };
+
+std::vector<std::string> split(std::string to_split, std::string delimiter) {
+  std::vector<std::string> toBeReturned;
+  int pos = 0;
+  while ((pos = to_split.find(delimiter)) != -1) {
+    std::string token = to_split.substr(0, pos);
+    toBeReturned.push_back(token);
+    to_split.erase(0, pos + delimiter.length());
+  }
+  toBeReturned.push_back(to_split);
+  return toBeReturned;
+}
 
 int main (int argc, char *argv[])
 {
@@ -227,7 +240,27 @@ int main (int argc, char *argv[])
                 }
                 else {
                     drive->rewind();
-                    drive->queryRAO(argv[1]);
+                    
+                    std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
+                    std::ifstream ns_file_pick(argv[1]);
+                    if (ns_file_pick.is_open()) {
+                      std::string line;
+                      while (getline(ns_file_pick, line)) {
+                        std::vector<std::string> tokens = split(line, ":");
+                        castor::tape::SCSI::Structures::RAO::blockLims lims;
+                        std::cout << tokens[0].c_str() << std::endl;
+                        tokens[0] += '\0';
+                        strcpy((char*)lims.fseq, tokens[0].c_str());
+                        lims.begin = std::stoi(tokens[1]);
+                        lims.end = std::stoi(tokens[2]);                        
+                        files.push_back(lims);
+                      }
+                    }
+                    else {
+                      throw -1;
+                    }
+                    
+                    drive->queryRAO(files);
                 }
             }
 

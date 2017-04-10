@@ -1309,6 +1309,7 @@ namespace SCSI {
          blockLims() {
            zeroStruct(this);
          }
+         unsigned char fseq[10];
          int begin;
          int end;
        };

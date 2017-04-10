@@ -458,7 +458,7 @@ namespace drive {
      * @param filename The name of the file containing the sequential order of
      * a list of files [line format: ID:BLOCK_START:BLOCK_END]
      */
-    virtual void queryRAO(char *filename);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files);
 
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
@@ -507,7 +507,7 @@ namespace drive {
      * and a pair of block limits
      * @param maxSupported The maximum number of UDS supported - obtained by getLimitUDS()
      */
-    virtual void generateRAO(std::map<std::string, SCSI::Structures::RAO::blockLims> blocks, int maxSupported);
+    virtual void generateRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
     
     /**
      * Receive the Recommended Access Order

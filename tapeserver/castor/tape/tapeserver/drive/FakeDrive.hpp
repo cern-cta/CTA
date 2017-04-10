@@ -109,7 +109,7 @@ namespace drive {
     virtual bool isTapeBlank();
     virtual lbpToUse getLbpToUse();
     virtual bool hasTapeInPlace();
-    virtual void queryRAO(char *filename);
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files);
   };
   
 }}}}
