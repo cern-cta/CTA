@@ -34,8 +34,9 @@ void AgentHeartbeatThread::stopAndWaitThread() {
 //------------------------------------------------------------------------------
 void AgentHeartbeatThread::run() {
   log::LogContext lc(m_logger);
+  auto exitFuture = m_exit.get_future();
   try {
-    while (std::future_status::ready != m_exit.get_future().wait_for(m_heartRate)) {
+    while (std::future_status::ready != exitFuture.wait_for(m_heartRate)) {
       m_agentReference.bumpHeatbeat(m_backend);
     }
   } catch (cta::exception::Exception & ex) {
