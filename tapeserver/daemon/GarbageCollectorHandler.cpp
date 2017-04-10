@@ -337,7 +337,7 @@ SubprocessHandler::ProcessingStatus GarbageCollectorHandler::shutdown() {
   if (!m_socketPair.get()) {
     m_processManager.logContext().log(log::WARNING, "In GarbageCollectorHandler::shutdown(): no socket pair");
   } else {
-    m_processManager.logContext().log(log::WARNING, "In GarbageCollectorHandler::shutdown(): sent shutdown message to child process");
+    m_processManager.logContext().log(log::INFO, "In GarbageCollectorHandler::shutdown(): sent shutdown message to child process");
     m_socketPair->send("\0");
   }
   return m_processingStatus;
