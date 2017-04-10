@@ -1,0 +1,28 @@
+/*!
+\page CTA-EOS Reconciliation Strategy
+
+\subsection{Reconciling EOS file info and CTA disk file info}
+
+This should be the most common scenario causing discrepancies between the EOS namespace and the disk file info within 
+the CTA catalogue. The proposal is to attack this in two ways: first (already done) we piggyback disk file info on most 
+commands acting on CTA Archive files ("archive", "retrieve", "cancelretrieve", etc.), second (to be agreed with Andreas) 
+EOS could have a trigger on file renames or other file information changes (owner, group, path, etc.) that calls our 
+updatefileinfo command with the updated fields. In addition (also to be agreed with Andreas) there should also be a 
+separate low priority process (a sort of EOS-side reconciliation process) going through the entire EOS namespace 
+periodically calling updatefileinfo on each of the known files, we would also store the date when this update function 
+was called (see below to know why).
+
+\subsection{Reconciling EOS deletes which haven't been propagated to CTA}
+
+Say that the above EOS-side low-priority reconciliation process takes on average 3 months and it is run continuously. We 
+could use the last reconciliation date to determine the list of possible candidates of files which EOS does not know 
+about anymore, by just taking the ones which haven't been updated say in the last 6 months. Since we have the EOS 
+instance name and EOS file id for each file (and Andreas confirmed that IDs are unique and never reused within a single
+instance), we can then automatically check (through our own CTA-side reconciliation process) whether indeed these files 
+exist or not. For the ones that still exist we notify EOS admins for a possible bug in their reconciliation process and 
+we ask them to issue the updatefileinfo command, for the ones which don't exist anymore we double check with their 
+owners before deleting them from CTA.
+
+Note: It's important to note that we do not reconcile storage class information. Any storage class change is triggered 
+by the EOS user and it is synchronous: once we successfully record the change our command returns.
+*/

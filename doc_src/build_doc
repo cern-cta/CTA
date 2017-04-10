@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Build PDF + HTML documentation from doxygen sources
+#
+# Proof-of-concept: For production, convert it to CMake
+#
+# Required packages:
+#
+# doxygen-latex
+# graphviz
+
+# Convert .md for Doxygen use
+for f in $(find .. -type f -name '*.md')
+do
+  cp $f z_${RANDOM}_$(basename $f)
+done
+
+doxygen
+cd latex
+pdflatex refman.tex
+pdflatex refman.tex
+mv refman.pdf ../cta.pdf

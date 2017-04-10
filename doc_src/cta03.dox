@@ -1,0 +1,66 @@
+/*!
+\page EOS-CTA Authorization Guidelines
+
+One of the requirements of CTA is to limit the crosstalk among different EOS
+instances. In more detail:
+
+\begin{enumerate}
+\item A listStorageClass command should return the list of storage classes 
+   belonging to the instance from where the command was executed only
+
+\item A queueArchive command should be authorized only if:
+\begin{itemize}
+   \item the instance provided in the command line coincides with the instance from
+     where the command was executed
+   \item the storage class provided in the command line belongs to the instance from
+     where the command was executed
+   \item the EOS username and/or group (of the original archive requester) provided
+     in the command line belongs to the instance from where the command was
+     executed
+\end{itemize}
+
+\item A queueRetrieve command should be authorized only if:
+\begin{itemize}
+   \item the instance of the requested file coincides with the instance from where 
+     the command was executed
+   \item the EOS username and/or group (of the original retrieve requester) provided
+     in the command line belongs to the instance from where the command was
+     executed
+\end{itemize}
+
+\item A deleteArchive command should be authorized only if:
+\begin{itemize}
+   \item the instance of the file to be deleted coincides with the instance from
+     where the command was executed
+   \item the EOS username and/or group (of the original delete requester) provided
+     in the command line belongs to the instance from where the command was
+     executed
+\end{itemize}
+
+\item A cancelRetrieve command should be authorized only if:
+\begin{itemize}
+   \item the instance of the file to be canceled coincides with the instance from
+     where the command was executed
+   \item the EOS username and/or group (of the original cancel requester) provided
+     in the command line belongs to the instance from where the command was
+     executed
+\end{itemize}
+
+\item An updateFileStorageClass command should be authorized only if:
+\begin{itemize}
+   \item the instance of the file to be updated coincides with the instance from
+     where the command was executed
+   \item the storage class provided in the command line belongs to the instance from
+     where the command was executed
+   \item the EOS username and/or group (of the original update requester) provided
+     in the command line belongs to the instance from where the command was
+     executed
+\end{itemize}
+
+\item An updateFileInfo command should be authorized only if:
+\begin{itemize}
+   \item the instance of the file to be updated coincides with the instance from
+     where the command was executed
+\end{itemize}
+\end{enumerate}
+*/

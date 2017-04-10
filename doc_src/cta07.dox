@@ -1,0 +1,184 @@
+/*!
+\page The Command Line Interface
+
+\subsection{Administrator commands}
+
+These are the commands that only administrators are allowed to use to operate CTA. For each command there is a short version and a long one, example: \texttt{op/operator}. Subcommands (\texttt{add}, \texttt{rm}, \texttt{ls}, \texttt{ch}, \texttt{reclaim}) do not have short versions.
+
+\tt
+\begin{itemize}
+\item cta ad/admin
+\item cta ah/adminhost{\normalfont \footnote{hostgroups also? not for the prototype}}
+\item cta us/user{\normalfont \footnote{or maybe power users? or egroups? will see later, for the moment just users}}
+\item cta tp/tapepool{\normalfont \footnote{listing the tapepools should include also stats such as total number of tapes and number of free tapes to help operator}}
+\item cta ar/archiveroute
+\item cta ll/logicallibrary
+\item cta ta/tape
+\item cta sc/storageclass{\normalfont \footnote{storage classes should be as static as possible, no change nor deletion if there is at least 1 directory using it}}
+\item cta lpa/listpendingarchives
+\item cta lpr/listpendingretrieves
+\item cta lds/listdrivestates{\normalfont \footnote{more or less the ``drive'' part of the current showqueues -x}}
+\end{itemize}
+\normalfont
+
+The detailed list of the commands with their subcommands and parameters follows.
+
+\subsubsection{\tt cta admin}
+This command is used to manage the administrators of the system. These are special users allowed to perform the admin commands described in this section.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{3}{*}{cta ad/admin add} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{3}{*}{cta ad/admin ch} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{2}{*}{cta ad/admin rm} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ \hline
+  cta ad/admin ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta adminhost}
+This command is used to manage the administrator hosts. These are specific machines from which administrators may issue the admin commands described in this section.  
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{2}{*}{cta ah/adminhost add} & -{}-name/-n <\textit{host\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{2}{*}{cta ah/adminhost ch} & -{}-name/-n <\textit{host\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  cta ah/adminhost rm & -{}-name/-n <\textit{host\_name}> \\ \hline
+  cta ah/adminhost ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+  
+\subsubsection{\tt cta user}
+This command is used to manage the ``normal'' users of CTA. These are typically physicists and experiment data storage managers, who are able to perform only the actions described in the next section (\textit{archive}, \textit{retrieve}, etc.).
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{3}{*}{cta us/user add} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{3}{*}{cta us/user ch} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{2}{*}{cta us/user rm} & -{}-uid/-u <\textit{uid}> \\ & -{}-gid/-g <\textit{gid}> \\ \hline
+  cta us/user ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+  
+\subsubsection{\tt cta tapepool}
+This command is used to manage the tape pools, which are logical sets of tapes. These are useful to manage the life cycle of tapes tolabel $\rightarrow$ supply $\rightarrow$ user pool $\rightarrow$ erase $\rightarrow$ tolabel.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{3}{*}{cta tp/tapepool add} & -{}-name/-n <\textit{tapepool\_name}> \\ & -{}-partialtapesnumber/-p <\textit{number\_of\_partial\_tapes}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{3}{*}{cta tp/tapepool ch} & -{}-name/-n <\textit{tapepool\_name}> \\ & -{}-partialtapesnumber/-p <\textit{number\_of\_partial\_tapes}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  cta tp/tapepool rm & -{}-name/-n <\textit{tapepool\_name}> \\ \hline
+  cta tp/tapepool ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta archiveroute}
+This command is used to manage the archive routes, which are the policies linking name space entries to tape pools.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{4}{*}{cta ar/archiveroute add} & -{}-storageclass/-s <\textit{storage\_class\_name}> \\ & -{}-copynb/-c <\textit{copy\_number}> \\ & -{}-tapepool/-t <\textit{tapepool\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{4}{*}{cta ar/archiveroute ch} & -{}-storageclass/-s <\textit{storage\_class\_name}> \\ & -{}-copynb/-c <\textit{copy\_number}> \\ & -{}-tapepool/-t <\textit{tapepool\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{2}{*}{cta ar/archiveroute rm} & -{}-storageclass/-s <\textit{storage\_class\_name}> \\ & -{}-copynb/-c <\textit{copy\_number}> \\ \hline
+  cta ar/archiveroute ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta logicallibrary}
+This command is used to manage the logical libraries. These are logical groupings of tapes and drives based on physical location and tape drive capabilities. Basically a tape can be accessed by a drive if it is in the same physical library and if the drive is capable of reading or writing the tape, in that case we typically have that that tape and that drive are in the same logical library.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{2}{*}{cta ll/logicallibrary add} & -{}-name/-n <\textit{logical\_library\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{2}{*}{cta ll/logicallibrary ch} & -{}-name/-n <\textit{logical\_library\_name}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  cta ll/logicallibrary rm & -{}-name/-n <\textit{logical\_library\_name}> \\ \hline
+  cta ll/logicallibrary ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta tape}
+This command is used to manage the tapes. These are the physical containers of data.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{5}{*}{cta ta/tape add} & -{}-vid/-v <\textit{vid}> \\ & -{}-logicallibrary/-l <\textit{logical\_library\_name}> \\ & -{}-tapepool/-t <\textit{tapepool\_name}> \\ & -{}-capacity/-c <\textit{capacity\_in\_bytes}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{5}{*}{cta ta/tape ch} & -{}-vid/-v <\textit{vid}> \\ & -{}-logicallibrary/-l <\textit{logical\_library\_name}> \\ & -{}-tapepool/-t <\textit{tapepool\_name}> \\ & -{}-capacity/-c <\textit{capacity\_in\_bytes}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  cta ta/tape rm & -{}-vid/-v <\textit{vid}> \\ \hline
+  cta ta/tape reclaim & -{}-vid/-v <\textit{vid}> \\ \hline
+  cta ta/tape ls & \\ \hline
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta storageclass}
+This command is used to manage the storage classes. These can be associated with CTA directories and they determine the number of tape copies the files in the directory should have.
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command \& Subcommand} & {\normalfont\it Parameters} \\ \hline  
+  \multirow{3}{*}{cta sc/storageclass add} & -{}-name/-n <\textit{storage\_class\_name}> \\ & -{}-copynb/-c <\textit{number\_of\_tape\_copies}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  \multirow{3}{*}{cta sc/storageclass ch} & -{}-name/-n <\textit{storage\_class\_name}> \\ & -{}-copynb/-c <\textit{number\_of\_tape\_copies}> \\ & -{}-comment/-m <\textit{``comment''}> \\ \hline
+  cta sc/storageclass rm & -{}-name/-n <\textit{storage\_class\_name}> \\ \hline
+  cta sc/storageclass ls & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{\tt cta list\ldots}
+This set of commands is used to list the pending archives and retrieves as well as the state of each tape drive (its status --up or down--, its contents, etc.).
+\tt
+\begin{center}
+\begin{tabular}{ l l }
+\rowcolor[gray]{0.9}{\normalfont\it Command} & {\normalfont\it Parameters} \\ \hline 
+  cta lpa/listpendingarchives & -{}-tapepool/-t <\textit{tapepool\_name}> \\ \hline
+  cta lpr/listpendingretrieves & -{}-vid/-v <\textit{vid}> \\ \hline  
+  cta lds/listdrivestates & \\ \hline  
+\end{tabular}
+\end{center}
+\normalfont
+
+\subsubsection{Questions administrators need to be able to answer}
+Questions that administrators need to be able to answer easily using commands above (not necessarily for the prototype, but to keep in mind):
+
+\begin{enumerate}
+\item Why is data not going to tape?
+\item Why is data not coming out of tapes?
+\item Which user is responsible for system overload?
+\end{enumerate}
+
+\subsection{User commands}
+
+For most commands there is a short version and a long one. Due to the limited number of USER commands it is not convenient (nor intuitive) to use subcommands here (anyway it could be applied only to storage classes).
+
+\tt
+\begin{itemize}
+\item cta lsc/liststorageclass{\normalfont \footnote{this command might seem a duplicate of the corresponding admin command but it actually shows a subset of fields (name and number of copies)}}
+\item cta ssc/setstorageclass <dirpath> <storage\_class\_name>
+\item cta csc/clearstorageclass <dirpath>
+\item cta mkdir <dirpath>
+\item cta chown <uid> <gid> <dirpath>{\normalfont \footnote{we may want to add \texttt{chmod} later on}}
+\item cta rmdir <dirpath>
+\item cta ls <dirpath>
+\item cta a/archive <src1> [<src2> [<src3> [...]]] <dst>
+\item cta r/retrieve <src1> [<src2> [<src3> [...]]] <dst>
+\item cta da/deletearchive <dst>{\normalfont \footnote{this works both on ongoing and finished archives, that is why it's called ``delete''}}
+\item cta cr/cancelretrieve <dst>{\normalfont \footnote{this clearly works only on ongoing retrieves, obviously does not delete destination files, that's why it's called ``cancel''}}
+\end{itemize}
+\normalfont
+
+\input{ObjectStore.tex}
+
+\input{TapeSessions.tex}
+*/

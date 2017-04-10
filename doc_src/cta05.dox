@@ -1,0 +1,282 @@
+/*!
+\page CTA-EOS command line interface
+
+EOS communicates with CTA by issuing commands on trusted hosts. EOS can archive a file, retrieve it, update its
+information/storage class, delete it or simply list the available storage classes. See the LimitingInstanceCrosstalk.txt
+file for more details on how these commands are authorized by CTA.
+
+\subsection{ARCHIVING from EOS to CTA}
+
+\begin{verbatim}
+1) EOS REQUEST: cta a/archive 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (archival), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (archival), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --diskid <disk_id>                 // string disk id of the file to be archived, 
+                                       // kept by CTA for reconciliation purposes
+
+    --instance <instance>              // string kept by CTA for authorizing the request 
+                                       // and for disaster recovery
+
+    --srcurl <src_URL>                 // string source URL of the file to archive of 
+                                       // the form scheme://host:port/opaque_part, 
+                                       // not kept by CTA after successful archival
+
+    --size <size>                      // uint64_t size in bytes kept by CTA for 
+                                       // correct archival and disaster recovery
+
+    --checksumtype <checksum_type>     // string checksum type (ex. ADLER32) kept by CTA 
+                                       // for correct archival and disaster recovery
+
+    --checksumvalue <checksum_value>   // string checksum value kept by CTA for correct 
+                                       // archival and disaster recovery
+
+    --storageclass <storage_class>     // string that determines how many copies and 
+                                       // which tape pools will be used for archival 
+                                       // kept by CTA for routing and authorization
+
+    --diskfilepath <disk_filepath>     // string the disk logical path kept by CTA 
+                                       // for disaster recovery and for logging
+
+    --diskfileowner <disk_fileowner>   // string owner username kept by CTA 
+                                       // for disaster recovery and for logging
+
+    --diskfilegroup <disk_filegroup>   // string owner group kept by CTA 
+                                       // for disaster recovery and for logging
+
+    --recoveryblob <recovery_blob>     // 2KB string kept by CTA for disaster recovery 
+                                       // (opaque string controlled by EOS)
+
+    --diskpool <diskpool_name>         // string used (and possibly kept)
+                                       // by CTA for proper drive allocation
+
+    --throughput <diskpool_throughput> // uint64_t (in bytes) used (and possibly kept) 
+                                       // by CTA for proper drive allocation
+
+2) CTA IMMEDIATE REPLY: CTA_ArchiveFileID or Error
+
+CTA_ArchiveFileID: string which is the unique ID of the CTA file to be kept by EOS 
+                   while file exists (for future retrievals). In case of retries, 
+                   a new ID will be given by CTA (as if it was a new file), 
+                   the old one can be discarded by EOS.
+
+3) CTA CALLBACK WHEN ARCHIVED SUCCESSFULLY: src_URL and copy_number with or without Error
+
+          src_URL: this is the same string provided in the EOS archival request
+      copy_number: indicates which copy number was archived
+             note: if multiple copies are archived there will be one callback per copy
+\end{verbatim}
+
+\subsection{RETRIEVING from CTA to EOS}
+
+\begin{verbatim}
+1) EOS REQUEST: cta r/retrieve
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (retrieval), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (retrieval), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --id <CTA_ArchiveFileID>           // uint64_t which is the unique ID of the CTA file
+
+    --dsturl <dst_URL>                 // string of the form scheme://host:port/opaque_part, 
+                                       // not kept by CTA after successful operation
+
+    --diskfilepath <disk_filepath>     // string the disk logical path kept by CTA 
+                                       // for disaster recovery and for logging
+
+    --diskfileowner <disk_fileowner>   // string owner username kept by CTA for 
+                                       // disaster recovery and for logging
+
+    --diskfilegroup <disk_filegroup>   // string owner group kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --recoveryblob <recovery_blob>     // 2KB string kept by CTA for disaster recovery 
+                                       // (opaque string controlled by EOS)
+
+    --diskpool <diskpool_name>         // string used (and possibly kept) by CTA for 
+                                       // proper drive allocation
+
+    --throughput <diskpool_throughput> // uint64_t (in bytes) used (and possibly kept) 
+                                       // by CTA for proper drive allocation
+
+Note: disk info is piggybacked
+
+2) CTA IMMEDIATE REPLY: Empty or Error
+
+3) CTA CALLBACK WHEN RETRIEVED SUCCESSFULLY: dst_URL with or without Error
+
+          dst_URL: this is the same string provided in the EOS retrieval request
+\end{verbatim}
+
+\subsection{DELETING an ARCHIVE FILE}
+
+\begin{verbatim}
+1) EOS REQUEST: cta da/deletearchive 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (deletion), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (deletion), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --id <CTA_ArchiveFileID>           // uint64_t which is the unique ID of the CTA file
+
+Note: This command may be issued even before the actual archival process has begun
+
+2) CTA IMMEDIATE REPLY: Empty or Error
+\end{verbatim}
+
+\subsection{CANCELING a SCHEDULED RETRIEVAL}
+
+\begin{verbatim}
+1) EOS REQUEST: cta cr/cancelretrieve 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (cancel), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (cancel), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --id <CTA_ArchiveFileID>           // uint64_t which is the unique ID of the CTA file
+
+    --dsturl <dst_URL>                 // this is the same string provided in the EOS 
+                                       // retrieval request
+
+    --diskfilepath <disk_filepath>     // string the disk logical path kept by CTA for 
+                                       // disaster recovery and for logging
+
+    --diskfileowner <disk_fileowner>   // string owner username kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --diskfilegroup <disk_filegroup>   // string owner group kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --recoveryblob <recovery_blob>     // 2KB string kept by CTA for disaster recovery 
+                                       // (opaque string controlled by EOS)
+
+Note: This command will succeed ONLY before the actual retrieval process has begun
+Note: disk info is piggybacked
+
+2) CTA IMMEDIATE REPLY: Empty or Error
+\end{verbatim}
+
+\subsection{UPDATE the STORAGE CLASS of a FILE}
+
+\begin{verbatim}
+1) EOS REQUEST: cta ufsc/updatefilestorageclass 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (update), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (update), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --id <CTA_ArchiveFileID>           // uint64_t which is the unique ID of the CTA file
+
+    --storageclass <storage_class>     // updated storage class which may or may not have 
+                                       // a different routing
+
+    --diskfilepath <disk_filepath>     // string the disk logical path kept by CTA for 
+                                       // disaster recovery and for logging
+
+    --diskfileowner <disk_fileowner>   // string owner username kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --diskfilegroup <disk_filegroup>   // string owner group kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --recoveryblob <recovery_blob>     // 2KB string kept by CTA for disaster recovery 
+                                       // (opaque string controlled by EOS)
+
+Note: This command DOES NOT change the number of tape copies! The number will change 
+      asynchronously (next repack or "reconciliation").
+Note: disk info is piggybacked
+
+2) CTA IMMEDIATE REPLY: Empty or Error
+\end{verbatim}
+
+\subsection{UPDATE INFO of a FILE}
+
+\begin{verbatim}
+1) EOS REQUEST: cta ufi/updatefileinfo 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --id <CTA_ArchiveFileID>           // uint64_t which is the unique ID of the CTA file
+
+    --diskfilepath <disk_filepath>     // string the disk logical path kept by CTA for 
+                                       // disaster recovery and for logging
+
+    --diskfileowner <disk_fileowner>   // string owner username kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --diskfilegroup <disk_filegroup>   // string owner group kept by CTA for disaster 
+                                       // recovery and for logging
+
+    --recoveryblob <recovery_blob>     // 2KB string kept by CTA for disaster recovery 
+                                       // (opaque string controlled by EOS)
+
+Note: This command is not executed on behalf of an EOS user. Instead it is part of a 
+      resynchronization process initiated by EOS.
+
+2) CTA IMMEDIATE REPLY: Empty or Error
+\end{verbatim}
+
+\subsection{LISTING all STORAGE CLASSES available}
+
+\begin{verbatim}
+1) EOS REQUEST: cta lsc/liststorageclass 
+
+    --encoded <"true" or "false">      // true if all following arguments are base64 encoded,
+                                       // false if all following arguments are in clear 
+                                       // (no mixing of encoded and clear arguments)
+
+    --user <user>                      // string name of the requester of the action (listing), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+    --group <group>                    // string group of the requester of the action (listing), 
+                                       // used for SLAs and logging, 
+                                       // not kept by CTA after successful operation
+
+2) CTA IMMEDIATE REPLY: storage class list
+\end{verbatim}
+*/
