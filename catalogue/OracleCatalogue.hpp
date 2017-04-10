@@ -20,6 +20,7 @@
 
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "rdbms/OcciColumn.hpp"
+#include "rdbms/PooledConn.hpp"
 
 #include <occi.h>
 #include <string.h>
@@ -90,7 +91,7 @@ public:
    *
    * @param events The tape file written events.
    */
-  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
+  void filesWrittenToTape(const std::set<TapeFileWritten> &events) override;
 
 private:
 
@@ -102,6 +103,10 @@ private:
    */
   common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid);
 
+  /**
+   * Structure used to assemble a batch of rows to insert into the TAPE_FILE
+   * table.
+   */
   struct TapeFileBatch {
     size_t nbRows;
     rdbms::OcciColumn vid;
@@ -112,6 +117,11 @@ private:
     rdbms::OcciColumn creationTime;
     rdbms::OcciColumn archiveFileId;
 
+    /**
+     * Constructor.
+     *
+     * @param nbRowsValue  The Number of rows to be inserted.
+     */
     TapeFileBatch(const size_t nbRowsValue):
       nbRows(nbRowsValue),
       vid("VID", nbRows),
@@ -122,7 +132,70 @@ private:
       creationTime("CREATION_TIME", nbRows),
       archiveFileId("ARCHIVE_FILE_ID", nbRows) {
     }
-  };
+  }; // struct TapeFileBatch
+
+  /**
+   * Structure used to assemble a batch of rows to insert into the ARCHIVE_FILE
+   * table.
+   */
+  struct ArchiveFileBatch {
+    size_t nbRows;
+    rdbms::OcciColumn archiveFileId;
+    rdbms::OcciColumn diskInstance;
+    rdbms::OcciColumn diskFileId;
+    rdbms::OcciColumn diskFilePath;
+    rdbms::OcciColumn diskFileUser;
+    rdbms::OcciColumn diskFileGroup;
+    rdbms::OcciColumn diskFileRecoveryBlob;
+    rdbms::OcciColumn size;
+    rdbms::OcciColumn checksumType;
+    rdbms::OcciColumn checksumValue;
+    rdbms::OcciColumn storageClassName;
+    rdbms::OcciColumn creationTime;
+    rdbms::OcciColumn reconciliationTime;
+
+    /**
+     * Constructor.
+     *
+     * @param nbRowsValue  The Number of rows to be inserted.
+     */
+    ArchiveFileBatch(const size_t nbRowsValue):
+      nbRows(nbRowsValue),
+      archiveFileId("ARCHIVE_FILE_ID", nbRows),
+      diskInstance("DISK_INSTANCE_NAME", nbRows),
+      diskFileId("DISK_FILE_ID", nbRows),
+      diskFilePath("DISK_FILE_PATH", nbRows),
+      diskFileUser("DISK_FILE_USER", nbRows),
+      diskFileGroup("DISK_FILE_GROUP", nbRows),
+      diskFileRecoveryBlob("DISK_FILE_RECOVERY_BLOB", nbRows),
+      size("SIZE_IN_BYTES", nbRows),
+      checksumType("CHECKSUM_TYPE", nbRows),
+      checksumValue("CHECKSUM_VALUE", nbRows),
+      storageClassName("STORAGE_CLASS_NAME", nbRows),
+      creationTime("CREATION_TIME", nbRows),
+      reconciliationTime("RECONCILIATION_TIME", nbRows) {
+    }
+  }; // struct ArchiveFileBatch
+
+  /**
+   * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
+   * specified TapeFileWritten events.
+   *
+   * This method has idempotent behaviour in the case where an ARCHIVE_FILE
+   * already exists.  Such a situation will occur when a file has more than one
+   * copy on tape.  The first tape copy will cause two successful inserts, one
+   * into the ARCHIVE_FILE table and one into the  TAPE_FILE table.  The second
+   * tape copy will try to do the same, but the insert into the ARCHIVE_FILE
+   * table will fail or simply bounce as the row will already exists.  The
+   * insert into the TABLE_FILE table will succeed because the two TAPE_FILE
+   * rows will be unique.
+   *
+   * @param conn The database connection.
+   * @param autocommitMode The autocommit mode of the SQL insert statement.
+   * @param events The tape file written events.
+   */
+  void idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn, const rdbms::Stmt::AutocommitMode autocommitMode,
+    const std::set<TapeFileWritten> &events);
 
 }; // class OracleCatalogue
 

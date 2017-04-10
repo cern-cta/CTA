@@ -222,13 +222,14 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::PooledConn &conn
 //------------------------------------------------------------------------------
 // filesWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &events) {
+void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
   try {
     if(events.empty()) {
       return;
     }
 
-    const auto &firstEvent = events.front();
+    auto firstEventItor = events.cbegin();
+    const auto &firstEvent = *firstEventItor;;
     checkTapeFileWrittenFieldsAreSet(firstEvent);
 
     std::lock_guard<std::mutex> m_lock(m_mutex);
@@ -257,7 +258,9 @@ void SqliteCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &event
       totalCompressedBytesWritten += event.compressedSize;
     }
 
-    const TapeFileWritten &lastEvent = events.back();
+    auto lastEventItor = events.cend();
+    lastEventItor--;
+    const TapeFileWritten &lastEvent = *lastEventItor;
     updateTape(conn, rdbms::Stmt::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 

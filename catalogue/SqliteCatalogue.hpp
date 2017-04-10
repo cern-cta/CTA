@@ -83,7 +83,7 @@ protected:
    *
    * @param events The tape file written events.
    */
-  void filesWrittenToTape(const std::list<TapeFileWritten> &events) override;
+  void filesWrittenToTape(const std::set<TapeFileWritten> &events) override;
 
 private:
 

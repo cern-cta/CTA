@@ -62,50 +62,15 @@ public:
    * Please not that this method does not record the specified value.  This
    * method only stores the length of the value.
    *
+   * This method tag dispatches using std::is_integral.
+   *
    * @param index The index of the field.
    * @param value The value whose length is to be recorded.
    */
   template<typename T> void setFieldLenToValueLen(const size_t index, const T &value) {
+    // Tag dispatch using std::is_integral
     setFieldLenToValueLen(index, value, std::is_integral<T>());
   }
-
-private:
-  /**
-   * Sets the length of the field at the specified index to the length of the
-   * specified value.
-   *
-   * Please not that this method does not record the specified value.  This
-   * method only stores the length of the value.
-   *
-   * @param index The index of the field.
-   * @param value The value whose length is to be recorded.
-   */
-  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::false_type) {
-    setFieldLen(index, value.length() + 1);
-  }
-
-  /**
-   * Sets the length of the field at the specified index to the length of the
-   * specified value.
-   *
-   * Please not that this method does not record the specified value.  This
-   * method only stores the length of the value.
-   *
-   * @param index The index of the field.
-   * @param value The value whose length is to be recorded.
-   */
-  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::true_type) {
-    setFieldLen(index, std::to_string(value).length() + 1);
-  }
-
-public:
-  /**
-   * Sets the length of the field at the specified index.
-   *
-   * @param index The index of the field.
-   * @param length The length of the field.
-   */
-  void setFieldLen(const size_t index, const ub2 length);
 
   /**
    * Returns the array of field lengths.
@@ -129,14 +94,94 @@ public:
   ub2 getMaxFieldLength() const;
 
   /**
+   * Sets the field at the specified index to the specified value.
+   *
+   * This method tag dispatches using std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value of the field.
+   */
+  template<typename T> void setFieldValue(const size_t index, const T &value) {
+    setFieldValue(index, value, std::is_integral<T>());
+  }
+
+private:
+
+  /**
+   * Sets the length of the field at the specified index.
+   *
+   * @param index The index of the field.
+   * @param length The length of the field.
+   */
+  void setFieldLen(const size_t index, const ub2 length);
+
+  /**
+   * Sets the length of the field at the specified index to the length of the
+   * specified value.
+   *
+   * Please not that this method does not record the specified value.  This
+   * method only stores the length of the value.
+   *
+   * The third unnamed parameter of this method is used to implement tag
+   * dispatching with std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value whose length is to be recorded.
+   */
+  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::false_type) {
+    setFieldLen(index, value.length() + 1);
+  }
+
+  /**
+   * Sets the length of the field at the specified index to the length of the
+   * specified value.
+   *
+   * Please not that this method does not record the specified value.  This
+   * method only stores the length of the value.
+   *
+   * The third unnamed parameter of this method is used to implement tag
+   * dispatching with std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value whose length is to be recorded.
+   */
+  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::true_type) {
+    setFieldLen(index, std::to_string(value).length() + 1);
+  }
+
+  /**
+   * Sets the field at the specified index to the specified value.
+   *
+   * The third unnamed parameter of this method is used to implement tag
+   * dispatching with std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value of the field.
+   */
+  template<typename T> void setFieldValue(const size_t index, const T &value, std::true_type) {
+    copyStrIntoField(index, std::to_string(value));
+  }
+
+  /**
+   * Sets the field at the specified index to the specified value.
+   *
+   * The third unnamed parameter of this method is used to implement tag
+   * dispatching with std::is_integral.
+   *
+   * @param index The index of the field.
+   * @param value The value of the field.
+   */
+  template<typename T> void setFieldValue(const size_t index, const T &value, std::false_type) {
+    copyStrIntoField(index, value);
+  }
+
+  /**
    * Copies the specified string value into the field at the specified index.
    *
    * @param index The index of the field.
    * @param str The string value.
    */
   void copyStrIntoField(const size_t index, const std::string &str);
-
-private:
 
   /**
    * The name of the column.

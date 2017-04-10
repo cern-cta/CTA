@@ -405,7 +405,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -577,7 +577,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
       
       // Create an archive file entry in the archive catalogue
       tapeFileWritten.archiveFileId=1000 + fseq;
@@ -597,7 +597,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -761,7 +761,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -904,7 +904,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";

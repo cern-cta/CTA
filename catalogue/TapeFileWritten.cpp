@@ -58,6 +58,13 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
 }
 
 //------------------------------------------------------------------------------
+// operator<
+//------------------------------------------------------------------------------
+bool TapeFileWritten::operator<(const TapeFileWritten &rhs) const {
+  return archiveFileId < rhs.archiveFileId;
+}
+
+//------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj) {

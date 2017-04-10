@@ -64,9 +64,9 @@ TEST_F(cta_rdbms_OcciColumnTest, setFieldLen) {
 
   ASSERT_EQ(0, col.getMaxFieldLength());
 
-  const ub2 field0Len = 1234;
-  col.setFieldLen(0, field0Len);
-  ASSERT_EQ(field0Len, col.getMaxFieldLength());
+  const ub2 field0Value = 1234;
+  col.setFieldLenToValueLen(0, field0Value);
+  ASSERT_EQ(5, col.getMaxFieldLength());
 }
 
 TEST_F(cta_rdbms_OcciColumnTest, setFieldLenToValueLen_stringValue) {
@@ -107,13 +107,13 @@ TEST_F(cta_rdbms_OcciColumnTest, setFieldLen_tooLate) {
   const size_t nbRows = 2;
   OcciColumn col(colName, nbRows);
 
-  const ub2 field0Len = 1234;
-  const ub2 field1Len = 5678;
-  col.setFieldLen(0, field0Len);
+  const ub2 field0Value = 1234;
+  const ub2 field1Value = 5678;
+  col.setFieldLenToValueLen(0, field0Value);
 
   col.getBuffer();
 
-  ASSERT_THROW(col.setFieldLen(1, field1Len), exception::Exception);
+  ASSERT_THROW(col.setFieldLenToValueLen(1, field1Value), exception::Exception);
 }
 
 TEST_F(cta_rdbms_OcciColumnTest, setFieldLen_invalidIndex) {
@@ -124,8 +124,8 @@ TEST_F(cta_rdbms_OcciColumnTest, setFieldLen_invalidIndex) {
   const size_t nbRows = 1;
   OcciColumn col(colName, nbRows);
 
-  const ub2 field1Len = 5678;
-  ASSERT_THROW(col.setFieldLen(1, field1Len), exception::Exception);
+  const ub2 field1Value = 5678;
+  ASSERT_THROW(col.setFieldLenToValueLen(1, field1Value), exception::Exception);
 }
 
 TEST_F(cta_rdbms_OcciColumnTest, getFieldLengths) {
@@ -136,18 +136,18 @@ TEST_F(cta_rdbms_OcciColumnTest, getFieldLengths) {
   const size_t nbRows = 3;
   OcciColumn col(colName, nbRows);
 
-  const ub2 field0Len = 1234;
-  const ub2 field1Len = 5678;
-  const ub2 field2Len = 9012;
-  col.setFieldLen(0, field0Len);
-  col.setFieldLen(1, field1Len);
-  col.setFieldLen(2, field2Len);
+  const ub2 field0Value = 1;
+  const ub2 field1Value = 22;
+  const ub2 field2Value = 333;
+  col.setFieldLenToValueLen(0, field0Value); // Field Length is 1 + 1
+  col.setFieldLenToValueLen(1, field1Value); // Field length is 2 + 1
+  col.setFieldLenToValueLen(2, field2Value); // Field length is 3 + 1
 
   ub2 *const fieldLens = col.getFieldLengths();
 
-  ASSERT_EQ(field0Len, fieldLens[0]);
-  ASSERT_EQ(field1Len, fieldLens[1]);
-  ASSERT_EQ(field2Len, fieldLens[2]);
+  ASSERT_EQ(2, fieldLens[0]);
+  ASSERT_EQ(3, fieldLens[1]);
+  ASSERT_EQ(4, fieldLens[2]);
 }
 
 TEST_F(cta_rdbms_OcciColumnTest, getBuffer) {
@@ -158,8 +158,8 @@ TEST_F(cta_rdbms_OcciColumnTest, getBuffer) {
   const size_t nbRows = 1;
   OcciColumn col(colName, nbRows);
 
-  const ub2 field0Len = 1234;
-  col.setFieldLen(0, field0Len);
+  const ub2 field0Value = 1234;
+  col.setFieldLenToValueLen(0, field0Value);
 
   char *const buf = col.getBuffer();
   ASSERT_NE(nullptr, buf);
@@ -184,16 +184,16 @@ TEST_F(cta_rdbms_OcciColumnTest, getMaxFieldLength) {
   const size_t nbRows = 4;
   OcciColumn col(colName, nbRows);
 
-  const ub2 field0Len = 1234;
-  const ub2 field1Len = 5678;
-  const ub2 field2Len = 9012;
-  const ub2 field3Len = 3456;
-  col.setFieldLen(0, field0Len);
-  col.setFieldLen(1, field1Len);
-  col.setFieldLen(2, field2Len);
-  col.setFieldLen(3, field3Len);
+  const ub2 field0Value = 1;
+  const ub2 field1Value = 22;
+  const ub2 field2Value = 333; // Max field length is 3 + 1
+  const ub2 field3Value = 1;
+  col.setFieldLenToValueLen(0, field0Value);
+  col.setFieldLenToValueLen(1, field1Value);
+  col.setFieldLenToValueLen(2, field2Value);
+  col.setFieldLenToValueLen(3, field3Value);
 
-  ASSERT_EQ(field2Len, col.getMaxFieldLength());
+  ASSERT_EQ(4, col.getMaxFieldLength());
 }
 
 TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_1_oneField) {
@@ -205,14 +205,14 @@ TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_1_oneField) {
   OcciColumn col(colName, nbRows);
 
   const std::string field0Value = "FIELD 0 VALUE";
-  col.setFieldLen(0, field0Value.length() + 1);
-  col.copyStrIntoField(0, field0Value);
+  col.setFieldLenToValueLen(0, field0Value);
+  col.setFieldValue(0, field0Value);
 
   char *const buf = col.getBuffer();
   ASSERT_EQ(field0Value, std::string(buf));
 }
 
-TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_twoFields) {
+TEST_F(cta_rdbms_OcciColumnTest, setFieldValue_twoFields) {
   using namespace cta;
   using namespace cta::rdbms;
 
@@ -222,10 +222,10 @@ TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_twoFields) {
 
   const std::string field0Value = "FIELD 0 VALUE";
   const std::string field1Value = "FIELD 1 VALUE";
-  col.setFieldLen(0, field0Value.length() + 1);
-  col.setFieldLen(1, field1Value.length() + 1);
-  col.copyStrIntoField(0, field0Value);
-  col.copyStrIntoField(1, field1Value);
+  col.setFieldLenToValueLen(0, field0Value);
+  col.setFieldLenToValueLen(1, field1Value);
+  col.setFieldValue(0, field0Value);
+  col.setFieldValue(1, field1Value);
 
   char *const buf = col.getBuffer();
   const char *const bufField0 = buf;
@@ -234,7 +234,7 @@ TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_twoFields) {
   ASSERT_EQ(field1Value, std::string(bufField1));
 }
 
-TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_tooLong) {
+TEST_F(cta_rdbms_OcciColumnTest, setFieldValue_tooLong) {
   using namespace cta;
   using namespace cta::rdbms;
 
@@ -242,9 +242,10 @@ TEST_F(cta_rdbms_OcciColumnTest, copyStrIntoField_tooLong) {
   const size_t nbRows = 1;
   OcciColumn col(colName, nbRows);
 
+  const std::string tooShortValue = "SHORT";
   const std::string field0Value = "FIELD 0 VALUE";
-  col.setFieldLen(0, 1);
-  ASSERT_THROW(col.copyStrIntoField(0, field0Value), exception::Exception);
+  col.setFieldLenToValueLen(0, tooShortValue);
+  ASSERT_THROW(col.setFieldValue(0, field0Value), exception::Exception);
 }
 
 } // namespace unitTests

@@ -81,7 +81,7 @@ bool cta::ArchiveJob::complete() {
   fileReport.storageClassName = archiveFile.storageClass;
   fileReport.tapeDrive = m_mount.getDrive();
   fileReport.vid = tapeFile.vid;
-  m_catalogue.filesWrittenToTape (std::list<catalogue::TapeFileWritten>{fileReport});
+  m_catalogue.filesWrittenToTape (std::set<catalogue::TapeFileWritten>{fileReport});
   //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
   //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
   // We will now report the successful archival to the EOS instance.

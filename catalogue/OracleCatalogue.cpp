@@ -283,17 +283,16 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledC
 //------------------------------------------------------------------------------
 // filesWrittenToTape
 //------------------------------------------------------------------------------
-void OracleCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &events) {
+void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
   try {
     if (events.empty()) {
       return;
     }
 
-    const auto &firstEvent = events.front();
+    auto firstEventItor = events.begin();
+    const auto &firstEvent = *firstEventItor;
     checkTapeFileWrittenFieldsAreSet(firstEvent);
     const time_t now = time(nullptr);
-    const std::string nowStr = std::to_string(now);
-    const uint32_t creationTimeMaxFieldSize = nowStr.length() + 1;
     std::lock_guard<std::mutex> m_lock(m_mutex);
     auto conn = m_connPool.getConn();
     rdbms::AutoRollback autoRollback(conn);
@@ -322,55 +321,37 @@ void OracleCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &event
       expectedFSeq++;
       totalCompressedBytesWritten += event.compressedSize;
 
+      // Store the length of each field and implicitly calculate the maximum field
+      // length of each column 
       tapeFileBatch.vid.setFieldLenToValueLen(i, event.vid);
       tapeFileBatch.fSeq.setFieldLenToValueLen(i, event.fSeq);
       tapeFileBatch.blockId.setFieldLenToValueLen(i, event.blockId);
       tapeFileBatch.compressedSize.setFieldLenToValueLen(i, event.compressedSize);
       tapeFileBatch.copyNb.setFieldLenToValueLen(i, event.copyNb);
-      tapeFileBatch.creationTime.setFieldLen(i, creationTimeMaxFieldSize);
+      tapeFileBatch.creationTime.setFieldLenToValueLen(i, now);
       tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
 
       i++;
     }
 
-    const TapeFileWritten &lastEvent = events.back();
+    auto lastEventItor = events.cend();
+    lastEventItor--;
+    const TapeFileWritten &lastEvent = *lastEventItor;
     updateTape(conn, rdbms::Stmt::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
-    // To be moved to the queueing of the archive request
-    for (const auto &event: events) {
-      std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, event.archiveFileId);
+    idempotentBatchInsertArchiveFiles(conn, rdbms::Stmt::AutocommitMode::OFF, events);
 
-      // If the archive file does not already exist
-      if (nullptr == archiveFile.get()) {
-        // Create one
-        ArchiveFileRow row;
-        row.archiveFileId = event.archiveFileId;
-        row.diskFileId = event.diskFileId;
-        row.diskInstance = event.diskInstance;
-        row.size = event.size;
-        row.checksumType = event.checksumType;
-        row.checksumValue = event.checksumValue;
-        row.storageClassName = event.storageClassName;
-        row.diskFilePath = event.diskFilePath;
-        row.diskFileUser = event.diskFileUser;
-        row.diskFileGroup = event.diskFileGroup;
-        row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-        insertArchiveFile(conn, rdbms::Stmt::AutocommitMode::OFF, row);
-      } else {
-        throwIfCommonEventDataMismatch(*archiveFile, event);
-      }
-    }
-
+    // Store the value of each field
     i = 0;
     for (const auto &event: events) {
-      tapeFileBatch.vid.copyStrIntoField(i, event.vid.c_str());
-      tapeFileBatch.fSeq.copyStrIntoField(i, std::to_string(event.fSeq));
-      tapeFileBatch.blockId.copyStrIntoField(i, std::to_string(event.blockId));
-      tapeFileBatch.compressedSize.copyStrIntoField(i, std::to_string(event.compressedSize));
-      tapeFileBatch.copyNb.copyStrIntoField(i, std::to_string(event.copyNb));
-      tapeFileBatch.creationTime.copyStrIntoField(i, nowStr);
-      tapeFileBatch.archiveFileId.copyStrIntoField(i, std::to_string(event.archiveFileId));
+      tapeFileBatch.vid.setFieldValue(i, event.vid);
+      tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
+      tapeFileBatch.blockId.setFieldValue(i, event.blockId);
+      tapeFileBatch.compressedSize.setFieldValue(i, event.compressedSize);
+      tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
+      tapeFileBatch.creationTime.setFieldValue(i, now);
+      tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
       i++;
     }
 
@@ -408,6 +389,130 @@ void OracleCatalogue::filesWrittenToTape(const std::list<TapeFileWritten> &event
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// idempotentBatchInsertArchiveFiles
+//------------------------------------------------------------------------------
+void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn,
+  const rdbms::Stmt::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events) {
+  try {
+    ArchiveFileBatch archiveFileBatch(events.size());
+    const time_t now = time(nullptr);
+
+    // Store the length of each field and implicitly calculate the maximum field
+    // length of each column 
+    uint32_t i = 0;
+    for (const auto &event: events) {
+      archiveFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
+      archiveFileBatch.diskInstance.setFieldLenToValueLen(i, event.diskInstance);
+      archiveFileBatch.diskFileId.setFieldLenToValueLen(i, event.diskFileId);
+      archiveFileBatch.diskFilePath.setFieldLenToValueLen(i, event.diskFilePath);
+      archiveFileBatch.diskFileUser.setFieldLenToValueLen(i, event.diskFileUser);
+      archiveFileBatch.diskFileGroup.setFieldLenToValueLen(i, event.diskFileGroup);
+      archiveFileBatch.diskFileRecoveryBlob.setFieldLenToValueLen(i, event.diskFileRecoveryBlob);
+      archiveFileBatch.size.setFieldLenToValueLen(i, event.size);
+      archiveFileBatch.checksumType.setFieldLenToValueLen(i, event.checksumType);
+      archiveFileBatch.checksumValue.setFieldLenToValueLen(i, event.checksumValue);
+      archiveFileBatch.storageClassName.setFieldLenToValueLen(i, event.storageClassName);
+      archiveFileBatch.creationTime.setFieldLenToValueLen(i, now);
+      archiveFileBatch.reconciliationTime.setFieldLenToValueLen(i, now);
+      i++;
+    }
+
+    // Store the value of each field
+    i = 0;
+    for (const auto &event: events) {
+      archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+      archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
+      archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
+      archiveFileBatch.diskFilePath.setFieldValue(i, event.diskFilePath);
+      archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileUser);
+      archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGroup);
+      archiveFileBatch.diskFileRecoveryBlob.setFieldValue(i, event.diskFileRecoveryBlob);
+      archiveFileBatch.size.setFieldValue(i, event.size);
+      archiveFileBatch.checksumType.setFieldValue(i, event.checksumType);
+      archiveFileBatch.checksumValue.setFieldValue(i, event.checksumValue);
+      archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
+      archiveFileBatch.creationTime.setFieldValue(i, now);
+      archiveFileBatch.reconciliationTime.setFieldValue(i, now);
+      i++;
+    }
+
+    const char *const sql =
+      "INSERT INTO ARCHIVE_FILE("
+        "ARCHIVE_FILE_ID,"
+        "DISK_INSTANCE_NAME,"
+        "DISK_FILE_ID,"
+        "DISK_FILE_PATH,"
+        "DISK_FILE_USER,"
+        "DISK_FILE_GROUP,"
+        "DISK_FILE_RECOVERY_BLOB,"
+        "SIZE_IN_BYTES,"
+        "CHECKSUM_TYPE,"
+        "CHECKSUM_VALUE,"
+        "STORAGE_CLASS_NAME,"
+        "CREATION_TIME,"
+        "RECONCILIATION_TIME)"
+      "VALUES("
+        ":ARCHIVE_FILE_ID,"
+        ":DISK_INSTANCE_NAME,"
+        ":DISK_FILE_ID,"
+        ":DISK_FILE_PATH,"
+        ":DISK_FILE_USER,"
+        ":DISK_FILE_GROUP,"
+        ":DISK_FILE_RECOVERY_BLOB,"
+        ":SIZE_IN_BYTES,"
+        ":CHECKSUM_TYPE,"
+        ":CHECKSUM_VALUE,"
+        ":STORAGE_CLASS_NAME,"
+        ":CREATION_TIME,"
+        ":RECONCILIATION_TIME)";
+    auto stmt = conn.createStmt(sql, autocommitMode);
+    rdbms::OcciStmt &occiStmt = dynamic_cast<rdbms::OcciStmt &>(*stmt);
+    occiStmt->setBatchErrorMode(true);
+
+    occiStmt.setColumn(archiveFileBatch.archiveFileId);
+    occiStmt.setColumn(archiveFileBatch.diskInstance);
+    occiStmt.setColumn(archiveFileBatch.diskFileId);
+    occiStmt.setColumn(archiveFileBatch.diskFilePath);
+    occiStmt.setColumn(archiveFileBatch.diskFileUser);
+    occiStmt.setColumn(archiveFileBatch.diskFileGroup);
+    occiStmt.setColumn(archiveFileBatch.diskFileRecoveryBlob);
+    occiStmt.setColumn(archiveFileBatch.size);
+    occiStmt.setColumn(archiveFileBatch.checksumType);
+    occiStmt.setColumn(archiveFileBatch.checksumValue);
+    occiStmt.setColumn(archiveFileBatch.storageClassName);
+    occiStmt.setColumn(archiveFileBatch.creationTime);
+    occiStmt.setColumn(archiveFileBatch.reconciliationTime);
+
+    try {
+      occiStmt->executeArrayUpdate(archiveFileBatch.nbRows);
+    } catch(oracle::occi::BatchSQLException &be) {
+      const int nbFailedRows = be.getFailedRowCount();
+      exception::Exception ex;
+      ex.getMessage() << "Caught a BatchSQLException" << nbFailedRows;
+      bool foundErrorOtherThanUniqueConstraint = false;
+      for (int row = 0; row < nbFailedRows; row++ ) {
+        oracle::occi::SQLException err = be.getException(row);
+        const unsigned int rowIndex = be.getRowNum(row);
+        const int errorCode = err.getErrorCode();
+
+        // If the error is anything other than a unique constraint error
+        if(1 != errorCode) {
+          foundErrorOtherThanUniqueConstraint = true;
+          ex.getMessage() << ": Row " << rowIndex << " generated ORA error " << errorCode;
+        }
+      }
+      if (foundErrorOtherThanUniqueConstraint) {
+        throw ex;
+      }
+    } catch(std::exception &se) {
+      throw exception::Exception(std::string("executeArrayUpdate failed: ") + se.what());
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

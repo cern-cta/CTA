@@ -41,9 +41,24 @@ struct TapeFileWritten {
   /**
    * Equality operator.
    *
-   * @param ths The right hand side of the operator.
+   * @param rhs The right hand side of the operator.
    */
   bool operator==(const TapeFileWritten &rhs) const;
+
+  /**
+   * Less than operator.
+   *
+   * TapeFileWritten events are ordered by their archiveFileId member variable.
+   *
+   * TapeFileWritten events are written to the catalogue database in batches in
+   * order to improve performance by reducing the number of network round trips
+   * to the database.   Thse batches are implemented using sorted containers in
+   * order to avoid deadlocks when two or more batches of overlapping events are
+   * concurrently written to the database.
+   *
+   * @param rhs The right hand side of the operator.
+   */
+  bool operator<(const TapeFileWritten &rhs) const;
 
   /**
    * The unique identifier of the file being archived.

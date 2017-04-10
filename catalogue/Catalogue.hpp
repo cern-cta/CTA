@@ -128,7 +128,7 @@ public:
    *
    * @param events The tape file written events.
    */
-  virtual void filesWrittenToTape(const std::list<TapeFileWritten> &event) = 0;
+  virtual void filesWrittenToTape(const std::set<TapeFileWritten> &event) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
