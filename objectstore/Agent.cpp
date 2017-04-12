@@ -108,7 +108,26 @@ bool cta::objectstore::Agent::isEmpty() {
 }
 
 void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner) {
-  throw cta::exception::Exception("In Agent::garbageCollect(): not implemented.");
+  checkPayloadWritable();
+  // We are here limited to checking the presumed owner and mark the agent as 
+  // untracked in the agent register in case of match, else we do nothing
+  if (m_header.owner() == presumedOwner) {
+    // We need to get hold of the agent register, which we suppose is available
+    RootEntry re(m_objectStore);
+    ScopedSharedLock reLock(re);
+    re.fetch();
+    AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
+    reLock.release();
+    // Then we should first create a pointer to our agent
+    ScopedExclusiveLock arLock(ar);
+    ar.fetch();
+    ar.untrackAgent(getAddressIfSet());
+    ar.commit();
+    arLock.release();
+    // We now mark ourselves as owned by the agent register
+    setOwner(ar.getAddressIfSet());
+    commit();
+  }
 }
 
 
@@ -162,7 +181,8 @@ std::list<std::string>
 
 void cta::objectstore::Agent::bumpHeartbeat() {
   checkPayloadWritable();
-  m_payload.set_heartbeat(m_payload.heartbeat()+1);
+  auto heartbeat=m_payload.heartbeat()+1;
+  m_payload.set_heartbeat(heartbeat);
 }
 
 uint64_t cta::objectstore::Agent::getHeartbeatCount() {

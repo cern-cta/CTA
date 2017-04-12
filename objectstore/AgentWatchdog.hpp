@@ -25,14 +25,21 @@ namespace cta { namespace objectstore {
 class AgentWatchdog {
 public:
   AgentWatchdog(const std::string & name, Backend & os): m_agent(name, os), 
-    m_heartbeatCounter(readHeartbeat()), m_timeout(5.0) {}
+    m_heartbeatCounter(readHeartbeat()) {
+    ScopedSharedLock lock(m_agent);
+    m_agent.fetch();
+    m_timeout = m_agent.getTimeout();
+  }
   
   bool checkAlive() {
     uint64_t newHeartBeatCount = readHeartbeat();
-    if (newHeartBeatCount == m_heartbeatCounter && m_timer.secs() > m_timeout)
+    auto timer = m_timer.secs();
+    if (newHeartBeatCount == m_heartbeatCounter && timer > m_timeout)
       return false;
-    m_heartbeatCounter = newHeartBeatCount;
-    m_timer.reset();
+    if (newHeartBeatCount != m_heartbeatCounter) {
+      m_heartbeatCounter = newHeartBeatCount;
+      m_timer.reset();
+    }
     return true; 
   }
   

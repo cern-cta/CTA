@@ -163,6 +163,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
      // The agent is removed from our ownership by the calling function: we're done.
      return;
    }
+   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
    // Return all objects owned by the agent to their respective backup owners
    auto ownedObjects = agent.getOwnershipList();
    for (auto obj = ownedObjects.begin(); obj!= ownedObjects.end(); obj++) {

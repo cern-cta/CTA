@@ -97,5 +97,9 @@ add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
 target_link_libraries(cta-objectstore-dump-object
   protobuf ctaobjectstore ctacommon)
 
+add_executable(cta-objectstore-unfollow-agent cta-objectstore-unfollow-agent.cpp)
+target_link_libraries(cta-objectstore-unfollow-agent
+  protobuf ctaobjectstore ctacommon)
+
 install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
   DESTINATION usr/bin)
