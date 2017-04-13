@@ -21,4 +21,3 @@ sudo -u eric git config --global color.ui true
 sudo -u eric git config --global user.email "Eric.Cano@cern.ch"
 sudo -u eric git config --global user.name "Eric Cano"
 
-
