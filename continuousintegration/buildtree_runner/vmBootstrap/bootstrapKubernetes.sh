@@ -5,11 +5,11 @@ sudo yum install -y kubernetes etcd flannel
 sudo systemctl enable etcd
 sudo systemctl start etcd
 sudo mkdir -p /etc/kubernetes
-sudo cp -rv /vmBootstrap/kubernetes/* /etc/kubernetes
+sudo cp -rv kubernetes/* /etc/kubernetes
 sudo perl -p -i -e 's/^(KUBELET_ARGS=).*$/$1"--allow_privileged=true --cluster-dns=10.254.199.254 --cluster-domain=cluster.local"/' /etc/kubernetes/kubelet
 # We put the config in 2 places as flanneld might fetch it from different places.
-curl -L http://localhost:2379/v2/keys/flannel/network/config -XPUT --data-urlencode value@/vmBootstrap/kubernetes/flannel-config.json
-curl -L http://localhost:2379/v2/keys/atomic.io/network/config -XPUT --data-urlencode value@/vmBootstrap/kubernetes/flannel-config.json
+curl -L http://localhost:2379/v2/keys/flannel/network/config -XPUT --data-urlencode value@kubernetes/flannel-config.json
+curl -L http://localhost:2379/v2/keys/atomic.io/network/config -XPUT --data-urlencode value@kubernetes/flannel-config.json
 sudo systemctl enable flanneld
 sudo systemctl start flanneld
 sudo systemctl enable kubelet

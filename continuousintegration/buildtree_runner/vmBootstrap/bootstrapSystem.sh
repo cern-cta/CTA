@@ -10,9 +10,9 @@ cat >> /etc/sudoers << EOFsudoers
 eric ALL=(ALL) NOPASSWD: ALL
 EOFsudoers
 chmod a+rx ~eric
-sudo -u eric cp /vmBootstrap/gitScripts/.git-* ~eric/
-cat /vmBootstrap/gitScripts/bash_profile.hook >> ~eric/.bash_profile
-sudo -u eric cp /vmBootstrap/tigConf/tigrc ~eric/.tigrc
+sudo -u eric cp gitScripts/.git-* ~eric/
+cat gitScripts/bash_profile.hook >> ~eric/.bash_profile
+sudo -u eric cp tigConf/tigrc ~eric/.tigrc
 
 echo Installing minimal tools and tape tools
 yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq

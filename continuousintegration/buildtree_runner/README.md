@@ -12,10 +12,10 @@ The target is to run in a virtual machine, possibly in a disconnected laptop.
 
 The vmBootstrap directory contains all the necessary script to go from minimal CC7 instalation to running kubernetes with CTA checked out and compiled.
 
-The directory vmBootstrap should be copied at the root of the new machine and the script bootstrapSystem.sh should be run from /wmBootstrap:
+A full CTA source tree should be cloned or copied in the target system, and scripts should be run from .../CTA/continuousintegration/buildtree_runner/vmBootstrap:
 
 ```
-cd /vmBootstrap
+cd .../CTA/continuousintegration/buildtree_runner/vmBootstrap
 ./bootstrapSystem.sh
 ```
 
@@ -26,7 +26,7 @@ This will create a new user (currently hardcoded to "eric") and prompt for the p
 The user should then login as the user, kinit with a valid CERN.CH token, and then run the next step: bootstrapCTA.sh:
 ```
 kinit user@CERN.CH
-cd /vmBootstrap
+cd .../CTA/continuousintegration/buildtree_runner/vmBootstrap
 ./bootstrapCTA.sh
 ```
 
@@ -36,7 +36,7 @@ This will check out CTA from git, in install the necessary build RPMs and compil
 
 The user should then run the script to setup kubernetes:
 ```
-cd /vmBootstrap
+cd .../CTA/continuousintegration/buildtree_runner/vmBootstrap
 ./bootstrapKubernetes.sh
 ```
 

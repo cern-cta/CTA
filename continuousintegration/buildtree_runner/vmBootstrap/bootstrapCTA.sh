@@ -10,22 +10,14 @@ mkdir -p ~/CTA-build-srpm
 (cd ~/CTA-build-srpm && cmake -DPackageOnly:Bool=true ../CTA; make cta_srpm)
 
 echo Installing repos
-sudo yum-config-manager --add-repo=/vmBootstrap/eos.repo
-sudo yum-config-manager --add-repo=/vmBootstrap/ceph-internal.repo
-sudo yum-config-manager --add-repo=/vmBootstrap/cta-ci-xroot.repo
-sudo yum-config-manager --add-repo=/vmBootstrap/castor.repo
+sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/eos.repo
+sudo yum-config-manager --add-repo=ceph-internal.repo
+sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo
+sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/castor.repo
 sudo yum install -y yum-plugin-priorities
 
 echo Adding versionlock for xrootd:
-sudo bash -c "cat >> /etc/yum/pluginconf.d/versionlock.list << EOF
-1:xrootd-libs-4.4.1-1.el7.x86_64
-1:xrootd-devel-4.4.1-1.el7.x86_64
-1:xrootd-client-libs-4.4.1-1.el7.x86_64
-1:xrootd-server-libs-4.4.1-1.el7.x86_64
-1:xrootd-client-devel-4.4.1-1.el7.x86_64
-1:xrootd-server-devel-4.4.1-1.el7.x86_64
-1:xrootd-private-devel-4.4.1-1.el7.noarch
-EOF"
+sudo cp ../../docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
 sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-0.src.rpm --enablerepo=cernonly --nogpgcheck
