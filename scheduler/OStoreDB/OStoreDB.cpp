@@ -1592,7 +1592,8 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
       log::ScopedParamContainer params(logContext);
       params.add("tapepool", mountInfo.tapePool)
             .add("queueObject", aq.getAddressIfSet())
-            .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet());
+            .add("jobObject", privateRet->m_archiveRequest.getAddressIfSet())
+            .add("fileID", privateRet->m_archiveRequest.getArchiveFile().archiveFileID);
       logContext.log(log::INFO, "In ArchiveMount::getNextJob(): popped job from queue");
       return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
     }
