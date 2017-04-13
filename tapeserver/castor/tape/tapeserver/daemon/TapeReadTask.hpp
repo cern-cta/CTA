@@ -68,7 +68,7 @@ public:
     
     // Set the common context for all the coming logs (file info)
     cta::log::ScopedParamContainer params(lc);
-    params.add("archiveFileID", m_retrieveJob->archiveFile.archiveFileID)
+    params.add("fileId", m_retrieveJob->archiveFile.archiveFileID)
           .add("BlockId", m_retrieveJob->selectedTapeFile().blockId)
           .add("fSeq", m_retrieveJob->selectedTapeFile().fSeq)
           .add("dstURL", m_retrieveJob->retrieveRequest.dstURL);

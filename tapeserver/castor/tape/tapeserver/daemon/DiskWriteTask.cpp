@@ -52,7 +52,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
   cta::utils::Timer totalTime(localTime);
   cta::utils::Timer transferTime(localTime);
   cta::log::ScopedParamContainer URLcontext(lc);
-  URLcontext.add("archiveFileID",m_retrieveJob->retrieveRequest.archiveFileID)
+  URLcontext.add("fileId",m_retrieveJob->retrieveRequest.archiveFileID)
             .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
             .add("fSeq",m_retrieveJob->selectedTapeFile().fSeq);
   // This out-of-try-catch variables allows us to record the stage of the 
@@ -270,7 +270,7 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,cta::log::LogCo
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("archiveFileID",m_retrieveJob->retrieveRequest.archiveFileID)
+           .add("fileId",m_retrieveJob->retrieveRequest.archiveFileID)
            .add("dstURL",m_retrieveJob->retrieveRequest.dstURL);
     lc.log(level,msg);
 }

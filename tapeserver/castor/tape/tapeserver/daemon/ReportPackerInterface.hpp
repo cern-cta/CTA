@@ -78,7 +78,7 @@ template <class PlaceHolder> class ReportPackerInterface{
       for(typename C::const_iterator it=c.begin();it!=c.end();++it)
       {
         cta::log::ScopedParamContainer sp(m_lc);
-        sp.add("archiveFileID",(*it)->fileid())
+        sp.add("fileId",(*it)->fileid())
           .add("NSFSEQ", (*it)->fseq())
           .add("NSHOST", (*it)->nshost())
           .add("NSFILETRANSACTIONID", (*it)->fileTransactionId());
@@ -97,7 +97,7 @@ template <class PlaceHolder> class ReportPackerInterface{
       for(typename C::const_iterator it=c.begin();it!=c.end();++it)
       {
         cta::log::ScopedParamContainer sp(m_lc);
-        sp.add("archiveFileID",(*it)->fileid())
+        sp.add("fileId",(*it)->fileid())
           .add("NSFSEQ", (*it)->fseq())
           .add("NSHOST", (*it)->nshost())
           .add("NSFILETRANSACTIONID", (*it)->fileTransactionId())

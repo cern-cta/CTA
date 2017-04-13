@@ -2090,7 +2090,7 @@ void XrdCtaFile::xCom_deletearchive() {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
   params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
-  params.push_back(cta::log::Param("archiveFileID", std::to_string(archiveFile.archiveFileID)));
+  params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
   params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
   params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
   params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));

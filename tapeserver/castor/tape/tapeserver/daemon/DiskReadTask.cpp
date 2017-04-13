@@ -214,7 +214,7 @@ void DiskReadTask::logWithStat(int level,const std::string& msg,cta::log::LogCon
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("FILEID",m_archiveJobCachedInfo.fileId)
+           .add("fileId",m_archiveJobCachedInfo.fileId)
            .add("path",m_archiveJobCachedInfo.remotePath);
     lc.log(level,msg);
 }

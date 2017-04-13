@@ -56,7 +56,7 @@ namespace daemon {
     for(auto it= jobs.begin();it!=jobs.end();++it){
       const uint64_t fileSize = (*it)->archiveFile.fileSize;
       LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("archiveFileID", (*it)->archiveFile.archiveFileID)),
+      LogContext::ScopedParam(m_lc, Param("fileId", (*it)->archiveFile.archiveFileID)),
       LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->tapeFile.fSeq)),
       LogContext::ScopedParam(m_lc, Param("path", (*it)->srcURL))
       };

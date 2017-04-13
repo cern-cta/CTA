@@ -162,7 +162,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         reportPacker.m_successfulArchiveJobs.pop();
         if (!job.get()) continue;
         cta::log::ScopedParamContainer params(reportPacker.m_lc);
-        params.add("archiveFileId", job->archiveFile.archiveFileID)
+        params.add("fileId", job->archiveFile.archiveFileID)
                .add("diskInstance", job->archiveFile.diskInstance)
                .add("diskFileId", job->archiveFile.diskFileId)
                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
@@ -179,7 +179,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("exceptionMessageValue", e.getMessageValue());
       if (job.get()) {
-        params.add("archiveFileId", job->archiveFile.archiveFileID)
+        params.add("fileId", job->archiveFile.archiveFileID)
               .add("diskInstance", job->archiveFile.diskInstance)
               .add("diskFileId", job->archiveFile.diskFileId)
               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
@@ -191,7 +191,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("exceptionWhat", e.what());
       if (job.get()) {
-        params.add("archiveFileId", job->archiveFile.archiveFileID)
+        params.add("fileId", job->archiveFile.archiveFileID)
               .add("diskInstance", job->archiveFile.diskInstance)
               .add("diskFileId", job->archiveFile.diskFileId)
               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);

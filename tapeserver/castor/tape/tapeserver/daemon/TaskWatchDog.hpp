@@ -447,7 +447,7 @@ private:
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
           .add("fileId", m_fileId)
-          .add("archiveFileID",m_fileId)
+          .add("fileId",m_fileId)
           .add("fSeq",m_fSeq);
     m_lc.log(cta::log::WARNING, "No tape block movement for too long");
   }
@@ -498,7 +498,7 @@ private:
   virtual void logStuckFile() {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("archiveFileID",m_fileId)
+          .add("fileId",m_fileId)
           .add("fSeq",m_fSeq);
     m_lc.log(cta::log::WARNING, "No tape block movement for too long");
   }

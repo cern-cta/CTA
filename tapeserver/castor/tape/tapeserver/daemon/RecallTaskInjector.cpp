@@ -90,7 +90,7 @@ void RecallTaskInjector::injectBulkRecalls(std::vector<std::unique_ptr<cta::Retr
     (*it)->positioningMethod=cta::PositioningMethod::ByBlock;
 
     LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("archiveFileID", (*it)->retrieveRequest.archiveFileID)),
+      LogContext::ScopedParam(m_lc, Param("fileId", (*it)->retrieveRequest.archiveFileID)),
       LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->selectedTapeFile().fSeq)),
       LogContext::ScopedParam(m_lc, Param("blockID", (*it)->selectedTapeFile().blockId)),
       LogContext::ScopedParam(m_lc, Param("dstURL", (*it)->retrieveRequest.dstURL))

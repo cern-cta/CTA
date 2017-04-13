@@ -167,7 +167,7 @@ void Scheduler::queueRetrieve(
   m_db.queueRetrieve(request, queueCriteria, selectedVid);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("archiveFileID", request.archiveFileID)
+  spc.add("fileId", request.archiveFileID)
      .add("instanceName", instanceName)
      .add("diskFilePath", request.diskFileInfo.path)
      .add("diskFileOwner", request.diskFileInfo.owner)

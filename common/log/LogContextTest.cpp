@@ -32,12 +32,12 @@ namespace unitTests {
     ASSERT_EQ(1U, lc.size());
     {
       // Create an anonymous variable (for its scope)
-      LogContext::ScopedParam sp(lc, Param("archiveFileID", 12345));
+      LogContext::ScopedParam sp(lc, Param("fileId", 12345));
       ASSERT_EQ(2U, lc.size());
       lc.log(DEBUG, "Two params message");
       {
         // Test that we do not allow duplicate params
-        LogContext::ScopedParam sp(lc, Param("archiveFileID", 123456));
+        LogContext::ScopedParam sp(lc, Param("fileId", 123456));
         ASSERT_EQ(2U, lc.size());
         LogContext::ScopedParam sp2(lc, Param("TPVID", "T1234"));
         ASSERT_EQ(3U, lc.size());
@@ -57,16 +57,16 @@ namespace unitTests {
     std::string first = sl.getLog();
     ASSERT_NE(std::string::npos, first.find("MigrationRequestId"));
     {
-      LogContext::ScopedParam sp(lc, Param("archiveFileID", 12345));
+      LogContext::ScopedParam sp(lc, Param("fileId", 12345));
       lc.log(INFO, "Second log");
     }
     std::string second = sl.getLog();
-    ASSERT_NE(std::string::npos, second.find("archiveFileID"));
+    ASSERT_NE(std::string::npos, second.find("fileId"));
     // We expect the NSFILEID parameter to show up only once (i.e, not after 
     // offset, which marks the end of its first occurrence).
     lc.log(INFO, "Third log");
     std::string third = sl.getLog();
-    size_t offset  = third.find("archiveFileID") + strlen("archiveFileID");
-    ASSERT_EQ(std::string::npos, third.find("archiveFileID", offset));
+    size_t offset  = third.find("fileId") + strlen("fileId");
+    ASSERT_EQ(std::string::npos, third.find("fileId", offset));
   }
 }

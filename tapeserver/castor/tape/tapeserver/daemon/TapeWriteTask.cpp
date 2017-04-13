@@ -315,7 +315,7 @@ namespace daemon {
            .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
                    1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
            .add("fileSize",m_archiveFile.fileSize)
-           .add("archiveFileID",m_archiveFile.archiveFileID)
+           .add("fileId",m_archiveFile.archiveFileID)
            .add("fSeq",m_tapeFile.fSeq)
            .add("reconciliationTime",m_archiveFile.reconciliationTime)
            .add("LBPMode", m_LBPMode);
