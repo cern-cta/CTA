@@ -45,12 +45,3 @@ add_subdirectory(daemon)
 # .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)
 
-###########################################################################
-# documentation
-###########################################################################
-#TODO
-#IF (NOT DEFINED PackageOnly)
-#  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseLATEX.cmake)
-#  add_subdirectory(Documentation)
-#ENDIF (NOT DEFINED PackageOnly)
-
