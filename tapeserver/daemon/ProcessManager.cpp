@@ -248,8 +248,13 @@ void ProcessManager::runEventLoop() {
       // If the handler requested kill, shutdown or fork, we can go back to handlers, 
       // which means we exit from the loop here.
       if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.sigChild) return;
-      // If new timeout is still in the past, we overlook it
+      // If new timeout is still in the past, we overlook it (but log it)
       if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
+        log::ScopedParamContainer params(m_logContext);
+        params.add("now", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count())
+              .add("subprocess", sp.handler->index)
+              .add("timeout", std::chrono::duration_cast<std::chrono::seconds>(sp.status.nextTimeout.time_since_epoch()).count());
+        m_logContext.log(log::ERR, "In ProcessManager::runEventLoop(): got twice a timeout in the past. Skipping.");
         continue;
       }
     }

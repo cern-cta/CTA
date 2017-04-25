@@ -182,15 +182,32 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
 decltype (SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTimeout() {
   // If a timeout is defined, then we compute its expiration time. Else we just give default timeout (end of times).
   decltype (SubprocessHandler::ProcessingStatus::nextTimeout) ret=decltype(SubprocessHandler::ProcessingStatus::nextTimeout)::max();
+  bool retSet=false;
   try {
     ret=m_lastStateChangeTime+m_stateChangeTimeouts.at(m_sessionState);
+    retSet=true;
+    m_timeoutType="StateChange";
   } catch (...) {}
   try {
-    ret=std::min(ret, m_lastHeartBeatTime+m_heartbeatTimeouts.at(m_sessionState));
+    auto newRet=m_lastHeartBeatTime+m_heartbeatTimeouts.at(m_sessionState);
+    if (newRet < ret) {
+      ret=newRet;
+      retSet=true;
+      m_timeoutType="Heartbeat";
+    }
   } catch (...) {}
   try {
-    ret=std::min(ret, m_lastDataMovementTime+m_dataMovementTimeouts.at(m_sessionState));
+    auto newRet=m_lastDataMovementTime+m_dataMovementTimeouts.at(m_sessionState);
+    if (newRet < ret) {
+      ret=newRet;
+      retSet=true;
+      m_timeoutType="DataMovement";
+    }
   } catch (...) {}
+  if (retSet) {
+    m_sessionStateWhenTimeoutDecided=m_sessionState;
+    m_sessionTypeWhenTimeoutDecided=m_sessionType;
+  }
   return ret;
 }
 
@@ -753,9 +770,16 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
     resetToDefault(PreviousSession::Crashed);
     return m_processingStatus;
   }
-  params.add("SessionState", session::toString(m_sessionState))
-        .add("SesssionType", session::toString(m_sessionType));
   auto now = std::chrono::steady_clock::now();
+  params.add("SessionState", session::toString(m_sessionState))
+        .add("SesssionType", session::toString(m_sessionType))
+        .add("TimeoutType", m_timeoutType)
+        .add("SessionTypeWhenTimeoutDecided", session::toString(m_sessionTypeWhenTimeoutDecided))
+        .add("SessionStateWhenTimeoutDecided", session::toString(m_sessionStateWhenTimeoutDecided))
+        .add("LasteDataMovementTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastDataMovementTime.time_since_epoch()).count())
+        .add("LastHeartbeatTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastHeartBeatTime.time_since_epoch()).count())
+        .add("LastStateChnageTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
+        .add("Now", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
   // Log timeouts (if we have any)
   try {
     decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
@@ -778,10 +802,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   try {
     params.add("SubprocessId", m_pid);
     exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL));
-    m_processManager.logContext().log(log::INFO, "Killed subprocess.");
+    m_processManager.logContext().log(log::WARNING, "In DriveHandler::processTimeout(): Killed subprocess.");
   } catch (exception::Exception & ex) {
     params.add("Error", ex.getMessageValue());
-    m_processManager.logContext().log(log::INFO, "Failed to kill() subprocess.");
+    m_processManager.logContext().log(log::ERR, "In DriveHandler::processTimeout(): Failed to kill subprocess.");
   }
   // We now should receive the sigchild, so we ask nothing from process manager
   m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();

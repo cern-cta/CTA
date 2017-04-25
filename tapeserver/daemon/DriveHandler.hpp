@@ -116,6 +116,12 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> m_lastHeartBeatTime=decltype(m_lastHeartBeatTime)::min();
   /** When did we see the last data movement? */
   std::chrono::time_point<std::chrono::steady_clock> m_lastDataMovementTime=decltype(m_lastDataMovementTime)::min();
+  /** Type of the currently active timeout */
+  std::string m_timeoutType;
+  /** Session type when currently active timeout was set */
+  session::SessionType m_sessionTypeWhenTimeoutDecided;
+  /** State when current timeout was set */
+  session::SessionState m_sessionStateWhenTimeoutDecided;
   /** Computation of the next timeout (depending on the state) */
   decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout();
   /** How much data did we see moving the session so far? (tape) */
