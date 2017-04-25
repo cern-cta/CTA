@@ -778,7 +778,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
         .add("SessionStateWhenTimeoutDecided", session::toString(m_sessionStateWhenTimeoutDecided))
         .add("LastDataMovementTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastDataMovementTime.time_since_epoch()).count())
         .add("LastHeartbeatTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastHeartBeatTime.time_since_epoch()).count())
-        .add("LastStateChnageTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
+        .add("LastStateChangeTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
         .add("Now", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
   // Log timeouts (if we have any)
   try {
