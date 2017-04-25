@@ -1,0 +1,9 @@
+#!/bin/sh
+
+sudo docker build . -f ./Dockerfile -t buildxroot
+
+id=$(sudo docker create buildxroot bash)
+
+sudo docker cp ${id}:rpmbuild_xrootd/RPMS/x86_64/ .
+
+sudo docker rm -v ${id}
