@@ -113,7 +113,7 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
       }
     }
 
-    // If there is a comment, then remove it from the line
+    // If the line re is a comment, then remove it from the line
     {
       const std::string::size_type startOfComment = line.find("#");
       if(startOfComment != std::string::npos) {
@@ -124,8 +124,13 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
     // Left and right trim the line of whitespace
     line = utils::trimString(std::string(line));
 
-    // If the line is not empty
-    if(!line.empty()) {
+    // Please note:
+    //
+    // Comments at the end of lines are not supported.
+    // Ignoring whitespace, lines starting with '#' are comments.
+
+    // If the line is not empty and is not a comment
+    if(!line.empty() && line.at(0) != '#') {
       lines.push_back(line);
     }
   }
