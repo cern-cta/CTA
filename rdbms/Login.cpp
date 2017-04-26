@@ -113,14 +113,6 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
       }
     }
 
-    // If the line re is a comment, then remove it from the line
-    {
-      const std::string::size_type startOfComment = line.find("#");
-      if(startOfComment != std::string::npos) {
-        line = line.substr(0, startOfComment);
-      }
-    }
-
     // Left and right trim the line of whitespace
     line = utils::trimString(std::string(line));
 

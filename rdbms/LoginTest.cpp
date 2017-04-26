@@ -98,6 +98,27 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle) {
   ASSERT_EQ(std::string("database"), login.database);
 }
 
+TEST_F(cta_rdbms_LoginTest, parseStream_oracle_password_with_a_hash) {
+  using namespace cta::rdbms;
+
+  std::stringstream inputStream;
+  inputStream << "# A comment" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << "# Another comment" << std::endl;
+  inputStream << "oracle:username/password_with_a_hash#@database" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+
+  const Login login = Login::parseStream(inputStream);
+  ASSERT_EQ(Login::DBTYPE_ORACLE, login.dbType);
+  ASSERT_EQ(std::string("username"), login.username);
+  ASSERT_EQ(std::string("password"), login.password);
+  ASSERT_EQ(std::string("database"), login.database);
+}
+
 TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
   using namespace cta::rdbms;
 
