@@ -115,7 +115,7 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle_password_with_a_hash) {
   const Login login = Login::parseStream(inputStream);
   ASSERT_EQ(Login::DBTYPE_ORACLE, login.dbType);
   ASSERT_EQ(std::string("username"), login.username);
-  ASSERT_EQ(std::string("password"), login.password);
+  ASSERT_EQ(std::string("password_with_a_hash#"), login.password);
   ASSERT_EQ(std::string("database"), login.database);
 }
 
