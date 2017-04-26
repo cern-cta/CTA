@@ -246,7 +246,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %files -n cta-catalogueutils
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-user-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-host-create
-%attr(0755,root,root) %{_bindir}/cta-catalogue-delete-all-data
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-lock
@@ -255,7 +254,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-database-poll
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-admin-host-create.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
-%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-delete-all-data.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-lock.1cta.gz

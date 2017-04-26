@@ -8,7 +8,6 @@
 echo Creating symlinks for CTA binaries and symlinks.
 ln -s -v -t /usr/bin \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/catalogue/cta-catalogue-admin-host-create \
-  ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/catalogue/cta-catalogue-delete-all-data \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/catalogue/cta-catalogue-schema-lock \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/catalogue/cta-catalogue-schema-status \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/catalogue/cta-database-poll \

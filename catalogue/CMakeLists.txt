@@ -146,17 +146,6 @@ target_link_libraries (cta-catalogue-schema-status
 install (TARGETS cta-catalogue-schema-status DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-status.1cta DESTINATION /usr/share/man/man1)
 
-add_executable(cta-catalogue-delete-all-data
-  DeleteAllCatalogueDataCmd.cpp
-  DeleteAllCatalogueDataCmdLineArgs.cpp
-  DeleteAllCatalogueDataCmdMain.cpp)
-
-target_link_libraries (cta-catalogue-delete-all-data
-  ctacatalogue)
-
-install (TARGETS cta-catalogue-delete-all-data DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-delete-all-data.1cta DESTINATION /usr/share/man/man1)
-
 add_custom_command(OUTPUT oracle_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
   DEPENDS oracle_catalogue_schema.sql)
@@ -247,8 +236,6 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateAdminUserCmdLineArgsTest.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdLineArgsTest.cpp
-  DeleteAllCatalogueDataCmdLineArgs.cpp
-  DeleteAllCatalogueDataCmdLineArgsTest.cpp
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdLineArgsTest.cpp
   LockSchemaCmdLineArgs.cpp
