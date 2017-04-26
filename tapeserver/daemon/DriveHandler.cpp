@@ -208,6 +208,16 @@ decltype (SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTi
     m_sessionStateWhenTimeoutDecided=m_sessionState;
     m_sessionTypeWhenTimeoutDecided=m_sessionType;
   }
+  {
+    log::ScopedParamContainer params(m_processManager.logContext());
+    params.add("TimeoutType", m_timeoutType)
+          .add("LastStateChangeTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
+          .add("LastHeartBeatTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastHeartBeatTime.time_since_epoch()).count())
+          .add("LastDataMovementTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastDataMovementTime.time_since_epoch()).count())
+          .add("Now", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count())
+          .add("Timeout", std::chrono::duration_cast<std::chrono::seconds>(ret.time_since_epoch()).count());
+    m_processManager.logContext().log(log::DEBUG, "Computed new timeout");
+  }
   return ret;
 }
 
@@ -668,6 +678,9 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
     m_totalDiskBytesMoved=message.totaldiskbytesmoved();
     m_lastDataMovementTime=std::chrono::steady_clock::now();
   }
+  
+  // Update next timeout if required. Next operations might not do it.
+  m_processingStatus.nextTimeout=nextTimeout();
 }
 
 //------------------------------------------------------------------------------
@@ -779,7 +792,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
         .add("LastDataMovementTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastDataMovementTime.time_since_epoch()).count())
         .add("LastHeartbeatTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastHeartBeatTime.time_since_epoch()).count())
         .add("LastStateChangeTime", std::chrono::duration_cast<std::chrono::seconds>(m_lastStateChangeTime.time_since_epoch()).count())
-        .add("Now", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
+        .add("Now", std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count())
+        .add("ThisTimeout", std::chrono::duration_cast<std::chrono::seconds>(m_processingStatus.nextTimeout.time_since_epoch()).count());
   // Log timeouts (if we have any)
   try {
     decltype (SubprocessHandler::ProcessingStatus::nextTimeout) nextTimeout = 
