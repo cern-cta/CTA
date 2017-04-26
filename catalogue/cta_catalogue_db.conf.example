@@ -15,7 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This file should contain one and only one connection string.  Blank lines and
-# comments are ignored.  The format of the connection string is either:
+# comments are ignored.
+#
+# Please note that comments on the end of a line are not supported.  Only entire
+# line comments are allowed.  A comment line starts a hash '#' character.
+# Leading whitespace is permitted.
+#
+# The format of the connection string is either:
 #
 #    in_memory
 #
