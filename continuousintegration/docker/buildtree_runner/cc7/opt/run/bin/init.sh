@@ -41,7 +41,7 @@ if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
   cta-catalogue-schema-unlock /etc/cta/cta_catalogue_db.conf
   cta-catalogue-schema-status /etc/cta/cta_catalogue_db.conf
-  cta-catalogue-schema-drop /etc/cta/cta_catalogue_db.conf
+  echo yes | cta-catalogue-schema-drop /etc/cta/cta_catalogue_db.conf
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))

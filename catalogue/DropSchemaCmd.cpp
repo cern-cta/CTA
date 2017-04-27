@@ -83,9 +83,32 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
     }
   }
 
-  dropCatalogueSchema(dbLogin);
+  if(userConfirmsDropOfSchema(dbLogin)) {
+    m_out << "DROPPING the schema of the CTA calalogue database" << std::endl;
+    dropCatalogueSchema(dbLogin);
+  } else {
+    m_out << "Aborting" << std::endl;
+  }
 
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// userConfirmsDropOfSchema
+//------------------------------------------------------------------------------
+bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
+  m_out << "WARNING" << std::endl;
+  m_out << "You are about to drop the schema of the CTA calalogue database" << std::endl;
+  m_out << "    Database name: " << dbLogin.database << std::endl;
+  m_out << "Are you sure you want to continue?" << std::endl;
+
+  std::string userResponse;
+  while(userResponse != "yes" && userResponse != "no") {
+    m_out << "Please type either \"yes\" or \"no\" > ";
+    std::getline(m_in, userResponse);
+  }
+
+  return userResponse == "yes";
 }
 
 //------------------------------------------------------------------------------

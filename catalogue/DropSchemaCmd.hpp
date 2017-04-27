@@ -65,6 +65,15 @@ private:
   void printUsage(std::ostream &os) override;
 
   /**
+   * Asks the user to confirm that they want to drop the schema of the catalogue
+   * database.
+   *
+   * @param dbLogin The database login.
+   * @return True if the user confirmed.
+   */
+  bool userConfirmsDropOfSchema(const rdbms::Login &dbLogin);
+
+  /**
    * Unconditionally drops the schema of the catalogue database associated with
    * the specified database login.
    *
