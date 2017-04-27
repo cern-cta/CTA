@@ -821,8 +821,8 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::requestRAO");
 }
 
-void drive::DriveGeneric::receiveRAO(int offset, int allocationLength) {
-    
+void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
+                                     int offset, int allocationLength) {
     SCSI::Structures::LinuxSGIO_t sgh;
     SCSI::Structures::RAO::recieveRAO_t cdb;
     SCSI::Structures::senseData_t<255> senseBuff;
@@ -850,16 +850,19 @@ void drive::DriveGeneric::receiveRAO(int offset, int allocationLength) {
 
     uint32_t desc_list_len = SCSI::Structures::toU32(params.raoDescriptorListLength);
     for (uint32_t i = 0;i < desc_list_len / sizeof(SCSI::Structures::RAO::udsDescriptor);++i) {
-        std::cout << params.udsDescriptors[i].udsName << ":" << SCSI::Structures::toU64(params.udsDescriptors[i].beginLogicalObjID) <<
-      ":" << SCSI::Structures::toU64(params.udsDescriptors[i].endLogicalObjID)  << std::endl;
+        SCSI::Structures::RAO::blockLims bl;
+        strncpy((char*)bl.fseq, (char*)params.udsDescriptors[i].udsName, 10);
+        bl.begin = SCSI::Structures::toU64(params.udsDescriptors[i].beginLogicalObjID);
+        bl.end = SCSI::Structures::toU64(params.udsDescriptors[i].endLogicalObjID);
+        files.emplace_back(bl);
     }
 }
 
-void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files) {
-    
-    SCSI::Structures::RAO::udsLimitsPage_t limits = getLimitUDS();
-    generateRAO(files, limits.maxSupported);
-    receiveRAO(0, (new SCSI::modeRAO())->DEFAULT_RRAO_ALLOCATION);
+void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
+                                   int maxSupported) {
+    generateRAO(files, maxSupported);
+    files.clear();
+    receiveRAO(files, 0, SCSI::modeRAO::DEFAULT_RRAO_ALLOCATION);
 }
 
 /**

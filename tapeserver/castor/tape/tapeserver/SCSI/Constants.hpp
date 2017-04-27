@@ -742,9 +742,7 @@ namespace SCSI {
   
   class modeRAO {
   public:
-    enum {
-      DEFAULT_RRAO_ALLOCATION = 64000
-    };
+      static const uint16_t DEFAULT_RRAO_ALLOCATION = 64000;
   };
 } // namespace SCSI
 } // namespace tape

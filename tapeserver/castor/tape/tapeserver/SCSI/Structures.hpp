@@ -1217,8 +1217,8 @@ namespace SCSI {
          udsLimitsPage_t() {
            zeroStruct(this);
          }
-         int maxSupported;
-         int maxSize;
+         unsigned int maxSupported;
+         unsigned int maxSize;
        };
 
        /**
@@ -1310,8 +1310,8 @@ namespace SCSI {
            zeroStruct(this);
          }
          unsigned char fseq[10];
-         int begin;
-         int end;
+         uint64_t begin;
+         uint64_t end;
        };
     }
  

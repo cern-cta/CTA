@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include <iostream>
 
 namespace {
@@ -297,8 +298,13 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
 
+castor::tape::SCSI::Structures::RAO::udsLimitsPage_t
+    castor::tape::tapeserver::drive::FakeDrive::getLimitUDS() {
+  throw cta::exception::Exception("In DriveFakeDrive::getLimitUDS: Not implemented.");
+}
+
 void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
-            std::list<SCSI::Structures::RAO::blockLims> &files)  {
+            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported)  {
   throw cta::exception::Exception("In DriveFakeDrive::queryRAO: Not implemented.");
 }
 
