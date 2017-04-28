@@ -279,6 +279,25 @@ BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name) {
   return ret.release();
 }
 
+BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name, std::function<std::string(const std::string&)>& update):
+  m_backend(be), m_name(name), m_update(update),
+  m_job(std::async(std::launch::async, 
+    [&](){
+      std::unique_ptr<ScopedLock> sl(m_backend.lockExclusive(m_name));
+      m_backend.atomicOverwrite(m_name, m_update(m_backend.read(m_name)));
+    })) 
+{}
+
+Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) {
+  // Create the object. Done.
+  return new AsyncUpdater(*this, name, update);
+}
+
+void BackendVFS::AsyncUpdater::wait() {
+  m_job.get();
+}
+
+
 std::string BackendVFS::Parameters::toStr() {
   std::stringstream ret;
   ret << "path=" << m_path;

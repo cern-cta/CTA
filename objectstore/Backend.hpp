@@ -18,8 +18,10 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
 #include <string>
 #include <list>
+#include <functional>
 
 namespace cta { namespace objectstore {
   
@@ -62,7 +64,7 @@ public:
    * @param name 
    * @return true if the object is found
    */
-  virtual bool exists(std::string name) = 0;  
+  virtual bool exists(std::string name) = 0;
   
   /**
    * Lists all objects
@@ -99,7 +101,42 @@ public:
    * @return pointer to a newly created scoped lock object (for RAII)
    */
   virtual ScopedLock * lockExclusive(std::string name) = 0;
-
+  
+  /// A collection of exceptions allowing the user to find out which step failed.
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchObject);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotLock);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotFetch);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotUpdateValue);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotCommit);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotUnlock);
+  
+  /**
+   * A base class handling asynchronous sequence of lock exclusive, fetch, call user 
+   * operation, commit, unlock. Each operation will be asynchronous, and the result
+   * (success or exception) will be returned via the wait() function call.
+   */
+  class AsyncUpdater { 
+ public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     */
+    virtual void wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncUpdater() {}
+  };
+  
+  /**
+   * Triggers the asynchronous object update sequence, as described in AsyncUpdater
+   * class description.
+   * @param update a callable/lambda that will receive the fetched value as a 
+   * parameter and return the updated value for commit.
+   * @return pointer to a newly created AsyncUpdater (for RAII)
+   */
+  virtual AsyncUpdater * asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) = 0;
+  
   /**
    * Base class for the representation of the parameters of the BackendStore.
    */

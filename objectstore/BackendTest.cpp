@@ -85,6 +85,21 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   ASSERT_FALSE(m_os->exists(nonExistingObject));
 }
 
+TEST_P(BackendAbstractTest, AsyncIOInterface) {
+  // Create object to update.
+  const std::string testValue = "1234";
+  const std::string testSecondValue = "12345";
+  const std::string testObjectName = "testObject";
+  try {m_os->remove(testObjectName);}catch(...){}
+  m_os->create(testObjectName, testValue);
+  // Launch update of object via asynchronous IO
+  std::function<std::string(const std::string &)> updaterCallback=[&](const std::string &s)->std::string{return testSecondValue;};
+  std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
+  updater->wait();
+  ASSERT_EQ(testSecondValue, m_os->read(testObjectName));
+  m_os->remove(testObjectName);
+}
+
 TEST_P(BackendAbstractTest, ParametersInterface) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   std::unique_ptr<cta::objectstore::Backend::Parameters> params(

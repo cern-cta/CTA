@@ -20,6 +20,7 @@
 
 #include "Backend.hpp"
 #include "rados/librados.hpp"
+#include <future>
 
 
 namespace cta { namespace objectstore {
@@ -28,6 +29,8 @@ namespace cta { namespace objectstore {
  */
 class BackendRados: public Backend {
 public:
+  class AsyncUpdater;
+  friend class AsyncUpdater;
   /**
    * The constructor, connecting to the storage pool 'pool' using the user id
    * 'userId'
@@ -35,32 +38,32 @@ public:
    * @param pool
    */
   BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
-  virtual ~BackendRados();
-  virtual std::string user() {
+  ~BackendRados() override;
+  std::string user() {
     return m_user;
   }
-  virtual std::string pool() {
+  std::string pool() {
     return m_pool;
   }
   
 
-  virtual void create(std::string name, std::string content);
+  void create(std::string name, std::string content) override;
   
-  virtual void atomicOverwrite(std::string name, std::string content);
+  void atomicOverwrite(std::string name, std::string content) override;
 
-  virtual std::string read(std::string name);
+  std::string read(std::string name) override;
   
-  virtual void remove(std::string name);
+  void remove(std::string name) override;
   
-  virtual bool exists(std::string name);
+  bool exists(std::string name) override;
   
-  virtual std::list<std::string> list();
+  std::list<std::string> list() override;
   
   class ScopedLock: public Backend::ScopedLock {
     friend class BackendRados;
   public:
-    virtual void release();
-    virtual ~ScopedLock();
+    void release() override;
+    ~ScopedLock() override;
   private:
     ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
     void set(const std::string & oid, const std::string clientId);
@@ -71,14 +74,56 @@ public:
   };
   
 private:
-  std::string createUniqueClientId();
+  static std::string createUniqueClientId();
   
 public:  
-  virtual ScopedLock * lockExclusive(std::string name);
+  ScopedLock * lockExclusive(std::string name) override;
 
-
-  virtual ScopedLock * lockShared(std::string name);
+  ScopedLock * lockShared(std::string name) override;
   
+  /**
+   * A class following up the check existence-lock-fetch-update-write-unlock. Constructor implicitly
+   * starts the lock step.
+   */
+  class AsyncUpdater: public Backend::AsyncUpdater {
+  public:
+    AsyncUpdater(BackendRados & be, const std::string & name, std::function <std::string(const std::string &)> & update);
+    void wait() override;
+  private:
+    /** A reference to the backend */
+    BackendRados &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** The operation on the object */
+    std::function <std::string(const std::string &)> & m_update;
+    /** Storage for stat operation (size) */
+    uint64_t m_size;
+    /** Storage for stat operation (date) */
+    time_t date;
+    /** The promise that will both do the job and allow synchronization with the caller. */
+    std::promise<void> m_job;
+    /** A future used to hold the structure of the lock operation. It will be either empty of complete at 
+     destruction time */
+    std::unique_ptr<std::future<void>> m_lockAsync;
+    /** A string used to identify the locker */
+    std::string m_lockClient;
+    /** The rados bufferlist used to hold the object data (read+write) */
+    ::librados::bufferlist m_radosBufferList;
+    /** A future the hole the the structure of the update operation. It will be either empty of complete at 
+     destruction time */
+    std::unique_ptr<std::future<void>> m_updateAsync;
+    /** The first callback operation (after checking existence) */
+    static void statCallback(librados::completion_t completion, void *pThis);
+    /** The second callback operation (after reading) */
+    static void fetchCallback(librados::completion_t completion, void *pThis);
+    /** The third callback operation (after writing) */
+    static void commitCallback(librados::completion_t completion, void *pThis);
+    /** The fourth callback operation (after unlocking) */
+    static void unlockCallback(librados::completion_t completion, void *pThis);
+  };
+  
+  Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
+
   class Parameters: public Backend::Parameters {
     friend class BackendRados;
   public:
@@ -86,17 +131,17 @@ public:
      * The standard-issue params to string for logging
      * @return a string representation of the parameters for logging
      */
-    virtual std::string toStr();
-    virtual std::string toURL();
+    std::string toStr() override;
+    std::string toURL() override;
   private:
     std::string m_userId;
     std::string m_pool;
     std::string m_namespace;
   };
   
-  virtual Parameters * getParams();
+  Parameters * getParams() override;
 
-  virtual std::string typeName() {
+  std::string typeName() override {
     return "cta::objectstore::BackendRados";
   }
   

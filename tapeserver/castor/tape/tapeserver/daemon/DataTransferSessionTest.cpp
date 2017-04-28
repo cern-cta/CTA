@@ -1540,8 +1540,8 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, DataTransferSessionTes
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 
-INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, SchedulerTest,
-  ::testing::Values(SchedulerTestParam(OStoreDBFactoryRados)));
+INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, DataTransferSessionTest,
+  ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryRados)));
 #endif
 
 } // namespace unitTest

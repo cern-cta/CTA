@@ -19,6 +19,8 @@
 #pragma once
 
 #include "Backend.hpp"
+#include <future>
+#include <functional>
 
 namespace cta { namespace objectstore {
 /**
@@ -57,25 +59,25 @@ public:
    */
   void deleteOnExit();
     
-  virtual ~BackendVFS();
+  ~BackendVFS() override;
 
-  virtual void create(std::string name, std::string content);
+  void create(std::string name, std::string content) override;
   
-  virtual void atomicOverwrite(std::string name, std::string content);
+  void atomicOverwrite(std::string name, std::string content) override;
   
-  virtual std::string read(std::string name);
+  std::string read(std::string name) override;
   
-  virtual void remove(std::string name);
+  void remove(std::string name) override;
   
-  virtual bool exists(std::string name);
+  bool exists(std::string name) override;
   
-  virtual std::list<std::string> list();
+  std::list<std::string> list() override;
   
   class ScopedLock: public Backend::ScopedLock {
     friend class BackendVFS;
   public:
-    virtual void release();
-    virtual ~ScopedLock() { release(); }
+    void release() override;
+    ~ScopedLock() override { release(); }
   private:
     ScopedLock(): m_fdSet(false) {}
     void set(int fd, const std::string & path) { m_fd=fd; m_fdSet=true; m_path=path; }
@@ -84,11 +86,30 @@ public:
     int m_fd;
   };
   
-  virtual ScopedLock * lockExclusive(std::string name);
+  ScopedLock * lockExclusive(std::string name) override;
 
-  virtual ScopedLock * lockShared(std::string name);
+  ScopedLock * lockShared(std::string name) override;
   
-
+  /**
+   * A class mimicking AIO using C++ async tasks
+   */
+  class AsyncUpdater: public Backend::AsyncUpdater {
+  public:
+    AsyncUpdater(BackendVFS & be, const std::string & name, std::function <std::string(const std::string &)> & update);
+    void wait() override;
+  private:
+    /** A reference to the backend */
+    BackendVFS &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** The operation on the object */
+    std::function <std::string(const std::string &)> & m_update;
+     /** The future that will both do the job and allow synchronization with the caller. */
+    std::future<void> m_job;
+  };
+  
+  Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
+  
   class Parameters: public Backend::Parameters {
     friend class BackendVFS;
   public:
@@ -96,13 +117,13 @@ public:
      * The standard-issue params to string for logging
      * @return a string representation of the parameters for logging
      */
-    virtual std::string toStr();
+    std::string toStr() override;
 
     /**
      * The standard-issue params to URL
      * @return a string representation of the parameters for logging
      */
-    virtual std::string toURL();
+    std::string toURL() override;
     
     /**
      * A more specific member, giving access to the path itself
@@ -113,10 +134,10 @@ public:
     std::string m_path;
   };
   
-  virtual Parameters * getParams();
+  Parameters * getParams() override;
   
 
-  virtual std::string typeName() {
+  std::string typeName() override {
     return "cta::objectstore::BackendVFS";
   }
 

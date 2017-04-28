@@ -193,6 +193,179 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   return ret.release();
 }
 
+Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update)
+{
+  return new AsyncUpdater(*this, name, update);
+}
+
+BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& name, std::function<std::string(const std::string&)>& update): m_backend(be), m_name(name), m_update(update) {
+  try {
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
+    // At construction time, we just fire a stat.
+    auto rc=m_backend.m_radosCtx.aio_stat(name, aioc, &m_size, &date);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, "In BackendRados::AsyncUpdater::AsyncUpdater(): failed to launch aio_stat()");
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+  } catch (...) {
+    m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::statCallback(librados::completion_t completion, void* pThis) {
+  AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  try {
+    // Check that the object exists.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          "In BackendRados::AsyncUpdater::statCallback(): could not stat object: ");
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+    // It does! Let's lock it. Rados does not have aio_lock, so we do it in an async.
+    // Operation is lock (synchronous), and then launch an async read.
+    // The async function never fails, exceptions go to the promise (as everywhere).
+    au.m_lockAsync.reset(new std::future<void>(std::async(std::launch::async,
+        [pThis](){
+          AsyncUpdater & au = *((AsyncUpdater *) pThis);
+          try {
+            au.m_lockClient = BackendRados::createUniqueClientId();
+            struct timeval tv;
+            tv.tv_usec = 0;
+            tv.tv_sec = 10;
+            int rc;
+            // Unfortunately, those loops will run in a limited number of threads, 
+            // limiting the parallelism of the locking.
+            // TODO: could be improved (but need aio_lock in rados, not available at the time
+            // of writing).
+            do {
+              rc = au.m_backend.m_radosCtx.lock_exclusive(au.m_name, "lock", au.m_lockClient, "", &tv, 0);
+            } while (-EBUSY == rc);
+            if (rc) {
+              cta::exception::Errnum errnum(-rc,
+                std::string("In BackendRados::AsyncUpdater::statCallback::lock_lambda(): failed to librados::IoCtx::lock_exclusive: ") +
+                au.m_name + "/" + "lock" + "/" + au.m_lockClient + "//");
+              throw CouldNotLock(errnum.getMessageValue());
+            }
+            // Locking is done, we can launch the read operation (async).
+            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, fetchCallback, nullptr);
+            rc=au.m_backend.m_radosCtx.aio_read(au.m_name, aioc, &au.m_radosBufferList, au.m_size, 0);
+            aioc->release();
+            if (rc) {
+              cta::exception::Errnum errnum (-rc, "In BackendRados::AsyncUpdater::AsyncUpdater(): failed to launch aio_stat()");
+              throw Backend::CouldNotFetch(errnum.getMessageValue());
+            }
+          } catch (...) {
+            au.m_job.set_exception(std::current_exception());
+          }
+        }
+        )));
+  } catch (...) {
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion, void* pThis) {
+  AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  try {
+    // Check that the object could be read.
+    if (rados_aio_get_return_value(completion)<0) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          "In BackendRados::AsyncUpdater::statCallback(): could not read object: ");
+      throw Backend::CouldNotFetch(errnum.getMessageValue());
+    }
+    // We can now launch the update operation
+    au.m_updateAsync.reset(new std::future<void>(std::async(std::launch::async,
+        [pThis](){
+          AsyncUpdater & au = *((AsyncUpdater *) pThis);
+          try {
+            // The data is in the buffer list.
+            std::string value;
+            try {
+              au.m_radosBufferList.copy(0, au.m_size, value);
+            } catch (std::exception & ex) {
+              throw CouldNotUpdateValue(
+                  std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ")
+                  + ex.what());
+            }
+            try {
+              // Execute the user's callback.
+              value=au.m_update(value);
+            } catch (std::exception & ex) {
+              throw CouldNotUpdateValue(
+                  std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to call update(): ")
+                  + ex.what());
+            }
+            try {
+              // Prepare result in buffer list.
+              au.m_radosBufferList.clear();
+              au.m_radosBufferList.append(value);
+            } catch (std::exception & ex) {
+              throw CouldNotUpdateValue(
+                  std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to prepare write buffer(): ")
+                  + ex.what());
+            }
+            // Launch the write
+            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, commitCallback, nullptr);
+            auto rc=au.m_backend.m_radosCtx.aio_write_full(au.m_name, aioc, au.m_radosBufferList);
+            aioc->release();
+            if (rc) {
+              cta::exception::Errnum errnum (-rc, 
+                "In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to launch aio_write_full()");
+              throw Backend::CouldNotCommit(errnum.getMessageValue());
+            }
+          } catch (...) {
+            au.m_job.set_exception(std::current_exception());
+          }
+        }
+        )));
+  } catch (...) {
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completion, void* pThis) {
+  AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  try {
+    // Check that the object could be written.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          "In BackendRados::AsyncUpdater::commitCallback(): could not write object: ");
+      throw Backend::CouldNotCommit(errnum.getMessageValue());
+    }
+    // Launch the async unlock.
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, unlockCallback, nullptr);
+    auto rc=au.m_backend.m_radosCtx.aio_unlock(au.m_name, "lock", au.m_lockClient, aioc);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, "In BackendRados::AsyncUpdater::commitCallback(): failed to launch aio_unlock()");
+      throw Backend::CouldNotUnlock(errnum.getMessageValue());
+    }
+  } catch (...) {
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::unlockCallback(librados::completion_t completion, void* pThis) {
+  AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  try {
+    // Check that the object could be unlocked.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          "In BackendRados::AsyncUpdater::unlockCallback(): could not unlock object: ");
+      throw Backend::CouldNotUnlock(errnum.getMessageValue());
+    }
+    // Done!
+    au.m_job.set_value();
+  } catch (...) {
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::wait() {
+  m_job.get_future().get();
+}
+
 std::string BackendRados::Parameters::toStr() {
   std::stringstream ret;
   ret << "userId=" << m_userId << " pool=" << m_pool;
