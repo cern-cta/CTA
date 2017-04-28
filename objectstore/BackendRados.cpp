@@ -27,16 +27,16 @@ namespace cta { namespace objectstore {
 
 BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
 m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtx() {
-  cta::exception::Errnum::throwOnNonZero(m_cluster.init(userId.c_str()),
+  cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
   try {
-    cta::exception::Errnum::throwOnNonZero(m_cluster.conf_read_file(NULL),
+    cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.conf_read_file(NULL),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_read_file");
-    cta::exception::Errnum::throwOnNonZero(m_cluster.conf_parse_env(NULL),
+    cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.conf_parse_env(NULL),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_parse_env");
-    cta::exception::Errnum::throwOnNonZero(m_cluster.connect(),
+    cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.connect(),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.connect");
-    cta::exception::Errnum::throwOnNonZero(m_cluster.ioctx_create(pool.c_str(), m_radosCtx),
+    cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.ioctx_create(pool.c_str(), m_radosCtx),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.ioctx_create");
     // An empty string also sets the namespace to default so no need to filter. This function does not fail.
     m_radosCtx.set_namespace(radosNameSpace);
@@ -58,7 +58,7 @@ void BackendRados::create(std::string name, std::string content) {
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
-  cta::exception::Errnum::throwOnNonZero(m_radosCtx.operate(name, &wop),
+  cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.operate(name, &wop),
       std::string("In ObjectStoreRados::create, failed to create exclusively or write ")
       + name);
 }
@@ -69,7 +69,7 @@ void BackendRados::atomicOverwrite(std::string name, std::string content) {
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
-  cta::exception::Errnum::throwOnNonZero(m_radosCtx.operate(name, &wop),
+  cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.operate(name, &wop),
       std::string("In ObjectStoreRados::atomicOverwrite, failed to assert existence or write ")
       + name);
 }
@@ -78,7 +78,7 @@ std::string BackendRados::read(std::string name) {
   std::string ret;
   uint64_t size;
   time_t time;
-  cta::exception::Errnum::throwOnNonZero(m_radosCtx.stat(name, &size, &time),
+  cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.stat(name, &size, &time),
       std::string("In ObjectStoreRados::read,  failed to stat ")
       + name);
   librados::bufferlist bl;
@@ -90,7 +90,7 @@ std::string BackendRados::read(std::string name) {
 }
 
 void BackendRados::remove(std::string name) {
-  cta::exception::Errnum::throwOnNegative(m_radosCtx.remove(name));
+  cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.remove(name));
 }
 
 bool BackendRados::exists(std::string name) {
