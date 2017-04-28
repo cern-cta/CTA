@@ -7316,17 +7316,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   ASSERT_THROW(m_catalogue->reclaimTape(m_admin, vid1), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, lockSchema_unlockSchema_lockSchema) {
-  using namespace cta;
-
-  m_catalogue->lockSchema();
-  ASSERT_TRUE(m_catalogue->schemaIsLocked());
-  m_catalogue->unlockSchema();
-  ASSERT_FALSE(m_catalogue->schemaIsLocked());
-  m_catalogue->lockSchema();
-  ASSERT_TRUE(m_catalogue->schemaIsLocked());
-}
-
 TEST_P(cta_catalogue_CatalogueTest, ping) {
   using namespace cta;
 

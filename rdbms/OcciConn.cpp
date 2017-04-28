@@ -151,6 +151,31 @@ std::list<std::string> OcciConn::getTableNames() {
 }
 
 //------------------------------------------------------------------------------
+// getSequenceNames
+//------------------------------------------------------------------------------
+std::list<std::string> OcciConn::getSequenceNames() {
+  try {
+    std::list<std::string> names;
+    const char *const sql =
+      "SELECT "
+        "SEQUENCE_NAME "
+      "FROM "
+        "USER_SEQUENCES "
+      "ORDER BY "
+        "SEQUENCE_NAME";
+    auto stmt = createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    auto rset = stmt->executeQuery();
+    while (rset->next()) {
+      names.push_back(rset->columnString("SEQUENCE_NAME"));
+    }
+
+    return names;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool OcciConn::isOpen() const {

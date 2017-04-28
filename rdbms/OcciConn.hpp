@@ -92,6 +92,15 @@ public:
    */
   bool isOpen() const override;
 
+  /**
+   * Returns the names of all the sequences in the database schema in
+   * alphabetical order.
+   *
+   * @return The names of all the sequences in the database schema in
+   * alphabetical order.
+   */
+  std::list<std::string> getSequenceNames();
+
 private:
 
   friend OcciStmt;

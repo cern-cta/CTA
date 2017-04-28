@@ -75,11 +75,28 @@ private:
 
   /**
    * Unconditionally drops the schema of the catalogue database associated with
-   * the specified database login.
+   * the specified database connection.
    *
-   * @param dbLogin The database login.
+   * @param dbType The database type.
+   * @param conn The database connection.
    */
-  void dropCatalogueSchema(const rdbms::Login &dbLogin);
+  void dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn);
+
+  /**
+   * Unconditionally drops the schema of the catalogue database associated with
+   * the specified database connection.
+   *
+   * @param conn The database connection.
+   */
+  void dropSqliteCatalogueSchema(rdbms::Conn &conn);
+
+  /**
+   * Unconditionally drops the schema of the catalogue database associated with
+   * the specified database connection.
+   *
+   * @param conn The database connection.
+   */
+  void dropOracleCatalogueSchema(rdbms::Conn &conn);
 
 }; // class DropSchemaCmd
 

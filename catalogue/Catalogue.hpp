@@ -519,29 +519,6 @@ public:
   virtual bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const = 0;
 
   /**
-   * Returns true if SCHEMA_STATUS column of the CTA_TABLE contains the value
-   * LOCKED.
-   *
-   * @return True if SCHEMA_STATUS column of the CTA_TABLE contains the value
-   * LOCKED.
-   */
-  virtual bool schemaIsLocked() const = 0;
-
-  /**
-   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to LOCKED.
-   *
-   * Please note that this method is idempotent.
-   */
-  virtual void lockSchema() = 0;
-
-  /**
-   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to UNLOCKED.
-   *
-   * Please note that this method is idempotent.
-   */
-  virtual void unlockSchema() = 0;
-
-  /**
    * Checks that the most trivial query goes through. Throws an exception if not.
    */
   virtual void ping() = 0;

@@ -490,27 +490,6 @@ public:
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
 
   /**
-   * Returns true if SCHEMA_STATUS column of the CTA_TABLE contains the value LOCKED.
-   *
-   * @return True if SCHEMA_STATUS column of the CTA_TABLE contains the value LOCKED.
-   */
-  bool schemaIsLocked() const override;
-
-  /**
-   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to LOCKED.
-   *
-   * Please note that this method is idempotent.
-   */
-  void lockSchema() override;
-
-  /**
-   * Sets the value of the SCHEMA_STATUS column of the CTA_TABLE to UNLOCKED.
-   *
-   * Please note that this method is idempotent.
-   */
-  void unlockSchema() override;
-
-  /**
    * Checks that the most trivial query goes through. Returns true on success,
    * false on failure.
    * 

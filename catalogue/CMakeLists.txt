@@ -113,39 +113,6 @@ install (FILES cta_catalogue_db.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-add_executable(cta-catalogue-schema-lock
-  LockSchemaCmd.cpp
-  LockSchemaCmdLineArgs.cpp
-  LockSchemaCmdMain.cpp)
-
-target_link_libraries (cta-catalogue-schema-lock
-  ctacatalogue)
-
-install (TARGETS cta-catalogue-schema-lock DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-lock.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-catalogue-schema-unlock
-  UnlockSchemaCmd.cpp
-  UnlockSchemaCmdLineArgs.cpp
-  UnlockSchemaCmdMain.cpp)
-
-target_link_libraries (cta-catalogue-schema-unlock
-  ctacatalogue)
-
-install (TARGETS cta-catalogue-schema-unlock DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-unlock.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-catalogue-schema-status
-  SchemaStatusCmd.cpp
-  SchemaStatusCmdLineArgs.cpp
-  SchemaStatusCmdMain.cpp)
-
-target_link_libraries (cta-catalogue-schema-status
-  ctacatalogue)
-
-install (TARGETS cta-catalogue-schema-status DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-status.1cta DESTINATION /usr/share/man/man1)
-
 add_custom_command(OUTPUT oracle_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
   DEPENDS oracle_catalogue_schema.sql)
@@ -238,14 +205,8 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
   CreateSchemaCmdLineArgsTest.cpp
   DropSchemaCmdLineArgs.cpp
   DropSchemaCmdLineArgsTest.cpp
-  LockSchemaCmdLineArgs.cpp
-  LockSchemaCmdLineArgsTest.cpp
   PollDatabaseCmdLineArgs.cpp
-  PollDatabaseCmdLineArgsTest.cpp
-  SchemaStatusCmdLineArgs.cpp
-  SchemaStatusCmdLineArgsTest.cpp
-  UnlockSchemaCmdLineArgs.cpp
-  UnlockSchemaCmdLineArgsTest.cpp)
+  PollDatabaseCmdLineArgsTest.cpp)
 
 add_library (ctacataloguecmdlineunittests SHARED
   ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})

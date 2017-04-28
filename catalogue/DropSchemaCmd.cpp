@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <rdbms/OcciConn.hpp>
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/DropOracleCatalogueSchema.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
@@ -23,6 +24,7 @@
 #include "catalogue/DropSqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/OcciConn.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -55,37 +57,45 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
   }
 
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
+  auto factory = rdbms::ConnFactoryFactory::create(dbLogin);
+  auto conn = factory->create();
 
   // Abort if the schema is already dropped
-  {
-    auto factory = rdbms::ConnFactoryFactory::create(dbLogin); 
-    auto conn = factory->create();
-
-    if(conn->getTableNames().empty()) {
-      m_out << "Database contains no tables. Assuming the schema has already been dropped." << std::endl;
+  switch(dbLogin.dbType) {
+  case rdbms::Login::DBTYPE_IN_MEMORY:
+  case rdbms::Login::DBTYPE_SQLITE:
+    if (conn->getTableNames().empty()) {
+      m_out << "Database contains no tables." << std::endl <<
+        "Assuming the schema has already been dropped." << std::endl;
       return 0;
     }
-  }
-
-  // Abort if the schema is not locked
-  {
-    const uint64_t nbDbConns = 1;
-    auto catalogue = CatalogueFactory::create(dbLogin, nbDbConns);
-    if(catalogue->schemaIsLocked()) {
-      m_err <<
-        "Cannot drop the schema of the catalogue database because the schema is locked.\n"
-        "\n"
-        "Please see the following command-line tools:\n"
-        "    cta-catalogue-schema-lock\n"
-        "    cta-catalogue-schema-status\n"
-        "    cta-catalogue-schema-unlock" << std::endl;
-      return 1;
+    break;
+  case rdbms::Login::DBTYPE_ORACLE:
+    {
+      rdbms::OcciConn *const occiConn = dynamic_cast<rdbms::OcciConn *>(conn.get());
+      if(nullptr == occiConn) {
+        throw exception::Exception("Failed to down cast rdbms::conn to rdbms::OcciConn");
+      }
+      if(occiConn->getTableNames().empty() && occiConn->getSequenceNames().empty()) {
+        m_out << "Database contains no tables and no sequences." << std::endl <<
+          "Assuming the schema has already been dropped." << std::endl;
+        return 0;
+      }
+    }
+    break;
+  case rdbms::Login::DBTYPE_NONE:
+    throw exception::Exception("Cannot delete the schema of  catalogue database without a database type");
+  default:
+    {
+      exception::Exception ex;
+      ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
+      throw ex;
     }
   }
 
   if(userConfirmsDropOfSchema(dbLogin)) {
     m_out << "DROPPING the schema of the CTA calalogue database" << std::endl;
-    dropCatalogueSchema(dbLogin);
+    dropCatalogueSchema(dbLogin.dbType, *conn);
   } else {
     m_out << "Aborting" << std::endl;
   }
@@ -114,33 +124,49 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 //------------------------------------------------------------------------------
 // dropCatalogueSchema
 //------------------------------------------------------------------------------
-void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login &dbLogin) {
-  auto factory = rdbms::ConnFactoryFactory::create(dbLogin); 
-  auto conn = factory->create();
+void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn) {
   try {
-    switch(dbLogin.dbType) {
+    switch(dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
     case rdbms::Login::DBTYPE_SQLITE:
-      {
-         DropSqliteCatalogueSchema dropSchema;
-         conn->executeNonQueries(dropSchema.sql);
-      }
+      dropSqliteCatalogueSchema(conn);
       break;
     case rdbms::Login::DBTYPE_ORACLE:
-      {
-         DropOracleCatalogueSchema dropSchema;
-         conn->executeNonQueries(dropSchema.sql);
-      }
+      dropOracleCatalogueSchema(conn);
       break;
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot delete the schema of  catalogue database without a database type");
     default:
       {
         exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
+        ex.getMessage() << "Unknown database type: value=" << dbType;
         throw ex;
       }
     }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropSqliteCatalogueSchema
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
+  try {
+    DropSqliteCatalogueSchema dropSchema;
+    conn.executeNonQueries(dropSchema.sql);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropOracleCatalogueSchema
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
+  try {
+    DropOracleCatalogueSchema dropSchema;
+    conn.executeNonQueries(dropSchema.sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

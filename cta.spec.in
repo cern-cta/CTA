@@ -248,17 +248,11 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-host-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-lock
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-status
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-unlock
 %attr(0755,root,root) %{_bindir}/cta-database-poll
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-admin-host-create.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
-%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-lock.1cta.gz
-%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-status.1cta.gz
-%attr(0644,root,bin) %doc /usr/share/man/man1/cta-catalogue-schema-unlock.1cta.gz
 %attr(0644,root,bin) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
 %package -n cta-mediachangerutils
