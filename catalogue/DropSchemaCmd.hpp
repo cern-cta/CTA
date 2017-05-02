@@ -22,6 +22,7 @@
 #include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/OcciConn.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -91,12 +92,26 @@ private:
   void dropSqliteCatalogueSchema(rdbms::Conn &conn);
 
   /**
+   * Drops the database tables with the specified names.
+   *
+   * @param tablesToDrop The names of the database tables to be dropped.
+   */
+  void dropDatabaseTables(rdbms::Conn &conn, const std::list<std::string> &tablesToDrop);
+
+  /**
    * Unconditionally drops the schema of the catalogue database associated with
    * the specified database connection.
    *
    * @param conn The database connection.
    */
   void dropOracleCatalogueSchema(rdbms::Conn &conn);
+
+  /**
+   * Drops the database sequences with the specified names.
+   *
+   * @param seqeuncesToDrop The names of the database sequences to be dropped.
+   */
+  void dropDatabaseSequences(rdbms::OcciConn &conn, const std::list<std::string> &sequencesToDrop);
 
 }; // class DropSchemaCmd
 

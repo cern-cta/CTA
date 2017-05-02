@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <rdbms/OcciConn.hpp>
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/DropOracleCatalogueSchema.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
@@ -25,6 +24,9 @@
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/OcciConn.hpp"
+
+#include <algorithm>
+#include <rdbms/OcciConn.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -153,8 +155,41 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
   try {
-    DropSqliteCatalogueSchema dropSchema;
-    conn.executeNonQueries(dropSchema.sql);
+    std::list<std::string> tablesInDb = conn.getTableNames();
+    std::list<std::string> tablesToDrop = {
+      "CTA_CATALOGUE",
+      "ARCHIVE_ROUTE",
+      "TAPE_FILE",
+      "ARCHIVE_FILE",
+      "ARCHIVE_FILE_ID",
+      "TAPE",
+      "REQUESTER_MOUNT_RULE",
+      "REQUESTER_GROUP_MOUNT_RULE",
+      "ADMIN_USER",
+      "ADMIN_HOST",
+      "STORAGE_CLASS",
+      "TAPE_POOL",
+      "LOGICAL_LIBRARY",
+      "MOUNT_POLICY"};
+    dropDatabaseTables(conn, tablesToDrop);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropDatabaseTables
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn, const std::list<std::string> &tablesToDrop) {
+  try {
+    std::list<std::string> tablesInDb = conn.getTableNames();
+    for(auto tableToDrop : tablesToDrop) {
+      const bool tableToDropIsInDb = tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop);
+      if(tableToDropIsInDb) {
+        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::Stmt::AutocommitMode::ON);
+        m_out << "Dropped table " << tableToDrop << std::endl;
+      }
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -165,8 +200,47 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
   try {
-    DropOracleCatalogueSchema dropSchema;
-    conn.executeNonQueries(dropSchema.sql);
+    std::list<std::string> tablesInDb = conn.getTableNames();
+    std::list<std::string> tablesToDrop = {
+      "CTA_CATALOGUE",
+      "ARCHIVE_ROUTE",
+      "TAPE_FILE",
+      "ARCHIVE_FILE",
+      "TAPE",
+      "REQUESTER_MOUNT_RULE",
+      "REQUESTER_GROUP_MOUNT_RULE",
+      "ADMIN_USER",
+      "ADMIN_HOST",
+      "STORAGE_CLASS",
+      "TAPE_POOL",
+      "LOGICAL_LIBRARY",
+      "MOUNT_POLICY"
+    };
+
+    dropDatabaseTables(conn, tablesToDrop);
+
+    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ"};
+    rdbms::OcciConn &occiConn = dynamic_cast<rdbms::OcciConn &>(conn);
+    dropDatabaseSequences(occiConn, sequencesToDrop);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// dropDatabaseSequences
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropDatabaseSequences(rdbms::OcciConn &conn, const std::list<std::string> &sequencesToDrop) {
+  try {
+    std::list<std::string> sequencesInDb = conn.getSequenceNames();
+    for(auto sequenceToDrop : sequencesToDrop) {
+      const bool sequenceToDropIsInDb = sequencesInDb.end() != std::find(sequencesInDb.begin(), sequencesInDb.end(),
+        sequenceToDrop);
+      if(sequenceToDropIsInDb) {
+        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::Stmt::AutocommitMode::ON);
+        m_out << "Dropped sequence " << sequenceToDrop << std::endl;
+      }
+    }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

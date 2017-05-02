@@ -131,31 +131,13 @@ add_executable(cta-catalogue-schema-create
 target_link_libraries (cta-catalogue-schema-create
   ctacatalogue)
 
-add_custom_command(OUTPUT drop_oracle_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/drop_oracle_catalogue_schema.sql | sed 's/$$/\"/' > drop_oracle_catalogue_schema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/drop_oracle_catalogue_schema.sql)
-
-add_custom_command(OUTPUT DropOracleCatalogueSchema.cpp
-  COMMAND sed '/DROP_CTA_SQL_SCHEMA/r drop_oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/DropOracleCatalogueSchema.before_SQL.cpp > DropOracleCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/DropOracleCatalogueSchema.before_SQL.cpp drop_oracle_catalogue_schema.cpp)
-
-add_custom_command(OUTPUT drop_sqlite_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/drop_sqlite_catalogue_schema.sql | sed 's/$$/\"/' > drop_sqlite_catalogue_schema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/drop_sqlite_catalogue_schema.sql)
-
-add_custom_command(OUTPUT DropSqliteCatalogueSchema.cpp
-  COMMAND sed '/DROP_CTA_SQL_SCHEMA/r drop_sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/DropSqliteCatalogueSchema.before_SQL.cpp > DropSqliteCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/DropSqliteCatalogueSchema.before_SQL.cpp drop_sqlite_catalogue_schema.cpp)
-
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
 
 add_executable(cta-catalogue-schema-drop
-  DropOracleCatalogueSchema.cpp
   DropSchemaCmd.cpp
   DropSchemaCmdLineArgs.cpp
-  DropSchemaCmdMain.cpp
-  DropSqliteCatalogueSchema.cpp)
+  DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop
   ctacatalogue)
