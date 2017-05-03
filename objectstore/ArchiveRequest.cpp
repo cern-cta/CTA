@@ -396,6 +396,46 @@ void ArchiveRequest::setJobOwner(
   throw NoSuchJob("In ArchiveRequest::setJobOwner: no such job");
 }
 
+ArchiveRequest::AsyncJobOwnerUpdater::AsyncJobOwnerUpdater(Backend::AsyncUpdater* backendUpdater):
+  m_backendUpdater(backendUpdater) { }
+
+ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16_t copyNumber,
+  const std::string& owner, const std::string& previousOwner) {
+  std::function<std::string(const std::string &)> updaterCallback=
+      [this, copyNumber, owner, previousOwner](const std::string &in)->std::string {
+        // We have a locked and fetched object, so we just need to work on its representation.
+        serializers::ObjectHeader oh;
+        oh.ParseFromString(in);
+        if (oh.type() != serializers::ObjectType::ArchiveRequest_t) {
+          std::stringstream err;
+          err << "In ArchiveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        serializers::ArchiveRequest payload;
+        payload.ParseFromString(oh.payload());
+        // Find the copy number and change the owner.
+        auto *jl=payload.mutable_jobs();
+        for (auto j=jl->begin(); j!=jl->end(); j++) {
+          if (j->copynb() == copyNumber) {
+            if (j->owner() != previousOwner) {
+              throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
+            }
+            j->set_owner(owner);
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        // If we do not find the copy, return not owned as well...
+        throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+      };
+  return new AsyncJobOwnerUpdater(m_objectStore.asyncUpdate(getAddressIfSet(), updaterCallback));
+}
+
+void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
+  m_backendUpdater->wait();
+}
+
+
 std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   checkPayloadReadable();
   auto jl = m_payload.jobs();

@@ -1511,7 +1511,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
       // A new queue could have been added in the mean time, and be non-empty.
       // We will then fail to remove from the RootEntry (non-fatal).
       // TODO: We still conclude that the queue is empty on this unlikely event.
-      // (cont'd): A better approach would be to retart the process of this function
+      // (cont'd): A better approach would be to restart the process of this function
       // from scratch.
       rel.lock(re);
       re.fetch();
@@ -1678,6 +1678,184 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
 //    return std::unique_ptr<SchedulerDatabase::ArchiveJob> (privateRet.release());
 //  }
 //  return std::unique_ptr<SchedulerDatabase::ArchiveJob>();
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::getNextJobBatch()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
+  // Find the next files to archive
+  // Get the archive queue
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto aql = re.dumpArchiveQueues();
+  rel.release();
+  std::string aqAddress;
+  for (auto & aqp : aql) {
+    if (aqp.tapePool == mountInfo.tapePool)
+      aqAddress = aqp.address;
+  }
+  // The archive queue is gone, there is no more job
+  if (!aqAddress.size())
+    return std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> >();
+  // Try and open the archive queue. It could be gone by now.
+  try {
+    objectstore::ArchiveQueue aq(aqAddress, m_objectStore);
+    objectstore::ScopedExclusiveLock aqlock;
+    try {
+      aqlock.lock(aq);
+      aq.fetch();
+    } catch (cta::exception::Exception & ex) {
+      // The queue is now absent. We can remove its reference in the root entry.
+      // A new queue could have been added in the mean time, and be non-empty.
+      // We will then fail to remove from the RootEntry (non-fatal).
+      // TODO: We still conclude that the queue is empty on this unlikely event.
+      // (cont'd): A better approach would be to restart the process of this function
+      // from scratch.
+      rel.lock(re);
+      re.fetch();
+      try {
+        re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
+      } catch (RootEntry::ArchivelQueueNotEmpty & ex) {
+        // TODO: improve: if we fail here we could retry to fetch a job.
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet())
+              .add("Message", ex.getMessageValue());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+      }
+      return std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> >();
+    }
+    // Pop jobs by batch until we find a sufficient number actually belonging to the queue.
+    // Any job not really belonging is an uncommitted pop, which we will
+    // re-do here.
+    std::list<std::unique_ptr<OStoreDB::ArchiveJob>> privateRet;
+    uint64_t currentBytes=0;
+    uint64_t currentFiles=0;
+    while (aq.dumpJobs().size()) {
+      // We should build the list of jobs we intend to grab. We will attempt to 
+      // dequeue them in one go, updating jobs in parallel. If some jobs turn out
+      // to not be there really, we will have to do several passes.
+      // We build directly the return value in the process.
+      auto candidateDumps=aq.dumpJobs();
+      std::list<std::unique_ptr<OStoreDB::ArchiveJob>> candidateJobs;
+      while (candidateDumps.size() && currentBytes < bytesRequested && currentFiles < filesRequested) {
+        auto job=candidateDumps.front();
+        candidateDumps.pop_front();
+        currentFiles++;
+        currentBytes+=job.size;
+        candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_objectStore, m_agentReference, *this));
+        candidateJobs.back()->tapeFile.copyNb = job.copyNb;
+      }
+      // We now have a patch of jobs to try and dequeue. Should not be empty.
+      // First add the jobs to the owned list of the agent.
+      std::list<std::string> addedJobs;
+      for (const auto &j: candidateJobs) addedJobs.emplace_back(j->m_archiveRequest.getAddressIfSet());
+      m_agentReference.addBatchToOwnership(addedJobs, m_objectStore);
+      // We can now attempt to switch the ownership of the jobs. Depending on the type of failure (if any) we
+      // will adapt the rest.
+      // First, start the parallel updates of jobs
+      std::list<std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater>> jobUpdates;
+      for (const auto &j: candidateJobs) jobUpdates.emplace_back(
+        j->m_archiveRequest.asyncUpdateJobOwner(j->tapeFile.copyNb, m_agentReference.getAgentAddress(), aqAddress));
+      // Now run through the results of the asynchronous updates. Non-sucess results come in the form of exceptions.
+      std::list<std::string> jobsToForget; // The jobs either absent or not owned, for which we should just remove references (agent).
+      std::list<std::string> jobsToDequeue; // The jobs that should not be queued anymore. All of them indeed (invalid or successfully poped).
+      std::list<std::unique_ptr<OStoreDB::ArchiveJob>> validatedJobs; // The jobs we successfully validated.
+      auto j=candidateJobs.begin(); // We will iterate on 2 lists...
+      auto ju=jobUpdates.begin();
+      while (ju!=jobUpdates.end()) {
+        // Get the processing status of update
+        try {
+          (*ju)->wait();
+          jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
+          validatedJobs.emplace_back(std::move(*j));
+          log::ScopedParamContainer params(logContext);
+          params.add("tapepool", mountInfo.tapePool)
+                .add("queueObject", aq.getAddressIfSet())
+                .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
+          logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): popped one job");
+        } catch (cta::exception::Exception & e) {
+          if (typeid(e) == typeid(Backend::NoSuchObject) ||
+              typeid(e) == typeid(ArchiveJob::JobNowOwned)) {
+            // The object was not present or not owned, so we skip it. It should be removed from
+            // the queue.
+            jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
+            // Log the event.
+            log::ScopedParamContainer params(logContext);
+            params.add("tapepool", mountInfo.tapePool)
+                  .add("queueObject", aq.getAddressIfSet())
+                  .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
+            logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): skipped job not owned or not present.");
+          } else {
+            // This is not a success, yet we could not confirm the job status due to an unexpected error.
+            // We leave the queue as is. We forget about owning this job. This is an error.
+            log::ScopedParamContainer params(logContext);
+            params.add("tapepool", mountInfo.tapePool)
+                  .add("queueObject", aq.getAddressIfSet())
+                  .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet())
+                  .add("exceptionType", typeid(e).name())
+                  .add("message", e.getMessageValue());
+            logContext.log(log::ERR, "In ArchiveMount::getNextJobBatch(): unexpected error. Leaving the job queued.");
+            jobsToForget.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
+          }
+          // This job is not for us.
+          jobsToForget.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
+          // We also need to update the counts.
+          currentFiles--;
+          currentBytes-=(*j)->archiveFile.fileSize;
+        }
+        // In all cases: move to the nexts.
+        ju=jobUpdates.erase(ju);
+        j=candidateJobs.erase(j);
+      }
+      // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
+      for (const auto &j: jobsToDequeue) aq.removeJob(j);
+      if (jobsToForget.size()) m_agentReference.removeBatchFromOwnership(addedJobs, m_objectStore);
+      // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
+      aq.commit();
+      // We can now add the validated jobs to the return value.
+      auto vj = validatedJobs.begin();
+      while (vj != validatedJobs.end()) {
+        privateRet.emplace_back(std::move(*vj));
+        vj=validatedJobs.erase(vj);
+      }
+      // We could be done now.
+      if (currentBytes >= bytesRequested || currentFiles >= filesRequested)
+        break;
+    }
+    // We either ran out of jobs or fulfilled the requirements. Time to build up the reply.
+    aqlock.release();
+    // Log the outcome.
+    uint64_t nFiles=0;
+    uint64_t nBytes=0;
+    for (auto & j: privateRet) {
+      nFiles++;
+      nBytes+=j->archiveFile.fileSize;
+    }
+    {
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", mountInfo.tapePool)
+            .add("files", nFiles)
+            .add("bytes", nBytes);
+      logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
+    }
+    // We can construct the return value.
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+    for (auto & j: privateRet) ret.emplace_back(std::move(j));
+    return ret;
+  } catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(logContext);
+    params.add("tapepool", mountInfo.tapePool)
+          .add("message", ex.getMessageValue());
+    logContext.log(log::ERR, "In ArchiveMount::getNextJobBatch(): got exception. Returning empty");
+    return std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> >();
+  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::complete()

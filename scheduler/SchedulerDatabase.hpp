@@ -177,6 +177,8 @@ public:
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) = 0;
+    virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
+      uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual ~ArchiveMount() {}

@@ -72,11 +72,27 @@ void AgentReference::setQueueFlushTimeout(std::chrono::duration<uint64_t, std::m
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Add, objectAddress, std::promise<void>()};
   queueAndExecuteAction(a, backend);
-} 
+}
+
+void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
+  objectstore::Agent ag(m_agentAddress, backend);
+  objectstore::ScopedExclusiveLock agl(ag);
+  ag.fetch();
+  for (const auto & oa: objectAdresses) ag.addToOwnership(oa);
+  ag.commit();
+}
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   Action a{AgentOperation::Remove, objectAddress, std::promise<void>()};
   queueAndExecuteAction(a, backend);
+}
+
+void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
+  objectstore::Agent ag(m_agentAddress, backend);
+  objectstore::ScopedExclusiveLock agl(ag);
+  ag.fetch();
+  for (const auto & oa: objectAdresses) ag.removeFromOwnership(oa);
+  ag.commit();
 }
 
 void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {

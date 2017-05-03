@@ -101,23 +101,37 @@ namespace cta {
     /**
      * Report that the tape is full.
      */
-    virtual void setTapeFull();
+    void setTapeFull();
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**
      * Job factory
      *
+     * @param logContext log context for logging internal operations.
      * @return A unique_ptr to the next archive job or NULL if there are no more
      * archive jobs left for this tape mount.
      */
-    virtual std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext);
+    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext);
+    
+    /**
+     * Batch job factory
+     * 
+     * @param filesRequested the number of files requested
+     * @param bytesRequested the number of bytes requested
+     * @param logContext
+     * @return a list of unique_ptr to the next archive jobs. The list is empty
+     * when no more jobs can be found. Will return jobs (if available) until one
+     * of the 2 criteria is fulfilled.
+     */
+    std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
+      uint64_t bytesRequested, log::LogContext &logContext);
     
     /**
      * Returns the tape pool of the tape to be mounted.
      *
      * @return The tape pool of the tape to be mounted.
      */
-    virtual std::string getPoolName() const;
+    std::string getPoolName() const;
     
     /**
      * Returns the mount transaction id.

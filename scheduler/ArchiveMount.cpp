@@ -109,7 +109,29 @@ std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob(log::LogContext &
   ret->m_dbJob.reset(dbJob.release());
   return ret;
 }
-    
+
+
+//------------------------------------------------------------------------------
+// getNextJobBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, 
+  uint64_t bytesRequested, log::LogContext& logContext) {
+  // Check we are still running the session
+  if (!m_sessionRunning)
+    throw SessionNotRunning("In ArchiveMount::getNextJobBatch(): trying to get job from complete/not started session");
+  // try and get a new job from the DB side
+  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested, 
+    bytesRequested, logContext));
+  std::list<std::unique_ptr<ArchiveJob>> ret;
+  // We prepare the response
+  for (auto & sdaj: dbJobBatch) {
+    ret.emplace_back(new ArchiveJob(*this, m_catalogue,
+      sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
+    ret.back()->m_dbJob.reset(sdaj.release());
+  }
+  return ret;
+}
+
 //------------------------------------------------------------------------------
 // complete
 //------------------------------------------------------------------------------

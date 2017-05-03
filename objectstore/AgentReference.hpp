@@ -62,8 +62,16 @@ public:
    * are queued in memory so that several threads can share the same access.
    * The execution order is guaranteed.
    * @param objectAddress
+   * @param backend reference to the backend to use.
    */
   void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  
+  /**
+   * Adds a list of object addresses to the referenced agent. The addition is immediate.
+   * @param objectAdresses
+   * @param backend reference to the backend to use.
+   */
+  void addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend);
   
   /**
    * Removes an object address from the referenced agent. The additions and removals
@@ -72,6 +80,13 @@ public:
    * @param objectAddress
    */
   void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend);
+  
+  /**
+   * Removes a list of object addresses to the referenced agent. The removal is immediate.
+   * @param objectAdresses
+   * @param backend reference to the backend to use.
+   */
+  void removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend);
   
   /**
    * Bumps up the heart beat of the agent. This action is queued in memory like the
