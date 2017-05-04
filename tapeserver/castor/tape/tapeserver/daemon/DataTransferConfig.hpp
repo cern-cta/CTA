@@ -113,6 +113,12 @@ struct DataTransferConfig {
   bool useLbp;
 
   /**
+   * The boolean variable describing to use on not to use Recommended
+   * Access Order
+   */
+  bool useRAO;
+
+  /**
    * The path to the operator provided encyption control script (or empty string)
    */
   std::string externalEncryptionKeyScript;

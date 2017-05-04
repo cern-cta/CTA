@@ -36,13 +36,15 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   cta::log::LogContext&  lc,
   RecallReportPacker &rrp,
   const bool useLbp,
+  const bool useRAO,
   const std::string & externalEncryptionKeyScript) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
-  m_useLbp(useLbp) {}
+  m_useLbp(useLbp),
+  m_useRAO(useRAO) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -154,6 +156,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
     vrp = m_tasks.popGetSize();
   // If we just passed (down) the half full limit, ask for more
   // (the remaining value is after pop)
+  isLastTask = false;
   if(vrp.remaining + 1 == m_maxFilesRequest/2) {
     // This is not a last call
     m_taskInjector->requestInjection(false);
@@ -161,6 +164,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
     // This is a last call: if the task injector comes up empty on this
     // one, he'll call it the end.
     m_taskInjector->requestInjection(true);
+    isLastTask = true;
   }
   return vrp.value;
 }
@@ -265,6 +269,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
         throw;
       }
+      if (m_useRAO) {
+        /* Give the RecallTaskInjector access to the drive to perform RAO query */
+        m_taskInjector->setPromise();
+      }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
       std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(openReadSession());
@@ -314,6 +322,11 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // This can lead the the session being marked as corrupt, so we test
         // it in the while loop
         task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
+        if (m_useRAO && isLastTask) {
+          // After the execution of all recalls, the TapeReadSingleThread
+          // passes the access to the drive to the RecallTaskInjector
+          m_taskInjector->setPromise();
+        }
         // Transmit the statistics to the watchdog thread
         m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)

@@ -287,6 +287,10 @@ public:
     m_stats.waitInstructionsTime = secs; 
   }
 
+  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveReference() {
+    return &m_drive;
+  }
+
   /**
    * Constructor
    * @param drive An interface to manipulate the drive to manipulate the tape

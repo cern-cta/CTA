@@ -67,16 +67,17 @@ public:
           cta::log::LogContext & lc,
           RecallReportPacker &rrp,
           const bool useLbp,
+          const bool useRAO,
           const std::string & externalEncryptionKeyScript);
    
-   /**
-    * Set the task injector. Has to be done that way (and not in the constructor)
-    *  because there is a dependency 
-    * @param ti the task injector 
-    */
-   void setTaskInjector(RecallTaskInjector * ti) { 
-     m_taskInjector = ti; 
-   }
+  /**
+   * Set the task injector. Has to be done that way (and not in the constructor)
+   *  because there is a dependency
+   * @param ti the task injector
+   */
+  void setTaskInjector(RecallTaskInjector * ti) {
+    m_taskInjector = ti;
+  }
 
 private:  
   
@@ -146,6 +147,12 @@ private:
    */
   const bool m_useLbp;
 
+  /**
+   * The boolean variable describing to use on not to use Recommended
+   * Access Order
+   */
+  bool m_useRAO;
+  bool isLastTask;
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 
     m_watchdog.addToErrorCount(error);

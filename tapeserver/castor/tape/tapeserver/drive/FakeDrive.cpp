@@ -300,12 +300,15 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
 
 castor::tape::SCSI::Structures::RAO::udsLimitsPage_t
     castor::tape::tapeserver::drive::FakeDrive::getLimitUDS() {
-  throw cta::exception::Exception("In DriveFakeDrive::getLimitUDS: Not implemented.");
+  castor::tape::SCSI::Structures::RAO::udsLimitsPage_t lims;
+  lims.maxSize = 30000;
+  lims.maxSupported = 30;
+  return lims;
 }
 
 void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
             std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported)  {
-  throw cta::exception::Exception("In DriveFakeDrive::queryRAO: Not implemented.");
+  files.reverse();
 }
 
 std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
