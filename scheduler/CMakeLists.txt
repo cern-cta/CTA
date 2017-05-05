@@ -33,7 +33,8 @@ target_link_libraries (ctascheduler ctacommon ctaobjectstore protobuf ctautils c
 add_library (ctaschedulerunittests SHARED
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
-  SchedulerTest.cpp)
+  SchedulerTest.cpp
+  OStoreDB/OStoreDBTest.cpp)
 
 target_link_libraries (ctaschedulerunittests 
   ctascheduler)

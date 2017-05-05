@@ -40,7 +40,7 @@
 
 namespace cta { namespace objectstore {
 
-BackendVFS::BackendVFS() : m_deleteOnExit(true) {
+BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
   // Create the directory for storage
   char tplt[] = "/tmp/jobStoreVFSXXXXXX";
   mkdtemp(tplt);
@@ -51,7 +51,8 @@ BackendVFS::BackendVFS() : m_deleteOnExit(true) {
     throw cta::exception::Errnum("Failed to create temporary directory");
   }
   #ifdef DEBUG_PRINT_LOGS
-  std::cout << "In BackendVFS::BackendVFS(): created object store" << m_root << std::endl;
+  std::cout << "In BackendVFS::BackendVFS(): created object store " << m_root << " " 
+      << std::hex << this << file << ":" << line << std::endl;
   #endif
 }
 
@@ -86,9 +87,14 @@ BackendVFS::~BackendVFS() {
     // Delete the created directories recursively
     nftw (m_root.c_str(), deleteFileOrDirectory, 100, FTW_DEPTH);
     #ifdef DEBUG_PRINT_LOGS
-    std::cout << "In BackendVFS::BackendVFS(): deleted object store" << m_root << std::endl;
+    ::printf("In BackendVFS::~BackendVFS(): deleted object store %s 0x%p\n", m_root.c_str(), (void*)this);
     #endif
   }
+  #ifdef DEBUG_PRINT_LOGS
+    else {
+    ::printf("In BackendVFS::~BackendVFS(): skipping object store deletion %s 0x%p\n", m_root.c_str(), (void*)this);
+  }
+  #endif
 }
 
 void BackendVFS::create(std::string name, std::string content) {

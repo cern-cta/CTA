@@ -36,9 +36,23 @@ namespace cta {
   
 namespace objectstore {
   class Backend;
+
+/**
+ * As slight variation of the SchedulerDatabase interface allowing 
+ * access to the underlying backend (this is hence OStoreDB specific).
+ * This interface allows tests to go behind the scenes and create "broken" situations
+ * and test recovery.
+ */
+
+class OStoreDBWrapperInterface: public SchedulerDatabase {
+public:
+  virtual objectstore::Backend & getBackend() = 0;
+};
+
 }
 
 namespace {
+
 /**
  * A self contained class providing a "backend+SchedulerDB" in a box,
  * allowing creation (and deletion) of an object store for each instance of the
@@ -46,12 +60,14 @@ namespace {
  * It can be instantiated with both types of backends
  */
 template <class BackendType>
-class OStoreDBWrapper: public SchedulerDatabase {
+class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
 public:
   OStoreDBWrapper(const std::string &context, const std::string &URL = "");
   
   ~OStoreDBWrapper() throw () {}
   
+  objectstore::Backend& getBackend() override { return *m_backend; }
+
   void ping() override {
     m_OStoreDB.ping();
   }

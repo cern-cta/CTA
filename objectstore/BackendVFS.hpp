@@ -38,7 +38,7 @@ public:
    * destroyed by default on destruction. This can be overridden with
    * noDeleteOnExit()
    */
-  BackendVFS();
+  BackendVFS(int line=0, const char *file="");
   
   /**
    * Passive constructor, using an existing store. It will NOT destroy the 
