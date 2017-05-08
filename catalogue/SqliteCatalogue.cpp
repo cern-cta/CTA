@@ -241,9 +241,8 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     // Oracle SELECT FOR UPDATE
     std::lock_guard<std::mutex> m_lock(m_mutex);
     auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn);
 
-    const auto tape = selectTape(rdbms::Stmt::AutocommitMode::OFF, conn, firstEvent.vid);
+    const auto tape = selectTape(rdbms::Stmt::AutocommitMode::ON, conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
@@ -268,13 +267,12 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeFileWritten &lastEvent = *lastEventItor;
-    updateTape(conn, rdbms::Stmt::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::Stmt::AutocommitMode::ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     for(const auto &event : events) {
-      fileWrittenToTape(rdbms::Stmt::AutocommitMode::OFF, conn, event);
+      fileWrittenToTape(rdbms::Stmt::AutocommitMode::ON, conn, event);
     }
-    conn.commit();
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
