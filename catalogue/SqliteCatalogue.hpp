@@ -100,10 +100,12 @@ private:
   /**
    * Selects the specified tape within the Tape table.
    *
+   * @param autocommitMode The autocommit mode of the statement.
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTape(rdbms::PooledConn &conn, const std::string &vid);
+  common::dataStructures::Tape selectTape(const rdbms::Stmt::AutocommitMode autocommitMode, rdbms::PooledConn &conn,
+    const std::string &vid);
 
 }; // class SqliteCatalogue
 

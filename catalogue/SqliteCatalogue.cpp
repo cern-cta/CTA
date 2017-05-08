@@ -129,7 +129,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::PooledConn &conn, const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Stmt::AutocommitMode autocommitMode,
+  rdbms::PooledConn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -167,7 +168,7 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(rdbms::PooledConn &conn
       "WHERE "
         "VID = :VID;";
 
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, autocommitMode);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
     if (!rset->next()) {
@@ -232,11 +233,16 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     const auto &firstEvent = *firstEventItor;;
     checkTapeFileWrittenFieldsAreSet(firstEvent);
 
+    // The SQLite implementation of this method relies on the fact that a tape
+    // cannot be physically mounted in two or more drives at the same time
+    //
+    // Given the above assumption regarding the laws of physics, a simple lock
+    // on the mutex of the SqliteCatalogue object is enough to emulate an
+    // Oracle SELECT FOR UPDATE
     std::lock_guard<std::mutex> m_lock(m_mutex);
     auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn);
 
-    const auto tape = selectTape(conn, firstEvent.vid);
+    const auto tape = selectTape(rdbms::Stmt::AutocommitMode::OFF, conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
