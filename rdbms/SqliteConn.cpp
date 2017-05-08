@@ -40,8 +40,8 @@ SqliteConn::SqliteConn(const std::string &filename):
       throw exception::Exception(msg);
     }
 
-    // Give SQLite upto 10 seconds to avoid a busy error
-    sqlite3_busy_timeout(m_sqliteConn, 10000);
+    // Give SQLite upto 120 seconds to avoid a busy error
+    sqlite3_busy_timeout(m_sqliteConn, 120000);
 
     {
       char *errMsg = nullptr;
