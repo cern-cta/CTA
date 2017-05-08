@@ -241,6 +241,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     // Oracle SELECT FOR UPDATE
     std::lock_guard<std::mutex> m_lock(m_mutex);
     auto conn = m_connPool.getConn();
+    rdbms::AutoRollback autoRollback(conn);
 
     const auto tape = selectTape(rdbms::Stmt::AutocommitMode::OFF, conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
