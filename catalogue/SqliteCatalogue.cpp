@@ -265,7 +265,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       lastEvent.tapeDrive);
 
     for(const auto &event : events) {
-      fileWrittenToTape(conn, event);
+      fileWrittenToTape(rdbms::Stmt::AutocommitMode::OFF, conn, event);
     }
     conn.commit();
   } catch(exception::Exception &ex) {
@@ -276,7 +276,8 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(rdbms::PooledConn &conn, const TapeFileWritten &event) {
+void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autocommitMode, rdbms::PooledConn &conn,
+  const TapeFileWritten &event) {
   try {
     checkTapeFileWrittenFieldsAreSet(event);
 
@@ -298,7 +299,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::PooledConn &conn, const TapeFileW
       row.diskFileUser = event.diskFileUser;
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
-      insertArchiveFile(conn, rdbms::Stmt::AutocommitMode::OFF, row);
+      insertArchiveFile(conn, autocommitMode, row);
     } else {
       throwIfCommonEventDataMismatch(*archiveFile, event);
     }
@@ -311,7 +312,7 @@ void SqliteCatalogue::fileWrittenToTape(rdbms::PooledConn &conn, const TapeFileW
     tapeFile.compressedSize = event.compressedSize;
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
-    insertTapeFile(conn, rdbms::Stmt::AutocommitMode::OFF, tapeFile, event.archiveFileId);
+    insertTapeFile(conn, autocommitMode, tapeFile, event.archiveFileId);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   }
