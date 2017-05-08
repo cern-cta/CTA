@@ -98,6 +98,10 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 //------------------------------------------------------------------------------
 uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
   try {
+    // The SQLite implemenation of getNextArchiveFileId() serializes access to
+    // the SQLite database in order to avoid busy errors
+    std::lock_guard<std::mutex> m_lock(m_mutex);
+
     rdbms::AutoRollback autoRollback(conn);
 
     conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::Stmt::AutocommitMode::OFF);

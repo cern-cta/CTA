@@ -72,6 +72,10 @@ protected:
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
    *
+   * PLEASE NOTE the SQLite implemenation of getNextArchiveFileId() takes a lock
+   * on m_mutex in order to serialize access to the SQLite database.  This has
+   * been done in an attempt to avoid SQLite busy errors.
+   *
    * @param conn The database connection.
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
