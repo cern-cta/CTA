@@ -100,6 +100,39 @@ TEST_P(BackendAbstractTest, AsyncIOInterface) {
   m_os->remove(testObjectName);
 }
 
+TEST_P(BackendAbstractTest, AsyncIOInterfaceMultithread) {
+  // Create object to update.
+  const std::string testValue = "1234";
+  const std::string testSecondValue = "12345";
+  const std::string testObjectNameRadix = "testObject";
+  std::function<std::string(size_t)> testObjectName=[&](size_t i){
+    std::stringstream tom;
+    tom << testObjectNameRadix << i;
+    return tom.str();
+  };
+  std::function<std::string(size_t)> value=[&](size_t i){
+    std::stringstream val;
+    val << testSecondValue << i;
+    return val.str();
+  };
+  for (size_t i=0; i<10; i++) { try {m_os->remove(testObjectName(i));}catch(...){} }
+  std::list<std::unique_ptr<cta::objectstore::Backend::AsyncUpdater>> updaters;
+  std::list<std::function<std::string(const std::string &)>> lambdas;
+  for (size_t i=0; i<10; i++) {
+    m_os->create(testObjectName(i), testValue);
+    // Launch update of object via asynchronous IO
+    lambdas.emplace_back([i,&value](const std::string &s)->std::string{return value(i);});
+    updaters.emplace_back(m_os->asyncUpdate(testObjectName(i),lambdas.back()));
+  }
+  size_t i=0;
+  for (auto & u: updaters) {
+    u->wait();
+    ASSERT_EQ(value(i), m_os->read(testObjectName(i)));
+    m_os->remove(testObjectName(i));
+    i++;
+  }
+}
+
 TEST_P(BackendAbstractTest, ParametersInterface) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   std::unique_ptr<cta::objectstore::Backend::Parameters> params(

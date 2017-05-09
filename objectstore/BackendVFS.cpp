@@ -203,8 +203,6 @@ std::list<std::string> BackendVFS::list() {
   return ret;
 }
 
-
-
 BackendVFS::Parameters* BackendVFS::getParams() {
   std::unique_ptr<Parameters> ret(new Parameters);
   ret->m_path = m_root;
@@ -236,10 +234,13 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
     int openErrno = errno;
     struct ::stat sBuff;
     int statResult = ::stat((m_root + name).c_str(), &sBuff);
+    int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
       ret->set(::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH), path);
       exception::Errnum::throwOnMinusOne(ret->m_fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
     } else {
+      if (statErrno == ENOENT)
+        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file");
       const std::string errnoStr = utils::errnoToString(errno);
       exception::Exception ex;
       ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
@@ -289,8 +290,32 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
   m_backend(be), m_name(name), m_update(update),
   m_job(std::async(std::launch::async, 
     [&](){
-      std::unique_ptr<ScopedLock> sl(m_backend.lockExclusive(m_name));
-      m_backend.atomicOverwrite(m_name, m_update(m_backend.read(m_name)));
+      std::unique_ptr<ScopedLock> sl;
+      try { // locking already throws proper exceptions for no such file.
+        sl.reset(m_backend.lockExclusive(m_name));
+      } catch (Backend::NoSuchObject &) {
+        throw;
+      } catch (cta::exception::Exception & ex) {
+        throw Backend::CouldNotLock(ex.getMessageValue());
+      }
+      std::string preUpdateData;
+      try {
+        preUpdateData=m_backend.read(m_name);
+      } catch (cta::exception::Exception & ex) {
+        throw Backend::CouldNotFetch(ex.getMessageValue());
+      }
+      // Let user's exceptions go through.
+      std::string postUpdateData=m_update(preUpdateData);
+      try {
+        m_backend.atomicOverwrite(m_name, postUpdateData);
+      } catch (cta::exception::Exception & ex) {
+        throw Backend::CouldNotCommit(ex.getMessageValue());
+      }
+      try {
+        sl->release();
+      } catch (cta::exception::Exception & ex) {
+        throw Backend::CouldNotUnlock(ex.getMessageValue());
+      }
     })) 
 {}
 

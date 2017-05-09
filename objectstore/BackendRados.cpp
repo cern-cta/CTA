@@ -288,14 +288,8 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
                   std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ")
                   + ex.what());
             }
-            try {
-              // Execute the user's callback.
-              value=au.m_update(value);
-            } catch (std::exception & ex) {
-              throw CouldNotUpdateValue(
-                  std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to call update(): ")
-                  + ex.what());
-            }
+            // Execute the user's callback. Let exceptions fly through. User knows his own exceptions.
+            value=au.m_update(value);
             try {
               // Prepare result in buffer list.
               au.m_radosBufferList.clear();
