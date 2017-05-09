@@ -26,6 +26,7 @@
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -257,8 +258,6 @@ INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestVFS, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryVFS)));
 #endif
 
-
-#undef TEST_RADOS
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 

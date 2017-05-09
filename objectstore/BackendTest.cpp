@@ -20,6 +20,7 @@
 #include "BackendVFS.hpp"
 #include "BackendRados.hpp"
 #include "common/exception/Exception.hpp"
+#include "BackendRadosTestSwitch.hpp"
 
 namespace unitTests {
 
@@ -141,8 +142,7 @@ TEST_P(BackendAbstractTest, ParametersInterface) {
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
-#define TEST_RADOS 0
-#if TEST_RADOS
+#ifdef TEST_RADOS
 static cta::objectstore::BackendRados osRados("tapetest", "tapetest");
 INSTANTIATE_TEST_CASE_P(BackendTestRados, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osRados));
 #endif

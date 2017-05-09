@@ -25,6 +25,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "OStoreDB.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
 
 namespace unitTests {
 
@@ -170,8 +171,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
-#define TEST_RADOS 0
-#if TEST_RADOS
+#ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 INSTANTIATE_TEST_CASE_P(OStoreTestRados, OStoreDBTest,
     ::testing::Values(OStoreDBTestParams(OStoreDBFactoryRados)));

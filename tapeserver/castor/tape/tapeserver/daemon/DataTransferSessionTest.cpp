@@ -52,6 +52,7 @@
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "tests/TempFile.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -1536,7 +1537,6 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, DataTransferSessionTes
   ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryVFS)));
 #endif
 
-#undef TEST_RADOS
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 
