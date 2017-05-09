@@ -68,7 +68,7 @@ public:
   public:
     void wait();
   private:
-    AsyncJobOwnerUpdater(Backend::AsyncUpdater *);
+    std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.

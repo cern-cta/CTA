@@ -1743,6 +1743,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       // We build directly the return value in the process.
       auto candidateDumps=aq.dumpJobs();
       std::list<std::unique_ptr<OStoreDB::ArchiveJob>> candidateJobs;
+      // If we fail to find jobs in one round, we will exit.
+      size_t jobsInThisRound=0;
       while (candidateDumps.size() && currentBytes < bytesRequested && currentFiles < filesRequested) {
         auto job=candidateDumps.front();
         candidateDumps.pop_front();
@@ -1773,15 +1775,17 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         try {
           (*ju)->wait();
           jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
-          validatedJobs.emplace_back(std::move(*j));
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
                 .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): popped one job");
+          validatedJobs.emplace_back(std::move(*j));
+          jobsInThisRound++;
         } catch (cta::exception::Exception & e) {
+          std::string debugType=typeid(e).name();
           if (typeid(e) == typeid(Backend::NoSuchObject) ||
-              typeid(e) == typeid(ArchiveJob::JobNowOwned)) {
+              typeid(e) == typeid(objectstore::ArchiveRequest::WrongPreviousOwner)) {
             // The object was not present or not owned, so we skip it. It should be removed from
             // the queue.
             jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
@@ -1827,9 +1831,33 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       // We could be done now.
       if (currentBytes >= bytesRequested || currentFiles >= filesRequested)
         break;
+      // If this round was not fruitful, just break.
+      if (!jobsInThisRound)
+        break;
     }
     // We either ran out of jobs or fulfilled the requirements. Time to build up the reply.
+    // Before this, we can release the queue and delete it if we emptied it.
+    auto remainingJobs=aq.dumpJobs().size();
     aqlock.release();
+    // If the queue is empty, we can get rid of it.
+    if (!remainingJobs) {
+      try {
+        // The queue should be removed as it is empty.
+        ScopedExclusiveLock reel(re);
+        re.fetch();
+        re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): deleted empty queue");
+      } catch (cta::exception::Exception &ex) {
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet())
+              .add("Message", ex.getMessageValue());
+        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not delete a presumably empty queue");
+      }
+    }
     // Log the outcome.
     uint64_t nFiles=0;
     uint64_t nBytes=0;

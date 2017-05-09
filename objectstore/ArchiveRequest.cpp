@@ -396,12 +396,10 @@ void ArchiveRequest::setJobOwner(
   throw NoSuchJob("In ArchiveRequest::setJobOwner: no such job");
 }
 
-ArchiveRequest::AsyncJobOwnerUpdater::AsyncJobOwnerUpdater(Backend::AsyncUpdater* backendUpdater):
-  m_backendUpdater(backendUpdater) { }
-
 ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16_t copyNumber,
   const std::string& owner, const std::string& previousOwner) {
-  std::function<std::string(const std::string &)> updaterCallback=
+  std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
+  ret->m_updaterCallback=
       [this, copyNumber, owner, previousOwner](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         serializers::ObjectHeader oh;
@@ -428,7 +426,8 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
         // If we do not find the copy, return not owned as well...
         throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
       };
-  return new AsyncJobOwnerUpdater(m_objectStore.asyncUpdate(getAddressIfSet(), updaterCallback));
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
 }
 
 void ArchiveRequest::AsyncJobOwnerUpdater::wait() {

@@ -109,7 +109,7 @@ private:
 
 }; // class SchedulerDatabaseTest
 
-TEST_P(OStoreDBTest, DISABLED_getBatchArchiveJob) {
+TEST_P(OStoreDBTest, getBatchArchiveJob) {
   using namespace cta::objectstore;
   cta::log::StringLogger logger("OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
@@ -130,12 +130,13 @@ TEST_P(OStoreDBTest, DISABLED_getBatchArchiveJob) {
     osdbi.queueArchive("testInstance", ar, afqc, lc);
   }
   // Delete the first job from the queue, change
+  std::string aqAddr;
   {
     // Get hold of the queue
     RootEntry re(osdbi.getBackend());
     ScopedSharedLock rel(re);
     re.fetch();
-    std::string aqAddr = re.getArchiveQueueAddress("Tapepool1");
+    aqAddr = re.getArchiveQueueAddress("Tapepool1");
     rel.release();
     ArchiveQueue aq(aqAddr, osdbi.getBackend());
     ScopedSharedLock aql(aq);
@@ -164,6 +165,8 @@ TEST_P(OStoreDBTest, DISABLED_getBatchArchiveJob) {
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());
+  // Check the queue has been emptied, and hence removed.
+  ASSERT_EQ(false, osdbi.getBackend().exists(aqAddr));
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
