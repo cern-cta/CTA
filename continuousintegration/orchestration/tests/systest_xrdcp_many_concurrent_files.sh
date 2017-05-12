@@ -119,14 +119,14 @@ NB_CONCURRENT_TRANSFERS=20
 # Delete any existing test files
 echo "Deleting ${NB_FILES} test files in batches of ${NB_CONCURRENT_TRANSFERS} concurrent deletes"
 for I in `seq 1 ${NB_FILES}`; do
-  echo /eos/ctaeos/cta/test_file_${I};
-done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm
+  echo eos rm /eos/ctaeos/cta/test_file_${I};
+done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos --
 
 # Copy test files into EOS
 echo "Copying ${NB_FILES} test files in batches of ${NB_CONCURRENT_TRANSFERS} concurrent transfers"
 for I in `seq 1 ${NB_FILES}`; do
-  echo root://localhost//eos/ctaeos/cta/test_file_${I};
-done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos -- xrdcp /etc/group
+  echo xrdcp /etc/group root://localhost//eos/ctaeos/cta/test_file_${I};
+done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos --
 
 # Wait for test files to be archived to tape
 for I in `seq 1 ${NB_FILES}`; do
@@ -147,25 +147,15 @@ for I in `seq 1 ${NB_FILES}`; do
   echo "${TEST_FILE_NAME} ARCHIVED TO TAPE"
 done
 
-# Remove the disk replicas of the test files
+echo "Removing the disk replicas of ${NB_FILES} test files in batches of ${NB_CONCURRENT_TRANSFERS} concurrent removes"
 for I in `seq 1 ${NB_FILES}`; do
-  TEST_FILE_NAME=test_file_${I}
-  echo
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
-  echo
-  echo "Information about the testing file:"
-  echo "********"
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
-  echo
-  echo "Removing ${TEST_FILE_NAME} disk replica"
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos file tag /eos/ctaeos/cta/${TEST_FILE_NAME} -1
-done
+  echo eos file tag /eos/ctaeos/cta/test_file_${I} -1
+done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos --
 
 echo "Requesting ${NB_FILES} test files be retrieved from tape in batches of ${NB_CONCURRENT_TRANSFERS} concurrent transfers"
 for I in `seq 1 ${NB_FILES}`; do
-  echo /eos/ctaeos/cta/test_file_${I};
-done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos -- xrdfs localhost prepare -s
+  echo xrdfs localhost prepare -s /eos/ctaeos/cta/test_file_${I};
+done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos --
 
 # Wait for the test files to be retrieved from tape
 for I in `seq 1 ${NB_FILES}`; do
@@ -186,16 +176,6 @@ for I in `seq 1 ${NB_FILES}`; do
   echo
   echo "${TEST_FILE_NAME} RETRIEVED FROM DISK"
   echo
-done
-
-# Display the current information about the test files
-for I in `seq 1 ${NB_FILES}`; do
-  TEST_FILE_NAME=test_file_${I}
-  echo
-  echo "Information about the testing file:"
-  echo "********"
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
 done
 
 # results
