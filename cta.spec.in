@@ -104,7 +104,6 @@ cd build
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
-requires: xrootd >= 4.3
 %description -n cta-cli
 CERN Tape Archive:
 The xroot plugin
@@ -154,7 +153,6 @@ The xroot plugin
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
-requires: xrootd >= 4.3
 %description -n cta-cli
 CERN Tape Archive:
 The xroot plugin
