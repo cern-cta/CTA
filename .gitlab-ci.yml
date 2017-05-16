@@ -7,7 +7,7 @@ stages:
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-  - echo "Exporting CTA_BUILD_ID=${CI_COMMIT_SHA}"
+  - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
 
 cta_srpm:
   stage: build:srpm
