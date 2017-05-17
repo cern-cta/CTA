@@ -4,6 +4,7 @@ stages:
   - build:dockerimage
   - rename:dockerimage
   - test
+  - publish_rpm
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
@@ -70,6 +71,15 @@ cta_tagged_rpm:
     paths:
     - build_tagged_rpm/RPM/RPMS
 
+  tags:
+    - docker
+
+publish_tagged_rpm
+  stage: publish_rpm
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR=build_tagged_rpm/RPM/RPMS EOS_PATH=/eos/user/c/ctareg/www/test-repo/cta HOOK=/eos/user/c/ctareg/www/test-repo/update_repos.sh continuousintegration/ci_helpers/deploy-eos.sh
   tags:
     - docker
 
