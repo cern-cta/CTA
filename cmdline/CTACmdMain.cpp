@@ -127,7 +127,9 @@ int sendCommand(const int argc, const char **argv) {
 
   // Open the xroot file reprsenting the execution of the command
   {
-    const XrdCl::XRootDStatus openStatus = xrootFile.Open(cmdPath, XrdCl::OpenFlags::Read);
+    const XrdCl::Access::Mode openMode = XrdCl::Access::None;
+    const uint16_t openTimeout = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
+    const XrdCl::XRootDStatus openStatus = xrootFile.Open(cmdPath, XrdCl::OpenFlags::Read, openMode, openTimeout);
     if(!openStatus.IsOK()) {
       throw std::runtime_error(std::string("Failed to open ") + cmdPath + ": " + openStatus.ToStr());
     }
