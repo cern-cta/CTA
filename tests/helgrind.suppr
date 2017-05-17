@@ -356,3 +356,42 @@
    fun:_ZNSt12__shared_ptrINSt13__future_base11_State_baseELN9__gnu_cxx12_Lock_policyE2EED1Ev
    fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
 }
+
+{     
+   Rados_context_create
+   Helgrind:Race
+   ...
+   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/libstdc++.so.6.0.19     
+   fun:mythread_wrapper     
+   fun:start_thread     
+   fun:clone
+}
+
+{     
+   Rados_context_create_2
+   Helgrind:Race
+   ...
+   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/librados.so.2.0.0
+   fun:_ZN8librados11RadosClient7connectEv
+   fun:_ZN3cta11objectstore12BackendRadosC1ERKSsS3_S3_   
+   ...
+}
+
+{
+   Rados_context_create_3
+   Helgrind:Race
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   fun:_ZN7Context8completeEi
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   ...
+}

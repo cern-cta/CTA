@@ -70,7 +70,7 @@ void AgentReference::setQueueFlushTimeout(std::chrono::duration<uint64_t, std::m
 }
 
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  Action a{AgentOperation::Add, objectAddress, std::promise<void>()};
+  std::shared_ptr<Action> a (new Action(AgentOperation::Add, objectAddress));
   queueAndExecuteAction(a, backend);
 }
 
@@ -83,7 +83,7 @@ void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdr
 }
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  Action a{AgentOperation::Remove, objectAddress, std::promise<void>()};
+  std::shared_ptr<Action> a (new Action(AgentOperation::Remove, objectAddress));
   queueAndExecuteAction(a, backend);
 }
 
@@ -96,19 +96,19 @@ void AgentReference::removeBatchFromOwnership(const std::list<std::string>& obje
 }
 
 void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
-  Action a{AgentOperation::Heartbeat, "", std::promise<void>()};
+  std::shared_ptr<Action> a (new Action(AgentOperation::Heartbeat, ""));
   queueAndExecuteAction(a, backend);
 }
 
 
-void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend& backend) {
+void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend) {
   // First, we need to determine if a queue exists or not.
   // If so, we just use it, and if not, we create and serve it.
   std::unique_lock<std::mutex> ulGlobal(m_currentQueueMutex);
   if (m_currentQueue) {
     // There is already a queue
     std::unique_lock<std::mutex> ulQueue(m_currentQueue->mutex);
-    m_currentQueue->queue.push_back(&action);
+    m_currentQueue->queue.push_back(action);
     // If this is time to run, wake up the serving thread
     if (m_currentQueue->queue.size() + 1 >= m_maxQueuedItems) {
       m_currentQueue->promise.set_value();
@@ -117,30 +117,31 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
     // Release the locks and wait for action execution
     ulQueue.unlock();
     ulGlobal.unlock();
-    action.promise.get_future().get();
+    action->promise.get_future().get();
   } else {
-    // There is not queue, so we need to create and serve it ourselves
-    ActionQueue q;
+    // There is not queue, so we need to create and serve it ourselves.
+    // To make sure there is no lifetime issues, we make it a shared_ptr
+    std::shared_ptr<ActionQueue> q(new ActionQueue);
     // Lock the queue
-    std::unique_lock<std::mutex> ulq(q.mutex);
+    std::unique_lock<std::mutex> ulq(q->mutex);
     // Get it referenced
-    m_currentQueue = &q;
+    m_currentQueue = q;
     // Get our execution promise and leave one behind
-    std::unique_ptr<std::promise<void>> promiseForThisQueue(std::move(m_nextQueueExecutionPromise));
+    std::shared_ptr<std::promise<void>> promiseForThisQueue(m_nextQueueExecutionPromise);
     // Leave a promise behind for the next queue
     m_nextQueueExecutionPromise.reset(new std::promise<void>);
     // Keep a pointer to it, so we will signal our own completion to our successor queue.
-    std::promise<void> * promiseForNextQueue = m_nextQueueExecutionPromise.get();
+    std::shared_ptr<std::promise<void>> promiseForNextQueue = m_nextQueueExecutionPromise;
     // We can now unlock the queue and the general lock: queuing is open.
     ulq.unlock();
     ulGlobal.unlock();
     // We wait for time or size of queue
-    q.promise.get_future().wait_for(m_queueFlushTimeout);
-    // Make sure we are not listed anymore a the queue taking jobs (this would happen
-    // in case of timeout.
+    q->promise.get_future().wait_for(m_queueFlushTimeout);
+    // Make sure we are not listed anymore as the queue taking jobs (this would happen
+    // in case of timeout).
     ulGlobal.lock();
-    if (m_currentQueue == &q)
-      m_currentQueue = nullptr;
+    if (m_currentQueue == q)
+      m_currentQueue.reset();
     ulGlobal.unlock();
     // Wait for previous queue to complete
     promiseForThisQueue->get_future().get();
@@ -152,9 +153,9 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
       objectstore::ScopedExclusiveLock agl(ag);
       ag.fetch();
       // First we apply our own modification
-      appyAction(action, ag);
+      appyAction(*action, ag);
       // Then those of other threads
-      for (auto a: q.queue)
+      for (auto a: q->queue)
         appyAction(*a, ag);
       // and commit
       ag.commit();
@@ -162,16 +163,21 @@ void AgentReference::queueAndExecuteAction(Action& action, objectstore::Backend&
       // Something wend wrong: , we release the next batch of changes
       promiseForNextQueue->set_value();
       // We now pass the exception to all threads
-      for (auto a: q.queue)
+      for (auto a: q->queue) {
+        std::lock_guard<std::mutex> lg(a->mutex);
         a->promise.set_exception(std::current_exception());
+      }
       // And to our own caller
       throw;
     }
     // Things went well. We pass the token to the next queue
     promiseForNextQueue->set_value();
     // and release the other threads
-    for (auto a: q.queue)
+    for (auto & a: q->queue) {
+      std::lock_guard<std::mutex> lg(a->mutex);
       a->promise.set_value();
+      a.reset();
+    }
   }
 }
 

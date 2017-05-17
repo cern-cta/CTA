@@ -24,7 +24,7 @@ namespace cta { namespace ostoredb {
 
 std::mutex MemArchiveQueue::g_mutex;
 
-std::map<std::string, MemArchiveQueue *> MemArchiveQueue::g_queues;
+std::map<std::string, std::shared_ptr<MemArchiveQueue>> MemArchiveQueue::g_queues;
 
 std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump& job, 
     objectstore::ArchiveRequest& archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext) {
@@ -32,15 +32,15 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
   std::unique_lock<std::mutex> ul(g_mutex);
   try {
     // 2) Determine if the queue exists already or not
-    auto & q = *g_queues.at(job.tapePool);
+    auto q = g_queues.at(job.tapePool);
     // It does: we just ride the train: queue ourselves
-    std::unique_lock<std::mutex> ulq(q.m_mutex);
-    MemArchiveQueueRequest maqr(job, archiveRequest);
-    q.add(maqr);
+    std::unique_lock<std::mutex> ulq(q->m_mutex);
+    std::shared_ptr<MemArchiveQueueRequest> maqr(new MemArchiveQueueRequest(job, archiveRequest));
+    q->add(maqr);
     // If there are already enough elements, signal to the initiating thread 
-    if (q.m_requests.size() + 1 >= g_maxQueuedElements) {
+    if (q->m_requests.size() + 1 >= g_maxQueuedElements) {
       // signal the initiating thread
-      q.m_promise.set_value();
+      q->m_promise.set_value();
       // Unreference the queue so no new request gets added to it
       g_queues.erase(job.tapePool);
     }
@@ -48,27 +48,27 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
     ulq.unlock();
     ul.unlock();
     // Wait for our request completion (this could throw, if there was a problem)
-    return maqr.m_promise.get_future().get();
+    return maqr->m_promise.get_future().get();
   } catch (std::out_of_range &) {
     utils::Timer timer;
     // The queue for our tape pool does not exist. We will create it, wait for 
     // the necessary amount of time or requests and release it.
     // Create the queue
-    MemArchiveQueue maq;
+    std::shared_ptr<MemArchiveQueue> maq(new MemArchiveQueue);
     // Reference it
-    g_queues[job.tapePool] = &maq;
+    g_queues[job.tapePool] = maq;
     // Release the global list
     ul.unlock();
     // Wait for timeout or enough jobs.
-    maq.m_promise.get_future().wait_for(std::chrono::milliseconds(100));
+    maq->m_promise.get_future().wait_for(std::chrono::milliseconds(100));
     // Re-take the global lock to make sure the queue is not referenced anymore,
     // and the queue as well, to make sure the last user is gone.
     ul.lock();
-    std::unique_lock<std::mutex> ulq(maq.m_mutex);
+    std::unique_lock<std::mutex> ulq(maq->m_mutex);
     // Remove the entry for our tape pool iff it also has our pointer (a new 
     // queue could have been created in the mean time.
     auto i = g_queues.find(job.tapePool);
-    if (i != g_queues.end() && (&maq == i->second))
+    if (i != g_queues.end() && (maq == i->second))
       g_queues.erase(i);
     // Our mem queue is now unreachable so we can let the global part go
     ul.unlock();
@@ -93,7 +93,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
         archiveRequest.setJobArchiveQueueAddress(job.copyNb, aq.getAddressIfSet());
       }
       // The do the same for all the queued requests
-      for (auto &maqr: maq.m_requests) {
+      for (auto &maqr: maq->m_requests) {
         // Add the job
         auto af = maqr->m_archiveRequest.getArchiveFile();
         aq.addJob(maqr->m_job, maqr->m_archiveRequest.getAddressIfSet(), af.archiveFileID,
@@ -120,7 +120,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
       // We will also count how much time we mutually wait for the other threads.
       ret->m_timer.reset();
       // And finally release all the user threads
-      for (auto &maqr: maq.m_requests) {
+      for (auto &maqr: maq->m_requests) {
         maqr->m_promise.set_value(ret);
       }
       // Done!
@@ -137,7 +137,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
       }
       size_t exceptionsNotPassed = 0;
       // Something went wrong. We should inform the other threads
-      for (auto & maqr: maq.m_requests) {
+      for (auto & maqr: maq->m_requests) {
         try {
           maqr->m_promise.set_exception(std::current_exception());
         } catch (...) {
@@ -151,7 +151,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
         } catch (std::exception & ex) {
           std::stringstream err;
           err << "In MemArchiveQueue::sharedAddToArchiveQueue(), in main thread, failed to notify "
-              << exceptionsNotPassed << " other threads out of  " << maq.m_requests.size()
+              << exceptionsNotPassed << " other threads out of  " << maq->m_requests.size()
               << " : " << ex.what();
           log::ScopedParamContainer params(logContext);
           params.add("what", ex.what())
@@ -174,8 +174,8 @@ SharedQueueLock::~SharedQueueLock() {
   m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
 }
 
-void MemArchiveQueue::add(MemArchiveQueueRequest& request) {
-  m_requests.emplace_back(&request); 
+void MemArchiveQueue::add(std::shared_ptr<MemArchiveQueueRequest> request) {
+  m_requests.emplace_back(request); 
 }
 
 

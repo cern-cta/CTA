@@ -116,9 +116,20 @@ private:
    * An operation with its parameter and promise
    */
   struct Action {
+    Action(AgentOperation op, const std::string & objectAddress): op(op), objectAddress(objectAddress) {}
     AgentOperation op;
     const std::string & objectAddress;
     std::promise<void> promise;
+    /***
+     * A mutex ensuring the object will not be released before the promise's result
+     * is fully pushed.
+     */
+    std::mutex mutex;
+    ~Action() {
+      // The setting of promise result will be protected by this mutex, so destruction 
+      // will only happen after promise setting is complete.
+      std::lock_guard<std::mutex> lm(mutex);
+    }
   };
   
   /**
@@ -126,7 +137,7 @@ private:
    */
   struct ActionQueue {
     std::mutex mutex;
-    std::list<Action *> queue;
+    std::list<std::shared_ptr<Action>> queue;
     std::promise<void> promise;
   };
   
@@ -143,10 +154,10 @@ private:
    * similar to queueing in ArchiveQueues and RetrieveQeueues.
    * @param action the action
    */
-  void queueAndExecuteAction(Action& action, objectstore::Backend& backend);
+  void queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend);
   
   std::mutex m_currentQueueMutex;
-  ActionQueue * m_currentQueue = nullptr;
+  std::shared_ptr<ActionQueue> m_currentQueue;
   /**
    * This pointer holds a promise that will be picked up by the thread managing 
    * the a queue in memory (promise(n)). The same thread will leave a fresh promise 
@@ -156,7 +167,7 @@ private:
    * This will ensure that the queues will be flushed in order, one at a time.
    * One at a time also minimize contention on the object store.
    */
-  std::unique_ptr<std::promise<void>> m_nextQueueExecutionPromise;
+  std::shared_ptr<std::promise<void>> m_nextQueueExecutionPromise;
   const size_t m_maxQueuedItems = 100;
   std::chrono::duration<uint64_t, std::milli> m_queueFlushTimeout = std::chrono::milliseconds(100); 
 };

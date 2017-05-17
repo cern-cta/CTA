@@ -86,14 +86,14 @@ private:
   /** Mutex that should be locked before attempting any operation */
   std::mutex m_mutex;
   /** Add the object */
-  void add(MemArchiveQueueRequest & request);
+  void add(std::shared_ptr<MemArchiveQueueRequest> request);
   /** Static function implementing the shared addition of archive requests to 
    * the object store queue */
   static const size_t g_maxQueuedElements = 100;
-  std::list<MemArchiveQueueRequest *> m_requests;
+  std::list<std::shared_ptr<MemArchiveQueueRequest>> m_requests;
   std::promise<void> m_promise;
   static std::mutex g_mutex;
-  static std::map<std::string, MemArchiveQueue *> g_queues;
+  static std::map<std::string, std::shared_ptr<MemArchiveQueue>> g_queues;
 };
 
 }} // namespace cta::ostoreDBUtils
