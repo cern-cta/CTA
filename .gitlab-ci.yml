@@ -74,7 +74,7 @@ cta_tagged_rpm:
   tags:
     - docker
 
-publish_tagged_rpm
+publish_tagged_rpm:
   stage: publish_rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
