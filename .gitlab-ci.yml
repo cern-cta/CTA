@@ -8,6 +8,8 @@ stages:
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+  - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
+  - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
 
 cta_srpm:
   stage: build:srpm
@@ -44,6 +46,29 @@ cta_rpm:
     expire_in: 30 days
     paths:
     - build_rpm/RPM/RPMS
+
+  tags:
+    - docker
+
+cta_tagged_rpm:
+  stage: build:rpm
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
+    - echo "Building package for tag ${CI_COMMIT_TAG}: CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - yum install -y gcc-c++ cmake make rpm-build
+    - yum -y install yum-plugin-priorities
+    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+    - mkdir build_tagged_rpm
+    - cd build_tagged_rpm
+    - CTA_VERSION=${TAG_VERSION} cmake -DVCS_VERSION=${TAG_RELEASE} ..
+    - make cta_rpm
+
+  artifacts:
+    expire_in: 30 days
+    paths:
+    - build_tagged_rpm/RPM/RPMS
 
   tags:
     - docker
