@@ -17,9 +17,6 @@ echo "Log URL file:/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
 
-# Create user cta early so that we can set file ownership correctly
-useradd cta
-
 # EOS INSTANCE NAME used as username for SSS key
 EOSINSTANCE=ctaeos
 

@@ -74,10 +74,10 @@ void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
 }
 
 //------------------------------------------------------------------------------
-// daemonizeIfNotRunInForeground
+// daemonizeIfNotRunInForegroundAndSetUserAndGroup
 //------------------------------------------------------------------------------
-void cta::server::Daemon::daemonizeIfNotRunInForeground(
-  const bool runAsStagerSuperuser) {
+void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName,
+  const std::string &groupName) {
   // Do nothing if already a daemon
   if (1 == getppid())  {
     return;
@@ -120,16 +120,12 @@ void cta::server::Daemon::daemonizeIfNotRunInForeground(
       "Failed to daemonize: Failed to freopen stderr");
   } // if (!m_foreground)
 
-  // Change the user of the daemon process if requested
-  if (runAsStagerSuperuser) {
-    const std::string userName = "stage";
-    const std::string groupName = "st";
-    std::list<log::Param> params = {
-      log::Param("userName", userName),
-      log::Param("groupName", groupName)};
-    m_log(log::INFO, "Setting user name and group name of current process", params);
-    cta::System::setUserAndGroup(userName, groupName);
-  }
+  // Change the user and group of the daemon process
+  std::list<log::Param> params = {
+    log::Param("userName", userName),
+    log::Param("groupName", groupName)};
+  m_log(log::INFO, "Setting user name and group name of current process", params);
+  cta::System::setUserAndGroup(userName, groupName);
 
   // Ignore SIGPIPE (connection lost with client)
   // and SIGXFSZ (a file is too big)

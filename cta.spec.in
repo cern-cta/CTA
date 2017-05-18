@@ -124,8 +124,8 @@ requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 CERN Tape Archive:
 The tape server daemon
 %pre -n cta-taped
-/usr/bin/getent group st || /usr/sbin/groupadd -g 1474 st
-/usr/bin/getent passwd stage || /usr/sbin/useradd -s /bin/nologin -c "Stager Staging System" -u 14029 -g 1474 stage
+/usr/bin/getent group cta || /usr/sbin/groupadd cta
+/usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
 %files -n cta-taped
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-taped
@@ -137,9 +137,13 @@ Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 requires: cta-lib
 requires: xrootd-server
+requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 %description -n cta-frontend
 CERN Tape Archive:
 The xroot plugin
+%pre -n cta-frontend
+/usr/bin/getent group cta || /usr/sbin/groupadd cta
+/usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
 %files -n cta-frontend
 %defattr(-,root,root)
 %attr(0755,root,root) %{_libdir}/libXrdCtaOfs.so

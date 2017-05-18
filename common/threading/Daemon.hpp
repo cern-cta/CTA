@@ -77,16 +77,19 @@ protected:
    * Daemonizes the daemon if it has not been configured to run in the
    * foreground.
    *
+   * This method also sets the user and group of the process to the specified
+   * values.
+   *
    * Please make sure that the setForeground() method has been called as
    * appropriate before this method is called.
    *
-   * This method takes into account whether or not the dameon should run in
+   * This method takes into account whether or not the daemon should run in
    * foregreound or background mode (m_foreground).
    *
-   * @param runAsStagerSuperuser Set to true if the user ID and group ID of the
-   * daemon should be set to those of the stager superuser.
+   * @param userName The name of the user.
+   * @param groupName The name of the group.
    */
-  void daemonizeIfNotRunInForeground(const bool runAsStagerSuperuser);
+  void daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName, const std::string &groupName);
 
   /**
    * Object representing the API of the CASTOR logging system.

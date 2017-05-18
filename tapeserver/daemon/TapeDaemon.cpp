@@ -80,8 +80,9 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // raw IO in the future
   setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
 
-  const bool runAsStagerSuperuser = true;
-  daemonizeIfNotRunInForeground(runAsStagerSuperuser);
+  const std::string userName = "cta";
+  const std::string groupName = "cta";
+  daemonizeIfNotRunInForegroundAndSetUserAndGroup(userName, groupName);
   setDumpable();
 
   // There is no longer any need for the process to be able to change user,

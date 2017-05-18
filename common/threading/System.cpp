@@ -111,7 +111,8 @@ int cta::System::porttoi(char* str)
 // setUserAndGroup
 //------------------------------------------------------------------------------
 void cta::System::setUserAndGroup(const std::string &userName, const std::string &groupName) {
-  const std::string task = std::string("set user and group of current process to ") + userName + ":" + groupName;
+  const std::string task = std::string("set user name of process to ") + userName + " and group name of process to " +
+    groupName;
   struct passwd *pwd = nullptr; // password structure pointer
   struct group  *grp = nullptr; // group structure pointer
 
