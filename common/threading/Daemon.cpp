@@ -120,9 +120,15 @@ void cta::server::Daemon::daemonizeIfNotRunInForeground(
       "Failed to daemonize: Failed to freopen stderr");
   } // if (!m_foreground)
 
-  // Change the user of the daemon process to the Castor superuser if requested
+  // Change the user of the daemon process if requested
   if (runAsStagerSuperuser) {
-    cta::System::switchToCtaSuperuser();
+    const std::string userName = "stage";
+    const std::string groupName = "st";
+    std::list<log::Param> params = {
+      log::Param("userName", userName),
+      log::Param("groupName", groupName)};
+    m_log(log::INFO, "Setting user name and group name of current process", params);
+    cta::System::setUserAndGroup(userName, groupName);
   }
 
   // Ignore SIGPIPE (connection lost with client)

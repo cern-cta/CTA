@@ -28,10 +28,6 @@
 #include "System.hpp"
 #include "common/exception/Errnum.hpp"
 
-#define STAGERSUPERGROUP "st"
-#define STAGERSUPERUSER "stage"
-
-
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
@@ -112,74 +108,66 @@ int cta::System::porttoi(char* str)
 }
 
 //------------------------------------------------------------------------------
-// switchToCastorSuperuser
+// setUserAndGroup
 //------------------------------------------------------------------------------
-void cta::System::switchToCtaSuperuser()
-   {
-  struct passwd *stage_passwd;    // password structure pointer
-  struct group  *stage_group;     // group structure pointer
-
-  uid_t ruid, euid;               // Original uid/euid
-  gid_t rgid, egid;               // Original gid/egid
+void cta::System::setUserAndGroup(const std::string &userName, const std::string &groupName) {
+  const std::string task = std::string("set user and group of current process to ") + userName + ":" + groupName;
+  struct passwd *pwd = nullptr; // password structure pointer
+  struct group  *grp = nullptr; // group structure pointer
 
   // Save original values
-  ruid = getuid();
-  euid = geteuid();
-  rgid = getgid();
-  egid = getegid();
+  const uid_t ruid = getuid();
+  const uid_t euid = geteuid();
+  const gid_t rgid = getgid();
+  const gid_t egid = getegid();
 
   // Get information on generic stage account from password file
-  if ((stage_passwd = getpwnam(STAGERSUPERUSER)) == NULL) {
+  if ((pwd = getpwnam(userName.c_str())) == NULL) {
     cta::exception::Exception e;
-    e.getMessage() << "CTA super user " << STAGERSUPERUSER
-                   << " not found in password file";
+    e.getMessage() << "Failed to " << task << ": User name not found in password file";
     throw e;
   }
   // verify existence of its primary group id
-  if (getgrgid(stage_passwd->pw_gid) == NULL) {
+  if (getgrgid(pwd->pw_gid) == NULL) {
     cta::exception::Exception e;
-    e.getMessage() << "CTA super user group does not exist";
+    e.getMessage() << "Failed to " << task << ": User does not have a primary group";
     throw e;
   }
-  // Get information on generic stage account from group file
-  if ((stage_group = getgrnam(STAGERSUPERGROUP)) == NULL) {
+  // Get information about group name from group file
+  if ((grp = getgrnam(groupName.c_str())) == NULL) {
     cta::exception::Exception e;
-    e.getMessage() << "CTA super user group " << STAGERSUPERGROUP
-                   << " not found in group file";
+    e.getMessage() << "Failed to " << task << ": Group name not found in group file";
     throw e;
   }
   // Verify consistency
-  if (stage_group->gr_gid != stage_passwd->pw_gid) {
+  if (grp->gr_gid != pwd->pw_gid) {
     cta::exception::Exception e;
-    e.getMessage() << "Inconsistent password file. The group of the "
-                   << "CTA superuser " << STAGERSUPERUSER
-                   << " should be " << stage_group->gr_gid
-                   << "(" << STAGERSUPERGROUP << "), but is "
-                   << stage_passwd->pw_gid;
+    e.getMessage() << "Failed to " << task << ": Inconsistent password file. The group ID of user " << userName <<
+      " should be " << grp->gr_gid << "(" << groupName << "), but is " << pwd->pw_gid;
     throw e;
   }
   // Undo group privilege
   if (setregid (egid, rgid) < 0) {
     cta::exception::Exception e;
-    e.getMessage() << "Unable to undo group privilege";
+    e.getMessage() << "Failed to " << task << ": Unable to undo group privilege";
     throw e;
   }
   // Undo user privilege
   if (setreuid (euid, ruid) < 0) {
     cta::exception::Exception e;
-    e.getMessage() << "Unable to undo user privilege";
+    e.getMessage() << "Failed to " << task << ": Unable to undo user privilege";
     throw e;
   }
-  // set the effective privileges to superuser
-  if (setegid(stage_passwd->pw_gid) < 0) {
+  // set the effective privileges
+  if (setegid(pwd->pw_gid) < 0) {
     cta::exception::Exception e;
-    e.getMessage() << "Unable to set group privileges of CTA Superuser. "
-                   << "You may want to check that the suid bit is set properly";
+    e.getMessage() << "Failed to " << task << ": Unable to set effective group ID to " << pwd->pw_gid << ". "
+      "You may want to check that the suid bit is set properly";
     throw e;
   }
-  if (seteuid(stage_passwd->pw_uid) < 0) {
+  if (seteuid(pwd->pw_uid) < 0) {
     cta::exception::Exception e;
-    e.getMessage() << "Unable to set privileges of CTA Superuser.";
+    e.getMessage() << "Failed to " << task << ": Unable to set effective user ID to " << pwd->pw_uid;
     throw e;
   }
 }
