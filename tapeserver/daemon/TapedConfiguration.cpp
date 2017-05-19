@@ -41,7 +41,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.logMask.setFromConfigurationFile(cf, generalConfigPath);
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
   // Memory management
-  ret.bufferSize.setFromConfigurationFile(cf, generalConfigPath);
+  ret.bufferSizeBytes.setFromConfigurationFile(cf, generalConfigPath);
   ret.bufferCount.setFromConfigurationFile(cf, generalConfigPath);
   // Batched metadata access and tape write flush parameters
   ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
@@ -64,7 +64,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.logMask.log(log);
   ret.tpConfigPath.log(log);
   
-  ret.bufferSize.log(log);
+  ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
   
   ret.archiveFetchBytesFiles.log(log);

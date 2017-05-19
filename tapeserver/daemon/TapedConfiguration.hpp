@@ -57,9 +57,9 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // Memory management
   //----------------------------------------------------------------------------
-  /// Memory buffer size (with a default of 5MB). TODO-switch to 32MB once validated in CASTOR.
-  SourcedParameter<uint64_t> bufferSize{
-    "taped", "BufferSize", 5*1025*1024, "Compile time default"};
+  /// Memory buffer size in bytes (with a default of 5MB). TODO-switch to 32MB once validated in CASTOR.
+  SourcedParameter<uint64_t> bufferSizeBytes{
+    "taped", "BufferSizeBytes", 5*1025*1024, "Compile time default"};
   /// Memory buffer count per drive. There is no default to this one.
   SourcedParameter<uint64_t> bufferCount{
     "taped", "BufferCount"};

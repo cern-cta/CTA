@@ -996,7 +996,7 @@ int DriveHandler::runChild() {
     castor::tape::System::realWrapper sWrapper;
     
     castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
-    dataTransferConfig.bufsz = m_tapedConfig.bufferSize.value();
+    dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
     dataTransferConfig.bulkRequestMigrationMaxBytes = 
         m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
     dataTransferConfig.bulkRequestMigrationMaxFiles =
