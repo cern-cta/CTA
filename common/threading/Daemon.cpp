@@ -78,11 +78,6 @@ void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
 //------------------------------------------------------------------------------
 void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName,
   const std::string &groupName) {
-  // Do nothing if already a daemon
-  if (1 == getppid())  {
-    return;
-  }
-
   // If the daemon is to be run in the background
   if (!m_foreground) {
     m_log.prepareForFork();
