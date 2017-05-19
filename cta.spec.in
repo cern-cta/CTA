@@ -130,7 +130,6 @@ The tape server daemon
 %files -n cta-taped
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0755,root,root) %{_libdir}/libctamessages.so
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta.conf.example
 
 %package -n cta-frontend
