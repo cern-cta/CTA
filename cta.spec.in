@@ -166,7 +166,7 @@ The xroot plugin
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
 %package -n cta-lib
-Summary: CERN Tape Archive
+Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: oracle-instantclient12.1-basic
 %description -n cta-lib
