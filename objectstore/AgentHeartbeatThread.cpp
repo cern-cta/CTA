@@ -25,6 +25,7 @@ namespace cta { namespace objectstore {
 // AgentHeartbeatThread::stopAndWaitThread
 //------------------------------------------------------------------------------
 void AgentHeartbeatThread::stopAndWaitThread() {
+  ANNOTATE_HAPPENS_BEFORE(&m_exit);
   m_exit.set_value();
   wait();
 }
@@ -39,6 +40,8 @@ void AgentHeartbeatThread::run() {
     while (std::future_status::ready != exitFuture.wait_for(m_heartRate)) {
       m_agentReference.bumpHeatbeat(m_backend);
     }
+    ANNOTATE_HAPPENS_AFTER(&m_exit);
+    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_exit);
   } catch (cta::exception::Exception & ex) {
     log::ScopedParamContainer params(lc);
     params.add("Message", ex.getMessageValue());

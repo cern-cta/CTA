@@ -128,7 +128,7 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_use
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
 
 // unit test is disabled as it is pretty long to run.
-TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
+TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;
   cta::log::DummyLogger dl("");
   cta::log::LogContext lc(dl);
@@ -137,7 +137,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
   
   // Inject 1000 archive jobs to the db.
   const size_t filesToDo = 100;
-    std::list<std::future<void>> jobInsertions;
+  std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
   for (size_t i=0; i<filesToDo; i++) {
     lambdas.emplace_back(
@@ -176,7 +176,7 @@ TEST_P(SchedulerDatabaseTest, DISABLED_createManyArchiveJobs) {
       ar.storageClass = "storageClass";
       db.queueArchive("eosInstance", ar, afqc, locallc);
     });
-    jobInsertions.emplace_back(std::async(std::launch::async | std::launch::deferred,lambdas.back()));
+    jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
   }
   for (auto &j: jobInsertions) { j.wait(); }
   jobInsertions.clear();

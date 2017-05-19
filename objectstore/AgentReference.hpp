@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "common/helgrind_annotator.hpp"
 #include "objectstore/Backend.hpp"
 #include <atomic>
 #include <string>
@@ -168,6 +169,10 @@ private:
    * One at a time also minimize contention on the object store.
    */
   std::shared_ptr<std::promise<void>> m_nextQueueExecutionPromise;
+  /**
+   * This future will be immediately extracted from the m_nextQueueExecutionPromise before any other thread touches it.
+   */
+  std::future<void> m_nextQueueExecutionFuture;
   const size_t m_maxQueuedItems = 100;
   std::chrono::duration<uint64_t, std::milli> m_queueFlushTimeout = std::chrono::milliseconds(100); 
 };

@@ -102,6 +102,8 @@ public:
     time_t date;
     /** The promise that will both do the job and allow synchronization with the caller. */
     std::promise<void> m_job;
+    /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
+    std::future<void> m_jobFuture;
     /** A future used to hold the structure of the lock operation. It will be either empty of complete at 
      destruction time */
     std::unique_ptr<std::future<void>> m_lockAsync;

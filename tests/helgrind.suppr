@@ -395,3 +395,43 @@
    obj:/usr/lib64/librados.so.2.0.0
    ...
 }
+
+{
+   RadosBufferList
+   Helgrind:Race
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   fun:_ZN8librados9IoCtxImpl12operate_readERK8object_tP15ObjectOperationPN4ceph6buffer4listEi
+   fun:_ZN8librados9IoCtxImpl4statERK8object_tPmPl
+   ...
+}
+
+{
+   RecursiveWriteLock
+   Helgrind:Misc
+   fun:pthread_spin_lock_WRK
+   fun:pthread_spin_lock
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   ...
+}
+
+{
+   PromiseInternalSharedPointers
+   Helgrind:Race
+   fun:_ZNSt13__future_base11_State_baseD1Ev
+   fun:_ZN9__gnu_cxx13new_allocatorINSt13__future_base11_State_baseEE7destroyIS2_EEvPT_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE10_S_destroyIS1_EENSt9enable_ifIXsrNS3_16__destroy_helperIT_EE5valueEvE4typeERS2_PS7_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE7destroyIS1_EEvRS2_PT_
+   fun:_ZNSt23_Sp_counted_ptr_inplaceINSt13__future_base11_State_baseESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   ...
+}
+

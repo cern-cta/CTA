@@ -26,6 +26,7 @@
 #include "common/log/StringLogger.hpp"
 #include "OStoreDB.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
+#include "MemQueues.hpp"
 
 namespace unitTests {
 
@@ -168,6 +169,52 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   ASSERT_EQ(8, jobs.size());
   // Check the queue has been emptied, and hence removed.
   ASSERT_EQ(false, osdbi.getBackend().exists(aqAddr));
+}
+
+TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
+  using namespace cta::objectstore;
+  cta::log::StringLogger logger("OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::LogContext lc(logger);
+  // Get the OStoreBDinterface
+  OStoreDBWrapperInterface & osdbi = getDb();
+  // Create many archive jobs and enqueue them in the same archive queue.
+  const size_t filesToDo = 100;
+  std::list<std::future<void>> jobInsertions;
+  std::list<std::function<void()>> lambdas;
+  for (size_t i=0; i<filesToDo; i++) {
+    lambdas.emplace_back(
+    [i,&osdbi,&lc](){
+      cta::log::LogContext localLc=lc;
+      // We need to pass an archive request and an archive request job dump to sharedAddToArchiveQueue.
+      cta::objectstore::ArchiveRequest aReq(osdbi.getAgentReference().nextId("ArchiveRequest"), osdbi.getBackend());
+      aReq.initialize();
+      cta::common::dataStructures::ArchiveFile aFile;
+      cta::common::dataStructures::MountPolicy mountPolicy;
+      cta::common::dataStructures::UserIdentity requester;
+      cta::common::dataStructures::EntryLog entryLog;
+      aFile.archiveFileID = i;
+      aReq.setArchiveFile(aFile);
+      aReq.setMountPolicy(mountPolicy);
+      aReq.setArchiveReportURL("");
+      aReq.setRequester(requester);
+      aReq.setSrcURL("");
+      aReq.setEntryLog(entryLog);
+      aReq.addJob(1, "tapepool", "archive queue address to be set later", 2, 2);
+      aReq.insert();
+      cta::objectstore::ScopedExclusiveLock aql(aReq);
+      ArchiveRequest::JobDump jd;
+      jd.tapePool = "tapepool";
+      jd.copyNb = 1;
+      auto sharedLock = cta::ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(jd, aReq, osdbi.getOstoreDB(), localLc);
+    });
+    jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
+  }
+  for (auto &j: jobInsertions) { j.wait(); }
+  jobInsertions.clear();
+  lambdas.clear();
+  
+  // Now make sure the files made it to the queue.
+  ASSERT_EQ(filesToDo, osdbi.getArchiveJobs("tapepool").size());
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);

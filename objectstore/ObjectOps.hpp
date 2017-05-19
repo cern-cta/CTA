@@ -79,7 +79,7 @@ protected:
   
   void checkReadable() {
     if (!m_locksCount)
-      throw NotLocked("In ObjectOps::checkReadable: object not locked");
+     throw NotLocked("In ObjectOps::checkReadable: object not locked");
   }
   
 public:

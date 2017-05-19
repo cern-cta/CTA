@@ -55,6 +55,7 @@ BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
 BuildRequires: oracle-instantclient12.1-devel
 BuildRequires: valgrind
+BuildRequires: valgrind-devel
 %endif
 # only build debug info if you're building the whole code
 

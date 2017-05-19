@@ -322,7 +322,7 @@ void OStoreDB::getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue& a
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
-  // Construct the return value immediately
+  // Construct the archive request object in memory
   cta::objectstore::ArchiveRequest aReq(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
   aReq.initialize();
   // Summarize all as an archiveFile
@@ -368,9 +368,14 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
     for (auto &j: aReq.dumpJobs()) {
       currentTapepool = j.tapePool;
       // The shared lock will be released automatically at the end of this scope.
+      // The queueing implicitly sets the job owner as the queue (as should be). The queue should not
+      // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
+      // stale and the job would be dereferenced from the queue.
       auto shareLock = ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this, logContext);
+      aReq.commit();
+      // Now we can let go off the queue.
+      shareLock.reset();
       linkedTapePools.push_back(j.ArchiveQueueAddress);
-      aReq.setJobOwner(j.copyNb, j.ArchiveQueueAddress);
       log::ScopedParamContainer params(logContext);
       params.add("tapepool", j.tapePool)
             .add("queueObject", j.ArchiveQueueAddress)

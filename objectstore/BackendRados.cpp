@@ -22,6 +22,7 @@
 #include <sys/syscall.h>
 #include <errno.h>
 #include <unistd.h>
+#include <valgrind/helgrind.h>
 
 namespace cta { namespace objectstore {
 
@@ -198,7 +199,8 @@ Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::
   return new AsyncUpdater(*this, name, update);
 }
 
-BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& name, std::function<std::string(const std::string&)>& update): m_backend(be), m_name(name), m_update(update) {
+BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& name, std::function<std::string(const std::string&)>& update):
+  m_backend(be), m_name(name), m_update(update), m_job(), m_jobFuture(m_job.get_future()) {
   try {
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
     // At construction time, we just fire a stat.
@@ -209,6 +211,7 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
       throw Backend::NoSuchObject(errnum.getMessageValue());
     }
   } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
   }
 }
@@ -256,11 +259,13 @@ void BackendRados::AsyncUpdater::statCallback(librados::completion_t completion,
               throw Backend::CouldNotFetch(errnum.getMessageValue());
             }
           } catch (...) {
+            ANNOTATE_HAPPENS_BEFORE(&au.m_job);
             au.m_job.set_exception(std::current_exception());
           }
         }
         )));
   } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -309,11 +314,13 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
               throw Backend::CouldNotCommit(errnum.getMessageValue());
             }
           } catch (...) {
+            ANNOTATE_HAPPENS_BEFORE(&au.m_job);
             au.m_job.set_exception(std::current_exception());
           }
         }
         )));
   } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -336,6 +343,7 @@ void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completio
       throw Backend::CouldNotUnlock(errnum.getMessageValue());
     }
   } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -350,14 +358,18 @@ void BackendRados::AsyncUpdater::unlockCallback(librados::completion_t completio
       throw Backend::CouldNotUnlock(errnum.getMessageValue());
     }
     // Done!
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_value();
   } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
 
 void BackendRados::AsyncUpdater::wait() {
-  m_job.get_future().get();
+  m_jobFuture.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 std::string BackendRados::Parameters::toStr() {

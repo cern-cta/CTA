@@ -47,6 +47,8 @@ namespace objectstore {
 class OStoreDBWrapperInterface: public SchedulerDatabase {
 public:
   virtual objectstore::Backend & getBackend() = 0;
+  virtual objectstore::AgentReference & getAgentReference() = 0;
+  virtual cta::OStoreDB & getOstoreDB() = 0;
 };
 
 }
@@ -67,6 +69,10 @@ public:
   ~OStoreDBWrapper() throw () {}
   
   objectstore::Backend& getBackend() override { return *m_backend; }
+  
+  objectstore::AgentReference& getAgentReference() override { return m_agentReference; }
+  
+  cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
   void ping() override {
     m_OStoreDB.ping();
