@@ -13,6 +13,7 @@ add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped
   ctatapedaemon ctacommon protobuf)
 install (TARGETS cta-taped DESTINATION usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)
 
 # CTA's cta-taped system tests.
 add_library(cta-tapedSystemTests SHARED

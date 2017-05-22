@@ -131,6 +131,7 @@ The tape server daemon
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta.conf.example
+%attr(0644,root,bin) %doc /usr/share/man/man1/cta-taped.1cta.gz
 
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
