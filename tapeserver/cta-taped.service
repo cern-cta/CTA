@@ -1,0 +1,12 @@
+[Unit]
+Description=CERN Tape Archive (CTA) tape server daemon
+After=syslog.target network-online.target
+
+[Service]
+EnvironmentFile=-/etc/sysconfig/cta-taped
+ExecStart=/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}
+Type=forking
+Restart=no
+
+[Install]
+WantedBy=default.target

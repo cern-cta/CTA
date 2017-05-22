@@ -3,7 +3,7 @@
 #   -h             display help and exit
 #   -c             config file location (cta.conf)
 #
-#CTA_TAPED_OPTIONS=
+#CTA_TAPED_OPTIONS="--config=/etc/cta/cta.conf"
 
 # Environment variables to configue the libXrdCl.so linked with cta-taped
 #
