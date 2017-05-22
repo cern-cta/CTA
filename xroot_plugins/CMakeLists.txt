@@ -28,6 +28,7 @@ target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacom
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
 INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
 
 set (OPAQUE_QUERY_CMD_SRC_FILES
   CmdLineTool.cpp
