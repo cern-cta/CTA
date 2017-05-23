@@ -76,6 +76,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
   gcAgent.removeAndUnregisterSelf();
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
@@ -135,6 +136,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   ASSERT_FALSE(be.exists(arName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
   gcAgent.removeAndUnregisterSelf();
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
@@ -195,6 +197,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
   gcAgent.removeAndUnregisterSelf();
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
@@ -255,6 +258,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
   gcAgent.removeAndUnregisterSelf();
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
@@ -424,6 +428,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
   gcAgent.removeAndUnregisterSelf();
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);

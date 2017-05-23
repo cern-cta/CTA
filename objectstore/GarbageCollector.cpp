@@ -139,6 +139,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
     if (!wa->second->checkAlive()) {
       cleanupDeadAgent(wa->first, lc);
       ScopedExclusiveLock oaLock(m_ourAgent);
+      m_ourAgent.fetch();
       m_ourAgent.removeFromOwnership(wa->first);
       m_ourAgent.commit();
       delete wa->second;

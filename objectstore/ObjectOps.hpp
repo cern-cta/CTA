@@ -199,6 +199,8 @@ protected:
     m_lock.reset(NULL);
     m_objectOps->m_locksCount--;
     m_locked = false;
+    // Releasing a lock voids the object content in memory as stored object can now change. 
+    m_objectOps->m_payloadInterpreted=false;
   }
 };
   

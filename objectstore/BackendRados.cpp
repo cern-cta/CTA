@@ -134,7 +134,7 @@ void BackendRados::ScopedLock::release() {
 void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId) {
   m_oid = oid;
   m_clientId = clientId;\
-      m_lockSet = true;
+  m_lockSet = true;
 }
 
 BackendRados::ScopedLock::~ScopedLock() {
