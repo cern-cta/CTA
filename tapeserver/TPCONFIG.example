@@ -1,0 +1,33 @@
+# The CERN Tape Archive (CTA) project
+# Copyright (C) 2015  CERN
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Example of a tape configuration file (/etc/cta/TPCONFIG)
+#
+# A single tape server daemon can control one or two tape drives.  There should
+# be one line per tape drive.  Each line should consist of the following 4
+# columns delimited by spaces:
+#
+# driveName logicalLibraryName driveDevicePath librarySlot
+#
+# Please modify accordingly the UPPERCASE letters and uncomment the following
+# line if you have a tape drive in a SCSI compatible library:
+#
+# DRIVENAME LOGIGICAL_LIBRARY_NAME /dev/XXXX smcDRIVE_ORDINAL
+#
+# Please modify accordingly the UPPERCASE letters and uncomment the following
+# line if you have a tape drive in an ACS library:
+#
+# DRIVENAME LOGIGICALi_LIBRARY_NAME /dev/XXXX acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER

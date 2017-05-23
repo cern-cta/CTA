@@ -13,6 +13,7 @@ add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped
   ctatapedaemon ctacommon protobuf)
 install (TARGETS cta-taped DESTINATION usr/bin)
+install (FILES TPCONFIG.example DESTINATION /etc/cta)
 install (FILES cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
 install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
