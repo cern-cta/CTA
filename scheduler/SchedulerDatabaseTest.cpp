@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "objectstore/BackendRadosTestSwitch.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/UserIdentity.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
@@ -26,7 +28,9 @@
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#endif
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -127,18 +131,23 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_adm
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnAdminHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_adminHost);
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
 
-// unit test is disabled as it is pretty long to run.
 TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;
+#ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("");
+#else
+  cta::log::StdoutLogger dl("");
+#endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase &db = getDb();
-  
-  // Inject 1000 archive jobs to the db.
+  // Inject 100 archive jobs to the db.
   const size_t filesToDo = 100;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
+#ifdef LOOPING_TEST
+  do {
+#endif
   for (size_t i=0; i<filesToDo; i++) {
     lambdas.emplace_back(
     [i,&db,&lc](){
@@ -201,11 +210,22 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     else
       done = true;
   }
+#ifdef LOOPING_TEST
+  if (filesToDo != count) { 
+    std::cout << "ERROR_DETECTED!!! ********************************************* BLocking test" << std::endl;
+    std::cout << "Missing=" << filesToDo - count << " count=" << count << " filesToDo=" << filesToDo << std::endl;
+    while (true) { sleep(1);} 
+  } else {
+    std::cout << "**************************************************************************************************** END OF RUN *******************************************************\n" << std::endl;
+  }
+#endif
   ASSERT_EQ(filesToDo, count);
   am->complete(time(nullptr));
   am.reset(nullptr);
   moutInfo.reset(nullptr);
-  
+#ifdef LOOPING_TEST
+  } while (true);
+#endif
   const size_t filesToDo2 = 200;
   for (size_t i=0; i<filesToDo2; i++) {
     lambdas.emplace_back(
@@ -252,10 +272,20 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   
   // Then load all archive jobs into memory (2nd pass)
   // Create mount.
+#ifdef LOOPING_TEST
+  auto moutInfo = db.getMountInfo();
+  cta::catalogue::TapeForWriting tfw;
+  tfw.tapePool = "tapePool";
+  tfw.vid = "vid";
+  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  auto done = false;
+  auto count = 0;
+#else
   moutInfo = db.getMountInfo();
   am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
   done = false;
   count = 0;
+#endif
   while (!done) {
     auto aj = am->getNextJob(lc);
     if (aj.get()) {

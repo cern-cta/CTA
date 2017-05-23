@@ -20,6 +20,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 #include "common/utils/Regex.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -33,8 +34,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#undef DEBUG_PRINT_LOGS
-#ifdef DEBUG_PRINT_LOGS
+#ifdef LOW_LEVEL_TRACING
 #include <iostream>
 #endif
 
@@ -50,7 +50,7 @@ BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
   } else {
     throw cta::exception::Errnum("Failed to create temporary directory");
   }
-  #ifdef DEBUG_PRINT_LOGS
+  #ifdef LOW_LEVEL_TRACING
   std::cout << "In BackendVFS::BackendVFS(): created object store " << m_root << " " 
       << std::hex << this << file << ":" << line << std::endl;
   #endif
@@ -86,11 +86,11 @@ BackendVFS::~BackendVFS() {
   if (m_deleteOnExit) {
     // Delete the created directories recursively
     nftw (m_root.c_str(), deleteFileOrDirectory, 100, FTW_DEPTH);
-    #ifdef DEBUG_PRINT_LOGS
+    #ifdef LOW_LEVEL_TRACING
     ::printf("In BackendVFS::~BackendVFS(): deleted object store %s 0x%p\n", m_root.c_str(), (void*)this);
     #endif
   }
-  #ifdef DEBUG_PRINT_LOGS
+  #ifdef LOW_LEVEL_TRACING
     else {
     ::printf("In BackendVFS::~BackendVFS(): skipping object store deletion %s 0x%p\n", m_root.c_str(), (void*)this);
   }
@@ -109,6 +109,9 @@ void BackendVFS::create(std::string name, std::string content) {
     cta::exception::Errnum::throwOnMinusOne(fd,
         "In ObjectStoreVFS::create, failed to open the file");
     fileCreated = true;
+    #ifdef LOW_LEVEL_TRACING
+      ::printf("In BackendVFS::create(): created object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
+    #endif
     cta::exception::Errnum::throwOnMinusOne(
         ::write(fd, content.c_str(), content.size()),
         "In ObjectStoreVFS::create, failed to write to file");
@@ -156,6 +159,9 @@ void BackendVFS::atomicOverwrite(std::string name, std::string content) {
   cta::exception::Errnum::throwOnMinusOne(
       ::rename(tempPath.c_str(), targetPath.c_str()),
       err.str());
+  #ifdef LOW_LEVEL_TRACING
+    ::printf("In BackendVFS::atomicOverwrite(): overwrote object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
+  #endif
 }
 
 std::string BackendVFS::read(std::string name) {
@@ -172,6 +178,9 @@ std::string BackendVFS::read(std::string name) {
     file.read(buff, sizeof (buff));
     ret.append(buff, file.gcount());
   }
+  #ifdef LOW_LEVEL_TRACING
+    ::printf("In BackendVFS::read(): read object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
+  #endif
   return ret;
 }
 
@@ -180,13 +189,22 @@ void BackendVFS::remove(std::string name) {
   std::string lockPath = m_root + "/." + name + ".lock";
   cta::exception::Errnum::throwOnNonZero(unlink(path.c_str()), "Failed to remove object file");
   cta::exception::Errnum::throwOnNonZero(unlink(lockPath.c_str()), "Failed to remove lock file.");
+  #ifdef LOW_LEVEL_TRACING
+    ::printf("In BackendVFS::read(): removed object %s, tid=%li\n", name.c_str(), ::syscall(SYS_gettid));
+  #endif
 }
 
 bool BackendVFS::exists(std::string name) {
   std::string path = m_root + "/" + name;
   std::string lockPath = m_root + "/." + name + ".lock";  
-  struct stat buffer;   
-  return (stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0);
+  struct stat buffer;
+  #ifdef LOW_LEVEL_TRACING
+    bool filePresent=stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0;
+    ::printf("In BackendVFS::exists(): tested presence of object %s, tid=%li, exists=%d\n", name.c_str(), ::syscall(SYS_gettid), filePresent);
+    return filePresent;
+  #else
+    return (stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0);
+  #endif
 }
 
 std::list<std::string> BackendVFS::list() {
@@ -211,7 +229,7 @@ BackendVFS::Parameters* BackendVFS::getParams() {
 
 void BackendVFS::ScopedLock::release() {
   if (!m_fdSet) return;
-#ifdef DEBUG_PRINT_LOGS
+#ifdef LOW_LEVEL_TRACING
   if (m_fd==-1) {
     std::cout << "Warning: fd=-1!" << std::endl;
   }
@@ -219,8 +237,8 @@ void BackendVFS::ScopedLock::release() {
   ::flock(m_fd, LOCK_UN);
   ::close(m_fd);
   m_fdSet = false;
-#ifdef DEBUG_PRINT_LOGS
-  std::cout << "Unlocked " << m_path << " with fd=" << m_fd  << " tid=" << syscall(SYS_gettid) << std::endl;
+#ifdef LOW_LEVEL_TRACING
+  ::printf("BackendVFS::ScopedLock::release() Unlocked %s with fd=%d tid=%ld\n", m_path.c_str() , m_fd, syscall(SYS_gettid));
 #endif
 }
 
@@ -259,30 +277,30 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
     throw ex;
   }
   
-#ifdef DEBUG_PRINT_LOGS
+  #ifdef LOW_LEVEL_TRACING
   if (ret->m_fd==-1) {
     std::cout << "Warning: fd=-1!" << std::endl;
   }
-#endif
+  #endif
 
   return ret.release();
 }
 
 BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name) {
   std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX));
-#ifdef DEBUG_PRINT_LOGS
-  std::cout << "LockedExclusive " << name << " with fd=" << ret->m_fd 
-      << " path=" << ret->m_path << " tid=" << syscall(SYS_gettid) << std::endl;
-#endif
+  #ifdef LOW_LEVEL_TRACING
+    ::printf ("In BackendVFS::lockExclusive(): LockedExclusive %s with fd=%d path=%s tid=%ld\n", 
+        name.c_str(), ret->m_fd, ret->m_path.c_str(), syscall(SYS_gettid));
+  #endif
   return ret.release();
 }
 
 BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name) {
   std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_SH));
-#ifdef DEBUG_PRINT_LOGS
-  std::cout << "LockedShared " << name << " with fd=" << ret->m_fd 
-      << " path=" << ret->m_path << " tid=" << syscall(SYS_gettid) << std::endl;
-#endif
+  #ifdef LOW_LEVEL_TRACING
+    ::printf ("In BackendVFS::lockShared(): LockedShared %s with fd=%d path=%s tid=%ld\n",
+        name.c_str(), ret->m_fd, ret->m_path.c_str(), syscall(SYS_gettid));
+  #endif
   return ret.release();
 }
 

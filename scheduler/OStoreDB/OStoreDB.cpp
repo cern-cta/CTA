@@ -296,6 +296,7 @@ void OStoreDB::getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue& a
       } catch (cta::exception::Exception & ex) {
         rel.release();
         ScopedExclusiveLock rexl(re);
+        re.fetch();
         archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, *m_agentReference));
       }
     }

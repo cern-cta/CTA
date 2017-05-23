@@ -21,6 +21,9 @@
 #include "BackendRados.hpp"
 #include "common/exception/Exception.hpp"
 #include "BackendRadosTestSwitch.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
+#include <atomic>
+#include <future>
 
 namespace unitTests {
 
@@ -84,6 +87,58 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   }
   // The object should not be created as a side effect
   ASSERT_FALSE(m_os->exists(nonExistingObject));
+}
+
+TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
+  // This test validates the locking of the object store
+  // Launch many threads which will bump up a number stored in a file.
+  // Similarly counted in memory
+#ifdef LOOPING_TEST
+  do {
+#endif
+  const std::string testObjectName = "testObject";
+  uint64_t val=0;
+  std::string valStr;
+  valStr.append((char*)&val, sizeof(val));
+  m_os->create(testObjectName, valStr);
+  auto os=m_os;
+  std::atomic<uint64_t> counter(0);
+  std::list<std::future<void>> insertCompletions;
+  std::list<std::function<void()>> lambdas;
+  const size_t threadCount=100;
+  const size_t passCount=100;
+  for (size_t i=0; i<threadCount; i++) {
+    lambdas.emplace_back([&testObjectName,os,&passCount,&counter](){
+      for (size_t pass=0; pass<passCount; pass++) {
+        std::unique_ptr<cta::objectstore::Backend::ScopedLock> sl(os->lockExclusive(testObjectName));
+        uint64_t val;
+        os->read(testObjectName).copy((char*)&val,sizeof(val));
+        val++;
+        std::string valStr;
+        valStr.append((char*)&val, sizeof(val));
+        os->atomicOverwrite(testObjectName, valStr);
+        counter++;
+      }
+    });
+    insertCompletions.emplace_back(std::async(std::launch::async, lambdas.back()));
+  }
+  for (auto &ic: insertCompletions) { ic.wait(); }
+  insertCompletions.clear();
+  lambdas.clear();
+  m_os->read(testObjectName).copy((char*)&val, sizeof(val));
+#ifdef LOOPING_TEST
+  printf(".");
+  if (counter != val) {
+    std::cout << "counter=" << counter << " val=" << val << std::endl;
+    std::cout << "ERROR!! *************************************************************" << std::endl;
+    while (true) { sleep (1); }
+  }
+#endif
+  ASSERT_EQ(counter, val);
+  m_os->remove(testObjectName);
+#ifdef LOOPING_TEST
+  }while(true);
+#endif
 }
 
 TEST_P(BackendAbstractTest, AsyncIOInterface) {
