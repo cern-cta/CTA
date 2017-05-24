@@ -157,14 +157,14 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
   // If we just passed (down) the half full limit, ask for more
   // (the remaining value is after pop)
   isLastTask = false;
-  if(vrp.remaining + 1 == m_maxFilesRequest/2) {
-    // This is not a last call
-    m_taskInjector->requestInjection(false);
-  } else if (0 == vrp.remaining) {
+  if(0 == vrp.remaining) {
     // This is a last call: if the task injector comes up empty on this
     // one, he'll call it the end.
     m_taskInjector->requestInjection(true);
     isLastTask = true;
+  } else if (vrp.remaining + 1 == m_maxFilesRequest/2) {
+    // This is not a last call
+    m_taskInjector->requestInjection(false);
   }
   return vrp.value;
 }
