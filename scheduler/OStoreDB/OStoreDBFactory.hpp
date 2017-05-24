@@ -212,6 +212,7 @@ m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
   rel.release();
   agent.insertAndRegisterSelf();
   rel.lock(re);
+  re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
   re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
   rel.release();
