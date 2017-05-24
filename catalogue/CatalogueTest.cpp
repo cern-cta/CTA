@@ -1634,6 +1634,16 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment_nonExisentLogica
   ASSERT_THROW(m_catalogue->modifyLogicalLibraryComment(m_admin, logicalLibraryName, comment), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, tapeExists_emptyString) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "";
+
+  ASSERT_THROW(m_catalogue->tapeExists(vid), exception::Exception);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createTape) {
   using namespace cta;
 
