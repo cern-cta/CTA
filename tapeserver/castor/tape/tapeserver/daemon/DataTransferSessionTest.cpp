@@ -767,7 +767,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::list<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
