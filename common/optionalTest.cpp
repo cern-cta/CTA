@@ -86,6 +86,7 @@ TEST_F(cta_optionalTest, string_constructors) {
   const optional<std::string> o4(x);
   const std::string y = "Mum!";
   const optional<std::string> o5(std::move(y));
+  const optional<std::string> o6("");
 
   ASSERT_FALSE(o1 == o2);
   ASSERT_FALSE(o2 == o3);
@@ -101,6 +102,7 @@ TEST_F(cta_optionalTest, string_constructors) {
   ASSERT_TRUE(bool(o3));
   ASSERT_TRUE(bool(o4));
   ASSERT_TRUE(bool(o5));
+  ASSERT_TRUE(bool(o6));
 }
 
 TEST_F(cta_optionalTest, bool_constructors) {

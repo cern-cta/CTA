@@ -37,6 +37,7 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
   rel.release();
   agent.insertAndRegisterSelf();
   rel.lock(re);
+  re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
   rel.release();
 }
