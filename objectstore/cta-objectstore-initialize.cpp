@@ -59,6 +59,7 @@ int main(int argc, char ** argv) {
     rel.release();
     ag.insertAndRegisterSelf();
     rel.lock(re);
+    re.fetch();
     re.addOrGetDriveRegisterPointerAndCommit(agr, el);
     re.addOrGetSchedulerGlobalLockAndCommit(agr,el);
     rel.release();
