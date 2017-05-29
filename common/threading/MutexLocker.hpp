@@ -69,10 +69,12 @@ public:
    * Destructor.
    */
   ~MutexLocker() {
-    try {
-      m_mutex.unlock();
-    } catch (...) {
-      // Ignore any exceptions
+    if (m_locked) {
+      try {
+        m_mutex.unlock();
+      } catch (...) {
+        // Ignore any exceptions
+      }
     }
   }
 
