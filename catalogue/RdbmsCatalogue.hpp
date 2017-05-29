@@ -240,17 +240,12 @@ public:
 
   /**
    * Creates a tape.
-   *
-   * @param encryptionKey The optional identifier of the encrption key.  This
-   * optional parameter should either have a non-empty string value or no value
-   * at all.  Empty strings are prohibited.
    */
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
-    const optional<std::string> &encryptionKey,
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,

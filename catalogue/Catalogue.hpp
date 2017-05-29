@@ -259,17 +259,12 @@ public:
   /**
    * Creates a tape which is assumed to have logical block protection (LBP)
    * enabled.
-   *
-   * @param encryptionKey The optional identifier of the encrption key.  This
-   * optional parameter should either have a non-empty string value or no value
-   * at all.  Empty strings are prohibited.
    */
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
-    const optional<std::string> &encryptionKey,
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,

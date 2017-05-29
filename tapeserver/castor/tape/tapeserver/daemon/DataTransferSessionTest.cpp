@@ -348,7 +348,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -520,7 +520,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -704,7 +704,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -847,7 +847,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -1000,7 +1000,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1137,7 +1137,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1271,7 +1271,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1417,7 +1417,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria

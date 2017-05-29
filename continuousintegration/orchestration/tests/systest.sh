@@ -79,7 +79,6 @@ echo "Preparing CTA for tests"
       --vid ${VID}                                                    \
       --disabled false                                                \
       --full false                                                    \
-      --encryptionkey test                                            \
       --comment "ctasystest"
   done
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta storageclass add   \
