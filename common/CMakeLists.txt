@@ -176,3 +176,5 @@ add_library (ctacommonunittests SHARED
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+add_executable(mutexLtrace threading/MutexLtrace.cpp)
+target_link_libraries (mutexLtrace ctacommon)
