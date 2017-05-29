@@ -951,7 +951,9 @@ void XrdCtaFile::xCom_tape() {
        << "\treclaim --vid/-v <vid>" << std::endl
        << "\tls      [--header/-h] [--all/-a] or any of: [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
        << "\t        [--lbp/-p <\"true\" or \"false\">] [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">]" << std::endl
-       << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl;  
+       << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl
+       << "Where" << std::endl
+       << "\tencryption_key Is either \"none\" or the name of the individual key to be used" << std::endl;
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
