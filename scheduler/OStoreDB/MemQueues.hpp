@@ -22,6 +22,8 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include <unistd.h>
 #include <syscall.h>
 
@@ -55,7 +57,7 @@ public:
   MemArchiveQueueRequest(objectstore::ArchiveRequest::JobDump & job,
     objectstore::ArchiveRequest & archiveRequest): m_job(job), m_archiveRequest(archiveRequest), m_tid(::syscall(SYS_gettid)) {}
   virtual ~MemArchiveQueueRequest() {
-    std::lock_guard<std::mutex> lg(m_mutex);
+    threading::MutexLocker ml(m_mutex);
   }
 private:
   objectstore::ArchiveRequest::JobDump & m_job;
@@ -63,7 +65,7 @@ private:
   std::promise<void> m_promise;
   std::shared_ptr<SharedQueueLock> m_returnValue;
   // Mutex protecting users against premature deletion
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
   // Helper for debugging
   pid_t m_tid;
 };
@@ -94,7 +96,7 @@ public:
   
 private:
   /** Mutex that should be locked before attempting any operation */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
   /** Add the object */
   void add(std::shared_ptr<MemArchiveQueueRequest>& request);
   /** Static function implementing the shared addition of archive requests to 
@@ -102,12 +104,12 @@ private:
   static const size_t g_maxQueuedElements = 100;
   std::list<std::shared_ptr<MemArchiveQueueRequest>> m_requests;
   std::promise<void> m_promise;
-  static std::mutex g_mutex;
+  static threading::Mutex g_mutex;
   static std::map<std::string, std::shared_ptr<MemArchiveQueue>> g_queues;
   
   /** Helper function for sharedAddToArchiveQueue */
   static std::shared_ptr<SharedQueueLock> sharedAddToArchiveQueueWithNewQueue(objectstore::ArchiveRequest::JobDump & job,
-    objectstore::ArchiveRequest & archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext, std::unique_lock<std::mutex> & globalLock);
+    objectstore::ArchiveRequest & archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext, threading::MutexLocker &globalLock);
 };
 
 }} // namespace cta::ostoreDBUtils

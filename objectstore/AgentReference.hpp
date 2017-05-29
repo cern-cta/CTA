@@ -20,6 +20,8 @@
 
 #include "common/helgrind_annotator.hpp"
 #include "objectstore/Backend.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include <atomic>
 #include <string>
 #include <future>
@@ -125,11 +127,11 @@ private:
      * A mutex ensuring the object will not be released before the promise's result
      * is fully pushed.
      */
-    std::mutex mutex;
+    threading::Mutex mutex;
     ~Action() {
       // The setting of promise result will be protected by this mutex, so destruction 
       // will only happen after promise setting is complete.
-      std::lock_guard<std::mutex> lm(mutex);
+      threading::MutexLocker ml(mutex);
     }
   };
   
@@ -137,7 +139,7 @@ private:
    * The queue with the lock and flush control 
    */
   struct ActionQueue {
-    std::mutex mutex;
+    threading::Mutex mutex;
     std::list<std::shared_ptr<Action>> queue;
     std::promise<void> promise;
   };
@@ -157,7 +159,7 @@ private:
    */
   void queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend);
   
-  std::mutex m_currentQueueMutex;
+  threading::Mutex m_currentQueueMutex;
   std::shared_ptr<ActionQueue> m_currentQueue;
   /**
    * This pointer holds a promise that will be picked up by the thread managing 

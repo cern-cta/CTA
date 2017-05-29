@@ -22,14 +22,14 @@
 
 namespace cta { namespace ostoredb {
 
-std::mutex MemArchiveQueue::g_mutex;
+threading::Mutex MemArchiveQueue::g_mutex;
 
 std::map<std::string, std::shared_ptr<MemArchiveQueue>> MemArchiveQueue::g_queues;
 
 std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump& job, 
     objectstore::ArchiveRequest& archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext) {
   // 1) Take the global lock (implicit in the constructor)
-  std::unique_lock<std::mutex> globalLock(g_mutex);
+  threading::MutexLocker globalLock(g_mutex);
   std::shared_ptr<MemArchiveQueue> q;
   try {
     // 2) Determine if the queue exists already or not
@@ -40,7 +40,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
   }
   // It does: we just ride the train: queue ourselves
   // Lock the queue.
-  std::unique_lock<std::mutex> ulq(q->m_mutex);
+  threading::MutexLocker ulq(q->m_mutex);
   std::shared_ptr<MemArchiveQueueRequest> maqr(new MemArchiveQueueRequest(job, archiveRequest));
   // Extract the future before the other thread gets a chance to touch the promise.
   auto resultFuture = maqr->m_promise.get_future();
@@ -69,7 +69,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
 
 std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(
   objectstore::ArchiveRequest::JobDump& job, objectstore::ArchiveRequest& archiveRequest, 
-  OStoreDB& oStoreDB, log::LogContext& logContext, std::unique_lock<std::mutex>& globalLock) {
+  OStoreDB& oStoreDB, log::LogContext& logContext, threading::MutexLocker &globalLock) {
   utils::Timer timer;
   // Re-check the queue is not there
   if (g_queues.end() != g_queues.find(job.tapePool)) {
@@ -95,7 +95,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
   // Our mem queue is now unreachable so we can let the global part go
   globalLock.unlock();
   // Lock the queue, to make sure the last user is done posting.
-  std::unique_lock<std::mutex> ulq(maq->m_mutex);
+  threading::MutexLocker ulq(maq->m_mutex);
   double waitTime = timer.secs(utils::Timer::resetCounter);
   // We can now proceed with the queuing of the jobs in the object store.
   try {
@@ -148,7 +148,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
     // And finally release all the user threads
     for (auto &maqr: maq->m_requests) {
       {
-        std::lock_guard<std::mutex> (maqr->m_mutex);
+        threading::MutexLocker (maqr->m_mutex);
         ANNOTATE_HAPPENS_BEFORE(&maqr->m_promise);
         maqr->m_returnValue=ret;
         maqr->m_promise.set_value();
@@ -170,7 +170,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
     // Something went wrong. We should inform the other threads
     for (auto & maqr: maq->m_requests) {
       try {
-        std::lock_guard<std::mutex> (maqr->m_mutex);
+        threading::MutexLocker (maqr->m_mutex);
         ANNOTATE_HAPPENS_BEFORE(&maqr->m_promise);
         maqr->m_promise.set_exception(std::current_exception());
       } catch (...) {
