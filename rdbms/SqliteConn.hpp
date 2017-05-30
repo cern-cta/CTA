@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "Conn.hpp"
+#include "common/threading/Mutex.hpp"
+#include "rdbms/Conn.hpp"
 
-#include <mutex>
 #include <sqlite3.h>
 
 namespace cta {
@@ -110,7 +110,7 @@ private:
   /**
    * Mutex used to serialize access to the database connection.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The database connection.

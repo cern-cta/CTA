@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "rdbms/Sqlite.hpp"
 #include "rdbms/SqliteConn.hpp"
 #include "rdbms/SqliteRset.hpp"
@@ -215,7 +216,7 @@ std::unique_ptr<Rset> SqliteStmt::executeQuery() {
 // executeNonQuery
 //------------------------------------------------------------------------------
 void SqliteStmt::executeNonQuery() {
-  std::lock_guard<std::mutex> connLock(m_conn.m_mutex);
+  threading::MutexLocker connLocker(m_conn.m_mutex);
 
   const int stepRc = sqlite3_step(m_stmt);
 
