@@ -18,12 +18,12 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace mediachanger {
@@ -85,7 +85,7 @@ private:
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
    
   /**
    * The TCP/IP port on which the CASTOR ACS daemon is listening for ZMQ
