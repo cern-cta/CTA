@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "rdbms/OcciConn.hpp"
 #include "rdbms/OcciEnv.hpp"
 #include "rdbms/OcciStmt.hpp"
@@ -55,7 +56,7 @@ OcciConn::~OcciConn() throw() {
 // close
 //------------------------------------------------------------------------------
 void OcciConn::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
   if(nullptr != m_occiConn) {
     m_env->terminateConnection(m_occiConn);
@@ -68,7 +69,7 @@ void OcciConn::close() {
 //------------------------------------------------------------------------------
 std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::AutocommitMode autocommitMode) {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_occiConn) {
        throw exception::Exception("Connection is closed");
@@ -92,7 +93,7 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, Stmt::Autocom
 //------------------------------------------------------------------------------
 void OcciConn::commit() {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_occiConn) {
        throw exception::Exception("Connection is closed");
@@ -111,7 +112,7 @@ void OcciConn::commit() {
 //------------------------------------------------------------------------------
 void OcciConn::rollback() {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_occiConn) {
        throw exception::Exception("Connection is closed");
@@ -187,7 +188,7 @@ bool OcciConn::isOpen() const {
 //------------------------------------------------------------------------------
 void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_occiConn) {
        throw exception::Exception("Connection is closed");
