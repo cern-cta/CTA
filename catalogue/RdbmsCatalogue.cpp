@@ -23,6 +23,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 
@@ -4444,7 +4445,7 @@ void RdbmsCatalogue::insertTapeFile(
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeLastFSeq(rdbms::PooledConn &conn, const std::string &vid, const uint64_t lastFSeq) {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const uint64_t currentValue = getTapeLastFSeq(conn, vid);
     if(lastFSeq != currentValue + 1) {

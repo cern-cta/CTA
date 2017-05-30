@@ -20,11 +20,11 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
+#include "common/threading/Mutex.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace common {
@@ -497,7 +497,7 @@ protected:
   /**
    * Mutex to be used to a take a global lock on the database.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The database connection factory.

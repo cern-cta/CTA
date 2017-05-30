@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -100,7 +101,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
   try {
     // The SQLite implemenation of getNextArchiveFileId() serializes access to
     // the SQLite database in order to avoid busy errors
-    std::lock_guard<std::mutex> m_lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     rdbms::AutoRollback autoRollback(conn);
 
@@ -243,7 +244,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     // Given the above assumption regarding the laws of physics, a simple lock
     // on the mutex of the SqliteCatalogue object is enough to emulate an
     // Oracle SELECT FOR UPDATE
-    std::lock_guard<std::mutex> m_lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
 
     const auto tape = selectTape(rdbms::Stmt::AutocommitMode::ON, conn, firstEvent.vid);
