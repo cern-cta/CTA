@@ -815,7 +815,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   } catch (...) {}
   try {
     params.add("SubprocessId", m_pid);
-    exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGSEGV));
+    exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL));
     m_processManager.logContext().log(log::WARNING, "In DriveHandler::processTimeout(): Killed subprocess.");
   } catch (exception::Exception & ex) {
     params.add("Error", ex.getMessageValue());
