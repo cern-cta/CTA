@@ -118,7 +118,7 @@ SqliteStmt::~SqliteStmt() throw() {
 // close
 //------------------------------------------------------------------------------
 void SqliteStmt::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
   if(nullptr != m_stmt) {
     sqlite3_finalize(m_stmt);
