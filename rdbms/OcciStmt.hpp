@@ -18,10 +18,10 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
 #include "rdbms/Stmt.hpp"
 
 #include <memory>
-#include <mutex>
 #include <occi.h>
 #include <stdint.h>
 
@@ -164,7 +164,7 @@ private:
   /**
    * Mutex used to serialize access to this object.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The database connection.
