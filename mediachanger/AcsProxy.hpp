@@ -37,11 +37,10 @@ public:
   /**
    * Constructor.
    *
-   * @param zmqContext The ZMQ context.
    * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
    * listening for ZMQ messages.
    */
-  AcsProxy(void *const zmqContext, const unsigned short serverPort = ACS_PORT) throw();
+  AcsProxy(const unsigned short serverPort = ACS_PORT) throw();
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only
@@ -82,11 +81,6 @@ public:
 
 private:
 
-  /**
-   * The ZMQ context.
-   */
-  void *m_zmqContext;
-  
   /**
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.

@@ -25,6 +25,7 @@
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerReturnValue.pb.h"
 #include "mediachanger/messages.hpp"
+#include "mediachanger/ZmqContextSingleton.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -168,8 +169,7 @@ Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySl
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AcsProxy::AcsProxy(void *const zmqContext, const unsigned short serverPort) throw():
-  m_zmqContext(zmqContext),
+AcsProxy::AcsProxy(const unsigned short serverPort) throw():
   m_serverPort(serverPort) {
 }
 
@@ -290,7 +290,7 @@ void AcsProxy::forceDismountTape(const std::string &vid, const LibrarySlot &libr
 //------------------------------------------------------------------------------
 ZmqSocket &AcsProxy::serverSocketInstance() {
   if(nullptr == m_serverSocket) {
-    m_serverSocket.reset(new ZmqSocket(m_zmqContext, ZMQ_REQ));
+    m_serverSocket.reset(new ZmqSocket(ZmqContextSingleton::instance(), ZMQ_REQ));
     connectZmqSocketToLocalhost(*m_serverSocket, m_serverPort);
   }
   return *m_serverSocket;
