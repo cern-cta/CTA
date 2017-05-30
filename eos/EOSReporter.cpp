@@ -30,7 +30,8 @@ void EOSReporter::reportArchiveFullyComplete() {
   XrdCl::Buffer arg (m_query.size());
   arg.FromString(m_query);
   XrdCl::Buffer * resp = nullptr;
-  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp);
+  const uint16_t queryTimeout = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
+  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp, queryTimeout);
   delete (resp);
   cta::exception::XrootCl::throwOnError(status,
       "In EOSReporter::reportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
