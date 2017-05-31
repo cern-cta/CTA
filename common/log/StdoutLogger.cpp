@@ -40,9 +40,9 @@ StdoutLogger::~StdoutLogger() {
 void StdoutLogger::prepareForFork() {}
 
 //------------------------------------------------------------------------------
-// reducedSyslog
+// writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void StdoutLogger::reducedSyslog(const std::string & msg) {
+void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &msg) {
   printf("%s\n", msg.c_str());
 }
 

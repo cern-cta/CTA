@@ -144,23 +144,6 @@ public:
    * @param logMask The log mask.
    */
   void setLogMask(const int logMask);
-  
-  /**
-   * Writes the header of a syslog message to teh specifed output stream.
-   *
-   * @param os The output stream to which the header will be written.
-   * @param priority The priority of the message.
-   * @param timeStamp The time stamp of the message.
-   * @param programName the program name of the log message.
-   * @param pid The process ID of the process logging the message.
-   * @return The header of the syslog message.
-   */
-  static void writeHeader(
-    std::ostringstream &os,
-    const int priority,
-    const struct timeval &timeStamp,
-    const std::string &programName,
-    const int pid);
 
   /**
    * Creates a clean version of the specified string ready for use with syslog.
@@ -181,13 +164,14 @@ protected:
   const std::string m_programName;
   
   /**
-   * A reduced version of syslog.  This method is able to set the message
-   * timestamp.  This is necessary when logging messages asynchronously of there
-   * creation, such as when retrieving logs from the DB.
+   * Writes the specified msg to the underlying logging system.
+   *
+   * This method is to be implemented by concrete sub-classes of the Logger
+   * class.
    *
    * @param msg The message to be logged.
    */
-  virtual void reducedSyslog(const std::string & msg) = 0;
+  virtual void writeMsgToUnderlyingLoggingSystem(const std::string &msg) = 0;
 
   /**
    * The log mask.
@@ -218,7 +202,6 @@ protected:
    * @param msg the message.
    * @param params the parameters of the message.
    * @param rawParams preprocessed parameters of the message.
-   * @param timeStamp the time stamp of the log message.
    * @param programName the program name of the log message.
    * @param pid the pid of the log message.
    */
@@ -229,7 +212,6 @@ protected:
     const std::string &msg,
     const std::list<Param> &params,
     const std::string &rawParams,
-    const struct timeval &timeStamp,
     const std::string &programName,
     const int pid);
   

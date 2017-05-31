@@ -40,9 +40,9 @@ DummyLogger::~DummyLogger() {
 void DummyLogger::prepareForFork() {}
 
 //------------------------------------------------------------------------------
-// reducedSyslog
+// writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void DummyLogger::reducedSyslog(const std::string & msg) {}
+void DummyLogger::writeMsgToUnderlyingLoggingSystem(const std::string &msg) {}
 
 } // namespace log
 } // namespace cta

@@ -57,7 +57,16 @@ public:
   void prepareForFork() ;
   
 protected:
-  virtual void reducedSyslog(const std::string & msg);
+
+  /**
+   * Writes the specified log message to the underlying logging system.
+   *
+   * This method is to be implemented by concrete sub-classes of the Logger
+   * class.
+   *
+   * @param msg The message to be logged.
+   */
+  void writeMsgToUnderlyingLoggingSystem(const std::string &msg) override;
 
 }; // class DummyLogger
 

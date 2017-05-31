@@ -43,9 +43,9 @@ void StringLogger::prepareForFork() {
 }
 
 //-----------------------------------------------------------------------------
-// reducedSyslog
+// writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void StringLogger::reducedSyslog(const std::string & msg) {
+void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &msg) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 

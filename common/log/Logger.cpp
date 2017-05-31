@@ -57,14 +57,12 @@ void Logger::operator() (
   const std::list<Param> &params) {
 
   const std::string rawParams;
-  struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
   const int pid = getpid();
 
   //-------------------------------------------------------------------------
   // Note that we do here part of the work of the real syslog call, by
   // building the message ourselves. We then only call a reduced version of
-  // syslog (namely reducedSyslog). The reason behind it is to be able to set
+  // syslog (namely writeMsgToUnderlyingLoggingSystem). The reason behind it is to be able to set
   // the message timestamp ourselves, in case we log messages asynchronously,
   // as we do when retrieving logs from the DB
   //-------------------------------------------------------------------------
@@ -95,11 +93,10 @@ void Logger::operator() (
     msg,
     params,
     rawParams,
-    timeStamp,
     m_programName,
     pid);
 
-  reducedSyslog(os.str());
+  writeMsgToUnderlyingLoggingSystem(os.str());
 }
 
 
@@ -113,26 +110,13 @@ void Logger::writeLogMsg(
   const std::string &msg,
   const std::list<Param> &params,
   const std::string &rawParams,
-  const struct timeval &timeStamp,
   const std::string &programName,
   const int pid) {
-
-  //-------------------------------------------------------------------------
-  // Note that we do here part of the work of the real syslog call, by
-  // building the message ourselves. We then only call a reduced version of
-  // syslog (namely reducedSyslog). The reason behind it is to be able to set
-  // the message timestamp ourselves, in case we log messages asynchronously,
-  // as we do when retrieving logs from the DB
-  //-------------------------------------------------------------------------
-
-  // Start message with priority, time, program and PID (syslog standard
-  // format)
-  writeHeader(os, priority | LOG_LOCAL3, timeStamp, programName, pid);
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" TID=\"" << tid << "\" MSG=\"" <<
+  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
     msg << "\" ";
 
   // Process parameters
@@ -153,35 +137,6 @@ void Logger::writeLogMsg(
 
   // Append raw parameters
   os << rawParams;
-}
-
-//-----------------------------------------------------------------------------
-// writeHeader
-//-----------------------------------------------------------------------------
-void Logger::writeHeader(
-  std::ostringstream &os,
-  const int priority,
-  const struct timeval &timeStamp,
-  const std::string &programName,
-  const int pid) {
-  char buf[80];
-  int bufLen = sizeof(buf);
-  int len = 0;
-
-  os << "<" << priority << ">";
-
-  struct tm localTime;
-  localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%Y-%m-%dT%T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06ld",
-    (unsigned long)timeStamp.tv_usec);
-  len += strftime(buf + len, bufLen - len, "%z: ", &localTime);
-  // dirty trick to have the proper timezone format (':' between hh and mm)
-  buf[len-2] = buf[len-3];
-  buf[len-3] = buf[len-4];
-  buf[len-4] = ':';
-  buf[sizeof(buf) - 1] = '\0';
-  os << buf << programName << "[" << pid << "]: ";
 }
 
 //-----------------------------------------------------------------------------

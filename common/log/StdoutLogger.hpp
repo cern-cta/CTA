@@ -53,13 +53,14 @@ public:
 protected:
 
   /**
-   * A reduced version of syslog.  This method is able to set the message
-   * timestamp.  This is necessary when logging messages asynchronously of there
-   * creation, such as when retrieving logs from the DB.
+   * Writes the specified log message to the underlying logging system.
+   *
+   * This method is to be implemented by concrete sub-classes of the Logger
+   * class.
    *
    * @param msg The message to be logged.
    */
-  void reducedSyslog(const std::string & msg);
+  void writeMsgToUnderlyingLoggingSystem(const std::string &msg) override;
 
 }; // class StringLogger
 
