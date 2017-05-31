@@ -42,8 +42,9 @@ void StdoutLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &msg) {
-  printf("%s\n", msg.c_str());
+void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+  const std::string headerPlusBody = header + body;
+  printf("%s\n", headerPlusBody.c_str());
 }
 
 } // namespace log

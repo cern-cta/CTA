@@ -45,12 +45,14 @@ void StringLogger::prepareForFork() {
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &msg) {
+void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 
+  const std::string headerPlusBody = header + body;
+
   // Append the message to the log (truncated to the maximum length)
-  m_log << msg.substr(0, m_maxMsgLen) << std::endl;
+  m_log << headerPlusBody.substr(0, m_maxMsgLen) << std::endl;
 
   // Uncomment this to get the logs printed to stdout during unit tests.
   // printf ("%s\n", msg.substr(0, m_maxMsgLen).c_str());

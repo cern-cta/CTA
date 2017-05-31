@@ -71,15 +71,21 @@ protected:
   std::stringstream m_log;
 
   /**
-   * Writes the specified log message to the underlying logging system.
+   * Writes the specified msg to the underlying logging system.
    *
    * This method is to be implemented by concrete sub-classes of the Logger
    * class.
    *
-   * @param msg The message to be logged.
+   * Please note it is the responsibility of a concrete sub-class to decide
+   * whether or not to use the specified log message header.  For example, the
+   * SysLogLogger sub-class does not use the header.  Instead it relies on
+   * rsyslog to provide a header.
+   *
+   * @param header The header of the message to be logged.  It is the
+   * esponsibility of the concrete sub-class
+   * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &msg) override;
-
+  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
 }; // class StringLogger
 
 } // namespace log

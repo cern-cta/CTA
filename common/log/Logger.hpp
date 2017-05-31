@@ -109,8 +109,7 @@ public:
   virtual void prepareForFork() = 0;
 
   /**
-   * Returns the name of the program that is to  be prepended to every log
-   * message.
+   * Returns the name of the program.
    */
   const std::string &getProgramName() const;
 
@@ -169,9 +168,16 @@ protected:
    * This method is to be implemented by concrete sub-classes of the Logger
    * class.
    *
-   * @param msg The message to be logged.
+   * Please note it is the responsibility of a concrete sub-class to decide
+   * whether or not to use the specified log message header.  For example, the
+   * SysLogLogger sub-class does not use the header.  Instead it relies on
+   * rsyslog to provide a header.
+   *
+   * @param header The header of the message to be logged.  It is the
+   * esponsibility of the concrete sub-class 
+   * @param body The body of the message to be logged.
    */
-  virtual void writeMsgToUnderlyingLoggingSystem(const std::string &msg) = 0;
+  virtual void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) = 0;
 
   /**
    * The log mask.
@@ -193,27 +199,6 @@ protected:
    * their equivalent syslog priorities.
    */
   const std::map<std::string, int> m_configTextToPriority;
-
-  /**
-   * Writes a log message to the specified output stream.
-   *
-   * @param logMsg The output stream to which the log message is to be written.
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param rawParams preprocessed parameters of the message.
-   * @param programName the program name of the log message.
-   * @param pid the pid of the log message.
-   */
-  static void writeLogMsg(
-    std::ostringstream &os,
-    const int priority,
-    const std::string &priorityText,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const std::string &rawParams,
-    const std::string &programName,
-    const int pid);
   
   /**
    * Default size of a syslog message.
@@ -251,6 +236,47 @@ protected:
    */
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
+private:
+
+  /**
+   * Creates and returns the header of a log message.
+   *
+   * Concrete subclasses of the Logger class can decide whether or not to use
+   * message headers created by this method.  The SysLogger sub-class for example
+   * relies on rsyslog to provide message headers and therefore does not call
+   * this method.
+   *
+   * @param priority The priority of the message.
+   * @param timeStamp The time stamp of the message.
+   * @param programName the program name of the log message.
+   * @param pid The process ID of the process logging the message.
+   * @return The message header.
+   */
+  static std::string createMsgHeader(
+    const int priority,
+    const struct timeval &timeStamp,
+    const std::string &programName,
+    const int pid);
+
+  /**
+   * Creates and returns the body of a log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   * @param rawParams preprocessed parameters of the message.
+   * @param programName the program name of the log message.
+   * @param pid the pid of the log message.
+   * @return The message body;
+   */
+  static std::string createMsgBody(
+    const int priority,
+    const std::string &priorityText,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const std::string &rawParams,
+    const std::string &programName,
+    const int pid);
 
 }; // class Logger
 

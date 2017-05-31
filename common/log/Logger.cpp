@@ -57,15 +57,9 @@ void Logger::operator() (
   const std::list<Param> &params) {
 
   const std::string rawParams;
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, NULL);
   const int pid = getpid();
-
-  //-------------------------------------------------------------------------
-  // Note that we do here part of the work of the real syslog call, by
-  // building the message ourselves. We then only call a reduced version of
-  // syslog (namely writeMsgToUnderlyingLoggingSystem). The reason behind it is to be able to set
-  // the message timestamp ourselves, in case we log messages asynchronously,
-  // as we do when retrieving logs from the DB
-  //-------------------------------------------------------------------------
 
   // Ignore messages whose priority is not of interest
   if(priority > m_logMask) {
@@ -84,59 +78,10 @@ void Logger::operator() (
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  std::ostringstream os;
+  const std::string header = createMsgHeader(priority | LOG_LOCAL3, timeStamp, m_programName, pid);
+  const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
 
-  writeLogMsg(
-    os,
-    priority,
-    priorityText,
-    msg,
-    params,
-    rawParams,
-    m_programName,
-    pid);
-
-  writeMsgToUnderlyingLoggingSystem(os.str());
-}
-
-
-//-----------------------------------------------------------------------------
-// writeLogMsg
-//-----------------------------------------------------------------------------
-void Logger::writeLogMsg(
-  std::ostringstream &os,
-  const int priority,
-  const std::string &priorityText,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const std::string &rawParams,
-  const std::string &programName,
-  const int pid) {
-
-  const int tid = syscall(__NR_gettid);
-
-  // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
-    msg << "\" ";
-
-  // Process parameters
-  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
-    const Param &param = *itor;
-
-    // Check the parameter name, if it's an empty string set the value to
-    // "Undefined".
-    const std::string name = param.getName() == "" ? "Undefined" :
-      cleanString(param.getName(), true);
-
-    // Process the parameter value
-    const std::string value = cleanString(param.getValue(), false);
-
-    // Write the name and value to the buffer
-    os << name << "=\"" << value << "\" ";
-  }
-
-  // Append raw parameters
-  os << rawParams;
+  writeMsgToUnderlyingLoggingSystem(header, body);
 }
 
 //-----------------------------------------------------------------------------
@@ -276,6 +221,77 @@ void Logger::setLogMask(const std::string logMask) {
 //------------------------------------------------------------------------------
 void Logger::setLogMask(const int logMask) {
   m_logMask = logMask;
+}
+
+//-----------------------------------------------------------------------------
+// createMsgHeader
+//-----------------------------------------------------------------------------
+std::string Logger::createMsgHeader(
+  const int priority,
+  const struct timeval &timeStamp,
+  const std::string &programName,
+  const int pid) {
+  std::ostringstream os;
+  char buf[80];
+  int bufLen = sizeof(buf);
+  int len = 0;
+
+  os << "<" << priority << ">";
+
+  struct tm localTime;
+  localtime_r(&(timeStamp.tv_sec), &localTime);
+  len += strftime(buf, bufLen, "%Y-%m-%dT%T", &localTime);
+  len += snprintf(buf + len, bufLen - len, ".%06ld",
+    (unsigned long)timeStamp.tv_usec);
+  len += strftime(buf + len, bufLen - len, "%z: ", &localTime);
+  // dirty trick to have the proper timezone format (':' between hh and mm)
+  buf[len-2] = buf[len-3];
+  buf[len-3] = buf[len-4];
+  buf[len-4] = ':';
+  buf[sizeof(buf) - 1] = '\0';
+  os << buf << programName << "[" << pid << "]: ";
+  return os.str();
+}
+
+//-----------------------------------------------------------------------------
+// createMsgBody
+//-----------------------------------------------------------------------------
+std::string Logger::createMsgBody(
+  const int priority,
+  const std::string &priorityText,
+  const std::string &msg,
+  const std::list<Param> &params,
+  const std::string &rawParams,
+  const std::string &programName,
+  const int pid) {
+  std::ostringstream os;
+
+  const int tid = syscall(__NR_gettid);
+
+  // Append the log level, the thread id and the message text
+  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
+    msg << "\" ";
+
+  // Process parameters
+  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
+    const Param &param = *itor;
+
+    // Check the parameter name, if it's an empty string set the value to
+    // "Undefined".
+    const std::string name = param.getName() == "" ? "Undefined" :
+      cleanString(param.getName(), true);
+
+    // Process the parameter value
+    const std::string value = cleanString(param.getValue(), false);
+
+    // Write the name and value to the buffer
+    os << name << "=\"" << value << "\" ";
+  }
+
+  // Append raw parameters
+  os << rawParams;
+
+  return os.str();
 }
 
 } // namespace log
