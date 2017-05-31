@@ -163,9 +163,9 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         if (!job.get()) continue;
         cta::log::ScopedParamContainer params(reportPacker.m_lc);
         params.add("fileId", job->archiveFile.archiveFileID)
-               .add("diskInstance", job->archiveFile.diskInstance)
-               .add("diskFileId", job->archiveFile.diskFileId)
-               .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+              .add("diskInstance", job->archiveFile.diskInstance)
+              .add("diskFileId", job->archiveFile.diskFileId)
+              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
         if (job->complete()) {
           params.add("reportURL", job->reportURL());
           reportPacker.m_lc.log(cta::log::INFO,"Reported to the client a full file archival");
@@ -182,7 +182,8 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         params.add("fileId", job->archiveFile.archiveFileID)
               .add("diskInstance", job->archiveFile.diskInstance)
               .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+              .add("reportURL", job->reportURL());
       }
       const std::string msg_error="An exception was caught trying to call reportMigrationResults";
       reportPacker.m_lc.log(cta::log::ERR, msg_error);
