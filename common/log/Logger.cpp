@@ -78,7 +78,7 @@ void Logger::operator() (
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  const std::string header = createMsgHeader(priority | LOG_LOCAL3, timeStamp, m_programName, pid);
+  const std::string header = createMsgHeader(timeStamp, m_programName, pid);
   const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
@@ -227,7 +227,6 @@ void Logger::setLogMask(const int logMask) {
 // createMsgHeader
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgHeader(
-  const int priority,
   const struct timeval &timeStamp,
   const std::string &programName,
   const int pid) {
@@ -235,8 +234,6 @@ std::string Logger::createMsgHeader(
   char buf[80];
   int bufLen = sizeof(buf);
   int len = 0;
-
-  os << "<" << priority << ">";
 
   struct tm localTime;
   localtime_r(&(timeStamp.tv_sec), &localTime);
