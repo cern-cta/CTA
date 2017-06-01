@@ -6,7 +6,7 @@ cta logicallibrary add --name VLSTK --comment "ctasystest"
 
 cta tapepool add --name ctasystest --partialtapesnumber 5 --encrypted false --comment "ctasystest"
 
-cta tape add --logicallibrary VLSTK --tapepool ctasystest --capacity 1000000000 --comment "ctasystest" --vid ${VID} --disabled false --full false --encryptionkey test
+cta tape add --logicallibrary VLSTK --tapepool ctasystest --capacity 1000000000 --comment "ctasystest" --vid ${VID} --disabled false --full false
 
 cta storageclass add --instance root --name ctaStorageClass --copynb 1 --comment "ctasystest"
 

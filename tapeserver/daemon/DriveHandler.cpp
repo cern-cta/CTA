@@ -846,6 +846,8 @@ int DriveHandler::runChild() {
   // Create the channel to talk back to the parent process.
   cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
   
+  std::string hostname=cta::utils::getShortHostname();
+  
   // Before anything, we need to check we have access to the scheduler's central storages.
   std::unique_ptr<cta::objectstore::Backend> backend(
     cta::objectstore::BackendFactory::createBackend(m_tapedConfig.objectStoreURL.value()).release());
@@ -909,7 +911,8 @@ int DriveHandler::runChild() {
     try {
       cta::common::dataStructures::DriveInfo driveInfo;
       driveInfo.driveName=m_configLine.unitName;
-      driveInfo.logicalLibrary=m_configLine.rawLibrarySlot;
+      driveInfo.logicalLibrary=m_configLine.logicalLibrary;
+      driveInfo.host=hostname;
       scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false);
@@ -934,7 +937,8 @@ int DriveHandler::runChild() {
       try {
         cta::common::dataStructures::DriveInfo driveInfo;
         driveInfo.driveName=m_configLine.unitName;
-        driveInfo.logicalLibrary=m_configLine.rawLibrarySlot;
+        driveInfo.logicalLibrary=m_configLine.logicalLibrary;
+        driveInfo.host=hostname;
         scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false);
@@ -1026,7 +1030,8 @@ int DriveHandler::runChild() {
         // this is done by reporting the drive as down first.
         cta::common::dataStructures::DriveInfo driveInfo;
         driveInfo.driveName=m_configLine.unitName;
-        driveInfo.logicalLibrary=m_configLine.rawLibrarySlot;
+        driveInfo.logicalLibrary=m_configLine.logicalLibrary;
+        driveInfo.host=hostname;
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/);

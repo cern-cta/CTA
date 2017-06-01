@@ -25,9 +25,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MediaChangerFacade::MediaChangerFacade(log::Logger &log, void *const zmqContext) throw():
-  m_zmqContext(zmqContext),
-  m_acsProxy(zmqContext),
+MediaChangerFacade::MediaChangerFacade(log::Logger &log) throw():
   m_mmcProxy(log) {
 }
 

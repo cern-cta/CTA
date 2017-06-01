@@ -51,7 +51,7 @@ AgentReference::AgentReference(const std::string & clientType) {
   m_agentAddress = aid.str();
   // Initialize the serialization token for queued actions (lock will make helgrind 
   // happy, but not really needed
-  std::unique_lock<std::mutex> ulg(m_currentQueueMutex);
+  threading::MutexLocker ml(m_currentQueueMutex);
   m_nextQueueExecutionPromise.reset(new std::promise<void>);
   m_nextQueueExecutionFuture = m_nextQueueExecutionPromise->get_future();
   ANNOTATE_HAPPENS_BEFORE(m_nextQueueExecutionPromise.get());
@@ -107,10 +107,10 @@ void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
 void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend) {
   // First, we need to determine if a queue exists or not.
   // If so, we just use it, and if not, we create and serve it.
-  std::unique_lock<std::mutex> ulGlobal(m_currentQueueMutex);
+  threading::MutexLocker ulGlobal(m_currentQueueMutex);
   if (m_currentQueue) {
     // There is already a queue
-    std::unique_lock<std::mutex> ulQueue(m_currentQueue->mutex);
+    threading::MutexLocker ulQueue(m_currentQueue->mutex);
     m_currentQueue->queue.push_back(action);
     // If this is time to run, wake up the serving thread
     if (m_currentQueue->queue.size() + 1 >= m_maxQueuedItems) {
@@ -131,7 +131,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // To make sure there is no lifetime issues, we make it a shared_ptr
     std::shared_ptr<ActionQueue> q(new ActionQueue);
     // Lock the queue
-    std::unique_lock<std::mutex> ulq(q->mutex);
+    threading::MutexLocker ulq(q->mutex);
     // Get it referenced
     m_currentQueue = q;
     // Get our execution promise and future and leave one behind.
@@ -172,7 +172,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       appyAction(*action, ag);
       // Then those of other threads
       for (auto a: q->queue) {
-        std::lock_guard<std::mutex> lg(a->mutex);
+        threading::MutexLocker ml(a->mutex);
         appyAction(*a, ag);
       }
       // and commit
@@ -183,7 +183,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       promiseForNextQueue->set_value();
       // We now pass the exception to all threads
       for (auto a: q->queue) {
-        std::lock_guard<std::mutex> lg(a->mutex);
+        threading::MutexLocker ml(a->mutex);
         ANNOTATE_HAPPENS_BEFORE(&a->promise);
         a->promise.set_exception(std::current_exception());
       }
@@ -195,7 +195,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     promiseForNextQueue->set_value();
     // and release the other threads
     for (auto a: q->queue) {
-      std::lock_guard<std::mutex> lg(a->mutex);
+      threading::MutexLocker ml(a->mutex);
       ANNOTATE_HAPPENS_BEFORE(&a->promise);
       a->promise.set_value();
     }

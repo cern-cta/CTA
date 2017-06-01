@@ -18,8 +18,9 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
+
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace mediachanger {
@@ -62,7 +63,7 @@ private:
    * Mutex used to implement a critical region around the implementation of the
    * instance() method.
    */
-  static std::mutex s_mutex;
+  static threading::Mutex s_mutex;
 
   /**
    * The single instance of a ZMQ context.  A value of NULL means the ZMQ

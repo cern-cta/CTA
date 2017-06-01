@@ -20,11 +20,11 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
+#include "common/threading/Mutex.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace common {
@@ -240,17 +240,12 @@ public:
 
   /**
    * Creates a tape.
-   *
-   * @param encryptionKey The optional identifier of the encrption key.  This
-   * optional parameter should either have a non-empty string value or no value
-   * at all.  Empty strings are prohibited.
    */
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
-    const optional<std::string> &encryptionKey,
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,
@@ -502,7 +497,7 @@ protected:
   /**
    * Mutex to be used to a take a global lock on the database.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The database connection factory.

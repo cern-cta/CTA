@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include "ColumnNameToIdx.hpp"
-#include "Rset.hpp"
+#include "common/threading/Mutex.hpp"
+#include "rdbms/ColumnNameToIdx.hpp"
+#include "rdbms/Rset.hpp"
 
 #include <memory>
-#include <mutex>
 #include <occi.h>
 
 namespace cta {
@@ -104,7 +104,7 @@ private:
   /**
    * Mutex used to serialize access to this object.
    */
-  mutable std::mutex m_mutex;
+  mutable threading::Mutex m_mutex;
 
   /**
    * The OCCI statement.

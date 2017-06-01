@@ -18,6 +18,7 @@
 
 #include "ZmqContextSingleton.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 
 #include <zmq.h>
@@ -28,7 +29,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // s_mutex
 //------------------------------------------------------------------------------
-std::mutex ZmqContextSingleton::s_mutex;
+threading::Mutex ZmqContextSingleton::s_mutex;
 
 //------------------------------------------------------------------------------
 // s_instance
@@ -40,7 +41,7 @@ void *ZmqContextSingleton::s_instance = nullptr;
 //------------------------------------------------------------------------------
 void *ZmqContextSingleton::instance() {
   try {
-    std::lock_guard<std::mutex> lock(s_mutex);
+    threading::MutexLocker locker(s_mutex);
 
     if(nullptr == s_instance) {
       const int sizeOfIOThreadPoolForZMQ = 1;

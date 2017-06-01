@@ -393,7 +393,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
   const bool lbpIsOn = true;
@@ -540,7 +540,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, nullopt, capacityInBytes, notDisabled,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes, notDisabled,
     notFull, tapeComment);
 
   const bool lbpIsOn = true;

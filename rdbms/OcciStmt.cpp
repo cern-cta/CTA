@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "rdbms/OcciColumn.hpp"
 #include "rdbms/OcciConn.hpp"
 #include "rdbms/OcciRset.hpp"
@@ -83,7 +84,7 @@ OcciStmt::~OcciStmt() throw() {
 //------------------------------------------------------------------------------
 void OcciStmt::close() {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if (nullptr != m_stmt) {
       m_conn.closeStmt(m_stmt);

@@ -2,6 +2,10 @@
 
 /opt/run/bin/init_pod.sh
 
+echo "Adding cta user and group"
+/usr/bin/getent group cta || /usr/sbin/groupadd cta
+/usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
 cat /tmp/library-rc.sh

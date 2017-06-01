@@ -18,12 +18,12 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace mediachanger {
@@ -37,11 +37,10 @@ public:
   /**
    * Constructor.
    *
-   * @param zmqContext The ZMQ context.
    * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
    * listening for ZMQ messages.
    */
-  AcsProxy(void *const zmqContext, const unsigned short serverPort = ACS_PORT) throw();
+  AcsProxy(const unsigned short serverPort = ACS_PORT) throw();
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only
@@ -83,15 +82,10 @@ public:
 private:
 
   /**
-   * The ZMQ context.
-   */
-  void *m_zmqContext;
-  
-  /**
    * Mutex used to implement a critical section around the enclosed
    * ZMQ socket.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
    
   /**
    * The TCP/IP port on which the CASTOR ACS daemon is listening for ZMQ

@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OcciEnvSingleton.hpp"
+#include "rdbms/OcciEnvSingleton.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -25,7 +26,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // s_mutex
 //------------------------------------------------------------------------------
-std::mutex OcciEnvSingleton::s_mutex;
+threading::Mutex OcciEnvSingleton::s_mutex;
 
 //------------------------------------------------------------------------------
 // s_instance
@@ -37,7 +38,7 @@ std::unique_ptr<OcciEnvSingleton> OcciEnvSingleton::s_instance;
 //------------------------------------------------------------------------------
 OcciEnvSingleton &OcciEnvSingleton::instance() {
   try {
-    std::lock_guard<std::mutex> lock(s_mutex);
+    threading::MutexLocker locker(s_mutex);
 
     if(nullptr == s_instance.get()) {
       s_instance.reset(new OcciEnvSingleton());

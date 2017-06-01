@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "Conn.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <occi.h>
-#include <mutex>
 
 namespace cta {
 namespace rdbms {
@@ -108,7 +108,7 @@ private:
   /**
    * Mutex used to serialize access to this object.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The OCCI environment.

@@ -24,7 +24,6 @@
 #include "mediachanger/MediaChangerProxy.hpp"
 #include "mediachanger/MmcProxy.hpp"
 #include "mediachanger/RmcProxy.hpp"
-#include "mediachanger/ZmqContextSingleton.hpp"
 
 #include <memory>
 #include <string>
@@ -44,12 +43,8 @@ public:
    * @param log Object representing the API to the CTA logging system.  This log
    * object will be used by the manual media changer to communicate with the
    * tape operator.
-   * @param zmqContext The ZMQ context.  There is usually one ZMQ context within
-   * a program.  Set this parameter in order for the MediaChangerFacade to share
-   * an already existing ZMQ context.  If this parameter is not set then the
-   * ZmqContextSingleton of the mediachanger namespace will be used.
    */
-  MediaChangerFacade(log::Logger &log, void *const zmqContext = ZmqContextSingleton::instance()) throw();
+  MediaChangerFacade(log::Logger &log) throw();
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -95,11 +90,6 @@ public:
   void forceDismountTape(const std::string &vid, const LibrarySlot &slot);
 
 private:
-
-  /**
-   * The ZMQ context.
-   */
-  void *m_zmqContext;
 
   /**
    * ACS media changer proxy.

@@ -348,7 +348,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -424,7 +424,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -520,7 +521,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -616,7 +617,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -916,7 +918,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -992,7 +994,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -1059,7 +1062,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // 6) Prepare files for reading by writing them to the mock system
@@ -1135,7 +1138,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -1212,7 +1216,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1261,7 +1265,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -1349,7 +1354,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1400,7 +1405,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -1483,7 +1489,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1533,7 +1539,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);
@@ -1629,7 +1636,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
   
   // Create the mount criteria
@@ -1680,7 +1687,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
+  driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false);

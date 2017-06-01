@@ -1655,7 +1655,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
 
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -1664,7 +1663,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   ASSERT_TRUE(m_catalogue->tapeExists(vid));
@@ -1678,7 +1677,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   ASSERT_EQ(vid, tape.vid);
   ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(encryptionKey, tape.encryptionKey);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
@@ -1705,14 +1703,13 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
   const std::string comment = "Create tape";
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment), exception::UserError);
 }
 
@@ -1724,7 +1721,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -1732,56 +1728,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_tape_pool) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
-  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment), exception::UserError);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, createTape_no_encryption_key) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getTapes().empty());
-
-  const std::string vid = "vid";
-  const std::string logicalLibraryName = "logical_library_name";
-  const std::string tapePoolName = "tape_pool_name";
-  const optional<std::string> encryptionKey = nullopt;
-  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
-  const bool disabledValue = true;
-  const bool fullValue = false;
-  const std::string comment = "Create tape";
-
-  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
-    "Create logical library");
-  m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
-    fullValue, comment);
-
-  const std::list<common::dataStructures::Tape> tapes =
-    m_catalogue->getTapes();
-
-  ASSERT_EQ(1, tapes.size());
-
-  const common::dataStructures::Tape tape = tapes.front();
-  ASSERT_EQ(vid, tape.vid);
-  ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-  ASSERT_EQ(tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(encryptionKey, tape.encryptionKey);
-  ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
-  ASSERT_TRUE(disabledValue == tape.disabled);
-  ASSERT_TRUE(fullValue == tape.full);
-      ASSERT_FALSE(tape.lbp);
-  ASSERT_EQ(comment, tape.comment);
-  ASSERT_FALSE(tape.labelLog);
-  ASSERT_FALSE(tape.lastReadLog);
-  ASSERT_FALSE(tape.lastWriteLog);
-
-  const common::dataStructures::EntryLog creationLog = tape.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
-
-  const common::dataStructures::EntryLog lastModificationLog =
-    tape.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_16_exabytes_capacity) {
@@ -1792,7 +1740,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_16_exabytes_capacity) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = std::numeric_limits<uint64_t>::max();
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -1801,7 +1748,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_16_exabytes_capacity) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   const std::list<common::dataStructures::Tape> tapes =
@@ -1813,7 +1760,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_16_exabytes_capacity) {
   ASSERT_EQ(vid, tape.vid);
   ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(encryptionKey, tape.encryptionKey);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
@@ -1838,7 +1784,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -1848,9 +1793,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
+    capacityInBytes, disabledValue, fullValue, comment);
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName,
-    tapePoolName, encryptionKey, capacityInBytes, disabledValue, fullValue,
+    tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment), exception::UserError);
 }
 
@@ -1859,7 +1804,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   const std::string logicalLibrary = "logical_library_name";
   const std::string tapePool = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
   const bool disabled = true;
   const bool full = false;
@@ -1878,7 +1822,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     std::ostringstream vid;
     vid << "vid" << i;
 
-    m_catalogue->createTape(m_admin, vid.str(), logicalLibrary, tapePool, encryptionKey, capacityInBytes, disabled,
+    m_catalogue->createTape(m_admin, vid.str(), logicalLibrary, tapePool, capacityInBytes, disabled,
       full, comment);
   }
 
@@ -1899,7 +1843,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(vid.str(), tape.vid);
       ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
       ASSERT_EQ(tapePool, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
@@ -2027,7 +1970,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(vid.str(), tape.vid);
       ASSERT_EQ(logicalLibrary, tape.logicalLibraryName);
       ASSERT_EQ(tapePool, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabled == tape.disabled);
       ASSERT_TRUE(full == tape.full);
@@ -2062,7 +2004,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const std::string vid2 = "vid2";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2073,7 +2014,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   {
     m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName,
-      encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
+      capacityInBytes, disabledValue, fullValue, comment);
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(1, tapes.size());
 
@@ -2084,7 +2025,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(vid1, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2127,7 +2067,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   {
     m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName,
-      encryptionKey, capacityInBytes, disabledValue, fullValue, comment);
+      capacityInBytes, disabledValue, fullValue, comment);
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
     ASSERT_EQ(2, tapes.size());
 
@@ -2138,7 +2078,6 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(vid2, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2166,7 +2105,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2176,7 +2114,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue,
+    capacityInBytes, disabledValue, fullValue,
     comment);
 
   const std::list<common::dataStructures::Tape> tapes =
@@ -2188,7 +2126,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   ASSERT_EQ(vid, tape.vid);
   ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(encryptionKey, tape.encryptionKey);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
@@ -2226,7 +2163,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const std::string logicalLibraryName = "logical_library_name";
   const std::string anotherLogicalLibraryName = "another_logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2236,7 +2172,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, "Create another logical library");
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2248,7 +2184,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2277,7 +2212,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(anotherLogicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2315,7 +2249,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
   const std::string anotherTapePoolName = "another_tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2326,7 +2259,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, 2, true, "Create another tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2338,7 +2271,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2367,7 +2299,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(anotherTapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2406,7 +2337,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2416,7 +2346,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2428,7 +2358,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2458,7 +2387,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeCapacityInBytes) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(modifiedCapacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2493,7 +2421,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2503,7 +2430,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2515,7 +2442,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKey) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2580,7 +2506,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2590,7 +2515,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2602,7 +2527,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2633,7 +2557,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2671,7 +2594,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2681,7 +2603,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2693,7 +2615,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2723,7 +2644,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2759,7 +2679,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2769,7 +2688,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2781,7 +2700,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2811,7 +2729,6 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2847,7 +2764,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2857,7 +2773,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2869,7 +2785,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2898,7 +2813,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
@@ -2931,7 +2845,6 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -2941,7 +2854,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -2953,7 +2866,6 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -2982,7 +2894,6 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(tape.full);
@@ -3015,7 +2926,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
@@ -3025,7 +2935,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
 
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
     fullValue, comment);
 
   {
@@ -3037,7 +2947,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -3066,7 +2975,6 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled) {
     ASSERT_EQ(vid, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(tape.disabled);
     ASSERT_FALSE(tape.full);
@@ -3099,7 +3007,6 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
@@ -3107,7 +3014,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
    fullValue, comment);
   const bool lbpIsOn = true;
   m_catalogue->tapeLabelled(vid, "tape_drive", lbpIsOn);
@@ -3132,7 +3039,6 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = false;
   const bool fullValue = false;
@@ -3140,7 +3046,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
    fullValue, comment);
 
   const std::list<catalogue::TapeForWriting> tapes = m_catalogue->getTapesForWriting(logicalLibraryName);
@@ -4753,7 +4659,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -4761,9 +4666,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, createTapeComment);
 
   const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -4774,7 +4679,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(vid1, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -4798,7 +4702,6 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
     ASSERT_EQ(vid2, tape.vid);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -5178,7 +5081,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -5186,9 +5088,9 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes,
     disabledValue, fullValue, comment);
 
   {
@@ -5204,7 +5106,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       ASSERT_EQ(vid1, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5229,7 +5130,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       ASSERT_EQ(vid2, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5645,7 +5545,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -5654,12 +5553,10 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
                                     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName,
-                          encryptionKey, capacityInBytes, disabledValue, fullValue,
-                          comment);
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName,
-                          encryptionKey, capacityInBytes, disabledValue, fullValue,
-                          comment);
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5673,7 +5570,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
       ASSERT_EQ(vid1, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5697,7 +5593,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
       ASSERT_EQ(vid2, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5870,7 +5765,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   const std::string vid = "VID123";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -5879,9 +5773,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
                                     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
-                          encryptionKey, capacityInBytes, disabledValue, fullValue,
-                          comment);
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -5895,7 +5788,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
       ASSERT_EQ(vid, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -6017,7 +5909,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   const std::string vid = "VID123";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6026,9 +5917,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
                                     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
-                          encryptionKey, capacityInBytes, disabledValue, fullValue,
-                          comment);
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
 
   const std::list<common::dataStructures::Tape> tapes =
     m_catalogue->getTapes();
@@ -6039,7 +5929,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
   ASSERT_EQ(vid, tape.vid);
   ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
   ASSERT_EQ(tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(encryptionKey, tape.encryptionKey);
   ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
   ASSERT_TRUE(disabledValue == tape.disabled);
   ASSERT_TRUE(fullValue == tape.full);
@@ -6152,7 +6041,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6161,11 +6049,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue,
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment);
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue,
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment);
 
   {
@@ -6180,7 +6066,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(vid1, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -6204,7 +6089,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(vid2, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -6506,7 +6390,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6515,11 +6398,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue,
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment);
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName,
-    encryptionKey, capacityInBytes, disabledValue, fullValue,
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
     comment);
 
   {
@@ -6534,7 +6415,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
       ASSERT_EQ(vid1, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -6558,7 +6438,6 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
       ASSERT_EQ(vid2, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
       ASSERT_EQ(tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(encryptionKey, tape.encryptionKey);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -6843,7 +6722,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6852,8 +6730,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
-    fullValue, comment);
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6865,7 +6743,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -6896,7 +6773,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_FALSE(tape.full);
@@ -6920,7 +6796,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const std::string vid = "vid";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6929,8 +6804,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
     "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes, disabledValue,
-    fullValue, comment);
+  m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    comment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6942,7 +6817,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -6973,7 +6847,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const std::string vid1 = "VID123";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -6981,8 +6854,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    createTapeComment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -6995,7 +6868,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -7091,7 +6963,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(1, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -7124,7 +6995,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(1, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -7157,7 +7027,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -7184,7 +7053,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const std::string vid1 = "VID123";
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
-  const std::string encryptionKey = "encryption_key";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -7192,8 +7060,8 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, encryptionKey, capacityInBytes,
-    disabledValue, fullValue, createTapeComment);
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue, fullValue,
+    createTapeComment);
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
@@ -7206,7 +7074,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);
@@ -7302,7 +7169,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(1, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
-    ASSERT_EQ(encryptionKey, tape.encryptionKey);
     ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(disabledValue == tape.disabled);
     ASSERT_TRUE(fullValue == tape.full);

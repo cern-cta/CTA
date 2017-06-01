@@ -18,11 +18,11 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
 #include "rdbms/Stmt.hpp"
 
 #include <map>
 #include <memory>
-#include <mutex>
 #include <stdint.h>
 #include <sqlite3.h>
 
@@ -136,7 +136,7 @@ private:
   /**
    * Mutex used to serialize access to the prepared statement.
    */
-  std::mutex m_mutex;
+  threading::Mutex m_mutex;
 
   /**
    * The SQL connection.

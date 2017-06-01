@@ -49,9 +49,11 @@ void tapeFile::VOL1::verify() {
   if (!cmpString(m_VSN, ""))
     throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
-  if (cmpString(m_lblStandard, "3"))
+  const char *const expectedLblStandard = "3";
+  if (cmpString(m_lblStandard, expectedLblStandard))
     throw cta::exception::Exception(
-          std::string("Failed verify for the label standard: ") +
+          std::string("Failed verify for the label standard: expected=") +
+          expectedLblStandard + " actual=" +
           tapeFile::toString(m_lblStandard));
 
   /* now we verify all other fields which must be spaces */

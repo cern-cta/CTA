@@ -117,7 +117,7 @@ bool OcciRset::columnIsNull(const std::string &colName) const {
 // close
 //------------------------------------------------------------------------------
 void OcciRset::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  threading::Mutex locker(m_mutex);
 
   if(nullptr != m_rset) {
     m_stmt->closeResultSet(m_rset);
@@ -150,7 +150,7 @@ optional<std::string> OcciRset::columnOptionalString(const std::string &colName)
 //------------------------------------------------------------------------------
 optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) const {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);

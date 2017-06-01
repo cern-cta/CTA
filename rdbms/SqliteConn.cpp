@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "rdbms/SqliteConn.hpp"
 #include "rdbms/SqliteStmt.hpp"
 
@@ -72,7 +73,7 @@ SqliteConn::~SqliteConn() throw() {
 // close
 //------------------------------------------------------------------------------
 void SqliteConn::close() {
-  std::lock_guard<std::mutex> lock(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
   if(nullptr != m_sqliteConn) {
     sqlite3_close(m_sqliteConn);
@@ -85,7 +86,7 @@ void SqliteConn::close() {
 //------------------------------------------------------------------------------
 std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");
@@ -102,7 +103,7 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Stmt:
 //------------------------------------------------------------------------------
 void SqliteConn::commit() {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");
@@ -131,7 +132,7 @@ void SqliteConn::commit() {
 //------------------------------------------------------------------------------
 void SqliteConn::rollback() {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     if(nullptr == m_sqliteConn) {
       throw exception::Exception("Connection is closed");

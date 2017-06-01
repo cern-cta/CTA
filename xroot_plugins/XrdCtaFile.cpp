@@ -943,7 +943,7 @@ void XrdCtaFile::xCom_tape() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
-       << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes> [--encryptionkey/-k <encryption_key>]" << std::endl
+       << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes>" << std::endl
        << "\t        --disabled/-d <\"true\" or \"false\"> --full/-f <\"true\" or \"false\"> [--comment/-m <\"comment\">] " << std::endl
        << "\tch      --vid/-v <vid> [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>] [--encryptionkey/-k <encryption_key>]" << std::endl
        << "\t        [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">] [--comment/-m <\"comment\">]" << std::endl
@@ -951,7 +951,9 @@ void XrdCtaFile::xCom_tape() {
        << "\treclaim --vid/-v <vid>" << std::endl
        << "\tls      [--header/-h] [--all/-a] or any of: [--vid/-v <vid>] [--logicallibrary/-l <logical_library_name>] [--tapepool/-t <tapepool_name>] [--capacity/-c <capacity_in_bytes>]" << std::endl
        << "\t        [--lbp/-p <\"true\" or \"false\">] [--disabled/-d <\"true\" or \"false\">] [--full/-f <\"true\" or \"false\">]" << std::endl
-       << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl;  
+       << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl
+       << "Where" << std::endl
+       << "\tencryption_key Is the name of the encryption key used to encrypt the tape" << std::endl;
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -961,12 +963,11 @@ void XrdCtaFile::xCom_tape() {
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", true, false);
       optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
       optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", true, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", true, true, "-");
       optional<bool> disabled = getOptionBoolValue("-d", "--disabled", true, false);
       optional<bool> full = getOptionBoolValue("-f", "--full", true, false);
       checkOptions(help.str());
-      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), encryptionkey, capacity.value(), disabled.value(), full.value(), comment.value());
+      m_catalogue->createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), capacity.value(), disabled.value(), full.value(), comment.value());
     }
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
@@ -1796,7 +1797,7 @@ void XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown", "vid"};
         responseTable.push_back(headers);
         for (auto ds: driveStates) {
           if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
@@ -1808,6 +1809,7 @@ void XrdCtaFile::xCom_drive() {
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
           currentRow.push_back(ds.desiredDriveState.up?"UP":"DOWN");
           currentRow.push_back(ds.desiredDriveState.forceDown?"FORCE":"");
+          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
           responseTable.push_back(currentRow);
         }
         cmdlineOutput<< formatResponse(responseTable, true);

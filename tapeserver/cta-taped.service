@@ -5,6 +5,7 @@ After=syslog.target network-online.target
 [Service]
 EnvironmentFile=-/etc/sysconfig/cta-taped
 ExecStart=/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}
+LimitCORE=infinity
 Type=forking
 Restart=no
 

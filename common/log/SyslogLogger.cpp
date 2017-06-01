@@ -22,6 +22,7 @@
 #include "common/utils/utils.hpp"
 
 #include <errno.h>
+#include <fstream>
 #include <sstream>
 #include <stdlib.h>
 #include <string.h>
@@ -62,11 +63,12 @@ void SyslogLogger::prepareForFork() {
 }
 
 //-----------------------------------------------------------------------------
-// reducedSyslog
+// writeMsgToLoggingSystem
 //-----------------------------------------------------------------------------
-void SyslogLogger::reducedSyslog(const std::string& msg) {
+void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+  // Explicitly ignore the message header as this will be provided by rsyslog
   // Truncate the log message if it exceeds the permitted maximum
-  std::string truncatedMsg = msg.substr(0, m_maxMsgLen);
+  std::string truncatedMsg = body.substr(0, m_maxMsgLen);
 
   syslog(LOG_LOCAL3|INFO, truncatedMsg.c_str());
 }

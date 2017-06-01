@@ -54,20 +54,23 @@ void FileLogger::prepareForFork() {
 }
 
 //-----------------------------------------------------------------------------
-// reducedSyslog
+// writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void FileLogger::reducedSyslog(const std::string & msg) {
+void FileLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
   if (-1 == m_fd)
-    throw cta::exception::Exception("In FileLogger::reducedSyslog(): file is not properly initialized");
+    throw cta::exception::Exception("In FileLogger::writeMsgToUnderlyingLoggingSystem(): file is not properly initialized");
+
+  const std::string headerPlusBody = header + body;
+
   // Prepare the string to print (for size)
-  std::string m = msg.substr(0, m_maxMsgLen) + "\n";
+  std::string m = headerPlusBody.substr(0, m_maxMsgLen) + "\n";
   
   // enter critical section
   threading::MutexLocker lock(m_mutex);
   
   // Append the message to the file
   cta::exception::Errnum::throwOnMinusOne(::write(m_fd, m.c_str(), m.size()), 
-      "In FileLogger::reducedSyslog(): failed to write to file");
+      "In FileLogger::writeMsgToUnderlyingLoggingSystem(): failed to write to file");
 }
 
 } // namespace log

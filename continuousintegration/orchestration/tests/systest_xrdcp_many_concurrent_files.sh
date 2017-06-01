@@ -79,7 +79,6 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --vid ${VID}                                                    \
     --disabled false                                                \
     --full false                                                    \
-    --encryptionkey test                                            \
     --comment "ctasystest"
 done
 

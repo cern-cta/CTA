@@ -72,6 +72,8 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
   try { m_this.logTapeAlerts(); } catch (...) {}
   // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
   try { m_this.logSCSIMetrics(); } catch(...) {}
+  m_this.m_initialProcess.reportState(cta::tape::session::SessionState::Unmounting,
+      cta::tape::session::SessionType::Archive);
   std::string currentErrorToCount = "Error_tapeUnload";
   try{
     // Do the final cleanup

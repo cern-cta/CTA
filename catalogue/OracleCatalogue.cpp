@@ -21,6 +21,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -293,7 +294,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     const auto &firstEvent = *firstEventItor;
     checkTapeFileWrittenFieldsAreSet(firstEvent);
     const time_t now = time(nullptr);
-    std::lock_guard<std::mutex> m_lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
     rdbms::AutoRollback autoRollback(conn);
 

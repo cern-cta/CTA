@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Mutex.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -41,15 +42,39 @@ public:
   MutexLocker(Mutex & m): m_mutex(m) {
     m.lock();
   }
+  
+  /**
+   * Unlocker
+   */
+  void unlock() {
+    if (!m_locked) {
+      throw exception::Exception("In MutexLocker::unlock(): trying to unlock an already unlocked mutex");
+    }
+    m_mutex.unlock();
+    m_locked=false;
+  }
 
+  /**
+   * Locker
+   */
+  void lock() {
+    if (m_locked) {
+      throw exception::Exception("In MutexLocker::lock(): trying to relock an locked mutex");
+    }
+    m_mutex.lock();
+    m_locked=true;
+  }
+  
   /**
    * Destructor.
    */
   ~MutexLocker() {
-    try {
-      m_mutex.unlock();
-    } catch (...) {
-      // Ignore any exceptions
+    if (m_locked) {
+      try {
+        m_mutex.unlock();
+      } catch (...) {
+        // Ignore any exceptions
+      }
     }
   }
 
@@ -59,6 +84,11 @@ private:
    * The mutex owened by this MutexLocker.
    */
   Mutex & m_mutex;
+  
+  /**
+   * Tracking of the state of the mutex
+   */
+  bool m_locked=true;
 
 }; // class MutexLocker
   

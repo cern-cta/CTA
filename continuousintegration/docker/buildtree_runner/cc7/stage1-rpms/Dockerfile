@@ -85,6 +85,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       cryptopp \
       json-c \
       castor-rmc-server \
+      shadow-utils \
   && \
     yum clean all \
   && \

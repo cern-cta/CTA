@@ -173,6 +173,7 @@ public:
       std::string logicalLibrary;
       std::string tapePool;
       std::string drive;
+      std::string host;
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
@@ -323,6 +324,7 @@ public:
       std::string logicalLibrary;
       std::string tapePool;
       std::string drive;
+      std::string host;
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;

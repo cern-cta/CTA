@@ -23,6 +23,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 
@@ -1526,17 +1527,11 @@ void RdbmsCatalogue::createTape(
   const std::string &vid,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
-  const optional<std::string> &encryptionKey,
   const uint64_t capacityInBytes,
   const bool disabled,
   const bool full,
   const std::string &comment) {
   try {
-    if(encryptionKey && encryptionKey.value().empty()) {
-      throw(exception::Exception(std::string("The identifier of the encrption key for tape ") + vid + " has been set "
-        "to the empty string.  This optional value should either have a non-empty string value or no value at all"));
-    }
-
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
       throw exception::UserError(std::string("Cannot create tape ") + vid +
@@ -1556,7 +1551,6 @@ void RdbmsCatalogue::createTape(
         "VID,"
         "LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY,"
         "CAPACITY_IN_BYTES,"
         "DATA_IN_BYTES,"
         "LAST_FSEQ,"
@@ -1576,7 +1570,6 @@ void RdbmsCatalogue::createTape(
         ":VID,"
         ":LOGICAL_LIBRARY_NAME,"
         ":TAPE_POOL_NAME,"
-        ":ENCRYPTION_KEY,"
         ":CAPACITY_IN_BYTES,"
         ":DATA_IN_BYTES,"
         ":LAST_FSEQ,"
@@ -1597,7 +1590,6 @@ void RdbmsCatalogue::createTape(
     stmt->bindString(":VID", vid);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
-    stmt->bindOptionalString(":ENCRYPTION_KEY", encryptionKey);
     stmt->bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
     stmt->bindUint64(":DATA_IN_BYTES", 0);
     stmt->bindUint64(":LAST_FSEQ", 0);
@@ -4453,7 +4445,7 @@ void RdbmsCatalogue::insertTapeFile(
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeLastFSeq(rdbms::PooledConn &conn, const std::string &vid, const uint64_t lastFSeq) {
   try {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const uint64_t currentValue = getTapeLastFSeq(conn, vid);
     if(lastFSeq != currentValue + 1) {

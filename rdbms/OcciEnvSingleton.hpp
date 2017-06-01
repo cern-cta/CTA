@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "OcciEnv.hpp"
+#include "common/threading/Mutex.hpp"
+#include "rdbms/OcciEnv.hpp"
 
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace rdbms {
@@ -43,7 +43,7 @@ private:
    * Mutex used to implement a critical region around the implementation of the
    * instance() method.
    */
-  static std::mutex s_mutex;
+  static threading::Mutex s_mutex;
 
   /**
    * The single instance of this class.
