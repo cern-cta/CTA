@@ -706,8 +706,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, cta::nullopt, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
-  int MAX_RECALLS = 62;
-  int MAX_BULK_RECALLS = 27;
+  int MAX_RECALLS = 50;
+  int MAX_BULK_RECALLS = 31;
   std::vector<int> expectedOrder;
   std::vector<std::string> expectedFseqOrderLog;
 
@@ -729,6 +729,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     size_t archiveFileSize=sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
+    bool isFirst = true;
     for (fseq=1; fseq <= MAX_RECALLS ; fseq ++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -783,7 +784,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
       bool apply_rao = false;
       bool add_expected = false;
-      if (MAX_BULK_RECALLS < 10) {
+      if (MAX_BULK_RECALLS < 2) {
         if (expectedOrder.size() % MAX_BULK_RECALLS == 0 ||
             fseq % MAX_RECALLS == 0) {
           add_expected = true;
@@ -791,23 +792,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       }
       else if (MAX_BULK_RECALLS >= 30) {
         if ((expectedOrder.size() % 30 == 0) ||
-            (((fseq % MAX_RECALLS == 0) || (fseq % MAX_BULK_RECALLS == 0)) &&
-              (expectedOrder.size() >= 10))) {
-          apply_rao = true;
-          add_expected = true;
-        }
-        else if (((fseq % MAX_RECALLS == 0) || (fseq % MAX_BULK_RECALLS == 0)) &&
-                (expectedOrder.size() < 10)) {
+            (fseq % MAX_RECALLS == 0) || (fseq % MAX_BULK_RECALLS == 0)) {
+          apply_rao = true & isFirst;
           add_expected = true;
         }
       }
       else if ((fseq % MAX_BULK_RECALLS == 0) || (fseq % MAX_RECALLS == 0)) {
-        if (expectedOrder.size() >= 10)
-          apply_rao = true;
-          add_expected = true;
+        apply_rao = true & isFirst;
+        add_expected = true;
       }
       if (apply_rao) {
         std::reverse(expectedOrder.begin(), expectedOrder.end());
+        isFirst = false;
       }
       if (add_expected) {
         std::stringstream expectedLogLine;

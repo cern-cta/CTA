@@ -125,7 +125,7 @@ public:
    */
   void initRAO();
 
-  void waitForPromise();
+  bool waitForPromise();
 
   void setPromise();
 
@@ -229,10 +229,8 @@ private:
    * The promise for reordering the read tasks according to RAO by the
    * RecallTaskInjector. The tasks to be run are placed in the m_tasks queue
    */
-  std::unique_ptr<std::promise<void>> m_raoPromise;
+  std::promise<void> m_raoPromise;
   std::future<void> m_raoFuture;
-
-  bool accessToDrive = false;
 };
 
 } //end namespace daemon
