@@ -29,6 +29,7 @@
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/TapePool.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
@@ -1350,6 +1351,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   am.mountInfo.vid = tape.vid;
   // Fill up the mount info
   am.mountInfo.drive = driveName;
+  am.mountInfo.host = hostName;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
@@ -1366,7 +1368,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     common::dataStructures::DriveInfo driveInfo;
     driveInfo.driveName=driveName;
     driveInfo.logicalLibrary=logicalLibrary;
-    /// TODO! driveInfo.host=???
+    driveInfo.host=hostName;
     ReportDriveStatusInputs inputs;
     inputs.mountType = common::dataStructures::MountType::Archive;
     inputs.byteTransfered = 0;
@@ -1426,6 +1428,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   // Fill up the mount info
   rm.mountInfo.vid = vid;
   rm.mountInfo.drive = driveName;
+  rm.mountInfo.host = hostName;
   rm.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   rm.mountInfo.tapePool = tapePool;
@@ -1442,7 +1445,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
     common::dataStructures::DriveInfo driveInfo;
     driveInfo.driveName=driveName;
     driveInfo.logicalLibrary=logicalLibrary;
-    /// TODO! driveInfo.host=???
+    driveInfo.host=hostName;
     ReportDriveStatusInputs inputs;
     inputs.mountType = common::dataStructures::MountType::Retrieve;
     inputs.mountSessionId = rm.mountInfo.mountId;
@@ -1908,7 +1911,7 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=mountInfo.drive;
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  /// TODO! driveInfo.host=???
+  driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
   inputs.mountType = common::dataStructures::MountType::NoMount;
   inputs.mountSessionId = mountInfo.mountId;
@@ -2050,7 +2053,7 @@ void OStoreDB::RetrieveMount::complete(time_t completionTime) {
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=mountInfo.drive;
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  /// TODO! driveInfo.host=???
+  driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
   inputs.mountType = common::dataStructures::MountType::NoMount;
   inputs.mountSessionId = mountInfo.mountId;
@@ -2081,7 +2084,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
   /// TODO! driveInfo.host=???
   ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountType = common::dataStructures::MountType::Retrieve;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;
@@ -2111,9 +2114,9 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=mountInfo.drive;
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  /// TODO! driveInfo.host=???
+  driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::NoMount;
+  inputs.mountType = common::dataStructures::MountType::Archive;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;

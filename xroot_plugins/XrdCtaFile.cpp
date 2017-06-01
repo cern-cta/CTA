@@ -1797,7 +1797,7 @@ void XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown", "vid"};
         responseTable.push_back(headers);
         for (auto ds: driveStates) {
           if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
@@ -1809,6 +1809,7 @@ void XrdCtaFile::xCom_drive() {
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
           currentRow.push_back(ds.desiredDriveState.up?"UP":"DOWN");
           currentRow.push_back(ds.desiredDriveState.forceDown?"FORCE":"");
+          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
           responseTable.push_back(currentRow);
         }
         cmdlineOutput<< formatResponse(responseTable, true);

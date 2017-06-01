@@ -61,7 +61,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     m_sysWrapper(sysWrapper),
     m_driveConfig(driveConfig),
     m_castorConf(castorConf),
-    m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.rawLibrarySlot}),
+    m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
     m_mc(mc),
     m_intialProcess(initialProcess),
     m_capUtils(capUtils),
