@@ -1,24 +1,10 @@
-CPPFLAGS=-I/usr/include/protobuf3 -std=c++1y -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
-LDFLAGS=-L/usr/lib64/protobuf3
-LINK.o=$(LINK.cc)
+CPPFLAGS=-I/usr/include/xrootd -fPIC -std=c++11
+LDFLAGS=-lXrdSsi-4 -lXrdSsiLib
 
-all: test_client
+all: frontend_ssi.so
 
-LDLIBS=-lprotobuf 
-
-test_client: test.pb.o test_client.o
-
-test_client.o: test_client.cpp test.pb.h
-
-test.pb.h: test.pb.cc
-
-test.pb.cc: test.proto protoc-gen-XrdSsi
-	#protoc3 --cpp_out=. --plugin=protoc-gen-XrdSsi=./protoc-gen-XrdSsi --XrdSsi_out=. test.proto
-	protoc3 --cpp_out=. test.proto
-
-LDLIBS=-lprotobuf -lprotoc
-
-protoc-gen-XrdSsi: protoc-gen-XrdSsi.cpp
+frontend_ssi.so: frontend_ssi.o
+	$(LINK.cc) -shared $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 clean:
-	rm -f test.pb.h test.pb.cc test.pb.o test.xrdssi.pb.h test.xrdssi.pb.cc test.xrdssi.pb.o test_client test_client.o protoc-gen-XrdSsi
+	rm -f frontend_ssi.o frontend_ssi.so

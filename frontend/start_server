@@ -1,0 +1,3 @@
+#!/bin/sh
+
+xrootd -c xrd.ssi.conf
