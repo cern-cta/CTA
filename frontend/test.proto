@@ -1,6 +1,6 @@
 syntax = "proto3";
 option cc_generic_services = false;  //< Generic services are deprecated
-package eos.wfe;
+package xrdssi.test;
 
 // XRootD SSI Request
 

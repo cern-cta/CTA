@@ -33,8 +33,8 @@ void Execute()
 
    cerr << "Execute()" << endl;
 
-   int reqLen;
-   char *reqData = GetRequest(reqLen);
+   //int reqLen;
+   //char *reqData = GetRequest(reqLen);
 
    // Parse the request
 
