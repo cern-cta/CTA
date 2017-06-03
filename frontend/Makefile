@@ -15,9 +15,9 @@ all: test_client
 
 LDLIBS=-lprotobuf 
 
-test_client: test_client.o test.pb.o
+test_client: test_client.o TestSsiRequest.o test.pb.o
 
-test_client.o: test_client.cpp TestSsiService.h test.pb.h
+test_client.o: test_client.cpp TestSsiService.h TestSsiRequest.h test.pb.h
 
 test.pb.h: test.proto
 	#protoc3 --cpp_out=. --plugin=protoc-gen-XrdSsi=./protoc-gen-XrdSsi --XrdSsi_out=. test.proto

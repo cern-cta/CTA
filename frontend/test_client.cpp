@@ -5,19 +5,19 @@
 
 int main(int argc, char *argv[])
 {
+   const std::string host = "localhost";
+   const int         port = 10400;
+
    // Verify that the version of the Google Protocol Buffer library that we linked against is
    // compatible with the version of the headers we compiled against
 
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-   // Obtain a Service Provider
-
-   const std::string host = "localhost";
-   const int         port = 10400;
-
    try
    {
-      TestSsiService test_ssi_service(host, port);
+      // Obtain a Service Provider
+
+      TestSsiService<xrdssi::test::Request, xrdssi::test::Result> test_ssi_service(host, port);
 
       // Create a Request object
 
@@ -25,36 +25,14 @@ int main(int argc, char *argv[])
 
       request.set_message_text("Archive some file");
 
-      // Output message in Json format
+      // Output message in Json format (for debugging only)
 
       std::cout << "Sending message:" << std::endl;
       std::cout << xrdssi::test::MessageToJsonString(request);
 
+      // Send the Request to the Service
 
-   // Initiate a Request
-
-#if 0
-   // Requests are always executed in the context of a service. They need to correspond to what the service allows.
-
-   XrdSsiRequest *theRequest; // Used for demonstration purposes
-
-   // Create a request object (upcast from your implementation)
-
-   int  reqDLen = 1024;
-   char reqData[reqDLen];
-
-   theRequest = new MyRequest(reqData, reqDLen, 5);
-
-   // Transfer ownership of the request to the service object
-
-   servP->ProcessRequest(*theRequest, theResource);
-
-   // MyRequest object handles deletion of the data buffer, we shall never mention this pointer again...
-
-   theRequest = NULL;
-
-   // Note: it is safe to delete the XrdSsiResource object after ProcessRequest() returns.
-#endif
+      test_ssi_service.send(request);
 
       // Wait for the response callback
 
