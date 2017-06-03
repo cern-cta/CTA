@@ -2,32 +2,16 @@
 #define __TEST_SSI_CLIENT_H
 
 #include <iostream>
-#include <stdexcept>
 
 #include <XrdSsi/XrdSsiProvider.hh>
 #include <XrdSsi/XrdSsiService.hh>
+#include "XrdSsiException.h"
 #include "TestSsiRequest.h"
 
 // Probably we want to allow multiple resources, e.g. streaming and non-streaming versions of the service
 // Can this be defined in the protobuf definition?
 
 const std::string TestSsiResource("/test");
-
-
-
-// Class to convert a XRootD error into a std::exception
-
-class XrdSsiException : public std::exception
-{
-public:
-   XrdSsiException(const std::string &err_msg) : error_msg(err_msg)     {}
-   XrdSsiException(const XrdSsiErrInfo &eInfo) : error_msg(eInfo.Get()) {}
-
-   const char* what() const noexcept { return error_msg.c_str(); }
-
-private:
-   std::string error_msg;
-};
 
 
 
@@ -84,17 +68,17 @@ public:
 
       // Serialize the request object
 
-      std::string data;
+      std::string request_str;
 
-      if(!request_msg.SerializeToString(&data))
+      if(!request_msg.SerializeToString(&request_str))
       {
          throw XrdSsiException("SerializeToString() failed");
       }
 
-      requestP = new TestSsiRequest(data, timeout);
+      requestP = new TestSsiRequest(request_str, timeout);
 
       // Transfer ownership of the request to the service object
-      // TestSsiRequest handles deletion of the data buffer, so we can allow the pointer to go out-of-scope
+      // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
 
       serverP->ProcessRequest(*requestP, resource);
 

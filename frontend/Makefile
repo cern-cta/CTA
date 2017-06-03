@@ -6,7 +6,7 @@ all: test_client frontend_ssi.so
 
 # XrdSsi server plugin
 
-frontend_ssi.so: TestSsiServiceProvider.o TestSsiService.o TestSsiRequestProc.o test.pb.o
+frontend_ssi.so: TestSsiServiceProvider.o TestSsiRequestProc.o test.pb.o
 	$(LINK.cc) -shared $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 # XrdSsi test client
@@ -35,4 +35,4 @@ clean:
 	rm -f   frontend_ssi.o frontend_ssi.so \
 		test_client test_client.o TestSsiRequest.o \
 		test.pb.cc test.pb.h test.pb.o \
-		TestSsiRequestProc.o TestSsiService.o TestSsiServiceProvider.o
+		TestSsiRequestProc.o TestSsiServiceProvider.o

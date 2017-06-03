@@ -2,6 +2,7 @@
 #define __TEST_SSI_REQUEST_PROC_H
 
 #include <XrdSsi/XrdSsiResponder.hh>
+#include "XrdSsiException.h"
 
 /*
  * The XrdSsiResponder class knows how to safely interact with the request object. It allows handling asynchronous
@@ -17,14 +18,92 @@
  * RequestProc is a kind of agent object that the service object creates for each request that it receives.
  */
 
+template <typename RequestType, typename ResponseType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-            RequestProc() {}
-   virtual ~RequestProc() {}
+                RequestProc() {}
+   virtual     ~RequestProc() {}
 
            void Execute();
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
+
+private:
+   void ExecuteAction()   {}
+   void ExecuteAlerts()   {}
+   void ExecuteMetadata() {}
+
+   RequestType  request;
+   ResponseType response;
 };
+
+
+
+template <typename RequestType, typename ResponseType>
+void RequestProc<RequestType, ResponseType>::Execute()
+{
+   using namespace std;
+
+   cerr << "Execute()" << endl;
+
+   // Unpack the Request buffer into a string object.
+   //
+   // We need to construct this with an explicit length, as request_buffer is a binary buffer, not a
+   // null-terminated string.
+
+   int request_len;
+   const char *request_buffer = GetRequest(request_len);
+   const std::string request_str(request_buffer, request_len);
+
+   // Deserialize the Request
+
+   if(!request.ParseFromString(request_str))
+   {
+      throw XrdSsiException("ParseFromString() failed");
+   }
+
+   // Release the request buffer (optional, perhaps it is more efficient to reuse it)
+
+   ReleaseRequestBuffer();
+
+   // Perform the requested action
+
+   ExecuteAction();
+
+   // Optional: send alerts
+
+   ExecuteAlerts();
+
+   // Optional: send metadata ahead of the response
+
+   ExecuteMetadata();
+
+   // Serialize the Response
+
+   std::string response_str;
+
+   if(!response.SerializeToString(&response_str))
+   {
+      throw XrdSsiException("SerializeToString() failed");
+   }
+
+   // Send the response
+
+   SetResponse(response_str.c_str(), response_str.length());
+}
+
+
+
+// Create specialized versions of this method to handle cancellation/cleanup for specific message types
+
+template <typename RequestType, typename ResponseType>
+void RequestProc<RequestType, ResponseType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
+{
+   using namespace std;
+
+   cerr << "Finished()" << endl;
+
+   // Reclaim any allocated resources
+}
 
 #endif
