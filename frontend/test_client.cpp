@@ -1,6 +1,6 @@
 #include <unistd.h> // for sleep
 
-#include "TestSsiService.h"
+#include "TestSsiClient.h"
 #include "TestSsiProtobuf.h"
 
 int main(int argc, char *argv[])
@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
    {
       // Obtain a Service Provider
 
-      TestSsiService<xrdssi::test::Request, xrdssi::test::Result> test_ssi_service(host, port);
+      TestSsiClient<xrdssi::test::Request, xrdssi::test::Result> test_ssi_service(host, port);
 
       // Create a Request object
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
    }
    catch (std::exception& e)
    {
-      std::cerr << "TestSsiService failed with error: " << e.what() << std::endl;
+      std::cerr << "TestSsiClient failed with error: " << e.what() << std::endl;
 
       return 1;
    }
