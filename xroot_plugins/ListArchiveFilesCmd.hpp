@@ -24,6 +24,7 @@
 
 #include <XrdSfs/XrdSfsInterface.hh>
 #include <memory>
+#include <sstream>
 #include <string>
 
 namespace cta {
@@ -112,7 +113,7 @@ protected:
    * of the CTA catalogue.
    *
    */
-  std::string m_readBuffer;
+  std::ostringstream m_readBuffer;
 
   /**
    * The offset in the reply file at which the current m_readBuffer starts.
