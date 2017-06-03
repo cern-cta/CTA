@@ -1,35 +1,61 @@
-#include <iostream>
+#include <unistd.h> // for sleep
 
-#include <google/protobuf/util/json_util.h> // for Json output
-
-#include "test.pb.h"
+#include "TestSsiService.h"
 
 int main(int argc, char *argv[])
 {
-   using namespace std;
+   // Obtain a Service Provider
 
-   // Verify that the version of the library that we linked against is compatible with the version of
-   // the headers we compiled against.
+   const std::string host = "localhost";
+   const int         port = 10400;
 
-   GOOGLE_PROTOBUF_VERIFY_VERSION;
+   try
+   {
+      TestSsiService test_ssi_service(host, port);
+   }
+   catch (std::exception& e)
+   {
+      std::cerr << "TestSsiService() failed with error: " << e.what() << std::endl;
 
-   eos::wfe::Request request;
+      return 1;
+   }
 
-   request.set_message_text("Archive some file");
+   // Initiate a Request
 
-   // Output message in Json format
+#if 0
+   // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
-   google::protobuf::util::JsonPrintOptions options;
-   options.add_whitespace = true;
-   options.always_print_primitive_fields = true;
-   string jsonNotification;
-   google::protobuf::util::MessageToJsonString(request, &jsonNotification, options);
-   cout << "Sending message:" << endl << jsonNotification;
+   XrdSsiRequest *theRequest; // Used for demonstration purposes
 
-   // Optional: Delete all global objects allocated by libprotobuf
+   // Create a request object (upcast from your implementation)
 
-   google::protobuf::ShutdownProtobufLibrary();
+   int  reqDLen = 1024;
+   char reqData[reqDLen];
 
-   return 0;
+   theRequest = new MyRequest(reqData, reqDLen, 5);
+
+   // Transfer ownership of the request to the service object
+
+   servP->ProcessRequest(*theRequest, theResource);
+
+   // MyRequest object handles deletion of the data buffer, we shall never mention this pointer again...
+
+   theRequest = NULL;
+
+   // Note: it is safe to delete the XrdSsiResource object after ProcessRequest() returns.
+#endif
+
+   // Wait for the response callback
+
+   std::cout << "Request sent, going to sleep..." << std::endl;
+
+   int wait_secs = 40;
+
+   while(--wait_secs)
+   {
+      std::cerr << ".";
+      sleep(1);
+   }
+
+   std::cout << "All done, exiting." << std::endl;
 }
-
