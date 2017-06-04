@@ -29,9 +29,11 @@ public:
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
 
 private:
-   void ExecuteAction()   {}
-   void ExecuteAlerts()   {}
-   void ExecuteMetadata() {}
+   // These methods should be specialized according to the needs of each <RequestType, ResponseType> pair
+
+   void ExecuteAction()   { std::cerr << "Called default ExecuteAction()" << std::endl; }
+   void ExecuteAlerts()   { std::cerr << "Called default ExecuteAlerts()" << std::endl; }
+   void ExecuteMetadata() { std::cerr << "Called default ExecuteMetadata()" << std::endl; }
 
    RequestType  request;
    ResponseType response;
@@ -62,7 +64,7 @@ void RequestProc<RequestType, ResponseType>::Execute()
       throw XrdSsiException("ParseFromString() failed");
    }
 
-   // Release the request buffer (optional, perhaps it is more efficient to reuse it)
+   // Release the request buffer (optional, perhaps it is more efficient to reuse it?)
 
    ReleaseRequestBuffer();
 
