@@ -22,7 +22,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 
    // Output message in Json format (for debugging)
 
-   std::cerr << "Sending response:" << std::endl;
+   std::cerr << "Preparing response:" << std::endl;
    std::cerr << xrdssi::test::MessageToJsonString(response);
 }
 
@@ -35,9 +35,14 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 template <>
 void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteMetadata()
 {
-   std::cerr << "Sending metadata..." << std::endl;
-   const std::string metadata("Have some metadata!");
-   SetMetadata(metadata.c_str(), metadata.size());
+   // Set metadata
+
+   metadata.set_message_text("Have some metadata");
+
+   // Output message in Json format (for debugging)
+
+   std::cerr << "Preparing metadata..." << std::endl;
+   std::cerr << xrdssi::test::MessageToJsonString(metadata);
 }
 
 
@@ -63,4 +68,8 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
  * A parameter to the method tells you why it’s being called.
  *
  * See example p.45
+template <>
+void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAlert()
+{
+}
  */

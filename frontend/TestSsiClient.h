@@ -60,22 +60,20 @@ public:
       }
    }
 
-   void send(RequestType request_msg)
+   void send(RequestType request)
    {
-      // Requests are always executed in the context of a service. They need to correspond to what the service allows.
-
-      XrdSsiRequest *requestP;
-
       // Serialize the request object
 
       std::string request_str;
 
-      if(!request_msg.SerializeToString(&request_str))
+      if(!request.SerializeToString(&request_str))
       {
-         throw XrdSsiException("SerializeToString() failed");
+         throw XrdSsiException("request.SerializeToString() failed");
       }
 
-      requestP = new TestSsiRequest(request_str, timeout);
+      // Requests are always executed in the context of a service. They need to correspond to what the service allows.
+
+      XrdSsiRequest *requestP = new TestSsiRequest(request_str, timeout);
 
       // Transfer ownership of the request to the service object
       // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope

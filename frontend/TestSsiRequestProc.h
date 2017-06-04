@@ -37,6 +37,8 @@ private:
 
    RequestType  request;
    ResponseType response;
+   MetadataType metadata;
+   AlertType    alert;
 };
 
 
@@ -61,7 +63,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    if(!request.ParseFromString(request_str))
    {
-      throw XrdSsiException("ParseFromString() failed");
+      throw XrdSsiException("request.ParseFromString() failed");
    }
 
    // Release the request buffer (optional, perhaps it is more efficient to reuse it?)
@@ -76,22 +78,39 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    ExecuteAlerts();
 
-   // Optional: send metadata ahead of the response
+   // Optional: prepare to send metadata ahead of the response
 
    ExecuteMetadata();
 
-   // Serialize the Response
+   // Serialize the Metadata
 
    std::string response_str;
 
+   if(!metadata.SerializeToString(&response_str))
+   {
+      throw XrdSsiException("metadata.SerializeToString() failed");
+   }
+
+   // Send the Metadata
+
+   if(response_str.size() > 0)
+   {
+      SetMetadata(response_str.c_str(), response_str.size());
+   }
+
+   // Serialize the Response
+
    if(!response.SerializeToString(&response_str))
    {
-      throw XrdSsiException("SerializeToString() failed");
+      throw XrdSsiException("response.SerializeToString() failed");
    }
 
    // Send the response
 
-   SetResponse(response_str.c_str(), response_str.length());
+   if(response_str.size() > 0)
+   {
+      SetResponse(response_str.c_str(), response_str.size());
+   }
 }
 
 

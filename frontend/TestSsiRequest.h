@@ -7,7 +7,7 @@ class TestSsiRequest : public XrdSsiRequest
 {
 public:
 
-           TestSsiRequest(const std::string &buffer_str, uint16_t tmo=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.length())
+           TestSsiRequest(const std::string &buffer_str, uint16_t tmo=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.size())
            {
               std::cerr << "Creating TestSsiRequest object, setting tmo=" << tmo << std::endl;
               this->SetTimeOut(tmo);
