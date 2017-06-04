@@ -43,7 +43,7 @@ XrdSsiService* TestSsiServiceProvider::GetService(XrdSsiErrInfo &eInfo, const st
 
    cerr << "Called GetService(" << contact << "," << oHold << ")" << endl;
 
-   XrdSsiService *ptr = new TestSsiService<xrdssi::test::Request, xrdssi::test::Result>;
+   XrdSsiService *ptr = new TestSsiService<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>;
 
    return ptr;
 }

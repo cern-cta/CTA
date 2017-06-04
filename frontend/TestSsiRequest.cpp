@@ -40,6 +40,7 @@ bool TestSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRes
 
          // do something with metadata
 
+         // A metadata-only response is indicated when XrdSsiRespInfo::rType is set to isNil (i.e. no response data is present).
 #if 0
          // clean up
 

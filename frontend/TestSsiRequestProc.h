@@ -18,7 +18,7 @@
  * RequestProc is a kind of agent object that the service object creates for each request that it receives.
  */
 
-template <typename RequestType, typename ResponseType>
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
@@ -41,8 +41,8 @@ private:
 
 
 
-template <typename RequestType, typename ResponseType>
-void RequestProc<RequestType, ResponseType>::Execute()
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 {
    using namespace std;
 
@@ -98,8 +98,8 @@ void RequestProc<RequestType, ResponseType>::Execute()
 
 // Create specialized versions of this method to handle cancellation/cleanup for specific message types
 
-template <typename RequestType, typename ResponseType>
-void RequestProc<RequestType, ResponseType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
    using namespace std;
 

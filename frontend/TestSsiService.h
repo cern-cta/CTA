@@ -11,7 +11,7 @@
  * Service Object, obtained using GetService() method of the TestSsiServiceProvider factory
  */
 
-template <typename RequestType, typename ResponseType>
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 class TestSsiService : public XrdSsiService
 {
 public:
@@ -32,12 +32,12 @@ public:
 
 
 
-template <typename RequestType, typename ResponseType>
-void TestSsiService<RequestType, ResponseType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+void TestSsiService<RequestType, ResponseType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
    std::cerr << "Called ProcessRequest()" << std::endl;
 
-   RequestProc<RequestType, ResponseType> processor;
+   RequestProc<RequestType, ResponseType, MetadataType, AlertType> processor;
 
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
 

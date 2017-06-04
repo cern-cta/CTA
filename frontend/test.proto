@@ -33,9 +33,15 @@ message Result {
   }
 }
 
-// XRootD SSI Service
+// XRootD SSI Metadata
 
-service XrdSsiService {
-  rpc SendRequest(Request) returns(Result);
+message Metadata {
+  string message_text = 1;          //< Some useful information about the next response
+}
+
+// XRootD SSI Alert
+
+message Alert {
+  string message_text = 1;          //< Some alert message for the client
 }
 

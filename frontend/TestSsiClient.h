@@ -21,7 +21,7 @@ extern XrdSsiProvider *XrdSsiProviderClient;
 
 
 
-template <typename RequestType, typename ResponseType>
+template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 class TestSsiClient
 {
 public:

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
    {
       // Obtain a Service Provider
 
-      TestSsiClient<xrdssi::test::Request, xrdssi::test::Result> test_ssi_service(host, port);
+      TestSsiClient<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert> test_ssi_service(host, port);
 
       // Create a Request object
 
