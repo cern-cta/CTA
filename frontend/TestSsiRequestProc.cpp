@@ -30,6 +30,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result>::ExecuteAction()
 template <>
 void RequestProc<xrdssi::test::Request, xrdssi::test::Result>::ExecuteMetadata()
 {
+   std::cerr << "Sending metadata..." << std::endl;
    const std::string metadata("Have some metadata!");
    SetMetadata(metadata.c_str(), metadata.size());
 }

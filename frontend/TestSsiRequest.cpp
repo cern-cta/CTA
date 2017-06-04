@@ -10,14 +10,6 @@ bool TestSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRes
 
    cerr << "ProcessResponse() callback called with response type = " << rInfo.State() << endl;
 
-   // Resume handling callbacks if they were on hold
-
-   if(!queue_on_hold)
-   {
-      cerr << "resuming...";
-      this->RestartDataResponse(XrdSsiRequest::RDR_All);
-   }
-
    if (eInfo.hasError())
    {
       // Handle error using the passed eInfo object
@@ -42,19 +34,22 @@ bool TestSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRes
 
       GetMetadata(myMetadataLen);
 
-      if(rInfo.rType == XrdSsiRespInfo::isData && myMetadataLen == 0)
+      if(rInfo.rType == XrdSsiRespInfo::isData && myMetadataLen > 0)
       {
-         cerr << "Response is metadata only." << endl;
+         cerr << "Response has " << myMetadataLen << " bytes of metadata." << endl;
 
          // do something with metadata
 
+#if 0
          // clean up
 
          Finished();
 
          delete this;
+#endif
       }
-      else if(rInfo.rType == XrdSsiRespInfo::isHandle)
+
+      if(rInfo.rType == XrdSsiRespInfo::isHandle)
       {
          cerr << "Response is detached, handle = " << endl;
 
@@ -66,7 +61,8 @@ bool TestSsiRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRes
 
          delete this;
       }
-      else
+
+      if(rInfo.rType == XrdSsiRespInfo::isData)
       {
          // A proper data response type
 
@@ -85,16 +81,7 @@ XrdSsiRequest::PRD_Xeq TestSsiRequest::ProcessResponseData(const XrdSsiErrInfo &
 {
    using namespace std;
 
-   // Simulate the scenario where we can't handle the queue at this time
-
-queue_on_hold = false;
-
-   if(queue_on_hold)
-   {
-      cerr << "Response queue is on hold...";
-      queue_on_hold = false;
-      return XrdSsiRequest::PRD_Hold;
-   }
+   // If we can't handle the queue at this time, return XrdSsiRequest::PRD_Hold;
 
    // GetResponseData() above places the data in the allocated buffer, then calls this method with
    // the buffer type and length

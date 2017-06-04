@@ -7,6 +7,16 @@ class TestSsiRequest : public XrdSsiRequest
 {
 public:
 
+           TestSsiRequest(const std::string &buffer_str, uint16_t tmo=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.length())
+           {
+              std::cerr << "Creating TestSsiRequest object, setting tmo=" << tmo << std::endl;
+              this->SetTimeOut(tmo);
+           }
+   virtual ~TestSsiRequest() 
+           {
+              std::cerr << "Deleting TestSsiRequest object" << std::endl;
+           }
+
    // It is up to the implementation to create request data, save it in some manner, and provide it to
    // the framework when GetRequest() is called. Optionally define the RelRequestBuffer() method to
    // clean up when the framework no longer needs access to the data.
@@ -15,7 +25,7 @@ public:
 
    // Query for Andy: shouldn't the return type for GetRequest be const?
 
-   virtual char *GetRequest(int &dlen) override {dlen = reqBLen; return const_cast<char*>(reqBuff);}
+   virtual char *GetRequest(int &reqlen) override { reqlen = request_len; return const_cast<char*>(request_buffer); }
 
    // Requests are sent to the server asynchronously via the service object. The ProcessResponse() callback
    // is used to inform the request object if the request completed or failed.
@@ -33,23 +43,10 @@ public:
 
    virtual void Alert(XrdSsiRespInfoMsg &aMsg) override;
 
-   // Constructor/Destructor
-
-                 TestSsiRequest(const std::string &buffer_str, uint16_t tmo=0) : reqBuff(buffer_str.c_str()), reqBLen(buffer_str.length()), queue_on_hold(true)
-                 {
-                    std::cerr << "Creating TestSsiRequest object, setting tmo=" << tmo << std::endl;
-                    this->SetTimeOut(tmo);
-                 }
-   virtual      ~TestSsiRequest() 
-                 {
-                    std::cerr << "Deleting TestSsiRequest object" << std::endl;
-                 }
-
 private:
 
-   const char *reqBuff;
-   int   reqBLen;
-   bool  queue_on_hold;
+   const char *request_buffer;
+   int         request_len;
 };
 
 #endif
