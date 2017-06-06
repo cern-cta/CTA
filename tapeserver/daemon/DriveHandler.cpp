@@ -886,7 +886,8 @@ int DriveHandler::runChild() {
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
-  cta::Scheduler scheduler(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
+  cta::Scheduler scheduler(*catalogue, *osdb, m_tapedConfig.mountCriteria.value().maxFiles,
+      m_tapedConfig.mountCriteria.value().maxBytes);
   // Before launching the transfer session, we validate that the scheduler is reachable.
   try {
     scheduler.ping();

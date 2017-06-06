@@ -47,6 +47,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
   ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
   ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, generalConfigPath);
+  // Mount criteria
+  ret.mountCriteria.setFromConfigurationFile(cf, generalConfigPath);
   // Disk file access parameters
   ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
   // Watchdog: parameters for timeouts in various situations.
@@ -70,6 +72,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.archiveFetchBytesFiles.log(log);
   ret.archiveFlushBytesFiles.log(log);
   ret.retrieveFetchBytesFiles.log(log);
+  
+  ret.mountCriteria.log(log);
   
   ret.nbDiskThreads.log(log);
   
