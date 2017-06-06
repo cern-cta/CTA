@@ -26,6 +26,12 @@ namespace cta {
 namespace threading {
 
 /**
+ * Forward declaration of the friend class representing a pthread condition
+ * variable.
+ */
+class CondVar;
+
+/**
  * A simple scoped locker for mutexes. Highly recommended as
  * the mutex will be released in all cases (exception, mid-code return, etc...)
  * To use, simply instantiate and forget.
@@ -78,6 +84,7 @@ public:
   }
 
 private:
+  friend CondVar;
 
   /**
    * The mutex owened by this MutexLocker.

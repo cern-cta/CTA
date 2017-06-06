@@ -23,6 +23,12 @@
 
 namespace cta {
 namespace threading {
+
+/**
+ * Forward declaration of the friend class that represents a pthread condition
+ * variable.
+ */
+class CondVar;
     
 /**
 * A simple exception throwing wrapper for pthread mutexes.
@@ -35,6 +41,7 @@ public:
   void lock() ;
   void unlock();
 private:
+  friend CondVar;
   pthread_mutex_t m_mutex;
 };
   
