@@ -21,7 +21,6 @@
 #include "common/exception/Exception.hpp"
 
 #include <pthread.h>
-#include <semaphore.h>
 
 namespace cta { 
 namespace threading {
