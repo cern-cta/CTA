@@ -18,13 +18,14 @@
 
 #include "GetOptThreadSafe.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 #include <memory>
 
 namespace cta { namespace utils {
 
 GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
-  std::lock_guard<std::mutex> lock(gMutex);
+  threading::MutexLocker locker(gMutex);
   // Prepare the classic styled argv.
   std::unique_ptr<char * []>argv(new char *[request.argv.size()]);
   char ** p=argv.get();
@@ -71,6 +72,6 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
   return ret;
 }
 
-std::mutex GetOpThreadSafe::gMutex;
+threading::Mutex GetOpThreadSafe::gMutex;
 
 }} // namespace cta::utils

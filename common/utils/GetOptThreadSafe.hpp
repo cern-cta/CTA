@@ -16,11 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/threading/Mutex.hpp"
+
 #include <vector>
 #include <string>
 #include <unistd.h>
 #include <getopt.h>
-#include <mutex>
 
 namespace cta { namespace utils {
 
@@ -45,7 +46,7 @@ public:
   };
   static Reply getOpt (const Request & request);
 private:
-  static std::mutex gMutex;
+  static threading::Mutex gMutex;
 };
 
 }} // namespace cta::utils
