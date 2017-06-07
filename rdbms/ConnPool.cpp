@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <iostream>
@@ -56,10 +57,10 @@ void ConnPool::createConns(const uint64_t nbConns) {
 // getConn
 //------------------------------------------------------------------------------
 PooledConn ConnPool::getConn() {
-  std::unique_lock<std::mutex> lock(m_connsMutex);
+  threading::MutexLocker locker(m_connsMutex);
 
   while(m_conns.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
-    m_connsCv.wait(lock);
+    m_connsCv.wait(locker);
   }
 
   if(m_conns.size() == 0) {
@@ -99,7 +100,7 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
         // connection, if there is one, has been lost.  Delete all the connections
         // currently in the pool because their underlying TCP/IP connections may
         // also have been lost.
-        std::unique_lock<std::mutex> lock(m_connsMutex);
+        threading::MutexLocker locker(m_connsMutex);
         while(!m_conns.empty()) {
           m_conns.pop_front();
         }
@@ -107,17 +108,17 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
           throw exception::Exception("Would have reached -1 connections on loan");
         }
         m_nbConnsOnLoan--;
-        m_connsCv.notify_one();
+        m_connsCv.signal();
         return;
       }
 
-      std::unique_lock<std::mutex> lock(m_connsMutex);
+      threading::MutexLocker locker(m_connsMutex);
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
       m_conns.push_back(std::move(conn));
-      m_connsCv.notify_one();
+      m_connsCv.signal();
 
     // Else the connection is closed
     } else {
@@ -126,7 +127,7 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
       // connection, if there is one, has been lost.  Delete all the connections
       // currently in the pool because their underlying TCP/IP connections may
       // also have been lost.
-      std::unique_lock<std::mutex> lock(m_connsMutex);
+      threading::MutexLocker locker(m_connsMutex);
       while(!m_conns.empty()) {
         m_conns.pop_front();
       }
@@ -134,7 +135,7 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
-      m_connsCv.notify_one();
+      m_connsCv.signal();
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
