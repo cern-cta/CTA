@@ -96,12 +96,6 @@ WriteNotificationMsgCmdLineArgs::WriteNotificationMsgCmdLineArgs(const int argc,
     throw ex;
   }
 
-  if(writeJsonToStdOut && actualNbArgs > 0) {
-    exception::CommandLineNotParsed ex;
-    ex.getMessage() << "A command-line argument cannot be specified with the -j|--json option";
-    throw ex;
-  }
-
   // There is no need to continue parsing if the help option is set
   if(help) {
     return;
