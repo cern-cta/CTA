@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include <iostream>
 
 namespace {
@@ -295,6 +296,19 @@ bool castor::tape::tapeserver::drive::FakeDrive::isEncryptionCapEnabled() {
 
 bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
+}
+
+castor::tape::SCSI::Structures::RAO::udsLimitsPage_t
+    castor::tape::tapeserver::drive::FakeDrive::getLimitUDS() {
+  castor::tape::SCSI::Structures::RAO::udsLimitsPage_t lims;
+  lims.maxSize = 30000;
+  lims.maxSupported = 30;
+  return lims;
+}
+
+void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
+            std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported)  {
+  files.reverse();
 }
 
 std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {

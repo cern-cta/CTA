@@ -203,7 +203,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,
-        m_castorConf.useLbp, m_castorConf.externalEncryptionKeyScript);
+        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript);
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
         rwd,
@@ -219,10 +219,18 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     trst.setTaskInjector(&rti);
     rrp.setWatchdog(rwd);
     
+    rti.setDriveInterface(trst.getDriveReference());
+
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
     cta::utils::Timer timer;
-    if (rti.synchronousInjection()) {  //adapt the recall task injector (starting from synchronousInjection)
+
+    // The RecallTaskInjector and the TapeReadSingleThread share the promise
+    if (m_castorConf.useRAO) {
+      rti.initRAO();
+    }
+
+    if (rti.synchronousFetch()) {  //adapt the recall task injector (starting from synchronousFetch)
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
       rwd.startThread();

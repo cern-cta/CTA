@@ -109,6 +109,8 @@ namespace drive {
     virtual bool isTapeBlank();
     virtual lbpToUse getLbpToUse();
     virtual bool hasTapeInPlace();
+    virtual castor::tape::SCSI::Structures::RAO::udsLimitsPage_t getLimitUDS();
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
   };
   
 }}}}

@@ -29,6 +29,9 @@
 #include "common/threading/Thread.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+
+#include <future>
 
 namespace castor{
 namespace tape{
@@ -99,7 +102,7 @@ public:
      * @param byteSizeThreshold total bytes count  at least requested
      * @return true if there are jobs to be done, false otherwise 
      */
-  bool synchronousInjection();
+  bool synchronousFetch();
 
   /**
    * Wait for the inner thread to finish
@@ -110,6 +113,22 @@ public:
    * Start the inner thread 
    */
   void startThreads();
+
+  /**
+   * Set the drive interface in use
+   * @param di - Drive interface
+   */
+  void setDriveInterface(castor::tape::tapeserver::drive::DriveInterface *di);
+
+  /**
+   * Initialize Recommended Access Order parameters
+   */
+  void initRAO();
+
+  bool waitForPromise();
+
+  void setPromise();
+
 private:
   /**
    * It will signal to the disk read thread  pool, tape write single thread
@@ -124,9 +143,8 @@ private:
   
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve
-   * @param jobs
    */
-  void injectBulkRecalls(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs);
+  void injectBulkRecalls();
 
   /**
    * A request of files to recall. We request EITHER
@@ -179,6 +197,11 @@ private:
   /// the client who is sending us jobs
   cta::RetrieveMount &m_retrieveMount;
   
+  /// Drive interface needed for performing Recommended Access Order query
+  castor::tape::tapeserver::drive::DriveInterface * m_drive;
+
+  std::vector<std::unique_ptr<cta::RetrieveJob>> m_jobs;
+
   /**
    * utility member to log some pieces of information
    */
@@ -193,6 +216,21 @@ private:
   
   //maximal number of cumulated byte requested. at once
   const uint64_t m_maxBytes;
+
+  /** Flag indicating if the file recalls are performed using
+   * the Recommended Access Order (RAO)
+   */
+  bool m_useRAO;
+
+  /** Drive-specific RAO parameters */
+  SCSI::Structures::RAO::udsLimitsPage_t m_raoLimits;
+
+  /**
+   * The promise for reordering the read tasks according to RAO by the
+   * RecallTaskInjector. The tasks to be run are placed in the m_tasks queue
+   */
+  std::promise<void> m_raoPromise;
+  std::future<void> m_raoFuture;
 };
 
 } //end namespace daemon

@@ -452,6 +452,20 @@ namespace drive {
      */
     virtual bool isEncryptionCapEnabled();
     
+    /**
+     * Query the drive for the maximum number and size of User Data Segments (UDS)
+     * @return udsLimitsPage_t class. A pair of the above mentioned parameters
+     */
+    virtual SCSI::Structures::RAO::udsLimitsPage_t getLimitUDS();
+
+    /**
+     * Query the drive for the Recommended Access Order (RAO)
+     * for a series of files
+     * @param filename The name of the file containing the sequential order of
+     * a list of files [line format: ID:BLOCK_START:BLOCK_END]
+     */
+    virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
@@ -485,6 +499,23 @@ namespace drive {
     virtual void setLogicalBlockProtection(const unsigned char method,
       unsigned char methodLength, const bool enableLPBforRead, 
       const bool enableLBBforWrite);
+
+    /**
+     * Send to the drive the command to generate the Recommended Access Order for
+     * a series of files
+     * @param blocks A mapping between a string identifier referring the file ID
+     * and a pair of block limits
+     * @param maxSupported The maximum number of UDS supported - obtained by getLimitUDS()
+     */
+    virtual void generateRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+    
+    /**
+     * Receive the Recommended Access Order
+     * @param offset 
+     * @param allocationLength
+     */
+    virtual void receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
+                            int offset, int allocationLength);
   };
 
   class DriveT10000 : public DriveGeneric {

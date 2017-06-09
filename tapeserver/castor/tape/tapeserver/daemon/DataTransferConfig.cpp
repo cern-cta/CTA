@@ -41,6 +41,7 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   maxFilesBeforeFlush(0),
   nbDiskThreads(0),
   useLbp(false),
+  useRAO(false),
   externalEncryptionKeyScript("") {}
 
 //------------------------------------------------------------------------------
@@ -85,11 +86,19 @@ castor::tape::tapeserver::daemon::DataTransferConfig
     "TapeServer", "XrootTimeout", 0, log);
   const std::string useLBP = castorConf.getConfEntString(
     "TapeServer", "UseLogicalBlockProtection", "no", log);
+  const std::string useRAO = castorConf.getConfEntString(
+    "TapeServer", "UseRecommendedAccessOrder", "no", log);
 
   if (!strcasecmp(useLBP.c_str(), "yes") || !strcmp(useLBP.c_str(), "1")) {
     config.useLbp = true;
   } else {
     config.useLbp = false;
+  }
+
+  if (!strcasecmp(useRAO.c_str(), "yes") || !strcmp(useRAO.c_str(), "1")) {
+    config.useRAO = true;
+  } else {
+    config.useRAO = false;
   }
 
   config.externalEncryptionKeyScript = castorConf.getConfEntString("TapeServer",

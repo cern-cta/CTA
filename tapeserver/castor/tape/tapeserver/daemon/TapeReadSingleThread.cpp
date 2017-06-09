@@ -36,13 +36,15 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   cta::log::LogContext&  lc,
   RecallReportPacker &rrp,
   const bool useLbp,
+  const bool useRAO,
   const std::string & externalEncryptionKeyScript) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
-  m_useLbp(useLbp) {}
+  m_useLbp(useLbp),
+  m_useRAO(useRAO) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -154,13 +156,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
     vrp = m_tasks.popGetSize();
   // If we just passed (down) the half full limit, ask for more
   // (the remaining value is after pop)
-  if(vrp.remaining + 1 == m_maxFilesRequest/2) {
-    // This is not a last call
-    m_taskInjector->requestInjection(false);
-  } else if (0 == vrp.remaining) {
+  if(0 == vrp.remaining) {
     // This is a last call: if the task injector comes up empty on this
     // one, he'll call it the end.
     m_taskInjector->requestInjection(true);
+  } else if (vrp.remaining + 1 == m_maxFilesRequest/2) {
+    // This is not a last call
+    m_taskInjector->requestInjection(false);
   }
   return vrp.value;
 }
@@ -264,6 +266,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         params.add("ErrorMessage", ex.getMessage().str());
         m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
         throw;
+      }
+      if (m_useRAO) {
+        /* Give the RecallTaskInjector access to the drive to perform RAO query */
+        m_taskInjector->setPromise();
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
