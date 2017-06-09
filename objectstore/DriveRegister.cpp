@@ -132,6 +132,9 @@ std::list<cta::common::dataStructures::DriveState> DriveRegister::getAllDrivesSt
     ret.back().desiredDriveState.forceDown = d.desiredforcedown();
     ret.back().currentVid                  = d.currentvid();
     ret.back().currentTapePool             = d.currenttapepool();
+    if (d.has_nextmounttype()) { ret.back().nextMountType  = (common::dataStructures::MountType) d.nextmounttype(); }
+    if (d.has_nexttapepool()) { ret.back().nextTapepool  = d.nexttapepool(); }
+    if (d.has_nextvid()) { ret.back().nextVid  = d.nextvid(); }   
   }
   return ret;
 }
@@ -217,6 +220,43 @@ update:
   ds->set_currenttapepool(driveState.currentTapePool);
 }
 
+
+//------------------------------------------------------------------------------
+// DriveRegister::setNextDriveState())
+//------------------------------------------------------------------------------
+void DriveRegister::setNextDriveState(const cta::common::dataStructures::DriveNextState driveNextState) {
+  using cta::common::dataStructures::MountType;
+  checkPayloadWritable();
+  // Find the drive to update (new or existing)
+  serializers::DriveState * ds = nullptr;
+  for (ssize_t i=0; i<m_payload.mutable_drives()->size(); i++) {
+    if (m_payload.mutable_drives(i)->drivename() == driveNextState.driveName) {
+      ds = m_payload.mutable_drives(i);
+      goto update;
+    }
+  }
+  // The drive was not found. We will create it.
+  ds = m_payload.mutable_drives()->Add();
+  ds->set_drivename(driveNextState.driveName);
+update: 
+  switch(driveNextState.mountType) {
+  case MountType::Archive:
+    ds->set_nexttapepool(driveNextState.tapepool);
+    // No break on purpose.
+  case MountType::Label:
+  case MountType::Retrieve:
+    ds->set_nextmounttype((int)driveNextState.mountType);
+    ds->set_nextvid(driveNextState.vid);
+    break;
+  default:
+  {
+    std::stringstream err;
+    err << "In DriveRegister::setNextDriveState(): unknown mount type: " 
+        << cta::common::dataStructures::toString(driveNextState.mountType);
+    throw cta::exception::Exception(err.str());
+  }
+  }
+}
 
 //------------------------------------------------------------------------------
 // DriveRegister::isEmpty())

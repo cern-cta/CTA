@@ -22,6 +22,7 @@
 #include <list>
 #include <limits>
 #include "common/dataStructures/DriveState.hpp"
+#include "common/dataStructures/DriveNextState.hpp"
 
 namespace cta { namespace objectstore {
   
@@ -60,6 +61,13 @@ public:
    * @param driveState Full drive state (drive name is part of the structure).
    */
   void setDriveState(const cta::common::dataStructures::DriveState driveState);
+  
+  /**
+   * Set the next state of a drive, following a mount decision (scheduling from
+   * idle or preemption).
+   * @param driveNextState Partial drive state.
+   */
+  void setNextDriveState(const cta::common::dataStructures::DriveNextState driveNextState);
 
   /**
    * Remove the drive from the register.

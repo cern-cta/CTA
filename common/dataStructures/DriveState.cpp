@@ -44,7 +44,8 @@ DriveState::DriveState():
   startStartTime(0),
   mountType(dataStructures::MountType::NoMount),
   driveStatus(dataStructures::DriveStatus::Down),
-  desiredDriveState({false, false}) {}
+  desiredDriveState({false, false}),
+  nextMountType(dataStructures::MountType::NoMount) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -71,7 +72,10 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && driveStatus==rhs.driveStatus
       && desiredDriveState==rhs.desiredDriveState
       && currentVid==rhs.currentVid
-      && currentTapePool==rhs.currentTapePool;
+      && currentTapePool==rhs.currentTapePool
+      && nextMountType == rhs.nextMountType
+      && nextTapepool == rhs.nextTapepool
+      && nextVid == rhs.nextVid;
 }
 
 //------------------------------------------------------------------------------
@@ -107,7 +111,10 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " status=" << obj.driveStatus
      << " desiredState=" << obj.desiredDriveState
      << " currentVid=" << obj.currentVid
-     << " currentTapePool=" << obj.currentTapePool << ")";
+     << " currentTapePool=" << obj.currentTapePool
+     << " nextMountType=" << obj.nextMountType
+     << " nextVid=" << obj.nextVid
+     << " nextTapePool=" << obj.nextTapepool << ")";
 }
 
 } // namespace dataStructures

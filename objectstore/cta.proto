@@ -283,6 +283,9 @@ message DriveState {
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
   optional string currenttapepool = 5022;
+  optional uint32 nextmounttype = 5023;
+  optional string nextvid = 5024;
+  optional string nexttapepool = 5025;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 

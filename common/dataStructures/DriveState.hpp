@@ -63,6 +63,9 @@ struct DriveState {
   DesiredDriveState desiredDriveState;
   std::string currentVid;
   std::string currentTapePool;
+  MountType nextMountType;
+  std::string nextVid;
+  std::string nextTapepool;
 
 }; // struct DriveState
 
