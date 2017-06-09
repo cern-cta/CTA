@@ -113,7 +113,9 @@ bool RecallTaskInjector::waitForPromise() {
 void RecallTaskInjector::setPromise() {
   try {
     m_raoPromise.set_value();
-  } catch (const std::exception &exc) {}
+  } catch (const std::exception &exc) {
+    throw cta::exception::Exception(std::string("In RecallTaskInjector::setPromise() got std::exception: ") + exc.what());
+  }
 }
 //------------------------------------------------------------------------------
 //injectBulkRecalls
