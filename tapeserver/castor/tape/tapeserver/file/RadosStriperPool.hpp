@@ -18,11 +18,11 @@
 
 #pragma once
 
+#include "common/threading/Mutex.hpp"
+
 #include <radosstriper/libradosstriper.hpp>
 #include <map>
 #include <memory>
-#include <mutex>
-
 
 namespace castor {
 namespace tape {    
@@ -71,7 +71,7 @@ private:
   /// striper pool
   std::vector<StriperDict> m_stripers;
   /// mutex protecting the striper pool
-  std::mutex m_mutex;
+  cta::threading::Mutex m_mutex;
   /// size of the Striper pool
   unsigned int m_maxStriperIdx;
   /// index of current striper pool to be used

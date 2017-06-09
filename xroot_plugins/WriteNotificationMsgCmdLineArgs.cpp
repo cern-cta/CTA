@@ -96,12 +96,6 @@ WriteNotificationMsgCmdLineArgs::WriteNotificationMsgCmdLineArgs(const int argc,
     throw ex;
   }
 
-  if(writeJsonToStdOut && actualNbArgs > 0) {
-    exception::CommandLineNotParsed ex;
-    ex.getMessage() << "A command-line argument cannot be specified with the -j|--json option";
-    throw ex;
-  }
-
   // There is no need to continue parsing if the help option is set
   if(help) {
     return;
@@ -171,9 +165,11 @@ void WriteNotificationMsgCmdLineArgs::printUsage(std::ostream &os) {
     "        Prints this usage message" << std::endl <<
     "    -j, --json" << std::endl <<
     "        Prints the JSON representation of the notification message to standard out" << std::endl <<
-    "Example:" << std::endl <<
+    "Example 1:" << std::endl <<
     "    cta-xrootd_plugins-write-notification-msg CLOSEW notification.msg" << std::endl <<
-    "    cat notification.msg | protoc --decode_raw" << std::endl;
+    "    cat notification.msg | protoc --decode_raw" << std::endl <<
+    "Example 2:" << std::endl <<
+    "    cta-xrootd_plugins-write-notification-msg PREPARE -j" << std::endl;
 }
 
 } // namespace xroot_plugins

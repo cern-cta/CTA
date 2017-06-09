@@ -16,37 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/threading/Mutex.hpp"
+#include <gtest/gtest.h>
 
-#include <vector>
-#include <string>
-#include <unistd.h>
-#include <getopt.h>
+#include "SourcedParameter.hpp"
+#include "FetchReportOrFlushLimits.hpp"
 
-namespace cta { namespace utils {
+namespace unitTests {
 
-/**
- * A thread safe (but serialized) wrapper to getopt.
- */
+TEST(cta_Daemon, SourcedParameter) {
+  cta::tape::daemon::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits> mountCriteria("unitTest", "mountCriteria");
+  mountCriteria.set("12, 34", "Unit test");
+  ASSERT_EQ(12, mountCriteria.value().maxBytes);
+  ASSERT_EQ(34, mountCriteria.value().maxFiles);
+}
 
-class GetOpThreadSafe {
-public:
-  struct Request {
-    std::vector<std::string> argv;
-    std::string optstring;
-    const struct ::option *longopts;
-  };
-  struct FoundOption {
-    std::string option;
-    std::string parameter;
-  };
-  struct Reply {
-    std::vector<FoundOption> options;
-    std::vector<std::string> remainder;
-  };
-  static Reply getOpt (const Request & request);
-private:
-  static threading::Mutex gMutex;
-};
-
-}} // namespace cta::utils
+} // namespace unitTests

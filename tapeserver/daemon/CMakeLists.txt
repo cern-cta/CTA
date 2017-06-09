@@ -46,7 +46,8 @@ target_link_libraries(ctatapedaemon
 add_library(ctadaemonunittests SHARED
   ConfigurationFileTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp)
+  TpconfigTests.cpp
+  SourcedParameterTests.cpp)
 
 add_library(ctadaemonunittests-multiprocess SHARED
   ProcessManagerTests.cpp

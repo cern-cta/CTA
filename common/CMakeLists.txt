@@ -113,6 +113,7 @@ set (COMMON_LIB_SRC_FILES
   SmartFILEPtr.cpp
   CRC.cpp
   threading/ChildProcess.cpp
+  threading/CondVar.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
   threading/SocketPair.cpp
@@ -158,6 +159,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   SmartFdTest.cpp
   SmartArrayPtrTest.cpp
   CRCTest.cpp
+  threading/CondVarTest.cpp
   threading/DaemonTest.cpp
   threading/SocketPairTest.cpp
   threading/ThreadingBlockingQTests.cpp

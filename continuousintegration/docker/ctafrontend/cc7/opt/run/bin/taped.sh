@@ -40,6 +40,7 @@ echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
 
 # cta-taped setup
   echo "taped BufferCount 10" > /etc/cta/cta.conf
+  echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta.conf 
   echo "general ObjectStoreURL $OBJECTSTOREURL" >> /etc/cta/cta.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 

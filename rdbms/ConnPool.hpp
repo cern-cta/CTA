@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include "Conn.hpp"
-#include "ConnFactory.hpp"
-#include "PooledConn.hpp"
+#include "common/threading/CondVar.hpp"
+#include "common/threading/Mutex.hpp"
+#include "rdbms/Conn.hpp"
+#include "rdbms/ConnFactory.hpp"
+#include "rdbms/PooledConn.hpp"
 
-#include <condition_variable>
 #include <list>
 #include <memory>
-#include <mutex>
 
 namespace cta {
 namespace rdbms {
@@ -91,13 +91,13 @@ private:
   /**
    * Mutex used to serialize access to the database connections within the pool.
    */
-  std::mutex m_connsMutex;
+  threading::Mutex m_connsMutex;
 
   /**
    * Condition variable used by threads returning connections to the pool to
    * notify threads waiting for connections.
    */
-  std::condition_variable m_connsCv;
+  threading::CondVar m_connsCv;
 
   /**
    * The database connections within the pool.

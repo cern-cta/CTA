@@ -17,8 +17,10 @@
  */
 
 #include "RadosStriperPool.hpp"
-#include <stdexcept>
 #include "common/exception/Errnum.hpp"
+#include "common/threading/MutexLocker.hpp"
+
+#include <stdexcept>
 
 namespace {
 //------------------------------------------------------------------------------
@@ -71,7 +73,7 @@ unsigned int RadosStriperPool::getStriperIdxAndIncrease() {
 // RadosStriperPool::throwingGetStriper
 //------------------------------------------------------------------------------
 libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::string& userAtPool) {
-  std::lock_guard<std::mutex> lock{m_mutex};
+  cta::threading::MutexLocker locker{m_mutex};
   unsigned int striperIdx = getStriperIdxAndIncrease();
   try {
     return m_stripers[striperIdx].at(userAtPool);
@@ -145,7 +147,7 @@ RadosStriperPool::~RadosStriperPool() {
 // RadosStriperPool::disconnectAll
 //------------------------------------------------------------------------------
 void RadosStriperPool::disconnectAll() {
-  std::lock_guard<std::mutex> lock{m_mutex};
+  cta::threading::MutexLocker locker{m_mutex};
   for (auto v = m_stripers.begin(); v != m_stripers.end(); v++) {
     for (auto i = v->begin(); i != v->end(); i++) {
       delete i->second;

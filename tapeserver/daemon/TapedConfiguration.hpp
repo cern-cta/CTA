@@ -76,6 +76,11 @@ struct TapedConfiguration {
   SourcedParameter<FetchReportOrFlushLimits> retrieveFetchBytesFiles{
     "taped", "RetrieveFetchBytesFiles", {80L*1000*1000*1000, 500}, "Compile time default"};
   //----------------------------------------------------------------------------
+  // Scheduling limits
+  //----------------------------------------------------------------------------
+  SourcedParameter<FetchReportOrFlushLimits> mountCriteria{
+    "taped", "MountCriteria", {80L*1000*1000*1000, 500}, "Compile time default"};
+  //----------------------------------------------------------------------------
   // Disk file access parameters
   //----------------------------------------------------------------------------
   /// Number of disk threads. This is the number of parallel file transfers.

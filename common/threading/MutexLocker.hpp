@@ -21,10 +21,15 @@
 #include "common/exception/Exception.hpp"
 
 #include <pthread.h>
-#include <semaphore.h>
 
 namespace cta { 
 namespace threading {
+
+/**
+ * Forward declaration of the friend class representing a pthread condition
+ * variable.
+ */
+class CondVar;
 
 /**
  * A simple scoped locker for mutexes. Highly recommended as
@@ -79,6 +84,7 @@ public:
   }
 
 private:
+  friend CondVar;
 
   /**
    * The mutex owened by this MutexLocker.
