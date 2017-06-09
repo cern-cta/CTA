@@ -32,6 +32,7 @@
 
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
 
 namespace cta { namespace tape { namespace  daemon {
 
@@ -244,6 +245,9 @@ int GarbageCollectorHandler::runChild() {
   // and object store, and run the garbage collector.
   // We do not have to care for previous crashed sessions as we will garbage
   // collect them like any other crashed agent.
+  
+  // Set the thread name for process ID:
+  prctl(PR_SET_NAME, "cta-taped-gc");
   
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to

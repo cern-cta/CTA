@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <set>
+#include <sys/prctl.h>
 
 namespace cta { namespace tape { namespace  daemon {
 
@@ -842,6 +843,11 @@ int DriveHandler::runChild() {
   // down (and already failed to unmount on its own).
   // Otherwise, this session will run a regular data transfer session which will
   // schedule itself info an empty drive probe, archive, retrieve or label session.
+  
+  // Set the thread name for process ID:
+  std::string threadName = "cta-tpd-";
+  threadName+=m_configLine.unitName;
+  prctl(PR_SET_NAME, threadName.c_str());
   
   // Create the channel to talk back to the parent process.
   cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
