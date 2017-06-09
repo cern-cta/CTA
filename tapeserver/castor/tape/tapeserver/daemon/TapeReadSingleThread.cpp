@@ -156,12 +156,10 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs(){
     vrp = m_tasks.popGetSize();
   // If we just passed (down) the half full limit, ask for more
   // (the remaining value is after pop)
-  isLastTask = false;
   if(0 == vrp.remaining) {
     // This is a last call: if the task injector comes up empty on this
     // one, he'll call it the end.
     m_taskInjector->requestInjection(true);
-    isLastTask = true;
   } else if (vrp.remaining + 1 == m_maxFilesRequest/2) {
     // This is not a last call
     m_taskInjector->requestInjection(false);
@@ -322,11 +320,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // This can lead the the session being marked as corrupt, so we test
         // it in the while loop
         task->execute(*rs, m_logContext, m_watchdog,m_stats,timer);
-        if (m_useRAO && isLastTask) {
-          // After the execution of all recalls, the TapeReadSingleThread
-          // passes the access to the drive to the RecallTaskInjector
-          m_taskInjector->setPromise();
-        }
         // Transmit the statistics to the watchdog thread
         m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)

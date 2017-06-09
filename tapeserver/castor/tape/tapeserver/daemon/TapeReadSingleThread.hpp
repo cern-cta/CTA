@@ -152,7 +152,6 @@ private:
    * Access Order
    */
   bool m_useRAO;
-  bool isLastTask;
   /// Helper virtual function to access the watchdog from parent class
   virtual void countTapeLogError(const std::string & error) { 
     m_watchdog.addToErrorCount(error);

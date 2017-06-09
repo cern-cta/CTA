@@ -62,11 +62,6 @@ RecallTaskInjector::~RecallTaskInjector(){
 void RecallTaskInjector::finish(){
   cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request());
-  /* Since this is the ending request, the RecallTaskInjector does not need
-   * to wait to have access to the drive
-   */
-  if (m_useRAO)
-    setPromise();
 }
 //------------------------------------------------------------------------------
 //requestInjection
