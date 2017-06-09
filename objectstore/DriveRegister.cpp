@@ -23,7 +23,7 @@
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include <set>
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 #include <iostream>
 
 namespace cta { namespace objectstore {
@@ -49,54 +49,13 @@ DriveRegister::DriveRegister(GenericObject& go):
 // DriveRegister::dump())
 //------------------------------------------------------------------------------
 std::string DriveRegister::dump() {
-  // TODO: update following structure changes.
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "DriveRegister" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object * array = json_object_new_array();
-  for (auto i = m_payload.drives().begin(); i!=m_payload.drives().end(); i++) {
-    json_object * jot = json_object_new_object();
-    
-    json_object_object_add(jot, "drivename", json_object_new_string(i->drivename().c_str()));
-    json_object_object_add(jot, "logicallibrary", json_object_new_string(i->logicallibrary().c_str()));
-    json_object_object_add(jot, "sessionid", json_object_new_int64(i->sessionid()));
-    json_object_object_add(jot, "bytestransferedinsession", json_object_new_int64(i->bytestransferedinsession()));
-    json_object_object_add(jot, "filestransferedinsession", json_object_new_int64(i->filestransferedinsession()));
-    json_object_object_add(jot, "latestbandwidth", json_object_new_double(i->latestbandwidth()));
-    json_object_object_add(jot, "sessionstarttime", json_object_new_int64(i->sessionstarttime()));
-    json_object_object_add(jot, "mountstarttime", json_object_new_int64(i->mountstarttime()));
-    json_object_object_add(jot, "transferstarttime", json_object_new_int64(i->transferstarttime()));
-    json_object_object_add(jot, "unloadstarttime", json_object_new_int64(i->unloadstarttime()));
-    json_object_object_add(jot, "unmountstarttime", json_object_new_int64(i->unmountstarttime()));
-    json_object_object_add(jot, "drainingstarttime", json_object_new_int64(i->drainingstarttime()));
-    json_object_object_add(jot, "downorupstarttime", json_object_new_int64(i->downorupstarttime()));
-    json_object_object_add(jot, "cleanupstarttime", json_object_new_int64(i->cleanupstarttime()));
-    json_object_object_add(jot, "lastupdatetime", json_object_new_int64(i->lastupdatetime()));
-    json_object_object_add(jot, "currentvid", json_object_new_string(i->currentvid().c_str()));
-    json_object_object_add(jot, "currenttapepool", json_object_new_string(i->currenttapepool().c_str()));
-    
-// TODO: Creation log should be fully supported or dropped.
-//    json_object * creationlog_jot = json_object_new_object();
-//    json_object_object_add(creationlog_jot, "host", json_object_new_string(i->creationlog().host().c_str()));
-//    json_object_object_add(creationlog_jot, "time", json_object_new_int64(i->creationlog().time()));
-//    json_object_object_add(jot, "creationlog", creationlog_jot);
-    
-    json_object * mounttype_jot = json_object_new_object();
-    json_object_object_add(mounttype_jot, "type", json_object_new_int(i->mounttype()));
-    json_object_object_add(jot, "mounttype", mounttype_jot);
-    
-    json_object * drivestatus_jot = json_object_new_object();
-    json_object_object_add(drivestatus_jot, "status", json_object_new_int(i->drivestatus()));
-    json_object_object_add(jot, "drivestatus", drivestatus_jot);
-  
-    json_object_array_add(array, jot);
-  }
-  json_object_object_add(jo, "drives", array);
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 //------------------------------------------------------------------------------

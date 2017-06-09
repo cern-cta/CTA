@@ -23,7 +23,7 @@
 #include "DiskFileInfoSerDeser.hpp"
 #include "ArchiveFileSerDeser.hpp"
 #include "objectstore/cta.pb.h"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -225,59 +225,12 @@ cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
 
 std::string RetrieveRequest::dump() {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "RetrieveRequest" << std::endl;
-  struct json_object * jo = json_object_new_object();
-//  struct json_object * jaf = json_object_new_object();
-  // TODO: fill up again
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().fileid()));
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().creationtime()));
-//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumtype().c_str()));
-//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumvalue().c_str()));
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
-//  json_object_object_add(jo, "creationlog", jaf);
-//  json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
-//  // Object for creation log
-//  json_object * jcl = json_object_new_object();
-//  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
-//  json_object_object_add(jcl, "time", json_object_new_int64(m_payload.creationlog().time()));
-//  json_object_object_add(jcl, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
-//  json_object_object_add(jo, "creationlog", jcl);
-  // Array for jobs
-  json_object * jja = json_object_new_array();
-  auto & jl = m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    // Object for job
-    json_object * jj = json_object_new_object();
-    
-    // TODO: fix
-    //json_object_object_add(jj, "copynb", json_object_new_int(j->copynb()));
-    json_object_object_add(jj, "retrieswithinmount", json_object_new_int(j->retrieswithinmount()));
-    json_object_object_add(jj, "totalretries", json_object_new_int(j->totalretries()));
-    json_object_object_add(jj, "status", json_object_new_int64(j->status()));
-    //json_object_object_add(jj, "fseq", json_object_new_int64(j->fseq()));
-    //json_object_object_add(jj, "blockid", json_object_new_int64(j->blockid()));
-    //json_object_object_add(jj, "tape", json_object_new_string(j->tape().c_str()));
-    //json_object_object_add(jj, "tapeAddress", json_object_new_string(j->tapeaddress().c_str()));
-    json_object_array_add(jja, jj);
-  }
-  json_object_object_add(jo, "jobs", jja);
-  // Object for diskfileinfo
-//  json_object * jlog = json_object_new_object();
-  // TODO: fill up again
-//  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
-//  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
-//  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
-//  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
-//  json_object_object_add(jo, "diskfileinfo", jlog);
-//  // Object for requester
-//  json_object * jrf = json_object_new_object();
-//  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
-//  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
-//  json_object_object_add(jo, "requester", jrf);
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

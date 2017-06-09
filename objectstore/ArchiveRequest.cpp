@@ -23,7 +23,7 @@
 #include "MountPolicySerDeser.hpp"
 
 #include <algorithm>
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -465,57 +465,12 @@ bool ArchiveRequest::finishIfNecessary() {
 
 std::string ArchiveRequest::dump() {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "ArchiveRequest" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  json_object_object_add(jo, "checksumtype", json_object_new_string(m_payload.checksumtype().c_str()));
-  json_object_object_add(jo, "checksumvalue", json_object_new_string(m_payload.checksumvalue().c_str()));
-  json_object_object_add(jo, "diskfileid", json_object_new_string(m_payload.diskfileid().c_str()));
-  json_object_object_add(jo, "diskinstance", json_object_new_string(m_payload.diskinstance().c_str()));
-  json_object_object_add(jo, "archivereporturl", json_object_new_string(m_payload.archivereporturl().c_str()));
-  json_object_object_add(jo, "filesize", json_object_new_int64(m_payload.filesize()));
-  json_object_object_add(jo, "srcurl", json_object_new_string(m_payload.srcurl().c_str()));
-  json_object_object_add(jo, "storageclass", json_object_new_string(m_payload.storageclass().c_str()));
-  // Object for creation log
-  json_object * jaf = json_object_new_object();
-  json_object_object_add(jaf, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
-  json_object_object_add(jaf, "time", json_object_new_int64(m_payload.creationlog().time()));
-  json_object_object_add(jaf, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
-  json_object_object_add(jo, "creationlog", jaf);
-  // Array for jobs
-  json_object * jja = json_object_new_array();
-  auto & jl = m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    // Object for job
-    json_object * jj = json_object_new_object();
-    json_object_object_add(jj, "copynb", json_object_new_int64(j->copynb()));
-    json_object_object_add(jj, "lastmountwithfailure", json_object_new_int64(j->lastmountwithfailure()));
-    json_object_object_add(jj, "maxretrieswithinmount", json_object_new_int64(j->maxretrieswithinmount()));
-    json_object_object_add(jj, "maxtotalretries", json_object_new_int64(j->maxtotalretries()));
-    json_object_object_add(jj, "owner", json_object_new_string(j->owner().c_str()));
-    json_object_object_add(jj, "retrieswithinmount", json_object_new_int64(j->retrieswithinmount()));
-    json_object_object_add(jj, "status", json_object_new_int64(j->status()));
-    json_object_object_add(jj, "tapepool", json_object_new_string(j->tapepool().c_str()));
-    json_object_object_add(jj, "tapepoolAddress", json_object_new_string(j->archivequeueaddress().c_str()));
-    json_object_object_add(jj, "totalRetries", json_object_new_int64(j->totalretries()));
-    json_object_array_add(jja, jj);
-  }
-  json_object_object_add(jo, "jobs", jja);
-  // Object for diskfileinfo
-  json_object * jlog = json_object_new_object();
-  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
-  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
-  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
-  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
-  json_object_object_add(jo, "diskfileinfo", jlog);
-  // Object for requester
-  json_object * jrf = json_object_new_object();
-  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
-  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
-  json_object_object_add(jo, "requester", jrf);
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

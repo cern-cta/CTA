@@ -22,7 +22,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore { 
 
@@ -42,52 +42,12 @@ ArchiveQueue::ArchiveQueue(GenericObject& go):
 
 std::string ArchiveQueue::dump() {  
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "ArchiveQueue" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "name", json_object_new_string(m_payload.tapepool().c_str()));
-  json_object_object_add(jo, "ArchiveJobsTotalSize", json_object_new_int64(m_payload.archivejobstotalsize()));
-  json_object_object_add(jo, "oldestJobCreationTime", json_object_new_int64(m_payload.oldestjobcreationtime()));
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.pendingarchivejobs().begin(); i!=m_payload.pendingarchivejobs().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "pendingarchivejobs", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.orphanedarchivejobsnscreation().begin(); i!=m_payload.orphanedarchivejobsnscreation().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "orphanedarchivejobsnscreation", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.orphanedarchivejobsnsdeletion().begin(); i!=m_payload.orphanedarchivejobsnsdeletion().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "orphanedarchivejobsnsdeletion", array);
-  }
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 void ArchiveQueue::initialize(const std::string& name) {

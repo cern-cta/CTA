@@ -20,7 +20,7 @@
 #include "GenericObject.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "ValueCountMap.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 cta::objectstore::RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) { }
@@ -62,29 +62,12 @@ std::string cta::objectstore::RetrieveQueue::getVid() {
 
 std::string cta::objectstore::RetrieveQueue::dump() {  
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "TapePool" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "vid", json_object_new_string(m_payload.vid().c_str()));
-  json_object_object_add(jo, "retrievejobstotalsize", json_object_new_int64(m_payload.retrievejobstotalsize()));
-  json_object_object_add(jo, "oldestjobcreationtime", json_object_new_int64(m_payload.oldestjobcreationtime()));
-  
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.retrievejobs().begin(); i!=m_payload.retrievejobs().end(); i++) {
-      json_object * rjobs = json_object_new_object();
-      json_object_object_add(rjobs, "size", json_object_new_int64(i->size()));
-      json_object_object_add(rjobs, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(rjobs, "copynb", json_object_new_int(i->copynb()));
-      json_object_array_add(array, rjobs);
-    }
-    json_object_object_add(jo, "retrievejobs", array);
-  }
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,

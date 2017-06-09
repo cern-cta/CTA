@@ -27,7 +27,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -586,66 +586,14 @@ void RootEntry::removeSchedulerGlobalLockAndCommit() {
 
 
 // Dump the root entry
-std::string RootEntry::dump () {  
+std::string RootEntry::dump () {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "RootEntry" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "agentregisterintent", json_object_new_string(m_payload.agentregisterintent().c_str()));
-  
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.driveregisterpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "driveregisterpointer", pointer);
-  }
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.agentregisterpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "agentregisterpointer", pointer);
-  }
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.schedulerlockpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "schedulerlockpointer", pointer);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto & i :m_payload.archivequeuepointers()) {
-      json_object * jot = json_object_new_object();
-
-      json_object_object_add(jot, "name", json_object_new_string(i.name().c_str())); 
-      json_object_object_add(jot, "address", json_object_new_string(i.address().c_str()));  
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "archivequeuepointers", array);
-  }
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

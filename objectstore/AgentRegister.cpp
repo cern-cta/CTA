@@ -19,7 +19,7 @@
 #include "AgentRegister.hpp"
 #include "ProtocolBuffersAlgorithms.hpp"
 #include "GenericObject.hpp"
-#include <json-c/json_object.h>
+#include <google/protobuf/util/json_util.h>
 
 cta::objectstore::AgentRegister::AgentRegister(Backend & os):
 ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os) {}
@@ -113,21 +113,10 @@ std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
 
 std::string cta::objectstore::AgentRegister::dump() {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "AgentRegister" << std::endl;
-  struct json_object * jo;
-  jo = json_object_new_object();
-  json_object * jal = json_object_new_array();
-  for (int i=0; i<m_payload.agents_size(); i++) {
-    json_object_array_add(jal, json_object_new_string(m_payload.agents(i).c_str()));
-  }
-  json_object_object_add(jo, "agents", jal);
-  json_object * jual = json_object_new_array();
-  for (int i=0; i<m_payload.untrackedagents_size(); i++) {
-    json_object_array_add(jual, json_object_new_string(m_payload.untrackedagents(i).c_str()));
-  }
-  json_object_object_add(jo, "untrackedAgents", jual);
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }

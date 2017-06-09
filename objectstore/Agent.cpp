@@ -26,7 +26,7 @@
 #include <sstream>
 #include <ctime>
 #include <cxxabi.h>
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 cta::objectstore::Agent::Agent(GenericObject& go):
   ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
@@ -202,22 +202,12 @@ void cta::objectstore::Agent::setTimeout_us(uint64_t timeout) {
 
 std::string cta::objectstore::Agent::dump() {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "Agent" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  // Array for owned objects
-  json_object * joo = json_object_new_array();
-  auto & ool = m_payload.ownedobjects();
-  for (auto oo = ool.begin(); oo!=ool.end(); oo++) {
-    json_object_array_add(joo, json_object_new_string(oo->c_str()));
-  }
-  json_object_object_add(jo, "ownedObjects", joo);
-  json_object_object_add(jo, "description", json_object_new_string(m_payload.description().c_str()));
-  json_object_object_add(jo, "heartbeat", json_object_new_int64(m_payload.heartbeat()));
-  json_object_object_add(jo, "timeout_us", json_object_new_int64(m_payload.timeout_us()));
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 
