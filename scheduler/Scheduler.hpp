@@ -238,7 +238,7 @@ public:
     const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
 
   /*============== Actual mount scheduling ===================================*/
-  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
+  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
   
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);

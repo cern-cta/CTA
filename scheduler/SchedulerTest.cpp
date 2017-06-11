@@ -34,6 +34,10 @@
 #include "tests/TempFile.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#endif
 
 #include <exception>
 #include <gtest/gtest.h>
@@ -334,8 +338,11 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   auto &catalogue = getCatalogue();
   
   setupDefaultCatalogue();
-  
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("unitTest");
+#else
   log::DummyLogger dl("");
+#endif
   log::LogContext lc(dl);
   
   uint64_t archiveFileId;
@@ -409,7 +416,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
@@ -472,7 +479,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed
     // the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -495,7 +502,11 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   auto &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
   
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("unitTest");
+#else
   log::DummyLogger dl("");
+#endif
   log::LogContext lc(dl);
   
   uint64_t archiveFileId;
@@ -549,7 +560,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   {
     // Emulate a tape server by asking for a mount and then a file
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0").release());
+    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;

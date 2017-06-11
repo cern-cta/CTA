@@ -400,6 +400,7 @@ public:
     std::string driveName;
     cta::common::dataStructures::MountType type;
     std::string tapePool;
+    std::string vid;
   };
   
   /**
@@ -419,7 +420,7 @@ public:
   class TapeMountDecisionInfo {
   public:
     std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
-    std::vector<ExistingMount> existingMounts; /**< Existing mounts */
+    std::vector<ExistingMount> existingOrNextMounts; /**< Existing mounts */
     std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
     /**
      * Create a new archive mount. This implicitly releases the global scheduling

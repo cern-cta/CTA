@@ -145,7 +145,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
     }
   }
-  // Collect information about the existing mounts
+  // Collect information about the existing and next mounts
+  // If a next mount exists it "counts double", but the corresponding drive
+  // is either about to mount, or about to replace its current mount.
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
   objectstore::ScopedSharedLock drl(dr);
   dr.fetch();
@@ -158,12 +160,22 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
     (int)cta::common::dataStructures::DriveStatus::Unloading,
     (int)cta::common::dataStructures::DriveStatus::Unmounting,
     (int)cta::common::dataStructures::DriveStatus::DrainingToDisk };
+  std::set<int> activeMountTypes = {
+    (int)cta::common::dataStructures::MountType::Archive,
+    (int)cta::common::dataStructures::MountType::Retrieve,
+    (int)cta::common::dataStructures::MountType::Label };
   for (auto d=dl.begin(); d!= dl.end(); d++) {
     if (activeDriveStatuses.count((int)d->driveStatus)) {
-      tmdi.existingMounts.push_back(ExistingMount());
-      tmdi.existingMounts.back().type = d->mountType;
-      tmdi.existingMounts.back().tapePool = d->currentTapePool;
-      tmdi.existingMounts.back().driveName = d->driveName;
+      tmdi.existingOrNextMounts.push_back(ExistingMount());
+      tmdi.existingOrNextMounts.back().type = d->mountType;
+      tmdi.existingOrNextMounts.back().tapePool = d->currentTapePool;
+      tmdi.existingOrNextMounts.back().driveName = d->driveName;
+    }
+    if (activeMountTypes.count((int)d->nextMountType)) {
+      tmdi.existingOrNextMounts.push_back(ExistingMount());
+      tmdi.existingOrNextMounts.back().type = d->nextMountType;
+      tmdi.existingOrNextMounts.back().tapePool = d->nextTapepool;
+      tmdi.existingOrNextMounts.back().driveName = d->driveName;
     }
   }
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));

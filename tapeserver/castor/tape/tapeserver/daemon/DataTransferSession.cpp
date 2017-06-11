@@ -129,7 +129,7 @@ schedule:
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
-    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName).release());
+    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc).release());
   } catch (cta::exception::Exception & e) {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());

@@ -127,7 +127,7 @@ void Scheduler::queueRetrieve(
   using utils::postEllipsis;
   using utils::midEllipsis;
   utils::Timer t;
-  // Get the 
+  // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
   // Get the statuses of the tapes on which we have files.
@@ -421,7 +421,7 @@ std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const co
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName) {
+std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc) {
   // In order to decide the next mount to do, we have to take a global lock on 
   // the scheduling, retrieve a list of all running mounts, queues sizes for 
   // tapes and tape pools, order the candidates by priority
@@ -470,13 +470,21 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // with the per tape pool existing mount statistics.
   typedef std::pair<std::string, common::dataStructures::MountType> tpType;
   std::map<tpType, uint32_t> existingMountsSummary;
-  for (auto & em: mountInfo->existingMounts) {
+  std::set<std::string> tapesInUse;
+  for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
       try {
         existingMountsSummary.at(tpType(em.tapePool, em.type))++;
       } catch (std::out_of_range &) {
         existingMountsSummary[tpType(em.tapePool, em.type)] = 1;
+      }
+      if (em.vid.size()) {
+        tapesInUse.insert(em.vid);
+        log::ScopedParamContainer params(lc);
+        params.add("vid", em.vid)
+              .add("mountType", common::dataStructures::toString(em.type));
+        lc.log(log::DEBUG,"In Scheduler::getNextMount(): tapeAlreadyInUse found.");
       }
     }
   }
@@ -501,6 +509,17 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", m->tapePool)
+            .add("mountType", common::dataStructures::toString(m->type))
+            .add("existingMounts", existingMounts)
+            .add("bytesQueued", m->bytesQueued)
+            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("filesQueued", m->filesQueued)
+            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("minArchiveRequestAge", m->minArchiveRequestAge);
+      lc.log(log::DEBUG, "Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
@@ -523,17 +542,17 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::Archive; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
   }
-       
-  auto fullTapeList=m_catalogue.getTapes(catalogue::TapeSearchCriteria());
-  for (auto & ftle: fullTapeList) {
-    ftle.capacityInBytes++;
-  }
         
-  for (auto & t:tapeList) {
-    auto const & tc=t;
-    uint64_t cap = tc.capacityInBytes+1;
-    cap++;
-  }  
+  // Remove from the tape list the ones already or soon to be mounted
+  auto t=tapeList.begin();
+  while (t!=tapeList.end()) {
+    if (tapesInUse.count(t->vid)) {
+      t=tapeList.erase(t);
+    } else {
+      t++;
+    }
+  }
+
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
@@ -557,40 +576,77 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
                 time(NULL)).release());
             internalRet->m_sessionRunning = true;
             internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
+            log::ScopedParamContainer params(lc);
+            uint32_t existingMounts = 0;
+            try {
+              existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+            } catch (...) {}
+            params.add("tapepool", m->tapePool)
+                  .add("vid", t.vid)
+                  .add("mountType", common::dataStructures::toString(m->type))
+                  .add("existingMounts", existingMounts)
+                  .add("bytesQueued", m->bytesQueued)
+                  .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+                  .add("filesQueued", m->filesQueued)
+                  .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+                  .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+                  .add("minArchiveRequestAge", m->minArchiveRequestAge);
+            lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (archive)");
             return std::unique_ptr<TapeMount> (internalRet.release());
-          } catch (exception::Exception & ex) {
+          } catch (cta::exception::Exception & ex) {
+            log::ScopedParamContainer params(lc);
+            params.add("Message", ex.getMessage());
+            lc.log(log::WARNING, "In Scheduler::getNextMount(): got an exception trying to schedule an archive mount. Trying others.");
             continue;
           }
         }
       }
     } else if (m->type==common::dataStructures::MountType::Retrieve) {
       // We know the tape we intend to mount. We have to validate the tape is 
-      // actually available to read, and pass on it if no.
-      auto drives = m_db.getDriveStates();
-      if (!std::count_if(drives.cbegin(), drives.cend(), [&](decltype(*drives.cbegin()) & d){ return d.currentVid == m->vid; })) {
+      // actually available to read (not mounted or about to be mounted, and pass 
+      // on it if so).
+      if (tapesInUse.count(m->vid)) continue;
+      try {
+        // create the mount, and populate its DB side.
+        std::unique_ptr<RetrieveMount> internalRet (
+          new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
+            m->tapePool,
+            driveName,
+            logicalLibraryName, 
+            utils::getShortHostname(), 
+            time(NULL))));
+        internalRet->m_sessionRunning = true;
+        internalRet->m_diskRunning = true;
+        internalRet->m_tapeRunning = true;
+        internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
+        log::ScopedParamContainer params(lc);
+        uint32_t existingMounts = 0;
         try {
-          // create the mount, and populate its DB side.
-          std::unique_ptr<RetrieveMount> internalRet (
-            new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
-              m->tapePool,
-              driveName,
-              logicalLibraryName, 
-              utils::getShortHostname(), 
-              time(NULL))));
-          internalRet->m_sessionRunning = true;
-          internalRet->m_diskRunning = true;
-          internalRet->m_tapeRunning = true;
-          internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
-          return std::unique_ptr<TapeMount> (internalRet.release()); 
-        } catch (exception::Exception & ex) {
-          std::string debug=ex.getMessageValue();
-          continue;
-        }
+          existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+        } catch (...) {}
+        params.add("tapepool", m->tapePool)
+              .add("vid", m->vid)
+              .add("mountType", common::dataStructures::toString(m->type))
+              .add("existingMounts", existingMounts)
+              .add("bytesQueued", m->bytesQueued)
+              .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+              .add("filesQueued", m->filesQueued)
+              .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+              .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+              .add("minArchiveRequestAge", m->minArchiveRequestAge);
+        lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
+        return std::unique_ptr<TapeMount> (internalRet.release()); 
+      } catch (exception::Exception & ex) {
+        log::ScopedParamContainer params(lc);
+        params.add("Message", ex.getMessage());
+        lc.log(log::WARNING, "In Scheduler::getNextMount(): got an exception trying to schedule a retrieve mount. Trying others.");
+        continue;
       }
     } else {
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
+  lc.log(log::DEBUG, "In Scheduler::getNextMount(): No valid mount found.");
   return std::unique_ptr<TapeMount>();
 }
 
