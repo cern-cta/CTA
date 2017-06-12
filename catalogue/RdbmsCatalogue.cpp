@@ -171,7 +171,9 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ADMIN_USER";
+        "ADMIN_USER "
+      "ORDER BY "
+        "ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -353,7 +355,9 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ADMIN_HOST";
+        "ADMIN_HOST "
+      "ORDER BY "
+        "ADMIN_HOST_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -555,7 +559,9 @@ std::list<common::dataStructures::StorageClass>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "STORAGE_CLASS";
+        "STORAGE_CLASS "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -951,7 +957,9 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE_POOL";
+        "TAPE_POOL "
+      "ORDER BY "
+        "TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -1224,7 +1232,9 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ARCHIVE_ROUTE";
+        "ARCHIVE_ROUTE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -1460,7 +1470,9 @@ std::list<common::dataStructures::LogicalLibrary>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "LOGICAL_LIBRARY";
+        "LOGICAL_LIBRARY "
+      "ORDER BY "
+        "LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -1719,7 +1731,9 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledCo
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "ORDER BY "
+        "VID";
 
     if(searchCriteria.vid||
        searchCriteria.logicalLibrary||
@@ -2663,7 +2677,9 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "REQUESTER_MOUNT_RULE";
+        "REQUESTER_MOUNT_RULE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -2888,7 +2904,9 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "REQUESTER_GROUP_MOUNT_RULE";
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, REQUESTER_GROUP_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -3139,7 +3157,9 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "MOUNT_POLICY";
+        "MOUNT_POLICY "
+      "ORDER BY "
+        "MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
