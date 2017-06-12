@@ -1731,9 +1731,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledCo
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE "
-      "ORDER BY "
-        "VID";
+        "TAPE";
 
     if(searchCriteria.vid||
        searchCriteria.logicalLibrary||
@@ -1780,6 +1778,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledCo
       if(addedAWhereConstraint) sql += " AND ";
       sql += " LBP_IS_ON = :LBP_IS_ON";
     }
+
+    sql += " ORDER BY VID";
 
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
 
