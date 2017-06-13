@@ -85,6 +85,13 @@ public:
       return "Failed to get scheduler";
     }
   };
+  
+  class FailedToGetSchedulerDB: public std::exception {
+  public:
+    const char *what() const throw() {
+      return "Failed to get object store db.";
+    }
+  };
 
   virtual void SetUp() {
     using namespace cta;
@@ -115,6 +122,14 @@ public:
     cta::Scheduler *const ptr = m_scheduler.get();
     if(NULL == ptr) {
       throw FailedToGetScheduler();
+    }
+    return *ptr;
+  }
+  
+  cta::SchedulerDatabase &getSchedulerDB() {
+    cta::SchedulerDatabase *const ptr = m_db.get();
+    if(NULL == ptr) {
+      throw FailedToGetSchedulerDB();
     }
     return *ptr;
   }
@@ -419,6 +434,11 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
+    auto & osdb=getSchedulerDB();
+    auto mi=osdb.getMountInfo();
+    ASSERT_EQ(1, mi->existingOrNextMounts.size());
+    ASSERT_EQ("TestTapePool", mi->existingOrNextMounts.front().tapePool);
+    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
@@ -614,7 +634,6 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     ASSERT_THROW(scheduler.queueRetrieve("disk_instance", request, lc), cta::exception::Exception);
   }
 }
-
 
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB

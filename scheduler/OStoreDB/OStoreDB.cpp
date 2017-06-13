@@ -170,12 +170,14 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.existingOrNextMounts.back().type = d->mountType;
       tmdi.existingOrNextMounts.back().tapePool = d->currentTapePool;
       tmdi.existingOrNextMounts.back().driveName = d->driveName;
+      tmdi.existingOrNextMounts.back().vid = d->currentVid;
     }
     if (activeMountTypes.count((int)d->nextMountType)) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
       tmdi.existingOrNextMounts.back().type = d->nextMountType;
       tmdi.existingOrNextMounts.back().tapePool = d->nextTapepool;
       tmdi.existingOrNextMounts.back().driveName = d->driveName;
+      tmdi.existingOrNextMounts.back().vid = d->nextVid;
     }
   }
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
