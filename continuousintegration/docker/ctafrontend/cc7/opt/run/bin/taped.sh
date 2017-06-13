@@ -39,9 +39,9 @@ echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
   echo "TapeServer EOSRemoteHostAndPort ${eoshost}" >>/etc/castor/castor.conf
 
 # cta-taped setup
-  echo "taped BufferCount 10" > /etc/cta/cta.conf
-  echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta.conf 
-  echo "general ObjectStoreURL $OBJECTSTOREURL" >> /etc/cta/cta.conf
+  echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
+  echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta-taped.conf 
+  echo "general ObjectStoreURL $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 
 
@@ -56,7 +56,7 @@ chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-export CTA_TAPED_OPTIONS="-fl /cta-taped.log"
+export CTA_TAPED_OPTIONS="--foreground --config /etc/cta/cta-taped.conf -l /var/log/cta/cta-taped.log"
 
 export XrdSecPROTOCOL=sss
 
@@ -67,7 +67,7 @@ EOF
 . /etc/sysconfig/cta-taped
 
 
-tail -F /cta-taped.log &
+tail -F /var/log/cta/cta-taped.log &
 
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from

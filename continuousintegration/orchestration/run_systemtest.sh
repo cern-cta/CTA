@@ -84,7 +84,9 @@ function execute_log {
   if [ "${execute_log_rc}" != "0" ]; then
     echo "FAILURE: cleaning up environment"
     cd ${orchestration_dir}
-    ./delete_instance.sh -n ${namespace}
+    if [ $keepnamespace == 0 ] ; then
+      ./delete_instance.sh -n ${namespace}
+    fi
     exit 1
   fi
 }
