@@ -46,10 +46,18 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
 // Destructor
 //------------------------------------------------------------------------------
 BackendPopulator::~BackendPopulator() throw() {
-  Agent agent(m_agentReference.getAgentAddress(), m_backend);
-  cta::objectstore::ScopedExclusiveLock agl(agent);
-  agent.fetch();
-  agent.removeAndUnregisterSelf();
+  try {
+    Agent agent(m_agentReference.getAgentAddress(), m_backend);
+    cta::objectstore::ScopedExclusiveLock agl(agent);
+    agent.fetch();
+    agent.removeAndUnregisterSelf();
+  } catch (cta::exception::Exception & ex) {
+    // We have an exception (we should not), let's core dump.
+    *((int*)nullptr)=0;
+  } catch (std::exception & ex) {
+    // We have an exception (we should not), let's core dump.
+    *((int*)nullptr)=0;    
+  }
 }
 
 //------------------------------------------------------------------------------
