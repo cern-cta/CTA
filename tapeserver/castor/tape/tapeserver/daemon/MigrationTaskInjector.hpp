@@ -124,7 +124,7 @@ private:
    * Create all the tape-read and write-disk tasks for set of files to retrieve
    * @param jobs the list of FileToMigrateStructs we have to transform in a pair of task
    */
-  void injectBulkMigrations(const std::vector<cta::ArchiveJob *>& jobs);
+  void injectBulkMigrations(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs);
   
   /*Compute how many blocks are needed for a file of fileSize bytes*/
   size_t howManyBlocksNeeded(size_t fileSize,size_t blockCapacity){
