@@ -32,9 +32,9 @@ fi
 EOSINSTANCE=ctaeos
 
 tempdir=$(mktemp -d) # temporary directory for system test related config
-echo -n "Reading library configuration from tpsrv"
+echo -n "Reading library configuration from tpsrv01"
 SECONDS_PASSED=0
-while test 0 = $(kubectl --namespace ${NAMESPACE} exec tpsrv -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' | tee ${tempdir}/library-rc.sh | wc -l); do
+while test 0 = $(kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' | tee ${tempdir}/library-rc.sh | wc -l); do
   sleep 1
   echo -n .
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -169,7 +169,7 @@ echo "Preparing CTA for tests"
 
 # results
   echo
-  msgNum=`kubectl --namespace $NAMESPACE logs tpsrv -c taped | grep "\"File suc" | grep ${TEST_FILE_NAME} | tail -n 4|wc -l`
+  msgNum=`kubectl --namespace $NAMESPACE logs tpsrv01 -c taped | grep "\"File suc" | grep ${TEST_FILE_NAME} | tail -n 4|wc -l`
   if [ $msgNum == "4" ]; then
     echo "OK: all tests passed"
       rc=0

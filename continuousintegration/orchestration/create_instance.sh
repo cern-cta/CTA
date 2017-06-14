@@ -167,8 +167,11 @@ kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/lib
 
 echo "Got library: ${LIBRARY_DEVICE}"
 
-echo -n "Requesting an unused log volume"
+echo "Requesting an unused log volume"
 kubectl create -f ./pvc_logs.yaml --namespace=${instance}
+
+echo "Requesting an unused stg volume"
+kubectl create -f ./pvc_stg.yaml --namespace=${instance}
 
 echo "Creating services in instance"
 
@@ -194,7 +197,7 @@ echo OK
 
 echo "Launching pods"
 
-for podname in ctacli tpsrv ctaeos ctafrontend kdc; do
+for podname in ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
   kubectl create -f ${poddir}/pod-${podname}.yaml --namespace=${instance}
 done
 

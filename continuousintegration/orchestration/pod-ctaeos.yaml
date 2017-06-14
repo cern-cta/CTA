@@ -42,6 +42,8 @@ spec:
       name: shared
     - mountPath: /mnt/logs
       name: logstorage
+    - mountPath: /fst
+      name: stgstorage
     securityContext:
       privileged: true
 
@@ -52,3 +54,6 @@ spec:
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
+  - name: stgstorage
+    persistentVolumeClaim:
+      claimName: claimstg
