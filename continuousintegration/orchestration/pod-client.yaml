@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  labels:
+    k8s-app: client
+spec:
+  restartPolicy: Never
+  containers:
+  - name: client
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    stdin: true
+    env:
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: BUILDTREE_BASE
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: base
+    - name: BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: subdir
+    - name: TERM
+      value: "xterm"
+    command: ['/opt/run/bin/client.sh']
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /mnt/logs
+      name: logstorage
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs

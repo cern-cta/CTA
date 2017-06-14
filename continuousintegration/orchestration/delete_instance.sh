@@ -34,7 +34,7 @@ fi
 # indeed if the system test fails, artifacts are not collected for the build
 tmpdir=$(mktemp -d -t ${instance}_delete_XXXX)
 echo "Collecting stdout logs of pods to ${tmpdir}"
-for podcontainer in "init -c ctainit" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv01 -c taped" "tpsrv01 -c rmcd" "tpsrv02 -c taped" "tpsrv02 -c rmcd"; do
+for podcontainer in "init -c ctainit" "client -c client" "ctacli -c ctacli" "ctaeos -c mgm" "ctafrontend -c ctafrontend" "kdc -c kdc" "tpsrv01 -c taped" "tpsrv01 -c rmcd" "tpsrv02 -c taped" "tpsrv02 -c rmcd"; do
   kubectl --namespace ${instance} logs ${podcontainer} > ${tmpdir}/$(echo ${podcontainer} | sed -e 's/ -c /-/').log
 done
 kubectl --namespace ${instance} exec ctacli -- tar -C /mnt/logs -zcf - . > ${tmpdir}/varlog.tgz

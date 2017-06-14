@@ -19,11 +19,11 @@ sec.protocol sss -c /etc/eos.keytab -s /etc/eos.keytab
 # KRB  authentication
 #sec.protocol krb5 -exptkn:/var/eos/auth/krb5#<uid> host/<host>@CERN.CH
 #sec.protocol krb5 host/<host>@CERN.CH
-
+sec.protocol krb5 /etc/eos.krb5.keytab eos/eos-server@TEST.CTA
 
 sec.protbind localhost.localdomain unix sss
 sec.protbind localhost unix sss
-sec.protbind * only sss unix
+sec.protbind * only sss unix krb5
 ###########################################################
 mgmofs.fs /
 mgmofs.targetport 1095
