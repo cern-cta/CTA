@@ -76,6 +76,7 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 
+  eos vid enable krb5
   eos vid enable sss
   eos vid enable unix
   EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
