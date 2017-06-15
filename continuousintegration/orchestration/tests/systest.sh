@@ -137,7 +137,7 @@ echo "Preparing CTA for tests"
     kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
   echo
   echo "Removing disk replica"
-    kubectl --namespace ${NAMESPACE} exec ctaeos -- eos file tag /eos/ctaeos/cta/${TEST_FILE_NAME} -1
+    kubectl --namespace ${NAMESPACE} exec ctaeos -- eos -r 0 0 file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
   echo
   echo "Information about the testing file without disk replica"
     kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
