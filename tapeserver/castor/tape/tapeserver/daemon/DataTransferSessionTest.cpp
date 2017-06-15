@@ -37,6 +37,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include "common/make_unique.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "common/threading/Thread.hpp"
@@ -1277,6 +1278,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castorConf.nbBufs = 10;
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   cta::log::DummyLogger dummyLog("dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
@@ -1417,6 +1420,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.nbBufs = 10;
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   cta::log::DummyLogger dummyLog("dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
@@ -1551,6 +1556,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castorConf.nbBufs = 10;
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   cta::log::DummyLogger dummyLog("dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
@@ -1699,6 +1706,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.nbBufs = 10;
   castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   cta::log::DummyLogger dummyLog("dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);

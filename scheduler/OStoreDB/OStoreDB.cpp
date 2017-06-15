@@ -1705,7 +1705,8 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::getNextJobBatch()
 //------------------------------------------------------------------------------
-std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
+std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
+    uint64_t bytesRequested, log::LogContext& logContext) {
   // Find the next files to archive
   // Get the archive queue
   objectstore::RootEntry re(m_objectStore);
@@ -1776,7 +1777,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_objectStore, m_agentReference, *this));
         candidateJobs.back()->tapeFile.copyNb = job.copyNb;
       }
-      // We now have a patch of jobs to try and dequeue. Should not be empty.
+      // We now have a batch of jobs to try and dequeue. Should not be empty.
       // First add the jobs to the owned list of the agent.
       std::list<std::string> addedJobs;
       for (const auto &j: candidateJobs) addedJobs.emplace_back(j->m_archiveRequest.getAddressIfSet());
@@ -1797,11 +1798,24 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         // Get the processing status of update
         try {
           (*ju)->wait();
+          // Getting here means the update went through... We can proceed with removing the 
+          // job from the queue, and populating the job to report in memory.
           jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
+          (*j)->archiveFile = (*ju)->getArchiveFile();
+          (*j)->srcURL = (*ju)->getSrcURL();
+          (*j)->archiveReportURL = (*ju)->getArchiveReportURL();
+          (*j)->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+          (*j)->tapeFile.vid = mountInfo.vid;
+          (*j)->tapeFile.blockId =
+              std::numeric_limits<decltype((*j)->tapeFile.blockId)>::max();
+          (*j)->m_jobOwned = true;
+          (*j)->m_mountId = mountInfo.mountId;
+          (*j)->m_tapePool = mountInfo.tapePool;
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
-                .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
+                .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet())
+                .add("fileId", (*j)->archiveFile.archiveFileID);
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): popped one job");
           validatedJobs.emplace_back(std::move(*j));
           jobsInThisRound++;
@@ -1882,10 +1896,9 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       }
     }
     // Log the outcome.
-    uint64_t nFiles=0;
+    uint64_t nFiles=privateRet.size();
     uint64_t nBytes=0;
     for (auto & j: privateRet) {
-      nFiles++;
       nBytes+=j->archiveFile.fileSize;
     }
     {

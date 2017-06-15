@@ -399,8 +399,10 @@ void ArchiveRequest::setJobOwner(
 ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16_t copyNumber,
   const std::string& owner, const std::string& previousOwner) {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
   ret->m_updaterCallback=
-      [this, copyNumber, owner, previousOwner](const std::string &in)->std::string {
+      [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         serializers::ObjectHeader oh;
         oh.ParseFromString(in);
@@ -419,6 +421,25 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
               throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
             }
             j->set_owner(owner);
+            // We also need to gather all the job content for the user to get in-memory
+            // representation.
+            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
+            // We could try and refactor this.
+            retRef.m_archiveFile.archiveFileID = payload.archivefileid();
+            retRef.m_archiveFile.checksumType = payload.checksumtype();
+            retRef.m_archiveFile.checksumValue = payload.checksumvalue();
+            retRef.m_archiveFile.creationTime = payload.creationtime();
+            retRef.m_archiveFile.diskFileId = payload.diskfileid();
+            retRef.m_archiveFile.diskFileInfo.group = payload.diskfileinfo().group();
+            retRef.m_archiveFile.diskFileInfo.owner = payload.diskfileinfo().owner();
+            retRef.m_archiveFile.diskFileInfo.path = payload.diskfileinfo().path();
+            retRef.m_archiveFile.diskFileInfo.recoveryBlob = payload.diskfileinfo().recoveryblob();
+            retRef.m_archiveFile.diskInstance = payload.diskinstance();
+            retRef.m_archiveFile.fileSize = payload.filesize();
+            retRef.m_archiveFile.reconciliationTime = payload.reconcilationtime();
+            retRef.m_archiveFile.storageClass = payload.storageclass();
+            retRef.m_archiveReportURL = payload.archivereporturl();
+            retRef.m_srcURL = payload.srcurl();
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
           }
@@ -434,6 +455,17 @@ void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
   m_backendUpdater->wait();
 }
 
+const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
+  return m_archiveFile;
+}
+
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
+  return m_archiveReportURL;
+}
+
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
+  return m_srcURL;
+}
 
 std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   checkPayloadReadable();

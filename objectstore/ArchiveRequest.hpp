@@ -67,9 +67,15 @@ public:
     friend class ArchiveRequest;
   public:
     void wait();
+    const common::dataStructures::ArchiveFile & getArchiveFile();
+    const std::string & getSrcURL();
+    const std::string & getArchiveReportURL();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    common::dataStructures::ArchiveFile m_archiveFile;
+    std::string m_srcURL;
+    std::string m_archiveReportURL;
   };
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
