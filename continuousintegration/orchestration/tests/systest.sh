@@ -104,6 +104,11 @@ echo "Preparing CTA for tests"
      --instance ${EOSINSTANCE}                                        \
      --name adm                                                       \
      --mountpolicy ctasystest --comment "ctasystest"
+  # group mount rule for ctausers group members: user1 and user2 as defined on the ctaeos mgm
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta groupmountrule add \
+     --instance ${EOSINSTANCE}                                        \
+     --name ctausers                                                  \
+     --mountpolicy ctasystest --comment "ctasystest"
 
   kubectl --namespace ${NAMESPACE} exec ctacli --  cta drive up ${DRIVENAMES[${driveslot}]}
 
