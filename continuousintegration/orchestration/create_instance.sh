@@ -241,14 +241,20 @@ kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/admin1.keytab adm
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
 # create users on the mgm
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1001 ctausers
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1002 ctaadmins
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 10000 --gid 1001 user1
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 11000 --gid 1002 admin1
+kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1100 users
+kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1200 powerusers
+kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1300 ctaadmins
+kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1400 eosadmins
+kubectl --namespace=${instance} exec ctaeos -- useradd --uid 11001 --gid 1100 user1
+kubectl --namespace=${instance} exec ctaeos -- useradd --uid 12001 --gid 1200 poweruser1
+kubectl --namespace=${instance} exec ctaeos -- useradd --uid 13001 --gid 1300 ctaadmin1
+kubectl --namespace=${instance} exec ctaeos -- useradd --uid 14001 --gid 1400 eosadmin1
 
 
 # use krb5 and then unix fod xrootd protocol on the client pod for eos, xrdcp and cta everything should be fine!
-echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=toto exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
+echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
+# May be needed for the client to make sure that SSS is not used by default but krb5...
+#echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 echo OK
 
 echo "klist for client:"
@@ -277,6 +283,13 @@ for ((i=0; i<300; i++)); do
 done
 kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" || die "TIMED OUT"
 echo OK
+
+
+echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
+kubectl --namespace=${instance} exec eos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+kubectl --namespace=${instance} exec eos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+echo OK
+
 
 echo "Instance ${instance} successfully created:"
 kubectl get pods -a --namespace=${instance}
