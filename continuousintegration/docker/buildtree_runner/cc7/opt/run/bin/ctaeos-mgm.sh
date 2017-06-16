@@ -114,7 +114,7 @@ eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=${CTA_Xr
 eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}
 
 # Set the worfklow rule for retrieving file from tape.
-eos attr set sys.workflow.prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} retrieve --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --id <eos::wfe::fxattr:sys.archiveFileId> --dsturl '<eos::wfe::turl>\&eos.injection=1\&eos.workflow=CTA_retrieve' --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --stderr" ${CTA_WF_DIR}
+eos attr set sys.workflow.prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} retrieve --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --id <eos::wfe::fxattr:sys.archiveFileId> --dsturl '<eos::wfe::turl>\&eos.ruid=0\&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve' --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --stderr" ${CTA_WF_DIR}
 
 # Set the workflow rule for the closew event of the CTA_retrieve workflow.
 # Using the CTA_retrieve workflow will prevent the default workflow from
