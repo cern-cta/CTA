@@ -216,7 +216,7 @@ Using this configuration for library:
 Preparing CTA for tests
 Drive VDSTK61 set UP.
 EOS server version is used:
-eos-server-4.1.11-20170118171644git24cd94a.el7.x86_64
+eos-server-4.1.24-20170616132055git722df4d.el7.x86_64
 xrdcp /etc/group root://localhost//eos/ctaeos/cta/4ff9d278-4c92-427a-b72b-a28cefddffcd
 [420B/420B][100%][==================================================][420B/s]  
 Waiting for file to be archived to tape: Seconds passed = 0
