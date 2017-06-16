@@ -286,8 +286,8 @@ echo OK
 
 
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
-kubectl --namespace=${instance} exec eos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
-kubectl --namespace=${instance} exec eos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 echo OK
 
 
