@@ -241,7 +241,7 @@ kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/admin1.keytab adm
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
 # create users on the mgm
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1100 users
+kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1100 eosusers
 kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1200 powerusers
 kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1300 ctaadmins
 kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1400 eosadmins
