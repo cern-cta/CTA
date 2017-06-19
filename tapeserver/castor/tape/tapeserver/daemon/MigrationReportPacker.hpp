@@ -54,59 +54,68 @@ public:
    * @param blockId The tape logical object ID of the first block of the header
    * of the file. This is 0 (instead of 1) for the first file on the tape (aka
    * fseq = 1).
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob);
+  virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
    * of migratedFile
    * @param migratedFile the file which failled 
-   * @param ex the reason for the failure 
+   * @param ex the reason for the failure
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex);
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex, cta::log::LogContext & lc);
      
    /**
     * Create into the MigrationReportPacker a report for the signaling a flusing on tape
     * @param compressStats 
-    * 
+    * @param lc log context provided by the calling thread.
+    *
     */
-  virtual void reportFlush(drive::compressionStats compressStats);
+  virtual void reportFlush(drive::compressionStats compressStats, cta::log::LogContext & lc);
   
   /**
    * Create into the MigrationReportPacker a report of reaching the end of the tape.
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportTapeFull();
+  virtual void reportTapeFull(cta::log::LogContext & lc);
   
   /**
    * Report the drive state and set it in the central drive register. This
    * function is to be used by the tape thread when running.
    * @param state the new drive state.
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status);
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::log::LogContext & lc);
   
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportEndOfSession();
+  virtual void reportEndOfSession(cta::log::LogContext & lc);
   
   /**
    * Function for testing purposes. It is used to tell the report packer that this is the last report
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportTestGoingToEnd();
+  virtual void reportTestGoingToEnd(cta::log::LogContext & lc);
   
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
    * @param msg The error message 
    * @param error_code The error code given by the drive
+   * @param lc log context provided by the calling thread.
    */
-  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code);
+  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code, cta::log::LogContext & lc);
 
   /**
    * Immediately report the end of session to the client.
    * @param msg The error message 
    * @param error_code The error code given by the drive
+   * @param lc log context provided by the calling thread.
    */
-  virtual void synchronousReportEndWithErrors(const std::string msg,int error_code);
+  virtual void synchronousReportEndWithErrors(const std::string msg,int error_code, cta::log::LogContext & lc);
   
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
@@ -125,19 +134,21 @@ private:
   public:
     ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob): 
     m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
-    virtual void execute(MigrationReportPacker& reportPacker);
+    void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportTestGoingToEnd :  public Report {
   public:
     ReportTestGoingToEnd() {}
-    virtual void execute(MigrationReportPacker& reportPacker) {reportPacker.m_continue=false;reportPacker.m_archiveMount->complete();}
+    virtual void execute(MigrationReportPacker& reportPacker) override {
+      reportPacker.m_continue=false;reportPacker.m_archiveMount->complete();
+    }
   };
   
   class ReportDriveStatus : public Report {
     cta::common::dataStructures::DriveStatus m_status;
   public:
     ReportDriveStatus(cta::common::dataStructures::DriveStatus status): m_status(status) {}
-    virtual void execute(MigrationReportPacker& reportPacker);
+    void execute(MigrationReportPacker& reportPacker) override;
   };
   
   class ReportFlush : public Report {
@@ -151,12 +162,12 @@ private:
      *  */
       ReportFlush(drive::compressionStats compressStats):m_compressStats(compressStats){}
       
-      void execute(MigrationReportPacker& reportPacker);
+      void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportTapeFull: public Report {
     public:
       ReportTapeFull() {}
-      void execute(MigrationReportPacker& reportPacker);
+      void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportError : public Report {
     const cta::exception::Exception m_ex;
@@ -169,11 +180,11 @@ private:
     ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception &ex):
     m_ex(ex), m_failedArchiveJob(std::move(failedArchiveJob)){}
     
-    virtual void execute(MigrationReportPacker& reportPacker);
+    void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportEndofSession : public Report {
   public:
-    virtual void execute(MigrationReportPacker& reportPacker);
+    virtual void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
@@ -182,7 +193,7 @@ private:
     ReportEndofSessionWithErrors(std::string msg,int errorCode):
     m_message(msg),m_errorCode(errorCode){}
     
-    virtual void execute(MigrationReportPacker& reportPacker);
+    void execute(MigrationReportPacker& reportPacker) override;
   };
   
   class WorkerThread: public cta::threading::Thread {

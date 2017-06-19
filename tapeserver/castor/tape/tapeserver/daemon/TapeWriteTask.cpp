@@ -135,7 +135,7 @@ namespace daemon {
       }
       m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
       m_archiveJob->tapeFile.blockId = output->getBlockId();
-      reportPacker.reportCompletedJob(std::move(m_archiveJob));
+      reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
       m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
@@ -173,7 +173,7 @@ namespace daemon {
         }
         // This is indeed the end of the tape. Not an error.
         watchdog.setErrorCount("Info_tapeFilledUp",1);
-        reportPacker.reportTapeFull();
+        reportPacker.reportTapeFull(lc);
       } catch (...) {
         // The error is not an ENOSPC, so it is, indeed, an error.
         // If we got here with a new error, currentErrorToCount will be non-empty,
@@ -203,7 +203,7 @@ namespace daemon {
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();
-      reportPacker.reportFailedJob(std::move(m_archiveJob),e);
+      reportPacker.reportFailedJob(std::move(m_archiveJob),e, lc);
   
       //we throw again because we want TWST to stop all tasks from execution 
       //and go into a degraded mode operation.

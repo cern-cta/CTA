@@ -100,13 +100,13 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(job1));
-    mrp.reportCompletedJob(std::move(job2));
+    mrp.reportCompletedJob(std::move(job1), lc);
+    mrp.reportCompletedJob(std::move(job2), lc);
 
     const tapeserver::drive::compressionStats statsCompress;
-    mrp.reportFlush(statsCompress);
-    mrp.reportEndOfSession();
-    mrp.reportTestGoingToEnd();
+    mrp.reportFlush(statsCompress, lc);
+    mrp.reportEndOfSession(lc);
+    mrp.reportTestGoingToEnd(lc);
     mrp.waitThread(); //here
 
     std::string temp = log.getLog();
@@ -143,17 +143,17 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(job1));
-    mrp.reportCompletedJob(std::move(job2));
+    mrp.reportCompletedJob(std::move(job1), lc);
+    mrp.reportCompletedJob(std::move(job2), lc);
 
     const std::string error_msg = "ERROR_TEST_MSG";
     const cta::exception::Exception ex(error_msg);
-    mrp.reportFailedJob(std::move(job3),ex);
+    mrp.reportFailedJob(std::move(job3),ex, lc);
 
     const tapeserver::drive::compressionStats statsCompress;
-    mrp.reportFlush(statsCompress);
-    mrp.reportEndOfSession();
-    mrp.reportTestGoingToEnd();
+    mrp.reportFlush(statsCompress, lc);
+    mrp.reportEndOfSession(lc);
+    mrp.reportTestGoingToEnd(lc);
     mrp.waitThread();
 
     std::string temp = log.getLog();
@@ -197,14 +197,14 @@ namespace unitTests {
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
 
-    mrp.reportCompletedJob(std::move(migratedBigFile));
-    mrp.reportCompletedJob(std::move(migratedFileSmall));
-    mrp.reportCompletedJob(std::move(migratedNullFile));
+    mrp.reportCompletedJob(std::move(migratedBigFile), lc);
+    mrp.reportCompletedJob(std::move(migratedFileSmall), lc);
+    mrp.reportCompletedJob(std::move(migratedNullFile), lc);
     tapeserver::drive::compressionStats stats;
     stats.toTape=(100000+1)/3;
-    mrp.reportFlush(stats);
-    mrp.reportEndOfSession();
-    mrp.reportTestGoingToEnd();
+    mrp.reportFlush(stats, lc);
+    mrp.reportEndOfSession(lc);
+    mrp.reportTestGoingToEnd(lc);
     mrp.waitThread();
 
     std::string temp = log.getLog();

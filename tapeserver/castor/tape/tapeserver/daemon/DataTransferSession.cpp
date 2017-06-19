@@ -337,11 +337,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       } catch (cta::exception::Exception & e) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", e.getMessage().str()));
         lc.log(cta::log::INFO, "Aborting the session after problem with mount details. Notifying the client.");
-        mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666);
+        mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666, lc);
         return MARK_DRIVE_AS_UP;
       } catch (...) {
         lc.log(cta::log::INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
-        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666);
+        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666, lc);
         return MARK_DRIVE_AS_UP;
       }
 
