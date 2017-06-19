@@ -1836,11 +1836,19 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
             // This is not a success, yet we could not confirm the job status due to an unexpected error.
             // We leave the queue as is. We forget about owning this job. This is an error.
             log::ScopedParamContainer params(logContext);
+            int demangleStatus;
+            char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
             params.add("tapepool", mountInfo.tapePool)
                   .add("queueObject", aq.getAddressIfSet())
-                  .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet())
-                  .add("exceptionType", typeid(e).name())
-                  .add("message", e.getMessageValue());
+                  .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
+            if (!demangleStatus) {
+              params.add("exceptionType", exceptionTypeStr);
+            } else {
+              params.add("exceptionType", typeid(e).name());
+            }
+            free(exceptionTypeStr);
+            exceptionTypeStr = nullptr;
+            params.add("message", e.getMessageValue());
             logContext.log(log::ERR, "In ArchiveMount::getNextJobBatch(): unexpected error. Leaving the job queued.");
             jobsToForget.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
           }

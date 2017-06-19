@@ -294,17 +294,31 @@ m_parent(parent) {
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void MigrationReportPacker::WorkerThread::run(){
-  m_parent.m_lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
+  // Create our own log context for the new thread.
+  cta::log::LogContext lc = m_parent.m_lc;
+  lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
   try{
     while(m_parent.m_continue) {
       std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
+      {
+        cta::log::ScopedParamContainer params(lc);
+        int demangleStatus;
+        char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+        if (!demangleStatus) {
+          params.add("typeId", demangledReportType);
+        } else {
+          params.add("typeId", typeid(*rep.get()).name());
+        }
+        free(demangledReportType);
+        lc.log(cta::log::DEBUG,"In MigrationReportPacker::WorkerThread::run(): Got a new report.");
+      }
       try{
         rep->execute(m_parent);
       }
       catch(const failedMigrationRecallResult& e){
         //here we catch a failed report MigrationResult. We try to close and if that fails too
         //we end up in the catch below
-        m_parent.m_lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
+        lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
         if (m_parent.m_watchdog) {
           m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
           m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -315,9 +329,9 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(const cta::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMSG", e.getMessageValue());
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -325,9 +339,16 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(const std::exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more. The exception is the following: " << e.what();
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMSG", e.what());
+    int demangleStatus;
+    char * demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
+    if (!demangleStatus) {
+      params.add("exceptionType", demangleExceptionType);
+    } else {
+      params.add("exceptionType", typeid(e).name());
+    }
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -335,9 +356,7 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(...){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.";
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -348,6 +367,16 @@ void MigrationReportPacker::WorkerThread::run(){
   // TODO devise a more generic mechanism
   while(m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
+    cta::log::ScopedParamContainer params(lc);
+    int demangleStatus;
+    char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+    if (!demangleStatus) {
+      params.add("typeId", demangledReportType);
+    } else {
+      params.add("typeId", typeid(*rep.get()).name());
+    }
+    free(demangledReportType);
+    lc.log(cta::log::DEBUG,"In MigrationReportPacker::WorkerThread::run(): Draining leftover.");
   }
 }
 
