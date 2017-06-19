@@ -10,8 +10,9 @@ add_subdirectory (session)
 # from the previous one to create a single library).
 
 add_executable (cta-taped cta-taped.cpp)
+find_package(Protobuf3 REQUIRED)
 target_link_libraries(cta-taped
-  ctatapedaemon ctacommon protobuf)
+  ctatapedaemon ctacommon ${PROTOBUF3_LIBRARIES})
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES TPCONFIG.example DESTINATION /etc/cta)
 install (FILES cta-taped.1cta DESTINATION /usr/share/man/man1)

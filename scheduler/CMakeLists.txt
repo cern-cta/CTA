@@ -21,11 +21,13 @@ set (CTA_SCHEDULER_SRC_FILES
   OStoreDB/OStoreDBWithAgent.cpp
   LabelMount.cpp)
 
+find_package(Protobuf3 REQUIRED)
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ctacommon ctaobjectstore protobuf ctautils ctaeos)
+target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctautils ctaeos)
 
 #add_library (ctaschedulerutils SHARED
 #  _old_prototype_DummyScheduler.cpp)

@@ -21,12 +21,13 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
 find_package(openssl REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package(zeromq REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctamessagesprotobuf
   ${ProtoSources})
 
@@ -52,5 +53,5 @@ target_link_libraries(ctamessages
   ctamediachanger
   ctautils
   ctatapesession
-  protobuf
+  ${PROTOBUF3_LIBRARIES}
   ssl)

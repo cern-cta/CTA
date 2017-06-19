@@ -15,15 +15,27 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-find_program(PROTOBUF_PROTOC_EXECUTABLE
-    NAMES protoc
-    DOC "The Google Protocol Buffers Compiler"
+find_program(PROTOBUF3_PROTOC3_EXECUTABLE
+    NAMES protoc3
+    DOC "Version 3 of The Google Protocol Buffers Compiler"
 )
+message(STATUS "protoc3 is at ${PROTOBUF3_PROTOC3_EXECUTABLE} ")
 
-message(STATUS "protoc is at ${PROTOBUF_PROTOC_EXECUTABLE} ")
-function(PROTOBUF_GENERATE_CPP SRCS HDRS)
+find_path(PROTOBUF3_INCLUDE_DIRS
+  google/protobuf/message.h
+  PATHS /usr/include/protobuf3
+  NO_DEFAULT_PATH)
+message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
+
+find_library(PROTOBUF3_LIBRARIES
+  NAME protobuf
+  PATHS /usr/lib64/protobuf3
+  NO_DEFAULT_PATH)
+message(STATUS "PROTOBUF3_LIBRARIES=${PROTOBUF3_LIBRARIES}")
+
+function(PROTOBUF3_GENERATE_CPP SRCS HDRS)
   if(NOT ARGN)
-    message(SEND_ERROR "Error: PROTOBUF_GENERATE_CPP() called without any proto files")
+    message(SEND_ERROR "Error: PROTOBUF3_GENERATE_CPP() called without any proto files")
     return()
   endif()
 
@@ -41,7 +53,7 @@ function(PROTOBUF_GENERATE_CPP SRCS HDRS)
     add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.cc"
              "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.h"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      COMMAND  ${PROTOBUF3_PROTOC3_EXECUTABLE}
       ARGS --cpp_out  ${CMAKE_CURRENT_BINARY_DIR} ${_protobuf_include_path} ${ABS_FIL}
       DEPENDS ${ABS_FIL}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
@@ -52,3 +64,7 @@ function(PROTOBUF_GENERATE_CPP SRCS HDRS)
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Protobuf3 DEFAULT_MSG
+  PROTOBUF3_INCLUDE_DIRS PROTOBUF3_LIBRARIES)

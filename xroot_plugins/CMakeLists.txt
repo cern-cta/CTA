@@ -22,8 +22,10 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
+find_package(Protobuf3 REQUIRED)
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library (XrdCtaOfs MODULE XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
-target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon protobuf ctaobjectstore cryptopp)
+target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)

@@ -56,13 +56,15 @@ add_executable(cta-unitTests-multiProcess
   unit_tests.cpp
   ${GMOCK_SRC})
 
+find_package(Protobuf3 REQUIRED)
+
 target_link_libraries(cta-unitTests-multiProcess
   ctadaemonunittests-multiprocess
   ctacommon
   ${GMOCK_LIB}
   gtest
   pthread
-  protobuf
+  ${PROTOBUF3_LIBRAIRES}
   sqlite3)
 
 add_library(unitTestHelper

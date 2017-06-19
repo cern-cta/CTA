@@ -22,12 +22,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
 
 find_package(json-c REQUIRED)
 find_package(librados2 REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
 set (CTAProtoFiles
   cta.proto)
 
-PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
+PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/ArchiveRequest.hpp
@@ -46,7 +46,7 @@ SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants} 
   PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
-
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
   RootEntry.cpp
@@ -83,24 +83,24 @@ set(ObjectStoreUnitTests
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
 target_link_libraries(ctaobjectstoreunittests
-  protobuf rados ctacommon gtest ctaobjectstore)
+  ${PROTOBUF3_LIBRARIES} rados ctacommon gtest ctaobjectstore)
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
 target_link_libraries(cta-objectstore-initialize
-  protobuf ctaobjectstore ctacommon ctautils)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctautils)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
 target_link_libraries(cta-objectstore-list
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
 target_link_libraries(cta-objectstore-dump-object
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-unfollow-agent cta-objectstore-unfollow-agent.cpp)
 target_link_libraries(cta-objectstore-unfollow-agent
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
   DESTINATION usr/bin)
