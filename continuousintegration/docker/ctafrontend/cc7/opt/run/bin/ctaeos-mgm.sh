@@ -10,6 +10,20 @@ yum-config-manager --enable eos-citrine
 # Install missing RPMs
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
 
+# create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
+groupadd --gid 1100 eosusers
+groupadd --gid 1200 powerusers
+groupadd --gid 1300 ctaadmins
+groupadd --gid 1400 eosadmins
+useradd --uid 11001 --gid 1100 user1
+useradd --uid 11002 --gid 1100 user2
+useradd --uid 12001 --gid 1200 poweruser1
+useradd --uid 12002 --gid 1200 poweruser2
+useradd --uid 13001 --gid 1300 ctaadmin1
+useradd --uid 13002 --gid 1300 ctaadmin2
+useradd --uid 14001 --gid 1400 eosadmin1
+useradd --uid 14002 --gid 1400 eosadmin2
+
 # copy needed template configuration files (nice to get all lines for logs)
 yes | cp -r /opt/ci/ctaeos/etc /
 
@@ -95,8 +109,14 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
   eos mkdir ${CTA_WF_DIR}
   eos attr set CTA_TapeFsId=${TAPE_FS_ID} ${CTA_WF_DIR}
   
+  # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
+  # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
+  # this is achieved through the ACLs.
+  # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_DIR}
-  eos chmod 777 ${CTA_TEST_DIR}
+  eos chmod 555 ${CTA_TEST_DIR}
+  eos attr set sys.acl=g:eosusers:rwx!d,g:powerusers:rwx+d /eos/ctaeos/cta
+
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
   # hack before it is fixed in EOS

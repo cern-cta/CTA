@@ -241,15 +241,7 @@ kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/admin1.keytab adm
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
 # create users on the mgm
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1100 eosusers
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1200 powerusers
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1300 ctaadmins
-kubectl --namespace=${instance} exec ctaeos -- groupadd --gid 1400 eosadmins
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 11001 --gid 1100 user1
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 12001 --gid 1200 poweruser1
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 13001 --gid 1300 ctaadmin1
-kubectl --namespace=${instance} exec ctaeos -- useradd --uid 14001 --gid 1400 eosadmin1
-
+# this is done in ctaeos-mgm.sh as the mgm needs this to setup the ACLs
 
 # use krb5 and then unix fod xrootd protocol on the client pod for eos, xrdcp and cta everything should be fine!
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
