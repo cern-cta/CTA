@@ -81,6 +81,10 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
   eos vid enable unix
   EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
 
+  # Add user daemon to sudoers this is to allow recalls for the moment using this command
+  #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
+  vid set membership 2 +sudo
+
   eos node set ${eoshost} on
   eos space set default on
   eos attr -r set default=replica /eos

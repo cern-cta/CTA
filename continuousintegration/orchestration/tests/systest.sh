@@ -104,10 +104,17 @@ echo "Preparing CTA for tests"
      --instance ${EOSINSTANCE}                                        \
      --name adm                                                       \
      --mountpolicy ctasystest --comment "ctasystest"
-  # group mount rule for eosusers group members: user1 and user2 as defined on the ctaeos mgm
+###
+# This rule exists to allow users from eosusers group to migrate files to tapes
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta groupmountrule add \
      --instance ${EOSINSTANCE}                                        \
      --name eosusers                                                  \
+     --mountpolicy ctasystest --comment "ctasystest"
+###
+# This rule exists to allow users from powerusers group to recall files from tapes
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta groupmountrule add \
+     --instance ${EOSINSTANCE}                                        \
+     --name powerusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
 
   kubectl --namespace ${NAMESPACE} exec ctacli --  cta drive up ${DRIVENAMES[${driveslot}]}
