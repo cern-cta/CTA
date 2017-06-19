@@ -83,7 +83,7 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
 
   # Add user daemon to sudoers this is to allow recalls for the moment using this command
   #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
-  vid set membership 2 +sudo
+  eos vid set membership 2 +sudo
 
   eos node set ${eoshost} on
   eos space set default on
