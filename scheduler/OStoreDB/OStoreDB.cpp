@@ -293,46 +293,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 */
 
 //------------------------------------------------------------------------------
-// OStoreDB::getLockedAndFetchedArchiveQueue()
-//------------------------------------------------------------------------------
-void OStoreDB::getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue& archiveQueue,
-  cta::objectstore::ScopedExclusiveLock& archiveQueueLock, const std::string& tapePool) {
-  // TODO: if necessary, we could use a singleton caching object here to accelerate
-  // lookups.
-  // Getting a locked AQ is the name of the game.
-  // Try and find an existing one first, create if needed
-  for (size_t i=0; i<5; i++) {
-    {
-      RootEntry re (m_objectStore);
-      ScopedSharedLock rel(re);
-      re.fetch();
-      try {
-        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool));
-      } catch (cta::exception::Exception & ex) {
-        rel.release();
-        ScopedExclusiveLock rexl(re);
-        re.fetch();
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, *m_agentReference));
-      }
-    }
-    try {
-      archiveQueueLock.lock(archiveQueue);
-      archiveQueue.fetch();
-      return;
-    } catch (cta::exception::Exception & ex) {
-      // We have a (rare) opportunity for a race condition, where we identify the
-      // queue and it gets deleted before we manage to lock it.
-      // The locking of fetching will fail in this case.
-      // We hence allow ourselves to retry a couple times.
-      continue;
-    }
-  }
-  throw cta::exception::Exception(std::string(
-      "In OStoreDB::getLockedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
-      + tapePool);
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 

@@ -19,6 +19,7 @@
 #include "common/helgrind_annotator.hpp"
 #include "MemQueues.hpp"
 #include "OStoreDB.hpp"
+#include "objectstore/Helpers.hpp"
 
 namespace cta { namespace ostoredb {
 
@@ -104,7 +105,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
     ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
     auto & aq = *ret->m_queue;
     auto & aql = *ret->m_lock;
-    oStoreDB.getLockedAndFetchedArchiveQueue(aq, aql, job.tapePool);
+    objectstore::Helpers::getLockedAndFetchedArchiveQueue(aq, aql, *oStoreDB.m_agentReference, job.tapePool);
     size_t aqSizeBefore=aq.dumpJobs().size();
     size_t addedJobs=1;
     // First add the job for this thread

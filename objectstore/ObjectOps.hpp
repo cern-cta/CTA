@@ -31,6 +31,7 @@ class ObjectOpsBase {
   friend class ScopedSharedLock;
   friend class ScopedExclusiveLock;
   friend class GenericObject;
+  friend class Helpers;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),
