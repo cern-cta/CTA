@@ -9,6 +9,7 @@ add_subdirectory (session)
 # The tape session's threads are in a separate directory (session, but compiled
 # from the previous one to create a single library).
 
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_executable (cta-taped cta-taped.cpp)
 find_package(Protobuf3 REQUIRED)
 target_link_libraries(cta-taped

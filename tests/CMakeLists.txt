@@ -16,7 +16,9 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package(gmock REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-unitTests
   unit_tests.cpp
   ${GMOCK_SRC})
@@ -55,8 +57,6 @@ target_link_libraries(cta-catalogueUnitTests
 add_executable(cta-unitTests-multiProcess
   unit_tests.cpp
   ${GMOCK_SRC})
-
-find_package(Protobuf3 REQUIRED)
 
 target_link_libraries(cta-unitTests-multiProcess
   ctadaemonunittests-multiprocess
