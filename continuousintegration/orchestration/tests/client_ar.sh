@@ -34,7 +34,8 @@ echo "********"
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
- XrdSecPROTOCOL=sss eos -r 12001 1200 root://${EOSINSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
+# XrdSecPROTOCOL=sss eos -r 12001 1200 root://${EOSINSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
 echo
 echo "Information about the testing file without disk replica"
   eos root://${EOSINSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
