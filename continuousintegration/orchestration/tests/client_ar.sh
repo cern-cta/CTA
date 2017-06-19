@@ -30,17 +30,18 @@ echo
 echo "Information about the testing file:"
 echo "********"
   eos root://${EOSINSTANCE} attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
+  eos root://${EOSINSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Removing disk replica"
  XrdSecPROTOCOL=sss eos root://${EOSINSTANCE} file tag /eos/ctaeos/cta/${TEST_FILE_NAME} -1
 echo
 echo "Information about the testing file without disk replica"
+  eos root://${EOSINSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
-echo "trigger EOS retrive workflow"
+echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 echo "XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s \"/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200\""
-#  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}
   XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
 
 
@@ -63,6 +64,16 @@ echo
 echo "Information about the testing file:"
 echo "********"
   eos root://${EOSINSTANCE} attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
+  eos root://${EOSINSTANCE} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 
+
+msgNum=$(grep "\"File suc" /mnt/logs/tpsrv*/taped/cta/cta-taped.log | grep ${TEST_FILE_NAME} | tail -n 4 | wc -l)
+if [ $msgNum == "4" ]; then
+  echo "OK: all tests passed"
+    rc=0
+else
+  echo "FAIL: tests failed"
+    rc=1
+fi
 
