@@ -485,3 +485,29 @@
    fun:_ZNSt13__future_base17_Async_state_implISt12_Bind_simpleIFSt8functionIFvvEEvEEvEC1EOS6_
    fun:_ZN9__gnu_cxx13new_allocatorINSt13__future_base17_Async_state_implISt12_Bind_simpleIFSt8functionIFvvEEvEEvEEE9constructIS9_IS8_EEEvPT_DpOT0_
 }
+
+{
+   DubiousCondVar
+   Helgrind:Misc
+   fun:pthread_cond_broadcast_WRK
+   fun:pthread_cond_broadcast@*
+   fun:__gthread_cond_broadcast
+   fun:_ZNSt18condition_variable10notify_allEv
+   ...
+}
+
+{
+   promise::get()
+   Helgrind:Race
+   fun:~unique_ptr
+   fun:_ZNSt13__future_base11_State_baseD1Ev
+   fun:_ZN9__gnu_cxx13new_allocatorINSt13__future_base11_State_baseEE7destroyIS2_EEvPT_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE10_S_destroyIS1_EENSt9enable_ifIXsrNS3_16__destroy_helperIT_EE5valueEvE4typeERS2_PS7_
+   fun:_ZNSt16allocator_traitsISaINSt13__future_base11_State_baseEEE7destroyIS1_EEvRS2_PT_
+   fun:_ZNSt23_Sp_counted_ptr_inplaceINSt13__future_base11_State_baseESaIS1_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrINSt13__future_base11_State_baseELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
+   fun:_ZNSt7promiseIvED1Ev
+}
