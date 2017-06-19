@@ -15,6 +15,9 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
+set(PROTOBUF3_RPATH /usr/lib64/protobuf3)
+message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
+
 find_program(PROTOBUF3_PROTOC3_EXECUTABLE
     NAMES protoc3
     DOC "Version 3 of The Google Protocol Buffers Compiler"
@@ -29,7 +32,7 @@ message(STATUS "PROTOBUF3_INCLUDE_DIRS=${PROTOBUF3_INCLUDE_DIRS}")
 
 find_library(PROTOBUF3_LIBRARIES
   NAME protobuf
-  PATHS /usr/lib64/protobuf3
+  PATHS ${PROTOBUF3_RPATH}
   NO_DEFAULT_PATH)
 message(STATUS "PROTOBUF3_LIBRARIES=${PROTOBUF3_LIBRARIES}")
 
@@ -67,4 +70,4 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Protobuf3 DEFAULT_MSG
-  PROTOBUF3_INCLUDE_DIRS PROTOBUF3_LIBRARIES)
+  PROTOBUF3_INCLUDE_DIRS PROTOBUF3_LIBRARIES PROTOBUF3_RPATH)

@@ -14,6 +14,7 @@ add_executable (cta-taped cta-taped.cpp)
 find_package(Protobuf3 REQUIRED)
 target_link_libraries(cta-taped
   ctatapedaemon ctacommon ${PROTOBUF3_LIBRARIES})
+set_target_properties(cta-taped PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES TPCONFIG.example DESTINATION /etc/cta)
 install (FILES cta-taped.1cta DESTINATION /usr/share/man/man1)

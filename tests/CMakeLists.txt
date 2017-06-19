@@ -43,6 +43,8 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
+set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+
 add_executable(cta-catalogueUnitTests
   CatalogueUnitTestsCmdLineArgs.cpp
   catalogueUnitTests.cpp
@@ -66,6 +68,8 @@ target_link_libraries(cta-unitTests-multiProcess
   pthread
   ${PROTOBUF3_LIBRAIRES}
   sqlite3)
+
+set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_library(unitTestHelper
   TempFile.cpp)
