@@ -59,10 +59,10 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
   globalLock.unlock();
   // Wait for our request completion (this could throw, if there was a problem)
   resultFuture.get();
-  auto ret=maqr->m_returnValue;
-  __attribute__((unused)) auto debugMaqr=maqr.get();
   ANNOTATE_HAPPENS_AFTER(&maqr->m_promise);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&maqr->m_promise);
+  auto ret=maqr->m_returnValue;
+  __attribute__((unused)) auto debugMaqr=maqr.get();
   maqr.reset();
   return ret;
 }
