@@ -35,7 +35,7 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
-    continue
+    break
   fi
 
   echo "$(grep -c archived$ ${STATUS_FILE})/${NB_FILES} archived"
@@ -84,7 +84,7 @@ while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
-    continue
+    break
   fi
 
   echo "$(grep -c retrieved$ ${STATUS_FILE})/${NB_FILES} retrieved"
