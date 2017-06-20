@@ -2,11 +2,10 @@
 
 
 EOSINSTANCE=ctaeos
-
-
-
 TEST_FILE_NAME=`uuidgen`
-echo "xrdcp /etc/group root://localhost//eos/ctaeos/cta/${TEST_FILE_NAME}"
+
+
+echo "xrdcp /etc/group root://${EOSINSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0

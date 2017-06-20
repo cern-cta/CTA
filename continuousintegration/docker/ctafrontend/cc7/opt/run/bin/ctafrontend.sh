@@ -38,14 +38,14 @@ sed -i 's|.*sec.protocol sss.*|sec.protocol sss -s /etc/ctafrontend_SSS_s.keytab
 sed -i 's|.*sec.protocol unix.*|#sec.protocol unix|' /etc/xrootd/xrootd-cta.cfg
 
 # Hack the default xrootd-cta.cfg provided by the sources
-sed -i 's|.*sec.protocol krb5.*|sec.protocol krb5 /etc/cta-frontend.keytab cta/cta-frontend@TEST.CTA|' /etc/xrootd/xrootd-cta.cfg
+sed -i 's|.*sec.protocol krb5.*|sec.protocol krb5 /etc/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA|' /etc/xrootd/xrootd-cta.cfg
 
 # Allow only SSS and krb5 for frontend
 sed -i 's|^sec.protbind .*|sec.protbind * only sss krb5|' /etc/xrootd/xrootd-cta.cfg
 
 # Wait for the keytab file to be pushed in by the creation script.
-echo -n "Waiting for /etc/cta-frontend.keytab"
-for ((;;)); do test -e /etc/cta-frontend.keytab && break; sleep 1; echo -n .; done
+echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
+for ((;;)); do test -e /etc/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
 touch /cta-frontend.log

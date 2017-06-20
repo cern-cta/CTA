@@ -59,7 +59,7 @@ ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -
 
 echo "Preparing CTA configuration for tests"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta_catalogue_db.conf --hostname ${ctacliIP} -c "docker cli"
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta_catalogue_db.conf --username admin1 -c "docker cli"
+  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta_catalogue_db.conf --username ctaadmin1 -c "docker cli"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta logicallibrary add \
      --name ${LIBRARYNAME}                                            \
      --comment "ctasystest"                                           

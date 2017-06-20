@@ -10,6 +10,8 @@ echo -n "Initing kdc... "
 /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA init --realm-max-ticket-life=unlimited --realm-max-renewable-life=unlimited TEST.CTA || (echo Failed. ; exit 1)
 echo Done.
 
+KEYTABS="user1 user2 poweruser1 poweruser2 ctaadmin1 ctaadmin2 eosadmin1 eosadmin2 cta/cta-frontend eos/eos-server"
+
 # Start kdc
 echo -n "Starting kdc... "
 /usr/libexec/kdc &
@@ -28,15 +30,14 @@ EOF_krb5
 echo Done.
 
 # Populate KDC and generate keytab files
-echo -n "Populating kdc... "
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA add --random-password --use-defaults admin1 admin2 user1 user2 cta/cta-frontend eos/eos-server
+echo "Populating kdc... "
+/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA add --random-password --use-defaults ${KEYTABS}
 
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/admin1.keytab admin1
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/admin2.keytab admin2
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/user1.keytab user1
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/user2.keytab user2
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/cta-frontend.keytab cta/cta-frontend
-/usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/eos.keytab eos/eos-server
+for NAME in ${KEYTABS}; do
+   echo -n "  Generating /root/$(basename ${NAME}).keytab for ${NAME}"
+  /usr/lib/heimdal/bin/kadmin -l -r TEST.CTA ext_keytab --keytab=/root/$(basename ${NAME}).keytab ${NAME} && echo OK || echo FAILED 
+done
+
 echo Done.
 
 echo "### KDC ready ###"
