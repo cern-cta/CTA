@@ -87,14 +87,17 @@ target_link_libraries(ctaobjectstoreunittests
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
+set_target_properties(cta-objectstore-initialize PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-initialize
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctautils)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
+set_target_properties(cta-objectstore-list PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-list
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
+set_target_properties(cta-objectstore-dump-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dump-object
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
