@@ -55,7 +55,7 @@ public:
   void removeIfEmpty();
   
   // Garbage collection (disallowed for root entry).
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
   
   // ArchiveQueue handling  ====================================================
   CTA_GENERATE_EXCEPTION_CLASS(ArchivelQueueNotEmpty);

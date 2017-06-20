@@ -112,7 +112,7 @@ public:
   };
   
   std::list<JobDump> dumpJobs();
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
   std::string  dump();
 };
 

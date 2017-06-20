@@ -77,47 +77,47 @@ namespace {
   using cta::objectstore::ScopedExclusiveLock;
   template <class C>
   void garbageCollectWithType(GenericObject * gop, ScopedExclusiveLock& lock,
-      const std::string &presumedOwner) {
+      const std::string &presumedOwner, AgentReference & agentReference) {
     C typedObject(*gop);
     lock.transfer(typedObject);
-    typedObject.garbageCollect(presumedOwner);
+    typedObject.garbageCollect(presumedOwner, agentReference);
     // Release the lock now as if we let the caller do, it will point
     // to the then-removed typedObject.
     lock.release();
   }
 }
 
-void GenericObject::garbageCollect(const std::string& presumedOwner) {
+void GenericObject::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
   throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
 }
 
 void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock, 
-    const std::string &presumedOwner) {
+    const std::string &presumedOwner, AgentReference & agentReference) {
   checkHeaderWritable();
   switch(m_header.type()) {
     case serializers::AgentRegister_t:
-      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner);
+      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::Agent_t:
-      garbageCollectWithType<Agent>(this, lock, presumedOwner);
+      garbageCollectWithType<Agent>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::DriveRegister_t:
-      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner);
+      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::SchedulerGlobalLock_t:
-      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner);
+      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::ArchiveRequest_t:
-      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner);
+      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::RetrieveRequest_t:
-      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner);
+      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::ArchiveQueue_t:
-      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner);
+      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner, agentReference);
       break;
     case serializers::RetrieveQueue_t:
-      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner);
+      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner, agentReference);
       break;
     default: {
       std::stringstream err;

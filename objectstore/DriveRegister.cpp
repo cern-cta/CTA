@@ -70,7 +70,7 @@ void DriveRegister::initialize() {
 //------------------------------------------------------------------------------
 // DriveRegister::garbageCollect())
 //------------------------------------------------------------------------------
-void DriveRegister::garbageCollect(const std::string &presumedOwner) {
+void DriveRegister::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the drive register creation failed. We have nothing to do.

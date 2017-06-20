@@ -56,7 +56,7 @@ public:
   
   bool isEmpty();
   
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
   
  /* class ScopedIntent {
   public:

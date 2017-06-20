@@ -34,7 +34,7 @@ public:
   RetrieveQueue(const std::string & address, Backend & os);
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();

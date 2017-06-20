@@ -26,6 +26,8 @@
 
 namespace cta { namespace objectstore {
 
+class AgentReference;
+
 class ObjectOpsBase {
   friend class ScopedLock;
   friend class ScopedSharedLock;
@@ -286,7 +288,7 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  virtual void garbageCollect(const std::string &presumedOwner) = 0;
+  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) = 0;
   
 protected:
   

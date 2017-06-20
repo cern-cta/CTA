@@ -296,8 +296,7 @@ int GarbageCollectorHandler::runChild() {
   agentHeartbeat.startThread();
   
   // Create the garbage collector itself
-  objectstore::Agent ag(backendPopulator->getAgentReference().getAgentAddress(), *backend);
-  objectstore::GarbageCollector gc(*backend, ag);
+  objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference());
   
   // Run the gc in a loop
   try {

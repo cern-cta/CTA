@@ -46,7 +46,7 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void RetrieveRequest::garbageCollect(const std::string& presumedOwner) {
+void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
   throw cta::exception::Exception("In RetrieveRequest::garbageCollect(): not implemented.");
 }
 

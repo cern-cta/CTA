@@ -19,6 +19,7 @@
 #include "ArchiveRequest.hpp"
 #include "GenericObject.hpp"
 #include "ArchiveQueue.hpp"
+#include "Helpers.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "MountPolicySerDeser.hpp"
 
@@ -282,7 +283,7 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   return ret;
 }
 
-void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
+void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
   checkPayloadWritable();
   // The behavior here depends on which job the agent is supposed to own.
   // We should first find this job (if any). This is for covering the case
@@ -301,9 +302,11 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
         // If we fail to reconnect, we have to fail the job and potentially
         // finish the request.
       try {
-        ArchiveQueue aq(j->owner(), m_objectStore);
-        ScopedExclusiveLock tpl(aq);
-        aq.fetch();
+        // Get the queue where we should requeue the job. The queue might need to be
+        // recreated (this will be done by helper).
+        ArchiveQueue aq(m_objectStore);
+        ScopedExclusiveLock tpl;
+        Helpers::getLockedAndFetchedArchiveQueue(aq, tpl, agentReference, j->tapepool());
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();

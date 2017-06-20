@@ -21,6 +21,10 @@
 #include "common/exception/Exception.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#endif
 #include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
@@ -70,7 +74,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef);
     gc.runOnePass(lc);
     gc.runOnePass(lc);
   }
@@ -129,7 +133,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef);
     gc.runOnePass(lc);
     gc.runOnePass(lc);
   }
@@ -190,7 +194,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef);
     gc.runOnePass(lc);
     gc.runOnePass(lc);
   }
@@ -251,7 +255,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef);
     gc.runOnePass(lc);
     gc.runOnePass(lc);
   }
@@ -269,13 +273,14 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
 
 TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // We will need a log object 
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("unitTest");
+#else
   cta::log::DummyLogger dl("unitTest");
+#endif
   cta::log::LogContext lc(dl);
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
-  agentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
   re.initialize();
@@ -284,9 +289,18 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  // Finish root creation.
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
-  // Create an agent
+  // continue agent creation.
+  agentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf();
+  // Create an agent to garbage collected
   cta::objectstore::AgentReference agrA("unitTestAgentA");
   agrA.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
@@ -299,19 +313,18 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // - partially linked to tape pools
   // - linked to all tape pools
   // - In the 2 latter cases, the job could have been picked up for processing
-  // - already
-  //w
-  // Create 2 tape pools (not owned).
+  //
+  // Create 2 archive queues
   std::string tpAddr[2];
   for (int i=0; i<2; i++)
   {
-    std::stringstream aqid;
-    aqid << "ArchiveQueue" << i;
-    tpAddr[i] = agentRef.nextId(aqid.str());
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::stringstream tapePoolName;
+    tapePoolName << "TapePool" << i;
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
-    aq.initialize(aqid.str());
-    aq.setOwner("");
-    aq.insert();
   }
   // Create the various ATFR's, stopping one step further each time.
   int pass=0;
@@ -337,8 +350,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     ar.setArchiveFile(aFile);
-    ar.addJob(1, "ArchiveQueue0", tpAddr[0], 1, 1);
-    ar.addJob(2, "ArchiveQueue1", tpAddr[1], 1, 1);    
+    ar.addJob(1, "TapePool0", tpAddr[0], 1, 1);
+    ar.addJob(2, "TapePool1", tpAddr[1], 1, 1);    
     ar.setOwner(agA.getAddressIfSet());
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
@@ -407,7 +420,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf();
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgent);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef);
     gc.runOnePass(lc);
     gc.runOnePass(lc);
   }
@@ -433,6 +446,22 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
+  // Remove jobs from archive queues
+  std::list<std::string> tapePools = { "TapePool0", "TapePool1" };
+  for (auto & tp: tapePools) {
+    // Empty queue
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp), be);
+    cta::objectstore::ScopedExclusiveLock aql(aq);
+    aq.fetch();
+    for (auto &j: aq.dumpJobs()) {
+      aq.removeJob(j.address);
+    }
+    aq.commit();
+    aql.release();
+    // Remove queues from root
+    re.removeArchiveQueueAndCommit(tp);
+  }
+
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
   ASSERT_NO_THROW(re.removeIfEmpty());
   // TODO: this unit test still leaks tape pools and requests

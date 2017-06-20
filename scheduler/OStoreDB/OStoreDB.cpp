@@ -493,7 +493,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
     } catch (...) {}
   }
   throw NoSuchArchiveRequest("In OStoreDB::markArchiveRequestForDeletion: ArchiveToFileRequest no found");
-  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveToFileRequestCancelation::complete()
@@ -513,7 +513,7 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
     try {
-      m_request.garbageCollect(m_agentReference.getAgentAddress());
+      m_request.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference);
       m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
     } catch (...) {}
   }
@@ -2215,7 +2215,7 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     // Return the job to the pot if we failed to handle it.
     objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
     m_archiveRequest.fetch();
-    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress());
+    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference);
     atfrl.release();
     // Remove ownership from agent
     m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
