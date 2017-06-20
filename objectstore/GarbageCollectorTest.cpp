@@ -365,7 +365,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       cta::objectstore::ArchiveRequest::JobDump jd;
       jd.copyNb = 1;
       jd.tapePool = "TapePool0";
-      jd.ArchiveQueueAddress = tpAddr[0];
+      jd.owner = tpAddr[0];
       cta::common::dataStructures::MountPolicy policy;
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
@@ -383,7 +383,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       cta::objectstore::ArchiveRequest::JobDump jd;
       jd.copyNb = 2;
       jd.tapePool = "TapePool1";
-      jd.ArchiveQueueAddress = tpAddr[1];
+      jd.owner = tpAddr[1];
       cta::common::dataStructures::MountPolicy policy;
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;

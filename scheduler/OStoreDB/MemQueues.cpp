@@ -114,9 +114,8 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
       aq.addJob(job, archiveRequest.getAddressIfSet(), af.archiveFileID,
           af.fileSize, archiveRequest.getMountPolicy(), archiveRequest.getEntryLog().time);
       // Back reference the queue in the job and archive request
-      job.ArchiveQueueAddress = aq.getAddressIfSet();
-      archiveRequest.setJobArchiveQueueAddress(job.copyNb, job.ArchiveQueueAddress);
-      archiveRequest.setJobOwner(job.copyNb, job.ArchiveQueueAddress);
+      job.owner = aq.getAddressIfSet();
+      archiveRequest.setJobOwner(job.copyNb, job.owner);
     }
     // We do the same for all the queued requests
     for (auto &maqr: maq->m_requests) {
@@ -126,8 +125,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
           af.fileSize, maqr->m_archiveRequest.getMountPolicy(), 
           maqr->m_archiveRequest.getEntryLog().time);
       // Back reference the queue in the job and archive request
-      maqr->m_job.ArchiveQueueAddress = aq.getAddressIfSet();
-      maqr->m_archiveRequest.setJobArchiveQueueAddress(maqr->m_job.copyNb, aq.getAddressIfSet());
+      maqr->m_job.owner = aq.getAddressIfSet();
       maqr->m_archiveRequest.setJobOwner(maqr->m_job.copyNb, aq.getAddressIfSet());
       addedJobs++;
     }

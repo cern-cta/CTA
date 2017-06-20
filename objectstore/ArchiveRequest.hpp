@@ -44,7 +44,6 @@ public:
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
     const std::string & archivequeueaddress, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
-  void setJobArchiveQueueAddress(uint16_t copyNumber, const std::string & queueAddress);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
@@ -109,7 +108,7 @@ public:
   public:
     uint16_t copyNb;
     std::string tapePool;
-    std::string ArchiveQueueAddress;
+    std::string owner;
   };
   
   std::list<JobDump> dumpJobs();

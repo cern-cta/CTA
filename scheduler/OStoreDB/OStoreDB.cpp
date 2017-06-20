@@ -351,10 +351,10 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       aReq.commit();
       // Now we can let go off the queue.
       shareLock.reset();
-      linkedTapePools.push_back(j.ArchiveQueueAddress);
+      linkedTapePools.push_back(j.owner);
       log::ScopedParamContainer params(logContext);
       params.add("tapepool", j.tapePool)
-            .add("queueObject", j.ArchiveQueueAddress)
+            .add("queueObject", j.owner)
             .add("jobObject", aReq.getAddressIfSet());
       logContext.log(log::INFO, "In OStoreDB::queueArchive(): added job to queue");
     }
@@ -388,7 +388,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
 //------------------------------------------------------------------------------
 void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName, 
   uint64_t fileId) {
-  // First of, find the archive request form all the tape pools.
+  // First of, find the archive request from all the tape pools.
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
@@ -418,7 +418,7 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
           // The owner might not be a queue, in which case the fetch will fail (and it's fine)
           try {
             // The queue on which we found the job is not locked anymore, so we can re-lock it.
-            ArchiveQueue aq2(j.ArchiveQueueAddress, m_objectStore);
+            ArchiveQueue aq2(j.owner, m_objectStore);
             ScopedExclusiveLock aq2xl(aq2);
             aq2.fetch();
             aq2.removeJob(ar.getAddressIfSet());
@@ -478,7 +478,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
           // Unlink the jobs from the tape pools (it is safely referenced in the agent)
           auto arJobs=ar.dumpJobs();
           for (auto atpp=arJobs.begin(); atpp!=arJobs.end(); atpp++) {
-            objectstore::ArchiveQueue aqp(atpp->ArchiveQueueAddress, m_objectStore);
+            objectstore::ArchiveQueue aqp(atpp->owner, m_objectStore);
             objectstore::ScopedExclusiveLock atpl(aqp);
             aqp.fetch();
             aqp.removeJob(arp->address);

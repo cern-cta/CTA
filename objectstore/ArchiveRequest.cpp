@@ -56,25 +56,15 @@ void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_copynb(copyNumber);
   j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue);
   j->set_tapepool(tapepool);
-  j->set_owner("");
-  j->set_archivequeueaddress(archivequeueaddress);
+  j->set_owner(archivequeueaddress);
+  // XXX This field (archivequeueaddress) is a leftover from a past layout when tape pools were static
+  // in the object store, and should be eventually removed.
+  j->set_archivequeueaddress("");
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
   j->set_maxretrieswithinmount(maxRetiesWithinMount);
   j->set_maxtotalretries(maxTotalRetries);
-}
-
-void ArchiveRequest::setJobArchiveQueueAddress(uint16_t copyNumber, const std::string& queueAddress) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      j->set_archivequeueaddress(queueAddress);
-      return;
-    }
-  }
-  throw NoSuchJob("In ArchiveRequest::setJobArchiveQueueAddress(): job not found");
 }
 
 bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
@@ -287,7 +277,7 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
     ret.push_back(JobDump());
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
-    ret.back().ArchiveQueueAddress = j->archivequeueaddress();
+    ret.back().owner = j->owner();
   }
   return ret;
 }
@@ -311,13 +301,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
         // If we fail to reconnect, we have to fail the job and potentially
         // finish the request.
       try {
-        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ArchiveQueue aq(j->owner(), m_objectStore);
         ScopedExclusiveLock tpl(aq);
         aq.fetch();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        jd.owner = j->owner();
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
@@ -335,13 +325,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
       // queue for files orphaned pending ns creation. Some user process will have
       // to pick them up actively (recovery involves schedulerDB + NameServerDB)
       try {
-        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ArchiveQueue aq(j->owner(), m_objectStore);
         ScopedExclusiveLock tpl(aq);
         aq.fetch();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        jd.owner = j->owner();
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(),
           m_payload.archivefileid(), m_payload.filesize()))
           aq.commit();
@@ -357,13 +347,13 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner) {
       // queue for files orphaned pending ns deletion. Some user process will have
       // to pick them up actively (recovery involves schedulerDB + NameServerDB)
       try {
-        ArchiveQueue aq(j->archivequeueaddress(), m_objectStore);
+        ArchiveQueue aq(j->owner(), m_objectStore);
         ScopedExclusiveLock tpl(aq);
         aq.fetch();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
-        jd.ArchiveQueueAddress = j->archivequeueaddress();
+        jd.owner = j->owner();
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
           m_payload.archivefileid(), m_payload.filesize()))
           aq.commit();
