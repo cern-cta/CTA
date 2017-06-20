@@ -245,6 +245,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
 %attr(0755,root,root) %{_bindir}/cta-objectstore-list
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
+%attr(0755,root,root) %{_bindir}/cta-objectstore-unfollow-agent
 
 #cta-systemtests installs libraries so we need ldconfig.
 %post -n cta-systemtests -p /sbin/ldconfig
