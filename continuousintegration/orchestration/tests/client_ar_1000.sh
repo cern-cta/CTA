@@ -1,5 +1,6 @@
 #!/bin/bash
 
+NB_PROCS=4
 
 EOSINSTANCE=ctaeos
 EOS_DIR=/eos/ctaeos/cta/$(uuidgen)
@@ -66,9 +67,11 @@ echo "###"
 
 
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
-for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200" || echo "Could not trigger retrieve for ${EOS_DIR}/${TEST_FILE_NAME}"
-done
+#for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
+#  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200" || echo "Could not trigger retrieve for ${EOS_DIR}/${TEST_FILE_NAME}"
+#done
+
+grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/TEST_FILE_NAME?eos.ruid=12001&eos.rgid=1200"
 
 
 # Wait for the copy to appear on disk
