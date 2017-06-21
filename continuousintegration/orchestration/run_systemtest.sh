@@ -12,13 +12,20 @@ execute_log_rc=0
 orchestration_dir=${PWD}
 # keep or drop namespace after systemtest_script? By default drop it.
 keepnamespace=0
+# by default use sqlite DB
+useoracle=0
+# by default use VFS objectstore
+useceph=0
 
+die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k] [-O] [-D]
 
 Options:
   -k    keep namespace after systemtest_script run if successful
+  -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
+  -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -31,7 +38,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:k" o; do
+while getopts "n:s:p:kDO" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -45,6 +52,12 @@ while getopts "n:s:p:k" o; do
             ;;
         k)
             keepnamespace=1
+            ;;
+        D)
+            useoracle=1
+            ;;
+        O)
+            useceph=1
             ;;
         *)
             usage
@@ -67,6 +80,24 @@ fi
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"
     exit 1
+fi
+
+if [ $useoracle == 1 ] ; then
+    database_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep database | head -1)
+    if [ "-${database_configmap}-" == "--" ]; then
+      die "Oracle database requested but not database configuration was found."
+    else
+      CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+    fi    
+fi
+
+if [ $useceph == 1 ] ; then
+    objectstore_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep objectstore | head -1)
+    if [ "-${objectstore_configmap}-" == "--" ]; then
+      die "Ceph objecstore requested but not objectstore configuration was found."
+    else
+      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"                                         
+    fi
 fi
 
 
