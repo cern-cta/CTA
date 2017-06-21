@@ -158,7 +158,7 @@ namespace daemon {
           throw castor::tape::tapeserver::daemon::ErrorFlag();
         }
         Request req = m_parent.m_queue.pop();
-        auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.filesRequested, m_parent.m_lc);
+        auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
         uint64_t files=jobs.size();
         uint64_t bytes=0;
         for (auto & j:jobs) bytes+=j->archiveFile.fileSize;
