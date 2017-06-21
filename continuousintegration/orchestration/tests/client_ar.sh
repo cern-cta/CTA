@@ -52,7 +52,7 @@ eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}
 
 for ((i=0;i<${NB_FILES};i++)); do
   TEST_FILE_NAME=${TEST_FILE_NAME_BASE}$(printf %.4d $i)
-  xrdcp --silent /etc/group root://${EOSINSTANCE}/${EOS_DIR}/${TEST_FILE_NAME}
+  xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${TEST_FILE_NAME}
 done
 
 eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" | sed -e 's/$/ copied/' > ${STATUS_FILE=}
