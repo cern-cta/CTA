@@ -25,6 +25,7 @@
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
@@ -2144,38 +2145,28 @@ void OStoreDB::ArchiveJob::fail() {
     return;
   }
   // The job still has a chance, return it to its original tape pool's queue
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  auto aql = re.dumpArchiveQueues();
-  rel.release();
-  for (auto & aqp: aql) {
-    if (aqp.tapePool == m_tapePool) {
-      objectstore::ArchiveQueue aq(aqp.address, m_objectStore);
-      objectstore::ScopedExclusiveLock aqlock(aq);
-      aq.fetch();
-      // Find the right job
-      auto jl = m_archiveRequest.dumpJobs();
-      for (auto & j:jl) {
-        if (j.copyNb == tapeFile.copyNb) {
-          aq.addJobIfNecessary(j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
-              m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time);
-          aq.commit();
-          aqlock.release();
-          // We have a pointer to the job, we can change the job ownership
-          m_archiveRequest.setJobOwner(tapeFile.copyNb, aqp.address);
-          m_archiveRequest.commit();
-          arl.release();
-          // We just have to remove the ownership from the agent and we're done.
-          m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
-          m_jobOwned = false;
-          return;
-        }
-      }
-      throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");
+  objectstore::ArchiveQueue aq(m_objectStore);
+  objectstore::ScopedExclusiveLock aqlock;
+  objectstore::Helpers::getLockedAndFetchedArchiveQueue(aq, aqlock, m_agentReference, m_tapePool);
+  // Find the right job
+  auto jl = m_archiveRequest.dumpJobs();
+  for (auto & j:jl) {
+    if (j.copyNb == tapeFile.copyNb) {
+      aq.addJobIfNecessary(j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
+          m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time);
+      aq.commit();
+      aqlock.release();
+      // We have a pointer to the job, we can change the job ownership
+      m_archiveRequest.setJobOwner(tapeFile.copyNb, aq.getAddressIfSet());
+      m_archiveRequest.commit();
+      arl.release();
+      // We just have to remove the ownership from the agent and we're done.
+      m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
+      m_jobOwned = false;
+      return;
     }
   }
-  throw NoSuchArchiveQueue("In OStoreDB::ArchiveJob::fail(): could not find the tape pool");
+  throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");
 }
 
 //------------------------------------------------------------------------------
