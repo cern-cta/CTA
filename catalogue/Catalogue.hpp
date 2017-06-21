@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "catalogue/ArchiveFileDoesNotExist.hpp"
 #include "catalogue/ArchiveFileItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
@@ -57,6 +58,7 @@
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <list>
 #include <map>
@@ -499,6 +501,8 @@ public:
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
+   * @throw ArchiveFileDoesNotExistInCatalogue If the specified archive file
+   * does not exist in the catalogue.
    */
   virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
     const uint64_t archiveFileId) = 0;

@@ -216,8 +216,16 @@ common::dataStructures::ArchiveFile Scheduler::deleteArchive(const std::string &
   try {
     m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
   } catch (exception::Exception &dbEx) {
-    // The file was apparently not queued. If we fail to remove it from the catalogue, then it is an error.
-    return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    // The file was apparently not queued. If we fail to remove it from the
+    // catalogue for any reason other than it does not exist in the catalogue,
+    // then it is an error.
+    try {
+      return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    } catch(catalogue::ArchiveFileDoesNotExist &e) {
+      return common::dataStructures::ArchiveFile();
+    } catch(...) {
+      throw;
+    }
   }
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).

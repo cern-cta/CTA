@@ -56,9 +56,11 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
     const auto archiveFile = getArchiveFile(conn, archiveFileId);
 
     if(nullptr == archiveFile.get()) {
-      exception::UserError ue;
-      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
-      throw ue;
+      ArchiveFileDoesNotExist e;
+      e.archiveFileId = archiveFileId;
+      e.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " from the catalogue because it"
+        " does not exist in the catalogue";
+      throw e;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {

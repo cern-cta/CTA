@@ -6695,7 +6695,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
-  ASSERT_THROW(m_catalogue->deleteArchiveFile("disk_instance", 12345678), exception::UserError);
+  ASSERT_THROW(m_catalogue->deleteArchiveFile("disk_instance", 12345678), catalogue::ArchiveFileDoesNotExist);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {
