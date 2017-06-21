@@ -1721,6 +1721,13 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
     std::list<std::unique_ptr<OStoreDB::ArchiveJob>> privateRet;
     uint64_t currentBytes=0;
     uint64_t currentFiles=0;
+    {
+      log::ScopedParamContainer params(logContext);
+      params.add("tapepool", mountInfo.tapePool)
+            .add("queueObject", aq.getAddressIfSet())
+            .add("queueSize", aq.dumpJobs().size());
+      logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): archive queue found.");
+    }
     while (aq.dumpJobs().size()) {
       // We should build the list of jobs we intend to grab. We will attempt to 
       // dequeue them in one go, updating jobs in parallel. If some jobs turn out
@@ -1737,6 +1744,17 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         currentBytes+=job.size;
         candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_objectStore, m_agentReference, *this));
         candidateJobs.back()->tapeFile.copyNb = job.copyNb;
+      }
+      {
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", mountInfo.tapePool)
+              .add("queueObject", aq.getAddressIfSet())
+              .add("candidatesCount", candidateJobs.size())
+              .add("currentFiles", currentFiles)
+              .add("currentBytes", currentBytes)
+              .add("requestedFiles", filesRequested)
+              .add("requestedBytes", bytesRequested);
+        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): will process a set of candidate jobs.");
       }
       // We now have a batch of jobs to try and dequeue. Should not be empty.
       // First add the jobs to the owned list of the agent.
