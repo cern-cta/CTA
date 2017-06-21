@@ -314,6 +314,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
+        j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
         commit();
       } catch (...) {
@@ -338,6 +339,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(),
           m_payload.archivefileid(), m_payload.filesize()))
           aq.commit();
+        j->set_owner(aq.getAddressIfSet());
+        commit();
       } catch (...) {
         j->set_status(serializers::AJS_Failed);
         // This could be the end of the request, with various consequences.
@@ -360,6 +363,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
           m_payload.archivefileid(), m_payload.filesize()))
           aq.commit();
+        j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
         commit();
       } catch (...) {
