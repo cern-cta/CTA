@@ -31,18 +31,18 @@ echo "Preparing namespace for the tests"
 ./prepare_tests.sh -n ${NAMESPACE}
 
 echo
+echo "Launching simple_client_ar.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/client_ar.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
+
+echo
 echo "Launching client_ar.sh on client pod"
+echo " Archiving 100 file of 1kB each"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh || exit 1
-
-echo
-echo "Launching client_ar_1000.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp client_ar_1000.sh client:/root/client_ar_1000.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar_1000.sh || exit 1
-
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 100 -s 1 -p 4 || exit 1
 
 exit 0
