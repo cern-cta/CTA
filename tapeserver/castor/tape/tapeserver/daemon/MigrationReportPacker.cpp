@@ -137,7 +137,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext & lc){
 void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode, cta::log::LogContext & lc){
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
-  lc.log(cta::log::DEBUG, "In MigrationReportPacker::synchronousReportEndWithErrors(), reporting asynchronously.");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::synchronousReportEndWithErrors(), reporting asynchronously session complete.");
   m_continue=false;
   m_archiveMount->complete();
   if(m_errorHappened) {
@@ -176,7 +176,8 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::log::LogContext & lc) {
   cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportDriveStatus");
+  params.add("type", "ReportDriveStatus")
+        .add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
@@ -186,6 +187,9 @@ void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::Drive
 //ReportDriveStatus::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
+  cta::log::ScopedParamContainer params(parent.m_lc);
+  params.add("status", cta::common::dataStructures::toString(m_status));
+  parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
   parent.m_archiveMount->setDriveStatus(m_status);
 }
 
@@ -266,6 +270,7 @@ void MigrationReportPacker::ReportTapeFull::execute(MigrationReportPacker& repor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_continue=false;
+  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if(!reportPacker.m_errorHappened){
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -298,6 +303,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_continue=false;
+  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if(reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
