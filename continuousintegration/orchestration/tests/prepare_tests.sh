@@ -124,7 +124,13 @@ echo "Setting drive up: ${DRIVENAMES[${driveslot}]}"
 # A bit of reporting
 echo "EOS server version is used:"
   kubectl --namespace ${NAMESPACE} exec ctaeos -- rpm -qa|grep eos-server
-echo "Information about the testing file:"
-echo "********"
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr ls /eos/ctaeos/cta/${TEST_FILE_NAME}
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
+
+
+# Super client capabilities
+echo "Adding super client capabilities"
+
+clientIP=`kubectl --namespace ${NAMESPACE} describe pod client | grep IP | sed -E 's/IP:[[:space:]]+//'`
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta adminhost add --name ${clientIP} --comment "for the super client"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta admin add --username ctaadmin2 --comment "ctaadmin2"
+
+kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
