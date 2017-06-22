@@ -397,8 +397,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           //we flush without asking
           tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files,timer);
           m_stats.flushTime += timer.secs(cta::utils::Timer::resetCounter);
-          //end of session + log
-          m_reportPacker.reportEndOfSession(m_logContext);
           cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("tapeThreadDuration", totalTimer.secs()));
           m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
           break;
@@ -432,6 +430,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     logWithStats(cta::log::INFO, "Tape thread complete",params);
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStats(m_stats);
+    //end of session + log
+    m_reportPacker.reportEndOfSession(m_logContext);
   } //end of try 
   catch(const cta::exception::Exception& e){
     //we end there because write session could not be opened 

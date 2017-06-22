@@ -140,7 +140,9 @@ private:
   public:
     ReportTestGoingToEnd() {}
     virtual void execute(MigrationReportPacker& reportPacker) override {
-      reportPacker.m_continue=false;reportPacker.m_archiveMount->complete();
+      reportPacker.m_continue=false;
+      reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportTestGoingToEnd::execute(): Reporting session complete.");
+      reportPacker.m_archiveMount->complete();
     }
   };
   

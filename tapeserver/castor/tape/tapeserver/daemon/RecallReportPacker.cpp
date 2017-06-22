@@ -27,6 +27,7 @@
 
 #include <signal.h>
 #include <iostream>
+#include <cxxabi.h>
 
 namespace{
   struct failedReportRecallResult : public cta::exception::Exception{
@@ -221,7 +222,14 @@ void RecallReportPacker::WorkerThread::run(){
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
     {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
-      spc.add("ReportType", debugType=typeid(*rep).name());
+      int demangleStatus;
+      char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+      if (!demangleStatus) {
+        spc.add("typeId", demangledReportType);
+      } else {
+        spc.add("typeId", typeid(*rep.get()).name());
+      }
+      free(demangledReportType);
       if (rep->goingToEnd())
         spc.add("goingToEnd", "true");
       m_parent.m_lc.log(cta::log::DEBUG, "Popping report");
