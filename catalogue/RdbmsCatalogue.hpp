@@ -48,6 +48,11 @@ namespace catalogue {
 class ArchiveFileRow;
 
 /**
+ * Forward declaration.
+ */
+class RdbmsArchiveFileItor;
+
+/**
  * CTA catalogue implemented using a relational database backend.
  */
 class RdbmsCatalogue: public Catalogue {
@@ -494,6 +499,8 @@ public:
 
 protected:
 
+  friend RdbmsArchiveFileItor;
+
   /**
    * Mutex to be used to a take a global lock on the database.
    */
@@ -896,70 +903,8 @@ protected:
   virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) = 0;
 
   /**
-   * Nested class used to implement the getArchiveFileItor() method.
-   */
-  class ArchiveFileItorImpl: public ArchiveFileItor {
-  public:
-
-    /**
-     * Constructor.
-     *
-     * @param catalogue The RdbmsCatalogue.
-     * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-     * @param searchCriteria The search criteria.
-     */
-    ArchiveFileItorImpl(
-      const RdbmsCatalogue &catalogue,
-      const uint64_t nbArchiveFilesToPrefetch,
-      const TapeFileSearchCriteria &searchCriteria);
-
-    /**
-     * Destructor.
-     */
-    ~ArchiveFileItorImpl() override;
-
-    /**
-     * Returns true if a call to next would return another archive file.
-     */
-    bool hasMore() const override;
-
-    /**
-     * Returns the next archive or throws an exception if there isn't one.
-     */
-    common::dataStructures::ArchiveFile next() override;
-
-  private:
-
-    /**
-     * The RdbmsCatalogue.
-     */
-    const RdbmsCatalogue &m_catalogue;
-
-    /**
-     * The number of archive files to prefetch.
-     */
-    const uint64_t m_nbArchiveFilesToPrefetch;
-
-    /**
-     * The search criteria.
-     */
-    TapeFileSearchCriteria m_searchCriteria;
-
-    /**
-     * The current offset into the list of archive files in the form of an
-     * archive file ID.
-     */
-    uint64_t m_nextArchiveFileId;
-
-    /**
-     * The current list of prefetched archive files.
-     */
-    std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
-  }; // class ArchiveFileItorImpl
-
-  /**
    * Returns the specified archive files.  This method is called by the nested
-   * class ArchiveFileItorImpl.  Please note that the list of files is ordered
+   * class RdbmsArchiveFileItor.  Please note that the list of files is ordered
    * by archive file IDs.
    *
    * @param startingArchiveFileId The unique identifier of the first archive

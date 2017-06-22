@@ -41,6 +41,7 @@ set (CATALOGUE_LIB_SRC_FILES
   InMemoryCatalogue.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
+  RdbmsArchiveFileItor.cpp
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp

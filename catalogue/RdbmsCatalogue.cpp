@@ -17,7 +17,9 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/RdbmsArchiveFileItor.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -3470,7 +3472,7 @@ std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFi
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
+    return cta::make_unique<RdbmsArchiveFileItor>(*this, nbArchiveFilesToPrefetch, searchCriteria);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3559,73 +3561,6 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
     if(!tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
     }
-  }
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RdbmsCatalogue::ArchiveFileItorImpl::ArchiveFileItorImpl(
-  const RdbmsCatalogue &catalogue,
-  const uint64_t nbArchiveFilesToPrefetch,
-  const TapeFileSearchCriteria &searchCriteria):
-  m_catalogue(catalogue),
-  m_nbArchiveFilesToPrefetch(nbArchiveFilesToPrefetch),
-  m_searchCriteria(searchCriteria),
-  m_nextArchiveFileId(1) {
-  try {
-    if(1 > m_nbArchiveFilesToPrefetch) {
-      exception::Exception ex;
-      ex.getMessage() << "nbArchiveFilesToPrefetch must equal to or greater than 1: actual=" <<
-        m_nbArchiveFilesToPrefetch;
-      throw ex;
-    }
-    m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
-      m_searchCriteria);
-    if(!m_prefechedArchiveFiles.empty()) {
-      m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-RdbmsCatalogue::ArchiveFileItorImpl::~ArchiveFileItorImpl() {
-}
-
-//------------------------------------------------------------------------------
-// hasMore
-//------------------------------------------------------------------------------
-bool RdbmsCatalogue::ArchiveFileItorImpl::hasMore() const {
-  return !m_prefechedArchiveFiles.empty();
-}
-
-//------------------------------------------------------------------------------
-// next
-//------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile RdbmsCatalogue::ArchiveFileItorImpl::next() {
-  try {
-    if(m_prefechedArchiveFiles.empty()) {
-      throw exception::Exception("No more archive files to iterate over");
-    }
-
-    common::dataStructures::ArchiveFile archiveFile = m_prefechedArchiveFiles.front();
-    m_prefechedArchiveFiles.pop_front();
-
-    if(m_prefechedArchiveFiles.empty()) {
-      m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
-        m_searchCriteria);
-      if(!m_prefechedArchiveFiles.empty()) {
-        m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
-      }
-    }
-
-    return archiveFile;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

@@ -19,6 +19,7 @@
 #pragma once
 
 #include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -36,7 +37,7 @@ public:
    * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
    * @param searchCriteria The search criteria.
    */
-  ArchiveFileItorImpl(
+  RdbmsArchiveFileItor(
     const RdbmsCatalogue &catalogue,
     const uint64_t nbArchiveFilesToPrefetch,
     const TapeFileSearchCriteria &searchCriteria);
@@ -44,7 +45,7 @@ public:
   /**
    * Destructor.
    */
-  ~ArchiveFileItorImpl() override;
+  ~RdbmsArchiveFileItor() override;
 
   /**
    * Returns true if a call to next would return another archive file.
@@ -83,6 +84,7 @@ private:
    * The current list of prefetched archive files.
    */
   std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
-}; // class ArchiveFileItorImpl
+}; // class RdbmsArchiveFileItor
 
 } // namespace catalogue
+} // namespace cta
