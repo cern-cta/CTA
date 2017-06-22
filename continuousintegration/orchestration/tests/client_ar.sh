@@ -50,14 +50,16 @@ echo "Creating test dir in eos: ${EOS_DIR}"
 # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR}
 eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}
 
+echo -n "Copying files to ${EOS_DIR} using ${NB_PROCS} processes..."
 for ((i=0;i<${NB_FILES};i++)); do
-  TEST_FILE_NAME=${TEST_FILE_NAME_BASE}$(printf %.4d $i)
-  xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${TEST_FILE_NAME}
-done
+  echo ${TEST_FILE_NAME_BASE}$(printf %.4d $i)
+done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/TEST_FILE_NAME
+echo Done.
+
 
 eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" | sed -e 's/$/ copied/' > ${STATUS_FILE=}
 
-
+echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=60
 while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
