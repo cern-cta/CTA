@@ -17,7 +17,6 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
