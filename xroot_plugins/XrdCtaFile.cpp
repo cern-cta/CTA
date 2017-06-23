@@ -256,36 +256,25 @@ const char* XrdCtaFile::FName() {
 // getMmap
 //------------------------------------------------------------------------------
 int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return SFS_ERROR;
-  //m_cmdlineOutput = std::to_string(m_cmdlineReturnCode) + m_cmdlineOutput;
-  //*Addr = const_cast<char *>(m_cmdlineOutput.c_str());
-  //Size = m_cmdlineOutput.length();
-  //return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
+  m_cmdlineOutput = std::to_string(m_cmdlineReturnCode) + m_cmdlineOutput;
+  *Addr = const_cast<char *>(m_cmdlineOutput.c_str());
+  Size = m_cmdlineOutput.length();
+  return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
 }
 
 //------------------------------------------------------------------------------
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize XrdCtaFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
-  if(0 > offset) {
-    error.setErrInfo(EINVAL, "The value of offset is negative");
-    return SFS_ERROR;
-  }
-
-  if(offset >= (XrdSfsFileOffset)m_cmdlineOutput.length()) {
-    return SFS_OK;
-  }
-
-  const XrdSfsXferSize remainingNbBytesToRead = m_cmdlineOutput.length() - offset;
-  const XrdSfsXferSize actualNbBytesToRead = remainingNbBytesToRead >= size ? size : remainingNbBytesToRead;
-
-  if(0 < actualNbBytesToRead) {
-    strncpy(buffer, m_cmdlineOutput.c_str() + offset, actualNbBytesToRead);
-    return actualNbBytesToRead;
-  } else {
-    return SFS_OK;
-  }
+//  if((unsigned long)offset<m_cmdlineOutput.length()) {
+//    strncpy(buffer, m_cmdlineOutput.c_str()+offset, size);
+//    return m_cmdlineOutput.length()-offset;
+//  }
+//  else {
+//    return SFS_OK;
+//  }
+  error.setErrInfo(ENOTSUP, "Not supported.");
+  return SFS_ERROR;
 }
 
 //------------------------------------------------------------------------------
