@@ -147,12 +147,13 @@ protected:
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
   
   /**
-   * Parses the command line and dispatches it to the relevant function
+   * Parses the command line, dispatches it to the relevant function and returns
+   * the output for the command-line.
    * 
    * @param requester  The requester identity
-   * @return           SFS_OK in case command succeeded, SFS_ERROR otherwise
+   * @return           The output for the command-line.
    */
-  void dispatchCommand();
+  std::string dispatchCommand();
   
   /**
    * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
@@ -190,33 +191,162 @@ protected:
    * @return true if the specified option is present, false otherwise
    */
   bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
-  
-  void xCom_admin();
-  void xCom_adminhost();
-  void xCom_tapepool();
-  void xCom_archiveroute();
-  void xCom_logicallibrary();
-  void xCom_tape();
-  void xCom_storageclass();
-  void xCom_requestermountrule();
-  void xCom_groupmountrule();
-  void xCom_mountpolicy();
-  void xCom_repack();
-  void xCom_shrink();
-  void xCom_verify();
-  void xCom_archivefile();
-  void xCom_test();
-  void xCom_drive();
-  void xCom_listpendingarchives();
-  void xCom_listpendingretrieves();
-  void xCom_listdrivestates();
-  void xCom_archive();
-  void xCom_retrieve();
-  void xCom_deletearchive();
-  void xCom_cancelretrieve();
-  void xCom_updatefileinfo();
-  void xCom_updatefilestorageclass();
-  void xCom_liststorageclass();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_admin();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_adminhost();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_tapepool();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archiveroute();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_logicallibrary();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_tape();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_storageclass();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_requestermountrule();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_groupmountrule();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_mountpolicy();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_repack();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_shrink();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_verify();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archivefile();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_test();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_drive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_listpendingarchives();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_listpendingretrieves();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_listdrivestates();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_retrieve();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_deletearchive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_cancelretrieve();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_updatefileinfo();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_updatefilestorageclass();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_liststorageclass();
   
   /**
    * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
