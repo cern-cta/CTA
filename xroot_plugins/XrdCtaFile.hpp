@@ -414,14 +414,13 @@ protected:
   time_t stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const;
   
   /**
-   * Sets the return code of the cmdline client and its output. Always returns SFS_OK, which is the only xroot return 
-   * code that allows the copy process to happen successfully. Logs the original request and any error in processing it.
+   * Sets the return code of the cmdline client and its output.
+   * Logs the original request and any error in processing it.
    * 
    * @param  rc The return code of the cmdline client
    * @param  returnString The output of the cmdline client
-   * @return SFS_OK
    */
-  int logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
+  void logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
   
   /**
    * Checks if all needed options are present. Throws UserError otherwise.

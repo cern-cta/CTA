@@ -79,7 +79,7 @@ void XrdCtaFile::checkOptions(const std::string &helpString) {
 //------------------------------------------------------------------------------
 // logRequestAndSetCmdlineResult
 //------------------------------------------------------------------------------
-int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString) {
+void XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString) {
   if(!m_missingRequiredOptions.empty()) {
     m_cmdlineOutput += "The following required options are missing:\n";
     for(auto it=m_missingRequiredOptions.cbegin(); it!=m_missingRequiredOptions.cend(); it++) {
@@ -122,8 +122,6 @@ int XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures:
       m_log(log::ERR, "Unsuccessful Request", params);
       break;
   }
-
-  return SFS_OK;
 }
 
 //------------------------------------------------------------------------------
