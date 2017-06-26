@@ -381,7 +381,7 @@ XrdCtaFile::XrdCtaFile(
   cta::log::Logger *log,
   const char *user,
   int MonID):
-  error(user, MonID),
+  XrdSfsFile(user, MonID),
   m_catalogue(catalogue),
   m_scheduler(scheduler),
   m_log(*log),

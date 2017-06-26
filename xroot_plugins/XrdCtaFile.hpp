@@ -41,7 +41,6 @@ class XrdCtaFile : public XrdSfsFile {
   
 public:
   
-  XrdOucErrInfo  error;
   virtual int open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int close();
   virtual int fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo);
