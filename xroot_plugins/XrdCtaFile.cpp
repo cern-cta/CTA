@@ -80,6 +80,12 @@ void XrdCtaFile::checkOptions(const std::string &helpString) {
 // logRequestAndSetCmdlineResult
 //------------------------------------------------------------------------------
 void XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString) {
+  // The return code of teh executed command is the first character of the
+  // result sent back to the cta command-line tool
+  //
+  // Please note return codes can only be between "0" and "9".
+  m_cmdlineOutput = std::to_string(rc);
+
   if(!m_missingRequiredOptions.empty()) {
     m_cmdlineOutput += "The following required options are missing:\n";
     for(auto it=m_missingRequiredOptions.cbegin(); it!=m_missingRequiredOptions.cend(); it++) {
@@ -256,10 +262,6 @@ const char* XrdCtaFile::FName() {
 int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
   error.setErrInfo(ENOTSUP, "Not supported.");
   return SFS_ERROR;
-  //m_cmdlineOutput = std::to_string(m_cmdlineReturnCode) + m_cmdlineOutput;
-  //*Addr = const_cast<char *>(m_cmdlineOutput.c_str());
-  //Size = m_cmdlineOutput.length();
-  //return SFS_OK; //change to "return SFS_ERROR;" in case the read function below is wanted, in that case uncomment the lines in that function.
 }
 
 //------------------------------------------------------------------------------
