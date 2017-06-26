@@ -23,6 +23,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/optional.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "xroot_plugins/ListArchiveFilesCmd.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
@@ -117,9 +118,9 @@ protected:
   bool m_suppressOptionalOptionsWarning;
   
   /**
-   * Set to true when the current command is to list archive files.
+   * Points to a ListArchiveFilesCmd object if the current command is to list archive files.
    */
-  bool m_listingArchiveFiles = false;
+  std::unique_ptr<cta::xrootPlugins::ListArchiveFilesCmd> m_listArchiveFilesCmd;
 
   /**
    * Reads the command result from the m_cmdlineOutput member variable.

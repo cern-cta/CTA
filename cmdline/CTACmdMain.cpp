@@ -167,7 +167,14 @@ int sendCommand(const int argc, const char **argv) {
       }
 
       if(bytesRead > 0) {
-        std::cout << buf;
+        for(std::string::size_type i = 0; i < bytesRead; i++) {
+          const char c = buf[i];
+          if(0 == c) {
+            std::cout << "<NULL>";
+          } else {
+            std::cout << c;
+          }
+        }
 
         if(writeToStderr) {
           std::cerr<<buf;

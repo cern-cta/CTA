@@ -267,9 +267,9 @@ int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize XrdCtaFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
-  if (m_listingArchiveFiles) {
+  if (nullptr != m_listArchiveFilesCmd.get()) {
     // Temporarily treat the "cta archive ls" command the same as all the others
-    return readFromCmdlineOutput(offset, buffer, size);
+    return m_listArchiveFilesCmd->read(offset, buffer, size);
   } else {
     return readFromCmdlineOutput(offset, buffer, size);
   }
@@ -1622,7 +1622,9 @@ std::string XrdCtaFile::xCom_archivefile() {
       checkOptions(help.str());
     }
     if(!summary) {
-      m_listingArchiveFiles = true;
+      const bool displayHeader = hasOption("-h", "--header");
+      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(m_log, error, displayHeader, searchCriteria, *m_catalogue));
+      /*
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
         std::vector<std::vector<std::string>> responseTable;
@@ -1652,6 +1654,7 @@ std::string XrdCtaFile::xCom_archivefile() {
         }
         cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
       }
+      */
     }
     else { //summary
       cta::common::dataStructures::ArchiveFileSummary summary=m_catalogue->getTapeFileSummary(searchCriteria);
