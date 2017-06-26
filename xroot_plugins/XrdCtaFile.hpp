@@ -313,12 +313,6 @@ protected:
    * Executes a command and returns the output for the command-line.
    * @return The output for the command-line.
    */
-  std::string xCom_listdrivestates();
-
-  /**
-   * Executes a command and returns the output for the command-line.
-   * @return The output for the command-line.
-   */
   std::string xCom_archive();
 
   /**
@@ -356,7 +350,7 @@ protected:
    * @return The output for the command-line.
    */
   std::string xCom_liststorageclass();
-  
+
   /**
    * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
    */

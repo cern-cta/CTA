@@ -163,7 +163,6 @@ std::string XrdCtaFile::dispatchCommand() {
   else if("dr"   == command || "drive"                  == command) {authorizeAdmin(); return xCom_drive();}
   else if("lpa"  == command || "listpendingarchives"    == command) {authorizeAdmin(); return xCom_listpendingarchives();}
   else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); return xCom_listpendingretrieves();}
-  else if("lds"  == command || "listdrivestates"        == command) {authorizeAdmin(); return xCom_listdrivestates();}
   
   else if("a"    == command || "archive"                == command) {return xCom_archive();}
   else if("r"    == command || "retrieve"               == command) {return xCom_retrieve();}
@@ -1817,23 +1816,64 @@ std::string XrdCtaFile::xCom_drive() {
     if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
       // We will dump all the drives, and select the one asked for if needed.
       bool singleDrive = (m_requestTokens.size() == 4);
+      bool driveFound = false;
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "forceDown", "vid"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "vid", "tapepool","session id","since","files","bytes","latest speed", "last updated"};
         responseTable.push_back(headers);
         for (auto ds: driveStates) {
           if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
+          driveFound = true;
           std::vector<std::string> currentRow;
           currentRow.push_back(ds.driveName);
           currentRow.push_back(ds.host);
           currentRow.push_back(ds.logicalLibrary);
           currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-          currentRow.push_back(ds.desiredDriveState.up?"UP":"DOWN");
-          currentRow.push_back(ds.desiredDriveState.forceDown?"FORCE":"");
+          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
           currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
+          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
+          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+          // print the time spent in the current state
+          switch(ds.driveStatus) {
+          case cta::common::dataStructures::DriveStatus::Up:
+          case cta::common::dataStructures::DriveStatus::Down:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.downOrUpStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Starting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.startStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Mounting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.mountStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Transfering:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.transferStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::CleaningUp:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.cleanupStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Unloading:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unloadStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Unmounting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unmountStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::DrainingToDisk:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.drainingStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Unknown:
+            currentRow.push_back("-");
+            break;
+          }
+          currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferedInSession));
+          currentRow.push_back(std::to_string((unsigned long long)ds.bytesTransferedInSession));
+          currentRow.push_back(std::to_string((long double)ds.latestBandwidth));
+          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
+        }
+        if (singleDrive && !driveFound) {
+          throw cta::exception::UserError(std::string("No such drive: ") + m_requestTokens.at(3));
         }
         cmdlineOutput<< formatResponse(responseTable, true);
       }
@@ -1971,40 +2011,6 @@ std::string XrdCtaFile::xCom_listpendingretrieves() {
       }
       cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
     }
-  }
-  return cmdlineOutput.str();
-}
-
-//------------------------------------------------------------------------------
-// xCom_listdrivestates
-//------------------------------------------------------------------------------
-std::string XrdCtaFile::xCom_listdrivestates() {
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  help << m_requestTokens.at(0) << " lds/listdrivestates [--header/-h]" << std::endl;
-  std::list<cta::common::dataStructures::DriveState> result = m_scheduler->getDriveStates(m_cliIdentity);  
-  if(result.size()>0) {
-    std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"logical library","host","drive","status","mount","vid","tapepool","session id","since","files","bytes","latest speed"};
-    if(hasOption("-h", "--header")) responseTable.push_back(header);    
-    for(auto it = result.cbegin(); it != result.cend(); it++) {
-      std::vector<std::string> currentRow;
-      currentRow.push_back(it->logicalLibrary);
-      currentRow.push_back(it->host);
-      currentRow.push_back(it->driveName);
-      // TODO: handle timing information.
-      currentRow.push_back(cta::common::dataStructures::toString(it->driveStatus));
-      currentRow.push_back(cta::common::dataStructures::toString(it->mountType));
-      currentRow.push_back(it->currentVid);
-      currentRow.push_back(it->currentTapePool);
-      currentRow.push_back(std::to_string((unsigned long long)it->sessionId));
-      currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-it->sessionStartTime)));
-      currentRow.push_back(std::to_string((unsigned long long)it->filesTransferedInSession));
-      currentRow.push_back(std::to_string((unsigned long long)it->bytesTransferedInSession));
-      currentRow.push_back(std::to_string((long double)it->latestBandwidth));
-      responseTable.push_back(currentRow);
-    }
-    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
   }
   return cmdlineOutput.str();
 }
@@ -2277,7 +2283,6 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
   help << programName << " drive/dr                 up/down"                    << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
-  help << programName << " listdrivestates/lds"                                 << std::endl;
   help << programName << " listpendingarchives/lpa"                             << std::endl;
   help << programName << " listpendingretrieves/lpr"                            << std::endl;
   help << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl;
