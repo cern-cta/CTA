@@ -97,12 +97,11 @@ void XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures
     }
   }
   m_cmdlineOutput += returnString;
-  m_cmdlineReturnCode = rc;
-  
+
   std::list<cta::log::Param> params;
   params.push_back({"Username", m_cliIdentity.username});
   params.push_back({"Host", m_cliIdentity.host});
-  params.push_back({"ReturnCode", toString(m_cmdlineReturnCode)});
+  params.push_back({"ReturnCode", toString(rc)});
   params.push_back({"CommandOutput", m_cmdlineOutput});
   std::stringstream originalRequest;
   for(auto it=m_requestTokens.begin(); it!=m_requestTokens.end(); it++) {
@@ -110,7 +109,7 @@ void XrdCtaFile::logRequestAndSetCmdlineResult(const cta::common::dataStructures
   }
   params.push_back(cta::log::Param("REQUEST", originalRequest.str()));
   
-  switch(m_cmdlineReturnCode) {
+  switch(rc) {
     case cta::common::dataStructures::FrontendReturnCode::ok:
       m_log(log::INFO, "Successful Request", params);
       break;
@@ -373,8 +372,7 @@ XrdCtaFile::XrdCtaFile(
   m_scheduler(scheduler),
   m_log(*log),
   m_cmdlineOutput(""),
-  m_cmdlineReturnCode(cta::common::dataStructures::FrontendReturnCode::ok),
-  m_suppressOptionalOptionsWarning(false){  
+  m_suppressOptionalOptionsWarning(false){
 }
 
 //------------------------------------------------------------------------------

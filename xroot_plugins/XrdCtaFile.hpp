@@ -83,11 +83,6 @@ protected:
   std::string m_cmdlineOutput;
   
   /**
-   * This is the return code to be passed to the client
-   */
-  cta::common::dataStructures::FrontendReturnCode m_cmdlineReturnCode;
-  
-  /**
    * The original client request represented as a vector of strings
    */
   std::vector<std::string> m_requestTokens;
