@@ -35,9 +35,10 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   yum() { echo "Skipping yum $@"; }
   /opt/run/bin/mkSymlinks.sh
 
-  if [ "-${MY_NAME}-" == "-ctafrontend-" ]; then
-    echo "Adding cta user and group"
-    /usr/bin/getent group cta || /usr/sbin/groupadd cta
-    /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
-  fi
+  # cta:cta needed for ctafrontend and taped but adding it inconditionally in buildtree
+  echo "Adding cta user and group"
+  /usr/bin/getent group cta || /usr/sbin/groupadd cta
+  /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+  # creating /var/log/cta needed by taped
+  mkdir -p /var/log/cta
 fi
