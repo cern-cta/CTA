@@ -268,6 +268,18 @@ int XrdCtaFile::getMmap(void **Addr, off_t &Size) {
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize XrdCtaFile::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
+  if (m_listingArchiveFiles) {
+    // Temporarily treat the "cta archive ls" command the same as all the others
+    return readFromCmdlineOutput(offset, buffer, size);
+  } else {
+    return readFromCmdlineOutput(offset, buffer, size);
+  }
+}
+
+//------------------------------------------------------------------------------
+// readFromCmdlineOutput
+//------------------------------------------------------------------------------
+XrdSfsXferSize XrdCtaFile::readFromCmdlineOutput(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
   if(0 > offset) {
     error.setErrInfo(EINVAL, "The value of offset is negative");
     return SFS_ERROR;
@@ -1611,6 +1623,7 @@ std::string XrdCtaFile::xCom_archivefile() {
       checkOptions(help.str());
     }
     if(!summary) {
+      m_listingArchiveFiles = true;
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
         std::vector<std::vector<std::string>> responseTable;

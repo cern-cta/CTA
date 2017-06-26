@@ -118,6 +118,21 @@ protected:
   bool m_suppressOptionalOptionsWarning;
   
   /**
+   * Set to true when the current command is to list archive files.
+   */
+  bool m_listingArchiveFiles = false;
+
+  /**
+   * Reads the command result from the m_cmdlineOutput member variable.
+   *
+   * @param offset
+   * @param buffer
+   * @param size
+   * @return
+   */
+  virtual XrdSfsXferSize readFromCmdlineOutput(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size);
+
+  /**
    * Decodes a string in base 64
    * 
    * @param msg string to decode
