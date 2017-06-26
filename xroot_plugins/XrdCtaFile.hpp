@@ -209,7 +209,6 @@ protected:
   void xCom_drive();
   void xCom_listpendingarchives();
   void xCom_listpendingretrieves();
-  void xCom_listdrivestates();
   void xCom_archive();
   void xCom_retrieve();
   void xCom_deletearchive();
