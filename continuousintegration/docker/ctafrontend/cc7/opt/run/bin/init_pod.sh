@@ -34,4 +34,10 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   yum-config-manager() { echo "Skipping yum-config-manager $@"; }
   yum() { echo "Skipping yum $@"; }
   /opt/run/bin/mkSymlinks.sh
+
+  if [ "-${MY_NAME}-" == "-ctafrontend-" ]; then
+    echo "Adding cta user and group"
+    /usr/bin/getent group cta || /usr/sbin/groupadd cta
+    /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+  fi
 fi
