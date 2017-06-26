@@ -26,7 +26,7 @@ FROM buildtree-runner-stage1
 # my environment variables
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     LOCALORCHESTRATIONDIR="/opt/ci" \
-    BASEDIR="continuousintegration/docker/buildtree_runner/cc7" \
+    BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
     CTAREPODIR="/tmp/repo"
 
 # Add pod specific configuration

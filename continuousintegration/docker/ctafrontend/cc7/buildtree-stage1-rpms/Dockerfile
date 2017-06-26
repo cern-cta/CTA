@@ -26,7 +26,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 # my environment variables
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     LOCALORCHESTRATIONDIR="/opt/ci" \
-    BASEDIR="continuousintegration/docker/buildtree_runner/cc7" \
+    BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
     CTAREPODIR="/tmp/repo"
 
 # Manage repos before running yum

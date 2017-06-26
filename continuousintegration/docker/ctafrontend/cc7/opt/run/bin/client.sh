@@ -1,6 +1,6 @@
 #!/bin/bash
 
-/opt/run/bin/init_pod.sh
+. /opt/run/bin/init_pod.sh
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph

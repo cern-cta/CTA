@@ -240,6 +240,12 @@ kubectl --namespace=${instance} exec kdc cat /root/eos-server.keytab | kubectl -
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
+
+
+# allow eos to start
+kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
+
+
 # create users on the mgm
 # this is done in ctaeos-mgm.sh as the mgm needs this to setup the ACLs
 

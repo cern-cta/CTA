@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # make symbolic links to all CTA binaries.
 

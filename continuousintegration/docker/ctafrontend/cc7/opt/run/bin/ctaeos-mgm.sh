@@ -1,6 +1,6 @@
-#!/bin/sh 
+#!/bin/bash 
 
-/opt/run/bin/init_pod.sh
+. /opt/run/bin/init_pod.sh
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable eos-citrine-commit
@@ -83,6 +83,16 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
 
   mkdir -p /fst
   chown daemon:daemon /fst/
+
+
+# Waiting for /CANSTART file before starting eos
+echo -n "Waiting for /CANSTART before going further"
+for ((i=0;i<600;i++)); do
+  test -f /CANSTART && break
+  sleep 1
+  echo -n .
+done
+test -f /CANSTART && echo OK || exit 1
 
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
