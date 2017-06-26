@@ -1797,7 +1797,7 @@ void XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "vid", "tapepool","session id","since","files","bytes","latest speed"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "vid", "tapepool","session id","since","files","bytes","latest speed", "last updated"};
         responseTable.push_back(headers);
         for (auto ds: driveStates) {
           if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
@@ -1846,6 +1846,7 @@ void XrdCtaFile::xCom_drive() {
           currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferedInSession));
           currentRow.push_back(std::to_string((unsigned long long)ds.bytesTransferedInSession));
           currentRow.push_back(std::to_string((long double)ds.latestBandwidth));
+          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
         }
         if (singleDrive && !driveFound) {
