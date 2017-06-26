@@ -64,3 +64,9 @@ mkdir -pv /shared/logs
 sudo kubectl delete pv log || true
 sudo kubectl create -f ./log_PV.yaml
 sudo kubectl get persistentvolumes -l type=logs
+
+echo Generating the stg persistent volume
+mkdir -pv /shared/stg
+sudo kubectl delete pv stg || true
+sudo kubectl create -f ./stg_PV.yaml
+sudo kubectl get persistentvolumes -l type=stg
