@@ -109,7 +109,7 @@ ctageneric_docker:
     - ""
   variables:
     TO: gitlab-registry.cern.ch/cta/ctageneric:${CI_PIPELINE_ID}
-    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
+    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile
 
 
 ctageneric_docker_rename:
