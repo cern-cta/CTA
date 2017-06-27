@@ -18,6 +18,7 @@
 
 #include "xroot_plugins/ListArchiveFilesCmd.hpp"
 
+#include <iomanip>
 #include <sstream>
 #include <stdint.h>
 
@@ -54,8 +55,24 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
     m_readBuffer << "0";
 
     if(m_displayHeader) {
-      m_readBuffer << "\x1b[31;1mid  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
-        "storage class  owner  group  creation time  path\x1b[0m\n";
+      m_readBuffer <<
+        "\x1b[31;1m" << // Change the colour of the output text to red
+        std::setfill(' ') << std::setw(7) << std::right << "id" << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << "copy no" << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << "vid" << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << "fseq" << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << "block id" << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << "instance" << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << "disk id" << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << "size" << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << "checksum type" << " " <<
+        std::setfill(' ') << std::setw(14) << std::right << "checksum value" << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << "storage class" << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << "owner" << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << "group" << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << "creation time" << " " <<
+        "path" <<
+        "\x1b[0m\n"; // Return the colour of the output text
     }
   }
 
@@ -125,20 +142,20 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
       const auto copyNb = copyNbToTapeFile.first;
       const common::dataStructures::TapeFile &tapeFile = copyNbToTapeFile.second;
       m_readBuffer <<
-        archiveFile.archiveFileID << " " <<
-        copyNb << " " <<
-        tapeFile.vid << " " <<
-        tapeFile.fSeq << " " <<
-        tapeFile.blockId << " " <<
-        archiveFile.diskInstance << " " <<
-        archiveFile.diskFileId << " " <<
-        archiveFile.fileSize << " " <<
-        archiveFile.checksumType << " " <<
-        archiveFile.checksumValue << " " <<
-        archiveFile.storageClass << " " <<
-        archiveFile.diskFileInfo.owner << " " <<
-        archiveFile.diskFileInfo.group << " " <<
-        archiveFile.creationTime << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << archiveFile.archiveFileID << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << copyNb << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << tapeFile.vid << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << tapeFile.fSeq << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << tapeFile.blockId << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskInstance << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << archiveFile.diskFileId << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << archiveFile.fileSize << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.checksumType << " " <<
+        std::setfill(' ') << std::setw(14) << std::right << archiveFile.checksumValue << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.storageClass << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.owner << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.group << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.creationTime << " " <<
         archiveFile.diskFileInfo.path << "\n";
     }
   }
