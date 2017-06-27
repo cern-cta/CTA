@@ -91,9 +91,9 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
-      std::unique_ptr<ArchiveFileItor> itor = m_catalogue->getArchiveFileItor();
-      while(itor->hasMore()) {
-        const auto archiveFile = itor->next();
+      auto itor = m_catalogue->getArchiveFileItor();
+      while(itor.hasMore()) {
+        const auto archiveFile = itor.next();
         m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID);
       }
     }
@@ -4722,7 +4722,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -4904,7 +4904,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_zero_prefetch) {
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existance_archiveFileId) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.archiveFileId = 1234;
@@ -4915,7 +4915,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existance_archiveFile
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_group_without_instance) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskFileGroup = "disk_file_group";
@@ -4925,7 +4925,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_group_without_i
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_group) {
   using namespace cta;
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -4937,7 +4937,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_gr
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_id_without_instance) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskFileId = "disk_file_id";
@@ -4947,7 +4947,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_id_without_inst
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_id) {
   using namespace cta;
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -4959,7 +4959,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_id
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_path_without_instance) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskFilePath = "disk_file_path";
@@ -4969,7 +4969,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_path_without_in
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_path) {
   using namespace cta;
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -4981,7 +4981,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_pa
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_user_without_instance) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskFileUser = "disk_file_user";
@@ -4991,7 +4991,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_disk_file_user_without_in
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_disk_file_user) {
   using namespace cta;
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -5032,7 +5032,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_wi
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.storageClass = storageClass.name;
@@ -5043,7 +5043,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_existant_storage_class_wi
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_storage_class) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.diskInstance = "non_existant_disk_instance";
@@ -5055,7 +5055,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_storage_clas
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tape_pool) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.tapePool = "non_existant_tape_pool";
@@ -5066,7 +5066,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_tape_pool) {
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFileItor_non_existant_vid) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = "non_existant_vid";
@@ -5160,7 +5160,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   const uint64_t nbArchiveFiles = 10;
   const uint64_t archiveFileSize = 1000;
   const uint64_t compressedFileSize = 800;
@@ -5276,9 +5276,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       searchCriteria.tapeFileCopyNb = 1;
       searchCriteria.tapePool = tapePoolName;
 
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria,
-        prefetch);
-      std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(1, m.size());
 
       const auto idAndFile = m.find(1);
@@ -5296,8 +5295,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     }
 
     {
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), prefetch);
-      std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(catalogue::TapeFileSearchCriteria(), prefetch);
+      std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -5377,8 +5376,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.archiveFileId = 10;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(1, m.size());
       ASSERT_EQ(10, m.begin()->first);
       ASSERT_EQ(10, m.begin()->second.archiveFileID);
@@ -5392,8 +5391,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5406,8 +5405,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileId = "12345687";
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(1, m.size());
       ASSERT_EQ("12345687", m.begin()->second.diskFileId);
 
@@ -5421,8 +5420,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFilePath = "/public_dir/public_file_10";
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(1, m.size());
       ASSERT_EQ("/public_dir/public_file_10", m.begin()->second.diskFileInfo.path);
 
@@ -5436,8 +5435,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileUser = "public_disk_user";
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5450,8 +5449,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.diskFileGroup = "public_disk_group";
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5464,8 +5463,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.diskInstance = storageClass.diskInstance;
       searchCriteria.storageClass = storageClass.name;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5476,8 +5475,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5489,8 +5488,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.vid = vid1;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5502,8 +5501,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.tapeFileCopyNb = 1;
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5515,8 +5514,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     {
       catalogue::TapeFileSearchCriteria searchCriteria;
       searchCriteria.tapePool = "tape_pool_name";
-      const auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
-      const auto m = archiveFileItorToMap(*archiveFileItor);
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria, prefetch);
+      const auto m = archiveFileItorToMap(archiveFileItor);
       ASSERT_EQ(nbArchiveFiles, m.size());
 
       const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
@@ -5614,7 +5613,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tap
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -5812,7 +5811,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_same_archive_
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -5948,7 +5947,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_corrupted_dis
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -6110,7 +6109,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -6155,8 +6154,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   }
 
   {
-    const auto archiveFileItor = m_catalogue->getArchiveFileItor();
-    const auto m = archiveFileItorToMap(*archiveFileItor);
+    auto archiveFileItor = m_catalogue->getArchiveFileItor();
+    const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
     auto mItor = m.find(file1Written.archiveFileId);
     ASSERT_FALSE(m.end() == mItor);
@@ -6249,8 +6248,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   }
 
   {
-    const auto archiveFileItor = m_catalogue->getArchiveFileItor();
-    const auto m = archiveFileItorToMap(*archiveFileItor);
+    auto archiveFileItor = m_catalogue->getArchiveFileItor();
+    const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
 
     {
@@ -6380,7 +6379,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) {
@@ -6459,7 +6458,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -6504,8 +6503,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
   }
 
   {
-    const auto archiveFileItor = m_catalogue->getArchiveFileItor();
-    const auto m = archiveFileItorToMap(*archiveFileItor);
+    auto archiveFileItor = m_catalogue->getArchiveFileItor();
+    const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
     auto mItor = m.find(file1Written.archiveFileId);
     ASSERT_FALSE(m.end() == mItor);
@@ -6598,8 +6597,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
   }
 
   {
-    const auto archiveFileItor = m_catalogue->getArchiveFileItor();
-    const auto m = archiveFileItorToMap(*archiveFileItor);
+    auto archiveFileItor = m_catalogue->getArchiveFileItor();
+    const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
 
     {
@@ -6694,7 +6693,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->deleteArchiveFile("disk_instance", 12345678), catalogue::ArchiveFileDoesNotExist);
 }
 
@@ -6888,7 +6887,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;
@@ -7094,7 +7093,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   const uint64_t archiveFileId = 1234;
 
-  ASSERT_FALSE(m_catalogue->getArchiveFileItor()->hasMore());
+  ASSERT_FALSE(m_catalogue->getArchiveFileItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 
   common::dataStructures::StorageClass storageClass;

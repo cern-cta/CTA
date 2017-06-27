@@ -50,7 +50,7 @@ class ArchiveFileRow;
 /**
  * Forward declaration.
  */
-class RdbmsArchiveFileItor;
+class RdbmsArchiveFileItorImpl;
 
 /**
  * CTA catalogue implemented using a relational database backend.
@@ -447,7 +447,7 @@ public:
    * This parameter must be set to a value equal to or greater than 1.
    * @return An iterator over the list of archive files.
    */
-  std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
+  ArchiveFileItor getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
     const uint64_t nbArchiveFilesToPrefetch) const override;
 
   /**
@@ -499,7 +499,7 @@ public:
 
 protected:
 
-  friend RdbmsArchiveFileItor;
+  friend RdbmsArchiveFileItorImpl;
 
   /**
    * Mutex to be used to a take a global lock on the database.

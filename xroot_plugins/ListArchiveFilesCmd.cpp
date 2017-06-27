@@ -135,8 +135,8 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
   // Clear the read buffer
   m_readBuffer.str(std::string());
 
-  while(m_archiveFileItor->hasMore() && nbArchiveFilesToFetch > nbFetchedArchiveFiles) {
-    const common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor->next();
+  while(m_archiveFileItor.hasMore() && nbArchiveFilesToFetch > nbFetchedArchiveFiles) {
+    const common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
     nbFetchedArchiveFiles++;
     for(auto copyNbToTapeFile: archiveFile.tapeFiles) {
       const auto copyNb = copyNbToTapeFile.first;

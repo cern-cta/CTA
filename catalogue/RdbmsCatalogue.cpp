@@ -17,7 +17,7 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/RdbmsArchiveFileItor.hpp"
+#include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
@@ -3466,13 +3466,13 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const rdbms::Stm
 //------------------------------------------------------------------------------
 // getArchiveFileItor
 //------------------------------------------------------------------------------
-std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
+ArchiveFileItor RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
   const uint64_t nbArchiveFilesToPrefetch) const {
 
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    return cta::make_unique<RdbmsArchiveFileItor>(*this, nbArchiveFilesToPrefetch, searchCriteria);
+    return ArchiveFileItor(new RdbmsArchiveFileItorImpl(*this, nbArchiveFilesToPrefetch, searchCriteria));
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

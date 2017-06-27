@@ -36,12 +36,13 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileItor.cpp
+  ArchiveFileItorImpl.cpp
   Catalogue.cpp
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
-  RdbmsArchiveFileItor.cpp
+  RdbmsArchiveFileItorImpl.cpp
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp

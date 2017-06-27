@@ -62,7 +62,6 @@
 
 #include <list>
 #include <map>
-#include <memory>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -463,7 +462,7 @@ public:
    * This parameter must be set to a value equal to or greater than 1.
    * @return An iterator over the list of archive files.
    */
-  virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(
+  virtual ArchiveFileItor getArchiveFileItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria(),
     const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
 

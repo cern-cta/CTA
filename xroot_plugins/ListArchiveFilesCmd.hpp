@@ -23,7 +23,6 @@
 #include "common/log/Logger.hpp"
 
 #include <XrdSfs/XrdSfsInterface.hh>
-#include <memory>
 #include <sstream>
 #include <string>
 
@@ -100,7 +99,7 @@ protected:
   /**
    * Iterator over the archive files in the CTA catalogue that are to be listed.
    */
-  std::unique_ptr<catalogue::ArchiveFileItor> m_archiveFileItor;
+  catalogue::ArchiveFileItor m_archiveFileItor;
 
   /**
    * The buffer that sits between calls to ListArchiveFilesCmd::read() and calls

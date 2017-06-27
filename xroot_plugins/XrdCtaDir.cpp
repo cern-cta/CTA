@@ -95,10 +95,10 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
 // nextEntry
 //------------------------------------------------------------------------------
 const char* XrdCtaDir::nextEntry() {
-  if(!(m_itor->hasMore())) {
+  if(!(m_itor.hasMore())) {
     return nullptr;
   }
-  return m_itor->next().diskFileId.c_str();
+  return m_itor.next().diskFileId.c_str();
 }
 
 //------------------------------------------------------------------------------
