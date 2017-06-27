@@ -111,10 +111,15 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
 // refreshReadBuffer
 //------------------------------------------------------------------------------
 void ListArchiveFilesCmd::refreshReadBuffer() {
+  // Note that one archive file may have more than one tape file
+  const uint32_t nbArchiveFilesToFetch = 100;
+  uint32_t nbFetchedArchiveFiles = 0;
+
   m_readBuffer.clear();
 
-  if(m_archiveFileItor->hasMore()) {
+  while(m_archiveFileItor->hasMore() && nbArchiveFilesToFetch > nbFetchedArchiveFiles) {
     const common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor->next();
+    nbFetchedArchiveFiles++;
     for(auto copyNbToTapeFile: archiveFile.tapeFiles) {
       const auto copyNb = copyNbToTapeFile.first;
       const common::dataStructures::TapeFile &tapeFile = copyNbToTapeFile.second;

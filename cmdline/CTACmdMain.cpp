@@ -157,27 +157,21 @@ int sendCommand(const int argc, const char **argv) {
   {
     uint64_t readOffset = 1; // The first character at offset 0 has already been read
     uint32_t bytesRead = 0;
+    const size_t bufSize = 20480;
+    std::unique_ptr<char []> buf(new char[bufSize]);
     do {
       bytesRead = 0;
-      char buf[1024];
-      memset(buf, 0, sizeof(buf));
-      const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, sizeof(buf) - 1, buf, bytesRead);
+      memset(buf.get(), 0, bufSize);
+      const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, bufSize - 1, buf.get(), bytesRead);
       if(!readStatus.IsOK()) {
         throw std::runtime_error(std::string("Failed to read ") + cmdPath + ": " + readStatus.ToStr());
       }
 
       if(bytesRead > 0) {
-        for(std::string::size_type i = 0; i < bytesRead; i++) {
-          const char c = buf[i];
-          if(0 == c) {
-            std::cout << "<NULL>";
-          } else {
-            std::cout << c;
-          }
-        }
+        std::cout << buf.get();
 
         if(writeToStderr) {
-          std::cerr<<buf;
+          std::cerr << buf.get();
         }
       }
 
