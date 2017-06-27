@@ -39,6 +39,11 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   echo "Adding cta user and group"
   /usr/bin/getent group cta || /usr/sbin/groupadd cta
   /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+  ## The following is not working as one cannot refresh groups in current shell...
+  # echo 'Adding cta in tape group (grant access to /dev/sg* /dev/st* /dev/nst* devices'
+  # /usr/sbin/usermod -a -G tape cta
+  # Chmod is the only way to go
+  chmod 666 /dev/nst* /dev/st* /dev/sg*
   # creating /var/log/cta needed by taped
   mkdir -p /var/log/cta
 fi
