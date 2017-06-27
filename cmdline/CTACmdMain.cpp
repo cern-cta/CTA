@@ -161,7 +161,7 @@ int sendCommand(const int argc, const char **argv) {
       bytesRead = 0;
       char buf[1024];
       memset(buf, 0, sizeof(buf));
-      const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, sizeof(buf - 1), buf, bytesRead);
+      const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, sizeof(buf) - 1, buf, bytesRead);
       if(!readStatus.IsOK()) {
         throw std::runtime_error(std::string("Failed to read ") + cmdPath + ": " + readStatus.ToStr());
       }
