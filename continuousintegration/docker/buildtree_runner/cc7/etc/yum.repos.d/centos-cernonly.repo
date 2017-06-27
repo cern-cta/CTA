@@ -1,7 +1,0 @@
-[centos-cernonly]
-name=CentOS-7 - CERN Only [20161019]
-baseurl=http://linuxsoft.cern.ch/internal/yumsnapshot/20161019/cern/centos/7/cernonly/x86_64
-enabled=1
-gpgcheck=0
-priority=10
-
