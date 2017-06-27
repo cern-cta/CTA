@@ -57,7 +57,7 @@ This image also contains embedded scripts from the CTA tree. As the build is 2 s
 
 When updating image content, be careful that some layers can be cached event if the content changed (for example an `ADD` layer may not be updated in the new image...). To make sure everything is clean, you need to remove all cached layers from `docker`:
 ```
-docker rmi $(docker images -a | tail -n+1 | awk '{print $3}')
+docker rmi $(docker images -a | tail -n+2 | awk '{print $3}')
 ```
 
 ### Preparing the environment (MHVTL, kubernetes volumes...)
