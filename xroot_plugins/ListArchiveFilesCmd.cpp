@@ -51,10 +51,10 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
     m_state = State::LISTING_ARCHIVE_FILES;
 
     // The first character of the reply stream is the return code
-    m_readBuffer = "0";
+    m_readBuffer << "0";
 
     if(m_displayHeader) {
-      m_readBuffer += "\x1b[31;1mid  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
+      m_readBuffer << "\x1b[31;1mid  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
         "storage class  owner  group  creation time  path\x1b[0m\n";
     }
   }
@@ -74,7 +74,7 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
     return SFS_ERROR;
   }
 
-  XrdSfsXferSize nbBytesToBeReadFromBuffer = (XrdSfsXferSize)m_readBuffer.size() - offSetIntoReadBuffer;
+  XrdSfsXferSize nbBytesToBeReadFromBuffer = (XrdSfsXferSize)m_readBuffer.str().size() - offSetIntoReadBuffer;
   if(0 > nbBytesToBeReadFromBuffer) {
     std::ostringstream errMsg;
     errMsg << "nbBytesToBeReadFromBuffer must be positive: actual=" << nbBytesToBeReadFromBuffer;
@@ -84,13 +84,13 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
 
   if(nbBytesToBeReadFromBuffer == 0) {
     refreshReadBuffer();
-    if (m_readBuffer.empty()) {
+    if (m_readBuffer.str().empty()) {
       m_state = State::LISTED_LAST_ARCHIVE_FILE;
       return SFS_OK;
     }
     m_fileOffsetOfReadBuffer = offset;
     offSetIntoReadBuffer = 0;
-    nbBytesToBeReadFromBuffer = m_readBuffer.size();
+    nbBytesToBeReadFromBuffer = m_readBuffer.str().size();
   }
 
   const XrdSfsXferSize actualNbBytesToRead = nbBytesToBeReadFromBuffer >= size ? size : nbBytesToBeReadFromBuffer;
@@ -101,7 +101,7 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
     return SFS_ERROR;
   }
 
-  strncpy(buffer, m_readBuffer.c_str() + offSetIntoReadBuffer, actualNbBytesToRead);
+  strncpy(buffer, m_readBuffer.str().c_str() + offSetIntoReadBuffer, actualNbBytesToRead);
   m_expectedFileOffset += actualNbBytesToRead;
 
   return actualNbBytesToRead;
@@ -115,7 +115,8 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
   const uint32_t nbArchiveFilesToFetch = 100;
   uint32_t nbFetchedArchiveFiles = 0;
 
-  m_readBuffer.clear();
+  // Clear the read buffer
+  m_readBuffer.str(std::string());
 
   while(m_archiveFileItor->hasMore() && nbArchiveFilesToFetch > nbFetchedArchiveFiles) {
     const common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor->next();
@@ -123,22 +124,22 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
     for(auto copyNbToTapeFile: archiveFile.tapeFiles) {
       const auto copyNb = copyNbToTapeFile.first;
       const common::dataStructures::TapeFile &tapeFile = copyNbToTapeFile.second;
-      m_readBuffer +=
-        std::to_string((unsigned long long) archiveFile.archiveFileID) + " " +
-        std::to_string((unsigned long long) copyNb) + " " +
-        tapeFile.vid + " " +
-        std::to_string((unsigned long long) tapeFile.fSeq) + " " +
-        std::to_string((unsigned long long) tapeFile.blockId) + " " +
-        archiveFile.diskInstance + " " +
-        archiveFile.diskFileId + " " +
-        std::to_string((unsigned long long) archiveFile.fileSize) + " " +
-        archiveFile.checksumType + " " +
-        archiveFile.checksumValue + " " +
-        archiveFile.storageClass + " " +
-        archiveFile.diskFileInfo.owner + " " +
-        archiveFile.diskFileInfo.group + " " +
-        std::to_string((unsigned long long) archiveFile.creationTime) + " " +
-        archiveFile.diskFileInfo.path + "\n";
+      m_readBuffer <<
+        archiveFile.archiveFileID << " " <<
+        copyNb << " " <<
+        tapeFile.vid << " " <<
+        tapeFile.fSeq << " " <<
+        tapeFile.blockId << " " <<
+        archiveFile.diskInstance << " " <<
+        archiveFile.diskFileId << " " <<
+        archiveFile.fileSize << " " <<
+        archiveFile.checksumType << " " <<
+        archiveFile.checksumValue << " " <<
+        archiveFile.storageClass << " " <<
+        archiveFile.diskFileInfo.owner << " " <<
+        archiveFile.diskFileInfo.group << " " <<
+        archiveFile.creationTime << " " <<
+        archiveFile.diskFileInfo.path << "\n";
     }
   }
 }
