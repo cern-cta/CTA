@@ -54,8 +54,8 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
     m_readBuffer = "0";
 
     if(m_displayHeader) {
-      m_readBuffer += "id  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
-        "storage class  owner  group  path  creation time\n";
+      m_readBuffer += "\x1b[31;1mid  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
+        "storage class  owner  group  path  creation time\x1b[0m\n";
     }
   }
 
