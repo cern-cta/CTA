@@ -58,6 +58,8 @@ void ArchiveQueue::initialize(const std::string& name) {
   // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
   m_payload.set_oldestjobcreationtime(0);
+  // set the initial summary map rebuild count to zero
+  m_payload.set_mapsrebuildcount(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
@@ -79,6 +81,7 @@ void ArchiveQueue::commit() {
       priorityMap.incCount(m_payload.pendingarchivejobs(i).priority());
       minArchiveRequestAgeMap.incCount(m_payload.pendingarchivejobs(i).priority());
     }
+    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
   }
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::commit();
 }
@@ -241,6 +244,7 @@ void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
         priorityMap.decCount(jl->Get(i).priority());
         ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
         minArchiveRequestAgeMap.decCount(jl->Get(i).minarchiverequestage());
+        m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - jl->Get(i).size());
         while (i+1 < (size_t)jl->size()) {
           jl->SwapElements(i, i+1);
           i++;

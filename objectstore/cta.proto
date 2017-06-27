@@ -386,6 +386,7 @@ message ArchiveQueue {
   repeated ValueCountPair maxdrivesallowedmap = 10033;
   required uint64 archivejobstotalsize = 10040;
   required uint64 oldestjobcreationtime = 10050;
+  required uint64 mapsrebuildcount = 10060;
 }
 
 message RetrieveQueue {
