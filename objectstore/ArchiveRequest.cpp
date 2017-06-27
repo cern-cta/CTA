@@ -337,7 +337,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         jd.tapePool = j->tapepool();
         jd.owner = j->owner();
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(),
-          m_payload.archivefileid(), m_payload.filesize()))
+          m_payload.archivefileid(), m_payload.filesize(), getMountPolicy()))
           aq.commit();
         j->set_owner(aq.getAddressIfSet());
         commit();
@@ -361,7 +361,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         jd.tapePool = j->tapepool();
         jd.owner = j->owner();
         if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefileid(), m_payload.filesize()))
+          m_payload.archivefileid(), m_payload.filesize(), getMountPolicy()))
           aq.commit();
         j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);

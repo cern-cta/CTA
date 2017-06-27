@@ -143,6 +143,9 @@ message ArchiveJobPointer {
   required uint64 size = 3001;
   required string address = 3002;
   required uint32 copynb = 3003;
+  required uint64 priority = 3004;
+  required uint64 minarchiverequestage = 3005;
+  required uint64 maxdrivesallowed = 3006;
 }
 
 message RetrieveJobPointer {

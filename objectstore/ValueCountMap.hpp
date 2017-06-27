@@ -29,6 +29,7 @@ public:
   ValueCountMap (google::protobuf::RepeatedPtrField<serializers::ValueCountPair>* valueCountMap);
   void incCount(uint64_t value);
   void decCount(uint64_t value);
+  void clear();
   uint64_t total();
   uint64_t minValue();
   uint64_t maxValue();

@@ -49,6 +49,9 @@ public:
   // In memory initialiser
   void initialize(const std::string & name);
   
+  // Commit with sanity checks (override from ObjectOps
+  void commit();
+  
   // Set/get tape pool
   void setTapePool(const std::string & name);
   std::string getTapePool();
@@ -56,17 +59,17 @@ public:
   // Archive jobs management ===================================================  
   void addJob(const ArchiveRequest::JobDump & job,
     const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
+    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
     const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & priority, time_t startTime);
+    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,
     const std::string& archiveToFileAddress, uint64_t fileid,
-    uint64_t size);
+    uint64_t size, const cta::common::dataStructures::MountPolicy & policy);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsDeletion(const ArchiveRequest::JobDump& job,

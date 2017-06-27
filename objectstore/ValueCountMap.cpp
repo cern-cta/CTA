@@ -87,6 +87,11 @@ void ValueCountMap::incCount(uint64_t value) {
   }
 }
 
+void ValueCountMap::clear() {
+  m_valueCountMap.Clear();
+}
+
+
 uint64_t ValueCountMap::maxValue() {
   if (!m_valueCountMap.size())
     throw  cta::exception::Exception("In ValueCountMap::maxValue: empty map");
