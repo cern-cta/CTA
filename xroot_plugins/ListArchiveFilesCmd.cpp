@@ -55,7 +55,7 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
 
     if(m_displayHeader) {
       m_readBuffer += "\x1b[31;1mid  copy no  vid  fseq  block id  instance  disk id  size  checksum type  checksum value  "
-        "storage class  owner  group  path  creation time\x1b[0m\n";
+        "storage class  owner  group  creation time  path\x1b[0m\n";
     }
   }
 
@@ -137,8 +137,8 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
         archiveFile.storageClass + " " +
         archiveFile.diskFileInfo.owner + " " +
         archiveFile.diskFileInfo.group + " " +
-        archiveFile.diskFileInfo.path + " " +
-        std::to_string((unsigned long long) archiveFile.creationTime) + "\n";
+        std::to_string((unsigned long long) archiveFile.creationTime) + " " +
+        archiveFile.diskFileInfo.path + "\n";
     }
   }
 }
