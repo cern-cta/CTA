@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{
@@ -103,7 +104,8 @@ namespace unitTests{
     RecallMemoryManager mm(10,100,lc);
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"", lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
     
     DiskWriteThreadPool dwtp(2,report,rwd,lc,"/dev/null", 0);
     dwtp.startThreads();

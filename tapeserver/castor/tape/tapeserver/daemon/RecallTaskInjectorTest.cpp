@@ -34,6 +34,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 
 #include <gtest/gtest.h>
 
@@ -148,7 +149,8 @@ namespace unitTests
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"",lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
@@ -208,7 +210,8 @@ namespace unitTests
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"",lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);

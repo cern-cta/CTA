@@ -191,7 +191,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // to refer them to each other)
     RecallReportPacker rrp(retrieveMount, lc);
     rrp.disableBulk(); //no bulk needed anymore
-    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    RecallWatchDog rwd(15,60*10,m_intialProcess,*retrieveMount,m_driveConfig.unitName,lc);
     
     RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -293,7 +293,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(archiveMount, lc);
-    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    MigrationWatchDog mwd(15,60*10,m_intialProcess,*archiveMount,m_driveConfig.unitName,lc);
     TapeWriteSingleThread twst(*drive,
         m_mc,
         tsr,
