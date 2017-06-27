@@ -1623,7 +1623,8 @@ std::string XrdCtaFile::xCom_archivefile() {
     }
     if(!summary) {
       const bool displayHeader = hasOption("-h", "--header");
-      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(m_log, error, displayHeader, searchCriteria, *m_catalogue));
+      auto archiveFileItor = m_catalogue->getArchiveFileItor(searchCriteria);
+      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(m_log, error, displayHeader, std::move(archiveFileItor)));
       /*
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {

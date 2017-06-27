@@ -32,12 +32,11 @@ ListArchiveFilesCmd::ListArchiveFilesCmd(
   log::Logger &log,
   XrdOucErrInfo &xrdSfsFileError,
   const bool displayHeader,
-  const catalogue::TapeFileSearchCriteria &searchCriteria,
-  catalogue::Catalogue &catalogue):
+  catalogue::ArchiveFileItor archiveFileItor):
   m_log(log),
   m_xrdSfsFileError(xrdSfsFileError),
   m_displayHeader(displayHeader),
-  m_archiveFileItor(catalogue.getArchiveFileItor(searchCriteria)) {
+  m_archiveFileItor(std::move(archiveFileItor)) {
 }
 
 //------------------------------------------------------------------------------

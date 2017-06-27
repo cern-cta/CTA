@@ -33,7 +33,6 @@ namespace xrootPlugins {
  * Server-side class implementing the listing of one or more archive files.
  */
 class ListArchiveFilesCmd {
-  
 public:
 
   /**
@@ -43,16 +42,13 @@ public:
    * @param xrdSfsFileError The error member-variable of the XrdSfsFile class.
    * @param displayHeader Set to true if the user requested the header to be
    * displayed.
-   * @param searchCriteria The collection of criteria used to select a set of
-   * tape files.
-   * @param catalogue The CTA catalogue.
+   * @param archiveFileItor Iterator over the archive files in the CTA catalogue that are to be listed.
    */
   ListArchiveFilesCmd(
     log::Logger &log,
     XrdOucErrInfo &xrdSfsFileError,
     const bool displayHeader,
-    const catalogue::TapeFileSearchCriteria &searchCriteria,
-    catalogue::Catalogue &catalogue);
+    catalogue::ArchiveFileItor archiveFileItor);
 
   /**
    * Indirectly implements the XrdSfsFile::read() method.
