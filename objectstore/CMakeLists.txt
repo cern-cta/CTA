@@ -111,6 +111,11 @@ set_target_properties(cta-objectstore-dereference-removed-queues PROPERTIES INST
 target_link_libraries(cta-objectstore-dereference-removed-queues
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
+add_executable(cta-objectstore-collect-orphaned-object cta-objectstore-collect-orphaned-object.cpp)
+set_target_properties(cta-objectstore-collect-orphaned-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-objectstore-collect-orphaned-object
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+
 install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object cta-objectstore-unfollow-agent 
   cta-objectstore-dereference-removed-queues
   DESTINATION usr/bin)
