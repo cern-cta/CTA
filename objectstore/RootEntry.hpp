@@ -67,6 +67,8 @@ public:
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   void removeArchiveQueueAndCommit(const std::string & tapePool);
+  /** This function is used in a cleanup utility. Removes unconditionally the reference to the archive queue */
+  void removeMissingArchiveQueueReference(const std::string & tapePool);
   void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress);
   std::string getArchiveQueueAddress(const std::string & tapePool);
   struct ArchiveQueueDump {
@@ -80,6 +82,8 @@ public:
   /** This function implicitly creates the retrieve queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
   std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef);
+  /** This function is used in a cleanup utility. Removes unconditionally the reference to the retrieve queue */
+  void removeMissingRetrieveQueueReference(const std::string & address);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
   void removeRetrieveQueueAndCommit(const std::string & vid);
   std::string getRetrieveQueue(const std::string & vid);

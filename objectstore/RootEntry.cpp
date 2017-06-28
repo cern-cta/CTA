@@ -181,6 +181,10 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
   }
 }
 
+void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool) {
+  serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
+}
+
 std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
   checkPayloadReadable();
   try {
@@ -246,6 +250,10 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // ... and clean up the agent
   agentRef.removeFromOwnership(retrieveQueueAddress, m_objectStore);
   return retrieveQueueAddress;
+}
+
+void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid) {
+  serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
 }
 
 void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
