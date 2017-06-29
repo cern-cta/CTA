@@ -44,6 +44,6 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 100 -s 1 -p 4 -v || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 1000 -s 15 -p 10 -v || exit 1
 
 exit 0
