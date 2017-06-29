@@ -63,7 +63,7 @@ XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, 
         std::setfill(' ') << std::setw(8) << std::right << "block id" << " " <<
         std::setfill(' ') << std::setw(8) << std::right << "instance" << " " <<
         std::setfill(' ') << std::setw(7) << std::right << "disk id" << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << "size" << " " <<
+        std::setfill(' ') << std::setw(12) << std::right << "size" << " " <<
         std::setfill(' ') << std::setw(13) << std::right << "checksum type" << " " <<
         std::setfill(' ') << std::setw(14) << std::right << "checksum value" << " " <<
         std::setfill(' ') << std::setw(13) << std::right << "storage class" << " " <<
@@ -148,7 +148,7 @@ void ListArchiveFilesCmd::refreshReadBuffer() {
         std::setfill(' ') << std::setw(8) << std::right << tapeFile.blockId << " " <<
         std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskInstance << " " <<
         std::setfill(' ') << std::setw(7) << std::right << archiveFile.diskFileId << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << archiveFile.fileSize << " " <<
+        std::setfill(' ') << std::setw(12) << std::right << archiveFile.fileSize << " " <<
         std::setfill(' ') << std::setw(13) << std::right << archiveFile.checksumType << " " <<
         std::setfill(' ') << std::setw(14) << std::right << archiveFile.checksumValue << " " <<
         std::setfill(' ') << std::setw(13) << std::right << archiveFile.storageClass << " " <<
