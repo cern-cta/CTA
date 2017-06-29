@@ -294,7 +294,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
     auto owner=j->owner();
     auto status=j->status();
     if (status==serializers::AJS_LinkingToArchiveQueue ||
-        (status==serializers::AJS_Selected && owner==presumedOwner)) {
+        ( (status==serializers::AJS_Selected || status==serializers::AJS_PendingMount)
+             && owner==presumedOwner)) {
         // If the job was being connected to the tape pool or was selected
         // by the dead agent, then we have to ensure it is indeed connected to
         // the tape pool and set its status to pending.
@@ -503,6 +504,5 @@ std::string ArchiveRequest::dump() {
 }
 
 }} // namespace cta::objectstore
-
 
 
