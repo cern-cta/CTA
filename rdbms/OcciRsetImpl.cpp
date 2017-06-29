@@ -17,7 +17,7 @@
  */
 
 #include "NullDbValue.hpp"
-#include "OcciRset.hpp"
+#include "OcciRsetImpl.hpp"
 #include "OcciStmt.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -32,7 +32,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
+OcciRsetImpl::OcciRsetImpl(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
   m_stmt(stmt),
   m_rset(rset) {
   try {
@@ -49,7 +49,7 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
 //------------------------------------------------------------------------------
 // populateColNameToIdx
 //------------------------------------------------------------------------------
-void OcciRset::populateColNameToIdxMap() {
+void OcciRsetImpl::populateColNameToIdxMap() {
   using namespace oracle;
 
   try {
@@ -69,7 +69,7 @@ void OcciRset::populateColNameToIdxMap() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciRset::~OcciRset() throw() {
+OcciRsetImpl::~OcciRsetImpl() throw() {
   try {
     close(); // Idempotent close()
   } catch(...) {
@@ -80,14 +80,14 @@ OcciRset::~OcciRset() throw() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &OcciRset::getSql() const {
+const std::string &OcciRsetImpl::getSql() const {
   return m_stmt.getSql();
 }
 
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-bool OcciRset::next() {
+bool OcciRsetImpl::next() {
   using namespace oracle;
 
   try {
@@ -102,7 +102,7 @@ bool OcciRset::next() {
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool OcciRset::columnIsNull(const std::string &colName) const {
+bool OcciRsetImpl::columnIsNull(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     return m_rset->isNull(colIdx);
@@ -116,7 +116,7 @@ bool OcciRset::columnIsNull(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void OcciRset::close() {
+void OcciRsetImpl::close() {
   threading::Mutex locker(m_mutex);
 
   if(nullptr != m_rset) {
@@ -128,7 +128,7 @@ void OcciRset::close() {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> OcciRset::columnOptionalString(const std::string &colName) const {
+optional<std::string> OcciRsetImpl::columnOptionalString(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
@@ -148,7 +148,7 @@ optional<std::string> OcciRset::columnOptionalString(const std::string &colName)
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) const {
+optional<uint64_t> OcciRsetImpl::columnOptionalUint64(const std::string &colName) const {
   try {
     threading::Mutex locker(m_mutex);
 

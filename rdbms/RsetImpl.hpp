@@ -18,45 +18,32 @@
 
 #pragma once
 
-#include "ColumnNameToIdxAndType.hpp"
-#include "Rset.hpp"
+#include "common/optional.hpp"
 
-#include <memory>
 #include <stdint.h>
-#include <sqlite3.h>
+#include <string>
 
 namespace cta {
 namespace rdbms {
 
 /**
- * Forward declaration.
+ * Abstract class specifying the interface to an implementation of the result
+ * set of an sql query.
  */
-class SqliteStmt;
-
-/**
- * The result set of an sql query.
- */
-class SqliteRset: public Rset {
+class RsetImpl {
 public:
-
-  /**
-   * Constructor.
-   *
-   * @param stmt The prepared statement.
-   */
-  SqliteRset(SqliteStmt &stmt);
 
   /**
    * Destructor.
    */
-  ~SqliteRset() throw() override;
+  virtual ~RsetImpl() throw() = 0;
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const override;
+  virtual const std::string &getSql() const = 0;
 
   /**
    * Attempts to get the next row of the result set.
@@ -64,7 +51,7 @@ public:
    * @return True if a row has been retrieved else false if there are no more
    * rows in the result set.
    */
-  virtual bool next() override;
+  virtual bool next() = 0;
 
   /**
    * Returns true if the specified column contains a null value.
@@ -72,7 +59,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  virtual bool columnIsNull(const std::string &colName) const override;
+  virtual bool columnIsNull(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as a string.
@@ -82,7 +69,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual optional<std::string> columnOptionalString(const std::string &colName) const override;
+  virtual optional<std::string> columnOptionalString(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -92,26 +79,9 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
 
-private:
-
-  /**
-   * The prepared statement.
-   */
-  SqliteStmt &m_stmt;
-
-  /**
-   * Map from column name to column index and type.
-   */
-  ColumnNameToIdxAndType m_colNameToIdxAndType;
-
-  /**
-   * Clears and populates the map from column name to column index and type.
-   */
-  void clearAndPopulateColNameToIdxAndTypeMap();
-
-}; // class SqlLiteRset
+}; // class RsetImpl
 
 } // namespace rdbms
 } // namespace cta

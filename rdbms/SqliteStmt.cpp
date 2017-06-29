@@ -21,7 +21,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/Sqlite.hpp"
 #include "rdbms/SqliteConn.hpp"
-#include "rdbms/SqliteRset.hpp"
+#include "rdbms/SqliteRsetImpl.hpp"
 #include "rdbms/SqliteStmt.hpp"
 
 #include <cstring>
@@ -208,8 +208,8 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> SqliteStmt::executeQuery() {
-  return cta::make_unique<SqliteRset>(*this);
+Rset SqliteStmt::executeQuery() {
+  return Rset(new SqliteRsetImpl(*this));
 }
 
 //------------------------------------------------------------------------------

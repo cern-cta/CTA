@@ -18,43 +18,38 @@
 
 #pragma once
 
-#include "common/threading/Mutex.hpp"
-#include "rdbms/ColumnNameToIdx.hpp"
-#include "rdbms/Rset.hpp"
+#include "rdbms/ColumnNameToIdxAndType.hpp"
+#include "rdbms/RsetImpl.hpp"
 
 #include <memory>
-#include <occi.h>
+#include <stdint.h>
+#include <sqlite3.h>
 
 namespace cta {
 namespace rdbms {
 
 /**
- * Forward declaration to avoid a circular dependency between OcciRset and
- * OcciStmt.
+ * Forward declaration.
  */
-class OcciStmt;
+class SqliteStmt;
 
 /**
- * A convenience wrapper around an OCCI result set.
+ * The result set of an sql query.
  */
-class OcciRset: public Rset {
+class SqliteRsetImpl: public RsetImpl {
 public:
 
   /**
    * Constructor.
    *
-   * This constructor will throw an exception if the result set is a nullptr
-   * pointer.
-   *
-   * @param stmt The OCCI statement.
-   * @param rset The OCCI result set.
+   * @param stmt The prepared statement.
    */
-  OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset);
+  SqliteRsetImpl(SqliteStmt &stmt);
 
   /**
    * Destructor.
    */
-  virtual ~OcciRset() throw() override;
+  ~SqliteRsetImpl() throw() override;
 
   /**
    * Returns the SQL statement.
@@ -102,36 +97,21 @@ public:
 private:
 
   /**
-   * Mutex used to serialize access to this object.
+   * The prepared statement.
    */
-  mutable threading::Mutex m_mutex;
+  SqliteStmt &m_stmt;
 
   /**
-   * The OCCI statement.
+   * Map from column name to column index and type.
    */
-  OcciStmt &m_stmt;
+  ColumnNameToIdxAndType m_colNameToIdxAndType;
 
   /**
-   * The OCCI result set.
+   * Clears and populates the map from column name to column index and type.
    */
-  oracle::occi::ResultSet *m_rset;
+  void clearAndPopulateColNameToIdxAndTypeMap();
 
-  /**
-   * Map from column name to column index.
-   */
-  ColumnNameToIdx m_colNameToIdx;
-
-  /**
-   * Idempotent close() method.  The destructor calls this method.
-   */
-  void close();
-
-  /**
-   * Populates the map from column name to column index.
-   */
-  void populateColNameToIdxMap();
-
-}; // class OcciRset
+}; // class SqlLiteRset
 
 } // namespace rdbms
 } // namespace cta

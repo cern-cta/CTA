@@ -21,7 +21,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/OcciColumn.hpp"
 #include "rdbms/OcciConn.hpp"
-#include "rdbms/OcciRset.hpp"
+#include "rdbms/OcciRsetImpl.hpp"
 #include "rdbms/OcciStmt.hpp"
 
 #include <cstring>
@@ -170,11 +170,11 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> OcciStmt::executeQuery() {
+Rset OcciStmt::executeQuery() {
   using namespace oracle;
 
   try {
-    return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
+    return Rset(new OcciRsetImpl(*this, m_stmt->executeQuery()));
   } catch(occi::SQLException &ex) {
     if(connShouldBeClosed(ex)) {
       // Close the statement first and then the connection

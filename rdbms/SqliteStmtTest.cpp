@@ -17,7 +17,7 @@
  */
 
 #include "SqliteConn.hpp"
-#include "SqliteRset.hpp"
+#include "SqliteRsetImpl.hpp"
 #include "SqliteStmt.hpp"
 
 #include <gtest/gtest.h>
@@ -51,10 +51,10 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
-    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_TRUE(rset.next());
+    const uint64_t nbTables = rset.columnUint64("NB_TABLES");
     ASSERT_EQ(0, nbTables);
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
     ASSERT_TRUE(conn.getTableNames().empty());
   }
 
@@ -80,10 +80,10 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
-    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_TRUE(rset.next());
+    const uint64_t nbTables = rset.columnUint64("NB_TABLES");
     ASSERT_EQ(1, nbTables);
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
     ASSERT_EQ(1, conn.getTableNames().size());
     ASSERT_EQ("TEST1", conn.getTableNames().front());
   }
@@ -110,10 +110,10 @@ TEST_F(cta_rdbms_SqliteStmtTest, create_table) {
         "TYPE = 'table';";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
-    const uint64_t nbTables = rset->columnUint64("NB_TABLES");
+    ASSERT_TRUE(rset.next());
+    const uint64_t nbTables = rset.columnUint64("NB_TABLES");
     ASSERT_EQ(1, nbTables);
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
     const auto tableNames = conn.getTableNames();
     ASSERT_EQ(2, tableNames.size());
     auto nameItor = tableNames.begin();
@@ -156,7 +156,7 @@ TEST_F(cta_rdbms_SqliteStmtTest, select_from_empty_table) {
         "TEST;";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
   }
 }
 
@@ -206,17 +206,17 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_without_bind) {
         "TEST;";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
+    ASSERT_TRUE(rset.next());
 
-    const std::string col1 = rset->columnString("COL1");
-    const std::string col2 = rset->columnString("COL2");
-    const uint64_t col3 = rset->columnUint64("COL3");
+    const std::string col1 = rset.columnString("COL1");
+    const std::string col2 = rset.columnString("COL2");
+    const uint64_t col3 = rset.columnUint64("COL3");
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
     ASSERT_EQ((uint64_t)3, col3);
 
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
   }
 }
 
@@ -270,17 +270,17 @@ TEST_F(cta_rdbms_SqliteStmtTest, insert_with_bind) {
         "TEST;";
     auto stmt = conn.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
+    ASSERT_TRUE(rset.next());
 
-    const std::string col1 = rset->columnString("COL1");
-    const std::string col2 = rset->columnString("COL2");
-    const uint64_t col3 = rset->columnUint64("COL3");
+    const std::string col1 = rset.columnString("COL1");
+    const std::string col2 = rset.columnString("COL2");
+    const uint64_t col3 = rset.columnUint64("COL3");
 
     ASSERT_EQ("one", col1);
     ASSERT_EQ("two", col2);
     ASSERT_EQ((uint64_t)3, col3);
 
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
   }
 }
 
@@ -332,13 +332,13 @@ TEST_F(cta_rdbms_SqliteStmtTest, isolated_transaction) {
         "TEST;";
     auto stmt = connForSelect.createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
-    ASSERT_TRUE(rset->next());
+    ASSERT_TRUE(rset.next());
 
-    const uint64_t nbRows = rset->columnUint64("NB_ROWS");
+    const uint64_t nbRows = rset.columnUint64("NB_ROWS");
 
     ASSERT_EQ((uint64_t)1, nbRows);
 
-    ASSERT_FALSE(rset->next());
+    ASSERT_FALSE(rset.next());
   }
 }
 

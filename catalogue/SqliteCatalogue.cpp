@@ -117,11 +117,11 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
           "ARCHIVE_FILE_ID";
       auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       auto rset = stmt->executeQuery();
-      if(!rset->next()) {
+      if(!rset.next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
-      archiveFileId = rset->columnUint64("ID");
-      if(rset->next()) {
+      archiveFileId = rset.columnUint64("ID");
+      if(rset.next()) {
         throw exception::Exception("Found more than one ID counter in the ARCHIVE_FILE_ID table");
       }
     }
@@ -178,46 +178,46 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Stmt::Auto
     auto stmt = conn.createStmt(sql, autocommitMode);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
-    if (!rset->next()) {
+    if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
 
     common::dataStructures::Tape tape;
 
-    tape.vid = rset->columnString("VID");
-    tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-    tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
-    tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-    tape.disabled = rset->columnBool("IS_DISABLED");
-    tape.full = rset->columnBool("IS_FULL");
-    tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
+    tape.vid = rset.columnString("VID");
+    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+    tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+    tape.disabled = rset.columnBool("IS_DISABLED");
+    tape.full = rset.columnBool("IS_FULL");
+    tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
-    tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
-    tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-    tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-    tape.comment = rset->columnString("USER_COMMENT");
+    tape.comment = rset.columnString("USER_COMMENT");
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnString("CREATION_LOG_USER_NAME");
+    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+    creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
 
     tape.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnString("LAST_UPDATE_USER_NAME");
+    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+    updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    updateLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    updateLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
     tape.lastModificationLog = updateLog;
 

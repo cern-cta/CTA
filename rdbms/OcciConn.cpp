@@ -141,8 +141,8 @@ std::list<std::string> OcciConn::getTableNames() {
         "TABLE_NAME";
     auto stmt = createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      names.push_back(rset->columnString("TABLE_NAME"));
+    while (rset.next()) {
+      names.push_back(rset.columnString("TABLE_NAME"));
     }
 
     return names;
@@ -166,8 +166,8 @@ std::list<std::string> OcciConn::getSequenceNames() {
         "SEQUENCE_NAME";
     auto stmt = createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      names.push_back(rset->columnString("SEQUENCE_NAME"));
+    while (rset.next()) {
+      names.push_back(rset.columnString("SEQUENCE_NAME"));
     }
 
     return names;

@@ -174,9 +174,9 @@ void SqliteConn::printSchema(std::ostream &os) {
     auto rset = stmt->executeQuery();
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
-    while (rset->next()) {
-      const std::string name = rset->columnString("NAME");
-      const std::string type = rset->columnString("TYPE");
+    while (rset.next()) {
+      const std::string name = rset.columnString("NAME");
+      const std::string type = rset.columnString("TYPE");
       os << name << ", " << type << std::endl;
     }
   } catch(exception::Exception &ex) {
@@ -201,8 +201,8 @@ std::list<std::string> SqliteConn::getTableNames() {
     auto stmt = createStmt(sql, Stmt::AutocommitMode::ON);
     auto rset = stmt->executeQuery();
     std::list<std::string> names;
-    while (rset->next()) {
-      names.push_back(rset->columnString("NAME"));
+    while (rset.next()) {
+      names.push_back(rset.columnString("NAME"));
     }
     return names;
   } catch(exception::Exception &ex) {

@@ -45,6 +45,7 @@ set (RDBMS_LIB_SRC_FILES
   Login.cpp
   LoginFactory.cpp
   Rset.cpp
+  RsetImpl.cpp
   Stmt.cpp
   NullDbValue.cpp
   ParamNameToIdx.cpp
@@ -52,7 +53,7 @@ set (RDBMS_LIB_SRC_FILES
   Sqlite.cpp
   SqliteConn.cpp
   SqliteConnFactory.cpp
-  SqliteRset.cpp
+        SqliteRsetImpl.cpp
   SqliteStmt.cpp)
 
 if (OCCI_SUPPORT)
@@ -64,7 +65,7 @@ if (OCCI_SUPPORT)
     OcciConnFactory.cpp
     OcciEnv.cpp
     OcciEnvSingleton.cpp
-    OcciRset.cpp
+          OcciRsetImpl.cpp
     OcciStmt.cpp)
 else (OCCI_SUPPORT)
   set (RDBMS_LIB_SRC_FILES

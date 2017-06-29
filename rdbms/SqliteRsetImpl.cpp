@@ -18,7 +18,7 @@
 
 #include "NullDbValue.hpp"
 #include "Sqlite.hpp"
-#include "SqliteRset.hpp"
+#include "SqliteRsetImpl.hpp"
 #include "SqliteStmt.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
@@ -120,31 +120,31 @@ private:
    */
   std::map<std::string, IdxAndType> m_nameToIdxAndType;
 
-}; // class SqliteRset::ColNameToIdx
+}; // class SqliteRsetImpl::ColNameToIdx
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteRset::SqliteRset(SqliteStmt &stmt): m_stmt(stmt) {
+SqliteRsetImpl::SqliteRsetImpl(SqliteStmt &stmt): m_stmt(stmt) {
 }
 
 //------------------------------------------------------------------------------
 // destructor.
 //------------------------------------------------------------------------------
-SqliteRset::~SqliteRset() throw() {
+SqliteRsetImpl::~SqliteRsetImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &SqliteRset::getSql() const {
+const std::string &SqliteRsetImpl::getSql() const {
   return m_stmt.getSql();
 }
 
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-bool SqliteRset::next() {
+bool SqliteRsetImpl::next() {
   try {
     const int stepRc = sqlite3_step(m_stmt.get());
 
@@ -167,7 +167,7 @@ bool SqliteRset::next() {
 //------------------------------------------------------------------------------
 // clearAndPopulateColNameToIdxMap
 //------------------------------------------------------------------------------
-void SqliteRset::clearAndPopulateColNameToIdxAndTypeMap() {
+void SqliteRsetImpl::clearAndPopulateColNameToIdxAndTypeMap() {
   try {
     m_colNameToIdxAndType.clear();
 
@@ -197,7 +197,7 @@ void SqliteRset::clearAndPopulateColNameToIdxAndTypeMap() {
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool SqliteRset::columnIsNull(const std::string &colName) const {
+bool SqliteRsetImpl::columnIsNull(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     return SQLITE_NULL == idxAndType.colType;
@@ -209,7 +209,7 @@ bool SqliteRset::columnIsNull(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> SqliteRset::columnOptionalString(const std::string &colName) const {
+optional<std::string> SqliteRsetImpl::columnOptionalString(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
@@ -232,7 +232,7 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) const {
+optional<uint64_t> SqliteRsetImpl::columnOptionalUint64(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
