@@ -7,15 +7,17 @@ TEST_FILE_NAME_BASE=test
 NB_PROCS=1
 NB_FILES=1
 FILE_KB_SIZE=1
+VERBOSE=0
+TAILPID=''
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v]
 EOF
 exit 1
 }
 
-while getopts "n:s:p:" o; do
+while getopts "n:s:p:v" o; do
     case "${o}" in
         n)
             NB_FILES=${OPTARG}
@@ -25,6 +27,9 @@ while getopts "n:s:p:" o; do
             ;;
         p)
             NB_PROCS=${OPTARG}
+            ;;
+        v)
+            VERBOSE=1
             ;;
         *)
             usage
@@ -38,12 +43,15 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-
-
-
 STATUS_FILE=$(mktemp)
 
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=${FILE_KB_SIZE} || exit 1
+
+if [[ $VERBOSE == 1 ]]; then
+  tail -v -f /mnt/logs/tpsrv0*/rmcd/castor/rmcd_legacy.log &
+  TAILPID=$!
+fi
+
 
 echo "Creating test dir in eos: ${EOS_DIR}"
 # uuid should be unique no need to remove dir before...
@@ -121,7 +129,7 @@ while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
     break
   fi
 
-  echo "$(grep -c retrieved$ ${STATUS_FILE})/${NB_FILES} retrieved"
+  echo "$(grep -c retrieved$ ${STATUS_FILE})/${TAPEONLY} retrieved"
 
   for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
     test 2 = $(eos root://${EOSINSTANCE} info ${EOS_DIR}/${TEST_FILE_NAME} | grep -c nodrain) && sed -i ${STATUS_FILE} -e "s/${TEST_FILE_NAME} tapeonly/${TEST_FILE_NAME} retrieved/"
@@ -137,6 +145,8 @@ echo "RETRIEVED/TAPEONLY/ARCHIVED/NB_FILES"
 echo "${RETRIEVED}/${TAPEONLY}/${ARCHIVED}/${NB_FILES}"
 echo "###"
 
+# stop tail
+test -z $TAILPID || kill ${TAILPID}
 
 test ${RETRIEVED} = ${NB_FILES} && exit 0
 
