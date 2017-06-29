@@ -1940,7 +1940,8 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
-        "LAST_FSEQ = 0, "
+        "DATA_IN_BYTES = 0,"
+        "LAST_FSEQ = 0,"
         "IS_FULL = 0,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
