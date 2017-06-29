@@ -6769,6 +6769,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
 
     const common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
@@ -6813,6 +6814,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
 
     const common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(vid, tape.vid);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
@@ -6864,6 +6866,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     auto it = vidToTape.find(vid1);
     const common::dataStructures::Tape &tape = it->second;
     ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
@@ -7023,6 +7026,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
     const common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
@@ -7070,6 +7074,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     auto it = vidToTape.find(vid1);
     const common::dataStructures::Tape &tape = it->second;
     ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(0, tape.dataOnTapeInBytes);
     ASSERT_EQ(0, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
@@ -7165,6 +7170,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     auto it = vidToTape.find(vid1);
     const common::dataStructures::Tape &tape = it->second;
     ASSERT_EQ(vid1, tape.vid);
+    ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
     ASSERT_EQ(1, tape.lastFSeq);
     ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(tapePoolName, tape.tapePoolName);
