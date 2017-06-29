@@ -40,6 +40,7 @@
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/dataStructures/QueueAndMountSummary.hpp"
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
@@ -237,8 +238,21 @@ public:
   std::list<cta::common::dataStructures::DriveState> getDriveStates(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
 
-  /*============== Actual mount scheduling ===================================*/
+  /*============== Actual mount scheduling and queue status reporting ========*/
+  /**
+   * Actually decide which mount to do next for a given drive.
+   * @param logicalLibraryName library for the drive we are scheduling
+   * @param driveName name of the drive we are scheduling
+   * @param lc log context
+   * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
+   */
   std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
+  /**
+   * A function returning 
+   * @param lc
+   * @return 
+   */
+  std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);

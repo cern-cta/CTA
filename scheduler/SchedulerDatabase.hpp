@@ -401,6 +401,10 @@ public:
     cta::common::dataStructures::MountType type;
     std::string tapePool;
     std::string vid;
+    bool currentMount; ///< True if the mount is current (othermise, it's a next mount).
+    uint64_t bytesTransferred;
+    uint64_t filesTransferred;
+    double latestBandwidth;
   };
   
   /**
@@ -448,6 +452,12 @@ public:
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+  
+  /**
+   * A function dumping the relevant mount information for reporting the system
+   * status. It is identical to getMountInfo, yet does not take the global lock.
+   */
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock() = 0;
   
   /* === Drive state handling  ============================================== */
   /**

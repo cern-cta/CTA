@@ -81,25 +81,9 @@ void OStoreDB::ping() {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getMountInfo()
+// OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
-  OStoreDB::getMountInfo() {
-  //Allocate the getMountInfostructure to return.
-  assertAgentAddressSet();
-  std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
-    m_objectStore, *m_agentReference));
-  TapeMountDecisionInfo & tmdi=*privateRet;
-  // Get all the tape pools and tapes with queues (potential mounts)
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  // Take an exclusive lock on the scheduling and fetch it.
-  tmdi.m_schedulerGlobalLock.reset(
-    new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
-  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
-  tmdi.m_lockTaken = true;
-  tmdi.m_schedulerGlobalLock->fetch();
+void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re) {
   // Walk the archive queues for statistics
   for (auto & aqp: re.dumpArchiveQueues()) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
@@ -147,7 +131,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
     }
   }
   // Collect information about the existing and next mounts
-  // If a next mount exists it "counts double", but the corresponding drive
+  // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
   objectstore::ScopedSharedLock drl(dr);
@@ -172,6 +156,10 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.existingOrNextMounts.back().tapePool = d->currentTapePool;
       tmdi.existingOrNextMounts.back().driveName = d->driveName;
       tmdi.existingOrNextMounts.back().vid = d->currentVid;
+      tmdi.existingOrNextMounts.back().currentMount = true;
+      tmdi.existingOrNextMounts.back().bytesTransferred = d->bytesTransferredInSession;
+      tmdi.existingOrNextMounts.back().filesTransferred = d->filesTransferredInSession;
+      tmdi.existingOrNextMounts.back().latestBandwidth = d->latestBandwidth;
     }
     if (activeMountTypes.count((int)d->nextMountType)) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
@@ -179,11 +167,76 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
       tmdi.existingOrNextMounts.back().tapePool = d->nextTapepool;
       tmdi.existingOrNextMounts.back().driveName = d->driveName;
       tmdi.existingOrNextMounts.back().vid = d->nextVid;
+      tmdi.existingOrNextMounts.back().currentMount = false;
+      tmdi.existingOrNextMounts.back().bytesTransferred = 0;
+      tmdi.existingOrNextMounts.back().filesTransferred = 0;
+      tmdi.existingOrNextMounts.back().latestBandwidth = 0;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfo()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
+  OStoreDB::getMountInfo() {
+  //Allocate the getMountInfostructure to return.
+  assertAgentAddressSet();
+  std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
+    m_objectStore, *m_agentReference));
+  TapeMountDecisionInfo & tmdi=*privateRet;
+  // Get all the tape pools and tapes with queues (potential mounts)
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  // Take an exclusive lock on the scheduling and fetch it.
+  tmdi.m_schedulerGlobalLock.reset(
+    new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
+  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
+  tmdi.m_lockTaken = true;
+  tmdi.m_schedulerGlobalLock->fetch();
+  fetchMountInfo(tmdi, re);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfoNoLock()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfoNoLock() {
+  //Allocate the getMountInfostructure to return.
+  assertAgentAddressSet();
+  std::unique_ptr<OStoreDB::TapeMountDecisionInfoNoLock> privateRet (new OStoreDB::TapeMountDecisionInfoNoLock);
+  // Get all the tape pools and tapes with queues (potential mounts)
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  TapeMountDecisionInfoNoLock & tmdi=*privateRet;
+  fetchMountInfo(tmdi, re);
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(const catalogue::TapeForWriting& tape, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid, const std::string& tapePool, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock()
+//------------------------------------------------------------------------------
+OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock() {}
+
+
 /* Old getMountInfo
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
@@ -960,8 +1013,8 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
     driveState.mountType = common::dataStructures::MountType::NoMount;
     driveState.driveStatus = common::dataStructures::DriveStatus::Unknown;
     driveState.sessionId = 0;
-    driveState.bytesTransferedInSession = 0;
-    driveState.filesTransferedInSession = 0;
+    driveState.bytesTransferredInSession = 0;
+    driveState.filesTransferredInSession = 0;
     driveState.latestBandwidth = 0;
     driveState.sessionStartTime = 0;
     driveState.mountStartTime = 0;
@@ -1030,8 +1083,8 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   }
   // If we are changing state, then all should be reset.
   driveState.sessionId=0;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;
@@ -1068,8 +1121,8 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   }
   // If we are changing state, then all should be reset.
   driveState.sessionId=0;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;
@@ -1099,8 +1152,8 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=inputs.reportTime;
   driveState.mountStartTime=0;
@@ -1130,8 +1183,8 @@ void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   //driveState.sessionstarttime=inputs.reportTime;
   driveState.mountStartTime=inputs.reportTime;
@@ -1156,14 +1209,14 @@ void OStoreDB::setDriveTransfering(common::dataStructures::DriveState & driveSta
   // If we were already transferring, we update the full statistics
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Transfering) {
     driveState.lastUpdateTime=inputs.reportTime;
-    driveState.bytesTransferedInSession=inputs.byteTransfered;
-    driveState.filesTransferedInSession=inputs.filesTransfered;
+    driveState.bytesTransferredInSession=inputs.byteTransfered;
+    driveState.filesTransferredInSession=inputs.filesTransfered;
     driveState.latestBandwidth=inputs.latestBandwidth;
     return;
   }
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=inputs.byteTransfered;
-  driveState.filesTransferedInSession=inputs.filesTransfered;
+  driveState.bytesTransferredInSession=inputs.byteTransfered;
+  driveState.filesTransferredInSession=inputs.filesTransfered;
   driveState.latestBandwidth=inputs.latestBandwidth;
   //driveState.sessionstarttime=inputs.reportTime;
   //driveState.mountstarttime=inputs.reportTime;
@@ -1192,8 +1245,8 @@ void OStoreDB::setDriveUnloading(common::dataStructures::DriveState & driveState
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;
@@ -1222,8 +1275,8 @@ void OStoreDB::setDriveUnmounting(common::dataStructures::DriveState & driveStat
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;
@@ -1252,8 +1305,8 @@ void OStoreDB::setDriveDrainingToDisk(common::dataStructures::DriveState & drive
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;
@@ -1282,8 +1335,8 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferedInSession=0;
-  driveState.filesTransferedInSession=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
   driveState.latestBandwidth=0;
   driveState.sessionStartTime=0;
   driveState.mountStartTime=0;

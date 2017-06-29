@@ -1872,8 +1872,8 @@ std::string XrdCtaFile::xCom_drive() {
             currentRow.push_back("-");
             break;
           }
-          currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferedInSession));
-          currentRow.push_back(std::to_string((unsigned long long)ds.bytesTransferedInSession));
+          currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
+          currentRow.push_back(std::to_string((unsigned long long)ds.bytesTransferredInSession));
           currentRow.push_back(std::to_string((long double)ds.latestBandwidth));
           currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);

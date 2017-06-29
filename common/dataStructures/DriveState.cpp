@@ -29,8 +29,8 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 DriveState::DriveState():
   sessionId(0),
-  bytesTransferedInSession(0),
-  filesTransferedInSession(0),
+  bytesTransferredInSession(0),
+  filesTransferredInSession(0),
   latestBandwidth(0),
   sessionStartTime(0),
   mountStartTime(0),
@@ -55,8 +55,8 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && host==rhs.host
       && logicalLibrary==rhs.logicalLibrary
       && sessionId==rhs.sessionId
-      && bytesTransferedInSession==rhs.bytesTransferedInSession
-      && filesTransferedInSession==rhs.filesTransferedInSession
+      && bytesTransferredInSession==rhs.bytesTransferredInSession
+      && filesTransferredInSession==rhs.filesTransferredInSession
       && latestBandwidth==rhs.latestBandwidth
       && sessionStartTime==rhs.sessionStartTime
       && mountStartTime==rhs.mountStartTime
@@ -94,8 +94,8 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " host=" << obj.host
      << " logicalLibrary=" << obj.logicalLibrary
      << " sessionId=" << obj.sessionId
-     << " bytesTransferedInSession=" << obj.bytesTransferedInSession
-     << " filesTransferedInSession=" << obj.filesTransferedInSession
+     << " bytesTransferedInSession=" << obj.bytesTransferredInSession
+     << " filesTransferedInSession=" << obj.filesTransferredInSession
      << " latestBandwidth=" << obj.latestBandwidth
      << " sessionStartTime=" << obj.sessionStartTime
      << " mountStartTime="  << obj.mountStartTime

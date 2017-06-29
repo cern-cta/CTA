@@ -113,8 +113,8 @@ std::list<cta::common::dataStructures::DriveState> DriveRegister::getAllDrivesSt
     ret.back().host                        = d.host();
     ret.back().logicalLibrary              = d.logicallibrary();
     ret.back().sessionId                   = d.sessionid();
-    ret.back().bytesTransferedInSession    = d.bytestransferedinsession();
-    ret.back().filesTransferedInSession    = d.filestransferedinsession();
+    ret.back().bytesTransferredInSession    = d.bytestransferedinsession();
+    ret.back().filesTransferredInSession    = d.filestransferedinsession();
     ret.back().latestBandwidth             = d.latestbandwidth();
     ret.back().sessionStartTime            = d.sessionstarttime();
     ret.back().mountStartTime              = d.mountstarttime();
@@ -153,8 +153,8 @@ cta::common::dataStructures::DriveState DriveRegister::getDriveState(const std::
       ret.host                        = d.host();
       ret.logicalLibrary              = d.logicallibrary();
       ret.sessionId                   = d.sessionid();
-      ret.bytesTransferedInSession    = d.bytestransferedinsession();
-      ret.filesTransferedInSession    = d.filestransferedinsession();
+      ret.bytesTransferredInSession    = d.bytestransferedinsession();
+      ret.filesTransferredInSession    = d.filestransferedinsession();
       ret.latestBandwidth             = d.latestbandwidth();
       ret.sessionStartTime            = d.sessionstarttime();
       ret.mountStartTime              = d.mountstarttime();
@@ -199,8 +199,8 @@ update:
   ds->set_host(driveState.host);
   ds->set_logicallibrary(driveState.logicalLibrary);
   ds->set_sessionid(driveState.sessionId);
-  ds->set_bytestransferedinsession(driveState.bytesTransferedInSession);
-  ds->set_filestransferedinsession(driveState.filesTransferedInSession);
+  ds->set_bytestransferedinsession(driveState.bytesTransferredInSession);
+  ds->set_filestransferedinsession(driveState.filesTransferredInSession);
   ds->set_latestbandwidth(driveState.latestBandwidth);
   ds->set_sessionstarttime(driveState.sessionStartTime);
   ds->set_mountstarttime(driveState.mountStartTime);

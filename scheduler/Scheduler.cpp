@@ -658,4 +658,69 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   return std::unique_ptr<TapeMount>();
 }
 
+std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
+  std::list<common::dataStructures::QueueAndMountSummary> ret;
+  // Extract relevant information from the object store.
+  auto mountDecisionInfo=m_db.getMountInfoNoLock();
+  for (auto & pm: mountDecisionInfo->potentialMounts) {
+    // Find or create the relevant entry.
+    auto & summary  = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid);
+    switch (pm.type) {
+    case common::dataStructures::MountType::Archive:
+      summary.mountPolicy.archivePriority = pm.priority;
+      summary.mountPolicy.archiveMinRequestAge = pm.minArchiveRequestAge;
+      summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
+      summary.bytesQueued = pm.bytesQueued;
+      summary.filesQueued = pm.filesQueued;
+      break;
+    case common::dataStructures::MountType::Retrieve:
+      // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
+      summary.mountPolicy.retrieveMinRequestAge = pm.minArchiveRequestAge;
+      summary.mountPolicy.retrievePriority = pm.priority;
+      summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
+      summary.bytesQueued = pm.bytesQueued;
+      summary.filesQueued = pm.filesQueued;
+      break;
+    default:
+      break;
+    }
+  }
+  for (auto & em: mountDecisionInfo->existingOrNextMounts) {
+    auto & summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid);
+    switch (em.type) {
+    case common::dataStructures::MountType::Archive:
+    case common::dataStructures::MountType::Retrieve:
+      if (em.currentMount) 
+        summary.currentMounts++;
+      else
+        summary.nextMounts++;
+      summary.currentBytes += em.bytesTransferred;
+      summary.currentFiles += em.filesTransferred;
+      summary.latestBandwidth += em.latestBandwidth;
+      break;
+    default:
+      break;
+    }
+  }
+  mountDecisionInfo.reset();
+  // Add the tape information where useful (archive queues).
+  for (auto & tp: ret) {
+    if (common::dataStructures::MountType::Archive==tp.mountType) {
+      // Get all the tape for this pool
+      cta::catalogue::TapeSearchCriteria tsc;
+      tsc.tapePool = tp.tapePool;
+      auto tapes=m_catalogue.getTapes(tsc);
+      for (auto & t:tapes) {
+        tp.tapesCapacity += t.capacityInBytes;
+        tp.dataOnTapes += t.dataOnTapeInBytes;
+        if (t.disabled) tp.disabledTapes++;
+        if (t.full) tp.fullTapes++;
+        if (!t.full && t.disabled) tp.writableTapes++;
+      }
+    }
+  }
+  return ret;
+}
+
+
 } // namespace cta

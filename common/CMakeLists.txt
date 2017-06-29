@@ -48,6 +48,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/LogicalLibrary.cpp
   dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp
+  dataStructures/QueueAndMountSummary.cpp
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
   dataStructures/RepackType.cpp

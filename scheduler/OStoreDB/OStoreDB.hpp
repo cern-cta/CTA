@@ -33,6 +33,7 @@ namespace cta {
 namespace objectstore {
   class Backend;
   class Agent;
+  class RootEntry;
 }
 
 namespace ostoredb {
@@ -81,9 +82,32 @@ public:
     objectstore::Backend & m_objectStore;
     objectstore::AgentReference & m_agentReference;
   };
-
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   
+  class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
+  public:
+    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+      const catalogue::TapeForWriting & tape,
+      const std::string driveName, const std::string& logicalLibrary, 
+      const std::string & hostName, time_t startTime) override;
+    std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
+      const std::string & vid, const std::string & tapePool,
+      const std::string driveName,
+      const std::string& logicalLibrary, const std::string& hostName, 
+      time_t startTime) override;
+    virtual ~TapeMountDecisionInfoNoLock();
+  };
+
+private:
+  /**
+   * An internal helper function with commonalities of both following functions
+   * @param tmdi The TapeMountDecisionInfo where to store the data.
+   * @param re A RootEntry object that should be locked and fetched.
+   */
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re);
+public:
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
+
   /* === Archive Mount handling ============================================= */
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;

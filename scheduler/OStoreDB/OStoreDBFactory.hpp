@@ -127,7 +127,11 @@ public:
   std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
   }
-  
+
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock() override {
+    return m_OStoreDB.getMountInfoNoLock();
+  }
+
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
           const std::set<std::string> & vidsToConsider) override {
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
