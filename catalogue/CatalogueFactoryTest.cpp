@@ -53,7 +53,8 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
 
   rdbms::Login login(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
   const uint64_t nbConns = 1;
-  std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(login, nbConns));
+  const uint64_t nbArchiveFileListingConns = 1;
+  std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(login, nbConns, nbArchiveFileListingConns));
   ASSERT_TRUE(nullptr != catalogue.get());
 
   ASSERT_TRUE(catalogue->getAdminUsers().empty());

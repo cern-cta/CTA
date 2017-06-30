@@ -271,7 +271,8 @@ int GarbageCollectorHandler::runChild() {
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
-    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
+    const uint64_t nbArchiveFileListingConns = 0;
+    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping();

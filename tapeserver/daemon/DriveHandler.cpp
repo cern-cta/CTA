@@ -883,7 +883,8 @@ int DriveHandler::runChild() {
   try {
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
-    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
+    const uint64_t nbArchiveFileListingConns = 0;
+    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());

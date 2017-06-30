@@ -54,8 +54,9 @@ void cta_catalogue_CatalogueTest::SetUp() {
     const rdbms::Login &login = GetParam()->create();
     auto connFactory = rdbms::ConnFactoryFactory::create(login);
     const uint64_t nbConns = 2;
+    const uint64_t nbArchiveFileListingConns = 2;
 
-    m_catalogue = CatalogueFactory::create(login, nbConns);
+    m_catalogue = CatalogueFactory::create(login, nbConns, nbArchiveFileListingConns);
     m_conn = connFactory->create();
 
     {

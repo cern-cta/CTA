@@ -52,7 +52,7 @@ public:
    * responsibility of the caller to delete the returned CTA catalogue object.
    */
   static std::unique_ptr<Catalogue> create(const rdbms::Login &login, const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns = 5);
+    const uint64_t nbArchiveFileListingConns);
 
 }; // class CatalogueFactory
 

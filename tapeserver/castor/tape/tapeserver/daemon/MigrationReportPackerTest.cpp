@@ -44,7 +44,8 @@ namespace unitTests {
 
       rdbms::Login catalogueLogin(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
       const uint64_t nbConns = 1;
-      m_catalogue = CatalogueFactory::create(catalogueLogin, nbConns);
+      const uint64_t nbArchiveFileListingConns = 0;
+      m_catalogue = CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
     }
 
     void TearDown() {
