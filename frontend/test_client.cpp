@@ -5,6 +5,8 @@
 
 int main(int argc, char *argv[])
 {
+   // Host:port of XRootD server
+
    const std::string host = "localhost";
    const int         port = 10400;
 
@@ -33,20 +35,6 @@ int main(int argc, char *argv[])
       // Send the Request to the Service
 
       test_ssi_service.send(request);
-
-      // Wait for the response callback
-
-      std::cout << "Request sent, going to sleep..." << std::endl;
-
-      int wait_secs = 40;
-
-      while(--wait_secs)
-      {
-         std::cerr << ".";
-         sleep(1);
-      }
-
-      std::cout << "All done, exiting." << std::endl;
    }
    catch (std::exception& e)
    {
@@ -55,7 +43,23 @@ int main(int argc, char *argv[])
       return 1;
    }
 
+   // Wait for the response callback
+
+   std::cout << "Request sent, going to sleep..." << std::endl;
+
+   int wait_secs = 20;
+
+   while(--wait_secs)
+   {
+      std::cerr << ".";
+      sleep(1);
+   }
+
+   std::cout << "All done, exiting." << std::endl;
+
    // Optional: Delete all global objects allocated by libprotobuf
 
    google::protobuf::ShutdownProtobufLibrary();
+
+   return 0;
 }

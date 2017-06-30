@@ -15,7 +15,7 @@ all: test_client
 
 LDLIBS=-lprotobuf 
 
-test_client: test_client.o TestSsiRequest.o test.pb.o
+test_client: test_client.o test.pb.o
 
 test_client.o: test_client.cpp TestSsiClient.h TestSsiRequest.h test.pb.h
 

@@ -8,7 +8,7 @@
 #include "XrdSsiException.h"
 #include "TestSsiRequest.h"
 
-// Probably we want to allow multiple resources, e.g. streaming and non-streaming versions of the service
+// Perhaps we want to allow multiple resources, e.g. streaming and non-streaming versions of the service?
 // Can this be defined in the protobuf definition?
 
 const std::string TestSsiResource("/test");
@@ -73,7 +73,7 @@ public:
 
       // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
-      XrdSsiRequest *requestP = new TestSsiRequest(request_str, timeout);
+      XrdSsiRequest *requestP = new TestSsiRequest<RequestType, ResponseType, MetadataType, AlertType> (request_str, timeout);
 
       // Transfer ownership of the request to the service object
       // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
