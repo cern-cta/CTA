@@ -3,11 +3,26 @@
 
 #include <XrdSsi/XrdSsiRequest.hh>
 
+
+
+// XRootD SSI + Protocol Buffers callbacks.
+// The client should define a specialized callback type for each XRootD reply type (Response, Metadata, Alert)
+
+template<typename CallbackArg>
+class XrdSsiPbRequestCallback
+{
+public:
+   void operator()(const CallbackArg &arg);
+};
+
+
+
+// XRootD SSI + Protocol Buffers Request class
+
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 class XrdSsiPbRequest : public XrdSsiRequest
 {
 public:
-
            XrdSsiPbRequest(const std::string &buffer_str, uint16_t timeout=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.size())
            {
               std::cerr << "Creating TestSsiRequest object, setting timeout=" << timeout << std::endl;
@@ -45,9 +60,18 @@ public:
    virtual void Alert(XrdSsiRespInfoMsg &aMsg) override;
 
 private:
-
    const char *request_buffer;
    int         request_len;
+
+   // Callbacks for each of the XRootD response types
+
+   XrdSsiPbRequestCallback<RequestType>  RequestCallback;
+   XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
+   XrdSsiPbRequestCallback<AlertType>    AlertCallback;
+
+   // Additional callback for handling errors from the XRootD framework
+
+   XrdSsiPbRequestCallback<std::string>  ErrorCallback;
 };
 
 
@@ -61,72 +85,91 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
 
    cerr << "ProcessResponse() callback called with response type = " << rInfo.State() << endl;
 
-   if (eInfo.hasError())
+   switch(rInfo.rType)
    {
-      // Handle error using the passed eInfo object
+      // Handle errors in the XRootD framework (e.g. no response from server)
 
-      cerr << "Error = " << eInfo.Get() << endl;
+      case XrdSsiRespInfo::isError:
+         ErrorCallback(eInfo.Get());
+         Finished();    // Return control of the object to the calling thread and delete rInfo
 
-      Finished();  // Returns control of the object to the calling thread
-                   // Deletes rInfo
-                   // Andy says you can now do a "delete this"
-
-      delete this; // well, OK, so long as you are 100% sure that this object was allocated by new,
-                   // that the pointer on the calling side will never refer to it again, that the
-                   // destructor of the base class doesn't access any class members, ...
-   }
-   else
-   {
-      // Arbitrary metadata can be sent ahead of the response data, for example to describe the
-      // response so that it can be handled in the most optimum way. To access the metadata, call
-      // GetMetadata() before calling GetResponseData().
-
-      int myMetadataLen;
-
-      GetMetadata(myMetadataLen);
-
-      if(rInfo.rType == XrdSsiRespInfo::isData && myMetadataLen > 0)
-      {
-         cerr << "Response has " << myMetadataLen << " bytes of metadata." << endl;
-
-         // do something with metadata
-
-         // A metadata-only response is indicated when XrdSsiRespInfo::rType is set to isNil (i.e. no response data is present).
-#if 0
-         // clean up
-
-         Finished();
+         // Andy says it is now safe to delete the Request object, which implies that the pointer on the calling side
+         // will never refer to it again and the destructor of the base class doesn't access any class members.
 
          delete this;
-#endif
-      }
+         break;
 
-      if(rInfo.rType == XrdSsiRespInfo::isHandle)
-      {
-         cerr << "Response is detached, handle = " << endl;
-
-         // copy the handle somewhere
-
-         // clean up
-
+      case XrdSsiRespInfo::isHandle:
+         // To implement detached requests, add another callback type which saves the handle
+         ErrorCallback("Detached requests are not implemented.");
          Finished();
-
          delete this;
-      }
+         break;
 
-      if(rInfo.rType == XrdSsiRespInfo::isData)
-      {
-         // A proper data response type
+      case XrdSsiRespInfo::isFile:
+         // To implement file requests, add another callback type
+         ErrorCallback("File requests are not implemented.");
+         Finished();
+         delete this;
+         break;
 
-         static const int myBSize = 1024;
+      case XrdSsiRespInfo::isStream:
+         // To implement stream requests, add another callback type
+         ErrorCallback("Stream requests are not implemented.");
+         Finished();
+         delete this;
+         break;
 
-         char *myBuff = reinterpret_cast<char*>(malloc(myBSize));
+      case XrdSsiRespInfo::isNone:
+      case XrdSsiRespInfo::isData:
+         // Check for metadata: Arbitrary metadata can be sent ahead of the response data, for example to
+         // describe the response so that it can be handled in the most optimal way.
 
-         GetResponseData(myBuff, myBSize);
-      }
+         int metadata_len;
+         const char *metadata_buffer = GetMetadata(metadata_len);
+
+         if(metadata_len > 0)
+         {
+            // Deserialize the metadata
+
+            const std::string metadata_str(metadata_buffer, metadata_len);
+std::cerr << "metadata_str = " << metadata_str << std::endl;
+
+            MetadataType metadata;
+
+            if(!metadata.ParseFromString(metadata_str))
+            {
+               ErrorCallback("metadata.ParseFromString() failed");
+               Finished();
+               delete this;
+               break;
+            }
+
+            MetadataCallback(metadata);
+
+            // If this is a metadata-only response, there is nothing more to do
+
+            if(rInfo.rType == XrdSsiRespInfo::isNone)
+            {
+               Finished();
+               delete this;
+               break;
+            }
+         }
+
+         // Handle messages
+
+         if(rInfo.rType == XrdSsiRespInfo::isData)
+         {
+            static const int myBSize = 1024;
+
+            char *myBuff = reinterpret_cast<char*>(malloc(myBSize));
+
+            GetResponseData(myBuff, myBSize);
+         }
    }
 
-   return true; // you should always return true. (So why not make the return type void?)
+   return true;
 }
 
 

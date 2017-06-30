@@ -1,5 +1,4 @@
 #include "test_util.h"      // for Json output (only needed for debugging)
-
 #include "test_client.h"    // Binds XRootD SSI to Google Protocol buffer
 
 // Define the location of the XRootD SSI Service
@@ -7,6 +6,28 @@
 const std::string host     = "localhost";
 const int         port     = 10400;
 const std::string resource = "/test";
+
+
+
+// Error callback
+// This is for framework errors, e.g. no response from server. Server errors will be returned in the Metadata or Alert callbacks.
+
+template<>
+void XrdSsiPbRequestCallback<std::string>::operator()(const std::string &error_txt)
+{
+   std::cerr << "ErrorCallback():" << std::endl << error_txt << std::endl;
+}
+
+
+
+// Metadata callback
+
+template<>
+void XrdSsiPbRequestCallback<xrdssi::test::Metadata>::operator()(const xrdssi::test::Metadata &metadata)
+{
+   std::cout << "MetadataCallback():" << std::endl;
+   std::cout << MessageToJsonString(metadata);
+}
 
 
 

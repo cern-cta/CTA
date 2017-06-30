@@ -9,7 +9,7 @@
 #include "XrdSsiPbServiceClientSide.h"   // XRootD SSI Service API
 #include "test.pb.h"                     // Auto-generated message types from .proto file
 
-// Bind the type of the XrdSsiClient to the types defined in the .proto file
+// Bind the type of the XrdSsiService to the types defined in the .proto file
 
 typedef XrdSsiPbServiceClientSide<xrdssi::test::Request,     // Request message type
                                   xrdssi::test::Result,      // Response message type
