@@ -49,7 +49,7 @@ struct QueueAndMountSummary {
   uint64_t disabledTapes=0;
   uint64_t writableTapes=0;
   
-  static QueueAndMountSummary & getOrCreateEntry(std::list<QueueAndMountSummary> summaryList, MountType mountType, const std::string & tapePool, const std::string vid);
+  static QueueAndMountSummary & getOrCreateEntry(std::list<QueueAndMountSummary> & summaryList, MountType mountType, const std::string & tapePool, const std::string vid);
 };
 
 }}} //namespace cta::common::dataStructures

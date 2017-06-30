@@ -662,6 +662,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   // Extract relevant information from the object store.
   auto mountDecisionInfo=m_db.getMountInfoNoLock();
+  auto & mdi __attribute__((unused)) = *mountDecisionInfo;
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
     auto & summary  = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid);

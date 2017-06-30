@@ -25,7 +25,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-QueueAndMountSummary& QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> summaryList, MountType mountType, const std::string& tapePool, const std::string vid) {
+QueueAndMountSummary& QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> & summaryList, MountType mountType, const std::string& tapePool, const std::string vid) {
   for (auto & summary: summaryList) {
     if ((mountType==MountType::Archive && summary.tapePool==tapePool) ||
         (mountType==MountType::Retrieve && summary.vid==vid))

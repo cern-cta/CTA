@@ -635,6 +635,49 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
   }
 }
 
+TEST_P(SchedulerTest, showqueues) {
+  using namespace cta;
+  
+  setupDefaultCatalogue();
+  
+  Scheduler &scheduler = getScheduler();
+  
+  log::DummyLogger dl("");
+  log::LogContext lc(dl);
+  
+  uint64_t archiveFileId __attribute__((unused));
+  {
+    // Queue an archive request.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.recoveryBlob="blob";
+    diskFileInfo.group="group2";
+    diskFileInfo.owner="cms_user";
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumType="ADLER32";
+    request.checksumValue="1111";
+    request.creationLog=creationLog;
+    request.diskFileInfo=diskFileInfo;
+    request.diskFileID="diskFileID";
+    request.fileSize=100*1000*1000;
+    cta::common::dataStructures::UserIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL="srcURL";
+    request.storageClass=s_storageClassName;
+    archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
+  }
+  
+  // get the queues from scheduler
+  auto queuesSummary = scheduler.getQueuesAndMountSummaries(lc);
+  ASSERT_EQ(1, queuesSummary.size());
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
