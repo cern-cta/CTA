@@ -3,6 +3,9 @@
 #ifndef __TEST_CLIENT_H
 #define __TEST_CLIENT_H
 
+#include <iostream>
+#include <unistd.h> // sleep
+
 #include "XrdSsiServiceClientSide.h"   // XRootD SSI Service API
 #include "test.pb.h"                   // Auto-generated message types from .proto file
 

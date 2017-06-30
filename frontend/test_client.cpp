@@ -1,4 +1,3 @@
-#include <unistd.h>         // for sleep
 #include "test_util.h"      // for Json output (only needed for debugging)
 
 #include "test_client.h"    // Binds XRootD SSI to Google Protocol buffer
@@ -40,23 +39,25 @@ int main(int argc, char *argv[])
       test_ssi_service.send(request);
 
       // Wait for the response callback.
-      // (When this loop finishes, test_ssi_service will go out-of-scope and the service will be shut down)
 
       std::cout << "Request sent, going to sleep..." << std::endl;
 
-      int wait_secs = 20;
-
-      while(--wait_secs)
-      {
-         std::cerr << ".";
-         sleep(1);
-      }
+      // When test_ssi_service goes out-of-scope, the Service will try to shut down, but will wait
+      // for outstanding Requests to be processed
    }
    catch (std::exception& e)
    {
       std::cerr << "XrdSsiServiceClient failed with error: " << e.what() << std::endl;
 
       return 1;
+   }
+
+   int wait_secs = 5;
+
+   while(--wait_secs)
+   {
+      std::cerr << ".";
+      sleep(1);
    }
 
    std::cout << "All done, exiting." << std::endl;
