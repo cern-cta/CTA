@@ -46,4 +46,8 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   chmod 666 /dev/nst* /dev/st* /dev/sg*
   # creating /var/log/cta needed by taped
   mkdir -p /var/log/cta
+else
+  # some yum optimisations for the standard system
+  SQUID_PROXY=squid.kube-system.svc.cluster.local
+  ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
 fi
