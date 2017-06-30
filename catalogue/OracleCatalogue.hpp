@@ -43,13 +43,18 @@ public:
    * @param password The database password.
    * @param database The database name.
    * @param nbConns The maximum number of concurrent connections to the
-   * underlying relational database.
+   * underlying relational database for all operations accept listing archive
+   * files which can be relatively long operations.
+   * @param nbArchiveFileListingConns The maximum number of concurrent
+   * connections to the underlying relational database for the sole purpose of
+   * listing archive files.
    */
   OracleCatalogue(
     const std::string &username,
     const std::string &password,
     const std::string &database,
-    const uint64_t nbConns);
+    const uint64_t nbConns,
+    const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.

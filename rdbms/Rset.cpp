@@ -20,6 +20,7 @@
 #include "RsetImpl.hpp"
 #include "NullDbValue.hpp"
 
+
 namespace cta {
 namespace rdbms {
 

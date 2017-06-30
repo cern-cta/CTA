@@ -62,10 +62,15 @@ protected:
    * Protected constructor only to be called by sub-classes.
    *
    * @param connFactory The factory for creating new database connections.
-   * @param nbConns The maximum number of concurrent connections to be
-   * created by the catalogue.
+   * @param nbConns The maximum number of concurrent connections to the
+   * underlying relational database for all operations accept listing archive
+   * files which can be relatively long operations.
+   * @param nbArchiveFileListingConns The maximum number of concurrent
+   * connections to the underlying relational database for the sole purpose of
+   * listing archive files.
    */
-  RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns);
+  RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns,
+    const uint64_t nbArchiveFileListingConns);
 
 public:
 
@@ -433,30 +438,21 @@ public:
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
   /**
-   * Returns an iterator over the list of archive files that meet the specified
-   * search criteria.
-   *
-   * Please note that the list is ordered by archive file ID.
-   *
-   * Please note that this method will throw an exception if the
-   * nbArchiveFilesToPrefetch parameter is set to 0.  The parameter must be set
-   * to a value greater than or equal to 1.
-   *
-   * @param searchCriteria The search criteria.
-   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-   * This parameter must be set to a value equal to or greater than 1.
-   * @return An iterator over the list of archive files.
-   */
-  ArchiveFileItor getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
-    const uint64_t nbArchiveFilesToPrefetch) const override;
-
-  /**
    * Throws a UserError exception if the specified searchCriteria is not valid
    * due to a user error.
    *
    * @param searchCriteria The search criteria.
    */
   void checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const;
+
+  /**
+   * Returns the specified archive files.  Please note that the list of files
+   * is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The archive files.
+   */
+  ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns a summary of the tape files that meet the specified search
@@ -499,8 +495,6 @@ public:
 
 protected:
 
-  friend RdbmsArchiveFileItorImpl;
-
   /**
    * Mutex to be used to a take a global lock on the database.
    */
@@ -512,9 +506,17 @@ protected:
   std::unique_ptr<rdbms::ConnFactory> m_connFactory;
 
   /**
-   * The pool of connections to the underlying relational database.
+   * The pool of connections to the underlying relational database to be used
+   * for all operations accept listing archive files which can be relatively
+   * long operations.
    */
   mutable rdbms::ConnPool m_connPool;
+
+  /**
+   * The pool of connections to the underlying relational database to be used
+   * for the sole purpose of listing archive files.
+   */
+  mutable rdbms::ConnPool m_archiveFileListingConnPool;
 
   /**
    * Returns true if the specified admin user exists.
@@ -901,22 +903,6 @@ protected:
    * the catalogue.
    */
   virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) = 0;
-
-  /**
-   * Returns the specified archive files.  This method is called by the nested
-   * class RdbmsArchiveFileItor.  Please note that the list of files is ordered
-   * by archive file IDs.
-   *
-   * @param startingArchiveFileId The unique identifier of the first archive
-   * file to be returned.
-   * @param nbArchiveFiles The maximum number of archive files to be returned.
-   * @param searchCriteria The search criteria.
-   * @return The archive files.
-   */
-  std::list<common::dataStructures::ArchiveFile> getArchiveFilesForItor(
-    const uint64_t startingArchiveFileId,
-    const uint64_t maxNbArchiveFiles,
-    const TapeFileSearchCriteria &searchCriteria) const;
 
   /**
    * Returns the mapping from tape copy to tape pool for the specified storage

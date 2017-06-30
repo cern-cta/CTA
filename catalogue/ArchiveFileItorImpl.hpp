@@ -38,7 +38,7 @@ public:
   /**
    * Returns true if a call to next would return another archive file.
    */
-  virtual bool hasMore() const = 0;
+  virtual bool hasMore() = 0;
 
   /**
    * Returns the next archive or throws an exception if there isn't one.

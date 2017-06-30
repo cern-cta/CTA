@@ -18,8 +18,12 @@
 
 #pragma once
 
+#include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/ArchiveFileItorImpl.hpp"
-#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/Rset.hpp"
+#include "rdbms/Stmt.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -33,14 +37,8 @@ public:
   /**
    * Constructor.
    *
-   * @param catalogue The RdbmsCatalogue.
-   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-   * @param searchCriteria The search criteria.
    */
-  RdbmsArchiveFileItorImpl(
-    const RdbmsCatalogue &catalogue,
-    const uint64_t nbArchiveFilesToPrefetch,
-    const TapeFileSearchCriteria &searchCriteria);
+  RdbmsArchiveFileItorImpl(rdbms::ConnPool &connPool, const TapeFileSearchCriteria &searchCriteria);
 
   /**
    * Destructor.
@@ -50,7 +48,7 @@ public:
   /**
    * Returns true if a call to next would return another archive file.
    */
-  bool hasMore() const override;
+  bool hasMore() override;
 
   /**
    * Returns the next archive or throws an exception if there isn't one.
@@ -59,31 +57,40 @@ public:
 
 private:
 
-  /**
-   * The RdbmsCatalogue.
-   */
-  const RdbmsCatalogue &m_catalogue;
+  rdbms::ConnPool &m_connPool;
 
-  /**
-   * The number of archive files to prefetch.
-   */
-  const uint64_t m_nbArchiveFilesToPrefetch;
-
-  /**
-   * The search criteria.
-   */
   TapeFileSearchCriteria m_searchCriteria;
 
   /**
-   * The current offset into the list of archive files in the form of an
-   * archive file ID.
+   * True if the result set is empty.
    */
-  uint64_t m_nextArchiveFileId;
+  bool m_rsetIsEmpty;
 
   /**
-   * The current list of prefetched archive files.
+   * True if hasMore() has been called and the corresponding call to next() has
+   * not.
+   *
+   * This member-variable is used to prevent next() being called before
+   * hasMore().
    */
-  std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
+  bool m_hasMoreHasBeenCalled;
+
+  /**
+   * The database statement.
+   */
+  std::unique_ptr<rdbms::Stmt> m_stmt;
+
+  /**
+   * The result set of archive files that is to be iterated over.
+   */
+  rdbms::Rset m_rset;
+
+  /**
+   * Builds ArchiveFile objects from a stream of tape files ordered by archive
+   * ID and then copy number.
+   */
+  ArchiveFileBuilder m_archiveFileBuilder;
+
 }; // class RdbmsArchiveFileItorImpl
 
 } // namespace catalogue

@@ -20,7 +20,6 @@
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/ConnPool.hpp"
 
-#include <iostream>
 #include <memory>
 
 namespace cta {

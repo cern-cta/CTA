@@ -448,23 +448,14 @@ public:
   virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
   /**
-   * Returns an iterator over the list of archive files that meet the specified
-   * search criteria.
-   *
-   * Please note that the list is ordered by archive file ID.
-   *
-   * Please note that this method will throw an exception if the
-   * nbArchiveFilesToPrefetch parameter is set to 0.  The parameter must be set
-   * to a value greater than or equal to 1.
+   * Returns the specified archive files.  Please note that the list of files
+   * is ordered by archive file ID.
    *
    * @param searchCriteria The search criteria.
-   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-   * This parameter must be set to a value equal to or greater than 1.
-   * @return An iterator over the list of archive files.
+   * @return The archive files.
    */
-  virtual ArchiveFileItor getArchiveFileItor(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria(),
-    const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
+  virtual ArchiveFileItor getArchiveFiles(
+    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns a summary of the tape files that meet the specified search

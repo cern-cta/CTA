@@ -43,11 +43,16 @@ public:
    *
    * @param login The database connection details.
    * @param nbConns The maximum number of concurrent connections to the
-   * underlying relational database.
+   * underlying relational database for all operations accept listing archive
+   * files which can be relatively long operations.
+   * @param nbArchiveFileListingConns The maximum number of concurrent
+   * connections to the underlying relational database for the sole purpose of
+   * listing archive files.
    * @return The newly created CTA catalogue object.  Please note that it is the
    * responsibility of the caller to delete the returned CTA catalogue object.
    */
-  static std::unique_ptr<Catalogue> create(const rdbms::Login &login, const uint64_t nbConns);
+  static std::unique_ptr<Catalogue> create(const rdbms::Login &login, const uint64_t nbConns,
+    const uint64_t nbArchiveFileListingConns = 5);
 
 }; // class CatalogueFactory
 

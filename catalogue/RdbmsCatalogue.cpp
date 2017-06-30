@@ -38,9 +38,13 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns):
+RdbmsCatalogue::RdbmsCatalogue(
+  std::unique_ptr<rdbms::ConnFactory> connFactory,
+  const uint64_t nbConns,
+  const uint64_t nbArchiveFileListingConns):
   m_connFactory(std::move(connFactory)),
-  m_connPool(*m_connFactory, nbConns) {
+  m_connPool(*m_connFactory, nbConns),
+  m_archiveFileListingConnPool(*m_connFactory, nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
@@ -3465,21 +3469,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const rdbms::Stm
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileItor
-//------------------------------------------------------------------------------
-ArchiveFileItor RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
-  const uint64_t nbArchiveFilesToPrefetch) const {
-
-  checkTapeFileSearchCriteria(searchCriteria);
-
-  try {
-    return ArchiveFileItor(new RdbmsArchiveFileItorImpl(*this, nbArchiveFilesToPrefetch, searchCriteria));
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // checkTapeFileSearchCriteria
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const {
@@ -3566,167 +3555,15 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFilesForItor
+// getArchiveFiles
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesForItor(
-  const uint64_t startingArchiveFileId,
-  const uint64_t maxNbArchiveFiles,
-  const TapeFileSearchCriteria &searchCriteria) const {
+ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const {
+
+  checkTapeFileSearchCriteria(searchCriteria);
+
   try {
-    std::string sql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "LEFT OUTER JOIN TAPE ON "
-        "TAPE_FILE.VID = TAPE.VID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID >= :STARTING_ARCHIVE_FILE_ID";
-    if(searchCriteria.archiveFileId) {
-      sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    }
-    if(searchCriteria.diskInstance) {
-      sql += " AND ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
-    }
-    if(searchCriteria.diskFileId) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
-    }
-    if(searchCriteria.diskFilePath) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
-    }
-    if(searchCriteria.diskFileUser) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
-    }
-    if(searchCriteria.diskFileGroup) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
-    }
-    if(searchCriteria.storageClass) {
-      sql += " AND ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    }
-    if(searchCriteria.vid) {
-      sql += " AND TAPE_FILE.VID = :VID";
-    }
-    if(searchCriteria.tapeFileCopyNb) {
-      sql += " AND TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
-    }
-    if(searchCriteria.tapePool) {
-      sql += " AND TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
-    }
-    sql += " ORDER BY ARCHIVE_FILE.ARCHIVE_FILE_ID, TAPE_FILE.COPY_NB";
-
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    stmt->bindUint64(":STARTING_ARCHIVE_FILE_ID", startingArchiveFileId);
-    if(searchCriteria.archiveFileId) {
-      stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
-    }
-    if(searchCriteria.diskInstance) {
-      stmt->bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
-    }
-    if(searchCriteria.diskFileId) {
-      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
-    }
-    if(searchCriteria.diskFilePath) {
-      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
-    }
-    if(searchCriteria.diskFileUser) {
-      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
-    }
-    if(searchCriteria.diskFileGroup) {
-      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
-    }
-    if(searchCriteria.storageClass) {
-      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
-    }
-    if(searchCriteria.vid) {
-      stmt->bindString(":VID", searchCriteria.vid.value());
-    }
-    if(searchCriteria.tapeFileCopyNb) {
-      stmt->bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
-    }
-    if(searchCriteria.tapePool) {
-      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
-    }
-    auto rset = stmt->executeQuery();
-    std::list<common::dataStructures::ArchiveFile> archiveFiles;
-
-    // While the prefetch limit has not been exceeded
-    while(archiveFiles.size() <= maxNbArchiveFiles) {
-
-      // Break the archive file loop if there are no more tape files
-      if(!rset.next()) {
-        break;
-      }
-
-      const uint64_t archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
-
-      // If the current tape file is for the next archive file
-      if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
-
-        // Break the archive file loop if creating the next archive file would exceed the prefetch limit
-        if(archiveFiles.size() == maxNbArchiveFiles) {
-          break;
-        }
-
-        common::dataStructures::ArchiveFile archiveFile;
-
-        archiveFile.archiveFileID = archiveFileId;
-        archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
-        archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-        archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-        archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
-        archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
-        archiveFile.diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-        archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
-        archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
-        archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
-        archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
-
-        archiveFiles.push_back(archiveFile);
-      }
-
-      common::dataStructures::ArchiveFile &archiveFile = archiveFiles.back();
-
-      // If there is a tape file
-      if(!rset.columnIsNull("VID")) {
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = rset.columnString("VID");
-        tapeFile.fSeq = rset.columnUint64("FSEQ");
-        tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = rset.columnUint64("COPY_NB");
-        tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
-
-        archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
-
-    return archiveFiles;
+    auto impl = new RdbmsArchiveFileItorImpl(m_archiveFileListingConnPool, searchCriteria);
+    return ArchiveFileItor(impl);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
