@@ -21,7 +21,7 @@ all: test_client
 
 test_client: test_client.o test.pb.o
 
-test_client.o: test_client.cpp test_client.h XrdSsiServiceClientSide.h TestSsiRequest.h test.pb.h
+test_client.o: test_client.cpp test_client.h XrdSsiPbServiceClientSide.h XrdSsiPbRequest.h test.pb.h
 
 test.pb.o: test.pb.cc test.pb.h
 

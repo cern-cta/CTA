@@ -1,19 +1,19 @@
-#ifndef __TEST_SSI_REQUEST_H
-#define __TEST_SSI_REQUEST_H
+#ifndef __XRD_SSI_PB_REQUEST_H
+#define __XRD_SSI_PB_REQUEST_H
 
 #include <XrdSsi/XrdSsiRequest.hh>
 
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-class TestSsiRequest : public XrdSsiRequest
+class XrdSsiPbRequest : public XrdSsiRequest
 {
 public:
 
-           TestSsiRequest(const std::string &buffer_str, uint16_t timeout=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.size())
+           XrdSsiPbRequest(const std::string &buffer_str, uint16_t timeout=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.size())
            {
               std::cerr << "Creating TestSsiRequest object, setting timeout=" << timeout << std::endl;
               SetTimeOut(timeout);
            }
-   virtual ~TestSsiRequest() 
+   virtual ~XrdSsiPbRequest() 
            {
               std::cerr << "Deleting TestSsiRequest object" << std::endl;
            }
@@ -55,7 +55,7 @@ private:
 // Process the response
 
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-bool TestSsiRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
+bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
    using namespace std;
 
@@ -132,7 +132,7 @@ bool TestSsiRequest<RequestType, ResponseType, MetadataType, AlertType>::Process
 
 
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-XrdSsiRequest::PRD_Xeq TestSsiRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *myBuff, int myBLen, bool isLast)
+XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *myBuff, int myBLen, bool isLast)
 {
    using namespace std;
 
@@ -177,7 +177,7 @@ XrdSsiRequest::PRD_Xeq TestSsiRequest<RequestType, ResponseType, MetadataType, A
 
 
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void TestSsiRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &aMsg)
+void XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &aMsg)
 {
    using namespace std;
 

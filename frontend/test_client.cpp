@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
    {
       // Obtain a Service Provider
 
-      XrdSsiServiceType test_ssi_service(host, port, resource);
+      XrdSsiPbServiceType test_ssi_service(host, port, resource);
 
       // Create a Request object
 
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
    }
    catch (std::exception& e)
    {
-      std::cerr << "XrdSsiServiceClient failed with error: " << e.what() << std::endl;
+      std::cerr << "XrdSsiPbServiceClient failed with error: " << e.what() << std::endl;
 
       return 1;
    }
