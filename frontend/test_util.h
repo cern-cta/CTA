@@ -1,12 +1,9 @@
-#ifndef __TEST_SSI_PROTOBUF_H
-#define __TEST_SSI_PROTOBUF_H
+#ifndef __TEST_UTIL_H
+#define __TEST_UTIL_H
 
 #include <google/protobuf/util/json_util.h>
 
-#include "test.pb.h"
-
-namespace xrdssi {
-namespace test {
+// Helper function for debugging
 
 inline std::string MessageToJsonString(const google::protobuf::Message &message)
 {
@@ -22,8 +19,5 @@ inline std::string MessageToJsonString(const google::protobuf::Message &message)
 
    return output;
 }
-
-} // test
-} // xrdssi
 
 #endif

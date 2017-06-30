@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "TestSsiServiceProvider.h"
+#include "test.pb.h"
 #include "TestSsiService.h"
-#include "TestSsiProtobuf.h"
+#include "TestSsiServiceProvider.h"
 
 
 

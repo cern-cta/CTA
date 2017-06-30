@@ -8,11 +8,6 @@
 #include "XrdSsiException.h"
 #include "TestSsiRequest.h"
 
-// Perhaps we want to allow multiple resources, e.g. streaming and non-streaming versions of the service?
-// Can this be defined in the protobuf definition?
-
-const std::string TestSsiResource("/test");
-
 
 
 // XrdSsiProviderClient is instantiated and managed by the SSI library
@@ -31,7 +26,7 @@ public:
 
    // constructor to be used on the client side (to establish a connection to the server):
 
-   TestSsiClient(std::string hostname, int port, int to = 15) : resource(TestSsiResource), timeout(to)
+   TestSsiClient(std::string hostname, int port, std::string _resource, int _timeout = 15) : resource(_resource), timeout(_timeout)
    {
       XrdSsiErrInfo eInfo;
 
@@ -83,6 +78,26 @@ public:
       // Note: it is safe to delete the XrdSsiResource object after ProcessRequest() returns. I don't delete it because
       // I am assuming I can reuse it, but I need to check if that is a safe assumption. Perhaps I need to create a new
       // resource object for each request?
+      //
+      // See SSI ref p.10 on configuring a resource to be reusable
+      // Do I need more than one resource? I could have a single resource called "/default" with some default options and
+      // if necessary I can add other resources with other options later.
+      //
+      // Possible useful options:
+      //
+      // For specifying the tapeserver callback:
+      // XrdSsiResource::rInfo
+      // This option allows you to send additional out-of-band information to the
+      // server that will be executing the request. The information should be specified
+      // in CGI format (i.e. key=value[&key=value[...]]). This information is supplied
+      // to the server-side service in its corresponding request resource object. Note
+      // that restrictions apply for reusable resources.
+      //
+      // XrdSsiResource::rUser
+      // This is an arbitrary string that is meant to further identify the request. The
+      // SSI framework normally uses this information to tag log messages. It is also
+      // supplied to the server-side service in its corresponding request resource
+      // object.
    }
 
 private:

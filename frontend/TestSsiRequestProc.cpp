@@ -1,8 +1,9 @@
 #include <iostream>
+#include "test_util.h"
 
+#include "test.pb.h"
 #include "XrdSsiException.h"
 #include "TestSsiRequestProc.h"
-#include "TestSsiProtobuf.h"
 
 // This is for specialized private methods called by RequestProc::Execute to handle actions, alerts
 // and metadata
@@ -13,7 +14,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
-   std::cerr << xrdssi::test::MessageToJsonString(request);
+   std::cerr << MessageToJsonString(request);
 
    // Set reply
 
@@ -23,7 +24,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing response:" << std::endl;
-   std::cerr << xrdssi::test::MessageToJsonString(response);
+   std::cerr << MessageToJsonString(response);
 }
 
 
@@ -42,7 +43,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing metadata..." << std::endl;
-   std::cerr << xrdssi::test::MessageToJsonString(metadata);
+   std::cerr << MessageToJsonString(metadata);
 }
 
 
