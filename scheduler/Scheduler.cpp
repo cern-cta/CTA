@@ -672,6 +672,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
+      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
       break;
     case common::dataStructures::MountType::Retrieve:
       // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
@@ -680,6 +681,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
+      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
       break;
     default:
       break;
@@ -704,19 +706,37 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   }
   mountDecisionInfo.reset();
   // Add the tape information where useful (archive queues).
-  for (auto & tp: ret) {
-    if (common::dataStructures::MountType::Archive==tp.mountType) {
+  for (auto & mountOrQueue: ret) {
+    if (common::dataStructures::MountType::Archive==mountOrQueue.mountType) {
       // Get all the tape for this pool
       cta::catalogue::TapeSearchCriteria tsc;
-      tsc.tapePool = tp.tapePool;
+      tsc.tapePool = mountOrQueue.tapePool;
       auto tapes=m_catalogue.getTapes(tsc);
       for (auto & t:tapes) {
-        tp.tapesCapacity += t.capacityInBytes;
-        tp.dataOnTapes += t.dataOnTapeInBytes;
-        if (t.disabled) tp.disabledTapes++;
-        if (t.full) tp.fullTapes++;
-        if (!t.full && t.disabled) tp.writableTapes++;
+        mountOrQueue.tapesCapacity += t.capacityInBytes;
+        mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
+        if (!t.dataOnTapeInBytes)
+          mountOrQueue.emptyTapes++;
+        if (t.disabled) mountOrQueue.disabledTapes++;
+        if (t.full) mountOrQueue.fullTapes++;
+        if (!t.full && t.disabled) mountOrQueue.writableTapes++;
       }
+    } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
+      // Get info for this tape.
+      cta::catalogue::TapeSearchCriteria tsc;
+      tsc.vid = mountOrQueue.vid;
+      auto tapes=m_catalogue.getTapes(tsc);
+      if (tapes.size() != 1) {
+        throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
+      }
+      auto &t=tapes.front();
+      mountOrQueue.tapesCapacity += t.capacityInBytes;
+      mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
+      if (!t.dataOnTapeInBytes)
+        mountOrQueue.emptyTapes++;
+      if (t.disabled) mountOrQueue.disabledTapes++;
+      if (t.full) mountOrQueue.fullTapes++;
+      if (!t.full && t.disabled) mountOrQueue.writableTapes++;
     }
   }
   return ret;
