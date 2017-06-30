@@ -1,16 +1,7 @@
-#include <unistd.h>    // for sleep
-#include "test_util.h" // for Json output (only needed for debugging)
+#include <unistd.h>         // for sleep
+#include "test_util.h"      // for Json output (only needed for debugging)
 
-#include "TestSsiClient.h"   // XRootD SSI Service API
-#include "test.pb.h"         // Auto-generated message types from .proto file
-
-// Bind the type of the XrdSsiClient to the types defined in the .proto file
-
-typedef TestSsiClient<xrdssi::test::Request,     // Request message type
-                      xrdssi::test::Result,      // Response message type
-                      xrdssi::test::Metadata,    // Metadata message type
-                      xrdssi::test::Alert>       // Alert message type
-        TestSsiClientType;
+#include "test_client.h"    // Binds XRootD SSI to Google Protocol buffer
 
 // Define the location of the XRootD SSI Service
 
@@ -29,10 +20,9 @@ int main(int argc, char *argv[])
 
    try
    {
-
       // Obtain a Service Provider
 
-      TestSsiClientType test_ssi_service(host, port, resource);
+      XrdSsiServiceType test_ssi_service(host, port, resource);
 
       // Create a Request object
 
@@ -64,7 +54,7 @@ int main(int argc, char *argv[])
    }
    catch (std::exception& e)
    {
-      std::cerr << "TestSsiClient failed with error: " << e.what() << std::endl;
+      std::cerr << "XrdSsiServiceClient failed with error: " << e.what() << std::endl;
 
       return 1;
    }

@@ -17,16 +17,16 @@ extern XrdSsiProvider *XrdSsiProviderClient;
 
 
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-class TestSsiClient
+class XrdSsiServiceClientSide
 {
 public:
    // default constructor to be used on the server side:
 
-   TestSsiClient() = delete;
+   XrdSsiServiceClientSide() = delete;
 
    // constructor to be used on the client side (to establish a connection to the server):
 
-   TestSsiClient(std::string hostname, int port, std::string _resource, int _timeout = 15) : resource(_resource), timeout(_timeout)
+   XrdSsiServiceClientSide(std::string hostname, int port, std::string _resource, int _timeout = 15) : resource(_resource), timeout(_timeout)
    {
       XrdSsiErrInfo eInfo;
 
@@ -36,7 +36,7 @@ public:
       }
    }
 
-   ~TestSsiClient()
+   ~XrdSsiServiceClientSide()
    {
       // The XrdSsiService object cannot be explicitly deleted. The Stop() method deletes the object if
       // it is safe to do so. A service object can only be deleted after all requests handed to the object
