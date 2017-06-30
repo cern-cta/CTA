@@ -715,12 +715,13 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       auto tapes=m_catalogue.getTapes(tsc);
       for (auto & t:tapes) {
         mountOrQueue.tapesCapacity += t.capacityInBytes;
+        mountOrQueue.filesOnTapes += t.lastFSeq;
         mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
         if (!t.dataOnTapeInBytes)
           mountOrQueue.emptyTapes++;
         if (t.disabled) mountOrQueue.disabledTapes++;
         if (t.full) mountOrQueue.fullTapes++;
-        if (!t.full && t.disabled) mountOrQueue.writableTapes++;
+        if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
@@ -732,12 +733,13 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       }
       auto &t=tapes.front();
       mountOrQueue.tapesCapacity += t.capacityInBytes;
+      mountOrQueue.filesOnTapes += t.lastFSeq;
       mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
       if (!t.dataOnTapeInBytes)
         mountOrQueue.emptyTapes++;
       if (t.disabled) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
-      if (!t.full && t.disabled) mountOrQueue.writableTapes++;
+      if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
     }
   }
   return ret;

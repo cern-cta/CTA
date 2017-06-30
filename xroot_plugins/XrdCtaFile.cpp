@@ -2034,7 +2034,7 @@ std::string XrdCtaFile::xCom_showqueues() {
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"type","tapepool","vid","files queued","bytes queued","oldest age","priority","min age","max drives",
-      "cur. mounts", "cur. files", "cur. bytes", "bandwidth", "next mounts", "tapes capacity", "data on tapes", "full tapes", "empty tapes",
+      "cur. mounts", "cur. files", "cur. bytes", "bandwidth", "next mounts", "tapes capacity", "files on tapes", "data on tapes", "full tapes", "empty tapes",
       "disabled tapes", "writables tapes"};
     if(hasOption("-h", "--header")) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
@@ -2064,6 +2064,7 @@ std::string XrdCtaFile::xCom_showqueues() {
       currentRow.push_back(std::to_string(q.latestBandwidth));
       currentRow.push_back(std::to_string(q.nextMounts));
       currentRow.push_back(std::to_string(q.tapesCapacity));
+      currentRow.push_back(std::to_string(q.filesOnTapes));
       currentRow.push_back(std::to_string(q.dataOnTapes));
       currentRow.push_back(std::to_string(q.fullTapes));
       currentRow.push_back(std::to_string(q.emptyTapes));

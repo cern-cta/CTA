@@ -43,6 +43,7 @@ struct QueueAndMountSummary {
   double latestBandwidth=0;
   uint64_t nextMounts=0;
   uint64_t tapesCapacity=0;
+  uint64_t filesOnTapes=0;
   uint64_t dataOnTapes=0;
   uint64_t fullTapes=0;
   uint64_t emptyTapes=0;
