@@ -314,6 +314,12 @@ protected:
    * Executes a command and returns the output for the command-line.
    * @return The output for the command-line.
    */
+  std::string xCom_showqueues();
+  
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
   std::string xCom_archive();
 
   /**

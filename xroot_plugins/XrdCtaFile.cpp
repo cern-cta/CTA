@@ -163,6 +163,7 @@ std::string XrdCtaFile::dispatchCommand() {
   else if("dr"   == command || "drive"                  == command) {authorizeAdmin(); return xCom_drive();}
   else if("lpa"  == command || "listpendingarchives"    == command) {authorizeAdmin(); return xCom_listpendingarchives();}
   else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); return xCom_listpendingretrieves();}
+  else if("sq"   == command || "showqueues"             == command) {authorizeAdmin(); return xCom_showqueues();}
   
   else if("a"    == command || "archive"                == command) {return xCom_archive();}
   else if("r"    == command || "retrieve"               == command) {return xCom_retrieve();}
@@ -2022,6 +2023,61 @@ std::string XrdCtaFile::xCom_listpendingretrieves() {
 }
 
 //------------------------------------------------------------------------------
+// xCom_listpendingretrieves
+//------------------------------------------------------------------------------
+std::string XrdCtaFile::xCom_showqueues() {
+  std::stringstream cmdlineOutput;
+  std::stringstream help;
+  help << m_requestTokens.at(0) << " sq/showqueues [--header/-h]" << std::endl;
+  log::LogContext lc(m_log);
+  auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
+  if (queuesAndMounts.size()) {
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"type","tapepool","vid","files queued","bytes queued","oldest age","priority","min age","max drives",
+      "cur. mounts", "cur. files", "cur. bytes", "bandwidth", "next mounts", "tapes capacity", "data on tapes", "full tapes", "empty tapes",
+      "disabled tapes", "writables tapes"};
+    if(hasOption("-h", "--header")) responseTable.push_back(header);
+    for (auto & q: queuesAndMounts) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(common::dataStructures::toString(q.mountType));
+      currentRow.push_back(q.tapePool);
+      currentRow.push_back(q.vid);
+      currentRow.push_back(std::to_string(q.filesQueued));
+      currentRow.push_back(std::to_string(q.bytesQueued));
+      currentRow.push_back(std::to_string(q.oldestJobAge));
+      if (common::dataStructures::MountType::Archive == q.mountType) {
+        currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
+        currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
+        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+      } else if (common::dataStructures::MountType::Retrieve == q.mountType) {
+        currentRow.push_back(std::to_string(q.mountPolicy.retrievePriority));
+        currentRow.push_back(std::to_string(q.mountPolicy.retrieveMinRequestAge));
+        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+      } else {
+        currentRow.push_back("-");
+        currentRow.push_back("-");
+        currentRow.push_back("-");
+      }
+      currentRow.push_back(std::to_string(q.currentMounts));
+      currentRow.push_back(std::to_string(q.currentFiles));
+      currentRow.push_back(std::to_string(q.currentBytes));
+      currentRow.push_back(std::to_string(q.latestBandwidth));
+      currentRow.push_back(std::to_string(q.nextMounts));
+      currentRow.push_back(std::to_string(q.tapesCapacity));
+      currentRow.push_back(std::to_string(q.dataOnTapes));
+      currentRow.push_back(std::to_string(q.fullTapes));
+      currentRow.push_back(std::to_string(q.emptyTapes));
+      currentRow.push_back(std::to_string(q.disabledTapes));
+      currentRow.push_back(std::to_string(q.writableTapes));
+      responseTable.push_back(currentRow);
+    }
+    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+  }
+  return cmdlineOutput.str();
+}
+
+
+//------------------------------------------------------------------------------
 // xCom_archive
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::xCom_archive() {
@@ -2287,7 +2343,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl;
   help << programName << " archivefile/af           ls"                         << std::endl;
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
-  help << programName << " drive/dr                 up/down"                    << std::endl;
+  help << programName << " drive/dr                 up/down/ls"                 << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
   help << programName << " listpendingarchives/lpa"                             << std::endl;
   help << programName << " listpendingretrieves/lpr"                            << std::endl;
