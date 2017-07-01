@@ -52,6 +52,8 @@ cta_rpm:
     - docker
 
 cta_tagged_rpm:
+  only:
+    - tags
   stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
@@ -76,6 +78,8 @@ cta_tagged_rpm:
 
 publish_tagged_rpm:
   stage: publish_rpm
+  only:
+    - tags
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
@@ -140,7 +144,7 @@ archiveretrieve:
     - mhvtl
 
 
-nightlytests:
+nightly1:
   stage: test
   only:
     - schedules
@@ -148,6 +152,8 @@ nightlytests:
     echo "Running  nightly tests"
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D
+    - kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 2000 -s 80 -p 10 -v
+    - kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 2000 -s 80 -p 10 -v
   artifacts:
     when: always
     expire_in: 30 days
@@ -156,3 +162,4 @@ nightlytests:
   tags:
     - kubernetes
     - mhvtl
+    - xlarge
