@@ -147,6 +147,7 @@ archiveretrieve:
 nightly1:
   stage: test
   only:
+    - triggers
     - schedules
   script:
     - echo "Running  nightly tests"
