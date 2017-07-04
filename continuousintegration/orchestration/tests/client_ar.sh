@@ -44,6 +44,7 @@ if [ ! -z "${error}" ]; then
 fi
 
 STATUS_FILE=$(mktemp)
+EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=${FILE_KB_SIZE} || exit 1
 
@@ -69,7 +70,7 @@ eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" |
 
 echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=60
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
 while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   echo "Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -82,8 +83,17 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
 
   echo "$(grep -c archived$ ${STATUS_FILE})/${NB_FILES} archived"
 
-  for TEST_FILE_NAME in $(grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-    eos root://${EOSINSTANCE} info ${EOS_DIR}/${TEST_FILE_NAME} | awk '{print $4;}' | grep -q tape && sed -i ${STATUS_FILE} -e "s/${TEST_FILE_NAME} copied/${TEST_FILE_NAME} archived/"
+  # generating EOS batch script
+  grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
+
+  # Updating all files statuses
+  eos --batch root://${EOSINSTANCE} ${EOS_BATCHFILE} | egrep '^ *File|tape' | while read line; do
+    if echo $line | grep -q File; then
+      filename=$(basename $(echo $line | awk '{print $2}' | sed -e "s/'//g"))
+    elif echo $line | awk '{print $4}' | grep -q tape; then
+      # file is on tape
+      sed -i ${STATUS_FILE} -e "s/${filename} copied/${filename} archived/"
+    fi
   done
 
 done
@@ -118,7 +128,7 @@ grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --m
 
 # Wait for the copy to appear on disk
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=60
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
 while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
   echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -131,8 +141,17 @@ while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
 
   echo "$(grep -c retrieved$ ${STATUS_FILE})/${TAPEONLY} retrieved"
 
-  for TEST_FILE_NAME in $(grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
-    test 2 = $(eos root://${EOSINSTANCE} info ${EOS_DIR}/${TEST_FILE_NAME} | grep -c nodrain) && sed -i ${STATUS_FILE} -e "s/${TEST_FILE_NAME} tapeonly/${TEST_FILE_NAME} retrieved/"
+  # generating EOS batch script
+  grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
+
+  # Updating all files statuses
+  eos --batch root://${EOSINSTANCE} ${EOS_BATCHFILE} | egrep '^ *File|nodrain.*online' | while read line; do
+    if echo $line | grep -q File; then
+      filename=$(basename $(echo $line | awk '{print $2}' | sed -e "s/'//g"))
+    elif echo $line | grep -q nodrain; then
+      # file is back on disk
+      sed -i ${STATUS_FILE} -e "s/${filename} tapeonly/${filename} retrieved/"
+    fi
   done
 
 done
