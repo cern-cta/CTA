@@ -2,8 +2,7 @@
 #define __TEST_SSI_SERVICE_H
 
 #include <XrdSsi/XrdSsiService.hh>
-
-#include "TestSsiRequestProc.h"
+#include "XrdSsiPbRequestProc.h"
 
 
 
@@ -19,8 +18,8 @@ public:
    virtual ~TestSsiService() {}
 
    // The pure abstract method ProcessRequest() is called when the client calls its ProcessRequest() method to hand off
-   // its request and resource objects. The client’s request and resource objects are transmitted to the server and passed
-   // into the service’s ProcessRequest() method.
+   // its request and resource objects. The client's request and resource objects are transmitted to the server and passed
+   // into the service's ProcessRequest() method.
 
    virtual void ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef) override;
 

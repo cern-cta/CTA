@@ -20,6 +20,17 @@ void XrdSsiPbRequestCallback<std::string>::operator()(const std::string &error_t
 
 
 
+// Alert callback
+
+template<>
+void XrdSsiPbRequestCallback<xrdssi::test::Alert>::operator()(const xrdssi::test::Alert &alert)
+{
+   std::cout << "AlertCallback():" << std::endl;
+   std::cout << MessageToJsonString(alert);
+}
+
+
+
 // Metadata callback
 
 template<>

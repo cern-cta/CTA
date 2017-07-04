@@ -1,8 +1,9 @@
-#ifndef __TEST_SSI_REQUEST_PROC_H
-#define __TEST_SSI_REQUEST_PROC_H
+#ifndef __XRD_SSI_PB_REQUEST_PROC_H
+#define __XRD_SSI_PB_REQUEST_PROC_H
 
 #include <XrdSsi/XrdSsiResponder.hh>
 #include "XrdSsiException.h"
+#include "XrdSsiPbAlert.h"
 
 /*
  * The XrdSsiResponder class knows how to safely interact with the request object. It allows handling asynchronous
@@ -29,6 +30,16 @@ public:
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
 
 private:
+
+
+   void Alert(const AlertType &alert)
+   {
+      // Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object. Alert message objects
+      // are created on the heap with lifetime managed by the XrdSsiResponder class.
+
+      XrdSsiResponder::Alert(*(new AlertMsg<AlertType>(alert)));
+   }
+
    // These methods should be specialized according to the needs of each <RequestType, ResponseType> pair
 
    void ExecuteAction()   { std::cerr << "Called default ExecuteAction()" << std::endl; }
@@ -37,8 +48,8 @@ private:
 
    RequestType  m_request;
    ResponseType m_response;
-   MetadataType m_metadata;
    AlertType    m_alert;
+   MetadataType m_metadata;
 };
 
 

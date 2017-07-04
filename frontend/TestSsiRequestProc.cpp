@@ -3,10 +3,9 @@
 
 #include "test.pb.h"
 #include "XrdSsiException.h"
-#include "TestSsiRequestProc.h"
+#include "XrdSsiPbRequestProc.h"
 
-// This is for specialized private methods called by RequestProc::Execute to handle actions, alerts
-// and metadata
+// This is for specialized private methods called by RequestProc::Execute to handle actions, alerts and metadata
 
 template <>
 void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAction()
@@ -48,29 +47,22 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 
 
 
-/*
- * Alert messages can be anything you want them to be. The SSI framework enforces
- * the following rules:
- *
- * - alerts are sent in the order posted,
- * - all outstanding alerts are sent before the final response is sent (i.e. the one
- * posted using a SetResponse() method),
- * - once a final response is posted, subsequent alert messages are not sent, and
- * - if a request is cancelled, all pending alerts are discarded.
- *
- * In order to send an alert, you must encapsulate your message using an
- * XrdSsiRespInfoMsg object. The object provides synchronization between posting
- * an alert, sending the alert, and releasing storage after the alert was sent. It is defined
- * in the XrdSsiRespInfo.hh header file.
- *
- * The XrdSsiRespInfoMsg object needs to be inherited by whatever class you use to
- * manage your alert message. The pure abstract class, RecycleMsg() must also be
- * implemented. This method is called after the message is sent or when it is discarded.
- * A parameter to the method tells you why it’s being called.
- *
- * See example p.45
+// Alert messages can be anything you want them to be. The SSI framework enforces the following rules:
+//
+// * alerts are sent in the order posted
+// * all outstanding alerts are sent before the final response is sent (i.e. the one posted using a
+//   SetResponse() method)
+// * once a final response is posted, subsequent alert messages are not sent
+// * if a request is cancelled, all pending alerts are discarded
+
 template <>
-void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAlert()
+void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAlerts()
 {
+   // Set alert message
+
+   m_alert.set_message_text("Something bad happened");
+
+   // Send the alert message
+
+   Alert(m_alert);
 }
- */

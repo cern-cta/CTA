@@ -1,24 +1,19 @@
 #include <iostream>
 
+#include "XrdSsiPbAlert.h"
 #include "test.pb.h"
 #include "TestSsiService.h"
 #include "TestSsiServiceProvider.h"
 
 
 
-/*
- * The service provider object is pointed to by the global pointer XrdSsiProviderServer which you
- * must define and set at library load time (i.e. it is a file level global static symbol).
- *
- * When your library is loaded, the XrdSsiProviderServer symbol is located in the library.
- * Initialization fails if the appropriate symbol cannot be found or it is a NULL pointer.
- */
+// The service provider object is pointed to by the global pointer XrdSsiProviderServer which you
+// must define and set at library load time (i.e. it is a file level global static symbol).
+//
+// When your library is loaded, the XrdSsiProviderServer symbol is located in the library.
+// Initialization fails if the appropriate symbol cannot be found or it is a NULL pointer.
 
 XrdSsiProvider *XrdSsiProviderServer = new TestSsiServiceProvider;
-
-// XrdSsiProviderClient is instantiated and managed by the SSI library
-
-//extern XrdSsiProvider *XrdSsiProviderClient;
 
 
 

@@ -5,8 +5,8 @@
 
 
 
-// XRootD SSI + Protocol Buffers callbacks.
-// The client should define a specialized callback type for each XRootD reply type (Response, Metadata, Alert)
+// XRootD SSI + Protocol Buffers callbacks: The client should specialize on this class for each XRootD reply type
+// (Response, Metadata, Alert, Error)
 
 template<typename CallbackArg>
 class XrdSsiPbRequestCallback
@@ -47,8 +47,6 @@ public:
    //
    // The thread used to initiate a request may be the same one used in the GetRequest() call.
 
-   // Query for Andy: shouldn't the return type for GetRequest be const?
-
    virtual char *GetRequest(int &reqlen) override { reqlen = m_request_len; return const_cast<char*>(m_request_bufptr); }
 
    // Requests are sent to the server asynchronously via the service object. The ProcessResponse() callback
@@ -56,7 +54,7 @@ public:
 
    virtual bool ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo) override;
 
-   // ProcessReesponseData() is an optional callback used in conjunction with the request's GetResponseData() method,
+   // ProcessResponseData() is an optional callback used in conjunction with the request's GetResponseData() method,
    // or when the response is a data stream and you wish to asynchronously receive data via the stream. Most
    // applications will need to implement this as scalable applications generally require that any large amount of
    // data be asynchronously received.
@@ -95,9 +93,7 @@ private:
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
-   using namespace std;
-
-   cerr << "ProcessResponse() callback called with response type = " << rInfo.State() << endl;
+   std::cerr << "ProcessResponse() callback called with response type = " << rInfo.State() << std::endl;
 
    switch(rInfo.rType)
    {
@@ -196,10 +192,6 @@ template<typename RequestType, typename ResponseType, typename MetadataType, typ
 XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
-   using namespace std;
-
-   // If we can't handle the queue at this time, return XrdSsiRequest::PRD_Hold;
-
    // The buffer length can be 0 if the response is metadata only
 
    if(response_buflen != 0)
@@ -243,25 +235,37 @@ XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, 
    }
 
    return XrdSsiRequest::PRD_Normal; // Indicate what type of post-processing is required (normal in this case)
+                                     // If we can't handle the queue at this time, return XrdSsiRequest::PRD_Hold;
 }
 
 
 
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &aMsg)
+void XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
 {
-   using namespace std;
+   // Get the Alert
 
-   int aMsgLen;
-   char *aMsgData = aMsg.GetMsg(aMsgLen);
+   int alert_len;
+   char *alert_buffer = alert_msg.GetMsg(alert_len);
 
-   // Process the alert
+   // Deserialize the Alert
 
-   cout << "Received Alert message: " << aMsgData << endl;
+   const std::string alert_str(alert_buffer, alert_len);
 
-   // Failure to recycle the message will cause a memory leak
+   AlertType alert;
 
-   aMsg.RecycleMsg();
+   if(alert.ParseFromString(alert_str))
+   {
+      AlertCallback(alert);
+   }
+   else
+   {
+      ErrorCallback("alert.ParseFromString() failed");
+   }
+
+   // Recycle the message to free memory
+
+   alert_msg.RecycleMsg();
 }
 
 #endif
