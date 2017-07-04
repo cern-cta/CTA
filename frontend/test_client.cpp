@@ -31,6 +31,17 @@ void XrdSsiPbRequestCallback<xrdssi::test::Metadata>::operator()(const xrdssi::t
 
 
 
+// Response callback
+
+template<>
+void XrdSsiPbRequestCallback<xrdssi::test::Result>::operator()(const xrdssi::test::Result &result)
+{
+   std::cout << "ResponseCallback():" << std::endl;
+   std::cout << MessageToJsonString(result);
+}
+
+
+
 int main(int argc, char *argv[])
 {
    // Verify that the version of the Google Protocol Buffer library that we linked against is

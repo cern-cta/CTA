@@ -32,10 +32,6 @@ public:
               std::cerr << "  Response buffer size = " << m_response_bufsize << std::endl;
               std::cerr << "  Response timeout = " << timeout << std::endl;
 
-              // Allocate response buffer
-
-              m_response_bufptr = new char[m_response_bufsize];
-
               // Set response timeout
 
               SetTimeOut(timeout);
@@ -43,8 +39,6 @@ public:
    virtual ~XrdSsiPbRequest() 
            {
               std::cerr << "Deleting XrdSsiPbRequest object" << std::endl;
-
-              delete[] m_response_bufptr;
            }
 
    // It is up to the implementation to create request data, save it in some manner, and provide it to
@@ -79,11 +73,9 @@ private:
    const char *m_request_bufptr;
    int         m_request_len;
 
-   // Pointer to the Response buffer
+   // Response buffer size
 
-   char       *m_response_bufptr;
    int         m_response_bufsize;
-   int         m_response_len;
 
    // Callbacks for each of the XRootD reply types
 
@@ -181,15 +173,17 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
             }
          }
 
-         // Handle messages
+         // Handle response messages
 
          if(rInfo.rType == XrdSsiRespInfo::isData)
          {
-            static const int myBSize = 1024;
+            // Allocate response buffer
 
-            char *myBuff = reinterpret_cast<char*>(malloc(myBSize));
+            char *response_bufptr = new char[m_response_bufsize];
 
-            GetResponseData(myBuff, myBSize);
+            // Read the first chunk of data into the buffer, and pass it to ProcessResponseData()
+
+            GetResponseData(response_bufptr, m_response_bufsize);
          }
    }
 
@@ -199,43 +193,53 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
 
 
 template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *myBuff, int myBLen, bool isLast)
+XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>
+             ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
    using namespace std;
 
    // If we can't handle the queue at this time, return XrdSsiRequest::PRD_Hold;
 
-   // GetResponseData() above places the data in the allocated buffer, then calls this method with
-   // the buffer type and length
+   // The buffer length can be 0 if the response is metadata only
 
-   cerr << "Called ProcessResponseData with myBLen = " << myBLen << ", isLast = " << isLast << endl;
-
-   // myBLen can be 0 if there is no relevant response or response is metadata only
-
-   // Process the response data of length myBLen placed in myBuff
-   // If there is more data then get it, else free the buffer and
-   // indicate to the framework that we are done
-
-   if(!isLast)
+   if(response_buflen != 0)
    {
-      static const int myBSize = 1024;
+      // How do we handle message boundaries for multi-block responses?
 
-      // Get the next chunk of data (and call this method recursively ... could this cause a stack overflow ?)
+      // Deserialize the response
 
-      GetResponseData(myBuff, myBSize);
+      const std::string response_str(response_bufptr, response_buflen);
+
+      ResponseType response;
+
+      if(response.ParseFromString(response_str))
+      {
+         ResponseCallback(response);
+      }
+      else
+      {
+         ErrorCallback("response.ParseFromString() failed");
+      }
+   }
+
+   // If there is more data then get it, otherwise clean up
+
+   if(!is_last)
+   {
+      // Get the next chunk of data:
+      // Does this call this method recursively? Is there danger of a stack overflow?
+
+      GetResponseData(response_bufptr, m_response_bufsize);
    }
    else
    {
-      myBuff[myBLen] = 0;
+      delete[] response_bufptr;
 
-      cerr << "Contents of myBuff = " << myBuff << endl;
+      // Note that if request objects are uniform, you may want to re-use them instead
+      // of deleting them, to avoid the overhead of repeated object creation.
 
-      free(myBuff);
-
-      Finished(); // Andy says you can now do a "delete this"
-
-      delete this; // Note that if request objects are uniform, you may want to re-use them instead
-                   // of deleting them, to avoid the overhead of repeated object creation.
+      Finished();
+      delete this;
    }
 
    return XrdSsiRequest::PRD_Normal; // Indicate what type of post-processing is required (normal in this case)
