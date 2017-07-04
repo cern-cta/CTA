@@ -95,6 +95,9 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    if(response_str.size() > 0)
    {
+      // Temporary workaround for XrdSsi bug #537:
+      response_str = " " + response_str;
+
       SetMetadata(response_str.c_str(), response_str.size());
    }
 

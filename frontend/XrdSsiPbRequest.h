@@ -130,10 +130,12 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
 
          if(metadata_len > 0)
          {
+            // Temporary workaround for XrdSsi bug #537:
+            ++metadata_buffer; --metadata_len;
+
             // Deserialize the metadata
 
             const std::string metadata_str(metadata_buffer, metadata_len);
-std::cerr << "metadata_str = " << metadata_str << std::endl;
 
             MetadataType metadata;
 
