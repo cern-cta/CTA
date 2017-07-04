@@ -152,9 +152,10 @@ nightly1:
   script:
     - echo "Running  nightly tests"
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D -k
     - kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 2000 -s 80 -p 10 -v
     - kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 2000 -s 80 -p 10 -v
+    - ./delete_instance.sh -n ${NAMESPACE}
   artifacts:
     when: always
     expire_in: 30 days
