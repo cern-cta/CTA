@@ -83,7 +83,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
   auto queueFuture=maq->m_promise.get_future();
   globalLock.unlock();
   // Wait for timeout or enough jobs.
-  queueFuture.wait_for(std::chrono::milliseconds(100));
+  queueFuture.wait_for(std::chrono::milliseconds(500));
   ANNOTATE_HAPPENS_AFTER(&maq->m_promise);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&maq->m_promise);
   // Re-take the global and make sure the queue is not referenced anymore.
