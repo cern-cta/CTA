@@ -30,9 +30,7 @@ bool TestSsiServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const
 
    // do some initialisation
 
-   initOK = true;
-
-   return initOK;
+   return true;
 }
 
 

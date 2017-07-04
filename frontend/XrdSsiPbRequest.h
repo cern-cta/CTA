@@ -23,14 +23,28 @@ template <typename RequestType, typename ResponseType, typename MetadataType, ty
 class XrdSsiPbRequest : public XrdSsiRequest
 {
 public:
-           XrdSsiPbRequest(const std::string &buffer_str, uint16_t timeout=0) : request_buffer(buffer_str.c_str()), request_len(buffer_str.size())
+           XrdSsiPbRequest(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
+              m_request_bufptr(buffer_str.c_str()),
+              m_request_len(buffer_str.size()),
+              m_response_bufsize(response_bufsize)
            {
-              std::cerr << "Creating TestSsiRequest object, setting timeout=" << timeout << std::endl;
+              std::cerr << "Creating XrdSsiPbRequest object:" << std::endl;
+              std::cerr << "  Response buffer size = " << m_response_bufsize << std::endl;
+              std::cerr << "  Response timeout = " << timeout << std::endl;
+
+              // Allocate response buffer
+
+              m_response_bufptr = new char[m_response_bufsize];
+
+              // Set response timeout
+
               SetTimeOut(timeout);
            }
    virtual ~XrdSsiPbRequest() 
            {
-              std::cerr << "Deleting TestSsiRequest object" << std::endl;
+              std::cerr << "Deleting XrdSsiPbRequest object" << std::endl;
+
+              delete[] m_response_bufptr;
            }
 
    // It is up to the implementation to create request data, save it in some manner, and provide it to
@@ -41,7 +55,7 @@ public:
 
    // Query for Andy: shouldn't the return type for GetRequest be const?
 
-   virtual char *GetRequest(int &reqlen) override { reqlen = request_len; return const_cast<char*>(request_buffer); }
+   virtual char *GetRequest(int &reqlen) override { reqlen = m_request_len; return const_cast<char*>(m_request_bufptr); }
 
    // Requests are sent to the server asynchronously via the service object. The ProcessResponse() callback
    // is used to inform the request object if the request completed or failed.
@@ -60,12 +74,20 @@ public:
    virtual void Alert(XrdSsiRespInfoMsg &aMsg) override;
 
 private:
-   const char *request_buffer;
-   int         request_len;
+   // Pointer to the Request buffer
 
-   // Callbacks for each of the XRootD response types
+   const char *m_request_bufptr;
+   int         m_request_len;
 
-   XrdSsiPbRequestCallback<RequestType>  RequestCallback;
+   // Pointer to the Response buffer
+
+   char       *m_response_bufptr;
+   int         m_response_bufsize;
+   int         m_response_len;
+
+   // Callbacks for each of the XRootD reply types
+
+   XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
    XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
    XrdSsiPbRequestCallback<AlertType>    AlertCallback;
 

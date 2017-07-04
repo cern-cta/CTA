@@ -35,10 +35,10 @@ private:
    void ExecuteAlerts()   { std::cerr << "Called default ExecuteAlerts()" << std::endl; }
    void ExecuteMetadata() { std::cerr << "Called default ExecuteMetadata()" << std::endl; }
 
-   RequestType  request;
-   ResponseType response;
-   MetadataType metadata;
-   AlertType    alert;
+   RequestType  m_request;
+   ResponseType m_response;
+   MetadataType m_metadata;
+   AlertType    m_alert;
 };
 
 
@@ -61,7 +61,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    // Deserialize the Request
 
-   if(!request.ParseFromString(request_str))
+   if(!m_request.ParseFromString(request_str))
    {
       throw XrdSsiException("request.ParseFromString() failed");
    }
@@ -86,7 +86,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    std::string response_str;
 
-   if(!metadata.SerializeToString(&response_str))
+   if(!m_metadata.SerializeToString(&response_str))
    {
       throw XrdSsiException("metadata.SerializeToString() failed");
    }
@@ -103,7 +103,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    // Serialize the Response
 
-   if(!response.SerializeToString(&response_str))
+   if(!m_response.SerializeToString(&response_str))
    {
       throw XrdSsiException("response.SerializeToString() failed");
    }

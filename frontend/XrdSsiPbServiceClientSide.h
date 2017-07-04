@@ -10,8 +10,9 @@
 
 // Constants
 
-const unsigned int default_server_timeout   = 15;    // Maximum XRootD reply timeout in seconds
-const unsigned int default_shutdown_timeout = 30;    // Maximum time to wait for the Service to shut down
+const unsigned int DefaultResponseBufferSize = 2097152;    // Default size for the response buffer in bytes = 2 Mb
+const unsigned int DefaultServerTimeout      = 15;         // Maximum XRootD reply timeout in secs
+const unsigned int DefaultShutdownTimeout    = 30;         // Maximum time to wait for the Service to shut down in secs
 
 
 
@@ -32,13 +33,17 @@ public:
    XrdSsiPbServiceClientSide() = delete;
 
    XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
-                           unsigned int server_timeout = default_server_timeout,
-                           unsigned int shutdown_timeout = default_shutdown_timeout) :
-      resource(resource), server_tmo(server_timeout), shutdown_tmo(shutdown_timeout)
+                           unsigned int response_bufsize = DefaultResponseBufferSize,
+                           unsigned int server_tmo       = DefaultServerTimeout,
+                           unsigned int shutdown_tmo     = DefaultShutdownTimeout) :
+      m_resource(resource),
+      m_response_bufsize(response_bufsize),
+      m_server_tmo(server_tmo),
+      m_shutdown_tmo(shutdown_tmo)
    {
       XrdSsiErrInfo eInfo;
 
-      if(!(serverP = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
+      if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
       {
          throw XrdSsiException(eInfo);
       }
@@ -53,12 +58,13 @@ public:
    void send(const RequestType &request);
 
 private:
-   XrdSsiResource resource;          // Requests are bound to this resource
+   XrdSsiResource m_resource;            // Requests are bound to this resource
 
-   XrdSsiService *serverP;           // Pointer to XRootD Server object
+   XrdSsiService *m_server_ptr;          // Pointer to XRootD Server object
 
-   unsigned int server_tmo;          // Timeout for a response from the server
-   unsigned int shutdown_tmo;        // Timeout to shut down the server in the destructor
+   unsigned int   m_response_bufsize;    // Buffer size for responses from the XRootD SSI server
+   unsigned int   m_server_tmo;          // Timeout for a response from the server
+   unsigned int   m_shutdown_tmo;        // Timeout to shut down the server in the destructor
 };
 
 
@@ -73,13 +79,13 @@ XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::~
    // The XrdSsiService object cannot be explicitly deleted. The Stop() method deletes the object if
    // it is safe to do so.
 
-   while(!serverP->Stop() && shutdown_tmo--)
+   while(!m_server_ptr->Stop() && m_shutdown_tmo--)
    {
       sleep(1);
       std::cerr << ".";
    }
 
-   if(shutdown_tmo > 0)
+   if(m_shutdown_tmo > 0)
    {
       std::cerr << "done." << std::endl;
    }
@@ -119,12 +125,13 @@ void XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertTyp
 
    // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
-   XrdSsiRequest *requestP = new XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType> (request_str, server_tmo);
+   XrdSsiRequest *request_ptr =
+      new XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>(request_str, m_response_bufsize, m_server_tmo);
 
    // Transfer ownership of the request to the service object
    // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
 
-   serverP->ProcessRequest(*requestP, resource);
+   m_server_ptr->ProcessRequest(*request_ptr, m_resource);
 
    // Note: it is safe to delete the XrdSsiResource object after ProcessRequest() returns. I don't delete it because
    // I am assuming I can reuse it, but I need to check if that is a safe assumption. Perhaps I need to create a new

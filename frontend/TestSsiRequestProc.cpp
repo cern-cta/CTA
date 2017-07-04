@@ -14,17 +14,17 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
-   std::cerr << MessageToJsonString(request);
+   std::cerr << MessageToJsonString(m_request);
 
    // Set reply
 
-   response.set_result_code(0);
-   response.mutable_response()->set_message_text("This is the reply to " + *request.mutable_message_text());
+   m_response.set_result_code(0);
+   m_response.mutable_response()->set_message_text("This is the reply to " + *m_request.mutable_message_text());
 
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing response:" << std::endl;
-   std::cerr << MessageToJsonString(response);
+   std::cerr << MessageToJsonString(m_response);
 }
 
 
@@ -38,12 +38,12 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 {
    // Set metadata
 
-   metadata.set_message_text("Have some metadata");
+   m_metadata.set_message_text("Have some metadata");
 
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing metadata..." << std::endl;
-   std::cerr << MessageToJsonString(metadata);
+   std::cerr << MessageToJsonString(m_metadata);
 }
 
 

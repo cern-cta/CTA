@@ -34,12 +34,8 @@ public:
 
    // Constructor and destructor
 
-            TestSsiServiceProvider() : initOK(false) {}
+            TestSsiServiceProvider() {}
    virtual ~TestSsiServiceProvider() {}
-
-private:
-
-   bool initOK;
 };
 
 #endif
