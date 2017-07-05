@@ -108,10 +108,11 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
   }
   // Checks are fine, let's just drop the queue from the map
   g_queues.erase(job.tapePool);
+  // Lock the queue, to make sure the last user is done posting. We could do this after
+  // releasing the global lock, but helgrind objects.
+  threading::MutexLocker ulq(maq->m_mutex);
   // Our mem queue is now unreachable so we can let the global part go
   globalLock.unlock();
-  // Lock the queue, to make sure the last user is done posting.
-  threading::MutexLocker ulq(maq->m_mutex);
   double waitTime = timer.secs(utils::Timer::resetCounter);
   // We can now proceed with the queuing of the jobs in the object store.
   try {
@@ -132,6 +133,8 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
       job.owner = aq.getAddressIfSet();
       archiveRequest.setJobOwner(job.copyNb, job.owner);
     }
+    // We are done with the queue: release the lock to make helgrind happy.
+    ulq.unlock();
     // We do the same for all the queued requests
     for (auto &maqr: maq->m_requests) {
       // Add the job
