@@ -31,7 +31,6 @@ public:
 
 private:
 
-
    void Alert(const AlertType &alert)
    {
       // Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object. Alert message objects
@@ -50,6 +49,11 @@ private:
    ResponseType m_response;
    AlertType    m_alert;
    MetadataType m_metadata;
+
+   // Metadata and response buffers must stay in scope until Finished() is called, so they need to be member variables
+
+   std::string  m_response_str;
+   std::string  m_metadata_str;
 };
 
 
@@ -95,35 +99,30 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    // Serialize the Metadata
 
-   std::string response_str;
-
-   if(!m_metadata.SerializeToString(&response_str))
+   if(!m_metadata.SerializeToString(&m_metadata_str))
    {
-      throw XrdSsiException("metadata.SerializeToString() failed");
+      throw XrdSsiException("m_metadata.SerializeToString() failed");
    }
 
    // Send the Metadata
 
-   if(response_str.size() > 0)
+   if(m_metadata_str.size() > 0)
    {
-      // Temporary workaround for XrdSsi bug #537:
-      response_str = " " + response_str;
-
-      SetMetadata(response_str.c_str(), response_str.size());
+      SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
    }
 
    // Serialize the Response
 
-   if(!m_response.SerializeToString(&response_str))
+   if(!m_response.SerializeToString(&m_response_str))
    {
-      throw XrdSsiException("response.SerializeToString() failed");
+      throw XrdSsiException("m_response.SerializeToString() failed");
    }
 
    // Send the response
 
-   if(response_str.size() > 0)
+   if(m_response_str.size() > 0)
    {
-      SetResponse(response_str.c_str(), response_str.size());
+      SetResponse(m_response_str.c_str(), m_response_str.size());
    }
 }
 
