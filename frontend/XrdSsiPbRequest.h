@@ -142,33 +142,30 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
          {
             // Deserialize the metadata
 
-            const std::string metadata_str(metadata_buffer, metadata_len);
-
             MetadataType metadata;
 
-            if(!metadata.ParseFromString(metadata_str))
+            if(metadata.ParseFromArray(metadata_buffer, metadata_len))
             {
-               ErrorCallback("metadata.ParseFromString() failed");
-               Finished();
-               delete this;
-               break;
+               MetadataCallback(metadata);
             }
-
-            MetadataCallback(metadata);
-
-            // If this is a metadata-only response, there is nothing more to do
-
-            if(rInfo.rType == XrdSsiRespInfo::isNone)
+            else
             {
+               ErrorCallback("metadata.ParseFromArray() failed");
                Finished();
                delete this;
                break;
             }
          }
 
-         // Handle response messages
+         // If this is a metadata-only response, there is nothing more to do
 
-         if(rInfo.rType == XrdSsiRespInfo::isData)
+         if(rInfo.rType == XrdSsiRespInfo::isNone)
+         {
+            Finished();
+            delete this;
+            break;
+         }
+         else // XrdSsiRespInfo::isData
          {
             // Allocate response buffer
 
@@ -197,17 +194,15 @@ XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, 
 
       // Deserialize the response
 
-      const std::string response_str(response_bufptr, response_buflen);
-
       ResponseType response;
 
-      if(response.ParseFromString(response_str))
+      if(response.ParseFromArray(response_bufptr, response_buflen))
       {
          ResponseCallback(response);
       }
       else
       {
-         ErrorCallback("response.ParseFromString() failed");
+         ErrorCallback("response.ParseFromArray() failed");
       }
    }
 
@@ -247,17 +242,15 @@ void XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(
 
    // Deserialize the Alert
 
-   const std::string alert_str(alert_buffer, alert_len);
-
    AlertType alert;
 
-   if(alert.ParseFromString(alert_str))
+   if(alert.ParseFromArray(alert_buffer, alert_len))
    {
       AlertCallback(alert);
    }
    else
    {
-      ErrorCallback("alert.ParseFromString() failed");
+      ErrorCallback("alert.ParseFromArray() failed");
    }
 
    // Recycle the message to free memory

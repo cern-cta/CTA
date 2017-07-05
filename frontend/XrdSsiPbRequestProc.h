@@ -61,27 +61,19 @@ private:
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 {
-   using namespace std;
-
-   cerr << "Execute()" << endl;
-
-   // Unpack the Request buffer into a string object.
-   //
-   // We need to construct this with an explicit length, as request_buffer is a binary buffer, not a
-   // null-terminated string.
-
-   int request_len;
-   const char *request_buffer = GetRequest(request_len);
-   const std::string request_str(request_buffer, request_len);
+   std::cerr << "Execute()" << std::endl;
 
    // Deserialize the Request
 
-   if(!m_request.ParseFromString(request_str))
+   int request_len;
+   const char *request_buffer = GetRequest(request_len);
+
+   if(!m_request.ParseFromArray(request_buffer, request_len))
    {
-      throw XrdSsiException("request.ParseFromString() failed");
+      throw XrdSsiException("m_request.ParseFromArray() failed");
    }
 
-   // Release the request buffer (optional, perhaps it is more efficient to reuse it?)
+   // Release the request buffer
 
    ReleaseRequestBuffer();
 
@@ -89,11 +81,11 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    ExecuteAction();
 
-   // Optional: send alerts
+   // Send alerts
 
    ExecuteAlerts();
 
-   // Optional: prepare to send metadata ahead of the response
+   // Prepare to send metadata ahead of the response
 
    ExecuteMetadata();
 
@@ -133,9 +125,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
-   using namespace std;
-
-   cerr << "Finished()" << endl;
+   std::cerr << "Finished()" << std::endl;
 
    // Reclaim any allocated resources
 }
