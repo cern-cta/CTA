@@ -26,6 +26,8 @@ namespace cta { namespace ostoredb {
 threading::Mutex MemArchiveQueue::g_mutex;
 
 std::map<std::string, std::shared_ptr<MemArchiveQueue>> MemArchiveQueue::g_queues;
+std::map<std::string, std::shared_ptr<std::promise<void>>> MemArchiveQueue::g_promises;
+std::map<std::string, std::future<void>> MemArchiveQueue::g_futures;
 
 std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(objectstore::ArchiveRequest::JobDump& job, 
     objectstore::ArchiveRequest& archiveRequest, OStoreDB & oStoreDB, log::LogContext & logContext) {
@@ -46,14 +48,6 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueue(object
   // Extract the future before the other thread gets a chance to touch the promise.
   auto resultFuture = maqr->m_promise.get_future();
   q->add(maqr);
-  // If there are already enough elements, signal to the initiating thread 
-  if (q->m_requests.size() + 1 >= g_maxQueuedElements) {
-    // signal the initiating thread
-    ANNOTATE_HAPPENS_BEFORE(&q->m_promise);
-    q->m_promise.set_value();
-    // Unreference the queue so no new request gets added to it
-    g_queues.erase(job.tapePool);
-  }
   // Release the queue, forget the queue, and release the global lock
   ulq.unlock();
   q.reset();
@@ -78,21 +72,42 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
   }
   // Create the queue and reference it.
   auto maq = (g_queues[job.tapePool] = std::make_shared<MemArchiveQueue>());
+  // Get the promise from the previous future (if any). This will create the slot
+  // as a side effect, but we will populate it right after.
+  std::shared_ptr<std::promise<void>> promiseFromPredecessor = g_promises[job.tapePool];
+  // If the promise from predecessor was present, also extract the future.
+  std::future<void> futureFromPredecessor;
+  if (promiseFromPredecessor.get()) {
+    try {
+      futureFromPredecessor = std::move(g_futures.at(job.tapePool));
+    } catch (std::out_of_range &) {
+      throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the future is not present, while it should!");
+    }
+  }
+  // Create the promise and future for successor.
+  std::shared_ptr<std::promise<void>> promiseForSuccessor = (g_promises[job.tapePool] = std::make_shared<std::promise<void>>());
+  g_futures[job.tapePool] = promiseForSuccessor->get_future();
   // Release the global list
-  // Get hold of the future before the promise could be touched
-  auto queueFuture=maq->m_promise.get_future();
   globalLock.unlock();
-  // Wait for timeout or enough jobs.
-  queueFuture.wait_for(std::chrono::milliseconds(500));
-  ANNOTATE_HAPPENS_AFTER(&maq->m_promise);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&maq->m_promise);
+  // Wait on out future, if necessary
+  if (promiseFromPredecessor.get()) {
+    futureFromPredecessor.get();
+    ANNOTATE_HAPPENS_AFTER(promiseFromPredecessor.get());
+    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(promiseFromPredecessor.get());
+  }
+  // We are now clear to update the queue in object store.
   // Re-take the global and make sure the queue is not referenced anymore.
   globalLock.lock();
-  // Remove the entry for our tape pool iff it also has our pointer (a new 
-  // queue could have been created in the mean time.
-  auto i = g_queues.find(job.tapePool);
-  if (i != g_queues.end() && (maq == i->second))
-    g_queues.erase(i);
+  // Remove the queue for our tape pool. It should be present.
+  try {
+    if (g_queues.at(job.tapePool).get() != maq.get()) {
+      throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the queue is not ours, while it should!");
+    }
+  } catch (std::out_of_range &) {
+    throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the queue is not present, while it should!");
+  }
+  // Checks are fine, let's just drop the queue from the map
+  g_queues.erase(job.tapePool);
   // Our mem queue is now unreachable so we can let the global part go
   globalLock.unlock();
   // Lock the queue, to make sure the last user is done posting.
@@ -131,6 +146,10 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
     }
     // We can now commit the multi-request addition to the object store
     aq.commit();
+    // The next update of the queue can now proceed
+    ANNOTATE_HAPPENS_BEFORE(promiseForSuccessor.get());
+    promiseForSuccessor->set_value();
+    // Log
     size_t aqSizeAfter=aq.dumpJobs().size();
     {
       log::ScopedParamContainer params(logContext);
@@ -153,6 +172,17 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
         maqr->m_promise.set_value();
       }
     }
+    // We can now cleanup our promise/future couple if they were not picked up to trim the maps.
+    // A next thread finding them unlocked or absent will be equivalent.
+    globalLock.lock();
+    // If there is an promise AND it is ours, we remove it.
+    try {
+      if (g_promises.at(job.tapePool).get() == promiseForSuccessor.get()) {
+        g_futures.erase(job.tapePool);
+        g_promises.erase(job.tapePool);
+      }
+    } catch (std::out_of_range &) {}
+    globalLock.unlock();
     // Done!
     return ret;
   } catch (...) {
@@ -163,7 +193,7 @@ std::shared_ptr<SharedQueueLock> MemArchiveQueue::sharedAddToArchiveQueueWithNew
       params.add("message", ex.getMessageValue());
       logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got an exception writing. Will propagate to other threads.");
     } catch (...) {
-      logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got a non cta exption writing. Will propagate to other threads.");
+      logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got a non cta exception writing. Will propagate to other threads.");
     }
     size_t exceptionsNotPassed = 0;
     // Something went wrong. We should inform the other threads

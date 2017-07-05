@@ -99,13 +99,27 @@ private:
   threading::Mutex m_mutex;
   /** Add the object */
   void add(std::shared_ptr<MemArchiveQueueRequest>& request);
-  /** Static function implementing the shared addition of archive requests to 
-   * the object store queue */
-  static const size_t g_maxQueuedElements = 100;
   std::list<std::shared_ptr<MemArchiveQueueRequest>> m_requests;
-  std::promise<void> m_promise;
   static threading::Mutex g_mutex;
+  /**
+   * A set of per tape pool queues. Their presence indicates that a queue is currently being built up and new objects to be queued
+   * should piggy back on it.
+   */
   static std::map<std::string, std::shared_ptr<MemArchiveQueue>> g_queues;
+  /**
+   * A set of per tape pool promises. Their presence indicates that a previous queue is currently pending commit. Threads creating
+   * a new queue (when there is no queue, yet a promise is present) will wait on them to prevent contention with previous queue update.
+   * When a thread creates a queue (there was none) and finds no promise, it will create is own queue and promise, post the queue,
+   * immediately push the content of the queue (which is likely, but not guaranteed to be just its own job), and release the promise
+   * when done. 
+   * At completion, if the initial promise is still present in the map, the creating thread will remove it, as no promise of a 
+   * fulfilled promise are equivalent.
+   */
+  static std::map<std::string, std::shared_ptr<std::promise<void>>> g_promises;
+  /**
+   * A set of futures, extracted from the corresponding g_promises.
+   */
+  static std::map<std::string, std::future<void>> g_futures;
   
   /** Helper function for sharedAddToArchiveQueue */
   static std::shared_ptr<SharedQueueLock> sharedAddToArchiveQueueWithNewQueue(objectstore::ArchiveRequest::JobDump & job,
