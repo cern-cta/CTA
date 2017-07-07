@@ -2,7 +2,7 @@
 #define __XRD_SSI_PB_ALERT_H
 
 #include <XrdSsi/XrdSsiRespInfo.hh>
-#include "XrdSsiException.h"
+#include "XrdSsiPbException.h"
 
 template<typename AlertType>
 class AlertMsg : public XrdSsiRespInfoMsg
@@ -14,7 +14,7 @@ public:
 
       if(!alert.SerializeToString(&alert_str))
       {
-         throw XrdSsiException("alert.SerializeToString() failed");
+         throw XrdSsiPbException("alert.SerializeToString() failed");
       }
 
       msgBuf = const_cast<char*>(alert_str.c_str());

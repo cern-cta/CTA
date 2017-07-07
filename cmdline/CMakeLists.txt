@@ -27,3 +27,17 @@ install (TARGETS cta DESTINATION usr/bin)
 INSTALL (FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
+
+#
+# eosctastub is a drop-in replacement for "cta archive|retrieve|delete"
+#
+
+# XRootD must be compiled with the SSI extensions
+find_package(xrootd REQUIRED)
+find_package(Protobuf3 REQUIRED)
+
+include_directories(${PROTOBUF3_INCLUDE_DIRS} ${XROOTD_INCLUDE_DIR} ../xroot_ssi_pb)
+add_executable(eoscta_stub EosCtaStub.cpp)
+target_link_libraries (eoscta_stub ctaeosmessages ${PROTOBUF3_LIBRARIES})
+#install(TARGETS eoscta_stub DESTINATION usr/bin)
+

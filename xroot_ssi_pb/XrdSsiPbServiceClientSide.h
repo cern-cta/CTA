@@ -1,9 +1,11 @@
 #ifndef __XRD_SSI_PB_SERVICE_CLIENT_SIDE_H
 #define __XRD_SSI_PB_SERVICE_CLIENT_SIDE_H
 
+#include <unistd.h> // sleep()
+
 #include <XrdSsi/XrdSsiProvider.hh>
 #include <XrdSsi/XrdSsiService.hh>
-#include "XrdSsiException.h"
+#include "XrdSsiPbException.h"
 #include "XrdSsiPbRequest.h"
 
 
@@ -45,7 +47,7 @@ public:
 
       if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
       {
-         throw XrdSsiException(eInfo);
+         throw XrdSsiPbException(eInfo);
       }
    }
 
@@ -120,7 +122,7 @@ void XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertTyp
 
    if(!request.SerializeToString(&request_str))
    {
-      throw XrdSsiException("request.SerializeToString() failed");
+      throw XrdSsiPbException("request.SerializeToString() failed");
    }
 
    // Requests are always executed in the context of a service. They need to correspond to what the service allows.

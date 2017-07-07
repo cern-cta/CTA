@@ -2,7 +2,7 @@
 #define __XRD_SSI_PB_REQUEST_PROC_H
 
 #include <XrdSsi/XrdSsiResponder.hh>
-#include "XrdSsiException.h"
+#include "XrdSsiPbException.h"
 #include "XrdSsiPbAlert.h"
 
 /*
@@ -70,7 +70,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    if(!m_request.ParseFromArray(request_buffer, request_len))
    {
-      throw XrdSsiException("m_request.ParseFromArray() failed");
+      throw XrdSsiPbException("m_request.ParseFromArray() failed");
    }
 
    // Release the request buffer
@@ -93,7 +93,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    if(!m_metadata.SerializeToString(&m_metadata_str))
    {
-      throw XrdSsiException("m_metadata.SerializeToString() failed");
+      throw XrdSsiPbException("m_metadata.SerializeToString() failed");
    }
 
    // Send the Metadata
@@ -107,7 +107,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 
    if(!m_response.SerializeToString(&m_response_str))
    {
-      throw XrdSsiException("m_response.SerializeToString() failed");
+      throw XrdSsiPbException("m_response.SerializeToString() failed");
    }
 
    // Send the response
