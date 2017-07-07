@@ -11,11 +11,10 @@ message Checksum {
   string name                = 2;       //< checksum name
 }
 
-
-
-//
-// Messages sent from EOS to CTA
-//
+message Service {
+  string name                = 1;       //< name of the service
+  string url                 = 2;       //< access url of the service
+}
 
 message Id {
   uint64 uid                 = 1;       //< user identity number
@@ -23,21 +22,6 @@ message Id {
   uint64 gid                 = 3;       //< group identity number
   string groupname           = 4;       //< group name
 }
-
-message Metadata {
-  uint64 fid                 = 1;       //< file/container id
-  uint64 pid                 = 2;       //< parent id
-  Clock ctime                = 3;       //< change time
-  Clock mtime                = 4;       //< modification time
-  Clock btime                = 5;       //< birth time
-  Clock ttime                = 6;       //< tree modification time
-  Id owner                   = 7;       //< ownership
-  uint64 size                = 8;       //< size 
-  Checksum cks               = 9;       //< checksum information
-  sint32 mode                = 10;      //< mode
-  string lpath               = 11;      //< logical path
-  map<string, string> xattr  = 12;      //< xattribute map
-};
 
 message Security {
   string host                = 1;       //< client host 
@@ -47,15 +31,11 @@ message Security {
   string grps                = 5;       //< security grps
 }
 
-message Client {
-  Id user                    = 1;       //< acting client
-  Security sec               = 2;       //< client security information
-}
 
-message Service {
-  string name                = 1;       //< name of the service
-  string url                 = 2;       //< access url of the service
-}
+
+//
+// Messages sent from EOS to CTA
+//
 
 message Workflow {
   enum EventType {
@@ -75,10 +55,34 @@ message Workflow {
   uint64 timestamp           = 6;       //< event timestamp
 }
 
+message Client {
+  Id user                    = 1;       //< acting client
+  Security sec               = 2;       //< client security information
+}
+
+message Transport {
+  string url                 = 1;       //< transport URL
+}
+
+message Metadata {
+  uint64 fid                 = 1;       //< file/container id
+  uint64 pid                 = 2;       //< parent id
+  Clock ctime                = 3;       //< change time
+  Clock mtime                = 4;       //< modification time
+  Clock btime                = 5;       //< birth time
+  Clock ttime                = 6;       //< tree modification time
+  Id owner                   = 7;       //< ownership
+  uint64 size                = 8;       //< size 
+  Checksum cks               = 9;       //< checksum information
+  sint32 mode                = 10;      //< mode
+  string lpath               = 11;      //< logical path
+  map<string, string> xattr  = 12;      //< xattribute map
+};
+
 message Notification {
   Workflow wf                = 1;       //< workflow
-  string turl                = 2;       //< transport URL
-  Client cli                 = 3;       //< client information
+  Client cli                 = 2;       //< client information
+  Transport transport        = 3;       //< transport
   Metadata file              = 4;       //< file meta data
   Metadata directory         = 5;       //< directory meta data
 }
