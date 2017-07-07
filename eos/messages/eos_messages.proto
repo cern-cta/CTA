@@ -7,8 +7,8 @@ message Clock {
 }
 
 message Checksum {
-  string value               = 1;       //< checksum value
-  string name                = 2;       //< checksum name
+  string name                = 1;       //< checksum name
+  string value               = 2;       //< checksum value
 }
 
 message Service {
@@ -26,7 +26,7 @@ message Id {
 message Security {
   string host                = 1;       //< client host 
   string app                 = 2;       //< app string
-  string name                = 3;       //< sec name
+  string name                = 3;       //< security name
   string prot                = 4;       //< security protocol
   string grps                = 5;       //< security grps
 }

@@ -56,27 +56,6 @@ static std::string MessageToJsonString(const google::protobuf::Message &message)
 
 
 
-/*!
- * Returns true if --stderr is on the command-line.
- *
- * @param argc The number of command-line arguments.
- * @param argv The command-line arguments.
- */
-
-static bool stderrIsOnTheCmdLine(int argc, const char *const *const argv)
-{
-  for(int i = 1; i < argc; i++)
-  {
-    const std::string arg(argv[i]);
-
-    if(arg == "--stderr") return true;
-  }
-
-  return false;
-}
-
-
-
 #if 0
 #include "cmdline/Configuration.hpp"
 #include "common/Configuration.hpp"
@@ -228,6 +207,68 @@ int sendCommand(const int argc, const char **argv) {
 }
 #endif
 
+
+
+/*!
+ * Fill a Notification message from the command-line parameters
+ *
+ * @param[out]    notification    The number of command-line arguments
+ * @param[out]    isStderr        --stderr appears on the command line
+ * @param[out]    isJson          --json appears on the command line
+ * @param[in]     argc            The number of command-line arguments
+ * @param[in]     argv            The command-line arguments
+ */
+
+void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool &isJson, int argc, const char *const *const argv)
+{
+   isStderr = false;
+   isJson = false;
+
+   for(int arg = 2; arg < argc; ++arg)
+   {
+      const std::string argstr(argv[arg]);
+
+      if(argstr == "--stderr") { isStderr = true; continue; }
+      if(argstr == "--json") { isJson = true; continue; }
+
+      if(argstr.substr(0,2) != "--" || argc == ++arg) throw std::runtime_error("Arguments must be provided as --key value pairs");
+
+      const std::string argval(argv[arg]);
+
+           if(argstr == "--instance")            notification.mutable_wf()->mutable_instance()->set_name(argval);
+      else if(argstr == "--srcurl")              notification.mutable_wf()->mutable_instance()->set_url(argval);
+
+      else if(argstr == "--user")                notification.mutable_cli()->mutable_user()->set_username(argval);
+      else if(argstr == "--group")               notification.mutable_cli()->mutable_user()->set_groupname(argval);
+
+      else if(argstr == "--dsturl")              notification.mutable_transport()->set_url(argval); // for retrieve WF
+
+      else if(argstr == "--diskid")              notification.mutable_file()->set_fid(std::stoi(argval));
+      else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_username(argval);
+      else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_groupname(argval);
+      else if(argstr == "--size")                notification.mutable_file()->set_size(std::stoi(argval));
+      else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_name(argval);
+      else if(argstr == "--checksumvalue")       notification.mutable_file()->mutable_cks()->set_value(argval);
+      else if(argstr == "--diskfilepath")        notification.mutable_file()->set_lpath(argval);
+      else if(argstr == "--storageclass")        {} // this is a xattr
+
+      else if(argstr == "--id")                  {} // eos::wfe::fxattr:sys.archiveFileId, not used for archive WF
+      else if(argstr == "--diskpool")            {} // = default?
+      else if(argstr == "--throughput")          {} // = 10000?
+      else if(argstr == "--recoveryblob:base64") {}
+      else throw std::runtime_error("Unrecognised key " + argstr);
+   }
+}
+
+
+
+/*!
+ * Does what it says on the tin: a version of main() that throws exceptions
+ *
+ * @param    argc[in]    The number of command-line arguments
+ * @param    argv[in]    The command-line arguments
+ */
+
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
    // Verify that the version of the Google Protocol Buffer library that we linked against is
@@ -241,17 +282,34 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    const std::string wf_command(argv[1]);
 
-   if(wf_command == "retrieve" || wf_command == "delete") throw std::runtime_error(wf_command + " is not implemented yet.");
+   eos::wfe::Notification notification;
 
-   if(wf_command != "archive") throw Usage;
+   if(wf_command == "archive")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
+   }
+   else if(wf_command == "retrieve")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::PREPARE);
+   }
+   else if(wf_command == "delete")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::DELETE);
+   }
+   else throw Usage;
 
    // Fill the protocol buffer from the command line arguments
 
-   eos::wfe::Notification notification;
+   bool isStderr, isJson;
 
-   // Output the protocol buffer as a JSON object (for debugging)
+   fillNotification(notification, isStderr, isJson, argc, argv);
 
-   std::cout << MessageToJsonString(notification);
+   if(isJson)
+   {
+      // Output the protocol buffer as a JSON object (for debugging)
+
+      std::cout << MessageToJsonString(notification);
+   }
 
 #if 0
       // Obtain a Service Provider
@@ -293,7 +351,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Send output to stdout or stderr?
 
-   std::ostream &myout = stderrIsOnTheCmdLine(argc, argv) ? std::cerr : std::cout;
+   std::ostream &myout = isStderr ? std::cerr : std::cout;
 
    myout << "Hello, world" << std::endl;
 
@@ -309,8 +367,8 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 /*!
  * Start here
  *
- * @param argc The number of command-line arguments
- * @param argv The command-line arguments
+ * @param    argc[in]    The number of command-line arguments
+ * @param    argv[in]    The command-line arguments
  */
 
 int main(int argc, const char **argv)
