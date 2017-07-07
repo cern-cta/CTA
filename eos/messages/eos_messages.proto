@@ -1,6 +1,11 @@
 syntax  = "proto3";
 package eos.wfe;
 
+message Clock {
+  uint64 sec                 = 1;       //< seconds of a clock
+  uint64 nsec                = 2;       //< nanoseconds of a clock
+}
+
 message Checksum {
   string value               = 1;       //< checksum value
   string name                = 2;       //< checksum name
@@ -17,11 +22,6 @@ message Id {
   string username            = 2;       //< user name 
   uint64 gid                 = 3;       //< group identity number
   string groupname           = 4;       //< group name
-}
-
-message Clock {
-  uint64 sec                 = 1;       //< seconds of a clock
-  uint64 nsec                = 2;       //< nanoseconds of a clock
 }
 
 message Metadata {
@@ -97,44 +97,46 @@ message Xattr {
 }
 
 message Tapereplica {
-   enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3; }
-   uint64 fid                = 1;       //< file  id
-   Status status             = 2;       //< state state for file ID
-   uint64 size               = 3;       //< File size as recorded on tape for cross check
-   Checksum cks              = 4;       //< File checksum as computer while writing to tape
+  enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3; }
+  uint64 fid                 = 1;       //< file id
+  Status status              = 2;       //< status for file id
+  uint64 size                = 3;       //< File size as recorded on tape, for cross-check
+  Checksum cks               = 4;       //< File checksum as computer while writing to tape
 }
 
-message Error {
+message Response {
+  enum ResponseType { XATTR_RSP = 0; TAPEREPLICA_RSP = 1; }
+  ResponseType rsp_type      = 1;       //< Encode the type of this reply
+  oneof response {
+    Xattr xattr              = 2;       //< Payload for Xattr response type
+    Tapereplica tapereplica  = 3;       //< Payload for Tapereplica response type
+  }
+}
+
+
+
+//
+// Error handling
+//
+
+// Message type for the Alert callback (generates a log message or response for the user)
+
+message Alert {
+  // What is the purpose of Audience NONE?
   enum Audience { NONE = 0; EOSLOG = 1; ENDUSER = 2; }
   Audience audience          = 1;       //< The intended audience of the error message
   uint64 code                = 2;       //< Zero means success, non-zero means error
   string message             = 3;       //< An empty if success, else an error message
 }
 
-// The following message is used to wrap all messages sent between EOS and its
-// peers.
-//
-// This wrapper message allows new message types to be added to the protocol in
-// the future.
-//
-// This wrapper message also allows EOS peers to receive non-EOS messages as
-// long as the following two conditions are met:
-// 1. The peer uses a wrapper message with exactly the same (simple) structure.
-// 2. No two message types use the same numeric tag value.
-//
-// The structure of this message is based on the "Union Types" section of the
-// following Google protocol buffers web page:
-//
-//     https://developers.google.com/protocol-buffers/docs/techniques
-//
-// A protocol buffer parser cannot determine a message type based solely on its
-// contents. The type field of this wrapper message provides the required
-// metadata.
-message Wrapper {
-  enum Type {NONE = 0; ERROR = 1; NOTIFICATION = 2; XATTR = 3; TAPEREPLICA = 4; }
-  Type type  = 1;
-  Error error  = 2;
-  Notification notification  = 3;
-  Xattr xattr  = 4;
-  Tapereplica tapereplica  = 5;
+// Message type for the Error callback (throws an exception)
+
+message Exception {
+  enum ErrorCode {
+    SERVER_NO_RSP = 0;                  //< No response from server
+    PB_PARSE_ERR  = 1;                  //< Protocol buffer parse error
+    // ... define other exception types
+  }
+  ErrorCode error            = 1;       //< Defines what went wrong
 }
+
