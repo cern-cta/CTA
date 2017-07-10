@@ -18,13 +18,13 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
 #include <stdexcept>
-
+#include <iostream>
+#include <sstream>
+#include <cryptopp/base64.h>
 #include <google/protobuf/util/json_util.h>
-#include "EosCtaApi.h"
-
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "EosCtaApi.h"
 
 
 
@@ -57,37 +57,6 @@ static std::string MessageToJsonString(const google::protobuf::Message &message)
 
 
 #if 0
-#include "cmdline/Configuration.hpp"
-#include "common/Configuration.hpp"
-
-#include <cryptopp/base64.h>
-#include <cryptopp/osrng.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <xrootd/XrdCl/XrdClFile.hh>
-
-/**
- * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
- * 
- * @param str  The original string
- * @param from The substring to replace
- * @param to   The replacement string
- */
-void replaceAll(std::string& str, const std::string& from, const std::string& to){
-  if(from.empty() || str.empty())
-    return;
-  size_t start_pos = 0;
-  while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-    str.replace(start_pos, from.length(), to);
-    start_pos += to.length();
-  }
-}
-
 /**
  * Encodes a string in base 64 and replaces slashes ('/') in the result
  * with underscores ('_').
@@ -127,84 +96,6 @@ std::string formatCommandPath(const int argc, const char **argv) {
   }
   return cmdPath;
 }
-
-/**
- * Sends the command and waits for the reply
- *
- * @param argc The number of command-line arguments.
- * @param argv The command-line arguments. 
- * @return the return code
- */
-int sendCommand(const int argc, const char **argv) {
-  int rc = 0;
-  const bool writeToStderr = stderrIsOnTheCmdLine(argc, argv);
-  const std::string cmdPath = formatCommandPath(argc, argv);
-  XrdCl::File xrootFile;
-
-  // Open the xroot file reprsenting the execution of the command
-  {
-    const XrdCl::Access::Mode openMode = XrdCl::Access::None;
-    const uint16_t openTimeout = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
-    const XrdCl::XRootDStatus openStatus = xrootFile.Open(cmdPath, XrdCl::OpenFlags::Read, openMode, openTimeout);
-    if(!openStatus.IsOK()) {
-      throw std::runtime_error(std::string("Failed to open ") + cmdPath + ": " + openStatus.ToStr());
-    }
-  }
-
-  // The cta frontend return code is the first char of the answer
-  {
-    uint64_t readOffset = 0;
-    uint32_t bytesRead = 0;
-    char rc_char = '0';
-    const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, 1, &rc_char, bytesRead);
-    if(!readStatus.IsOK()) {
-      throw std::runtime_error(std::string("Failed to read first byte from ") + cmdPath + ": " +
-        readStatus.ToStr());
-    }
-    if(bytesRead != 1) {
-      throw std::runtime_error(std::string("Failed to read first byte from ") + cmdPath +
-        ": Expected to read exactly 1 byte, actually read " +
-        std::to_string((long long unsigned int)bytesRead) + " bytes");
-    }
-    rc = rc_char - '0';
-  }
-
-  // Read and print the command result
-  {
-    uint64_t readOffset = 1; // The first character at offset 0 has already been read
-    uint32_t bytesRead = 0;
-    const size_t bufSize = 20480;
-    std::unique_ptr<char []> buf(new char[bufSize]);
-    do {
-      bytesRead = 0;
-      memset(buf.get(), 0, bufSize);
-      const XrdCl::XRootDStatus readStatus = xrootFile.Read(readOffset, bufSize - 1, buf.get(), bytesRead);
-      if(!readStatus.IsOK()) {
-        throw std::runtime_error(std::string("Failed to read ") + cmdPath + ": " + readStatus.ToStr());
-      }
-
-      if(bytesRead > 0) {
-        std::cout << buf.get();
-
-        if(writeToStderr) {
-          std::cerr << buf.get();
-        }
-      }
-
-      readOffset += bytesRead;
-    } while(bytesRead > 0);
-  }
-
-  // Close the xroot file reprsenting the execution of the command
-  {
-    const XrdCl::XRootDStatus closeStatus = xrootFile.Close();
-    if(!closeStatus.IsOK()) {
-      throw std::runtime_error(std::string("Failed to close ") + cmdPath + ": " + closeStatus.ToStr());
-    }
-  }
-
-  return rc;
-}
 #endif
 
 
@@ -212,7 +103,91 @@ int sendCommand(const int argc, const char **argv) {
 /*!
  * Fill a Notification message from the command-line parameters
  *
- * @param[out]    notification    The number of command-line arguments
+ * @param[out]    notification    The protobuf to fill
+ * @param[in]     argval          A base64-encoded blob
+ */
+
+void base64Decode(eos::wfe::Notification &notification, const std::string &argval)
+{
+   using namespace std;
+
+   string base64str(argval.substr(7)); // delete "base64:" from start of string
+
+   // Decode Base64 blob
+
+   string decoded;
+   CryptoPP::StringSource ss1(base64str, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(decoded)));
+
+   // Split into file metadata and directory metadata parts
+
+   string fmd = decoded.substr(decoded.find("fmd={ ")+6, decoded.find(" }")-7);
+   string dmd = decoded.substr(decoded.find("dmd={ ")+6);
+   dmd.resize(dmd.size()-3); // remove closing space/brace/quote
+
+   // Process file metadata
+
+   stringstream fss(fmd);
+   while(!fss.eof())
+   {
+      string key;
+      fss >> key;
+      size_t eq_pos = key.find("=");
+      string val(key.substr(eq_pos+1));
+      key.resize(eq_pos);
+
+      cout << key << "=" << val << endl;
+   }
+
+   // Process directory metadata
+
+   string xattrn;
+
+   stringstream dss(dmd);
+   while(!dss.eof())
+   {
+      string key;
+      dss >> key;
+      size_t eq_pos = key.find("=");
+      string val(key.substr(eq_pos+1));
+      key.resize(eq_pos);
+
+           if(key == "fid") notification.mutable_directory()->set_fid(stoi(val));
+      else if(key == "pid") notification.mutable_directory()->set_pid(stoi(val));
+      else if(key == "ctime")
+      {
+         size_t pt_pos = val.find(".");
+         notification.mutable_directory()->mutable_ctime()->set_sec(stoi(val.substr(0, pt_pos)));
+         notification.mutable_directory()->mutable_ctime()->set_nsec(stoi(val.substr(pt_pos+1)));
+      }
+      else if(key == "mtime")
+      {
+         size_t pt_pos = val.find(".");
+         notification.mutable_directory()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
+         notification.mutable_directory()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
+      }
+      else if(key == "uid") notification.mutable_directory()->mutable_owner()->set_uid(stoi(val));
+      else if(key == "gid") notification.mutable_directory()->mutable_owner()->set_gid(stoi(val));
+      else if(key == "size") notification.mutable_directory()->set_size(stoi(val));
+      else if(key == "mode") notification.mutable_directory()->set_mode(stoi(val));
+      else if(key == "file") notification.mutable_directory()->set_lpath(val);
+      else if(key == "xattrn") xattrn = val;
+      else if(key == "xattrv")
+      {
+         // Insert extended attributes
+
+         notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
+      }
+      else { cout << "No match in protobuf for " << key << "=" << val << endl; } // key-value pair does not map to a protobuf field
+   }
+
+}
+
+
+
+/*!
+ * Fill a Notification message from the command-line parameters
+ *
+ * @param[out]    notification    The protobuf to fill
  * @param[out]    isStderr        --stderr appears on the command line
  * @param[out]    isJson          --json appears on the command line
  * @param[in]     argc            The number of command-line arguments
@@ -255,7 +230,7 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
       else if(argstr == "--id")                  {} // eos::wfe::fxattr:sys.archiveFileId, not used for archive WF
       else if(argstr == "--diskpool")            {} // = default?
       else if(argstr == "--throughput")          {} // = 10000?
-      else if(argstr == "--recoveryblob:base64") {}
+      else if(argstr == "--recoveryblob:base64") base64Decode(notification, argval);
       else throw std::runtime_error("Unrecognised key " + argstr);
    }
 }
