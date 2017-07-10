@@ -1,5 +1,4 @@
 /*!
- *
  * @project        The CERN Tape Archive (CTA)
  * @brief          Command-line tool to test EOS-CTA interface
  * @description    Proof-of-concept stub to combine Google Protocol Buffers and XRootD SSI transport
