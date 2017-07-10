@@ -135,7 +135,28 @@ void base64Decode(eos::wfe::Notification &notification, const std::string &argva
       string val(key.substr(eq_pos+1));
       key.resize(eq_pos);
 
-      cout << key << "=" << val << endl;
+           if(key == "fid") notification.mutable_file()->set_fid(stoi(val));
+      else if(key == "pid") notification.mutable_file()->set_pid(stoi(val));
+      else if(key == "ctime")
+      {
+         size_t pt_pos = val.find(".");
+         notification.mutable_file()->mutable_ctime()->set_sec(stoi(val.substr(0, pt_pos)));
+         notification.mutable_file()->mutable_ctime()->set_nsec(stoi(val.substr(pt_pos+1)));
+      }
+      else if(key == "mtime")
+      {
+         size_t pt_pos = val.find(".");
+         notification.mutable_file()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
+         notification.mutable_file()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
+      }
+      else if(key == "uid") notification.mutable_file()->mutable_owner()->set_uid(stoi(val));
+      else if(key == "gid") notification.mutable_file()->mutable_owner()->set_gid(stoi(val));
+      else if(key == "size") notification.mutable_file()->set_size(stoi(val));
+      else if(key == "xstype") notification.mutable_file()->mutable_cks()->set_name(val);
+      else if(key == "xs") notification.mutable_file()->mutable_cks()->set_value(val);
+      else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
+      else if(key == "file") notification.mutable_file()->set_lpath(val);
+      else { cout << "No match in protobuf for fmd:" << key << "=" << val << endl; }
    }
 
    // Process directory metadata
@@ -177,9 +198,8 @@ void base64Decode(eos::wfe::Notification &notification, const std::string &argva
 
          notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
       }
-      else { cout << "No match in protobuf for " << key << "=" << val << endl; } // key-value pair does not map to a protobuf field
+      else { cout << "No match in protobuf for dmd:" << key << "=" << val << endl; }
    }
-
 }
 
 
