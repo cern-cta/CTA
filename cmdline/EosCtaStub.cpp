@@ -29,6 +29,8 @@
 
 
 
+//! Usage exception
+
 const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [options] [--stderr]");
 
 
@@ -54,50 +56,6 @@ static std::string MessageToJsonString(const google::protobuf::Message &message)
 
    return output;
 }
-
-
-
-#if 0
-/**
- * Encodes a string in base 64 and replaces slashes ('/') in the result
- * with underscores ('_').
- * 
- * @param msg string to encode
- * @return encoded string
- */
-std::string encode(const std::string msg) {
-  std::string ret;
-  const bool noNewLineInBase64Output = false;
-  CryptoPP::StringSource ss1(msg, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(ret), noNewLineInBase64Output));
-
-  // need to replace slashes ('/') with underscores ('_') because xroot removes
-  // consecutive slashes, and the cryptopp base64 algorithm may produce
-  // consecutive slashes. This is solved in cryptopp-5.6.3 (using
-  // Base64URLEncoder instead of Base64Encoder) but we currently have
-  // cryptopp-5.6.2. To be changed in the future...
-  replaceAll(ret, "/", "_");
-
-  return ret;
-}
-
-/**
- * Formats the command path string
- *
- * @param argc The number of command-line arguments.
- * @param argv The command-line arguments. 
- * @return the command string
- */
-std::string formatCommandPath(const int argc, const char **argv) {
-  cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
-  std::string cmdPath = "root://"+cliConf.getFrontendHostAndPort()+"//";
-
-  for(int i=0; i<argc; i++) {
-    if(i) cmdPath += "&";
-    cmdPath += encode(std::string(argv[i]));
-  }
-  return cmdPath;
-}
-#endif
 
 
 
@@ -220,6 +178,28 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
    isStderr = false;
    isJson = false;
 
+   // First argument must be a valid command specifying which workflow action to execute
+
+   if(argc < 2) throw Usage;
+
+   const std::string wf_command(argv[1]);
+
+   if(wf_command == "archive")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
+   }
+   else if(wf_command == "retrieve")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::PREPARE);
+   }
+   else if(wf_command == "delete")
+   {
+      notification.mutable_wf()->set_event(eos::wfe::Workflow::DELETE);
+   }
+   else throw Usage;
+
+   // Parse the remaining command-line options
+
    for(int arg = 2; arg < argc; ++arg)
    {
       const std::string argstr(argv[arg]);
@@ -258,8 +238,57 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
 
 
 
+//
+// Define the XRootD SSI callbacks
+//
+
 /*!
- * Does what it says on the tin: a version of main() that throws exceptions
+ * Error callback.
+ *
+ * This is for framework errors, i.e. errors raised by XRoot or Protocol Buffers, such as no response
+ * from the server. CTA errors will be returned in the Metadata or Alert callbacks.
+ */
+
+template<>
+void XrdSsiPbRequestCallback<std::string>::operator()(const std::string &error_txt)
+{
+   std::cerr << "ErrorCallback():" << std::endl << error_txt << std::endl;
+}
+
+
+
+/*!
+ * Alert callback.
+ *
+ * This is for messages which should be logged by EOS or directed to the User.
+ */
+
+template<>
+void XrdSsiPbRequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
+{
+   std::cout << "AlertCallback():" << std::endl;
+   std::cout << MessageToJsonString(alert);
+}
+
+
+
+/*!
+ * Metadata Response callback.
+ *
+ * This is the CTA Front End response to the Notification.
+ */
+
+template<>
+void XrdSsiPbRequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &metadata)
+{
+   std::cout << "MetadataCallback():" << std::endl;
+   std::cout << MessageToJsonString(metadata);
+}
+
+
+
+/*!
+ * Sends a Notification to the CTA XRootD SSI server
  *
  * @param    argc[in]    The number of command-line arguments
  * @param    argv[in]    The command-line arguments
@@ -272,30 +301,9 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-   // Parse which workflow action to execute
-
-   if(argc < 2) throw Usage;
-
-   const std::string wf_command(argv[1]);
+   // Fill the Notification protobuf object from the command line arguments
 
    eos::wfe::Notification notification;
-
-   if(wf_command == "archive")
-   {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
-   }
-   else if(wf_command == "retrieve")
-   {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::PREPARE);
-   }
-   else if(wf_command == "delete")
-   {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::DELETE);
-   }
-   else throw Usage;
-
-   // Fill the protocol buffer from the command line arguments
-
    bool isStderr, isJson;
 
    fillNotification(notification, isStderr, isJson, argc, argv);
@@ -315,21 +323,11 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    XrdSsiPbServiceType cta_service(host, port, resource);
 
+   // Send the Notification (Request) to the Service
+
+   cta_service.send(notification);
+
 #if 0
-      // Create a Request object
-
-      xrdssi::test::Request request;
-
-      request.set_message_text("Archive some file");
-
-      // Output message in Json format
-
-      std::cout << "Sending message:" << std::endl;
-      std::cout << MessageToJsonString(request);
-
-      // Send the Request to the Service
-
-      test_ssi_service.send(request);
 
       // Wait for the response callback.
 
