@@ -23,6 +23,7 @@
 #include <sstream>
 #include <cryptopp/base64.h>
 #include <google/protobuf/util/json_util.h>
+
 #include "common/dataStructures/FrontendReturnCode.hpp"
 #include "EosCtaApi.h"
 
@@ -306,11 +307,15 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
       std::cout << MessageToJsonString(notification);
    }
 
+   // Obtain a Service Provider
+
+   std::string host("localhost");
+   int port = 10955;
+   std::string resource("/cta");
+
+   XrdSsiPbServiceType cta_service(host, port, resource);
+
 #if 0
-      // Obtain a Service Provider
-
-      XrdSsiPbServiceType test_ssi_service(host, port, resource);
-
       // Create a Request object
 
       xrdssi::test::Request request;

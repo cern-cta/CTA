@@ -26,7 +26,7 @@ extern XrdSsiProvider *XrdSsiProviderClient;
 
 // Convenience object to manage the XRootD SSI service on the client side
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+template <typename RequestType, typename MetadataType, typename AlertType>
 class XrdSsiPbServiceClientSide
 {
 public:
@@ -73,10 +73,10 @@ private:
 
 // Destructor
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
+template <typename RequestType, typename MetadataType, typename AlertType>
+XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
 {
-   std::cerr << "Stopping XRootD SSI service...";
+   std::cout << "Stopping XRootD SSI service...";
 
    // The XrdSsiService object cannot be explicitly deleted. The Stop() method deletes the object if
    // it is safe to do so.
@@ -84,12 +84,12 @@ XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::~
    while(!m_server_ptr->Stop() && m_shutdown_tmo--)
    {
       sleep(1);
-      std::cerr << ".";
+      std::cout << ".";
    }
 
    if(m_shutdown_tmo > 0)
    {
-      std::cerr << "done." << std::endl;
+      std::cout << "done." << std::endl;
    }
    else
    {
@@ -105,7 +105,7 @@ XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::~
       // Until this is solved, deleting the Service may leak memory, so don't delete Service objects
       // unless the client is shutting down!
 
-      std::cerr << "failed." << std::endl;
+      std::cout << "failed." << std::endl;
    }
 }
 
@@ -113,8 +113,8 @@ XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::~
 
 // Send a Request to the Service
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertType>::send(const RequestType &request)
+template <typename RequestType, typename MetadataType, typename AlertType>
+void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const RequestType &request)
 {
    // Serialize the request object
 
@@ -128,7 +128,7 @@ void XrdSsiPbServiceClientSide<RequestType, ResponseType, MetadataType, AlertTyp
    // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
    XrdSsiRequest *request_ptr =
-      new XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>(request_str, m_response_bufsize, m_server_tmo);
+      new XrdSsiPbRequest<RequestType, MetadataType, AlertType>(request_str, m_response_bufsize, m_server_tmo);
 
    // Transfer ownership of the request to the service object
    // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope

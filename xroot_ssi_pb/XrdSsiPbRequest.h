@@ -19,7 +19,7 @@ public:
 
 // XRootD SSI + Protocol Buffers Request class
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+template <typename RequestType, typename MetadataType, typename AlertType>
 class XrdSsiPbRequest : public XrdSsiRequest
 {
 public:
@@ -28,9 +28,11 @@ public:
               m_request_len(buffer_str.size()),
               m_response_bufsize(response_bufsize)
            {
-              std::cerr << "Creating XrdSsiPbRequest object:" << std::endl;
-              std::cerr << "  Response buffer size = " << m_response_bufsize << std::endl;
-              std::cerr << "  Response timeout = " << timeout << std::endl;
+#ifdef XRDSSI_DEBUG
+              std::cout << "Creating XrdSsiPbRequest object:" << std::endl;
+              std::cout << "  Response buffer size = " << m_response_bufsize << std::endl;
+              std::cout << "  Response timeout = " << timeout << std::endl;
+#endif
 
               // Set response timeout
 
@@ -38,7 +40,9 @@ public:
            }
    virtual ~XrdSsiPbRequest() 
            {
-              std::cerr << "Deleting XrdSsiPbRequest object" << std::endl;
+#ifdef XRDSSI_DEBUG
+              std::cout << "Deleting XrdSsiPbRequest object" << std::endl;
+#endif
            }
 
    // It is up to the implementation to create request data, save it in some manner, and provide it to
@@ -77,7 +81,7 @@ private:
 
    // Callbacks for each of the XRootD reply types
 
-   XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
+   //XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
    XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
    XrdSsiPbRequestCallback<AlertType>    AlertCallback;
 
@@ -90,10 +94,12 @@ private:
 
 // Process the response
 
-template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
+template<typename RequestType, typename MetadataType, typename AlertType>
+bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
-   std::cerr << "ProcessResponse() callback called with response type = " << rInfo.State() << std::endl;
+#ifdef XRDSSI_DEBUG
+   std::cout << "ProcessResponse() callback called with response type = " << rInfo.State() << std::endl;
+#endif
 
    switch(rInfo.rType)
    {
@@ -182,14 +188,15 @@ bool XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Proces
 
 
 
-template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>
+template<typename RequestType, typename MetadataType, typename AlertType>
+XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
    // The buffer length can be 0 if the response is metadata only
 
    if(response_buflen != 0)
    {
+#if 0
       // How do we handle message boundaries for multi-block responses?
 
       // Deserialize the response
@@ -204,6 +211,7 @@ XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, 
       {
          ErrorCallback("response.ParseFromArray() failed");
       }
+#endif
    }
 
    // If there is more data then get it, otherwise clean up
@@ -232,8 +240,8 @@ XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, ResponseType, MetadataType, 
 
 
 
-template<typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void XrdSsiPbRequest<RequestType, ResponseType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
+template<typename RequestType, typename MetadataType, typename AlertType>
+void XrdSsiPbRequest<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
 {
    // Get the Alert
 

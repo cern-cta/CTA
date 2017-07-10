@@ -41,9 +41,21 @@ private:
 
    // These methods should be specialized according to the needs of each <RequestType, ResponseType> pair
 
-   void ExecuteAction()   { std::cerr << "Called default ExecuteAction()" << std::endl; }
-   void ExecuteAlerts()   { std::cerr << "Called default ExecuteAlerts()" << std::endl; }
-   void ExecuteMetadata() { std::cerr << "Called default ExecuteMetadata()" << std::endl; }
+   void ExecuteAction() {
+#ifdef XRDSSI_DEBUG
+      std::cout << "Called default ExecuteAction()" << std::endl;
+#endif
+   }
+   void ExecuteAlerts() {
+#ifdef XRDSSI_DEBUG
+      std::cout << "Called default ExecuteAlerts()" << std::endl;
+#endif
+   }
+   void ExecuteMetadata() {
+#ifdef XRDSSI_DEBUG
+      std::cout << "Called default ExecuteMetadata()" << std::endl;
+#endif
+   }
 
    RequestType  m_request;
    ResponseType m_response;
@@ -61,7 +73,9 @@ private:
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 {
-   std::cerr << "Execute()" << std::endl;
+#ifdef XRDSSI_DEBUG
+   std::cout << "Execute()" << std::endl;
+#endif
 
    // Deserialize the Request
 
@@ -125,7 +139,9 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
 template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
-   std::cerr << "Finished()" << std::endl;
+#ifdef XRDSSI_DEBUG
+   std::cout << "Finished()" << std::endl;
+#endif
 
    // Reclaim any allocated resources
 }
