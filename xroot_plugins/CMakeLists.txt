@@ -32,7 +32,7 @@ set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 # XRootD SSI/CTA Frontend shared library
 include_directories(../xroot_ssi_pb)
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
-target_link_libraries(XrdSsiCta ctaeosmessages ${PROTOBUF3_LIBRARIES})
+target_link_libraries(XrdSsiCta ctaeosmessages ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
 set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
