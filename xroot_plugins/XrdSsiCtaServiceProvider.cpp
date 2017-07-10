@@ -1,9 +1,9 @@
 #include <iostream>
 
 #include "XrdSsiPbAlert.h"
-#include "test.pb.h"
-#include "TestSsiService.h"
-#include "TestSsiServiceProvider.h"
+#include "XrdSsiCtaService.h"
+#include "XrdSsiCtaServiceProvider.h"
+#include "eos/messages/eos_messages.pb.h"
 
 
 
@@ -13,11 +13,11 @@
 // When your library is loaded, the XrdSsiProviderServer symbol is located in the library.
 // Initialization fails if the appropriate symbol cannot be found or it is a NULL pointer.
 
-XrdSsiProvider *XrdSsiProviderServer = new TestSsiServiceProvider;
+XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 
 
-bool TestSsiServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
+bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
    using namespace std;
 
@@ -30,20 +30,20 @@ bool TestSsiServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const
 
 
 
-XrdSsiService* TestSsiServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
+XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
    using namespace std;
 
    cerr << "Called GetService(" << contact << "," << oHold << ")" << endl;
 
-   XrdSsiService *ptr = new TestSsiService<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>;
+   XrdSsiService *ptr = new XrdSsiCtaService<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
 
    return ptr;
 }
 
 
 
-XrdSsiProvider::rStat TestSsiServiceProvider::QueryResource(const char *rName, const char *contact)
+XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName, const char *contact)
 {
    using namespace std;
 
@@ -61,7 +61,7 @@ XrdSsiProvider::rStat TestSsiServiceProvider::QueryResource(const char *rName, c
    // XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful only in clustered
    //                               environments where the resource may be immediately available on some other node.)
 
-   if(strcmp(rName, "/test") == 0)
+   if(strcmp(rName, "/cta") == 0)
    {
       cerr << "isPresent" << endl;
 

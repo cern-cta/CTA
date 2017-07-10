@@ -29,6 +29,12 @@ add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFile.cpp XrdCtaDir.c
 target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
 set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
+# XRootD SSI/CTA Frontend shared library
+include_directories(../xroot_ssi_pb)
+add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
+target_link_libraries(XrdSsiCta ctaeosmessages ${PROTOBUF3_LIBRARIES})
+set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
 INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)

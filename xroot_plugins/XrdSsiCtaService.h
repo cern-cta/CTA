@@ -1,5 +1,5 @@
-#ifndef __TEST_SSI_SERVICE_H
-#define __TEST_SSI_SERVICE_H
+#ifndef __XRD_SSI_CTA_SERVICE_H
+#define __XRD_SSI_CTA_SERVICE_H
 
 #include <XrdSsi/XrdSsiService.hh>
 #include "XrdSsiPbRequestProc.h"
@@ -7,15 +7,15 @@
 
 
 /*
- * Service Object, obtained using GetService() method of the TestSsiServiceProvider factory
+ * Service Object, obtained using GetService() method of the XrdSsiCtaServiceProvider factory
  */
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-class TestSsiService : public XrdSsiService
+template <typename RequestType, typename MetadataType, typename AlertType>
+class XrdSsiCtaService : public XrdSsiService
 {
 public:
-            TestSsiService() {}
-   virtual ~TestSsiService() {}
+            XrdSsiCtaService() {}
+   virtual ~XrdSsiCtaService() {}
 
    // The pure abstract method ProcessRequest() is called when the client calls its ProcessRequest() method to hand off
    // its request and resource objects. The client's request and resource objects are transmitted to the server and passed
@@ -31,12 +31,12 @@ public:
 
 
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void TestSsiService<RequestType, ResponseType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
+template <typename RequestType, typename MetadataType, typename AlertType>
+void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
    std::cerr << "Called ProcessRequest()" << std::endl;
 
-   RequestProc<RequestType, ResponseType, MetadataType, AlertType> processor;
+   RequestProc<RequestType, MetadataType, AlertType> processor;
 
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
 

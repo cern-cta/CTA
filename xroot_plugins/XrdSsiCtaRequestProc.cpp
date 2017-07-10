@@ -1,20 +1,21 @@
 #include <iostream>
-#include "test_util.h"
+#include "../frontend/test_util.h" // for Json output (for debugging)
 
-#include "test.pb.h"
-#include "XrdSsiException.h"
+#include "XrdSsiPbException.h"
 #include "XrdSsiPbRequestProc.h"
+#include "eos/messages/eos_messages.pb.h"
 
 // This is for specialized private methods called by RequestProc::Execute to handle actions, alerts and metadata
 
 template <>
-void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAction()
+void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAction()
 {
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
    std::cerr << MessageToJsonString(m_request);
 
+#if 0
    // Set reply
 
    m_response.set_result_code(0);
@@ -24,6 +25,7 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 
    std::cerr << "Preparing response:" << std::endl;
    std::cerr << MessageToJsonString(m_response);
+#endif
 }
 
 
@@ -33,11 +35,11 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 // defined by XrdSsiResponder::MaxMetaDataSZ constant member.
 
 template <>
-void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteMetadata()
+void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteMetadata()
 {
    // Set metadata
 
-   m_metadata.set_message_text("Have some metadata");
+   m_metadata.set_rsp_type(eos::wfe::Response::XATTR_RSP);
 
    // Output message in Json format (for debugging)
 
@@ -56,11 +58,13 @@ void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Meta
 // * if a request is cancelled, all pending alerts are discarded
 
 template <>
-void RequestProc<xrdssi::test::Request, xrdssi::test::Result, xrdssi::test::Metadata, xrdssi::test::Alert>::ExecuteAlerts()
+void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAlerts()
 {
    // Set alert message
 
-   m_alert.set_message_text("Something bad happened");
+   m_alert.set_audience(eos::wfe::Alert::EOSLOG);
+   m_alert.set_code(1);
+   m_alert.set_message("Something bad happened");
 
    // Send the alert message
 

@@ -1,5 +1,5 @@
-#ifndef __TEST_SSI_SERVICE_PROVIDER_H
-#define __TEST_SSI_SERVICE_PROVIDER_H
+#ifndef __XRD_SSI_CTA_SERVICE_PROVIDER_H
+#define __XRD_SSI_CTA_SERVICE_PROVIDER_H
 
 #include <XrdSsi/XrdSsiProvider.hh>
 
@@ -16,7 +16,7 @@
  *                        client asks for the resource status.
  */
 
-class TestSsiServiceProvider : public XrdSsiProvider
+class XrdSsiCtaServiceProvider : public XrdSsiProvider
 {
 public:
 
@@ -34,8 +34,8 @@ public:
 
    // Constructor and destructor
 
-            TestSsiServiceProvider() {}
-   virtual ~TestSsiServiceProvider() {}
+            XrdSsiCtaServiceProvider() {}
+   virtual ~XrdSsiCtaServiceProvider() {}
 };
 
 #endif

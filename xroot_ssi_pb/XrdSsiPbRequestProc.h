@@ -37,7 +37,7 @@
  * RequestProc is a kind of agent object that the service object creates for each request that it receives.
  */
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
+template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
@@ -57,7 +57,7 @@ private:
       XrdSsiResponder::Alert(*(new AlertMsg<AlertType>(alert)));
    }
 
-   // These methods should be specialized according to the needs of each <RequestType, ResponseType> pair
+   // These methods should be specialized according to the needs of each <RequestType, MetadataType> pair
 
    void ExecuteAction() {
 #ifdef XRDSSI_DEBUG
@@ -76,20 +76,18 @@ private:
    }
 
    RequestType  m_request;
-   ResponseType m_response;
-   AlertType    m_alert;
    MetadataType m_metadata;
+   AlertType    m_alert;
 
-   // Metadata and response buffers must stay in scope until Finished() is called, so they need to be member variables
+   // Metadata (and response) buffers must stay in scope until Finished() is called, so they need to be member variables
 
-   std::string  m_response_str;
    std::string  m_metadata_str;
 };
 
 
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
+template <typename RequestType, typename MetadataType, typename AlertType>
+void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
 #ifdef XRDSSI_DEBUG
    std::cout << "Execute()" << std::endl;
@@ -135,6 +133,7 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
       SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
    }
 
+#if 0
    // Serialize the Response
 
    if(!m_response.SerializeToString(&m_response_str))
@@ -148,14 +147,15 @@ void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Execute()
    {
       SetResponse(m_response_str.c_str(), m_response_str.size());
    }
+#endif
 }
 
 
 
 // Create specialized versions of this method to handle cancellation/cleanup for specific message types
 
-template <typename RequestType, typename ResponseType, typename MetadataType, typename AlertType>
-void RequestProc<RequestType, ResponseType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
+template <typename RequestType, typename MetadataType, typename AlertType>
+void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
 #ifdef XRDSSI_DEBUG
    std::cout << "Finished()" << std::endl;
