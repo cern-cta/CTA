@@ -85,6 +85,11 @@ namespace cta {
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status);
+    
+    /**
+     * Report a tape session statistics
+     */
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
 
     /**
      * Indicates that the disk thread of the mount was completed. This

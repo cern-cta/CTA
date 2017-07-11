@@ -34,6 +34,7 @@
 #include "scheduler/LogicalLibrary.hpp"
 #include "common/TapePool.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include <algorithm>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -1096,7 +1097,33 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
   dr.setDriveState(driveState);
 }
 
-  
+void OStoreDB::updateDriveStatsInRegitry(objectstore::DriveRegister& dr, 
+  const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs) {
+  using common::dataStructures::DriveStatus;
+  // The drive state might not be present, in which case we do nothing.
+  cta::common::dataStructures::DriveState driveState;
+  try { 
+    driveState = dr.getDriveState(driveInfo.driveName);
+  } catch (cta::exception::Exception & ex) {
+    // The drive is missing in the registry. Nothing to update
+      return;    
+  }
+  // Set the parameters that we always set
+  driveState.host = driveInfo.host;
+  driveState.logicalLibrary = driveInfo.logicalLibrary;
+
+  switch (driveState.driveStatus) {    
+    case DriveStatus::Transfering:
+      driveState.lastUpdateTime=inputs.reportTime;
+      driveState.bytesTransferredInSession=inputs.byteTransfered;
+      driveState.filesTransferredInSession=inputs.filesTransfered;
+      driveState.latestBandwidth=inputs.latestBandwidth;
+      break;    
+    default:
+      return ;
+  }
+  dr.setDriveState(driveState);
+}  
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveDown()
@@ -2217,6 +2244,35 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::setTapeSessionStats()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveMount::setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) {
+  // We just report tthe tape session statistics as instructed by the tape thread.
+  // Get the drive register
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  driveInfo.host=mountInfo.host;
+  
+  ReportDriveStatsInputs inputs;
+  inputs.reportTime = time(nullptr); 
+  inputs.byteTransfered = stats.dataVolume;
+  inputs.filesTransfered = stats.filesCount;
+  inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
+  
+  OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
+  
+  dr.commit();
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) {
@@ -2245,6 +2301,35 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.filesTransfered = 0;
   inputs.latestBandwidth = 0;
   OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
+  dr.commit();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::setTapeSessionStats()
+//------------------------------------------------------------------------------
+void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  // We just report the tape session statistics as instructed by the tape thread.
+  // Get the drive register
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  // Reset the drive state.
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName=mountInfo.drive;
+  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
+  driveInfo.host=mountInfo.host;
+  
+  ReportDriveStatsInputs inputs;
+  inputs.reportTime = time(nullptr); 
+  inputs.byteTransfered = stats.dataVolume;
+  inputs.filesTransfered = stats.filesCount;
+  inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
+  
+  OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
+  
   dr.commit();
 }
 

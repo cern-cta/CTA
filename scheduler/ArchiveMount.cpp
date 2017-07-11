@@ -163,6 +163,13 @@ void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus 
 }
 
 //------------------------------------------------------------------------------
+// setTapeSessionStats()
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  m_dbMount->setTapeSessionStats(stats);
+}
+
+//------------------------------------------------------------------------------
 // setTapeFull()
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setTapeFull() {

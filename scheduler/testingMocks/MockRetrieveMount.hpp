@@ -57,7 +57,8 @@ namespace cta {
     bool bothSidesComplete() override { return false; }
     
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
-
+    
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 
   private:
 

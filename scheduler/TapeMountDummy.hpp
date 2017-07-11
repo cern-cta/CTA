@@ -42,6 +42,7 @@ class TapeMountDummy: public TapeMount {
     throw exception::Exception("In DummyTapeMount::getNbFiles() : not implemented");
   }
   void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {}
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 };
 
 }

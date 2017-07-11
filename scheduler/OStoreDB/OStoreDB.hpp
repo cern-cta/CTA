@@ -123,6 +123,7 @@ public:
       uint64_t bytesRequested, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
   
   /* === Archive Job Handling =============================================== */
@@ -159,6 +160,7 @@ public:
     std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) override;
   };
   
   /* === Retrieve Job handling ============================================== */
@@ -270,6 +272,13 @@ private:
     std::string vid;
     std::string tapepool;
   };
+  /** Collection of smaller scale parts of reportDriveStats */
+  struct ReportDriveStatsInputs {
+    time_t reportTime; 
+    uint64_t byteTransfered;
+    uint64_t filesTransfered;
+    double latestBandwidth;
+  };
   /**
    * Utility implementing the operation get drive state or create, update, set on an
    * already locked and fetched DriveRegistry. It in used in reportDriveStatus as well
@@ -280,6 +289,17 @@ private:
    */
   static void updateDriveStatusInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
     const ReportDriveStatusInputs & inputs);
+  
+  /**
+   * Utility implementing the operation get drive state and update stats in it if present, set on an
+   * already locked and fetched DriveRegistry. 
+   *  
+   * @param dr
+   * @param driveInfo
+   * @param inputs
+   */
+  static void updateDriveStatsInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
+    const ReportDriveStatsInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);

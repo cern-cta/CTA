@@ -37,6 +37,7 @@
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "scheduler/TapeMount.hpp"
 
 #include <list>
 #include <limits>
@@ -182,6 +183,7 @@ public:
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -331,6 +333,7 @@ public:
     virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
+    virtual void setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };

@@ -20,6 +20,7 @@
 
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 #include <string>
 
@@ -68,6 +69,11 @@ namespace cta {
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status) = 0;
+    
+    /**
+     * Report a tape session statistics
+     */
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     
     /**
      * Destructor.

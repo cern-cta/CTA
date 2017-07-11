@@ -134,6 +134,7 @@ namespace unitTests
     std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob(cta::log::LogContext & logContext) override { throw std::runtime_error("Not implemented");}
     void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }
+    void setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) override { throw std::runtime_error("Not implemented"); }
   };
   
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {

@@ -131,6 +131,13 @@ void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus
 }
 
 //------------------------------------------------------------------------------
+// setTapeSessionStats()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  m_dbMount->setTapeSessionStats(stats);
+}
+
+//------------------------------------------------------------------------------
 // bothSidesComplete())
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::bothSidesComplete() {

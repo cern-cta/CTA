@@ -99,6 +99,11 @@ namespace cta {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
     
     /**
+     * Report a tape session statistics
+     */
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+    
+    /**
      * Report that the tape is full.
      */
     void setTapeFull();
