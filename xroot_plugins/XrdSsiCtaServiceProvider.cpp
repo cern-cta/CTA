@@ -61,7 +61,7 @@ XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName,
    // XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful only in clustered
    //                               environments where the resource may be immediately available on some other node.)
 
-   if(strcmp(rName, "/cta") == 0)
+   if(strcmp(rName, "/ctafrontend") == 0)
    {
       cerr << "isPresent" << endl;
 

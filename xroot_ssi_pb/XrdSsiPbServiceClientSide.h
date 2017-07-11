@@ -63,6 +63,12 @@ public:
    {
       XrdSsiErrInfo eInfo;
 
+      // Resource context may be cached and is reusable
+
+      //m_resource.rOpts = XrdSsiResource::Reusable;
+
+      // Get the Service pointer
+
       if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
       {
          throw XrdSsiPbException(eInfo);
@@ -78,7 +84,9 @@ public:
    void send(const RequestType &request);
 
 private:
-   XrdSsiResource m_resource;            // Requests are bound to this resource
+   XrdSsiResource m_resource;            // Requests are bound to this resource. As the resource is
+                                         // reusable, the lifetime of the resource is the same as the
+                                         // lifetime of the Service object.
 
    XrdSsiService *m_server_ptr;          // Pointer to XRootD Server object
 
@@ -94,7 +102,9 @@ private:
 template <typename RequestType, typename MetadataType, typename AlertType>
 XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
 {
-   std::cout << "Stopping XRootD SSI service...";
+#ifdef XRDSSI_DEBUG
+   std::cerr << "Stopping XRootD SSI service...";
+#endif
 
    // The XrdSsiService object cannot be explicitly deleted. The Stop() method deletes the object if
    // it is safe to do so.
@@ -102,12 +112,16 @@ XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServic
    while(!m_server_ptr->Stop() && m_shutdown_tmo--)
    {
       sleep(1);
-      std::cout << ".";
+#ifdef XRDSSI_DEBUG
+      std::cerr << ".";
+#endif
    }
 
    if(m_shutdown_tmo > 0)
    {
-      std::cout << "done." << std::endl;
+#ifdef XRDSSI_DEBUG
+      std::cerr << "done." << std::endl;
+#endif
    }
    else
    {
@@ -123,7 +137,9 @@ XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServic
       // Until this is solved, deleting the Service may leak memory, so don't delete Service objects
       // unless the client is shutting down!
 
-      std::cout << "failed." << std::endl;
+#ifdef XRDSSI_DEBUG
+      std::cerr << "failed." << std::endl;
+#endif
    }
 }
 
@@ -153,13 +169,8 @@ void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const
 
    m_server_ptr->ProcessRequest(*request_ptr, m_resource);
 
-   // Note: it is safe to delete the XrdSsiResource object after ProcessRequest() returns. I don't delete it because
-   // I am assuming I can reuse it, but I need to check if that is a safe assumption. Perhaps I need to create a new
-   // resource object for each request?
-   //
-   // See SSI ref p.10 on configuring a resource to be reusable
-   // Do I need more than one resource? I could have a single resource called "/default" with some default options and
-   // if necessary I can add other resources with other options later.
+   // Note: for a non-reusable resource, it is safe to delete it after ProcessRequest() returns. We
+   // have created reusable resources, so no need to delete it.
    //
    // Possible useful options:
    //

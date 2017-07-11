@@ -101,11 +101,11 @@ private:
 
    //XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
    XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
-   XrdSsiPbRequestCallback<AlertType>    AlertCallback;
+   XrdSsiPbRequestCallback<AlertType> AlertCallback;
 
    // Additional callback for handling errors from the XRootD framework
 
-   XrdSsiPbRequestCallback<std::string>  ErrorCallback;
+   XrdSsiPbRequestCallback<std::string> ErrorCallback;
 };
 
 
@@ -164,6 +164,8 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
 
          if(metadata_len > 0)
          {
+std::string dump_buffer(metadata_buffer, metadata_len);
+DumpBuffer(dump_buffer);
             // Deserialize the metadata
 
             MetadataType metadata;

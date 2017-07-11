@@ -23,6 +23,7 @@
 #include <cryptopp/base64.h>
 #include <google/protobuf/util/json_util.h>
 
+#include "../frontend/test_util.h"
 #include "common/dataStructures/FrontendReturnCode.hpp"
 #include "EosCtaApi.h"
 
@@ -31,30 +32,6 @@
 //! Usage exception
 
 const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [options] [--stderr]");
-
-
-
-/*!
- * Convert protocol buffer to JSON (for debug output)
- *
- * @param     message    A Google protocol buffer
- * @returns   The PB converted to JSON format
- */
-
-static std::string MessageToJsonString(const google::protobuf::Message &message)
-{
-   using namespace google::protobuf::util;
-
-   std::string output;
-   JsonPrintOptions options;
-
-   options.add_whitespace = true;
-   options.always_print_primitive_fields = true;
-
-   MessageToJsonString(message, &output, options);    // returns util::Status
-
-   return output;
-}
 
 
 
@@ -318,7 +295,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    std::string host("localhost");
    int port = 10955;
-   std::string resource("/cta");
+   std::string resource("/ctafrontend");
 
    XrdSsiPbServiceType cta_service(host, port, resource);
 

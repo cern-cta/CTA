@@ -93,6 +93,17 @@ message Notification {
 // Messages sent from CTA to EOS
 //
 
+message Exception {
+  enum ErrorCode {
+    UNKNOWN_ERR       = 0;              //< Can't determine the cause of the error
+    SERVER_NO_RSP_ERR = 1;              //< No response from server
+    PB_PARSE_ERR      = 2;              //< Protocol buffer parse error
+    // ... define other exception types
+  }
+  ErrorCode code             = 1;       //< Defines what went wrong
+  string message             = 2;       //< Additional error text
+}
+
 message Xattr {
   enum Operation { NONE = 0; GET = 1; ADD = 2; SET = 3; DELETE = 4; }
   uint64 fid                 = 1;       //< file id
@@ -109,21 +120,20 @@ message Tapereplica {
 }
 
 message Response {
-  enum ResponseType { XATTR_RSP = 0; TAPEREPLICA_RSP = 1; }
+  enum ResponseType { EXCEPTION_RSP = 0; XATTR_RSP = 1; TAPEREPLICA_RSP = 2; }
   ResponseType rsp_type      = 1;       //< Encode the type of this reply
   oneof response {
-    Xattr xattr              = 2;       //< Payload for Xattr response type
-    Tapereplica tapereplica  = 3;       //< Payload for Tapereplica response type
+    Exception exception      = 2;       //< Something bad happened
+    Xattr xattr              = 3;       //< Payload for Xattr response type
+    Tapereplica tapereplica  = 4;       //< Payload for Tapereplica response type
   }
 }
 
 
 
 //
-// Error handling
+// Alert Messages: log messages or responses for the user
 //
-
-// Message type for the Alert callback (generates a log message or response for the user)
 
 message Alert {
   // What is the purpose of Audience NONE?
@@ -131,16 +141,5 @@ message Alert {
   Audience audience          = 1;       //< The intended audience of the error message
   uint64 code                = 2;       //< Zero means success, non-zero means error
   string message             = 3;       //< An empty if success, else an error message
-}
-
-// Message type for the Error callback (throws an exception)
-
-message Exception {
-  enum ErrorCode {
-    SERVER_NO_RSP = 0;                  //< No response from server
-    PB_PARSE_ERR  = 1;                  //< Protocol buffer parse error
-    // ... define other exception types
-  }
-  ErrorCode error            = 1;       //< Defines what went wrong
 }
 

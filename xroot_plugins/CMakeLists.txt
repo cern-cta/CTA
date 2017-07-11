@@ -30,6 +30,7 @@ target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacom
 set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 # XRootD SSI/CTA Frontend shared library
+add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
 target_link_libraries(XrdSsiCta ctaeosmessages ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)

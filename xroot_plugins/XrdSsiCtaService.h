@@ -45,12 +45,6 @@ void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdS
    // Execute the request, upon return the processor is deleted
 
    processor.Execute();
-
-   // Unbind the request from the responder (required)
-
-   processor.UnBindRequest();
-
-   std::cerr << "ProcessRequest.UnBind()" << std::endl;
 }
 
 #endif

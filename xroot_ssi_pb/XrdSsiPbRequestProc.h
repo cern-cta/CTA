@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          XRootD SSI Responder class
+ * @brief          XRootD SSI Responder class template
  * @copyright      Copyright 2017 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,19 @@
 #include "XrdSsiPbException.h"
 #include "XrdSsiPbAlert.h"
 
-/*
+#include "../frontend/test_util.h"
+
+
+
+//! Error codes that the framework knows about
+
+enum XrdSsiRequestProcErr {
+   PB_PARSE_ERR
+};
+
+
+
+/*!
  * The XrdSsiResponder class knows how to safely interact with the request object. It allows handling asynchronous
  * requests such as cancellation, broken TCP connections, etc.
  *
@@ -75,13 +87,20 @@ private:
 #endif
    }
 
+   // This method must put the error into the Metadata to send it back to the client
+
+   void HandleError(XrdSsiRequestProcErr err_num, const std::string &err_text = "");
+
+   // Protocol Buffer members
+
    RequestType  m_request;
    MetadataType m_metadata;
    AlertType    m_alert;
 
-   // Metadata (and response) buffers must stay in scope until Finished() is called, so they need to be member variables
+   // Metadata and Response buffers must stay in scope until Finished() is called, so they need to be member variables
 
    std::string  m_metadata_str;
+   std::string  m_response_str;
 };
 
 
@@ -98,26 +117,30 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    int request_len;
    const char *request_buffer = GetRequest(request_len);
 
-   if(!m_request.ParseFromArray(request_buffer, request_len))
+   if(m_request.ParseFromArray(request_buffer, request_len))
    {
-      throw XrdSsiPbException("m_request.ParseFromArray() failed");
+      // Perform the requested action
+
+      ExecuteAction();
+
+      // Send alerts
+
+      ExecuteAlerts();
+
+      // Prepare to send metadata ahead of the response
+
+      ExecuteMetadata();
+   }
+   else
+   {
+      // Return an error to the client
+
+      HandleError(PB_PARSE_ERR, "m_request.ParseFromArray() failed");
    }
 
    // Release the request buffer
 
    ReleaseRequestBuffer();
-
-   // Perform the requested action
-
-   ExecuteAction();
-
-   // Send alerts
-
-   ExecuteAlerts();
-
-   // Prepare to send metadata ahead of the response
-
-   ExecuteMetadata();
 
    // Serialize the Metadata
 
@@ -131,6 +154,8 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    if(m_metadata_str.size() > 0)
    {
       SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
+
+      DumpBuffer(m_metadata_str);
    }
 
 #if 0
@@ -140,14 +165,12 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    {
       throw XrdSsiPbException("m_response.SerializeToString() failed");
    }
-
-   // Send the response
-
-   if(m_response_str.size() > 0)
-   {
-      SetResponse(m_response_str.c_str(), m_response_str.size());
-   }
 #endif
+
+   // Send the response. This must always be called, even if the response is empty, as Finished()
+   // will not be called until the Response has been processed.
+
+   SetResponse(m_response_str.c_str(), m_response_str.size());
 }
 
 
@@ -161,7 +184,24 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
    std::cout << "Finished()" << std::endl;
 #endif
 
-   // Reclaim any allocated resources
+   if(cancel)
+   {
+      // Reclaim resources dedicated to the request and then tell caller the request object can be reclaimed.
+   }
+   else
+   {
+      // Reclaim any allocated resources
+   }
+
+   // Tell the framework we are done with the request object
+
+#ifdef XRDSSI_DEBUG
+   std::cout << "ProcessRequest.UnBind()" << std::endl;
+#endif
+
+   // Unbind the request from the responder
+
+   UnBindRequest();
 }
 
 #endif
