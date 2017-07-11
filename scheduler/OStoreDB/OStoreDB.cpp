@@ -352,6 +352,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
         const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
+  cta::utils::Timer timer;
   // Construct the archive request object in memory
   cta::objectstore::ArchiveRequest aReq(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
   aReq.initialize();
@@ -391,6 +392,10 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.setOwner(m_agentReference->getAgentAddress());
   aReq.insert();
   ScopedExclusiveLock arl(aReq);
+  double arCreationAndRelock = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+  double arTotalQueueingTime = 0;
+  double arTotalCommitTime = 0;
+  double arTotalQueueUnlockTime = 0;
   // We can now enqueue the requests
   std::list<std::string> linkedTapePools;
   std::string currentTapepool;
@@ -402,14 +407,23 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
       // stale and the job would be dereferenced from the queue.
       auto shareLock = ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this, logContext);
+      double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      arTotalQueueingTime += qTime;
       aReq.commit();
+      double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      arTotalCommitTime += cTime;
       // Now we can let go off the queue.
       shareLock.reset();
+      double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      arTotalQueueUnlockTime += qUnlockTime;
       linkedTapePools.push_back(j.owner);
       log::ScopedParamContainer params(logContext);
       params.add("tapepool", j.tapePool)
             .add("queueObject", j.owner)
-            .add("jobObject", aReq.getAddressIfSet());
+            .add("jobObject", aReq.getAddressIfSet())
+            .add("queueingTime", qTime)
+            .add("commitTime", cTime)
+            .add("queueUnlockTime", qUnlockTime);
       logContext.log(log::INFO, "In OStoreDB::queueArchive(): added job to queue");
     }
   } catch (NoSuchArchiveQueue &) {
@@ -432,9 +446,21 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   // just to disown it from the agent.
   aReq.setOwner("");
   aReq.commit();
+  double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   arl.release();
+  double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   // And remove reference from the agent
   m_agentReference->removeFromOwnership(aReq.getAddressIfSet(), m_objectStore);
+  log::ScopedParamContainer params(logContext);
+  params.add("jobObject", aReq.getAddressIfSet())
+    .add("creationAndRelockTime", arCreationAndRelock)
+    .add("totalQueueingTime", arTotalQueueingTime)
+    .add("totalCommitTime", arTotalCommitTime)
+    .add("totalQueueUnlockTime", arTotalQueueUnlockTime)
+    .add("ownerResetTime", arOwnerResetTime)
+    .add("lockReleaseTime", arLockRelease)
+    .add("agentOwnershipResetTime", timer.secs());
+  logContext.log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueuing request.");
 }
 
 //------------------------------------------------------------------------------
