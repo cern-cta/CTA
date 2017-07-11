@@ -41,6 +41,7 @@ public:
   /**
    * Creates a CTA catalogue object using the specified database login details.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param login The database connection details.
    * @param nbConns The maximum number of concurrent connections to the
    * underlying relational database for all operations accept listing archive
@@ -51,7 +52,10 @@ public:
    * @return The newly created CTA catalogue object.  Please note that it is the
    * responsibility of the caller to delete the returned CTA catalogue object.
    */
-  static std::unique_ptr<Catalogue> create(const rdbms::Login &login, const uint64_t nbConns,
+  static std::unique_ptr<Catalogue> create(
+    log::Logger &log,
+    const rdbms::Login &login,
+    const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns);
 
 }; // class CatalogueFactory

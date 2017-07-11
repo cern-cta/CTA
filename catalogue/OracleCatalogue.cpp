@@ -36,14 +36,17 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 OracleCatalogue::OracleCatalogue(
+  log::Logger &log,
   const std::string &username,
   const std::string &password,
   const std::string &database,
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
+    log,
     rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database)),
-      nbConns, nbArchiveFileListingConns) {
+    nbConns,
+    nbArchiveFileListingConns) {
 
 }
 

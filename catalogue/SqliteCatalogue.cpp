@@ -33,9 +33,13 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns,
+SqliteCatalogue::SqliteCatalogue(
+  log::Logger &log,
+  const std::string &filename,
+  const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
+    log,
     rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
     nbConns,
     nbArchiveFileListingConns) {

@@ -39,6 +39,7 @@ public:
   /**
    * Constructor.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param username The database username.
    * @param password The database password.
    * @param database The database name.
@@ -50,6 +51,7 @@ public:
    * listing archive files.
    */
   OracleCatalogue(
+    log::Logger       &log,
     const std::string &username,
     const std::string &password,
     const std::string &database,

@@ -24,7 +24,7 @@ namespace cta {
 namespace log {
 
 /**
- * A dummy logger class whose implementation of the API of the CASTOR logging
+ * A dummy logger class whose implementation of the API of the CTA logging
  * system does nothing.
  *
  * The primary purpose of this class is to facilitate the unit testing of

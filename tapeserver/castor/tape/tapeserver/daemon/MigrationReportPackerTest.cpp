@@ -21,6 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -36,6 +37,11 @@ using namespace castor::tape;
 namespace unitTests {
   
   class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
+  public:
+    castor_tape_tapeserver_daemon_MigrationReportPackerTest():
+      m_dummyLog("dummy") {
+    }
+
   protected:
 
     void SetUp() {
@@ -45,13 +51,14 @@ namespace unitTests {
       rdbms::Login catalogueLogin(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
-      m_catalogue = CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+      m_catalogue = CatalogueFactory::create(m_dummyLog, catalogueLogin, nbConns, nbArchiveFileListingConns);
     }
 
     void TearDown() {
       m_catalogue.reset();
     }
 
+    cta::log::DummyLogger m_dummyLog;
     std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
   }; // class castor_tape_tapeserver_daemon_MigrationReportPackerTest

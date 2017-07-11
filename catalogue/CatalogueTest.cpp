@@ -35,7 +35,8 @@ namespace unitTests {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest() {
+cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
+  m_dummyLog("dummy") {
   m_localAdmin.username = "local_admin_user";
   m_localAdmin.host = "local_admin_host";
 
@@ -56,7 +57,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
     const uint64_t nbConns = 2;
     const uint64_t nbArchiveFileListingConns = 2;
 
-    m_catalogue = CatalogueFactory::create(login, nbConns, nbArchiveFileListingConns);
+    m_catalogue = CatalogueFactory::create(m_dummyLog, login, nbConns, nbArchiveFileListingConns);
     m_conn = connFactory->create();
 
     {

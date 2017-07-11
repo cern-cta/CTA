@@ -59,6 +59,7 @@
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/Logger.hpp"
 
 #include <list>
 #include <map>
@@ -76,6 +77,12 @@ namespace catalogue {
  */
 class Catalogue {
 public:
+  /**
+   * Constructor.
+   *
+   * @param log Object representing the API to the CTA logging system.
+   */
+  Catalogue(log::Logger &log);
 
   /**
    * Destructor.
@@ -527,6 +534,13 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
+
+private:
+
+  /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
 
 }; // class Catalogue
 

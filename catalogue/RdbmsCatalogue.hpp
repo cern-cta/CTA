@@ -61,6 +61,7 @@ protected:
   /**
    * Protected constructor only to be called by sub-classes.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param connFactory The factory for creating new database connections.
    * @param nbConns The maximum number of concurrent connections to the
    * underlying relational database for all operations accept listing archive
@@ -69,7 +70,10 @@ protected:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns,
+  RdbmsCatalogue(
+    log::Logger &log,
+    std::unique_ptr<rdbms::ConnFactory> connFactory,
+    const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns);
 
 public:

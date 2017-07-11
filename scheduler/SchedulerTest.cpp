@@ -21,6 +21,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -69,7 +70,7 @@ struct SchedulerTestParam {
 class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
-  SchedulerTest() {
+  SchedulerTest(): m_dummyLog("dummy") {
   }
 
   class FailedToGetCatalogue: public std::exception {
@@ -101,7 +102,7 @@ public:
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(nbConns, nbArchiveFileListingConns);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
 
@@ -212,6 +213,7 @@ private:
   // Prevent assignment
   SchedulerTest & operator= (const SchedulerTest &) = delete;
 
+  cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;

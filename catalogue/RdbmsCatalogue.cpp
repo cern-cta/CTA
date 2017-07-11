@@ -39,9 +39,11 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 RdbmsCatalogue::RdbmsCatalogue(
+  log::Logger &log,
   std::unique_ptr<rdbms::ConnFactory> connFactory,
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
+  Catalogue(log),
   m_connFactory(std::move(connFactory)),
   m_connPool(*m_connFactory, nbConns),
   m_archiveFileListingConnPool(*m_connFactory, nbArchiveFileListingConns) {
