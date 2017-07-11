@@ -17,7 +17,7 @@ sudo -u eric cp tigConf/tigrc ~eric/.tigrc
 echo Installing minimal tools and tape tools
 yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc
 
-sudo -u eric git config --global color.ui true
-sudo -u eric git config --global user.email "Eric.Cano@cern.ch"
-sudo -u eric git config --global user.name "Eric Cano"
+(cd / ; sudo -u eric git config --global color.ui true)
+(cd / ; sudo -u eric git config --global user.email "Eric.Cano@cern.ch")
+(cd / ; sudo -u eric git config --global user.name "Eric Cano")
 
