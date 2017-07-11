@@ -19,6 +19,8 @@
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <fstream>
+
 namespace cta {
 namespace catalogue {
 
@@ -77,12 +79,25 @@ std::unique_ptr<common::dataStructures::ArchiveFile> ArchiveFileBuilder::append(
     const auto tapeFileMapItor = tapeFile.tapeFiles.begin();
     const auto copyNbOfTapeFileToAppend = tapeFileMapItor->first;
     if(m_archiveFile->tapeFiles.find(copyNbOfTapeFileToAppend) != m_archiveFile->tapeFiles.end()) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: Found two tape files for the same archive file with the same copy"
-        " numbers: archiveFileID=" << tapeFile.archiveFileID << " copyNb=" << copyNbOfTapeFileToAppend;
-      throw ex;
+      // Found two tape files for the same archive file with the same copy
+      // number
+
+      // Ignore for now any inconsistencies in the copy number of the tape file
+      // exception::Exception ex;
+      // ex.getMessage() << __FUNCTION__ << " failed: Found two tape files for the same archive file with the same copy"
+      //   " numbers: archiveFileID=" << tapeFile.archiveFileID << " copyNb=" << copyNbOfTapeFileToAppend;
+      // throw ex;
+
+      uint64_t maxCopyNb = 0;
+      for(const auto maplet: m_archiveFile->tapeFiles) {
+        if(maplet.first > maxCopyNb) {
+          maxCopyNb = maplet.first;
+        }
+      }
+      m_archiveFile->tapeFiles[maxCopyNb + 1] = tapeFileMapItor->second;
+    } else {
+      m_archiveFile->tapeFiles[copyNbOfTapeFileToAppend] = tapeFileMapItor->second;
     }
-    m_archiveFile->tapeFiles[copyNbOfTapeFileToAppend] = tapeFileMapItor->second;
 
     // There could be more tape files so return incomplete
     return std::unique_ptr<common::dataStructures::ArchiveFile>();
