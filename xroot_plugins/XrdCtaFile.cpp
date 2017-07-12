@@ -1854,7 +1854,7 @@ std::string XrdCtaFile::xCom_drive() {
           case cta::common::dataStructures::DriveStatus::Mounting:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.mountStartTime)));
             break;
-          case cta::common::dataStructures::DriveStatus::Transfering:
+          case cta::common::dataStructures::DriveStatus::Transferring:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.transferStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::CleaningUp:

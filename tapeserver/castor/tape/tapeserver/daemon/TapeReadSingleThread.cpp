@@ -307,7 +307,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Then we will loop on the tasks as they get from 
       // the task injector
       std::unique_ptr<TapeReadTask> task;
-      m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transfering);
+      m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring);
       while(true) {
         //get a task
         task.reset(popAndRequestMoreJobs());

@@ -28,7 +28,7 @@ enum DriveStatus {
   Up,
   Starting,
   Mounting,
-  Transfering,
+  Transferring,
   Unloading,
   Unmounting,
   DrainingToDisk,

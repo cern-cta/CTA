@@ -31,7 +31,7 @@ namespace cta { namespace common {
     // to mounting a tape before the mounting is confirmed. It is necessary to
     // allow race-free scheduling
     Mounting,
-    Transfering,
+    Transferring,
     Unloading,
     Unmounting,
     DrainingToDisk,

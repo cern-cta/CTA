@@ -30,8 +30,8 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
       return "Starting";
     case cta::common::dataStructures::DriveStatus::Mounting:
       return "Mounting";
-    case cta::common::dataStructures::DriveStatus::Transfering:
-      return "Transfering";
+    case cta::common::dataStructures::DriveStatus::Transferring:
+      return "Transferring";
     case cta::common::dataStructures::DriveStatus::Unloading:
       return "Unloading";
     case cta::common::dataStructures::DriveStatus::Unmounting:

@@ -141,7 +141,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   std::set<int> activeDriveStatuses = {
     (int)cta::common::dataStructures::DriveStatus::Starting,
     (int)cta::common::dataStructures::DriveStatus::Mounting,
-    (int)cta::common::dataStructures::DriveStatus::Transfering,
+    (int)cta::common::dataStructures::DriveStatus::Transferring,
     (int)cta::common::dataStructures::DriveStatus::Unloading,
     (int)cta::common::dataStructures::DriveStatus::Unmounting,
     (int)cta::common::dataStructures::DriveStatus::DrainingToDisk };
@@ -330,7 +330,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   std::set<int> activeDriveStatuses = {
     (int)DriveStatus::Starting,
     (int)DriveStatus::Mounting,
-    (int)DriveStatus::Transfering,
+    (int)DriveStatus::Transferring,
     (int)DriveStatus::Unloading,
     (int)DriveStatus::Unmounting,
     (int)DriveStatus::DrainingToDisk };
@@ -1075,8 +1075,8 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
     case DriveStatus::Mounting:
       setDriveMounting(driveState, inputs);
       break;
-    case DriveStatus::Transfering:
-      setDriveTransfering(driveState, inputs);
+    case DriveStatus::Transferring:
+      setDriveTransferring(driveState, inputs);
       break;
     case DriveStatus::Unloading:
       setDriveUnloading(driveState, inputs);
@@ -1229,12 +1229,12 @@ void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::setDriveTransfering()
+// OStoreDB::setDriveTransferring()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveTransfering(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveTransferring(common::dataStructures::DriveState & driveState,
   const ReportDriveStatusInputs & inputs) {
   // If we were already transferring, we update the full statistics
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Transfering) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Transferring) {
     driveState.lastUpdateTime=inputs.reportTime;
     driveState.bytesTransferredInSession=inputs.byteTransfered;
     driveState.filesTransferredInSession=inputs.filesTransfered;
@@ -1255,7 +1255,7 @@ void OStoreDB::setDriveTransfering(common::dataStructures::DriveState & driveSta
   driveState.cleanupStartTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Transfering;
+  driveState.driveStatus=common::dataStructures::DriveStatus::Transferring;
   driveState.currentVid=inputs.vid;
   driveState.currentTapePool=inputs.tapepool;
 }

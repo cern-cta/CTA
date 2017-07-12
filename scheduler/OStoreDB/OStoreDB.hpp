@@ -295,7 +295,7 @@ private:
   static void setDriveMounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
-  static void setDriveTransfering(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveTransferring(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveUnloading(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);

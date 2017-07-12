@@ -387,7 +387,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       std::unique_ptr<TapeWriteTask> task;   
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transfering, m_logContext); 
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, m_logContext); 
       while(1) {
         //get a task
         task.reset(m_tasks.pop());
