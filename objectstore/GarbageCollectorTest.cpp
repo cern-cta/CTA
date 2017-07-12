@@ -109,7 +109,6 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   rel.release();
   // Create an agent and add and agent register to it as an owned object
   cta::objectstore::AgentReference agrA("unitTestAgentA");
-  agrA.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -127,7 +126,6 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   }
   // Create the garbage colletor and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
-  gcAgentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -156,7 +154,6 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
-  agentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -170,7 +167,6 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   rel.release();
   // Create an agent and add and agent register to it as an owned object
   cta::objectstore::AgentReference agrA("unitTestAgentA");
-  agrA.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -188,7 +184,6 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   }
   // Create the garbage colletor and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
-  gcAgentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -217,7 +212,6 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
-  agentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -231,7 +225,6 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   rel.release();
   // Create an agent and add the drive register to it as an owned object
   cta::objectstore::AgentReference agrA("unitTestAgentA");
-  agrA.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -249,7 +242,6 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   }
   // Create the garbage colletor and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
-  gcAgentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -295,14 +287,12 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // continue agent creation.
-  agentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf();
   // Create an agent to garbage collected
   cta::objectstore::AgentReference agrA("unitTestAgentA");
-  agrA.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -414,7 +404,6 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   }
   // Create the garbage collector and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
-  gcAgentRef.setQueueFlushTimeout(std::chrono::milliseconds(0));
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);

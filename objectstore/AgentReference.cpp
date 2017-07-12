@@ -68,10 +68,6 @@ std::string AgentReference::nextId(const std::string& childType) {
   return id.str();
 }
 
-void AgentReference::setQueueFlushTimeout(std::chrono::duration<uint64_t, std::milli> timeout) {
-  m_queueFlushTimeout = timeout;
-}
-
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   std::shared_ptr<Action> a (new Action(AgentOperation::Add, objectAddress));
   queueAndExecuteAction(a, backend);
@@ -112,12 +108,6 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // There is already a queue
     threading::MutexLocker ulQueue(m_currentQueue->mutex);
     m_currentQueue->queue.push_back(action);
-    // If this is time to run, wake up the serving thread
-    if (m_currentQueue->queue.size() + 1 >= m_maxQueuedItems) {
-      ANNOTATE_HAPPENS_BEFORE(&m_currentQueue->promise);
-      m_currentQueue->promise.set_value();
-      m_currentQueue = nullptr;
-    }
     // Get hold of the future before the promise gets a chance to be accessed
     auto actionFuture=action->promise.get_future();
     // Release the locks and wait for action execution
@@ -142,25 +132,22 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     m_nextQueueExecutionFuture=m_nextQueueExecutionPromise->get_future();
     // Keep a pointer to it, so we will signal our own completion to our successor queue.
     std::shared_ptr<std::promise<void>> promiseForNextQueue = m_nextQueueExecutionPromise;
-    // Get future from promise before other thread gets a chance to touch the latter.
-    auto queueFuture=q->promise.get_future();
     // We can now unlock the queue and the general lock: queuing is open.
     ulq.unlock();
     ulGlobal.unlock();
-    // We wait for time or size of queue
-    queueFuture.wait_for(m_queueFlushTimeout);
-    ANNOTATE_HAPPENS_AFTER(&q->promise);
-    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&q->promise);
-    // Make sure we are not listed anymore as the queue taking jobs (this would happen
-    // in case of timeout).
-    ulGlobal.lock();
-    if (m_currentQueue == q)
-      m_currentQueue.reset();
-    ulGlobal.unlock();
-    // Wait for previous queue to complete
+    // Wait for previous queue to complete so we will not contend with other threads while
+    // updating the object store. 
     futureForThisQueue.get();
     ANNOTATE_HAPPENS_AFTER(promiseForThisQueue.get());
     ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(promiseForThisQueue.get());
+    // Make sure we are not listed anymore as the queue taking jobs.
+    // We should still be the listed queue
+    ulGlobal.lock();
+    if (m_currentQueue != q) {
+      throw cta::exception::Exception("In AgentReference::queueAndExecuteAction(): our queue is not the listed one as expected.");
+    }
+    m_currentQueue.reset();
+    ulGlobal.unlock();
     // Make sure no leftover thread is still writing to the queue.
     ulq.lock();
     // Off we go! Add the actions to the queue

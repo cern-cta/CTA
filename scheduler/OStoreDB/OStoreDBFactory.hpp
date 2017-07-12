@@ -170,7 +170,6 @@ OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
 m_backend(new cta::objectstore::BackendVFS()),
 m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
   // We need to populate the root entry before using.
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
@@ -195,7 +194,6 @@ OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()),
 m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {
