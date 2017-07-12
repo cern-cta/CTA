@@ -1553,6 +1553,18 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
+  // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
+  // Get drive register
+  {
+    objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+    ScopedSharedLock drl(dr);
+    dr.fetch();
+    auto drs = dr.getDriveState(mountInfo.drive);
+    if (!drs.desiredDriveState.up && drs.desiredDriveState.forceDown) {
+      logContext.log(log::INFO, "In OStoreDB::ArchiveMount::getNextJob(): returning no job as we are forcibly going down.");
+      return nullptr;
+    }
+  }
   auto aql = re.dumpArchiveQueues();
   rel.release();
   std::string aqAddress;
@@ -2040,12 +2052,24 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::getNextJob()
 //------------------------------------------------------------------------------
-auto OStoreDB::RetrieveMount::getNextJob() -> std::unique_ptr<SchedulerDatabase::RetrieveJob> {
+auto OStoreDB::RetrieveMount::getNextJob(log::LogContext & logContext) -> std::unique_ptr<SchedulerDatabase::RetrieveJob> {
   // Find the next file to retrieve
   // Get the tape pool and then tape
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
+  // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
+  // Get drive register
+  {
+    objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+    ScopedSharedLock drl(dr);
+    dr.fetch();
+    auto drs = dr.getDriveState(mountInfo.drive);
+    if (!drs.desiredDriveState.up && drs.desiredDriveState.forceDown) {
+      logContext.log(log::INFO, "In OStoreDB::RetrieveMount::getNextJob(): returning no job as we are forcibly going down.");
+      return nullptr;
+    }
+  }
   auto rql = re.dumpRetrieveQueues();
   rel.release();
   std::string rqAddress;

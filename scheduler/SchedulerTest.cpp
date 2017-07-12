@@ -507,10 +507,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    retrieveJob.reset(retrieveMount->getNextJob().release());
+    retrieveJob.reset(retrieveMount->getNextJob(lc).release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
     retrieveJob->complete();
-    retrieveJob.reset(retrieveMount->getNextJob().release());
+    retrieveJob.reset(retrieveMount->getNextJob(lc).release());
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
   }
 }

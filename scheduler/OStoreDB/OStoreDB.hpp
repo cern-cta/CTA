@@ -156,7 +156,7 @@ public:
     objectstore::AgentReference & m_agentReference;
   public:
     const MountInfo & getMountInfo() override;
-    std::unique_ptr<RetrieveJob> getNextJob() override;
+    std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
   };

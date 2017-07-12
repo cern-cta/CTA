@@ -118,7 +118,7 @@ namespace cta {
      * @return A unique_ptr to the next archive job or NULL if there are no more
      * archive jobs left for this tape mount.
      */
-    virtual std::unique_ptr<RetrieveJob> getNextJob();
+    virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext);
     
     /**
      * Destructor.

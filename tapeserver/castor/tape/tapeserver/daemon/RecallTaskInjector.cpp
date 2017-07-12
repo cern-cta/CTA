@@ -208,7 +208,7 @@ bool RecallTaskInjector::synchronousFetch()
     uint64_t files=0;
     uint64_t bytes=0;
     while(files<=m_maxFiles && bytes<=m_maxBytes) {
-      std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob();
+      std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob(m_lc);
       if(!job.get()) break;
       files++;
       bytes+=job->archiveFile.fileSize;
@@ -292,7 +292,7 @@ void RecallTaskInjector::WorkerThread::run()
       uint64_t files=0;
       uint64_t bytes=0;
       while(files<=req.filesRequested && bytes<=req.bytesRequested) {
-        std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob();
+        std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob(m_parent.m_lc);
         if(!job.get()) break;
         files++;
         bytes+=job->archiveFile.fileSize;

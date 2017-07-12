@@ -33,7 +33,7 @@ namespace cta {
     ~MockRetrieveMount() throw() {
     }
 
-    std::unique_ptr<cta::RetrieveJob> getNextJob() override {
+    std::unique_ptr<cta::RetrieveJob> getNextJob(log::LogContext & logContext) override {
       getJobs++;
       if(m_jobs.empty()) {
         return std::unique_ptr<cta::RetrieveJob>();

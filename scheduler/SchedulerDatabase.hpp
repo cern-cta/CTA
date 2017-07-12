@@ -328,7 +328,7 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
-    virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
+    virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual ~RetrieveMount() {}
