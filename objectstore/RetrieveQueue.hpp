@@ -42,7 +42,7 @@ public:
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  void addJob(uint64_t copyNb,
+  void addJob(uint64_t copyNb, uint64_t fSeq,
     const std::string & retrieveRequestAddress, uint64_t size,
     const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   struct JobsSummary {

@@ -526,12 +526,28 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-            .add("minArchiveRequestAge", m->minArchiveRequestAge);
+            .add("minArchiveRequestAge", m->minArchiveRequestAge)
+            .add("existingMounts", existingMounts)
+            .add("maxDrivesAllowed", m->maxDrivesAllowed);
       lc.log(log::DEBUG, "Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", m->tapePool)
+            .add("mountType", common::dataStructures::toString(m->type))
+            .add("existingMounts", existingMounts)
+            .add("bytesQueued", m->bytesQueued)
+            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("filesQueued", m->filesQueued)
+            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("minArchiveRequestAge", m->minArchiveRequestAge)
+            .add("existingMounts", existingMounts)
+            .add("maxDrivesAllowed", m->maxDrivesAllowed)
+            .add("ratioOfMountQuotaUsed", m->ratioOfMountQuotaUsed);
+      lc.log(log::DEBUG, "Will consider potential mount");
       m++;
    }
   }

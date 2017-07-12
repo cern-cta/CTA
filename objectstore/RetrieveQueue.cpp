@@ -93,7 +93,7 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   return headerDump;
 }
 
-void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,
+void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb, uint64_t fSeq,
   const std::string & retrieveRequestAddress, uint64_t size, 
   const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
@@ -117,9 +117,17 @@ void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,
   j->set_address(retrieveRequestAddress);
   j->set_size(size);
   j->set_copynb(copyNb);
+  j->set_fseq(fSeq);
   j->set_priority(policy.retrievePriority);
   j->set_minretrieverequestage(policy.retrieveMinRequestAge);
   j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  // move the the new job in the right spot on the queue.
+  // i points to the newly added job all the time.
+  size_t i=m_payload.retrievejobs_size() - 1;
+  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+    i--;
+  }
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {

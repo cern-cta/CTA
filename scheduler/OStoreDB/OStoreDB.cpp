@@ -830,7 +830,8 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   // We need to find the job corresponding to the vid
   for (auto & j: rReq.getArchiveFile().tapeFiles) {
     if (j.second.vid == vid) {
-      rq.addJob(j.second.copyNb, rReq.getAddressIfSet(), criteria.archiveFile.fileSize, criteria.mountPolicy, rReq.getEntryLog().time);
+      rq.addJob(j.second.copyNb, j.second.fSeq, rReq.getAddressIfSet(), criteria.archiveFile.fileSize, 
+          criteria.mountPolicy, rReq.getEntryLog().time);
       rReq.setActiveCopyNumber(j.second.copyNb);
       goto jobAdded;
     }
