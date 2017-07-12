@@ -3564,7 +3564,7 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    auto impl = new RdbmsArchiveFileItorImpl(m_archiveFileListingConnPool, searchCriteria);
+    auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
     return ArchiveFileItor(impl);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

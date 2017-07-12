@@ -535,7 +535,7 @@ public:
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
 
-private:
+protected:
 
   /**
    * Object representing the API to the CTA logging system.

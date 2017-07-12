@@ -25,6 +25,13 @@ namespace cta {
 namespace catalogue {
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+ArchiveFileBuilder::ArchiveFileBuilder(log::Logger &log):
+  m_log(log) {
+}
+
+//------------------------------------------------------------------------------
 // append
 //------------------------------------------------------------------------------
 std::unique_ptr<common::dataStructures::ArchiveFile> ArchiveFileBuilder::append(
@@ -77,6 +84,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> ArchiveFileBuilder::append(
 
     // Append the tape file
     const auto tapeFileMapItor = tapeFile.tapeFiles.begin();
+    const auto vid = tapeFileMapItor->second.vid;
+    const auto fSeq = tapeFileMapItor->second.fSeq;
+    const auto blockId = tapeFileMapItor->second.blockId;
     const auto copyNbOfTapeFileToAppend = tapeFileMapItor->first;
     if(m_archiveFile->tapeFiles.find(copyNbOfTapeFileToAppend) != m_archiveFile->tapeFiles.end()) {
       // Found two tape files for the same archive file with the same copy
@@ -88,13 +98,25 @@ std::unique_ptr<common::dataStructures::ArchiveFile> ArchiveFileBuilder::append(
       //   " numbers: archiveFileID=" << tapeFile.archiveFileID << " copyNb=" << copyNbOfTapeFileToAppend;
       // throw ex;
 
+      // Create a unique copy number to replace the original duplicate
       uint64_t maxCopyNb = 0;
       for(const auto maplet: m_archiveFile->tapeFiles) {
         if(maplet.first > maxCopyNb) {
           maxCopyNb = maplet.first;
         }
       }
-      m_archiveFile->tapeFiles[maxCopyNb + 1] = tapeFileMapItor->second;
+      const uint64_t workaroundCopyNb = maxCopyNb + 1;
+      {
+        std::list<cta::log::Param> params;
+        params.push_back(cta::log::Param("archiveFileID", tapeFile.archiveFileID));
+        params.push_back(cta::log::Param("duplicateCopyNb", copyNbOfTapeFileToAppend));
+        params.push_back(cta::log::Param("workaroundCopyNb", workaroundCopyNb));
+        params.push_back(cta::log::Param("vid", vid));
+        params.push_back(cta::log::Param("fSeq", fSeq));
+        params.push_back(cta::log::Param("blockId", blockId));
+        m_log(cta::log::WARNING, "Found a duplicate tape copy number when listing archive files", params);
+      }
+      m_archiveFile->tapeFiles[workaroundCopyNb] = tapeFileMapItor->second;
     } else {
       m_archiveFile->tapeFiles[copyNbOfTapeFileToAppend] = tapeFileMapItor->second;
     }
