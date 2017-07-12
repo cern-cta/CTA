@@ -266,8 +266,8 @@ private:
     cta::common::dataStructures::MountType mountType;
     time_t reportTime; 
     uint64_t mountSessionId;
-    uint64_t byteTransfered;
-    uint64_t filesTransfered;
+    uint64_t byteTransferred;
+    uint64_t filesTransferred;
     double latestBandwidth;
     std::string vid;
     std::string tapepool;
@@ -275,8 +275,8 @@ private:
   /** Collection of smaller scale parts of reportDriveStats */
   struct ReportDriveStatsInputs {
     time_t reportTime; 
-    uint64_t byteTransfered;
-    uint64_t filesTransfered;
+    uint64_t byteTransferred;
+    uint64_t filesTransferred;
     double latestBandwidth;
   };
   /**

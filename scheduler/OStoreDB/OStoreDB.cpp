@@ -998,8 +998,8 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
 //------------------------------------------------------------------------------
 void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
-  time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered,
-  uint64_t filesTransfered, double latestBandwidth, const std::string& vid, 
+  time_t reportTime, uint64_t mountSessionId, uint64_t byteTransferred,
+  uint64_t filesTransferred, double latestBandwidth, const std::string& vid, 
   const std::string& tapepool) {
   using common::dataStructures::DriveStatus;
   // Lock the drive register and try to find the drive entry
@@ -1013,8 +1013,8 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   // Wrap all the parameters together for easier manipulation by sub-functions
   ReportDriveStatusInputs inputs;
   inputs.mountType = mountType;
-  inputs.byteTransfered = byteTransfered;
-  inputs.filesTransfered = filesTransfered;
+  inputs.byteTransferred = byteTransferred;
+  inputs.filesTransferred = filesTransferred;
   inputs.latestBandwidth = latestBandwidth;
   inputs.mountSessionId = mountSessionId;
   inputs.reportTime = reportTime;
@@ -1113,10 +1113,10 @@ void OStoreDB::updateDriveStatsInRegitry(objectstore::DriveRegister& dr,
   driveState.logicalLibrary = driveInfo.logicalLibrary;
 
   switch (driveState.driveStatus) {    
-    case DriveStatus::Transfering:
+    case DriveStatus::Transferring:
       driveState.lastUpdateTime=inputs.reportTime;
-      driveState.bytesTransferredInSession=inputs.byteTransfered;
-      driveState.filesTransferredInSession=inputs.filesTransfered;
+      driveState.bytesTransferredInSession=inputs.byteTransferred;
+      driveState.filesTransferredInSession=inputs.filesTransferred;
       driveState.latestBandwidth=inputs.latestBandwidth;
       break;    
     default:
@@ -1263,14 +1263,14 @@ void OStoreDB::setDriveTransferring(common::dataStructures::DriveState & driveSt
   // If we were already transferring, we update the full statistics
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Transferring) {
     driveState.lastUpdateTime=inputs.reportTime;
-    driveState.bytesTransferredInSession=inputs.byteTransfered;
-    driveState.filesTransferredInSession=inputs.filesTransfered;
+    driveState.bytesTransferredInSession=inputs.byteTransferred;
+    driveState.filesTransferredInSession=inputs.filesTransferred;
     driveState.latestBandwidth=inputs.latestBandwidth;
     return;
   }
   driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=inputs.byteTransfered;
-  driveState.filesTransferredInSession=inputs.filesTransfered;
+  driveState.bytesTransferredInSession=inputs.byteTransferred;
+  driveState.filesTransferredInSession=inputs.filesTransferred;
   driveState.latestBandwidth=inputs.latestBandwidth;
   //driveState.sessionstarttime=inputs.reportTime;
   //driveState.mountstarttime=inputs.reportTime;
@@ -1453,8 +1453,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     driveInfo.host=hostName;
     ReportDriveStatusInputs inputs;
     inputs.mountType = common::dataStructures::MountType::Archive;
-    inputs.byteTransfered = 0;
-    inputs.filesTransfered = 0;
+    inputs.byteTransferred = 0;
+    inputs.filesTransferred = 0;
     inputs.latestBandwidth = 0;
     inputs.mountSessionId = am.mountInfo.mountId;
     inputs.reportTime = startTime;
@@ -2236,8 +2236,8 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
   // TODO: statistics!
-  inputs.byteTransfered = 0;
-  inputs.filesTransfered = 0;
+  inputs.byteTransferred = 0;
+  inputs.filesTransferred = 0;
   inputs.latestBandwidth = 0;
   OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
@@ -2263,8 +2263,8 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(castor::tape::tapeserver::daem
   
   ReportDriveStatsInputs inputs;
   inputs.reportTime = time(nullptr); 
-  inputs.byteTransfered = stats.dataVolume;
-  inputs.filesTransfered = stats.filesCount;
+  inputs.byteTransferred = stats.dataVolume;
+  inputs.filesTransferred = stats.filesCount;
   inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
@@ -2297,8 +2297,8 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
   // TODO: statistics!
-  inputs.byteTransfered = 0;
-  inputs.filesTransfered = 0;
+  inputs.byteTransferred = 0;
+  inputs.filesTransferred = 0;
   inputs.latestBandwidth = 0;
   OStoreDB::updateDriveStatusInRegitry(dr, driveInfo, inputs);
   dr.commit();
@@ -2324,8 +2324,8 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   
   ReportDriveStatsInputs inputs;
   inputs.reportTime = time(nullptr); 
-  inputs.byteTransfered = stats.dataVolume;
-  inputs.filesTransfered = stats.filesCount;
+  inputs.byteTransferred = stats.dataVolume;
+  inputs.filesTransferred = stats.filesCount;
   inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
