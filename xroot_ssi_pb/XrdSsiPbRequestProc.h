@@ -51,8 +51,16 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-                RequestProc() {}
-   virtual     ~RequestProc() {}
+                RequestProc() {
+#ifdef XRDSSI_DEBUG
+                   std::cout << "Called RequestProc() constructor" << std::endl;
+#endif
+                }
+   virtual     ~RequestProc() {
+#ifdef XRDSSI_DEBUG
+                   std::cout << "Called ~RequestProc() destructor" << std::endl;
+#endif
+                }
 
            void Execute();
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
@@ -188,16 +196,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
    {
       // Reclaim any allocated resources
    }
-
-   // Tell the framework we are done with the request object
-
-#ifdef XRDSSI_DEBUG
-   std::cout << "ProcessRequest.UnBind()" << std::endl;
-#endif
-
-   // Unbind the request from the responder
-
-   UnBindRequest();
 }
 
 #endif

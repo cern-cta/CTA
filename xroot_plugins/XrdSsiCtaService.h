@@ -1,6 +1,8 @@
 #ifndef __XRD_SSI_CTA_SERVICE_H
 #define __XRD_SSI_CTA_SERVICE_H
 
+#include <unistd.h> // for debugging
+
 #include <XrdSsi/XrdSsiService.hh>
 #include "XrdSsiPbRequestProc.h"
 
@@ -34,7 +36,9 @@ public:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
+#ifdef XRDSSI_DEBUG
    std::cerr << "Called ProcessRequest()" << std::endl;
+#endif
 
    RequestProc<RequestType, MetadataType, AlertType> processor;
 
@@ -45,6 +49,18 @@ void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdS
    // Execute the request, upon return the processor is deleted
 
    processor.Execute();
+
+   // Tell the framework we are done with the request object
+
+   // WE NEED TO ENSURE THAT FINISHED() HAS BEEN CALLED BEFORE UNBIND
+   sleep(1);
+#ifdef XRDSSI_DEBUG
+   std::cout << "ProcessRequest.UnBind()" << std::endl;
+#endif
+
+   // Unbind the request from the responder
+
+   processor.UnBindRequest();
 }
 
 #endif
