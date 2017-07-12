@@ -2227,7 +2227,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=mountInfo.drive;
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  /// TODO! driveInfo.host=???
+  driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
   inputs.mountType = common::dataStructures::MountType::Retrieve;
   inputs.mountSessionId = mountInfo.mountId;
