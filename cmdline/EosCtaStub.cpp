@@ -243,7 +243,7 @@ template<>
 void XrdSsiPbRequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
-   std::cout << MessageToJsonString(alert);
+   OutputJsonString(&alert);
 }
 
 
@@ -257,8 +257,33 @@ void XrdSsiPbRequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert 
 template<>
 void XrdSsiPbRequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &metadata)
 {
+   using namespace std;
+
    std::cout << "MetadataCallback():" << std::endl;
-   std::cout << MessageToJsonString(metadata);
+
+   eos::wfe::Response test;
+   test.set_rsp_type(eos::wfe::Response::EXCEPTION_RSP);
+   test.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
+   test.mutable_exception()->set_message("m_request.ParseFromArray() failed");
+   std::string test_str;
+   google::protobuf::util::MessageToJsonString(test, &test_str);
+   std::cerr << test_str << std::endl;
+
+#if 0
+   switch(metadata.rsp_type())
+   {
+      case eos::wfe::Response::EXCEPTION_RSP:
+         cerr << "EXCEPTION" << endl;
+         if(metadata.has_exception()) cerr << "has_exception" << endl;
+         cout << "code = " << metadata.exception().code() << endl;
+         cout << "message = " << metadata.exception().message() << endl;
+         break;
+      case eos::wfe::Response::XATTR_RSP: cerr << "XATTR" << endl; break;
+      case eos::wfe::Response::TAPEREPLICA_RSP: cerr << "TAPEREPLICA" << endl; break;
+      default: cerr << "Unknown metadata type" << endl; break;
+   }
+   OutputJsonString(&metadata);
+#endif
 }
 
 
@@ -288,8 +313,15 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    {
       // Output the protocol buffer as a JSON object (for debugging)
 
-      std::cout << MessageToJsonString(notification);
+      OutputJsonString(&notification);
    }
+   eos::wfe::Response test;
+   test.set_rsp_type(eos::wfe::Response::EXCEPTION_RSP);
+   test.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
+   test.mutable_exception()->set_message("m_request.ParseFromArray() failed");
+   OutputJsonString(&test);
+   XrdSsiPbRequestCallback<eos::wfe::Response> cb;
+   cb(test);
 
    // Obtain a Service Provider
 
@@ -330,6 +362,8 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    myout << "Hello, world" << std::endl;
 
    // Optional: Delete all global objects allocated by libprotobuf
+
+   sleep(5);
 
    google::protobuf::ShutdownProtobufLibrary();
 

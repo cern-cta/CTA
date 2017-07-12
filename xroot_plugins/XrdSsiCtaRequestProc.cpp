@@ -35,7 +35,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
-   std::cerr << MessageToJsonString(m_request);
+   OutputJsonString(&m_request);
 
 #if 0
    // Set reply
@@ -46,7 +46,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing response:" << std::endl;
-   std::cerr << MessageToJsonString(m_response);
+   OutputJsonString(&m_response);
 #endif
 }
 
@@ -72,7 +72,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing metadata..." << std::endl;
-   std::cerr << MessageToJsonString(m_metadata);
+   OutputJsonString(&m_metadata);
 }
 
 
@@ -131,6 +131,6 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing error metadata..." << std::endl;
-   std::cerr << MessageToJsonString(m_metadata);
+   OutputJsonString(&m_metadata);
 }
 

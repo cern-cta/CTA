@@ -165,6 +165,7 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
          if(metadata_len > 0)
          {
 std::string dump_buffer(metadata_buffer, metadata_len);
+std::cout << "Metadata len is " << metadata_len << std::endl;
 DumpBuffer(dump_buffer);
             // Deserialize the metadata
 

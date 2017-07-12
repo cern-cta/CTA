@@ -2,11 +2,12 @@
 #define __TEST_UTIL_H
 
 #include <stdio.h>
+#include <iostream>
 #include <google/protobuf/util/json_util.h>
 
 // Helper functions for debugging
 
-inline std::string MessageToJsonString(const google::protobuf::Message &message)
+static void OutputJsonString(const google::protobuf::Message *message)
 {
    using namespace google::protobuf::util;
 
@@ -16,9 +17,9 @@ inline std::string MessageToJsonString(const google::protobuf::Message &message)
    options.add_whitespace = true;
    options.always_print_primitive_fields = true;
 
-   MessageToJsonString(message, &output, options);    // returns util::Status
+   MessageToJsonString(*message, &output, options);
 
-   return output;
+   std::cout << output << std::endl;
 }
 
 inline void DumpBuffer(const std::string &buffer)

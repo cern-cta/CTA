@@ -93,6 +93,8 @@ private:
    unsigned int   m_response_bufsize;    // Buffer size for responses from the XRootD SSI server
    unsigned int   m_server_tmo;          // Timeout for a response from the server
    unsigned int   m_shutdown_tmo;        // Timeout to shut down the server in the destructor
+
+   std::string    m_request_str;         // Buffer for sending a request
 };
 
 
@@ -152,9 +154,7 @@ void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const
 {
    // Serialize the request object
 
-   std::string request_str;
-
-   if(!request.SerializeToString(&request_str))
+   if(!request.SerializeToString(&m_request_str))
    {
       throw XrdSsiPbException("request.SerializeToString() failed");
    }
@@ -162,7 +162,7 @@ void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const
    // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
    XrdSsiRequest *request_ptr =
-      new XrdSsiPbRequest<RequestType, MetadataType, AlertType>(request_str, m_response_bufsize, m_server_tmo);
+      new XrdSsiPbRequest<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
 
    // Transfer ownership of the request to the service object
    // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
