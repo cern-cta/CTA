@@ -260,30 +260,7 @@ void XrdSsiPbRequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Res
    using namespace std;
 
    std::cout << "MetadataCallback():" << std::endl;
-
-   eos::wfe::Response test;
-   test.set_rsp_type(eos::wfe::Response::EXCEPTION_RSP);
-   test.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
-   test.mutable_exception()->set_message("m_request.ParseFromArray() failed");
-   std::string test_str;
-   google::protobuf::util::MessageToJsonString(test, &test_str);
-   std::cerr << test_str << std::endl;
-
-#if 0
-   switch(metadata.rsp_type())
-   {
-      case eos::wfe::Response::EXCEPTION_RSP:
-         cerr << "EXCEPTION" << endl;
-         if(metadata.has_exception()) cerr << "has_exception" << endl;
-         cout << "code = " << metadata.exception().code() << endl;
-         cout << "message = " << metadata.exception().message() << endl;
-         break;
-      case eos::wfe::Response::XATTR_RSP: cerr << "XATTR" << endl; break;
-      case eos::wfe::Response::TAPEREPLICA_RSP: cerr << "TAPEREPLICA" << endl; break;
-      default: cerr << "Unknown metadata type" << endl; break;
-   }
    OutputJsonString(&metadata);
-#endif
 }
 
 
@@ -315,13 +292,6 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
       OutputJsonString(&notification);
    }
-   eos::wfe::Response test;
-   test.set_rsp_type(eos::wfe::Response::EXCEPTION_RSP);
-   test.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
-   test.mutable_exception()->set_message("m_request.ParseFromArray() failed");
-   OutputJsonString(&test);
-   XrdSsiPbRequestCallback<eos::wfe::Response> cb;
-   cb(test);
 
    // Obtain a Service Provider
 
@@ -335,14 +305,12 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    cta_service.send(notification);
 
-#if 0
+   // Wait for the response callback.
 
-      // Wait for the response callback.
+   std::cout << "Request sent, going to sleep..." << std::endl;
 
-      std::cout << "Request sent, going to sleep..." << std::endl;
-
-      // When test_ssi_service goes out-of-scope, the Service will try to shut down, but will wait
-      // for outstanding Requests to be processed
+   // When test_ssi_service goes out-of-scope, the Service will try to shut down, but will wait
+   // for outstanding Requests to be processed
 
    int wait_secs = 5;
 
@@ -352,8 +320,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
       sleep(1);
    }
 
-   std::cout << "All done, exiting." << std::endl;
-#endif
+   std::cout << "done, exiting." << std::endl;
 
    // Send output to stdout or stderr?
 
@@ -362,8 +329,6 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    myout << "Hello, world" << std::endl;
 
    // Optional: Delete all global objects allocated by libprotobuf
-
-   sleep(5);
 
    google::protobuf::ShutdownProtobufLibrary();
 

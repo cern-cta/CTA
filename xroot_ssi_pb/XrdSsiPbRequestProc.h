@@ -23,8 +23,6 @@
 #include "XrdSsiPbException.h"
 #include "XrdSsiPbAlert.h"
 
-#include "../frontend/test_util.h"
-
 
 
 //! Error codes that the framework knows about
@@ -119,7 +117,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    if(m_request.ParseFromArray(request_buffer, request_len))
    {
-#if 0
       // Perform the requested action
 
       ExecuteAction();
@@ -134,7 +131,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    }
    else
    {
-#endif
       // Return an error to the client
 
       HandleError(PB_PARSE_ERR, "m_request.ParseFromArray() failed");
@@ -150,23 +146,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    {
       throw XrdSsiPbException("m_metadata.SerializeToString() failed");
    }
-std::cout << "Metadata len is " << m_metadata_str.size() << std::endl;
-      DumpBuffer(m_metadata_str);
-
-   int bufsz = m_metadata.ByteSize();
-   std::cout << "Buf len is " << bufsz << std::endl;
-   char *buf = new char[bufsz];
-   m_metadata.SerializeToArray((void*)buf, bufsz);
-   std::string tmp_str(buf, bufsz);
-   m_metadata_str = tmp_str;
-      DumpBuffer(m_metadata_str);
-
-   // Parse the string we just serialized
-
-   std::cerr << "Parse the serialized string" << std::endl;
-   MetadataType test;
-   test.ParseFromString(m_metadata_str);
-   OutputJsonString(&test);
 
    // Send the Metadata
 
