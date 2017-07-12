@@ -1825,7 +1825,7 @@ std::string XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "vid", "tapepool","session id","since","files","bytes","latest speed", "last updated"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desired", "vid", "tapepool","session id","since","files","bytes","latest speed", "last updated"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
         driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
