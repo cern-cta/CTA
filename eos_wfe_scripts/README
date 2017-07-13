@@ -8,3 +8,12 @@ For example the following script is executed when a tape server triggers
 an archived.default workflow event:
 
     /var/eos/wfe/bash/create_tape_drop_disk_replicas
+
+The following eos attr set commands can be used to build the workflow
+actions that call the EOS workflow engine scripts in this directory.
+Please remember to replace /eos/dev/proc/cta/workflow with the path
+specific to you're EOS instance.
+
+    eos attr set sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>" /eos/dev/proc/cta/workflow
+    eos attr set sys.workflow.sync::delete.default="bash:delete_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::path>" /eos/dev/proc/cta/workflow
+    eos attr set sys.workflow.sync::prepare.default="bash:retrieve_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::turl> <eos::wfe::username> <eos::wfe::groupname> <eos::wfe::base64:metadata> <eos::wfe::path>" /eos/dev/proc/cta/workflow
