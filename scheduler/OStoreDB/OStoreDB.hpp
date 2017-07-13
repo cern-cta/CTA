@@ -160,7 +160,7 @@ public:
     std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
-    void setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) override;
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
   
   /* === Retrieve Job handling ============================================== */

@@ -2246,7 +2246,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setTapeSessionStats(castor::tape::tapeserver::daemon::TapeSessionStats stats) {
+void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
   // We just report tthe tape session statistics as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
@@ -2265,7 +2265,7 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(castor::tape::tapeserver::daem
   inputs.reportTime = time(nullptr); 
   inputs.byteTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
-  inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
+  inputs.latestBandwidth = stats.transferTime()?1.0*(stats.dataVolume+stats.headerVolume)/stats.transferTime():0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
   
@@ -2326,7 +2326,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   inputs.reportTime = time(nullptr); 
   inputs.byteTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
-  inputs.latestBandwidth = stats.totalTime?1.0*(stats.dataVolume+stats.headerVolume)/1000/1000/stats.totalTime:0.0;
+  inputs.latestBandwidth = stats.transferTime()?1.0*(stats.dataVolume+stats.headerVolume)/stats.transferTime():0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
   
