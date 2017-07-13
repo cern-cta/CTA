@@ -12,12 +12,12 @@ class XrdSsiCtaServiceProvider : public XrdSsiProvider
 public:
             XrdSsiCtaServiceProvider() {
 #ifdef XRDSSI_DEBUG
-               std::cout << "XrdSsiCtaServiceProvider() constructor" << std::endl;
+               std::cout << "[DEBUG] XrdSsiCtaServiceProvider() constructor" << std::endl;
 #endif
             }
    virtual ~XrdSsiCtaServiceProvider() {
 #ifdef XRDSSI_DEBUG
-               std::cout << "~XrdSsiCtaServiceProvider() destructor" << std::endl;
+               std::cout << "[DEBUG] ~XrdSsiCtaServiceProvider() destructor" << std::endl;
 #endif
    }
 

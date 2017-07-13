@@ -24,7 +24,7 @@ XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "Called Init(" << cfgFn << "," << parms << ")" << std::endl;
+   std::cout << "[DEBUG] Called Init(" << cfgFn << "," << parms << ")" << std::endl;
 #endif
 
    // do some initialisation
@@ -37,7 +37,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "Called GetService(" << contact << "," << oHold << ")" << std::endl;
+   std::cout << "[DEBUG] Called GetService(" << contact << "," << oHold << ")" << std::endl;
 #endif
 
    XrdSsiService *ptr = new XrdSsiCtaService<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
@@ -69,7 +69,7 @@ XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName,
                                             XrdSsiProvider::isPresent : XrdSsiProvider::notPresent;
 
 #ifdef XRDSSI_DEBUG
-   std::cout << "XrdSsiCtaServiceProvider::QueryResource(" << rName << "): "
+   std::cout << "[DEBUG] XrdSsiCtaServiceProvider::QueryResource(" << rName << "): "
              << ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent")
              << std::endl;
 #endif

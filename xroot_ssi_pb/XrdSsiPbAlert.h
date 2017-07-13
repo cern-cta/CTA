@@ -29,7 +29,7 @@ public:
    AlertMsg(const AlertType &alert) : XrdSsiRespInfoMsg(nullptr, 0)
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "AlertMsg() constructor" << std::endl;
+      std::cout << "[DEBUG] AlertMsg() constructor" << std::endl;
 #endif
 
       // Serialize the Alert
@@ -45,13 +45,13 @@ public:
 
    ~AlertMsg() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "~AlertMsg() destructor" << std::endl;
+      std::cout << "[DEBUG] ~AlertMsg() destructor" << std::endl;
 #endif
    }
 
    void RecycleMsg(bool sent=true) {
 #ifdef XRDSSI_DEBUG
-      std::cout << "AlertMsg::RecycleMsg()" << std::endl;
+      std::cout << "[DEBUG] AlertMsg::RecycleMsg()" << std::endl;
 #endif
       delete this;
    }

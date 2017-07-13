@@ -99,7 +99,7 @@ XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const 
    m_server_tmo(server_tmo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "XrdSsiPbServiceClientSide() constructor" << std::endl;
+   std::cout << "[DEBUG] XrdSsiPbServiceClientSide() constructor" << std::endl;
 #endif
    XrdSsiErrInfo eInfo;
 
@@ -125,7 +125,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "XrdSsiPbServiceClientSide() destructor" << std::endl;
+   std::cout << "[DEBUG] XrdSsiPbServiceClientSide() destructor" << std::endl;
 #endif
 
 #if 0
@@ -169,7 +169,7 @@ Shutdown(int shutdown_tmo)
    if(!m_is_running) return true;
 
 #ifdef XRDSSI_DEBUG
-   std::cerr << "XrdSsiPbServiceClientSide::Shutdown():" << std::endl;
+   std::cerr << "[DEBUG] XrdSsiPbServiceClientSide::Shutdown():" << std::endl;
    std::cerr << "Shutting down XRootD SSI service...";
 #endif
 

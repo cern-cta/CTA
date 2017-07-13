@@ -52,7 +52,7 @@ public:
       m_response_bufsize(response_bufsize)
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "XrdSsiPbRequest constructor: "
+      std::cout << "[DEBUG] XrdSsiPbRequest constructor: "
                 << "Response buffer size = " << m_response_bufsize
                 << ", Response timeout = " << timeout << std::endl;
 #endif
@@ -65,7 +65,7 @@ public:
    virtual ~XrdSsiPbRequest() 
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "~XrdSsiPbRequest destructor" << std::endl;
+      std::cout << "[DEBUG] ~XrdSsiPbRequest destructor" << std::endl;
 #endif
    }
 
@@ -137,7 +137,7 @@ template<typename RequestType, typename MetadataType, typename AlertType>
 bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "ProcessResponse(): response type = " << rInfo.State() << std::endl;
+   std::cout << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
 #endif
 
    switch(rInfo.rType)
