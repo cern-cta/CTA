@@ -1,0 +1,10 @@
+This directory contains scripts to be executed by the EOS workflow engine.
+These scripts should be installed in the foillowing directory on the EOS
+mgm node:
+
+    /var/eos/wfe/bash/
+
+For example the following script is executed when a tape server triggers
+an archived.default workflow event:
+
+    /var/eos/wfe/bash/create_tape_drop_disk_replicas
