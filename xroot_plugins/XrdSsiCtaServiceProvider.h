@@ -3,39 +3,35 @@
 
 #include <XrdSsi/XrdSsiProvider.hh>
 
-
-
-/*
- * The service provider is used by xrootd to actually process client requests. The three methods that
- * you must implement in your derived XrdSsiProvider object are:
- *
- *     Init()          -- initialize the object for its intended use.
- *     GetService()    -- Called once (only) after initialisation to obtain an instance of an
- *                        XrdSsiService object.
- *     QueryResource() -- used to obtain the availability of a resource. Can be called whenever the
- *                        client asks for the resource status.
+/*!
+ * The Service Provider is used by XRootD to process client requests
  */
 
 class XrdSsiCtaServiceProvider : public XrdSsiProvider
 {
 public:
+            XrdSsiCtaServiceProvider() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "XrdSsiCtaServiceProvider() constructor" << std::endl;
+#endif
+            }
+   virtual ~XrdSsiCtaServiceProvider() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "~XrdSsiCtaServiceProvider() destructor" << std::endl;
+#endif
+   }
 
-   // Init() is always called before any other method
+   //! Initialize the object for its intended use. This is always called before any other method.
 
    bool Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv) override;
 
-   // The GetService() method must supply a service object
+   //! Called exactly once after initialisation to obtain an instance of an XrdSsiService object
 
    XrdSsiService *GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold=256) override;
 
-   // The QueryResource() method determines resource availability
+   //! Determine resource availability. Can be called any time the client asks for the resource status.
 
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
-
-   // Constructor and destructor
-
-            XrdSsiCtaServiceProvider() {}
-   virtual ~XrdSsiCtaServiceProvider() {}
 };
 
 #endif

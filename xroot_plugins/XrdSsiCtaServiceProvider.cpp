@@ -1,4 +1,6 @@
+#ifdef XRDSSI_DEBUG
 #include <iostream>
+#endif
 
 #include "XrdSsiPbAlert.h"
 #include "XrdSsiCtaService.h"
@@ -7,11 +9,13 @@
 
 
 
-// The service provider object is pointed to by the global pointer XrdSsiProviderServer which you
-// must define and set at library load time (i.e. it is a file level global static symbol).
-//
-// When your library is loaded, the XrdSsiProviderServer symbol is located in the library.
-// Initialization fails if the appropriate symbol cannot be found or it is a NULL pointer.
+/*!
+ * The service provider object is pointed to by the global pointer XrdSsiProviderServer.
+ *
+ * The shared object must define and set this at library load time (i.e. it is a file-level global
+ * static symbol). When the shared object is loaded, initialization fails if the appropriate symbol
+ * cannot be found or it is a null pointer.
+ */
 
 XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
@@ -19,9 +23,9 @@ XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
-   using namespace std;
-
-   cerr << "Called Init(" << cfgFn << "," << parms << ")" << endl;
+#ifdef XRDSSI_DEBUG
+   std::cout << "Called Init(" << cfgFn << "," << parms << ")" << std::endl;
+#endif
 
    // do some initialisation
 
@@ -32,9 +36,9 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
-   using namespace std;
-
-   cerr << "Called GetService(" << contact << "," << oHold << ")" << endl;
+#ifdef XRDSSI_DEBUG
+   std::cout << "Called GetService(" << contact << "," << oHold << ")" << std::endl;
+#endif
 
    XrdSsiService *ptr = new XrdSsiCtaService<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
 
@@ -43,35 +47,33 @@ XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const 
 
 
 
+/*!
+ * Query whether a resource exists on a server.
+ *
+ * @param[in]    rName      The resource name
+ * @param[in]    contact    Used by client-initiated queries for a resource at a particular endpoint.
+ *                          It is set to NULL for server-initiated queries.
+ *
+ * @retval    XrdSsiProvider::notPresent    The resource does not exist
+ * @retval    XrdSsiProvider::isPresent     The resource exists
+ * @retval    XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful
+ *                                          only in clustered environments where the resource may be
+ *                                          immediately available on some other node.)
+ */
+
 XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName, const char *contact)
 {
-   using namespace std;
+   // We only have one resource
 
-   /*
-    * The second argument, contact, is always (invalid?) for a server. It is only used by a client initiated
-    * query for a resource at a particular endpoint.
-    */
+   XrdSsiProvider::rStat resourcePresence = (strcmp(rName, "/ctafrontend") == 0) ?
+                                            XrdSsiProvider::isPresent : XrdSsiProvider::notPresent;
 
-   cerr << "Called QueryResource(" << rName << "): ";
+#ifdef XRDSSI_DEBUG
+   std::cout << "XrdSsiCtaServiceProvider::QueryResource(" << rName << "): "
+             << ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent")
+             << std::endl;
+#endif
 
-   // Return one of the following values:
-   //
-   // XrdSsiProvider::notPresent    The resource does not exist.
-   // XrdSsiProvider::isPresent     The resource exists.
-   // XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful only in clustered
-   //                               environments where the resource may be immediately available on some other node.)
-
-   if(strcmp(rName, "/ctafrontend") == 0)
-   {
-      cerr << "isPresent" << endl;
-
-      return XrdSsiProvider::isPresent;
-   }
-   else
-   {
-      cerr << "notPresent" << endl;
-
-      return XrdSsiProvider::notPresent;
-   }
+   return resourcePresence;
 }
 

@@ -16,8 +16,16 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class XrdSsiCtaService : public XrdSsiService
 {
 public:
-            XrdSsiCtaService() {}
-   virtual ~XrdSsiCtaService() {}
+            XrdSsiCtaService() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "[DEBUG] XrdSsiCtaService() constructor" << std::endl;
+#endif
+            }
+   virtual ~XrdSsiCtaService() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "[DEBUG] ~XrdSsiCtaService() destructor" << std::endl;
+#endif
+            }
 
    // The pure abstract method ProcessRequest() is called when the client calls its ProcessRequest() method to hand off
    // its request and resource objects. The client's request and resource objects are transmitted to the server and passed
@@ -37,7 +45,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
 #ifdef XRDSSI_DEBUG
-   std::cerr << "Called ProcessRequest()" << std::endl;
+   std::cout << "[DEBUG] XrdSsiCtaService::ProcessRequest()" << std::endl;
 #endif
 
    RequestProc<RequestType, MetadataType, AlertType> processor;
@@ -55,7 +63,7 @@ void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdS
    // WE NEED TO ENSURE THAT FINISHED() HAS BEEN CALLED BEFORE UNBIND
    sleep(1);
 #ifdef XRDSSI_DEBUG
-   std::cout << "ProcessRequest.UnBind()" << std::endl;
+   std::cout << "[DEBUG] XrdSsiCtaService::ProcessRequest(): Calling UnBindRequest()" << std::endl;
 #endif
 
    // Unbind the request from the responder
