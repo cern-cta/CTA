@@ -23,8 +23,11 @@
 
 
 
-// XRootD SSI + Protocol Buffers callbacks: The client should specialize on this class for each XRootD reply type
-// (Response, Metadata, Alert, Error)
+/*!
+ * XRootD SSI + Protocol Buffers Callback class
+ *
+ * The client should specialize on this class for each XRootD reply type (Metadata, Alert, Error)
+ */
 
 template<typename CallbackArg>
 class XrdSsiPbRequestCallback
@@ -35,73 +38,93 @@ public:
 
 
 
-// XRootD SSI + Protocol Buffers Request class
+/*!
+ * XRootD SSI + Protocol Buffers Request class
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 class XrdSsiPbRequest : public XrdSsiRequest
 {
 public:
-           XrdSsiPbRequest(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
-              m_request_bufptr(buffer_str.c_str()),
-              m_request_len(buffer_str.size()),
-              m_response_bufsize(response_bufsize)
-           {
+   XrdSsiPbRequest(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
+      m_request_bufptr(buffer_str.c_str()),
+      m_request_len(buffer_str.size()),
+      m_response_bufsize(response_bufsize)
+   {
 #ifdef XRDSSI_DEBUG
-              std::cout << "Creating XrdSsiPbRequest object:" << std::endl;
-              std::cout << "  Response buffer size = " << m_response_bufsize << std::endl;
-              std::cout << "  Response timeout = " << timeout << std::endl;
+      std::cout << "XrdSsiPbRequest constructor: "
+                << "Response buffer size = " << m_response_bufsize
+                << ", Response timeout = " << timeout << std::endl;
 #endif
 
-              // Set response timeout
+      // Set response timeout
 
-              SetTimeOut(timeout);
-           }
+      SetTimeOut(timeout);
+   }
+
    virtual ~XrdSsiPbRequest() 
-           {
+   {
 #ifdef XRDSSI_DEBUG
-              std::cout << "Deleting XrdSsiPbRequest object" << std::endl;
+      std::cout << "~XrdSsiPbRequest destructor" << std::endl;
 #endif
-           }
+   }
 
-   // It is up to the implementation to create request data, save it in some manner, and provide it to
-   // the framework when GetRequest() is called. Optionally define the RelRequestBuffer() method to
-   // clean up when the framework no longer needs access to the data.
-   //
-   // The thread used to initiate a request may be the same one used in the GetRequest() call.
+   /*!
+    * The implementation of GetRequest() must create request data, save it in some manner, and provide
+    * it to the framework.
+    *
+    * Optionally also define the RelRequestBuffer() method to clean up when the framework no longer
+    * needs access to the data. The thread used to initiate a request may be the same one used in the
+    * GetRequest() call.
+    */
 
-   virtual char *GetRequest(int &reqlen) override { reqlen = m_request_len; return const_cast<char*>(m_request_bufptr); }
+   virtual char *GetRequest(int &reqlen) override {
+      reqlen = m_request_len;
+      return const_cast<char*>(m_request_bufptr);
+   }
 
-   // Requests are sent to the server asynchronously via the service object. The ProcessResponse() callback
-   // is used to inform the request object if the request completed or failed.
+   /*!
+    * Requests are sent to the server asynchronously via the service object. ProcessResponse() is used
+    * to inform the request object if the request completed or failed.
+    */
 
    virtual bool ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo) override;
 
-   // ProcessResponseData() is an optional callback used in conjunction with the request's GetResponseData() method,
-   // or when the response is a data stream and you wish to asynchronously receive data via the stream. Most
-   // applications will need to implement this as scalable applications generally require that any large amount of
-   // data be asynchronously received.
+   /*!
+    * ProcessResponseData() is an optional callback used in conjunction with the request's GetResponseData()
+    * method, or when the response is a data stream and you wish to asynchronously receive data via the
+    * stream. Most applications will need to implement this as scalable applications generally require that
+    * any large amount of data be asynchronously received.
+    */
 
    virtual XrdSsiRequest::PRD_Xeq ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int blen, bool last) override;
 
-   // Alert method is optional, by default Alert messages are ignored
+   /*!
+    * The Alert method is optional. By default, Alert messages are ignored.
+    */
 
    virtual void Alert(XrdSsiRespInfoMsg &aMsg) override;
 
 private:
-   // Pointer to the Request buffer
-
-   const char *m_request_bufptr;
-   int         m_request_len;
-
-   // Response buffer size
-
-   int         m_response_bufsize;
+   const char *m_request_bufptr;          //!< Pointer to the Request buffer
+   int         m_request_len;             //!< Size of the Request buffer
+   int         m_response_bufsize;        //!< Size of the Response buffer
 
    // Callbacks for each of the XRootD reply types
 
-   //XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
    XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
    XrdSsiPbRequestCallback<AlertType> AlertCallback;
+
+   // Responses and stream Responses will be implemented as a binary blob/stream. The format of the
+   // response will not be a protocol buffer. If the response was a protocol buffer we would need to
+   // read the entire response before parsing it, which would defeat the point of streaming. The
+   // possibilities are:
+   // 1. The format is defined in the metadata which is a kind of header
+   // 2. The format is record-based, and each record is a protocol buffer
+   //
+   // Commented out for now pending review, as EOS archive only needs metadata responses
+   //
+   //XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
 
    // Additional callback for handling errors from the XRootD framework
 
@@ -110,13 +133,11 @@ private:
 
 
 
-// Process the response
-
 template<typename RequestType, typename MetadataType, typename AlertType>
 bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "ProcessResponse() callback called with response type = " << rInfo.State() << std::endl;
+   std::cout << "ProcessResponse(): response type = " << rInfo.State() << std::endl;
 #endif
 
    switch(rInfo.rType)

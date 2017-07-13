@@ -303,24 +303,21 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Send the Notification (Request) to the Service
 
-   cta_service.send(notification);
+   cta_service.Send(notification);
 
    // Wait for the response callback.
 
    std::cout << "Request sent, going to sleep..." << std::endl;
 
-   // When test_ssi_service goes out-of-scope, the Service will try to shut down, but will wait
-   // for outstanding Requests to be processed
-
    int wait_secs = 5;
 
-   while(--wait_secs)
+   while(wait_secs--)
    {
       std::cerr << ".";
       sleep(1);
    }
 
-   std::cout << "done, exiting." << std::endl;
+   std::cout << "done." << std::endl;
 
    // Send output to stdout or stderr?
 

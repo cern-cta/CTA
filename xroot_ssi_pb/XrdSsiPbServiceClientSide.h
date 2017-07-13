@@ -30,19 +30,21 @@
 
 // Constants
 
-const unsigned int DefaultResponseBufferSize = 2097152;    // Default size for the response buffer in bytes = 2 Mb
-const unsigned int DefaultServerTimeout      = 15;         // Maximum XRootD reply timeout in secs
-const unsigned int DefaultShutdownTimeout    = 30;         // Maximum time to wait for the Service to shut down in secs
+const unsigned int DefaultResponseBufferSize = 2097152;    //!< Default size for the response buffer in bytes = 2 Mb
+const unsigned int DefaultServerTimeout      = 15;         //!< Maximum XRootD reply timeout in secs
+const unsigned int DefaultShutdownTimeout    = 0;          //!< Maximum time to wait for the Service to shut down in secs
 
 
 
-// XrdSsiProviderClient is instantiated and managed by the SSI library
+//! XrdSsiProviderClient is instantiated and managed by the SSI library
 
 extern XrdSsiProvider *XrdSsiProviderClient;
 
 
 
-// Convenience object to manage the XRootD SSI service on the client side
+/*!
+ * Convenience object to manage the XRootD SSI service on the client side
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 class XrdSsiPbServiceClientSide
@@ -53,65 +55,128 @@ public:
    XrdSsiPbServiceClientSide() = delete;
 
    XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
-                           unsigned int response_bufsize = DefaultResponseBufferSize,
-                           unsigned int server_tmo       = DefaultServerTimeout,
-                           unsigned int shutdown_tmo     = DefaultShutdownTimeout) :
-      m_resource(resource),
-      m_response_bufsize(response_bufsize),
-      m_server_tmo(server_tmo),
-      m_shutdown_tmo(shutdown_tmo)
-   {
-      XrdSsiErrInfo eInfo;
-
-      // Resource context may be cached and is reusable
-
-      //m_resource.rOpts = XrdSsiResource::Reusable;
-
-      // Get the Service pointer
-
-      if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
-      {
-         throw XrdSsiPbException(eInfo);
-      }
-   }
+                             unsigned int response_bufsize = DefaultResponseBufferSize,
+                             unsigned int server_tmo       = DefaultServerTimeout);
 
    // Service object destructor for the client side
 
    virtual ~XrdSsiPbServiceClientSide();
 
+   // Request shutdown of the Service
+
+   bool Shutdown(int shutdown_tmo = DefaultShutdownTimeout);
+
    // Send a Request to the Service
 
-   void send(const RequestType &request);
+   void Send(const RequestType &request);
 
 private:
-   XrdSsiResource m_resource;            // Requests are bound to this resource. As the resource is
-                                         // reusable, the lifetime of the resource is the same as the
-                                         // lifetime of the Service object.
+   bool           m_is_running;          //!< Is the service running?
+   XrdSsiResource m_resource;            //!< Requests are bound to this resource. As the resource is
+                                         //!< reusable, the lifetime of the resource is the same as the
+                                         //!< lifetime of the Service object.
 
-   XrdSsiService *m_server_ptr;          // Pointer to XRootD Server object
+   XrdSsiService *m_server_ptr;          //!< Pointer to XRootD Server object
 
-   unsigned int   m_response_bufsize;    // Buffer size for responses from the XRootD SSI server
-   unsigned int   m_server_tmo;          // Timeout for a response from the server
-   unsigned int   m_shutdown_tmo;        // Timeout to shut down the server in the destructor
+   unsigned int   m_response_bufsize;    //!< Buffer size for responses from the XRootD SSI server
+   unsigned int   m_server_tmo;          //!< Timeout for a response from the server
 
-   std::string    m_request_str;         // Buffer for sending a request
+   std::string    m_request_str;         //!< Buffer for sending a request
 };
 
 
 
-// Destructor
+//! Constructor
+
+template <typename RequestType, typename MetadataType, typename AlertType>
+XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::
+XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
+                          unsigned int response_bufsize,
+                          unsigned int server_tmo) :
+   m_is_running(false),
+   m_resource(resource),
+   m_response_bufsize(response_bufsize),
+   m_server_tmo(server_tmo)
+{
+#ifdef XRDSSI_DEBUG
+   std::cout << "XrdSsiPbServiceClientSide() constructor" << std::endl;
+#endif
+   XrdSsiErrInfo eInfo;
+
+   // Resource context may be cached and is reusable
+
+   m_resource.rOpts = XrdSsiResource::Reusable;
+
+   // Get the Service pointer
+
+   if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
+   {
+      throw XrdSsiPbException(eInfo);
+   }
+
+   m_is_running = true;
+}
+
+
+
+//! Destructor
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
 {
 #ifdef XRDSSI_DEBUG
-   std::cerr << "Stopping XRootD SSI service...";
+   std::cout << "XrdSsiPbServiceClientSide() destructor" << std::endl;
+#endif
+
+#if 0
+   // Default Stop() implementation is return false;
+   // i.e. XRootD SSI makes no attempt to shut down!
+
+   // If the Service has not been shut down, make one last valiant effort to do so
+
+   if(m_is_running && !m_server_ptr->Stop())
+   {
+      std::cerr << "XrdSsiPbServiceClientSide object was destroyed before all Requests have been processed. "
+                << "This will cause a memory leak. Call Shutdown() before deleting the object." << std::endl;
+   }
+#endif
+}
+
+
+
+/*!
+ * Shut down the XRootD SSI Service.
+ *
+ * A Service object can only be deleted after all requests handed to the object have completed. It is
+ * possible to take back control of Requests by calling each Request's Finished() method: this cancels
+ * the Request and the object can then be deleted.
+ *
+ * However, the current interface does not provide a way to recover a list of outstanding XrdSsi
+ * Requests. I have raised this with Andy.
+ *
+ * @param[in]    shutdown_tmo    No. of seconds to wait before giving up
+ *
+ * @retval       true            The Service has been shut down
+ * @retval       false           The Service has not been shut down
+ */
+
+template <typename RequestType, typename MetadataType, typename AlertType>
+bool XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::
+Shutdown(int shutdown_tmo)
+{
+   // Trivial case: server has already been shut down
+
+   if(!m_is_running) return true;
+
+#ifdef XRDSSI_DEBUG
+   std::cerr << "XrdSsiPbServiceClientSide::Shutdown():" << std::endl;
+   std::cerr << "Shutting down XRootD SSI service...";
 #endif
 
    // The XrdSsiService object cannot be explicitly deleted. The Stop() method deletes the object if
    // it is safe to do so.
 
-   while(!m_server_ptr->Stop() && m_shutdown_tmo--)
+   while(!m_server_ptr->Stop() && shutdown_tmo--)
    {
       sleep(1);
 #ifdef XRDSSI_DEBUG
@@ -119,39 +184,40 @@ XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServic
 #endif
    }
 
-   if(m_shutdown_tmo > 0)
+   if(shutdown_tmo > 0)
    {
+      m_is_running = false;
+
 #ifdef XRDSSI_DEBUG
       std::cerr << "done." << std::endl;
 #endif
    }
    else
    {
-      // Timeout reached and there are still outstanding requests
-      //
-      // A service object can only be deleted after all requests handed to the object have completed.
-      // It is possible to take back control of Requests by calling each Request's Finished() method:
-      // this cancels the Request and the object can then be deleted.
-      //
-      // However, the current interface does not provide a way to recover a list of outstanding
-      // Requests. I have raised this with Andy.
-      //
-      // Until this is solved, deleting the Service may leak memory, so don't delete Service objects
-      // unless the client is shutting down!
-
 #ifdef XRDSSI_DEBUG
       std::cerr << "failed." << std::endl;
 #endif
    }
+
+   return !m_is_running;
 }
 
 
 
-// Send a Request to the Service
+/*!
+ * Send a Request to the Service
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const RequestType &request)
+void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
 {
+   // Check service is up
+
+   if(!m_is_running)
+   {
+      throw XrdSsiPbException("Service has been stopped");
+   }
+
    // Serialize the request object
 
    if(!request.SerializeToString(&m_request_str))
@@ -172,7 +238,7 @@ void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::send(const
    // Note: for a non-reusable resource, it is safe to delete it after ProcessRequest() returns. We
    // have created reusable resources, so no need to delete it.
    //
-   // Possible useful options:
+   // Possibly useful resource options:
    //
    // For specifying the tapeserver callback:
    // XrdSsiResource::rInfo

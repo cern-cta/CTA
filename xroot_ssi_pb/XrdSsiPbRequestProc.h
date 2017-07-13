@@ -51,27 +51,29 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-                RequestProc() {
+   RequestProc() {
 #ifdef XRDSSI_DEBUG
-                   std::cout << "Called RequestProc() constructor" << std::endl;
+      std::cout << "RequestProc() constructor" << std::endl;
 #endif
-                }
-   virtual     ~RequestProc() {
+   }
+   virtual ~RequestProc() {
 #ifdef XRDSSI_DEBUG
-                   std::cout << "Called ~RequestProc() destructor" << std::endl;
+      std::cout << "~RequestProc() destructor" << std::endl;
 #endif
-                }
+   }
 
            void Execute();
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
 
 private:
 
+   /*!
+    * Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object. Alert message objects
+    * are created on the heap with lifetime managed by the XrdSsiResponder class.
+    */
+
    void Alert(const AlertType &alert)
    {
-      // Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object. Alert message objects
-      // are created on the heap with lifetime managed by the XrdSsiResponder class.
-
       XrdSsiResponder::Alert(*(new AlertMsg<AlertType>(alert)));
    }
 
@@ -79,17 +81,17 @@ private:
 
    void ExecuteAction() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "Called default ExecuteAction()" << std::endl;
+      std::cout << "Called default RequestProc::ExecuteAction()" << std::endl;
 #endif
    }
    void ExecuteAlerts() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "Called default ExecuteAlerts()" << std::endl;
+      std::cout << "Called default RequestProc::ExecuteAlerts()" << std::endl;
 #endif
    }
    void ExecuteMetadata() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "Called default ExecuteMetadata()" << std::endl;
+      std::cout << "Called default RequestProc::ExecuteMetadata()" << std::endl;
 #endif
    }
 
@@ -115,7 +117,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "Execute()" << std::endl;
+   std::cout << "RequestProc::Execute()" << std::endl;
 #endif
 
    // Deserialize the Request
@@ -185,7 +187,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "Finished()" << std::endl;
+   std::cout << "RequestProc::Finished()" << std::endl;
 #endif
 
    if(cancel)

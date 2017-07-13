@@ -28,6 +28,10 @@ class AlertMsg : public XrdSsiRespInfoMsg
 public:
    AlertMsg(const AlertType &alert) : XrdSsiRespInfoMsg(nullptr, 0)
    {
+#ifdef XRDSSI_DEBUG
+      std::cout << "AlertMsg() constructor" << std::endl;
+#endif
+
       // Serialize the Alert
 
       if(!alert.SerializeToString(&alert_str))
@@ -39,9 +43,18 @@ public:
       msgLen = alert_str.size();
    }
 
-   ~AlertMsg() {}
+   ~AlertMsg() {
+#ifdef XRDSSI_DEBUG
+      std::cout << "~AlertMsg() destructor" << std::endl;
+#endif
+   }
 
-   void RecycleMsg(bool sent=true) { delete this; }
+   void RecycleMsg(bool sent=true) {
+#ifdef XRDSSI_DEBUG
+      std::cout << "AlertMsg::RecycleMsg()" << std::endl;
+#endif
+      delete this;
+   }
 
 private:
    std::string alert_str;
