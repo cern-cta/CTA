@@ -2171,8 +2171,65 @@ std::string XrdCtaFile::xCom_retrieve() {
 //------------------------------------------------------------------------------
 // xCom_deletearchive
 //------------------------------------------------------------------------------
+// IMPLEMENTATION THAT CALLS THE SCHEDULER
+// This version is commented out because it tries to delete the archive ID from
+// the object store which can possible take more than 15 seconds.
+//std::string XrdCtaFile::xCom_deletearchive() {
+//  std::stringstream cmdlineOutput;
+//  std::stringstream help;
+//  help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
+//       << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+//  optional<std::string> user = getOptionStringValue("", "--user", true, false);
+//  optional<std::string> group = getOptionStringValue("", "--group", true, false);
+//  optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
+//  checkOptions(help.str());
+//  cta::common::dataStructures::UserIdentity originator;
+//  originator.name=user.value();
+//  originator.group=group.value();
+//  cta::common::dataStructures::DeleteArchiveRequest request;
+// request.archiveFileID=id.value();
+//  request.requester=originator;
+//  const cta::common::dataStructures::ArchiveFile archiveFile = m_scheduler->deleteArchive(m_cliIdentity.username, request);  
+//  std::list<cta::log::Param> params;
+//  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+//  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+//  params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
+//  params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
+//  params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
+//  params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
+//  params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
+//  params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
+//  params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
+//  params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
+//  params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
+//  params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
+//  params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
+//  params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
+//  params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
+//  for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
+//    std::stringstream tapeCopyLogStream;
+//    tapeCopyLogStream << "copy number: " << it->first
+//            << " vid: " << it->second.vid
+//            << " fSeq: " << it->second.fSeq
+//            << " blockId: " << it->second.blockId
+//            << " creationTime: " << it->second.creationTime
+//            << " compressedSize: " << it->second.compressedSize
+//            << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+//            << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+//            << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+//    params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
+//  }  
+//  m_log(log::INFO, "Archive File Deleted", params);  
+//  return cmdlineOutput.str();
+//}
+
+//------------------------------------------------------------------------------
+// xCom_deletearchive
+//------------------------------------------------------------------------------
+// THIS IS A TEMPORARY SOLUTION
+// TODO - Decide whther or not xCom_deletearchive() needs to call the scheduler
+// and then update this code accordingly.
 std::string XrdCtaFile::xCom_deletearchive() {
-  std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2186,38 +2243,50 @@ std::string XrdCtaFile::xCom_deletearchive() {
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id.value();
   request.requester=originator;
-  const cta::common::dataStructures::ArchiveFile archiveFile = m_scheduler->deleteArchive(m_cliIdentity.username, request);  
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
-  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
-  params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
-  params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
-  params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
-  params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
-  params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
-  params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
-  params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
-  params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
-  params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
-  params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
-  params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
-  params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
-  params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
-  for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
-    std::stringstream tapeCopyLogStream;
-    tapeCopyLogStream << "copy number: " << it->first
-            << " vid: " << it->second.vid
-            << " fSeq: " << it->second.fSeq
-            << " blockId: " << it->second.blockId
-            << " creationTime: " << it->second.creationTime
-            << " compressedSize: " << it->second.compressedSize
-            << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-            << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-            << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-    params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
-  }  
-  m_log(log::INFO, "Archive File Deleted", params);  
-  return cmdlineOutput.str();
+
+  try {
+    const std::string &instanceName = m_cliIdentity.username;
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->deleteArchiveFile(instanceName, request.archiveFileID);
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+    params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
+    params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
+    params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
+    params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
+    params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
+    params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
+    params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
+    params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
+    params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
+    params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
+    params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
+    params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
+    params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
+    for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
+      std::stringstream tapeCopyLogStream;
+      tapeCopyLogStream << "copy number: " << it->first
+              << " vid: " << it->second.vid
+              << " fSeq: " << it->second.fSeq
+              << " blockId: " << it->second.blockId
+              << " creationTime: " << it->second.creationTime
+              << " compressedSize: " << it->second.compressedSize
+              << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+              << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+              << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
+    }  
+    m_log(log::INFO, "Archive File Deleted", params);  
+    return "";
+  } catch(catalogue::ArchiveFileDoesNotExist &) {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
+    params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
+    params.push_back(cta::log::Param("fileId", std::to_string(request.archiveFileID)));
+    m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+    return "";
+  }
 }
 
 //------------------------------------------------------------------------------

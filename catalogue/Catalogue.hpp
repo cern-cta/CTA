@@ -498,7 +498,7 @@ public:
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
-   * @throw ArchiveFileDoesNotExistInCatalogue If the specified archive file
+   * @throw catalogue::ArchiveFileDoesNotExist If the specified archive file
    * does not exist in the catalogue.
    */
   virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
