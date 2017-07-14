@@ -37,7 +37,7 @@ bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
       && archiveFileID==rhs.archiveFileID
       && dstURL==rhs.dstURL
       && diskFileInfo==rhs.diskFileInfo
-      && entryLog==rhs.entryLog;
+      && creationLog==rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
      << " archiveFileID=" << obj.archiveFileID
      << " dstURL=" << obj.dstURL
      << " diskFileInfo=" << obj.diskFileInfo
-     << " creationLog=" << obj.entryLog << ")";
+     << " creationLog=" << obj.creationLog << ")";
   return os;
 }
 

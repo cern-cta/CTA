@@ -174,9 +174,9 @@ void Scheduler::queueRetrieve(
      .add("diskFileGroup", request.diskFileInfo.group)
      .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
      .add("dstURL", request.dstURL)
-     .add("creationHost", request.entryLog.host)
-     .add("creationTime", request.entryLog.time)
-     .add("creationUser", request.entryLog.username)
+     .add("creationHost", request.creationLog.host)
+     .add("creationTime", request.creationLog.time)
+     .add("creationUser", request.creationLog.username)
      .add("requesterName", request.requester.name)
      .add("requesterGroup", request.requester.group)
      .add("criteriaArchiveFileId", queueCriteria.archiveFile.archiveFileID)
@@ -689,7 +689,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
+      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
       break;
     case common::dataStructures::MountType::Retrieve:
       // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
@@ -698,7 +698,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
+      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
       break;
     default:
       break;

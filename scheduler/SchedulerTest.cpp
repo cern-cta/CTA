@@ -472,7 +472,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
-    request.entryLog = creationLog;
+    request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
@@ -629,7 +629,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
-    request.entryLog = creationLog;
+    request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;

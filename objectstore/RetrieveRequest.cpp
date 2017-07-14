@@ -91,7 +91,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->set_dsturl(retrieveRequest.dstURL);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
   dfisd.serialize(*sr->mutable_diskfileinfo());
-  objectstore::EntryLogSerDeser el(retrieveRequest.entryLog);
+  objectstore::EntryLogSerDeser el(retrieveRequest.creationLog);
   el.serialize(*sr->mutable_entrylog());
 }
 
@@ -105,7 +105,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   ret.requester.name = m_payload.schedulerrequest().requester().name();
   ret.requester.group = m_payload.schedulerrequest().requester().group();
   ret.archiveFileID = m_payload.schedulerrequest().archivefileid();
-  objectstore::EntryLogSerDeser el(ret.entryLog);
+  objectstore::EntryLogSerDeser el(ret.creationLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
   objectstore::DiskFileInfoSerDeser dfisd;

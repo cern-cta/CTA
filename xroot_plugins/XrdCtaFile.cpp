@@ -2120,6 +2120,9 @@ std::string XrdCtaFile::xCom_archive() {
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
   request.archiveReportURL=archiveReportURL.value();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = time(nullptr);
   log::LogContext lc(m_log);
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request, lc);
   cmdlineOutput << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
@@ -2157,6 +2160,9 @@ std::string XrdCtaFile::xCom_retrieve() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.dstURL=dsturl.value();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = time(nullptr);
   log::LogContext lc(m_log);
   m_scheduler->queueRetrieve(m_cliIdentity.username, request, lc);
   return cmdlineOutput.str();
