@@ -20,14 +20,14 @@ FILE_PATH="$5"
 LOG_FILE="/var/log/eos/wfe/${WF_TAG}.log"
 
 if test UNDEF = ${ARCHIVE_FILE_ID}; then
-  echo `date +%s` `date`" $0 Ignoring deletion of non-existent tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo `date +%s` `date`" $0: ignoring deletion of non-existent tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 fi
 
 if RESULT=`2>&1 /usr/bin/cta deletearchive --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID}`; then
-  echo `date +%s` `date`" $0 Deleted tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo `date +%s` `date`" $0: deleted tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 else
-  echo `date +%s` `date`" $0 Failed to delete tape archive file: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo `date +%s` `date`" $0: failed to delete tape archive file: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
   exit ${ECANCELED}
 fi
