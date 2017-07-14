@@ -71,6 +71,12 @@ namespace daemon {
     /** Count of files actually transfered in the session. */
     uint64_t filesCount;
     
+    /** Archive file ID of the current file */
+    uint64_t fileId;
+
+    /** Destination URL for the current file */
+    std::string dstURL;
+
     /** Constructor: all defaults are zero */
     DiskStats():  openingTime(0.0), 
     closingTime(0.0),
@@ -84,7 +90,9 @@ namespace daemon {
     transferTime(0.0),
     totalTime(0.0),
     dataVolume(0),
-    filesCount(0) {}
+    filesCount(0),
+    fileId(0),
+    dstURL("") {}
     
     /** Accumulate contents of another stats block */
 
