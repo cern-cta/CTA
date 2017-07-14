@@ -17,11 +17,24 @@
  */
 
 #include <iostream>
+#include <memory>
+
 #include "../frontend/test_util.h" // for Json output (for debugging)
 
 #include "XrdSsiPbException.h"
 #include "XrdSsiPbRequestProc.h"
 #include "eos/messages/eos_messages.pb.h"
+
+#include "common/Configuration.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "scheduler/Scheduler.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendPopulator.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "rdbms/Login.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#include "common/make_unique.hpp"
 
 
 
@@ -32,10 +45,58 @@
 template <>
 void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAction()
 {
+   // Instantiate the scheduler
+
+   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/home/mdavis/cernbox/CERNHome/CTAtest/ctatest_image/etc/cta/cta_catalogue_db.conf");
+   const uint64_t nbConns = 10;
+   const uint64_t nbArchiveFileListingConns = 2;
+
+   std::unique_ptr<cta::catalogue::Catalogue> my_catalogue = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+   //cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf"),
+   //ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release());
+   std::string backend_str("/tmp/jobStoreXXXXXXX");
+
+   std::unique_ptr<cta::objectstore::Backend> backend(cta::objectstore::BackendFactory::createBackend(backend_str));
+   cta::objectstore::BackendPopulator backendPopulator(*backend, "Frontend");
+   cta::OStoreDBWithAgent scheddb(*backend, backendPopulator.getAgentReference());
+
+   cta::Scheduler *scheduler = new cta::Scheduler(*my_catalogue, scheddb, 5, 2*1000*1000);
+   cta::log::StdoutLogger log("ctafrontend");
+   cta::log::LogContext lc(log);
+
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
    OutputJsonString(&m_request);
+
+   // Unpack message
+
+   cta::common::dataStructures::UserIdentity originator;
+   originator.name          = m_request.cli().user().username();
+   originator.group         = m_request.cli().user().groupname();
+
+   cta::common::dataStructures::DiskFileInfo diskFileInfo;
+   diskFileInfo.owner       = m_request.file().owner().username();
+   diskFileInfo.group       = m_request.file().owner().groupname();
+   diskFileInfo.path        = m_request.file().lpath();
+
+   cta::common::dataStructures::ArchiveRequest request;
+   request.checksumType     = m_request.file().cks().name();
+   request.checksumValue    = m_request.file().cks().value();
+   request.diskFileInfo     = diskFileInfo;
+   request.diskFileID       = m_request.file().fid();
+   request.fileSize         = m_request.file().size();
+   request.requester        = originator;
+   request.srcURL           = m_request.wf().instance().url();
+   request.storageClass     = m_request.file().xattr().at("CTA_StorageClass");
+   request.archiveReportURL = "null:";
+
+   std::string client_username = m_request.cli().user().username();
+
+   // Queue the request
+
+   uint64_t archiveFileId = scheduler->queueArchive(client_username, request, lc);
+   std::cout << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
 
 #if 0
    // Set reply

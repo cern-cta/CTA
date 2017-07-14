@@ -202,7 +202,10 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
       else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_name(argval);
       else if(argstr == "--checksumvalue")       notification.mutable_file()->mutable_cks()->set_value(argval);
       else if(argstr == "--diskfilepath")        notification.mutable_file()->set_lpath(argval);
-      else if(argstr == "--storageclass")        {} // this is a xattr
+      else if(argstr == "--storageclass")        {
+         google::protobuf::MapPair<std::string,std::string> sc("CTA_StorageClass", argval);
+         notification.mutable_file()->mutable_xattr()->insert(sc);
+      }
 
       else if(argstr == "--id")                  {} // eos::wfe::fxattr:sys.archiveFileId, not used for archive WF
       else if(argstr == "--diskpool")            {} // = default?
