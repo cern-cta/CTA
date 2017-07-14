@@ -265,7 +265,7 @@ void GarbageCollector::reinjectOwnedObject(log::LogContext& lc) {
     if (ag.getOwner() == m_ourAgentReference.getAgentAddress()) {
       ag.setOwner(m_agentRegister.getAddressIfSet());
       ag.commit();
-      lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): chenged agent ownership to registry.");
+      lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): changed agent ownership to registry.");
     } else {
       params.add("newOwner", ag.getOwner());
       lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): skipping agent whose ownership we lost last minute.");
