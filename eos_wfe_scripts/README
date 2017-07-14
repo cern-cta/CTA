@@ -9,11 +9,23 @@ an archived.default workflow event:
 
     /var/eos/wfe/bash/create_tape_drop_disk_replicas
 
-The following eos attr set commands can be used to build the workflow
-actions that call the EOS workflow engine scripts in this directory.
-Please remember to replace /eos/dev/proc/cta/workflow with the path
-specific to you're EOS instance.
+The following "eos attr set" commands can be used to build the workflow
+actions of an EOSi/CTA instance.  Please remember to replace
+CTA_WF_DIR with the path specific to you're EOS instance, for example
+/eos/dev/proc/cta/workflow.  Please also replace CTA_BIN with the full
+path of the cta command-line tool.
 
-    eos attr set sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>" /eos/dev/proc/cta/workflow
-    eos attr set sys.workflow.sync::delete.default="bash:delete_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::path>" /eos/dev/proc/cta/workflow
-    eos attr set sys.workflow.sync::prepare.default="bash:retrieve_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::turl> <eos::wfe::username> <eos::wfe::groupname> <eos::wfe::base64:metadata> <eos::wfe::path>" /eos/dev/proc/cta/workflow
+    EXECUTED WHEN AN END USER CLOSES A FILE THEY ARE WRITING TO EOS DISK
+    eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=sss XrdSecSSSKT=${CTA_KT} ${CTA_BIN} archive --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --diskid <eos::wfe::fid> --instance eoscta --srcurl <eos::wfe::turl> --size <eos::wfe::size> --checksumtype <eos::wfe::checksumtype> --checksumvalue <eos::wfe::checksum> --storageclass <eos::wfe::cxattr:CTA_StorageClass> --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --reportURL 'eosQuery://${EOS_MGM_HOST}//eos/wfe/passwd?mgm.pcmd=event\&mgm.fid=<eos::wfe::fxid>\&mgm.logid=cta\&mgm.event=archived\&mgm.workflow=default\&mgm.path=/eos/wfe/passwd\&mgm.ruid=0\&mgm.rgid=0' --stderr" ${CTA_WF_DIR}
+
+    EXECUTED WHEN A TAPE SERVER REPORTS TO EOS THAT A FILE IS SAFELY STORED ON TAPE
+    eos attr set sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}
+
+    EXECUTED WHEN AN END USER ON THE MGM NODE RUNS THE "xrdfs prepare" COMMAND
+    eos attr set sys.workflow.sync::prepare.default="bash:retrieve_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::turl> <eos::wfe::username> <eos::wfe::groupname> <eos::wfe::base64:metadata> <eos::wfe::path>" ${CTA_WF_DIR}
+
+    EXECUTED WHEN A TAPE SERVER CLOSES A FILE IT IS RETRIEVING TO DISK
+    eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${CTA_WF_DIR}
+
+    EXECUTED WHEN AN END USER RUNS THE "eos rm" COMMAND
+    eos attr set sys.workflow.sync::delete.default="bash:delete_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::path>" ${CTA_WF_DIR}
