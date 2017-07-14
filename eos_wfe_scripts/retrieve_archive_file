@@ -23,17 +23,19 @@ FILE_PATH="$9"
 
 DST_URL=${TURL}'\&eos.ruid=0&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve'
 
+LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
+LOG_SCRIPT_NAME=`basename $0`
 LOG_FILE="/var/log/eos/wfe/${WF_TAG}.log"
 
 if test UNDEF = ${ARCHIVE_FILE_ID}; then
-  echo `date +%s` `date`" $0: cannot retrieve an archive file without the sys.archiveFileId attribute being set: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo "$LOG_DATE $LOG_SCRIPT_NAME cannot retrieve an archive file without the sys.archiveFileId attribute being set: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit ${ECANCELED}
 fi
 
 if RESULT=`2>&1 /usr/bin/cta retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl ${DST_URL} --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} --recoveryblob:base64 ${METADATA_BASE64}`; then
-  echo `date +%s` `date`" $0: queued retrieve request: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo "$LOG_DATE $LOG_SCRIPT_NAME queued retrieve request: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 else
-  echo `date +%s` `date`" $0: failed to queue retrieve request: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo "$LOG_DATE $LOG_SCRIPT_NAME failed to queue retrieve request: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit ${ECANCELED}
 fi
