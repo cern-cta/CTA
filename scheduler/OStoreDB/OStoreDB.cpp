@@ -1114,10 +1114,14 @@ void OStoreDB::updateDriveStatsInRegitry(objectstore::DriveRegister& dr,
 
   switch (driveState.driveStatus) {    
     case DriveStatus::Transferring:
+      {
+      const time_t timeDifference = inputs.reportTime -  driveState.lastUpdateTime;
+      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.bytesTransferredInSession;   
       driveState.lastUpdateTime=inputs.reportTime;
-      driveState.bytesTransferredInSession=inputs.byteTransferred;
+      driveState.bytesTransferredInSession=inputs.bytesTransferred;
       driveState.filesTransferredInSession=inputs.filesTransferred;
-      driveState.latestBandwidth=inputs.latestBandwidth;
+      driveState.latestBandwidth = timeDifference?1.0*bytesDifference/timeDifference:0.0;
+      }
       break;    
     default:
       return ;
@@ -2263,9 +2267,8 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   
   ReportDriveStatsInputs inputs;
   inputs.reportTime = time(nullptr); 
-  inputs.byteTransferred = stats.dataVolume;
+  inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
-  inputs.latestBandwidth = stats.transferTime()?1.0*(stats.dataVolume+stats.headerVolume)/stats.transferTime():0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
   
@@ -2324,9 +2327,8 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   
   ReportDriveStatsInputs inputs;
   inputs.reportTime = time(nullptr); 
-  inputs.byteTransferred = stats.dataVolume;
+  inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
-  inputs.latestBandwidth = stats.transferTime()?1.0*(stats.dataVolume+stats.headerVolume)/stats.transferTime():0.0;
   
   OStoreDB::updateDriveStatsInRegitry(dr, driveInfo, inputs);
   

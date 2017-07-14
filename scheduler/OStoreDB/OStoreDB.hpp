@@ -275,9 +275,8 @@ private:
   /** Collection of smaller scale parts of reportDriveStats */
   struct ReportDriveStatsInputs {
     time_t reportTime; 
-    uint64_t byteTransferred;
+    uint64_t bytesTransferred;
     uint64_t filesTransferred;
-    double latestBandwidth;
   };
   /**
    * Utility implementing the operation get drive state or create, update, set on an
