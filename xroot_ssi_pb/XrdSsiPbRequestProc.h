@@ -103,7 +103,6 @@ private:
 
    RequestType  m_request;
    MetadataType m_metadata;
-   AlertType    m_alert;
 
    // Metadata and Response buffers must stay in scope until Finished() is called, so they need to be member variables
 

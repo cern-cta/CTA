@@ -154,16 +154,16 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 template <>
 void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAlerts()
 {
-   // Set alert message
+   // Allocate alert messages on the heap, they are self-destructing
 
-   m_alert.set_audience(eos::wfe::Alert::EOSLOG);
-   m_alert.set_message("Something bad happened");
+   auto *alert_msg = new eos::wfe::Alert();
+
+   alert_msg->set_audience(eos::wfe::Alert::EOSLOG);
+   alert_msg->set_message("Something bad happened");
 
    // Send the alert message
 
-   Alert(m_alert);
-
-   // If we want to allow an arbitrary number of alerts, note that m_alert is not reusable (needs a container)
+   Alert(*alert_msg);
 }
 
 
