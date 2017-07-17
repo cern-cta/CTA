@@ -6187,46 +6187,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  {
-    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->deleteArchiveFile("disk_instance", archiveFileId);
-
-    ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
-    ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumType, archiveFile.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, archiveFile.checksumValue);
-    ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
-
-    ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    ASSERT_EQ(file2Written.diskFilePath, archiveFile.diskFileInfo.path);
-    ASSERT_EQ(file2Written.diskFileUser, archiveFile.diskFileInfo.owner);
-    ASSERT_EQ(file2Written.diskFileGroup, archiveFile.diskFileInfo.group);
-    ASSERT_EQ(file2Written.diskFileRecoveryBlob, archiveFile.diskFileInfo.recoveryBlob);
-
-    ASSERT_EQ(2, archiveFile.tapeFiles.size());
-
-    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile1 = copyNbToTapeFile1Itor->second;
-    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
-    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
-    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.compressedSize, tapeFile1.compressedSize);
-    ASSERT_EQ(file1Written.checksumType, tapeFile1.checksumType);
-    ASSERT_EQ(file1Written.checksumValue, tapeFile1.checksumValue);
-    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
-
-    auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
-    const common::dataStructures::TapeFile &tapeFile2 = copyNbToTapeFile2Itor->second;
-    ASSERT_EQ(file2Written.vid, tapeFile2.vid);
-    ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
-    ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.compressedSize, tapeFile2.compressedSize);
-    ASSERT_EQ(file2Written.checksumType, tapeFile2.checksumType);
-    ASSERT_EQ(file2Written.checksumValue, tapeFile2.checksumValue);
-    ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
-  }
+  m_catalogue->deleteArchiveFile("disk_instance", archiveFileId);
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
 }
@@ -6543,7 +6504,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
-  ASSERT_THROW(m_catalogue->deleteArchiveFile("disk_instance", 12345678), catalogue::ArchiveFileDoesNotExist);
+  m_catalogue->deleteArchiveFile("disk_instance", 12345678);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {

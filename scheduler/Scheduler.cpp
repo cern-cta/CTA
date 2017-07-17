@@ -209,30 +209,27 @@ void Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
-  try {
-    m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
-  } catch (exception::Exception &dbEx) {
-    // The file was apparently not queued. If we fail to remove it from the
-    // catalogue for any reason other than it does not exist in the catalogue,
-    // then it is an error.
-    try {
-      return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
-    } catch(catalogue::ArchiveFileDoesNotExist &e) {
-      return common::dataStructures::ArchiveFile();
-    } catch(...) {
-      throw;
-    }
-  }
+// TEMPORARILY commenting out SchedulerDatabase::deleteArchiveRequest() in order
+// to reduce latency.  PLEASE NOTE however that this means files "in-flight" to
+// tape will not be deleted and they will appear in the CTA catalogue when they
+// are finally written to tape.
+//try {
+//  m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
+//} catch (exception::Exception &dbEx) {
+//  // The file was apparently not queued. If we fail to remove it from the
+//  // catalogue for any reason other than it does not exist in the catalogue,
+//  // then it is an error.
+//  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+//}
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).
   try {
-    return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   } catch (exception::UserError &) {}
-  return common::dataStructures::ArchiveFile();
 }
 
 //------------------------------------------------------------------------------

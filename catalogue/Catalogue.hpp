@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "catalogue/ArchiveFileDoesNotExist.hpp"
 #include "catalogue/ArchiveFileItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
@@ -493,16 +492,16 @@ public:
    * prevent a disk instance deleting an archive file that belongs to another
    * disk instance.
    *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
    * @param instanceName The name of the instance from where the deletion request
    * originated
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
-   * @throw catalogue::ArchiveFileDoesNotExist If the specified archive file
-   * does not exist in the catalogue.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
-    const uint64_t archiveFileId) = 0;
+  virtual void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId) = 0;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
