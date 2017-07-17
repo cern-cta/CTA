@@ -69,6 +69,21 @@ void RequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
    OutputJsonString(&alert);
 }
 
+
+
+/*!
+ * Convert exceptions into Alerts.
+ *
+ * This tells the framework how to log exceptions received on the client side
+ */
+
+template<>
+void ExceptionToAlert<eos::wfe::Alert>::operator()(const std::exception &e, eos::wfe::Alert &alert)
+{
+   alert.set_audience(eos::wfe::Alert::EOSLOG);
+   alert.set_message_txt(e.what());
+}
+
 } // namespace XrdSsiPb
 
 
@@ -299,7 +314,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    std::cout << "Request sent, going to sleep..." << std::endl;
 
-   int wait_secs = 5;
+   int wait_secs = 20;
 
    while(wait_secs--)
    {

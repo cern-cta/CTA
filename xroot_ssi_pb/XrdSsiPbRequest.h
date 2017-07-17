@@ -26,7 +26,7 @@ namespace XrdSsiPb {
 /*!
  * XRootD SSI + Protocol Buffers Callback class
  *
- * The client should specialize on this class for each XRootD reply type (Metadata, Alert, Error)
+ * The client should specialize on this class for each XRootD reply type (Metadata, Alert)
  */
 
 template<typename CallbackArg>
@@ -34,6 +34,21 @@ class RequestCallback
 {
 public:
    void operator()(const CallbackArg &arg);
+};
+
+
+
+/*!
+ * Convert Exceptions to Alerts
+ *
+ * The client should specialize on this class to specify how to log exceptions
+ */
+
+template<typename AlertType>
+class ExceptionToAlert
+{
+public:
+   void operator()(const std::exception &e, AlertType &alert);
 };
 
 
@@ -100,15 +115,20 @@ public:
    virtual XrdSsiRequest::PRD_Xeq ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int blen, bool last) override;
 
    /*!
-    * The Alert method is optional. By default, Alert messages are ignored.
+    * Deserialize Alert messages and call the Alert callback
     */
 
-   virtual void Alert(XrdSsiRespInfoMsg &aMsg) override;
+   virtual void Alert(XrdSsiRespInfoMsg &alert_msg) override;
+
 
 private:
    const char *m_request_bufptr;          //!< Pointer to the Request buffer
    int         m_request_len;             //!< Size of the Request buffer
    int         m_response_bufsize;        //!< Size of the Response buffer
+
+   // Convert exceptions to Alerts. Must be defined on the client side.
+
+   ExceptionToAlert<AlertType> ExceptionHandler;
 
    // Callbacks for each of the XRootD reply types
 
@@ -136,40 +156,26 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
    std::cout << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
 #endif
 
-   switch(rInfo.rType)
-   {
+   try {
+      switch(rInfo.rType) {
+
       // Handle errors in the XRootD framework (e.g. no response from server)
 
-      case XrdSsiRespInfo::isError:
-         //ErrorCallback(eInfo.Get());
-         Finished();    // Return control of the object to the calling thread and delete rInfo
+      case XrdSsiRespInfo::isError:     throw XrdSsiException(eInfo.Get());
 
-         // Andy says it is now safe to delete the Request object, which implies that the pointer on the calling side
-         // will never refer to it again and the destructor of the base class doesn't access any class members.
+      // To implement detached requests, add another callback type which saves the handle
 
-         delete this;
-         break;
+      case XrdSsiRespInfo::isHandle:    throw XrdSsiException("Detached requests are not implemented.");
 
-      case XrdSsiRespInfo::isHandle:
-         // To implement detached requests, add another callback type which saves the handle
-         //ErrorCallback("Detached requests are not implemented.");
-         Finished();
-         delete this;
-         break;
+      // To implement file requests, add another callback type
 
-      case XrdSsiRespInfo::isFile:
-         // To implement file requests, add another callback type
-         //ErrorCallback("File requests are not implemented.");
-         Finished();
-         delete this;
-         break;
+      case XrdSsiRespInfo::isFile:      throw XrdSsiException("File requests are not implemented.");
 
-      case XrdSsiRespInfo::isStream:
-         // To implement stream requests, add another callback type
-         //ErrorCallback("Stream requests are not implemented.");
-         Finished();
-         delete this;
-         break;
+      // To implement stream requests, add another callback type
+
+      case XrdSsiRespInfo::isStream:    throw XrdSsiException("Stream requests are not implemented.");
+
+      // Metadata-only responses and data responses
 
       case XrdSsiRespInfo::isNone:
       case XrdSsiRespInfo::isData:
@@ -191,17 +197,14 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
             }
             else
             {
-               //ErrorCallback("metadata.ParseFromArray() failed");
-               Finished();
-               delete this;
-               break;
+               throw PbException("metadata.ParseFromArray() failed");
             }
          }
 
-         // If this is a metadata-only response, there is nothing more to do
-
          if(rInfo.rType == XrdSsiRespInfo::isNone)
          {
+            // If this is a metadata-only response, we are done
+
             Finished();
             delete this;
             break;
@@ -216,6 +219,24 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
             GetResponseData(response_bufptr, m_response_bufsize);
          }
+      }
+   }
+   catch(std::exception &e)
+   {
+      // Pass the exception to the Alert callback to be logged
+
+      AlertType alert;
+      ExceptionHandler(e, alert);
+      AlertCallback(alert);
+
+      // Return control of the object to the calling thread and delete rInfo
+
+      Finished();
+
+      // It is now safe to delete the Request object (which implies that the pointer on the calling side
+      // will never refer to it again and the destructor of the base class doesn't access any class members).
+
+      delete this;
    }
 
    return true;
@@ -231,22 +252,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
 
    if(response_buflen != 0)
    {
-#if 0
-      // How do we handle message boundaries for multi-block responses?
-
-      // Deserialize the response
-
-      ResponseType response;
-
-      if(response.ParseFromArray(response_bufptr, response_buflen))
-      {
-         ResponseCallback(response);
-      }
-      else
-      {
-         ErrorCallback("response.ParseFromArray() failed");
-      }
-#endif
+      // Handle one block of response data
    }
 
    // If there is more data then get it, otherwise clean up
@@ -287,14 +293,13 @@ void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &ale
 
    AlertType alert;
 
-   if(alert.ParseFromArray(alert_buffer, alert_len))
+   if(!alert.ParseFromArray(alert_buffer, alert_len))
    {
-      AlertCallback(alert);
+      PbException e("alert.ParseFromArray() failed");
+      ExceptionHandler(e, alert);
    }
-   else
-   {
-      //ErrorCallback("alert.ParseFromArray() failed");
-   }
+
+   AlertCallback(alert);
 
    // Recycle the message to free memory
 

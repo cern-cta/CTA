@@ -40,7 +40,7 @@ message Security {
 message Alert {
   enum Audience { EOSLOG = 0; ENDUSER = 1; }
   Audience audience          = 1;       //< The intended audience of the error message
-  string message             = 2;       //< An empty if success, else an error message
+  string message_txt         = 2;       //< An empty if success, else an error message
 }
 
 

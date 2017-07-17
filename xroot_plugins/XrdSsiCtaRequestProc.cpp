@@ -154,16 +154,14 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 template <>
 void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAlerts()
 {
-   // Allocate alert messages on the heap, they are self-destructing
+   eos::wfe::Alert alert_msg;
 
-   auto *alert_msg = new eos::wfe::Alert();
+   alert_msg.set_audience(eos::wfe::Alert::EOSLOG);
+   alert_msg.set_message_txt("Something bad happened");
 
-   alert_msg->set_audience(eos::wfe::Alert::EOSLOG);
-   alert_msg->set_message("Something bad happened");
+   // Serialize and send the alert message
 
-   // Send the alert message
-
-   Alert(*alert_msg);
+   Alert(alert_msg);
 }
 
 
@@ -187,7 +185,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
       //case PB_PARSE_ERR:    m_metadata.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
    //}
 
-   m_metadata.mutable_alert_msg()->set_message(err_text);
+   m_metadata.mutable_alert_msg()->set_message_txt(err_text);
 
    // Output message in Json format (for debugging)
 
