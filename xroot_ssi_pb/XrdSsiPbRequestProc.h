@@ -23,7 +23,7 @@
 #include "XrdSsiPbException.h"
 #include "XrdSsiPbAlert.h"
 
-
+namespace XrdSsiPb {
 
 //! Error codes that the framework knows about
 
@@ -154,7 +154,7 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    if(!m_metadata.SerializeToString(&m_metadata_str))
    {
-      throw XrdSsiPbException("m_metadata.SerializeToString() failed");
+      throw PbException("m_metadata.SerializeToString() failed");
    }
 
    // Send the Metadata
@@ -169,7 +169,7 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    if(!m_response.SerializeToString(&m_response_str))
    {
-      throw XrdSsiPbException("m_response.SerializeToString() failed");
+      throw PbException("m_response.SerializeToString() failed");
    }
 #endif
 
@@ -199,5 +199,7 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
       // Reclaim any allocated resources
    }
 }
+
+} // namespace XrdSsiPb
 
 #endif

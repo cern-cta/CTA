@@ -22,6 +22,12 @@
 #include <XrdSsi/XrdSsiRespInfo.hh>
 #include "XrdSsiPbException.h"
 
+namespace XrdSsiPb {
+
+/*!
+ * Instantiate an Alert message
+ */
+
 template<typename AlertType>
 class AlertMsg : public XrdSsiRespInfoMsg
 {
@@ -36,7 +42,7 @@ public:
 
       if(!alert.SerializeToString(&alert_str))
       {
-         throw XrdSsiPbException("alert.SerializeToString() failed");
+         throw PbException("alert.SerializeToString() failed");
       }
 
       msgBuf = const_cast<char*>(alert_str.c_str());
@@ -52,6 +58,7 @@ public:
    void RecycleMsg(bool sent=true) {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] AlertMsg::RecycleMsg()" << std::endl;
+      std::cout << "[DEBUG] Alert \"" << alert_str << "\" was " << (sent ? "sent." : "not sent.") << std::endl;
 #endif
       delete this;
    }
@@ -59,5 +66,7 @@ public:
 private:
    std::string alert_str;
 };
+
+} // namespace XrdSsiPb
 
 #endif

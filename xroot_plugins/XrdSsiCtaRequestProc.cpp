@@ -38,6 +38,8 @@
 
 
 
+namespace XrdSsiPb {
+
 /*!
  * Process a Notification Request
  */
@@ -192,4 +194,6 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
    std::cerr << "Preparing error metadata..." << std::endl;
    OutputJsonString(&m_metadata);
 }
+
+} // namespace XrdSsiPb
 

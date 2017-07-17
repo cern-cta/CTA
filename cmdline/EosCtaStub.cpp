@@ -35,6 +35,44 @@ const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [opti
 
 
 
+// Define the XRootD SSI callbacks
+
+namespace XrdSsiPb {
+
+/*!
+ * Response callback.
+ *
+ * This is the CTA Front End response to the Notification.
+ */
+
+template<>
+void RequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &response)
+{
+   using namespace std;
+
+   std::cout << "MetadataCallback():" << std::endl;
+   OutputJsonString(&response);
+}
+
+
+
+/*!
+ * Alert callback.
+ *
+ * This is for messages which should be logged by EOS or directed to the User.
+ */
+
+template<>
+void RequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
+{
+   std::cout << "AlertCallback():" << std::endl;
+   OutputJsonString(&alert);
+}
+
+} // namespace XrdSsiPb
+
+
+
 /*!
  * Fill a Notification message from the command-line parameters
  *
@@ -213,57 +251,6 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
       else if(argstr == "--recoveryblob:base64") base64Decode(notification, argval);
       else throw std::runtime_error("Unrecognised key " + argstr);
    }
-}
-
-
-
-//
-// Define the XRootD SSI callbacks
-//
-
-/*!
- * Error callback.
- *
- * This is for framework errors, i.e. errors raised by XRoot or Protocol Buffers, such as no response
- * from the server. CTA errors will be returned in the Metadata or Alert callbacks.
- */
-
-template<>
-void XrdSsiPbRequestCallback<std::string>::operator()(const std::string &error_txt)
-{
-   std::cerr << "ErrorCallback():" << std::endl << error_txt << std::endl;
-}
-
-
-
-/*!
- * Alert callback.
- *
- * This is for messages which should be logged by EOS or directed to the User.
- */
-
-template<>
-void XrdSsiPbRequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
-{
-   std::cout << "AlertCallback():" << std::endl;
-   OutputJsonString(&alert);
-}
-
-
-
-/*!
- * Metadata Response callback.
- *
- * This is the CTA Front End response to the Notification.
- */
-
-template<>
-void XrdSsiPbRequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &metadata)
-{
-   using namespace std;
-
-   std::cout << "MetadataCallback():" << std::endl;
-   OutputJsonString(&metadata);
 }
 
 

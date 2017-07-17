@@ -28,6 +28,14 @@
 
 
 
+//! XrdSsiProviderClient is instantiated and managed by the SSI library
+
+extern XrdSsiProvider *XrdSsiProviderClient;
+
+
+
+namespace XrdSsiPb {
+
 // Constants
 
 const unsigned int DefaultResponseBufferSize = 2097152;    //!< Default size for the response buffer in bytes = 2 Mb
@@ -36,31 +44,25 @@ const unsigned int DefaultShutdownTimeout    = 0;          //!< Maximum time to 
 
 
 
-//! XrdSsiProviderClient is instantiated and managed by the SSI library
-
-extern XrdSsiProvider *XrdSsiProviderClient;
-
-
-
 /*!
  * Convenience object to manage the XRootD SSI service on the client side
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-class XrdSsiPbServiceClientSide
+class ServiceClientSide
 {
 public:
    // Service object constructor for the client side
 
-   XrdSsiPbServiceClientSide() = delete;
+   ServiceClientSide() = delete;
 
-   XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
+   ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
                              unsigned int response_bufsize = DefaultResponseBufferSize,
                              unsigned int server_tmo       = DefaultServerTimeout);
 
    // Service object destructor for the client side
 
-   virtual ~XrdSsiPbServiceClientSide();
+   virtual ~ServiceClientSide();
 
    // Request shutdown of the Service
 
@@ -89,8 +91,8 @@ private:
 //! Constructor
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::
-XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
+ServiceClientSide<RequestType, MetadataType, AlertType>::
+ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
                           unsigned int response_bufsize,
                           unsigned int server_tmo) :
    m_is_running(false),
@@ -99,7 +101,7 @@ XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const 
    m_server_tmo(server_tmo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbServiceClientSide() constructor" << std::endl;
+   std::cout << "[DEBUG] ServiceClientSide() constructor" << std::endl;
 #endif
    XrdSsiErrInfo eInfo;
 
@@ -111,7 +113,7 @@ XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const 
 
    if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
    {
-      throw XrdSsiPbException(eInfo);
+      throw XrdSsiException(eInfo);
    }
 
    m_is_running = true;
@@ -122,10 +124,10 @@ XrdSsiPbServiceClientSide(const std::string &hostname, unsigned int port, const 
 //! Destructor
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServiceClientSide()
+ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbServiceClientSide() destructor" << std::endl;
+   std::cout << "[DEBUG] ServiceClientSide() destructor" << std::endl;
 #endif
 
 #if 0
@@ -136,7 +138,7 @@ XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServic
 
    if(m_is_running && !m_server_ptr->Stop())
    {
-      std::cerr << "XrdSsiPbServiceClientSide object was destroyed before all Requests have been processed. "
+      std::cerr << "ServiceClientSide object was destroyed before all Requests have been processed. "
                 << "This will cause a memory leak. Call Shutdown() before deleting the object." << std::endl;
    }
 #endif
@@ -161,7 +163,7 @@ XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::~XrdSsiPbServic
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-bool XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::
+bool ServiceClientSide<RequestType, MetadataType, AlertType>::
 Shutdown(int shutdown_tmo)
 {
    // Trivial case: server has already been shut down
@@ -169,7 +171,7 @@ Shutdown(int shutdown_tmo)
    if(!m_is_running) return true;
 
 #ifdef XRDSSI_DEBUG
-   std::cerr << "[DEBUG] XrdSsiPbServiceClientSide::Shutdown():" << std::endl;
+   std::cerr << "[DEBUG] ServiceClientSide::Shutdown():" << std::endl;
    std::cerr << "Shutting down XRootD SSI service...";
 #endif
 
@@ -209,26 +211,26 @@ Shutdown(int shutdown_tmo)
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
+void ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
 {
    // Check service is up
 
    if(!m_is_running)
    {
-      throw XrdSsiPbException("Service has been stopped");
+      throw XrdSsiException("Service has been stopped");
    }
 
    // Serialize the request object
 
    if(!request.SerializeToString(&m_request_str))
    {
-      throw XrdSsiPbException("request.SerializeToString() failed");
+      throw PbException("request.SerializeToString() failed");
    }
 
    // Requests are always executed in the context of a service. They need to correspond to what the service allows.
 
    XrdSsiRequest *request_ptr =
-      new XrdSsiPbRequest<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
+      new Request<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
 
    // Transfer ownership of the request to the service object
    // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
@@ -254,5 +256,7 @@ void XrdSsiPbServiceClientSide<RequestType, MetadataType, AlertType>::Send(const
    // supplied to the server-side service in its corresponding request resource
    // object.
 }
+
+} // namespace XrdSsiPb
 
 #endif

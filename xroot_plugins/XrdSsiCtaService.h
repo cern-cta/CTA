@@ -48,7 +48,7 @@ void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdS
    std::cout << "[DEBUG] XrdSsiCtaService::ProcessRequest()" << std::endl;
 #endif
 
-   RequestProc<RequestType, MetadataType, AlertType> processor;
+   XrdSsiPb::RequestProc<RequestType, MetadataType, AlertType> processor;
 
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
 

@@ -21,7 +21,7 @@
 
 #include <XrdSsi/XrdSsiRequest.hh>
 
-
+namespace XrdSsiPb {
 
 /*!
  * XRootD SSI + Protocol Buffers Callback class
@@ -30,7 +30,7 @@
  */
 
 template<typename CallbackArg>
-class XrdSsiPbRequestCallback
+class RequestCallback
 {
 public:
    void operator()(const CallbackArg &arg);
@@ -43,16 +43,16 @@ public:
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-class XrdSsiPbRequest : public XrdSsiRequest
+class Request : public XrdSsiRequest
 {
 public:
-   XrdSsiPbRequest(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
+   Request(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
       m_request_bufptr(buffer_str.c_str()),
       m_request_len(buffer_str.size()),
       m_response_bufsize(response_bufsize)
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] XrdSsiPbRequest constructor: "
+      std::cout << "[DEBUG] Request constructor: "
                 << "Response buffer size = " << m_response_bufsize
                 << ", Response timeout = " << timeout << std::endl;
 #endif
@@ -62,10 +62,10 @@ public:
       SetTimeOut(timeout);
    }
 
-   virtual ~XrdSsiPbRequest() 
+   virtual ~Request() 
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] ~XrdSsiPbRequest destructor" << std::endl;
+      std::cout << "[DEBUG] ~Request destructor" << std::endl;
 #endif
    }
 
@@ -112,8 +112,8 @@ private:
 
    // Callbacks for each of the XRootD reply types
 
-   XrdSsiPbRequestCallback<MetadataType> MetadataCallback;
-   XrdSsiPbRequestCallback<AlertType> AlertCallback;
+   RequestCallback<MetadataType> MetadataCallback;
+   RequestCallback<AlertType> AlertCallback;
 
    // Responses and stream Responses will be implemented as a binary blob/stream. The format of the
    // response will not be a protocol buffer. If the response was a protocol buffer we would need to
@@ -124,17 +124,13 @@ private:
    //
    // Commented out for now pending review, as EOS archive only needs metadata responses
    //
-   //XrdSsiPbRequestCallback<ResponseType> ResponseCallback;
-
-   // Additional callback for handling errors from the XRootD framework
-
-   XrdSsiPbRequestCallback<std::string> ErrorCallback;
+   //RequestCallback<ResponseType> ResponseCallback;
 };
 
 
 
 template<typename RequestType, typename MetadataType, typename AlertType>
-bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
+bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
@@ -145,7 +141,7 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
       // Handle errors in the XRootD framework (e.g. no response from server)
 
       case XrdSsiRespInfo::isError:
-         ErrorCallback(eInfo.Get());
+         //ErrorCallback(eInfo.Get());
          Finished();    // Return control of the object to the calling thread and delete rInfo
 
          // Andy says it is now safe to delete the Request object, which implies that the pointer on the calling side
@@ -156,21 +152,21 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
 
       case XrdSsiRespInfo::isHandle:
          // To implement detached requests, add another callback type which saves the handle
-         ErrorCallback("Detached requests are not implemented.");
+         //ErrorCallback("Detached requests are not implemented.");
          Finished();
          delete this;
          break;
 
       case XrdSsiRespInfo::isFile:
          // To implement file requests, add another callback type
-         ErrorCallback("File requests are not implemented.");
+         //ErrorCallback("File requests are not implemented.");
          Finished();
          delete this;
          break;
 
       case XrdSsiRespInfo::isStream:
          // To implement stream requests, add another callback type
-         ErrorCallback("Stream requests are not implemented.");
+         //ErrorCallback("Stream requests are not implemented.");
          Finished();
          delete this;
          break;
@@ -195,7 +191,7 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
             }
             else
             {
-               ErrorCallback("metadata.ParseFromArray() failed");
+               //ErrorCallback("metadata.ParseFromArray() failed");
                Finished();
                delete this;
                break;
@@ -228,7 +224,7 @@ bool XrdSsiPbRequest<RequestType, MetadataType, AlertType>::ProcessResponse(cons
 
 
 template<typename RequestType, typename MetadataType, typename AlertType>
-XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, MetadataType, AlertType>
+XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
    // The buffer length can be 0 if the response is metadata only
@@ -280,7 +276,7 @@ XrdSsiRequest::PRD_Xeq XrdSsiPbRequest<RequestType, MetadataType, AlertType>
 
 
 template<typename RequestType, typename MetadataType, typename AlertType>
-void XrdSsiPbRequest<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
+void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
 {
    // Get the Alert
 
@@ -297,12 +293,14 @@ void XrdSsiPbRequest<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfo
    }
    else
    {
-      ErrorCallback("alert.ParseFromArray() failed");
+      //ErrorCallback("alert.ParseFromArray() failed");
    }
 
    // Recycle the message to free memory
 
    alert_msg.RecycleMsg();
 }
+
+} // namespace XrdSsiPb
 
 #endif

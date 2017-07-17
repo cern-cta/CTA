@@ -26,9 +26,9 @@
  * Bind the type of the XrdSsiService to the types defined in the .proto file
  */
 
-typedef XrdSsiPbServiceClientSide<eos::wfe::Notification,    //!< XrdSSi Request message type
-                                  eos::wfe::Response,        //!< XrdSsi Metadata message type
-                                  eos::wfe::Alert>           //!< XrdSsi Alert message type
+typedef XrdSsiPb::ServiceClientSide<eos::wfe::Notification,    //!< XrdSSi Request message type
+                                    eos::wfe::Response,        //!< XrdSsi Metadata message type
+                                    eos::wfe::Alert>           //!< XrdSsi Alert message type
         XrdSsiPbServiceType;
 
 #endif
