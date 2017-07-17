@@ -47,14 +47,13 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 {
    // Instantiate the scheduler
 
-   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/home/mdavis/cernbox/CERNHome/CTAtest/ctatest_image/etc/cta/cta_catalogue_db.conf");
+   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
    const uint64_t nbConns = 10;
    const uint64_t nbArchiveFileListingConns = 2;
 
    std::unique_ptr<cta::catalogue::Catalogue> my_catalogue = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
-   //cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf"),
-   //ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release());
-   std::string backend_str("/tmp/jobStoreXXXXXXX");
+   cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf");
+   std::string backend_str = ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr);
 
    std::unique_ptr<cta::objectstore::Backend> backend(cta::objectstore::BackendFactory::createBackend(backend_str));
    cta::objectstore::BackendPopulator backendPopulator(*backend, "Frontend");
@@ -128,7 +127,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 {
    // Set metadata
 
-   m_metadata.set_rsp_type(eos::wfe::Response::XATTR_RSP);
+   m_metadata.set_rsp_type(eos::wfe::Response::RSP_SUCCESS);
 
    // Output message in Json format (for debugging)
 
@@ -156,7 +155,6 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Set alert message
 
    m_alert.set_audience(eos::wfe::Alert::EOSLOG);
-   m_alert.set_code(1);
    m_alert.set_message("Something bad happened");
 
    // Send the alert message
@@ -180,14 +178,14 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
 {
    // Set metadata
 
-   m_metadata.set_rsp_type(eos::wfe::Response::EXCEPTION_RSP);
+   m_metadata.set_rsp_type(eos::wfe::Response::RSP_ERR_CTA);
 
-   switch(err_num)
-   {
-      case PB_PARSE_ERR:    m_metadata.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
-   }
+   //switch(err_num)
+   //{
+      //case PB_PARSE_ERR:    m_metadata.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
+   //}
 
-   m_metadata.mutable_exception()->set_message(err_text);
+   m_metadata.mutable_alert_msg()->set_message(err_text);
 
    // Output message in Json format (for debugging)
 

@@ -34,7 +34,19 @@ message Security {
 
 
 //
-// Messages sent from EOS to CTA
+// Alert Messages
+//
+
+message Alert {
+  enum Audience { EOSLOG = 0; ENDUSER = 1; }
+  Audience audience          = 1;       //< The intended audience of the error message
+  string message             = 2;       //< An empty if success, else an error message
+}
+
+
+
+//
+// Messages sent from EOS to CTA Frontend
 //
 
 message Workflow {
@@ -90,56 +102,30 @@ message Notification {
 
 
 //
-// Messages sent from CTA to EOS
+// Messages sent from CTA Frontend to EOS
 //
-
-message Exception {
-  enum ErrorCode {
-    UNKNOWN_ERR       = 0;              //< Can't determine the cause of the error
-    SERVER_NO_RSP_ERR = 1;              //< No response from server
-    PB_PARSE_ERR      = 2;              //< Protocol buffer parse error
-    // ... define other exception types
-  }
-  ErrorCode code             = 1;       //< Defines what went wrong
-  string message             = 2;       //< Additional error text
-}
-
-message Xattr {
-  enum Operation { NONE = 0; GET = 1; ADD = 2; SET = 3; DELETE = 4; }
-  uint64 fid                 = 1;       //< file id
-  map<string, string> xattr  = 2;       //< xattribute map
-  Operation op               = 3;       //< operation to execute for this xattr map
-}
-
-message Tapereplica {
-  enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3; }
-  uint64 fid                 = 1;       //< file id
-  Status status              = 2;       //< status for file id
-  uint64 size                = 3;       //< File size as recorded on tape, for cross-check
-  Checksum cks               = 4;       //< File checksum as computer while writing to tape
-}
 
 message Response {
-  enum ResponseType { EXCEPTION_RSP = 0; XATTR_RSP = 1; TAPEREPLICA_RSP = 2; }
-  ResponseType rsp_type      = 1;       //< Encode the type of this reply
-  oneof response {
-    Exception exception      = 2;       //< Something bad happened
-    Xattr xattr              = 3;       //< Payload for Xattr response type
-    Tapereplica tapereplica  = 4;       //< Payload for Tapereplica response type
+  enum ResponseType {
+    RSP_SUCCESS              = 0;       //< Notification was queued successfully
+    RSP_ERR_PROTOBUF         = 1;       //< Framework error caused by Google Protocol Buffers layer
+    RSP_ERR_XROOT            = 2;       //< Framework error caused by XRoot protocol layer
+    RSP_ERR_CTA              = 3;       //< Server error reported by CTA Frontend
   }
+  ResponseType rsp_type      = 1;       //< Encode the type of this reply
+  Alert alert_msg            = 2;       //< Text of the reply
 }
 
 
 
 //
-// Alert Messages: log messages or responses for the user
+// Messages sent from the Tape Server to EOS
 //
 
-message Alert {
-  // What is the purpose of Audience NONE?
-  enum Audience { NONE = 0; EOSLOG = 1; ENDUSER = 2; }
-  Audience audience          = 1;       //< The intended audience of the error message
-  uint64 code                = 2;       //< Zero means success, non-zero means error
-  string message             = 3;       //< An empty if success, else an error message
-}
-
+//message Tapereplica {
+//  enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3; }
+//  uint64 fid                 = 1;       //< file id
+//  Status status              = 2;       //< status for file id
+//  uint64 size                = 3;       //< File size as recorded on tape, for cross-check
+//  Checksum cks               = 4;       //< File checksum as computer while writing to tape
+//}
