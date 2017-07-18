@@ -36,7 +36,10 @@ CTA_KT=/etc/ctafrontend_SSS_c.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
+# dir for cta tests only for eosusers and powerusers
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
+# dir for eos instance basic tests writable and readable by anyone
+EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
 # prepare CTA cli commands environment
 cat <<EOF > /etc/cta/cta-cli.conf
@@ -136,12 +139,16 @@ test -f /CANSTART && echo OK || exit 1
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 
+  # Prepare the tmp dir so that we can test that the EOS instance is OK
+  eos mkdir ${EOS_TMP_DIR}
+  eos chmod 777 ${EOS_TMP_DIR}
+
 # test EOS
 # eos slow behind us and we need to give it time to be ready
 # 5 secs is not enough
   sleep 10
   eos -b node ls
-  xrdcp /etc/group root://${eoshost}:/${CTA_TEST_DIR}/testFile
+  xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
 
 # prepare EOS workflow
   eos space config default space.wfe=on
