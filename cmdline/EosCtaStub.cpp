@@ -36,7 +36,7 @@ namespace XrdSsiPb {
 /*!
  * Alert callback.
  *
- * Defines how Alert messages should be logged by EOS or directed to the User.
+ * Defines how Alert messages should be logged by EOS (or directed to the User)
  */
 
 template<>
@@ -247,8 +247,7 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
 
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
-   // Verify that the version of the Google Protocol Buffer library that we linked against is
-   // compatible with the version of the headers we compiled against
+   // Verify that the Google Protocol Buffer header and linked library versions are compatible
 
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 

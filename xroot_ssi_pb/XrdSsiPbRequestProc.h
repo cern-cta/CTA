@@ -163,15 +163,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
       SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
    }
 
-#if 0
-   // Serialize the Response
-
-   if(!m_response.SerializeToString(&m_response_str))
-   {
-      throw PbException("m_response.SerializeToString() failed");
-   }
-#endif
-
    // Send the response. This must always be called, even if the response is empty, as Finished()
    // will not be called until the Response has been processed.
 

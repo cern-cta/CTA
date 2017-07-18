@@ -109,8 +109,7 @@ message Response {
   enum ResponseType {
     RSP_SUCCESS              = 0;       //< Notification was queued successfully
     RSP_ERR_PROTOBUF         = 1;       //< Framework error caused by Google Protocol Buffers layer
-    RSP_ERR_XROOT            = 2;       //< Framework error caused by XRoot protocol layer
-    RSP_ERR_CTA              = 3;       //< Server error reported by CTA Frontend
+    RSP_ERR_CTA              = 2;       //< Server error reported by CTA Frontend
   }
   ResponseType rsp_type      = 1;       //< Encode the type of this reply
   Alert alert_msg            = 2;       //< Text of the reply
