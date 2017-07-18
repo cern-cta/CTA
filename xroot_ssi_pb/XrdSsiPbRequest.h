@@ -143,7 +143,6 @@ private:
 
    // Callbacks for each of the XRootD reply types
 
-   RequestCallback<MetadataType> MetadataCallback;
    RequestCallback<AlertType> AlertCallback;
 
    // Responses and stream Responses will be implemented as a binary blob/stream. The format of the
@@ -204,7 +203,7 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
             if(metadata.ParseFromArray(metadata_buffer, metadata_len))
             {
-               MetadataCallback(metadata);
+               m_promise.set_value(metadata);
             }
             else
             {
@@ -234,11 +233,9 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
    }
    catch(std::exception &e)
    {
-      // Pass the exception to the Alert callback to be logged
+      // Use the exception to fulfil the promise
 
-      AlertType alert;
-      ExceptionHandler(e, alert);
-      AlertCallback(alert);
+      m_promise.set_exception(std::current_exception());
 
       // Return control of the object to the calling thread and delete rInfo
 
