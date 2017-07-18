@@ -1,4 +1,0 @@
-*.o
-*.so
-test.pb.*
-test_client

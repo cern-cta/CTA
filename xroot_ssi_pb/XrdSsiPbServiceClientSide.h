@@ -57,8 +57,8 @@ public:
    ServiceClientSide() = delete;
 
    ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
-                             unsigned int response_bufsize = DefaultResponseBufferSize,
-                             unsigned int server_tmo       = DefaultServerTimeout);
+                     unsigned int response_bufsize = DefaultResponseBufferSize,
+                     unsigned int server_tmo       = DefaultServerTimeout);
 
    // Service object destructor for the client side
 
@@ -70,7 +70,7 @@ public:
 
    // Send a Request to the Service
 
-   void Send(const RequestType &request);
+   MetadataType Send(const RequestType &request);
 
 private:
    bool           m_is_running;          //!< Is the service running?
@@ -105,9 +105,24 @@ ServiceClientSide(const std::string &hostname, unsigned int port, const std::str
 #endif
    XrdSsiErrInfo eInfo;
 
-   // Resource context may be cached and is reusable
+   // Set Resource options
 
-   m_resource.rOpts = XrdSsiResource::Reusable;
+   m_resource.rOpts = XrdSsiResource::Reusable;     //< Resource context may be cached and is reusable
+
+   // Other possibly-useful options:
+   //
+   // (For specifying the tapeserver callback)
+   //
+   // XrdSsiResource::rInfo
+   //     This option allows you to send additional out-of-band information to the server that will be executing
+   //     the request. The information should be specified in CGI format (i.e. key=value[&key=value[...]]). This
+   //     information is supplied to the server-side service in its corresponding request resource object. Note
+   //     that restrictions apply for reusable resources.
+   //
+   // XrdSsiResource::rUser
+   //     This is an arbitrary string that is meant to further identify the request. The SSI framework normally
+   //     uses this information to tag log messages. It is also supplied to the server-side service in its
+   //     corresponding request resource object.
 
    // Get the Service pointer
 
@@ -211,7 +226,7 @@ Shutdown(int shutdown_tmo)
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
-void ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
+MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
 {
    // Check service is up
 
@@ -220,41 +235,30 @@ void ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const Request
       throw XrdSsiException("Service has been stopped");
    }
 
-   // Serialize the request object
+   // Serialize the Request
 
    if(!request.SerializeToString(&m_request_str))
    {
       throw PbException("request.SerializeToString() failed");
    }
 
-   // Requests are always executed in the context of a service. They need to correspond to what the service allows.
+   // Instantiate the Request object
 
-   XrdSsiRequest *request_ptr =
-      new Request<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
+   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
 
-   // Transfer ownership of the request to the service object
-   // TestSsiRequest handles deletion of the request buffer, so we can allow the pointer to go out-of-scope
+   auto future_response = request_ptr->GetFuture();
+
+   // Transfer ownership of the Request to the Service object. The framework will handle deletion of the
+   // Request object. Although it is safe to delete the Resource after ProcessRequest() returns, we are
+   // creating reusable Resources, so no need to delete it.
 
    m_server_ptr->ProcessRequest(*request_ptr, m_resource);
 
-   // Note: for a non-reusable resource, it is safe to delete it after ProcessRequest() returns. We
-   // have created reusable resources, so no need to delete it.
-   //
-   // Possibly useful resource options:
-   //
-   // For specifying the tapeserver callback:
-   // XrdSsiResource::rInfo
-   // This option allows you to send additional out-of-band information to the
-   // server that will be executing the request. The information should be specified
-   // in CGI format (i.e. key=value[&key=value[...]]). This information is supplied
-   // to the server-side service in its corresponding request resource object. Note
-   // that restrictions apply for reusable resources.
-   //
-   // XrdSsiResource::rUser
-   // This is an arbitrary string that is meant to further identify the request. The
-   // SSI framework normally uses this information to tag log messages. It is also
-   // supplied to the server-side service in its corresponding request resource
-   // object.
+   // Wait synchronously for the framework to return its response
+
+   auto response = future_response.get();
+
+   return response;
 }
 
 } // namespace XrdSsiPb

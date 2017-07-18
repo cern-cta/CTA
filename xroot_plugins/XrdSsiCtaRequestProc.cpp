@@ -19,8 +19,7 @@
 #include <iostream>
 #include <memory>
 
-#include "../frontend/test_util.h" // for Json output (for debugging)
-
+#include "XrdSsiPbDebug.h" // for Json output
 #include "XrdSsiPbException.h"
 #include "XrdSsiPbRequestProc.h"
 #include "eos/messages/eos_messages.pb.h"
@@ -68,7 +67,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Output message in Json format (for debugging)
 
    std::cerr << "Received message:" << std::endl;
-   OutputJsonString(&m_request);
+   OutputJsonString(std::cerr, &m_request);
 
    // Unpack message
 
@@ -134,7 +133,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing metadata..." << std::endl;
-   OutputJsonString(&m_metadata);
+   OutputJsonString(std::cerr, &m_metadata);
 }
 
 
@@ -190,7 +189,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
    // Output message in Json format (for debugging)
 
    std::cerr << "Preparing error metadata..." << std::endl;
-   OutputJsonString(&m_metadata);
+   OutputJsonString(std::cerr, &m_metadata);
 }
 
 } // namespace XrdSsiPb

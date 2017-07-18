@@ -19,6 +19,7 @@
 #ifndef __XRD_SSI_PB_REQUEST_H
 #define __XRD_SSI_PB_REQUEST_H
 
+#include <future>
 #include <XrdSsi/XrdSsiRequest.hh>
 
 namespace XrdSsiPb {
@@ -93,7 +94,8 @@ public:
     * GetRequest() call.
     */
 
-   virtual char *GetRequest(int &reqlen) override {
+   virtual char *GetRequest(int &reqlen) override
+   {
       reqlen = m_request_len;
       return const_cast<char*>(m_request_bufptr);
    }
@@ -120,13 +122,22 @@ public:
 
    virtual void Alert(XrdSsiRespInfoMsg &alert_msg) override;
 
+   /*!
+    * Return the future associated with the promise
+    */
+
+   auto GetFuture() { return m_promise.get_future(); }
 
 private:
    const char *m_request_bufptr;          //!< Pointer to the Request buffer
    int         m_request_len;             //!< Size of the Request buffer
    int         m_response_bufsize;        //!< Size of the Response buffer
 
-   // Convert exceptions to Alerts. Must be defined on the client side.
+   //! Promise a reply of Metadata type
+
+   std::promise<MetadataType> m_promise;
+
+   //! Convert exceptions to Alerts. Must be defined on the client side.
 
    ExceptionToAlert<AlertType> ExceptionHandler;
 

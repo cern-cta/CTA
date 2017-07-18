@@ -23,8 +23,8 @@
 #include <cryptopp/base64.h>
 #include <google/protobuf/util/json_util.h>
 
-#include "../frontend/test_util.h"
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "XrdSsiPbDebug.h"
 #include "EosCtaApi.h"
 
 
@@ -50,8 +50,8 @@ void RequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &r
 {
    using namespace std;
 
-   std::cout << "MetadataCallback():" << std::endl;
-   OutputJsonString(&response);
+   std::cout << "ResponseCallback():" << std::endl;
+   OutputJsonString(std::cout, &response);
 }
 
 
@@ -66,7 +66,7 @@ template<>
 void RequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
-   OutputJsonString(&alert);
+   OutputJsonString(std::cout, &alert);
 }
 
 
@@ -284,18 +284,19 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-   // Fill the Notification protobuf object from the command line arguments
-
    eos::wfe::Notification notification;
+
+   // Parse the command line arguments: fill the Notification fields
+
    bool isStderr, isJson;
 
    fillNotification(notification, isStderr, isJson, argc, argv);
 
+   std::ostream &myout = isStderr ? std::cerr : std::cout;
+
    if(isJson)
    {
-      // Output the protocol buffer as a JSON object (for debugging)
-
-      OutputJsonString(&notification);
+      OutputJsonString(myout, &notification);
    }
 
    // Obtain a Service Provider
@@ -306,31 +307,16 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    XrdSsiPbServiceType cta_service(host, port, resource);
 
-   // Send the Notification (Request) to the Service
+   // Send the Request to the Service and get a Response
 
-   cta_service.Send(notification);
+   eos::wfe::Response response = cta_service.Send(notification);
 
-   // Wait for the response callback.
-
-   std::cout << "Request sent, going to sleep..." << std::endl;
-
-   int wait_secs = 20;
-
-   while(wait_secs--)
+   if(isJson)
    {
-      std::cerr << ".";
-      sleep(1);
+      OutputJsonString(myout, &response);
    }
 
-   std::cout << "done." << std::endl;
-
-   // Send output to stdout or stderr?
-
-   std::ostream &myout = isStderr ? std::cerr : std::cout;
-
-   myout << "Hello, world" << std::endl;
-
-   // Optional: Delete all global objects allocated by libprotobuf
+   // Delete all global objects allocated by libprotobuf
 
    google::protobuf::ShutdownProtobufLibrary();
 
