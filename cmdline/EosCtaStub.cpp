@@ -29,37 +29,14 @@
 
 
 
-//! Usage exception
-
-const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [options] [--stderr]");
-
-
-
-// Define the XRootD SSI callbacks
+// Define XRootD SSI Alert message callback
 
 namespace XrdSsiPb {
 
 /*!
- * Response callback.
- *
- * This is the CTA Front End response to the Notification.
- */
-
-template<>
-void RequestCallback<eos::wfe::Response>::operator()(const eos::wfe::Response &response)
-{
-   using namespace std;
-
-   std::cout << "ResponseCallback():" << std::endl;
-   OutputJsonString(std::cout, &response);
-}
-
-
-
-/*!
  * Alert callback.
  *
- * This is for messages which should be logged by EOS or directed to the User.
+ * Defines how Alert messages should be logged by EOS or directed to the User.
  */
 
 template<>
@@ -69,22 +46,13 @@ void RequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
    OutputJsonString(std::cout, &alert);
 }
 
-
-
-/*!
- * Convert exceptions into Alerts.
- *
- * This tells the framework how to log exceptions received on the client side
- */
-
-template<>
-void ExceptionToAlert<eos::wfe::Alert>::operator()(const std::exception &e, eos::wfe::Alert &alert)
-{
-   alert.set_audience(eos::wfe::Alert::EOSLOG);
-   alert.set_message_txt(e.what());
-}
-
 } // namespace XrdSsiPb
+
+
+
+//! Usage exception
+
+const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [options] [--stderr]");
 
 
 

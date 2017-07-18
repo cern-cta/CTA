@@ -20,6 +20,7 @@
 #define __XRD_SSI_PB_REQUEST_H
 
 #include <future>
+
 #include <XrdSsi/XrdSsiRequest.hh>
 
 namespace XrdSsiPb {
@@ -40,21 +41,6 @@ public:
 
 
 /*!
- * Convert Exceptions to Alerts
- *
- * The client should specialize on this class to specify how to log exceptions
- */
-
-template<typename AlertType>
-class ExceptionToAlert
-{
-public:
-   void operator()(const std::exception &e, AlertType &alert);
-};
-
-
-
-/*!
  * XRootD SSI + Protocol Buffers Request class
  */
 
@@ -64,7 +50,7 @@ class Request : public XrdSsiRequest
 public:
    Request(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
       m_request_bufptr(buffer_str.c_str()),
-      m_request_len(buffer_str.size()),
+      m_request_bufsize(buffer_str.size()),
       m_response_bufsize(response_bufsize)
    {
 #ifdef XRDSSI_DEBUG
@@ -96,7 +82,7 @@ public:
 
    virtual char *GetRequest(int &reqlen) override
    {
-      reqlen = m_request_len;
+      reqlen = m_request_bufsize;
       return const_cast<char*>(m_request_bufptr);
    }
 
@@ -129,21 +115,13 @@ public:
    auto GetFuture() { return m_promise.get_future(); }
 
 private:
-   const char *m_request_bufptr;          //!< Pointer to the Request buffer
-   int         m_request_len;             //!< Size of the Request buffer
-   int         m_response_bufsize;        //!< Size of the Response buffer
+   const char *m_request_bufptr;                //!< Pointer to the Request buffer
+   int         m_request_bufsize;               //!< Size of the Request buffer
+   char       *m_response_bufptr;               //!< Pointer to the Response buffer
+   int         m_response_bufsize;              //!< Size of the Response buffer
 
-   //! Promise a reply of Metadata type
-
-   std::promise<MetadataType> m_promise;
-
-   //! Convert exceptions to Alerts. Must be defined on the client side.
-
-   ExceptionToAlert<AlertType> ExceptionHandler;
-
-   // Callbacks for each of the XRootD reply types
-
-   RequestCallback<AlertType> AlertCallback;
+   std::promise<MetadataType> m_promise;        //!< Promise a reply of Metadata type
+   RequestCallback<AlertType> AlertCallback;    //!< Callback for Alerts
 
    // Responses and stream Responses will be implemented as a binary blob/stream. The format of the
    // response will not be a protocol buffer. If the response was a protocol buffer we would need to
@@ -223,16 +201,14 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
          {
             // Allocate response buffer
 
-            char *response_bufptr = new char[m_response_bufsize];
+            m_response_bufptr = new char[m_response_bufsize];
 
             // Read the first chunk of data into the buffer, and pass it to ProcessResponseData()
 
-            GetResponseData(response_bufptr, m_response_bufsize);
+            GetResponseData(m_response_bufptr, m_response_bufsize);
          }
       }
-   }
-   catch(std::exception &e)
-   {
+   } catch(std::exception &ex) {
       // Use the exception to fulfil the promise
 
       m_promise.set_exception(std::current_exception());
@@ -244,6 +220,9 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
       // It is now safe to delete the Request object (which implies that the pointer on the calling side
       // will never refer to it again and the destructor of the base class doesn't access any class members).
 
+      delete this;
+   } catch(...) {
+      Finished();
       delete this;
    }
 
@@ -292,22 +271,31 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
 template<typename RequestType, typename MetadataType, typename AlertType>
 void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
 {
-   // Get the Alert
-
-   int alert_len;
-   char *alert_buffer = alert_msg.GetMsg(alert_len);
-
-   // Deserialize the Alert
-
-   AlertType alert;
-
-   if(!alert.ParseFromArray(alert_buffer, alert_len))
+   try
    {
-      PbException e("alert.ParseFromArray() failed");
-      ExceptionHandler(e, alert);
-   }
+      // Get the Alert
 
-   AlertCallback(alert);
+      int alert_len;
+      char *alert_buffer = alert_msg.GetMsg(alert_len);
+
+      // Deserialize the Alert
+
+      AlertType alert;
+
+      if(alert.ParseFromArray(alert_buffer, alert_len))
+      {
+         AlertCallback(alert);
+      }
+      else
+      {
+         throw PbException("alert.ParseFromArray() failed");
+      }
+   }
+   catch(std::exception &ex)
+   {
+      m_promise.set_exception(std::current_exception());
+   }
+   catch(...) {}
 
    // Recycle the message to free memory
 
