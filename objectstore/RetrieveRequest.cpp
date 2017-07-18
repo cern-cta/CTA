@@ -23,14 +23,21 @@
 #include "DiskFileInfoSerDeser.hpp"
 #include "ArchiveFileSerDeser.hpp"
 #include "objectstore/cta.pb.h"
+#include "Helpers.hpp"
 #include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
 RetrieveRequest::RetrieveRequest(
   const std::string& address, Backend& os): 
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(os, address) { }
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
 RetrieveRequest::RetrieveRequest(GenericObject& go):
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
@@ -39,6 +46,9 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
   getPayloadFromHeader();
 }
 
+//------------------------------------------------------------------------------
+// initialize
+//------------------------------------------------------------------------------
 void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
@@ -46,10 +56,44 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
+//------------------------------------------------------------------------------
+// garbageCollect
+//------------------------------------------------------------------------------
+void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
+  checkPayloadWritable();
+  // Check the request is indeed owned by the right owner.
+  if (getOwner() != presumedOwner) return;
+  // The owner is indeed the right one. We should requeue the request if possible.
+  // Find the vids for active jobs in the request (pending ones).
+  using serializers::RetrieveJobStatus;
+  std::set<RetrieveJobStatus> validStates({RetrieveJobStatus::RJS_Pending, RetrieveJobStatus::RJS_Selected});
+  std::set<std::string> candidateVids;
+  for (auto &j: m_payload.jobs()) {
+    if (validStates.count(j.status())) {
+      // Find the job details in tape file
+      for (auto &tf: m_payload.archivefile().tapefiles()) {
+        if (tf.copynb() == j.copynb()) {
+          candidateVids.insert(tf.vid());
+          goto found;
+        }
+      }
+      {
+        std::stringstream err;
+        err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
+        throw exception::Exception(err.str());
+      }
+    found:;
+    }
+  }
+  // If we have to fetch the status of the tapes and queued for the non-disabled vids.
+  auto bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
   throw cta::exception::Exception("In RetrieveRequest::garbageCollect(): not implemented.");
 }
 
+//------------------------------------------------------------------------------
+// setJobSuccessful
+//------------------------------------------------------------------------------
 void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
@@ -61,6 +105,9 @@ void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uin
   tf->set_status(serializers::RetrieveJobStatus::RJS_Pending);
 }
 
+//------------------------------------------------------------------------------
+// setJobSuccessful
+//------------------------------------------------------------------------------
 bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();

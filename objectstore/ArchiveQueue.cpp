@@ -98,7 +98,8 @@ bool ArchiveQueue::isEmpty() {
   return true;
 }
 
-void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
+void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the tape pool creation failed. We have nothing to do.

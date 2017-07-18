@@ -28,16 +28,26 @@
 #include "RootEntry.hpp"
 #include "ArchiveRequest.hpp"
 #include "GenericObject.hpp"
+#include "common/log/StringLogger.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <bits/unique_ptr.h>
 
 int main(int argc, char ** argv) {
   try {
     std::unique_ptr<cta::objectstore::Backend> be;
-    if (3 == argc) {
+    std::unique_ptr<cta::catalogue::Catalogue> catalogue;
+    cta::log::StringLogger sl("cta-objectstore-collect-orphaned", cta::log::DEBUG);
+    cta::log::LogContext lc(sl);
+    if (4 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(argv[2]);
+      const uint64_t nbConns = 1;
+      const uint64_t nbArchiveFileListingConns = 0;
+      catalogue=std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 2");
+      throw std::runtime_error("Wrong number of arguments: expected 3: <objectstoreURL> <catalogue login file> <objectname>");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
@@ -69,7 +79,7 @@ int main(int argc, char ** argv) {
       for (auto & j: ar.dumpJobs()) {
         if (!be->exists(j.owner)) {
           std::cout << "Owner " << j.owner << " for job " <<  j.copyNb << " does not exist." << std::endl;
-          ar.garbageCollect(j.owner, agr);
+          ar.garbageCollect(j.owner, agr, lc, *catalogue);
           someGcDone=true;
           goto gcpass;
         }

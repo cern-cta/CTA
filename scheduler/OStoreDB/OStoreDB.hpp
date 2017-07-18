@@ -27,6 +27,8 @@
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "common/log/Logger.hpp"
 
 namespace cta {
   
@@ -43,7 +45,7 @@ namespace ostoredb {
 class OStoreDB: public SchedulerDatabase {
   friend class cta::ostoredb::MemArchiveQueue;
 public:
-  OStoreDB(objectstore::Backend & be);
+  OStoreDB(objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger);
   virtual ~OStoreDB() throw();
   
   /* === Object store and agent handling ==================================== */
@@ -75,11 +77,13 @@ public:
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
-    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &);
+    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &l);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
   };
   
@@ -112,8 +116,10 @@ public:
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &);
+    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
@@ -137,12 +143,14 @@ public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
-    ArchiveJob(const std::string &, objectstore::Backend &,
-      objectstore::AgentReference &, ArchiveMount &);
+    ArchiveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
+      log::Logger &, objectstore::AgentReference &, ArchiveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     std::string m_tapePool;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
@@ -198,14 +206,16 @@ public:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
     ArchiveToFileRequestCancelation(objectstore::AgentReference & agentReference, 
-      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
-      m_agentReference(agentReference), m_closed(false) {} 
+      objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger): m_request(be), m_lock(), m_objectStore(be),
+      m_catalogue(catalogue), m_logger(logger), m_agentReference(agentReference), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
     void complete() override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference &m_agentReference;
     bool m_closed;
     friend class OStoreDB;
@@ -330,6 +340,8 @@ private:
   
 private:
   objectstore::Backend & m_objectStore;
+  catalogue::Catalogue & m_catalogue;
+  log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
 };
   

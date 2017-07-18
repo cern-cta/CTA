@@ -113,7 +113,7 @@ protected:
   /**
    * The database or object store holding all CTA persistent objects
    */
-  cta::OStoreDBWithAgent m_scheddb;
+  std::unique_ptr<cta::OStoreDBWithAgent> m_scheddb;
 
   /**
    * The CTA catalogue of tapes and tape files.

@@ -520,8 +520,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_xrdOucBuffPool(1024, 65536), // XrdOucBuffPool(minsz, maxsz)
   m_ctaConf("/etc/cta/cta-frontend.conf"),
   m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
-  m_backendPopulator(*m_backend, "Frontend"),
-  m_scheddb(*m_backend, m_backendPopulator.getAgentReference()) {
+  m_backendPopulator(*m_backend, "Frontend") {
   using namespace cta;
   
   // Try to instantiate the logging system API
@@ -544,7 +543,8 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
   const uint64_t nbArchiveFileListingConns = 2;
   m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
-  m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, m_scheddb, 5, 2*1000*1000);
+  m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator.getAgentReference(), *m_catalogue, *m_log);
+  m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.

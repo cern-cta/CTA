@@ -51,7 +51,8 @@ public:
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object cannot be garbage collected as-is */
-  void garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   
   /** This dispatcher function will call the object's garbage collection function.
    * It also handles the passed lock and returns is unlocked.
@@ -61,8 +62,12 @@ public:
    * @param lock reference to the generic object's lock
    * @param presumedOwner address of the agent which pointed to the object
    * @param agent reference object allowing creation of new objects when needed (at least for requeuing of requests)
+   * @params lc log context passed to garbage collection routines to log GC steps.
+   * @params catalogue reference to the catalogue, used by some garbage collection routines (specially for RetriveRequests
+   * which are tape status dependent.
    */
-  void garbageCollectDispatcher(ScopedExclusiveLock & lock, const std::string &presumedOwner, AgentReference & agentReference);
+  void garbageCollectDispatcher(ScopedExclusiveLock & lock, const std::string &presumedOwner, AgentReference & agentReference, 
+    log::LogContext & lc, cta::catalogue::Catalogue & catalogue);
   
   /** This dispatcher function will call the object's dump.
    * It also handles the passed lock.

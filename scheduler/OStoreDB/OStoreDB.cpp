@@ -48,8 +48,8 @@ using namespace objectstore;
 //------------------------------------------------------------------------------
 // OStoreDB::OStoreDB()
 //------------------------------------------------------------------------------
-OStoreDB::OStoreDB(objectstore::Backend& be):
-  m_objectStore(be) {}
+OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
+  m_objectStore(be), m_catalogue(catalogue), m_logger(logger) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::~OStoreDB()
@@ -185,7 +185,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
   std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
-    m_objectStore, *m_agentReference));
+    m_objectStore, *m_agentReference, m_catalogue, m_logger));
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
@@ -527,7 +527,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
   assertAgentAddressSet();
   // Construct the return value immediately
   std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCancelation>
-    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(*m_agentReference, m_objectStore));
+    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(*m_agentReference, m_objectStore, m_catalogue, m_logger));
   cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
   cta::objectstore::ScopedExclusiveLock & atfrl = internalRet->m_lock;
   // Attempt to find the request
@@ -595,7 +595,8 @@ void OStoreDB::ArchiveToFileRequestCancelation::complete() {
 OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
   if (!m_closed) {
     try {
-      m_request.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference);
+      log::LogContext lc(m_logger);
+      m_request.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
       m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
     } catch (...) {}
   }
@@ -760,39 +761,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
 std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueueStatistics(
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
   const std::set<std::string> & vidsToConsider) {
-  std::list<RetrieveQueueStatistics> ret;
-  // Find the retrieve queues for each vid if they exist (absence is possible).
-  RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
-  rel.release();
-  for (auto &tf:criteria.archiveFile.tapeFiles) {
-    if (!vidsToConsider.count(tf.second.vid))
-      continue;
-    std::string rqAddr;
-    try {
-      std::string rqAddr = re.getRetrieveQueue(tf.second.vid);
-    } catch (cta::exception::Exception &) {
-      ret.push_back(RetrieveQueueStatistics());
-      ret.back().vid=tf.second.vid;
-      ret.back().bytesQueued=0;
-      ret.back().currentPriority=0;
-      ret.back().filesQueued=0;
-      continue;
-    }
-    RetrieveQueue rq(rqAddr, m_objectStore);
-    ScopedSharedLock rql(rq);
-    rq.fetch();
-    rql.release();
-    if (rq.getVid() != tf.second.vid)
-      throw cta::exception::Exception("In OStoreDB::getRetrieveQueueStatistics(): unexpected vid for retrieve queue");
-    ret.push_back(RetrieveQueueStatistics());
-    ret.back().vid=rq.getVid();
-    ret.back().currentPriority=rq.getJobsSummary().priority;
-    ret.back().bytesQueued=rq.getJobsSummary().bytes;
-    ret.back().filesQueued=rq.getJobsSummary().files;
-  }
-  return ret;
+  return Helpers::getRetrieveQueueStatistics(criteria, vidsToConsider, m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -1026,6 +995,9 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   dr.commit();
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::updateDriveStatusInRegitry()
+//------------------------------------------------------------------------------
 void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr, 
   const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs) {
   using common::dataStructures::DriveStatus;
@@ -1098,6 +1070,9 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
   dr.setDriveState(driveState);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::updateDriveStatsInRegitry()
+//------------------------------------------------------------------------------
 void OStoreDB::updateDriveStatsInRegitry(objectstore::DriveRegister& dr, 
   const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs) {
   using common::dataStructures::DriveStatus;
@@ -1423,7 +1398,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
   std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
-    new OStoreDB::ArchiveMount(m_objectStore, m_agentReference));
+    new OStoreDB::ArchiveMount(m_objectStore, m_agentReference, m_catalogue, m_logger));
   auto &am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -1481,8 +1456,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
 // OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo()
 //------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(
-  objectstore::Backend& os, objectstore::AgentReference& a):
-   m_lockTaken(false), m_objectStore(os), m_agentReference(a) {}
+  objectstore::Backend& os, objectstore::AgentReference& a, catalogue::Catalogue & c, log::Logger &l):
+   m_lockTaken(false), m_objectStore(os), m_catalogue(c), m_logger(l), m_agentReference(a) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
@@ -1566,8 +1541,8 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::ArchiveMount()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::AgentReference& a):
-  m_objectStore(os), m_agentReference(a) {}
+OStoreDB::ArchiveMount::ArchiveMount(objectstore::Backend& os, objectstore::AgentReference& a, catalogue::Catalogue & c, log::Logger & l):
+  m_objectStore(os), m_catalogue(c), m_logger(l), m_agentReference(a) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::getMountInfo()
@@ -1649,7 +1624,7 @@ auto OStoreDB::ArchiveMount::getNextJob(log::LogContext &logContext) -> std::uni
       // Prepare the return value
       auto job=aq.dumpJobs().front();
       std::unique_ptr<OStoreDB::ArchiveJob> privateRet(new OStoreDB::ArchiveJob(
-        job.address, m_objectStore, m_agentReference, *this));
+        job.address, m_objectStore, m_catalogue, m_logger, m_agentReference, *this));
       privateRet->tapeFile.copyNb = job.copyNb;
       objectstore::ScopedExclusiveLock arl;
       try {
@@ -1866,7 +1841,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         candidateDumps.pop_front();
         currentFiles++;
         currentBytes+=job.size;
-        candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_objectStore, m_agentReference, *this));
+        candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_objectStore, m_catalogue, m_logger, m_agentReference, *this));
         candidateJobs.back()->tapeFile.copyNb = job.copyNb;
       }
       {
@@ -2065,8 +2040,8 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, 
-  objectstore::Backend& os, objectstore::AgentReference& ar, ArchiveMount & am): m_jobOwned(false),
-  m_objectStore(os), m_agentReference(ar), m_archiveRequest(jobAddress, os), m_archiveMount(am) {}
+  objectstore::Backend& os, catalogue::Catalogue & c, log::Logger & l, objectstore::AgentReference& ar, ArchiveMount & am): m_jobOwned(false),
+  m_objectStore(os), m_catalogue(c), m_logger(l), m_agentReference(ar), m_archiveRequest(jobAddress, os), m_archiveMount(am) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::RetrieveMount()
@@ -2413,10 +2388,11 @@ bool OStoreDB::ArchiveJob::succeed() {
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::~ArchiveJob() {
   if (m_jobOwned) {
+    log::LogContext lc(m_logger);
     // Return the job to the pot if we failed to handle it.
     objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
     m_archiveRequest.fetch();
-    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference);
+    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
     atfrl.release();
     // Remove ownership from agent
     m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);

@@ -283,7 +283,11 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   return ret;
 }
 
-void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
+//------------------------------------------------------------------------------
+// garbageCollect
+//------------------------------------------------------------------------------
+void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // The behavior here depends on which job the agent is supposed to own.
   // We should first find this job (if any). This is for covering the case

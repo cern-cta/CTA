@@ -215,6 +215,7 @@ void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFile
   } while (found);
 }
 
-void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
+void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
 }

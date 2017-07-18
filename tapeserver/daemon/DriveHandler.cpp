@@ -870,7 +870,6 @@ int DriveHandler::runChild() {
     std::string processName="DriveProcess-";
     processName+=m_configLine.unitName;
     backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName));
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());
@@ -885,6 +884,7 @@ int DriveHandler::runChild() {
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
     catalogue=cta::catalogue::CatalogueFactory::create(m_sessionEndContext.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());

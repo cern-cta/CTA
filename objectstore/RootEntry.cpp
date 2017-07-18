@@ -82,7 +82,8 @@ void RootEntry::removeIfEmpty() {
   remove();
 }
 
-void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
+void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   // The root entry cannot be garbage collected.
   throw ForbiddenOperation("In RootEntry::garbageCollect(): RootEntry cannot be garbage collected");
 }

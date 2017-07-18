@@ -35,7 +35,8 @@ public:
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
   void commit();
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();

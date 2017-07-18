@@ -41,7 +41,8 @@ void cta::objectstore::AgentRegister::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
+void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));

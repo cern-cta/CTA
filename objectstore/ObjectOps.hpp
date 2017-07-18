@@ -21,6 +21,8 @@
 #include "Backend.hpp"
 #include "common/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
+#include "common/log/LogContext.hpp"
+#include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
 
@@ -288,7 +290,8 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) = 0;
+  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) = 0;
   
 protected:
   

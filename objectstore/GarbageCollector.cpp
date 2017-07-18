@@ -24,8 +24,8 @@
 namespace cta { namespace objectstore {
 const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 5;
 
-GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference): 
-  m_objectStore(os), m_ourAgentReference(agentReference), m_agentRegister(os) {
+GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue): 
+  m_objectStore(os), m_catalogue(catalogue), m_ourAgentReference(agentReference), m_agentRegister(os) {
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
@@ -182,7 +182,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
      go.fetch();
      // Call GenericOpbject's garbage collect method, which in turn will
      // delegate to the object type's garbage collector.
-     go.garbageCollectDispatcher(goLock, address, m_ourAgentReference);
+     go.garbageCollectDispatcher(goLock, address, m_ourAgentReference, lc, m_catalogue);
      lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
    } else {
      lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
