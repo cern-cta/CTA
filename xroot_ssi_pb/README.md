@@ -14,7 +14,7 @@ XRootD SSI transport layer. It contains the following files:
 * **XrdSsiPbService.hpp** : Defines Service on server side: bind Request to Request Processor and Execute
 * **XrdSsiPbRequestProc.hpp** : Process Request and send Response
 
-## Both Server and Client Side
+## Both Client and Server Side
 
 * **XrdSsiPbAlert.hpp** : Optional Alerts from Service to Client (_e.g._ log messages) 
 * **XrdSsiPbException.hpp** : Convert XRootD SSI and Protocol Buffer errors to exceptions

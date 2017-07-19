@@ -95,7 +95,7 @@ public:
    virtual void Alert(XrdSsiRespInfoMsg &alert_msg) override;
 
    /*!
-    * Return the future associated with the promise
+    * Return the future associated with this object's promise
     */
 
    auto GetFuture() { return m_promise.get_future(); }

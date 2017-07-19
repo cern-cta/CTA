@@ -19,6 +19,8 @@
 #ifndef __XRD_SSI_PB_REQUEST_PROC_H
 #define __XRD_SSI_PB_REQUEST_PROC_H
 
+#include <future>
+
 #include <XrdSsi/XrdSsiResponder.hh>
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbAlert.hpp"
@@ -58,7 +60,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-   RequestProc() {
+            RequestProc() {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] RequestProc() constructor" << std::endl;
 #endif
@@ -111,17 +113,21 @@ private:
     * A metadata-only reply is appropriate when we just need to send a short response/acknowledgement,
     * as it has less overhead than a full response.
     *
+    * Note that Metadata and Response buffers need to be member variables as they must stay in scope
+    * after calling RequestProc() (until Finished() is called).
+    *
     * The maximum amount of metadata that may be sent is defined by XrdSsiResponder::MaxMetaDataSZ
     * constant member.
     */
 
-   RequestType  m_request;
-   MetadataType m_metadata;
+   RequestType  m_request;         //!< Request object
+   MetadataType m_metadata;        //!< Metadata Response object
 
-   // Metadata and Response buffers must stay in scope until Finished() is called, so they need to be member variables
 
-   std::string  m_metadata_str;
-   std::string  m_response_str;
+   std::string  m_metadata_str;    //!< Serialized Metadata Response buffer
+   std::string  m_response_str;    //!< Response buffer
+
+   std::promise<void> m_promise;   //!< Promise that the Request has been processed
 };
 
 
@@ -173,6 +179,11 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    // will not be called until the Response has been processed.
 
    SetResponse(m_response_str.c_str(), m_response_str.size());
+
+   // Wait for the framework to call Finished()
+
+   auto finished = m_promise.get_future();
+   finished.wait();    // Is it possible that Finished() is never called? We should probably use wait_for() here and throw an exception if it times out
 }
 
 
@@ -201,6 +212,10 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
    {
       // Reclaim any allocated resources
    }
+
+   // Tell Execute() that we have Finished()
+
+   m_promise.set_value();
 }
 
 } // namespace XrdSsiPb

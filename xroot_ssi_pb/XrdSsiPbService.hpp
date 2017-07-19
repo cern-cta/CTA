@@ -19,8 +19,6 @@
 #ifndef __XRD_SSI_PB_SERVICE_H
 #define __XRD_SSI_PB_SERVICE_H
 
-#include <unistd.h> // for debugging
-
 #include <XrdSsi/XrdSsiService.hh>
 #include "XrdSsiPbRequestProc.hpp"
 
@@ -70,13 +68,13 @@ public:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
-#ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest()" << std::endl;
-#endif
-
    XrdSsiPb::RequestProc<RequestType, MetadataType, AlertType> processor;
 
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
+
+#ifdef XRDSSI_DEBUG
+   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Binding Processor to Request" << std::endl;
+#endif
 
    processor.BindRequest(reqRef);
 
@@ -84,15 +82,11 @@ void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest
 
    processor.Execute();
 
-   // Tell the framework we are done with the request object
+   // Tell the framework we have finished with the request object: unbind the request from the responder
 
-   // WE NEED TO ENSURE THAT FINISHED() HAS BEEN CALLED BEFORE UNBIND
-   sleep(1); // remove unistd.h
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Calling UnBindRequest()" << std::endl;
+   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Unbinding Processor from Request" << std::endl;
 #endif
-
-   // Unbind the request from the responder
 
    processor.UnBindRequest();
 }
