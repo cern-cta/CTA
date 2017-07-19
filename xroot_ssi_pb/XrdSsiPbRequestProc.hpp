@@ -135,6 +135,8 @@ private:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
+   const int ExecuteTimeout = 15;    //< Maximum no. of seconds to wait before deleting myself
+
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] RequestProc::Execute()" << std::endl;
 #endif
@@ -183,7 +185,13 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    // Wait for the framework to call Finished()
 
    auto finished = m_promise.get_future();
-   finished.wait();    // Is it possible that Finished() is never called? We should probably use wait_for() here and throw an exception if it times out
+
+   if(finished.wait_for(std::chrono::seconds(ExecuteTimeout)) == std::future_status::timeout)
+   {
+      throw XrdSsiException("RequestProc::Finished() was never called!");
+
+      // Potentially could call Finished() with cancel == true here instead of throwing an exception?
+   }
 }
 
 
