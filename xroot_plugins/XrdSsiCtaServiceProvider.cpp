@@ -2,7 +2,7 @@
 #include <iostream>
 #endif
 
-#include "XrdSsiPbAlert.h"
+#include "XrdSsiPbAlert.hpp"
 #include "XrdSsiCtaService.h"
 #include "XrdSsiCtaServiceProvider.h"
 #include "eos/messages/eos_messages.pb.h"

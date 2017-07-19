@@ -111,8 +111,8 @@ message Response {
     RSP_ERR_PROTOBUF         = 1;       //< Framework error caused by Google Protocol Buffers layer
     RSP_ERR_CTA              = 2;       //< Server error reported by CTA Frontend
   }
-  ResponseType rsp_type      = 1;       //< Encode the type of this reply
-  Alert alert_msg            = 2;       //< Text of the reply
+  ResponseType type          = 1;       //< Encode the type of this reply
+  string message_txt         = 2;       //< Text of the reply
 }
 
 

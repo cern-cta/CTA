@@ -23,8 +23,8 @@
 
 #include <XrdSsi/XrdSsiProvider.hh>
 #include <XrdSsi/XrdSsiService.hh>
-#include "XrdSsiPbException.h"
-#include "XrdSsiPbRequest.h"
+#include "XrdSsiPbException.hpp"
+#include "XrdSsiPbRequest.hpp"
 
 
 

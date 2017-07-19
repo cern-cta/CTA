@@ -19,7 +19,7 @@
 #ifndef __EOS_CTA_API_H
 #define __EOS_CTA_API_H
 
-#include "XrdSsiPbServiceClientSide.h"       //!< XRootD SSI/Protocol Buffer Service bindings (client side)
+#include "XrdSsiPbServiceClientSide.hpp"     //!< XRootD SSI/Protocol Buffer Service, client-side bindings
 #include "eos/messages/eos_messages.pb.h"    //!< Auto-generated message types from .proto file
 
 /*!

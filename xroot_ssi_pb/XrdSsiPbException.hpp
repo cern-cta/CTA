@@ -28,15 +28,10 @@ namespace XrdSsiPb {
  * Framework exception thrown by Google Protocol Buffers layer
  */
 
-class PbException : public std::exception
-{
+class PbException : public std::runtime_error {
 public:
-   PbException(const std::string &err_msg) : m_err_msg(err_msg) {}
-
-   const char* what() const noexcept { return m_err_msg.c_str(); }
-
-private:
-   std::string m_err_msg;
+   PbException(const char *err_msg) : std::runtime_error(err_msg) {}
+   PbException(const std::string &err_msg) : std::runtime_error(err_msg) {}
 };
 
 
@@ -45,11 +40,12 @@ private:
  * Framework exception thrown by XRootD/SSI layer
  */
 
-class XrdSsiException : public PbException
+class XrdSsiException : public std::runtime_error
 {
 public:
-   XrdSsiException(const std::string &err_msg) : PbException(err_msg) {}
-   XrdSsiException(const XrdSsiErrInfo &eInfo) : PbException(eInfo.Get()) {}
+   XrdSsiException(const char *err_msg) : std::runtime_error(err_msg) {}
+   XrdSsiException(const std::string &err_msg) : std::runtime_error(err_msg) {}
+   XrdSsiException(const XrdSsiErrInfo &eInfo) : std::runtime_error(eInfo.Get()) {}
 };
 
 } // namespace XrdSsiPb

@@ -21,10 +21,10 @@
 #include <iostream>
 #include <sstream>
 #include <cryptopp/base64.h>
-#include <google/protobuf/util/json_util.h>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
-#include "XrdSsiPbDebug.h"
+
+#include "XrdSsiPbDebug.hpp"
 #include "EosCtaApi.h"
 
 
@@ -283,6 +283,19 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
       XrdSsiPb::OutputJsonString(myout, &response);
    }
 
+   // Handle responses
+
+   switch(response.type())
+   {
+      using namespace eos::wfe;
+
+      case Response::RSP_SUCCESS:         myout << response.message_txt() << std::endl; break;
+      case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
+      case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
+      // ... define other response types in the protocol buffer (e.g. user error)
+      default:                            throw XrdSsiPb::PbException("Invalid response type.");
+   }
+
    // Delete all global objects allocated by libprotobuf
 
    google::protobuf::ShutdownProtobufLibrary();
@@ -303,12 +316,16 @@ int main(int argc, const char **argv)
 {
    try {    
       return exceptionThrowingMain(argc, argv);
+   } catch (XrdSsiPb::PbException &ex) {
+      std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
+   } catch (XrdSsiPb::XrdSsiException &ex) {
+      std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
    } catch (std::exception &ex) {
-      std::cerr << "Failed to execute the command. Reason: " << ex.what() << std::endl;
-      return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
+      std::cerr << "Caught exception: " << ex.what() << std::endl;
    } catch (...) {
-      std::cerr << "Failed to execute the command for an unknown reason" << std::endl;
-      return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
+      std::cerr << "Caught an unknown exception" << std::endl;
    }
+
+   return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
 }
 

@@ -4,7 +4,7 @@
 #include <unistd.h> // for debugging
 
 #include <XrdSsi/XrdSsiService.hh>
-#include "XrdSsiPbRequestProc.h"
+#include "XrdSsiPbRequestProc.hpp"
 
 
 
@@ -61,7 +61,7 @@ void XrdSsiCtaService<RequestType, MetadataType, AlertType>::ProcessRequest(XrdS
    // Tell the framework we are done with the request object
 
    // WE NEED TO ENSURE THAT FINISHED() HAS BEEN CALLED BEFORE UNBIND
-   sleep(1);
+   sleep(1); // remove unistd.h
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] XrdSsiCtaService::ProcessRequest(): Calling UnBindRequest()" << std::endl;
 #endif

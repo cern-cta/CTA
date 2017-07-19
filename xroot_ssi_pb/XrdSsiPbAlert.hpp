@@ -20,7 +20,7 @@
 #define __XRD_SSI_PB_ALERT_H
 
 #include <XrdSsi/XrdSsiRespInfo.hh>
-#include "XrdSsiPbException.h"
+#include "XrdSsiPbException.hpp"
 
 namespace XrdSsiPb {
 

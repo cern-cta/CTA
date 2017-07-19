@@ -19,9 +19,9 @@
 #include <iostream>
 #include <memory>
 
-#include "XrdSsiPbDebug.h" // for Json output
-#include "XrdSsiPbException.h"
-#include "XrdSsiPbRequestProc.h"
+#include "XrdSsiPbDebug.hpp" // for Json output
+#include "XrdSsiPbException.hpp"
+#include "XrdSsiPbRequestProc.hpp"
 #include "eos/messages/eos_messages.pb.h"
 
 #include "common/Configuration.hpp"
@@ -102,13 +102,12 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 
       // Set metadata
 
-      m_metadata.set_rsp_type(eos::wfe::Response::RSP_SUCCESS);
+      m_metadata.set_type(eos::wfe::Response::RSP_SUCCESS);
    }
    catch(std::exception &ex)
    {
-      m_metadata.set_rsp_type(eos::wfe::Response::RSP_ERR_CTA);
-      m_metadata.mutable_alert_msg()->set_audience(eos::wfe::Alert::EOSLOG);
-      m_metadata.mutable_alert_msg()->set_message_txt(ex.what());
+      m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
+      m_metadata.set_message_txt(ex.what());
    }
 
 #if 0
@@ -186,14 +185,14 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
 {
    // Set metadata
 
-   m_metadata.set_rsp_type(eos::wfe::Response::RSP_ERR_CTA);
+   m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
 
    //switch(err_num)
    //{
       //case PB_PARSE_ERR:    m_metadata.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
    //}
 
-   m_metadata.mutable_alert_msg()->set_message_txt(err_text);
+   m_metadata.set_message_txt(err_text);
 
    // Output message in Json format (for debugging)
 
