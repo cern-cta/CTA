@@ -33,6 +33,9 @@ cta::objectstore::RetrieveQueue::RetrieveQueue(GenericObject& go):
   getPayloadFromHeader();
 }
 
+cta::objectstore::RetrieveQueue::RetrieveQueue(Backend& os):
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os) { }
+
 void cta::objectstore::RetrieveQueue::initialize(const std::string &vid) {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields

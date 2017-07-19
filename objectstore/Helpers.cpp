@@ -66,12 +66,53 @@ void Helpers::getLockedAndFetchedArchiveQueue(ArchiveQueue& archiveQueue,
     }
   }
   throw cta::exception::Exception(std::string(
-      "In OStoreDB::getLockedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
+      "In OStoreDB::getLockedAndFetchedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
       + tapePool);
 }
 
+
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedArchiveQueue()
+// Helpers::getLockedAndFetchedRetrieveQueue()
+//------------------------------------------------------------------------------
+void Helpers::getLockedAndFetchedRetrieveQueue(RetrieveQueue& retrieveQueue, ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference, const std::string& vid) {
+  // TODO: if necessary, we could use a singleton caching object here to accelerate
+  // lookups.
+  // Getting a locked AQ is the name of the game.
+  // Try and find an existing one first, create if needed
+  Backend & be = retrieveQueue.m_objectStore;
+  for (size_t i=0; i<5; i++) {
+    {
+      RootEntry re (be);
+      ScopedSharedLock rel(re);
+      re.fetch();
+      try {
+        retrieveQueue.setAddress(re.getRetrieveQueue(vid));
+      } catch (cta::exception::Exception & ex) {
+        rel.release();
+        ScopedExclusiveLock rexl(re);
+        re.fetch();
+        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid, agentReference));
+      }
+    }
+    try {
+      retrieveQueueLock.lock(retrieveQueue);
+      retrieveQueue.fetch();
+      return;
+    } catch (cta::exception::Exception & ex) {
+      // We have a (rare) opportunity for a race condition, where we identify the
+      // queue and it gets deleted before we manage to lock it.
+      // The locking of fetching will fail in this case.
+      // We hence allow ourselves to retry a couple times.
+      continue;
+    }
+  }
+  throw cta::exception::Exception(std::string(
+      "In OStoreDB::getLockedAndFetchedRetrieveQueue(): failed to find or create and lock archive queue after 5 retries for vid: ")
+      + vid);
+}
+
+//------------------------------------------------------------------------------
+// Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
     objectstore::Backend & objectstore) {
@@ -166,6 +207,31 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
 }
 
 //------------------------------------------------------------------------------
+// Helpers::updateRetrieveQueueStatisticsCache()
+//------------------------------------------------------------------------------
+void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority) {
+  // We will not update the status of the tape if we already cached it (called did not check),
+  // but of course we will suppose the tape is not disabled if the cache entry is either absent
+  // or stale.
+  threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
+  try {
+    if (g_retrieveQueueStatistics.at(vid).updateTime + c_retrieveQueueCacheMaxAge < time(nullptr))
+      g_retrieveQueueStatistics.at(vid).tapeStatus.disabled=false;
+    g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
+    g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
+    g_retrieveQueueStatistics.at(vid).updateTime=time(nullptr);
+  } catch (std::out_of_range &) {
+    // The entry is missing. We just create it.
+    g_retrieveQueueStatistics[vid].stats.bytesQueued=bytes;
+    g_retrieveQueueStatistics[vid].stats.filesQueued=files;
+    g_retrieveQueueStatistics[vid].stats.currentPriority=priority;
+    g_retrieveQueueStatistics[vid].stats.vid=vid;
+    g_retrieveQueueStatistics[vid].tapeStatus.disabled=false;
+    g_retrieveQueueStatistics[vid].tapeStatus.full=false;
+  }
+}
+
+//------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatistics
 //------------------------------------------------------------------------------
 std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime> Helpers::g_retrieveQueueStatistics;
@@ -178,7 +244,6 @@ cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 //------------------------------------------------------------------------------
 // Helpers::getLockedAndFetchedArchiveQueue()
 //------------------------------------------------------------------------------
-
 std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueStatistics(
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider,
   objectstore::Backend & objectstore) {

@@ -22,6 +22,7 @@
 #include "MountPolicySerDeser.hpp"
 #include "DiskFileInfoSerDeser.hpp"
 #include "ArchiveFileSerDeser.hpp"
+#include "RetrieveQueue.hpp"
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -86,9 +87,67 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
     found:;
     }
   }
+  // If there is no candidate, we cancel the job
+  // TODO: in the future, we might queue it for reporting to EOS.
+  if (candidateVids.empty()) {
+    remove();
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet());
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): deleted job as no tape file is available for recall.");
+    return;
+  }
   // If we have to fetch the status of the tapes and queued for the non-disabled vids.
   auto bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
-  throw cta::exception::Exception("In RetrieveRequest::garbageCollect(): not implemented.");
+  // Find the corresponding tape file, which will give the copynb, which will allow finding the retrieve job.
+  auto bestTapeFile=m_payload.archivefile().tapefiles().begin();
+  while (bestTapeFile != m_payload.archivefile().tapefiles().end()) {
+    if (bestTapeFile->vid() == bestVid)
+      goto tapeFileFound;
+    bestTapeFile++;
+  }
+  {
+    std::stringstream err;
+    err << "In RetrieveRequest::garbageCollect(): could not find tapefile for vid " << bestVid;
+    throw exception::Exception(err.str());
+  }
+tapeFileFound:;
+  auto bestJob=m_payload.mutable_jobs()->begin();
+  while (bestJob!=m_payload.mutable_jobs()->end()) {
+    if (bestJob->copynb() == bestTapeFile->copynb())
+      goto jobFound;
+    bestJob++;
+  }
+  {
+    std::stringstream err;
+    err << "In RetrieveRequest::garbageCollect(): could not find job for copynb " << bestTapeFile->copynb();
+    throw exception::Exception(err.str());
+  }
+jobFound:;
+  // We now need to grab the queue a requeue the request.
+  RetrieveQueue rq(m_objectStore);
+  ScopedExclusiveLock rql;
+  Helpers::getLockedAndFetchedRetrieveQueue(rq, rql, agentReference, bestVid);
+  // Enqueue add the job to the queue
+  objectstore::MountPolicySerDeser mp;
+  mp.deserialize(m_payload.mountpolicy());
+  rq.addJob(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
+    mp, m_payload.schedulerrequest().entrylog().time());
+  auto jobsSummary=rq.getJobsSummary();
+  rq.commit();
+  // We can now make the transition official
+  bestJob->set_status(serializers::RetrieveJobStatus::RJS_Pending);
+  m_payload.set_activecopynb(bestJob->copynb());
+  setOwner(rq.getAddressIfSet());
+  commit();
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("queueObject", rq.getAddressIfSet())
+          .add("copynb", bestTapeFile->copynb())
+          .add("vid", bestTapeFile->vid());
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+  }
+  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
 }
 
 //------------------------------------------------------------------------------

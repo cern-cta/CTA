@@ -86,6 +86,12 @@ public:
     const std::set<std::string> & vidsToConsider,
     objectstore::Backend & objectstore);
   
+  /**
+   * Opportunistic updating of the queue stats cache as we access it. This implies the
+   * tape is not disabled (full status not fetched).
+   */
+  static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
+  
 private:
   /** Lock for the retrieve queues stats */
   static cta::threading::Mutex g_retrieveQueueStatisticsMutex;

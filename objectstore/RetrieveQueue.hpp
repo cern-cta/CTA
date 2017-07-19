@@ -32,6 +32,8 @@ class GenericObject;
 class RetrieveQueue: public ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t> {
 public:
   RetrieveQueue(const std::string & address, Backend & os);
+  // Undefined object constructor
+  RetrieveQueue(Backend & os);
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
   void commit();
