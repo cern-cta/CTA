@@ -340,7 +340,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       checkTapeFileWrittenFieldsAreSet(firstEvent);
 
       if (event.vid != firstEvent.vid) {
-        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=event.vid");
+        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
 
       if (expectedFSeq != event.fSeq) {
