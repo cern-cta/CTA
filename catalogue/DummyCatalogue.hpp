@@ -69,7 +69,7 @@ public:
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::TapePool> getTapePools() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+ // getTapesByVid is implemented below (and works).
   std::list<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyAdminHostComment(const common::dataStructures::SecurityIdentity& admin, const std::string& hostName, const std::string& comment) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -109,6 +109,34 @@ public:
   void tapeMountedForArchive(const std::string& vid, const std::string& drive) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool tapePoolExists(const std::string& tapePoolName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  
+  // Special functions for unit tests.
+  void addEnabledTape(const std::string & vid) {
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    m_tapeEnabling[vid]=true;
+  }
+  void addDisabledTape(const std::string & vid) {
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    m_tapeEnabling[vid]=false;
+  }
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const {
+    // Minimal implementation of VidToMap for retrieve request unit tests. We just support
+    // disabled status for the tapes.
+    // If the tape is not listed, it is listed as disabled in the return value.
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    common::dataStructures::VidToTapeMap ret;
+    for (const auto & v: vids) {
+      try {
+        ret[v].disabled = !m_tapeEnabling.at(v);
+      } catch (std::out_of_range &) {
+        ret[v].disabled = true;
+      }
+    }
+    return ret;
+  }
+private:
+  mutable threading::Mutex m_tapeEnablingMutex;
+  std::map<std::string, bool> m_tapeEnabling;
 };
 
 }} // namespace cta::catalogue.

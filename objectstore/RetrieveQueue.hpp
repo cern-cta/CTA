@@ -48,6 +48,11 @@ public:
   void addJob(uint64_t copyNb, uint64_t fSeq,
     const std::string & retrieveRequestAddress, uint64_t size,
     const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
+  bool addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
+    const std::string & retrieveRequestAddress, uint64_t size,
+    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;

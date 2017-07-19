@@ -133,6 +133,49 @@ void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb, uint64_t fSeq,
   }
 }
 
+bool cta::objectstore::RetrieveQueue::addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
+  const std::string & retrieveRequestAddress, uint64_t size, 
+  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+  checkPayloadWritable();
+  // Check if the job is present and skip insertion if so
+  for (auto &j: m_payload.retrievejobs()) {
+    if (j.address() == retrieveRequestAddress)
+      return false;
+  }
+  // Keep track of the mounting criteria
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.incCount(policy.retrievePriority);
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
+  if (m_payload.retrievejobs_size()) {
+    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
+      m_payload.set_oldestjobcreationtime(startTime);
+    }
+    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
+  } else {
+    m_payload.set_oldestjobcreationtime(startTime);
+    m_payload.set_retrievejobstotalsize(size);
+  }
+  auto * j = m_payload.add_retrievejobs();
+  j->set_address(retrieveRequestAddress);
+  j->set_size(size);
+  j->set_copynb(copyNb);
+  j->set_fseq(fSeq);
+  j->set_priority(policy.retrievePriority);
+  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  // move the the new job in the right spot on the queue.
+  // i points to the newly added job all the time.
+  size_t i=m_payload.retrievejobs_size() - 1;
+  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+    i--;
+  }
+  return true;
+}
+
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
   checkPayloadReadable();
   JobsSummary ret;

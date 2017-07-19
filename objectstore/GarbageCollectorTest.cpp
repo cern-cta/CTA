@@ -32,7 +32,9 @@
 #include "AgentRegister.hpp"
 #include "DriveRegister.hpp"
 #include "ArchiveRequest.hpp"
+#include "RetrieveRequest.hpp"
 #include "ArchiveQueue.hpp"
+#include "RetrieveQueue.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "catalogue/DummyCatalogue.hpp"
 
@@ -458,6 +460,185 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aql.release();
     // Remove queues from root
     re.removeArchiveQueueAndCommit(tp);
+  }
+
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
+  ASSERT_NO_THROW(re.removeIfEmpty());
+  // TODO: this unit test still leaks tape pools and requests
+}
+
+TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
+  // We will need a log object
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("unitTest");
+#else
+  cta::log::DummyLogger dl("unitTest");
+#endif
+  cta::log::LogContext lc(dl);
+  // We need a dummy catalogue
+  cta::catalogue::DummyCatalogue catalogue(dl);
+  // Here we check that can successfully call RetrieveRequests's garbage collector
+  cta::objectstore::BackendVFS be;
+  // Create the root entry
+  cta::objectstore::RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  cta::objectstore::EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
+  // Create the agent for objects creation
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  // Finish root creation.
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  rel.release();
+  // continue agent creation.
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf();
+  // Create an agent to garbage be collected
+  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
+  agA.initialize();
+  agA.setTimeout_us(0);
+  agA.insertAndRegisterSelf();
+  // Several use cases are present for the RetrieveRequests:
+  // - just referenced in agent ownership list, but not yet created.
+  // - just created but not linked to any tape
+  // - partially linked to tape
+  // - When requeueing the request, the tape could be disabled, in which case
+  //   it will be deleted.
+  //
+  // Create 2 retrieve queues
+  std::string tAddr[2];
+  for (int i=0; i<2; i++)
+  {
+    cta::objectstore::RootEntry re(be);
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    std::stringstream vid;
+    vid << "Tape" << i;
+    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef);
+    cta::objectstore::RetrieveQueue rq(tAddr[i], be);
+  }
+  // Create the various ATFR's, stopping one step further each time.
+  int pass=0;
+  while (true)
+  {
+    // -just referenced
+    std::string atfrAddr = agrA.nextId("RetrieveRequest");
+    agrA.addToOwnership(atfrAddr, be);
+    if (pass < 1) { pass++; continue; }
+    // - created, but not linked to tape pools. Those jobs will be queued by the garbage
+    // collector.
+    cta::objectstore::RetrieveRequest rr(atfrAddr, be);
+    rr.initialize();
+    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
+    rqc.archiveFile.archiveFileID = 123456789L;
+    rqc.archiveFile.diskFileId = "eos://diskFile";
+    rqc.archiveFile.checksumType = "";
+    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.creationTime = 0;
+    rqc.archiveFile.reconciliationTime = 0;
+    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    rqc.archiveFile.diskInstance = "eoseos";
+    rqc.archiveFile.fileSize = 667;
+    rqc.archiveFile.storageClass = "sc";
+    rqc.archiveFile.tapeFiles[1].blockId=0;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].copyNb=1;
+    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
+    rqc.archiveFile.tapeFiles[1].fSeq=pass;
+    rqc.archiveFile.tapeFiles[1].vid="Tape0";
+    rqc.archiveFile.tapeFiles[2].blockId=0;
+    rqc.archiveFile.tapeFiles[2].compressedSize=1;
+    rqc.archiveFile.tapeFiles[2].compressedSize=1;
+    rqc.archiveFile.tapeFiles[2].copyNb=2;
+    rqc.archiveFile.tapeFiles[2].creationTime=time(nullptr);
+    rqc.archiveFile.tapeFiles[2].fSeq=pass;
+    rqc.archiveFile.tapeFiles[2].vid="Tape1";
+    rqc.mountPolicy.archiveMinRequestAge = 1;
+    rqc.mountPolicy.archivePriority = 1;
+    rqc.mountPolicy.creationLog.time = time(nullptr);
+    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.maxDrivesAllowed = 1;
+    rqc.mountPolicy.retrieveMinRequestAge = 1;
+    rqc.mountPolicy.retrievePriority = 1;
+    rr.setRetrieveFileQueueCriteria(rqc);
+    cta::common::dataStructures::RetrieveRequest sReq;
+    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
+    sReq.creationLog.time=time(nullptr);
+    rr.setSchedulerRequest(sReq);
+    rr.addJob(1, 1, 1);
+    rr.addJob(2, 1, 1);    
+    rr.setOwner(agA.getAddressIfSet());
+    rr.setActiveCopyNumber(0);
+    rr.insert();
+    cta::objectstore::ScopedExclusiveLock rrl(rr);
+    if (pass < 3) { pass++; continue; }
+    // - Reference job in the first tape
+    {
+      cta::objectstore::RetrieveQueue rq(tAddr[0], be);
+      cta::objectstore::ScopedExclusiveLock rql(rq);
+      rq.fetch();
+      rq.addJob(1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time);
+      rq.commit();
+    }
+    if (pass < 5) { pass++; continue; }
+    // - Still marked a not owned but referenced in the agent
+    {
+      rr.setOwner(tAddr[0]);
+      rr.setActiveCopyNumber(1);
+      rr.commit();
+    }
+    break;
+  }
+  // Mark the tape as enabled
+  catalogue.addEnabledTape("Tape0");
+  // Create the garbage collector and run it twice.
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+  gcAgent.initialize();
+  gcAgent.setTimeout_us(0);
+  gcAgent.insertAndRegisterSelf();
+  {
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    gc.runOnePass(lc);
+    gc.runOnePass(lc);
+  }
+  // All 4 requests should be linked in the first tape queue
+  {
+    cta::objectstore::RetrieveQueue rq(tAddr[0], be);
+    cta::objectstore::ScopedExclusiveLock tp0lock(rq);
+    rq.fetch();
+    auto dump=rq.dumpJobs();
+    // We expect all jobs with sizes 1002-1005 inclusive to be connected to
+    // their respective tape pools.
+    ASSERT_EQ(5, rq.getJobsSummary().files);
+  }
+  // Unregister gc's agent
+  cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
+  gcAgent.fetch();
+  gcAgent.removeAndUnregisterSelf();
+  // We should not be able to remove the agent register (as it should be empty)
+  rel.lock(re);
+  re.fetch();
+  // Remove jobs from retrieve queue
+  std::list<std::string> retrieveQueues = { "Tape0", "Tape1" };
+  for (auto & vid: retrieveQueues) {
+    // Empty queue
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid), be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    for (auto &j: rq.dumpJobs()) {
+      rq.removeJob(j.address);
+    }
+    rq.commit();
+    rql.release();
+    // Remove queues from root
+    re.removeRetrieveQueueAndCommit(vid);
   }
 
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());

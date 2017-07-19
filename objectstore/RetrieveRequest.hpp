@@ -83,17 +83,13 @@ public:
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
   
-  void setArchiveFile(const cta::common::dataStructures::ArchiveFile & archiveFile);
-  cta::common::dataStructures::ArchiveFile getArchiveFile();
-  
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
+  cta::common::dataStructures::ArchiveFile getArchiveFile();
+  cta::common::dataStructures::EntryLog getEntryLog();
   
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
-  
-  void setEntryLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getEntryLog();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

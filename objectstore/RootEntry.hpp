@@ -87,7 +87,7 @@ public:
   void removeMissingRetrieveQueueReference(const std::string & address);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
   void removeRetrieveQueueAndCommit(const std::string & vid);
-  std::string getRetrieveQueue(const std::string & vid);
+  std::string getRetrieveQueueAddress(const std::string & vid);
   struct RetrieveQueueDump {
     std::string vid;
     std::string address;

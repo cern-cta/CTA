@@ -86,7 +86,7 @@ void Helpers::getLockedAndFetchedRetrieveQueue(RetrieveQueue& retrieveQueue, Sco
       ScopedSharedLock rel(re);
       re.fetch();
       try {
-        retrieveQueue.setAddress(re.getRetrieveQueue(vid));
+        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid));
       } catch (cta::exception::Exception & ex) {
         rel.release();
         ScopedExclusiveLock rexl(re);
@@ -258,7 +258,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueue(tf.second.vid);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;

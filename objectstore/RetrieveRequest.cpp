@@ -64,7 +64,13 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // Check the request is indeed owned by the right owner.
-  if (getOwner() != presumedOwner) return;
+  if (getOwner() != presumedOwner) {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("presumedOwner", presumedOwner)
+          .add("owner", getOwner());
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): no garbage collection needed.");
+  }
   // The owner is indeed the right one. We should requeue the request if possible.
   // Find the vids for active jobs in the request (pending ones).
   using serializers::RetrieveJobStatus;
@@ -130,7 +136,7 @@ jobFound:;
   // Enqueue add the job to the queue
   objectstore::MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());
-  rq.addJob(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
+  rq.addJobIfNecessary(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
     mp, m_payload.schedulerrequest().entrylog().time());
   auto jobsSummary=rq.getJobsSummary();
   rq.commit();

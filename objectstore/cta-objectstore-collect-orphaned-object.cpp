@@ -27,6 +27,7 @@
 #include "Agent.hpp"
 #include "RootEntry.hpp"
 #include "ArchiveRequest.hpp"
+#include "RetrieveRequest.hpp"
 #include "GenericObject.hpp"
 #include "common/log/StringLogger.hpp"
 #include "catalogue/CatalogueFactory.hpp"
@@ -56,7 +57,7 @@ int main(int argc, char ** argv) {
     } catch (std::bad_cast &){}
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     // Try and open the object.
-    cta::objectstore::GenericObject go(argv[2], *be);
+    cta::objectstore::GenericObject go(argv[3], *be);
     cta::objectstore::ScopedExclusiveLock gol(go);
     std::cout << "Object address: " << go.getAddressIfSet() << std::endl;
     go.fetch();
@@ -73,7 +74,7 @@ int main(int argc, char ** argv) {
       gol.release();
       bool someGcDone=false;
     gcpass:
-      cta::objectstore::ArchiveRequest ar(argv[2], *be);
+      cta::objectstore::ArchiveRequest ar(argv[3], *be);
       cta::objectstore::ScopedExclusiveLock arl(ar);
       ar.fetch();
       for (auto & j: ar.dumpJobs()) {
@@ -91,6 +92,24 @@ int main(int argc, char ** argv) {
         }
       } else {
         std::cout << "No job was orphaned." << std::endl;
+      }
+      break;
+    }
+    case cta::objectstore::serializers::ObjectType::RetrieveRequest_t:
+    {
+      // Reopen the object as an ArchiveRequest
+      std::cout << "The object is an RetrieveRequest" << std::endl;
+      gol.release();
+      cta::objectstore::RetrieveRequest rr(argv[3], *be);
+      cta::objectstore::ScopedExclusiveLock rrl(rr);
+      rr.fetch();
+      if (!be->exists(rr.getOwner())) {
+        std::cout << "Owner " << rr.getOwner() << " does not exist." << std::endl;
+        rr.garbageCollect(rr.getOwner(), agr, lc, *catalogue);
+        rr.fetch();
+        std::cout << "New owner for request is " << rr.getOwner() << std::endl;
+      } else {
+        std::cout << "No request was not orphaned." << std::endl;
       }
       break;
     }
