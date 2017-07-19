@@ -2255,24 +2255,26 @@ void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::ArchiveJob::succeed()
+// OStoreDB::ArchiveJob::asyncSucceed()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::succeed() {
-  // Lock the request and set the job as successful.
-  objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
-  m_archiveRequest.fetch();
-  std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  bool lastJob=m_archiveRequest.setJobSuccessful(tapeFile.copyNb);
-  if (lastJob) {
-    m_archiveRequest.remove();
-  } else {
-    m_archiveRequest.commit();
+void OStoreDB::ArchiveJob::asyncSucceed() {  
+  m_jobUpdate.reset(m_archiveRequest.asyncUpdateJobSuccessful(tapeFile.copyNb));
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::checkSucceed()
+//------------------------------------------------------------------------------
+bool OStoreDB::ArchiveJob::checkSucceed() {  
+  m_jobUpdate->wait();
+  if (m_jobUpdate->m_isLastJob) {
+    m_archiveRequest.resetValues();
   }
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership from agent
-  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);
-  return lastJob;
+  const std::string atfrAddress = m_archiveRequest.getAddressIfSet();
+  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);  
+  return m_jobUpdate->m_isLastJob;
 }
 
 //------------------------------------------------------------------------------

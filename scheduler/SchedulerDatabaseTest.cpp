@@ -205,7 +205,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj.front()->succeed();
+      aj.front()->asyncSucceed();
+      aj.front()->checkSucceed();
     }
     else
       done = true;
@@ -291,7 +292,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj.front()->succeed();
+      aj.front()->asyncSucceed();
+      aj.front()->checkSucceed();
     }
     else
       done = true;

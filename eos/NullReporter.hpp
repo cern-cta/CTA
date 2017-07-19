@@ -26,6 +26,7 @@ class NullReporter: public DiskReporter {
 public:
   NullReporter() {};
   void reportArchiveFullyComplete() override {};
+  void asyncReportArchiveFullyComplete() override {};
 };
 
 }} // namespace cta::disk

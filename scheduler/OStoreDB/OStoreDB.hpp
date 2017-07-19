@@ -140,8 +140,9 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    bool succeed() override;
     void fail(log::LogContext & lc) override;
+    void asyncSucceed() override;
+    bool checkSucceed() override;
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
@@ -156,6 +157,7 @@ public:
     objectstore::AgentReference & m_agentReference;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
   };
   
   /* === Retrieve Mount handling ============================================ */

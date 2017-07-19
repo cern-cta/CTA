@@ -76,6 +76,19 @@ public:
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
+
+  // An asynchronous job updating class for success.
+  class AsyncJobSuccessfulUpdater {
+    friend class ArchiveRequest;
+  public:
+    void wait();
+    bool m_isLastJob;
+  private:
+    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+  };
+  AsyncJobSuccessfulUpdater * asyncUpdateJobSuccessful(uint16_t copyNumber);
+
   // Get a job owner
   std::string getJobOwner(uint16_t copyNumber);
   // Request management ========================================================

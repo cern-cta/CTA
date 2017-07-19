@@ -185,9 +185,11 @@ public:
     std::string archiveReportURL;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    /// Indicates a success to the DB. If this is the last job, return true.
-    virtual bool succeed() = 0;
     virtual void fail(log::LogContext & lc) = 0;
+    /// Indicates a success to the DB. 
+    virtual void asyncSucceed() = 0;
+    /// Check a succeed job status. If this is the last job, return true.
+    virtual bool checkSucceed() = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };

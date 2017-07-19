@@ -77,8 +77,8 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
-  return m_reporterFactory.createDiskReporter(URL);
+cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL, std::promise<void> &reporterState) {
+  return m_reporterFactory.createDiskReporter(URL, reporterState);
 }
 
 //------------------------------------------------------------------------------
@@ -93,6 +93,12 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 }
 
 //------------------------------------------------------------------------------
+// updateCatalogueWithTapeFilesWritten
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten) {
+  m_catalogue.filesWrittenToTape(tapeFilesWritten);
+}
+
 // getNextJobBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, 

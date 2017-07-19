@@ -329,13 +329,32 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
         ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw Backend::CouldNotFetch(ex.getMessageValue());
       }
-      // Let user's exceptions go through.
-      std::string postUpdateData=m_update(preUpdateData);
-      try {
-        m_backend.atomicOverwrite(m_name, postUpdateData);
-      } catch (cta::exception::Exception & ex) {
-        ANNOTATE_HAPPENS_BEFORE(&m_job);
-        throw Backend::CouldNotCommit(ex.getMessageValue());
+      
+      std::string postUpdateData;
+      bool updateWithDelete = false;
+      try {      
+        postUpdateData=m_update(preUpdateData);
+      } catch (AsyncUpdateWithDelete & ex) {
+        updateWithDelete = true;               
+      } catch (...) {
+        // Let user's exceptions go through.
+        throw; 
+      }
+      
+      if(updateWithDelete) {
+        try {
+          m_backend.remove(m_name);
+        } catch (cta::exception::Exception & ex) {
+          ANNOTATE_HAPPENS_BEFORE(&m_job);
+          throw Backend::CouldNotCommit(ex.getMessageValue());
+        }
+      } else { 
+        try {
+          m_backend.atomicOverwrite(m_name, postUpdateData);
+        } catch (cta::exception::Exception & ex) {
+          ANNOTATE_HAPPENS_BEFORE(&m_job);
+          throw Backend::CouldNotCommit(ex.getMessageValue());
+        }
       }
       try {
         sl->release();

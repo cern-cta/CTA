@@ -461,6 +461,51 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
   return m_srcURL;
 }
 
+ArchiveRequest::AsyncJobSuccessfulUpdater * ArchiveRequest::asyncUpdateJobSuccessful(const uint16_t copyNumber ) { 
+  std::unique_ptr<AsyncJobSuccessfulUpdater> ret(new AsyncJobSuccessfulUpdater);  
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
+  ret->m_updaterCallback=
+    [this,copyNumber, &retRef](const std::string &in)->std::string { 
+      // We have a locked and fetched object, so we just need to work on its representation.
+      serializers::ObjectHeader oh;
+      oh.ParseFromString(in);
+      if (oh.type() != serializers::ObjectType::ArchiveRequest_t) {
+        std::stringstream err;
+        err << "In ArchiveRequest::asyncUpdateJobSuccessful()::lambda(): wrong object type: " << oh.type();
+        throw cta::exception::Exception(err.str());
+      }
+      serializers::ArchiveRequest payload;
+      payload.ParseFromString(oh.payload());
+      auto * jl = payload.mutable_jobs();
+      for (auto j=jl->begin(); j!=jl->end(); j++) {
+        if (j->copynb() == copyNumber) {
+          j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
+          for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
+            if (j2->status()!= serializers::ArchiveJobStatus::AJS_Complete && 
+                j2->status()!= serializers::ArchiveJobStatus::AJS_Failed) {
+                retRef.m_isLastJob = false;
+                oh.set_payload(payload.SerializePartialAsString());
+                return oh.SerializeAsString();
+            }
+          }
+          retRef.m_isLastJob = true;
+          oh.set_payload(payload.SerializePartialAsString());
+          throw cta::objectstore::Backend::AsyncUpdateWithDelete(oh.SerializeAsString());
+        }
+      }
+      std::stringstream err;
+      err << "In ArchiveRequest::asyncUpdateJobSuccessful()::lambda(): copyNb not found";
+      throw cta::exception::Exception(err.str());
+    };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
+}
+
+void ArchiveRequest::AsyncJobSuccessfulUpdater::wait() {
+  m_backendUpdater->wait();
+}
+
 std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   checkPayloadReadable();
   auto jl = m_payload.jobs();

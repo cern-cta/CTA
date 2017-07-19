@@ -23,6 +23,7 @@ namespace cta { namespace eos {
 class DiskReporter {
 public:
   virtual void reportArchiveFullyComplete() = 0;
+  virtual void asyncReportArchiveFullyComplete() = 0;
   virtual ~DiskReporter() {};
 };
 
