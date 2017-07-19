@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <google/protobuf/util/json_util.h>
 
-
+namespace XrdSsiPb {
 
 static void OutputJsonString(std::ostream &os, const google::protobuf::Message *message)
 {
@@ -50,5 +50,7 @@ inline void DumpBuffer(const std::string &buffer)
    }
    fprintf(stderr, "\n");
 }
+
+} // namespace XrdSsiPb
 
 #endif

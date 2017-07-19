@@ -263,7 +263,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      OutputJsonString(myout, &notification);
+      XrdSsiPb::OutputJsonString(myout, &notification);
    }
 
    // Obtain a Service Provider
@@ -280,7 +280,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      OutputJsonString(myout, &response);
+      XrdSsiPb::OutputJsonString(myout, &response);
    }
 
    // Delete all global objects allocated by libprotobuf

@@ -149,7 +149,7 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
       // Handle errors in the XRootD framework (e.g. no response from server)
 
-      case XrdSsiRespInfo::isError:     throw XrdSsiException(eInfo.Get());
+      case XrdSsiRespInfo::isError:     throw XrdSsiException(eInfo);
 
       // To implement detached requests, add another callback type which saves the handle
 
