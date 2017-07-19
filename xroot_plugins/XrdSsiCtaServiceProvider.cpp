@@ -3,7 +3,7 @@
 #endif
 
 #include "XrdSsiPbAlert.hpp"
-#include "XrdSsiCtaService.h"
+#include "XrdSsiPbService.hpp"
 #include "XrdSsiCtaServiceProvider.h"
 #include "eos/messages/eos_messages.pb.h"
 
@@ -40,7 +40,7 @@ XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const 
    std::cout << "[DEBUG] Called GetService(" << contact << "," << oHold << ")" << std::endl;
 #endif
 
-   XrdSsiService *ptr = new XrdSsiCtaService<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
+   XrdSsiService *ptr = new XrdSsiPb::Service<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
 
    return ptr;
 }

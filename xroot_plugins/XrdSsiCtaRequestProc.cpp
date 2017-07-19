@@ -40,6 +40,19 @@
 namespace XrdSsiPb {
 
 /*!
+ * Convert a framework exception into a Response
+ */
+
+template<>
+void ExceptionHandler<eos::wfe::Response, PbException>::operator()(eos::wfe::Response &response, const PbException &ex)
+{
+   response.set_type(eos::wfe::Response::RSP_ERR_PROTOBUF);
+   response.set_message_txt(ex.what());
+}
+
+
+
+/*!
  * Process a Notification Request
  */
 
@@ -106,98 +119,22 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
    }
    catch(std::exception &ex)
    {
+      // Send a log message
+
+      eos::wfe::Alert alert_msg;
+
+      alert_msg.set_audience(eos::wfe::Alert::EOSLOG);
+      alert_msg.set_message_txt("Something bad happened");
+
+      // Serialize and send the alert message
+
+      Alert(alert_msg);
+
+      // Set the response
+
       m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.what());
    }
-
-#if 0
-   // Set reply
-
-   m_response.set_result_code(0);
-   m_response.mutable_response()->set_message_text("This is the reply to " + *m_request.mutable_message_text());
-
-   // Output message in Json format (for debugging)
-
-   std::cerr << "Preparing response:" << std::endl;
-   OutputJsonString(&m_response);
-#endif
-}
-
-
-
-/*!
- * Prepare a Metadata response
- *
- * A metadata-only reply is appropriate when we just need to send a short response/acknowledgement,
- * as it has less overhead than a full response.
- *
- * The maximum amount of metadata that may be sent is defined by XrdSsiResponder::MaxMetaDataSZ
- * constant member.
- */
-
-template <>
-void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteMetadata()
-{
-   // Output message in Json format (for debugging)
-
-   std::cerr << "Preparing metadata..." << std::endl;
-   OutputJsonString(std::cerr, &m_metadata);
-}
-
-
-
-/*!
- * Send a message to EOS log or EOS user
- *
- * The SSI framework enforces the following rules:
- *
- * - alerts are sent in the order posted
- * - all outstanding alerts are sent before the final response is sent (i.e. the one posted using a
- *   SetResponse() method)
- * - once a final response is posted, subsequent alert messages are not sent
- * - if a request is cancelled, all pending alerts are discarded
- */
-
-template <>
-void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAlerts()
-{
-   eos::wfe::Alert alert_msg;
-
-   alert_msg.set_audience(eos::wfe::Alert::EOSLOG);
-   alert_msg.set_message_txt("Something bad happened");
-
-   // Serialize and send the alert message
-
-   Alert(alert_msg);
-}
-
-
-
-/*!
- * Handle framework errors
- *
- * Framework errors are sent back to EOS in the Metadata response
- */
-
-template <>
-void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::
-   HandleError(XrdSsiRequestProcErr err_num, const std::string &err_text)
-{
-   // Set metadata
-
-   m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
-
-   //switch(err_num)
-   //{
-      //case PB_PARSE_ERR:    m_metadata.mutable_exception()->set_code(eos::wfe::Exception::PB_PARSE_ERR);
-   //}
-
-   m_metadata.set_message_txt(err_text);
-
-   // Output message in Json format (for debugging)
-
-   std::cerr << "Preparing error metadata..." << std::endl;
-   OutputJsonString(std::cerr, &m_metadata);
 }
 
 } // namespace XrdSsiPb

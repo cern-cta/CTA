@@ -25,6 +25,10 @@
 
 namespace XrdSsiPb {
 
+/*!
+ * Wrapper around google::protobuf::util::MessageToJsonString() which outputs to a stream
+ */
+
 static void OutputJsonString(std::ostream &os, const google::protobuf::Message *message)
 {
    using namespace google::protobuf::util;
@@ -41,6 +45,10 @@ static void OutputJsonString(std::ostream &os, const google::protobuf::Message *
 }
 
 
+
+/*!
+ * Inspect the contents of a serialized Protocol Buffer
+ */
 
 inline void DumpBuffer(const std::string &buffer)
 {

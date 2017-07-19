@@ -25,26 +25,33 @@
 
 namespace XrdSsiPb {
 
-//! Error codes that the framework knows about
+/*!
+ * Exception Handler class.
+ *
+ * This is used to send framework exceptions back to the client. The client should specialize on this
+ * class for the Response class.
+ */
 
-enum XrdSsiRequestProcErr {
-   PB_PARSE_ERR
+template<typename MetadataType, typename ExceptionType>
+class ExceptionHandler
+{
+public:
+   void operator()(MetadataType &response, const ExceptionType &ex);
 };
 
 
 
 /*!
- * The XrdSsiResponder class knows how to safely interact with the request object. It allows handling asynchronous
- * requests such as cancellation, broken TCP connections, etc.
+ * Request Processing class.
  *
- * The XrdSsiResponder class contains all the methods needed to interact with the request object: get the request,
- * release storage, send alerts, and post a response.
+ * This is an agent object that the Service object creates for each Request that it receives. The Request
+ * object will be bound to the XrdSsiResponder object via a call to XrdSsiResponder::BindRequest(). Once
+ * the relationship is established, the XrdSsi framework keeps track of the Request object and manages
+ * its lifetime.
  *
- * The Request object will be bound to the XrdSsiResponder object via a call to XrdSsiResponder::BindRequest().
- * Once the relationship is established, you no longer need to keep a reference to the request object. The SSI
- * framework keeps track of the request object for you.
- *
- * RequestProc is a kind of agent object that the service object creates for each request that it receives.
+ * The XrdSsiResponder class contains the methods needed to interact with the Request object: get the
+ * Request, release storage, send Alerts, and post a Response. It also knows how to safely interact with
+ * the Request object, handling asynchronous requests such as cancellation, broken TCP connections, etc. 
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
@@ -66,10 +73,10 @@ public:
    virtual void Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel=false) override;
 
 private:
-
    /*!
-    * Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object. Alert message objects
-    * are created on the heap with lifetime managed by the XrdSsiResponder class.
+    * Encapsulate the Alert protocol buffer inside a XrdSsiRespInfoMsg object.
+    *
+    * Alert message objects are created on the heap with lifetime managed by the XrdSsiResponder class.
     */
 
    void Alert(const AlertType &alert)
@@ -77,29 +84,36 @@ private:
       XrdSsiResponder::Alert(*(new AlertMsg<AlertType>(alert)));
    }
 
-   // These methods should be specialized according to the needs of each <RequestType, MetadataType> pair
+   /*!
+    * Handle bad protocol buffer Requests.
+    *
+    * This class should store the exception in the Response Protocol Buffer, which the framework will
+    * send back to the client. The client needs to define the specialized version of this class.
+    */
+
+   ExceptionHandler<MetadataType, PbException> Throw;
+
+   /*!
+    * Execute action after deserialization of the Request Protocol Buffer.
+    *
+    * The client needs to define the specialized version of this method.
+    */
 
    void ExecuteAction() {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] Called default RequestProc::ExecuteAction()" << std::endl;
 #endif
    }
-   void ExecuteAlerts() {
-#ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Called default RequestProc::ExecuteAlerts()" << std::endl;
-#endif
-   }
-   void ExecuteMetadata() {
-#ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Called default RequestProc::ExecuteMetadata()" << std::endl;
-#endif
-   }
 
-   // This method must put the error into the Metadata to send it back to the client
-
-   void HandleError(XrdSsiRequestProcErr err_num, const std::string &err_text = "");
-
-   // Protocol Buffer members
+   /*
+    * Protocol Buffer members
+    *
+    * A metadata-only reply is appropriate when we just need to send a short response/acknowledgement,
+    * as it has less overhead than a full response.
+    *
+    * The maximum amount of metadata that may be sent is defined by XrdSsiResponder::MaxMetaDataSZ
+    * constant member.
+    */
 
    RequestType  m_request;
    MetadataType m_metadata;
@@ -126,23 +140,15 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    if(m_request.ParseFromArray(request_buffer, request_len))
    {
-      // Perform the requested action
+      // Pass control from the framework to the application
 
       ExecuteAction();
-
-      // Send alerts
-
-      ExecuteAlerts();
-
-      // Prepare to send metadata ahead of the response
-
-      ExecuteMetadata();
    }
    else
    {
-      // Return an error to the client
+      // Pass an exception back to the client and continue processing
 
-      HandleError(PB_PARSE_ERR, "m_request.ParseFromArray() failed");
+      Throw(m_metadata, PbException("m_request.ParseFromArray() failed"));
    }
 
    // Release the request buffer
@@ -171,7 +177,14 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
 
 
-// Create specialized versions of this method to handle cancellation/cleanup for specific message types
+/*!
+ * Clean up the Request Processing object.
+ *
+ * This is called when the Request has been processed or cancelled.
+ *
+ * If required, you can create specialized versions of this method to handle cancellation/cleanup for
+ * specific message types.
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)

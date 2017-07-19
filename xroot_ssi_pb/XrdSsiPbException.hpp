@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          Class to convert a XRootD SSI Google Protocol Buffers errors into a std::exception
+ * @brief          Classes to convert XRootD SSI/Google Protocol Buffers errors into exceptions
  * @copyright      Copyright 2017 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ namespace XrdSsiPb {
  * Framework exception thrown by Google Protocol Buffers layer
  */
 
-class PbException : public std::runtime_error {
+class PbException : public std::runtime_error
+{
 public:
    PbException(const char *err_msg) : std::runtime_error(err_msg) {}
    PbException(const std::string &err_msg) : std::runtime_error(err_msg) {}

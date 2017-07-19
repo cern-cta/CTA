@@ -26,9 +26,11 @@
 namespace XrdSsiPb {
 
 /*!
- * XRootD SSI + Protocol Buffers Callback class
+ * Request Callback class
  *
- * The client should specialize on this class for each XRootD reply type (Metadata, Alert)
+ * The client should specialize on this class for the Alert Response type. This permits an arbitrary
+ * number of Alert messages to be sent before each Response. These can be used for any purpose defined
+ * by the client and server, for example writing messages to the client log.
  */
 
 template<typename CallbackArg>
@@ -41,7 +43,7 @@ public:
 
 
 /*!
- * XRootD SSI + Protocol Buffers Request class
+ * Request class
  */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
@@ -86,25 +88,9 @@ public:
       return const_cast<char*>(m_request_bufptr);
    }
 
-   /*!
-    * Requests are sent to the server asynchronously via the service object. ProcessResponse() is used
-    * to inform the request object if the request completed or failed.
-    */
-
    virtual bool ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo) override;
 
-   /*!
-    * ProcessResponseData() is an optional callback used in conjunction with the request's GetResponseData()
-    * method, or when the response is a data stream and you wish to asynchronously receive data via the
-    * stream. Most applications will need to implement this as scalable applications generally require that
-    * any large amount of data be asynchronously received.
-    */
-
    virtual XrdSsiRequest::PRD_Xeq ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int blen, bool last) override;
-
-   /*!
-    * Deserialize Alert messages and call the Alert callback
-    */
 
    virtual void Alert(XrdSsiRespInfoMsg &alert_msg) override;
 
@@ -122,20 +108,16 @@ private:
 
    std::promise<MetadataType> m_promise;        //!< Promise a reply of Metadata type
    RequestCallback<AlertType> AlertCallback;    //!< Callback for Alerts
-
-   // Responses and stream Responses will be implemented as a binary blob/stream. The format of the
-   // response will not be a protocol buffer. If the response was a protocol buffer we would need to
-   // read the entire response before parsing it, which would defeat the point of streaming. The
-   // possibilities are:
-   // 1. The format is defined in the metadata which is a kind of header
-   // 2. The format is record-based, and each record is a protocol buffer
-   //
-   // Commented out for now pending review, as EOS archive only needs metadata responses
-   //
-   //RequestCallback<ResponseType> ResponseCallback;
 };
 
 
+
+/*!
+ * Process Responses from the server
+ *
+ * Requests are sent to the server asynchronously via the service object. ProcessResponse() informs
+ * the Request object on the client side if it completed or failed.
+ */
 
 template<typename RequestType, typename MetadataType, typename AlertType>
 bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
@@ -167,8 +149,8 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
       case XrdSsiRespInfo::isNone:
       case XrdSsiRespInfo::isData:
-         // Check for metadata: Arbitrary metadata can be sent ahead of the response data, for example to
-         // describe the response so that it can be handled in the most optimal way.
+         // Check for metadata. The Protocol Buffers Metadata format is used for simple Responses. It
+         // can also be used as the header for large asynchronous data transfers or streaming data.
 
          int metadata_len;
          const char *metadata_buffer = GetMetadata(metadata_len);
@@ -217,11 +199,13 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
       Finished();
 
-      // It is now safe to delete the Request object (which implies that the pointer on the calling side
-      // will never refer to it again and the destructor of the base class doesn't access any class members).
+      // It is now safe to delete the Request object (implies that the pointer on the calling side will
+      // never refer to it again and the destructor of the base class doesn't access any class members)
 
       delete this;
    } catch(...) {
+      // set_exception() above can also throw an exception...
+
       Finished();
       delete this;
    }
@@ -230,6 +214,23 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 }
 
 
+
+/*!
+ * Process Response Data.
+ *
+ * Responses will be implemented as a binary blob or binary stream, which is received one chunk at a time.
+ * The chunk size is defined when the Request object is instantiated (see m_response_bufsize above).
+ *
+ * The format of Responses is not defined by a Protocol Buffer, as this would require us to read the entire
+ * Response before parsing it, which would defeat the point of reading the Response in chunks. How the
+ * Response is parsed is up to the client, but two possibilities are:
+ *
+ * 1. The format is defined in the metadata which is a kind of header
+ * 2. The format is record-based, and each record is a protocol buffer
+ *
+ * ProcessResponseData() is called either by GetResponseData(), or asynchronously at any time for data
+ * streams.
+ */
 
 template<typename RequestType, typename MetadataType, typename AlertType>
 XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
@@ -240,33 +241,43 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
    if(response_buflen != 0)
    {
       // Handle one block of response data
-   }
 
-   // If there is more data then get it, otherwise clean up
+      // TO DO: Provide an interface to the client to read a chunk of data
+   }
 
    if(!is_last)
    {
-      // Get the next chunk of data:
-      // Does this call this method recursively? Is there danger of a stack overflow?
+      // If there is more datam get the next chunk
 
       GetResponseData(response_bufptr, m_response_bufsize);
    }
    else
    {
+      // No more data, so clean up
+
       delete[] response_bufptr;
 
-      // Note that if request objects are uniform, you may want to re-use them instead
-      // of deleting them, to avoid the overhead of repeated object creation.
+      // If Request objects are uniform, we could re-use them instead of deleting them, to avoid the
+      // overhead of repeated object creation. This would require a more complex Request factory. For
+      // now we just delete.
 
       Finished();
       delete this;
    }
 
-   return XrdSsiRequest::PRD_Normal; // Indicate what type of post-processing is required (normal in this case)
-                                     // If we can't handle the queue at this time, return XrdSsiRequest::PRD_Hold;
+   // Indicate what type of post-processing is required (normal in this case)
+
+   return XrdSsiRequest::PRD_Normal;
+
+   // If the client is resource-limited and can't handle the queue at this time,
+   // return XrdSsiRequest::PRD_Hold;
 }
 
 
+
+/*!
+ * Deserialize Alert messages and call the Alert callback
+ */
 
 template<typename RequestType, typename MetadataType, typename AlertType>
 void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
@@ -295,7 +306,8 @@ void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &ale
    {
       m_promise.set_exception(std::current_exception());
    }
-   catch(...) {}
+   // catch(...) {} ?
+   // set_exception() can also throw()...
 
    // Recycle the message to free memory
 

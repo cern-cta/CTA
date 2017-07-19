@@ -25,7 +25,15 @@
 namespace XrdSsiPb {
 
 /*!
- * Instantiate an Alert message
+ * Alert message class.
+ *
+ * The SSI framework enforces the following rules for Alerts:
+ *
+ * 1. Alerts are sent in the order posted
+ * 2. All outstanding Alerts are sent before the final response is sent
+ *    (i.e. before SetResponse() is called)
+ * 3. Once a final response is posted, subsequent Alert messages are discarded
+ * 4. If a request is cancelled, all pending Alerts are discarded
  */
 
 template<typename AlertType>
@@ -54,6 +62,10 @@ public:
       std::cout << "[DEBUG] ~AlertMsg() destructor" << std::endl;
 #endif
    }
+
+   /*!
+    * Method called by the framework to clean up after the Alert has been sent or discarded
+    */
 
    void RecycleMsg(bool sent=true) {
 #ifdef XRDSSI_DEBUG

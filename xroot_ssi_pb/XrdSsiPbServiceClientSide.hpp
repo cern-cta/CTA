@@ -28,7 +28,9 @@
 
 
 
-//! XrdSsiProviderClient is instantiated and managed by the SSI library
+/*!
+ * XrdSsiProviderClient is instantiated and managed by the SSI library
+ */
 
 extern XrdSsiProvider *XrdSsiProviderClient;
 
@@ -52,23 +54,15 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class ServiceClientSide
 {
 public:
-   // Service object constructor for the client side
-
    ServiceClientSide() = delete;
 
    ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
                      unsigned int response_bufsize = DefaultResponseBufferSize,
                      unsigned int server_tmo       = DefaultServerTimeout);
 
-   // Service object destructor for the client side
-
    virtual ~ServiceClientSide();
 
-   // Request shutdown of the Service
-
    bool Shutdown(int shutdown_tmo = DefaultShutdownTimeout);
-
-   // Send a Request to the Service
 
    MetadataType Send(const RequestType &request);
 
@@ -88,7 +82,9 @@ private:
 
 
 
-//! Constructor
+/*!
+ * Client-side Service Constructor
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::
@@ -136,7 +132,9 @@ ServiceClientSide(const std::string &hostname, unsigned int port, const std::str
 
 
 
-//! Destructor
+/*!
+ * Client-side Service Destructor
+ */
 
 template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
@@ -162,7 +160,9 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 
 
 /*!
- * Shut down the XRootD SSI Service.
+ * Request Shutdown of the Service
+ *
+ * TODO: Define a Stop() method for the Service. Currently this method will always fail.
  *
  * A Service object can only be deleted after all requests handed to the object have completed. It is
  * possible to take back control of Requests by calling each Request's Finished() method: this cancels
