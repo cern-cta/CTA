@@ -45,6 +45,22 @@ public:
 #endif
             }
 
+   /*!
+    * Stop the Service.
+    *
+    * Requires some method to pass Finished(true) to in-flight Requests. This has been raised with Andy.
+    * Currently not implemented as it would require tracking all in-flight Requests by the application
+    * when this is really the job of the framework.
+    */
+
+   virtual bool Stop() override
+   {
+#ifdef XRDSSI_DEBUG
+      std::cout << "[DEBUG] Service::Stop()" << std::endl;
+#endif
+      return false;
+   }
+
    virtual void ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef) override;
 
    /*
