@@ -767,14 +767,17 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 //------------------------------------------------------------------------------
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
-void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
-  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-  const std::string &vid) {
+std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   assertAgentAddressSet();
+  // Get the best vid from the cache
+  std::set<std::string> candidateVids;
+  for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.second.vid);
+  std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
   // Check that the requested retrieve job (for the provided vid) exists.
   if (!std::count_if(criteria.archiveFile.tapeFiles.cbegin(), 
                      criteria.archiveFile.tapeFiles.end(),
-                     [vid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == vid; }))
+                     [bestVid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == bestVid; }))
     throw RetrieveRequestHasNoCopies("In OStoreDB::queueRetrieve(): no tape file for requested vid.");
   // In order to post the job, construct it first in memory.
   objectstore::RetrieveRequest rReq(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
@@ -792,7 +795,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
-  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference);
+  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(bestVid, *m_agentReference);
   // Create the request.
   rel.release();
   RetrieveQueue rq(rqAddr, m_objectStore);
@@ -800,7 +803,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   rq.fetch();
   // We need to find the job corresponding to the vid
   for (auto & j: rReq.getArchiveFile().tapeFiles) {
-    if (j.second.vid == vid) {
+    if (j.second.vid == bestVid) {
       rq.addJob(j.second.copyNb, j.second.fSeq, rReq.getAddressIfSet(), criteria.archiveFile.fileSize, 
           criteria.mountPolicy, rReq.getEntryLog().time);
       rReq.setActiveCopyNumber(j.second.copyNb);
@@ -819,6 +822,7 @@ void OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest&
   rrl.release();
   // And relinquish ownership form agent
   m_agentReference->removeFromOwnership(rReq.getAddressIfSet(), m_objectStore);
+  return bestVid;
 }
 
 //------------------------------------------------------------------------------

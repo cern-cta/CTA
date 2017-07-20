@@ -130,41 +130,7 @@ void Scheduler::queueRetrieve(
   // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
-  // Get the statuses of the tapes on which we have files.
-  std::set<std::string> vids;
-  for (auto & tf: queueCriteria.archiveFile.tapeFiles) {
-    vids.insert(tf.second.vid);
-  }
-  auto tapeStatuses = m_catalogue.getTapesByVid(vids);
-  // Filter out the tapes with are disabled
-  for (auto & t: tapeStatuses) {
-    if (t.second.disabled)
-      vids.erase(t.second.vid);
-  }
-  if (vids.empty())
-    throw exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
-  auto catalogueTime = t.secs(utils::Timer::resetCounter);
-  // Get the statistics for the potential tapes on which we will retrieve.
-  auto stats=m_db.getRetrieveQueueStatistics(queueCriteria, vids);
-  // Sort the potential queues.
-  stats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
-  // If there are several equivalent entries, choose randomly among them.
-  // First element will always be selected.
-  std::set<std::string> candidateVids;
-  for (auto & s: stats) {
-    if (!(s<stats.front()) && !(s>stats.front()))
-      candidateVids.insert(s.vid);
-  }
-  if (candidateVids.empty())
-    throw exception::Exception("In Scheduler::queueRetrieve(): failed to sort and select candidate VIDs");
-  // We need to get a random number [0, candidateVids.size() -1]
-  std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-  std::uniform_int_distribution<size_t> distribution(0, candidateVids.size() -1);
-  size_t index=distribution(dre);
-  auto it=candidateVids.cbegin();
-  std::advance(it, index);
-  std::string selectedVid=*it;
-  m_db.queueRetrieve(request, queueCriteria, selectedVid);
+  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
@@ -201,7 +167,6 @@ void Scheduler::queueRetrieve(
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
-     .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "Queued retrieve request");
 }

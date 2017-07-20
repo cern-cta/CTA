@@ -1,3 +1,4 @@
+
 /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
@@ -597,6 +598,8 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   }
   // Mark the tape as enabled
   catalogue.addEnabledTape("Tape0");
+  // Mark the other tape as disabled
+  catalogue.addDisabledTape("Tape1");
   // Create the garbage collector and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);

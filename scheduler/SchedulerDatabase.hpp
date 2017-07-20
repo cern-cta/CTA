@@ -243,16 +243,16 @@ public:
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
     const std::set<std::string> & vidsToConsider) = 0;
   /**
-   * Queues the specified request.
+   * Queues the specified request. As the object store has access to the catalogue,
+   * the best queue (most likely to go, and not disabled can be chosen directly there).
    *
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
-   * @param vid: the vid of the retrieve queue on which we will queue the request.
+   * @return the selected vid (mostly for logging)
    */
-  virtual void queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-    const std::string &vid) = 0;
+  virtual std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then

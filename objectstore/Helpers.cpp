@@ -242,7 +242,7 @@ std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime> Helpers::g_retri
 cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedArchiveQueue()
+// Helpers::getRetrieveQueueStatistics()
 //------------------------------------------------------------------------------
 std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueStatistics(
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider,

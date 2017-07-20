@@ -122,14 +122,14 @@ public:
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const {
     // Minimal implementation of VidToMap for retrieve request unit tests. We just support
     // disabled status for the tapes.
-    // If the tape is not listed, it is listed as disabled in the return value.
+    // If the tape is not listed, it is listed as enabled in the return value.
     threading::MutexLocker lm(m_tapeEnablingMutex);
     common::dataStructures::VidToTapeMap ret;
     for (const auto & v: vids) {
       try {
         ret[v].disabled = !m_tapeEnabling.at(v);
       } catch (std::out_of_range &) {
-        ret[v].disabled = true;
+        ret[v].disabled = false;
       }
     }
     return ret;
