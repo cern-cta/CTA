@@ -20,7 +20,6 @@
 #define __XRD_SSI_PB_REQUEST_H
 
 #include <future>
-
 #include <XrdSsi/XrdSsiRequest.hh>
 
 namespace XrdSsiPb {
@@ -50,24 +49,9 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class Request : public XrdSsiRequest
 {
 public:
-   Request(const std::string &buffer_str, unsigned int response_bufsize, uint16_t timeout) :
-      m_request_bufptr(buffer_str.c_str()),
-      m_request_bufsize(buffer_str.size()),
-      m_response_bufsize(response_bufsize)
-   {
-#ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Request constructor: "
-                << "Response buffer size = " << m_response_bufsize
-                << ", Response timeout = " << timeout << std::endl;
-#endif
+   Request(const RequestType &request, unsigned int response_bufsize, uint16_t timeout);
 
-      // Set response timeout
-
-      SetTimeOut(timeout);
-   }
-
-   virtual ~Request() 
-   {
+   virtual ~Request() {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] ~Request destructor" << std::endl;
 #endif
@@ -76,17 +60,17 @@ public:
    /*!
     * The implementation of GetRequest() must create request data, save it in some manner, and provide
     * it to the framework.
-    *
-    * Optionally also define the RelRequestBuffer() method to clean up when the framework no longer
-    * needs access to the data. The thread used to initiate a request may be the same one used in the
-    * GetRequest() call.
     */
 
    virtual char *GetRequest(int &reqlen) override
    {
-      reqlen = m_request_bufsize;
-      return const_cast<char*>(m_request_bufptr);
+      reqlen = m_request_str.size();
+      return const_cast<char*>(m_request_str.c_str());
    }
+
+   // Optionally also define the RelRequestBuffer() method to clean up when the framework no longer
+   // needs access to the data. The thread used to initiate a request may be the same one used in the
+   // GetRequest() call.
 
    virtual bool ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo) override;
 
@@ -101,14 +85,41 @@ public:
    auto GetFuture() { return m_promise.get_future(); }
 
 private:
-   const char *m_request_bufptr;                //!< Pointer to the Request buffer
-   int         m_request_bufsize;               //!< Size of the Request buffer
-   char       *m_response_bufptr;               //!< Pointer to the Response buffer
-   int         m_response_bufsize;              //!< Size of the Response buffer
+   std::string  m_request_str;                  //!< Request buffer
+   char        *m_response_bufptr;              //!< Pointer to the Response buffer
+   int          m_response_bufsize;             //!< Size of the Response buffer
 
    std::promise<MetadataType> m_promise;        //!< Promise a reply of Metadata type
    RequestCallback<AlertType> AlertCallback;    //!< Callback for Alerts
 };
+
+
+
+/*!
+ * Request constructor
+ */
+
+template<typename RequestType, typename MetadataType, typename AlertType>
+Request<RequestType, MetadataType, AlertType>::
+Request(const RequestType &request, unsigned int response_bufsize, uint16_t timeout) :
+   m_response_bufsize(response_bufsize)
+{
+#ifdef XRDSSI_DEBUG
+   std::cout << "[DEBUG] Request constructor: "
+             << "Response buffer size = " << m_response_bufsize
+             << " bytes, timeout = " << timeout << std::endl;
+#endif
+   // Set response timeout
+
+   SetTimeOut(timeout);
+
+   // Serialize the Request
+
+   if(!request.SerializeToString(&m_request_str))
+   {
+      throw PbException("request.SerializeToString() failed");
+   }
+}
 
 
 

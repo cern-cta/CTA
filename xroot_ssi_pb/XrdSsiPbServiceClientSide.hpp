@@ -70,8 +70,6 @@ private:
 
    unsigned int   m_response_bufsize;    //!< Buffer size for responses from the XRootD SSI server
    unsigned int   m_server_tmo;          //!< Timeout for a response from the server
-
-   std::string    m_request_str;         //!< Buffer for sending a request
 };
 
 
@@ -153,26 +151,21 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 template <typename RequestType, typename MetadataType, typename AlertType>
 MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
 {
-   // Serialize the Request
-
-   if(!request.SerializeToString(&m_request_str))
-   {
-      throw PbException("request.SerializeToString() failed");
-   }
-
    // Instantiate the Request object
 
-   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(m_request_str, m_response_bufsize, m_server_tmo);
+   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(request, m_response_bufsize, m_server_tmo);
 
    auto future_response = request_ptr->GetFuture();
 
-   // Transfer ownership of the Request to the Service object. The framework will handle deletion of the
-   // Request object. Although it is safe to delete the Resource after ProcessRequest() returns, we are
-   // creating reusable Resources, so no need to delete it.
+   // Transfer ownership of the Request to the Service object.
 
    m_server_ptr->ProcessRequest(*request_ptr, m_resource);
 
-   // Wait synchronously for the framework to return its response
+   // After ProcessRequest() returns, it is safe for request_ptr to go out-of-scope, as the framework
+   // will handle deletion of the Request object. It is also safe to delete the Resource; in our case
+   // we do not need to as we created a reusable Resource.
+
+   // Wait synchronously for the framework to return its Response (or an exception)
 
    auto response = future_response.get();
 

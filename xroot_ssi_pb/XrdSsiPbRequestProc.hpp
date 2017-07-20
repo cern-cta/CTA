@@ -136,6 +136,8 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
    const int ExecuteTimeout = 15;    //< Maximum no. of seconds to wait before deleting myself
+                                     //< What is a sensible number? Does it need to be configurable?
+                                     //< In any case it should be <= timeout on the client side?
 
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] RequestProc::Execute()" << std::endl;
@@ -199,7 +201,9 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
    {
       throw XrdSsiException("RequestProc::Finished() was never called!");
 
-      // Potentially could call Finished() with cancel == true here instead of throwing an exception?
+      // Should call Finished(true) instead of throwing an exception, waiting for Andy to comment on
+      // whether the handling of Finished() is reentrant in the framework, or whether the application
+      // has to manage it.
    }
 }
 
