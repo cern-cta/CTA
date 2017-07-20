@@ -236,6 +236,10 @@ template<typename RequestType, typename MetadataType, typename AlertType>
 XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
+#ifdef XRDSSI_DEBUG
+   std::cout << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes of data" << std::endl;
+#endif
+
    // The buffer length can be 0 if the response is metadata only
 
    if(response_buflen != 0)
@@ -247,7 +251,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
 
    if(!is_last)
    {
-      // If there is more datam get the next chunk
+      // If there is more data, get the next chunk
 
       GetResponseData(response_bufptr, m_response_bufsize);
    }

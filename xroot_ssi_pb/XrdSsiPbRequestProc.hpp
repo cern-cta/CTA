@@ -177,10 +177,19 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
       SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
    }
 
-   // Send the response. This must always be called, even if the response is empty, as Finished()
-   // will not be called until the Response has been processed.
+   // Send the Response
 
-   SetResponse(m_response_str.c_str(), m_response_str.size());
+   if(m_response_str.size() == 0)
+   {
+      // Send a metadata-only response. If the Response is empty, we still have to call SetResponse(),
+      // otherwise Finished() will not be called on the Request.
+
+      SetNilResponse();
+   }
+   else
+   {
+      SetResponse(m_response_str.c_str(), m_response_str.size());
+   }
 
    // Wait for the framework to call Finished()
 
