@@ -753,6 +753,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       if (t.disabled) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
       if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+      mountOrQueue.tapePool = t.tapePoolName;
     }
   }
   return ret;
