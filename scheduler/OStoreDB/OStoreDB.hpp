@@ -39,11 +39,13 @@ namespace objectstore {
 }
 
 namespace ostoredb {
-  class MemArchiveQueue;
+  template <class, class>
+  class MemQueue;
 }
   
 class OStoreDB: public SchedulerDatabase {
-  friend class cta::ostoredb::MemArchiveQueue;
+  template <class, class>
+  friend class cta::ostoredb::MemQueue;
 public:
   OStoreDB(objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger);
   virtual ~OStoreDB() throw();

@@ -212,7 +212,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       ArchiveRequest::JobDump jd;
       jd.tapePool = "tapepool";
       jd.copyNb = 1;
-      auto sharedLock = cta::ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(jd, aReq, osdbi.getOstoreDB(), localLc);
+      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, aReq, osdbi.getOstoreDB(), localLc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
   }

@@ -408,7 +408,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       // The queueing implicitly sets the job owner as the queue (as should be). The queue should not
       // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
       // stale and the job would be dereferenced from the queue.
-      auto shareLock = ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(j, aReq, *this, logContext);
+      auto shareLock = ostoredb::MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::sharedAddToQueue(j, aReq, *this, logContext);
       double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       arTotalQueueingTime += qTime;
       aReq.commit();
