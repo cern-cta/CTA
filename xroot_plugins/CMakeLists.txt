@@ -24,8 +24,7 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
 find_package(Protobuf3 REQUIRED)
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
-#add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
-add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
+add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
 target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
 set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
