@@ -43,5 +43,3 @@ find_package(cryptopp REQUIRED)
 include_directories(${PROTOBUF3_INCLUDE_DIRS} ${XROOTD_INCLUDE_DIR} ../xroot_ssi_pb)
 add_executable(eoscta_stub EosCtaStub.cpp)
 target_link_libraries (eoscta_stub cryptopp ctaeosmessages ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
-install(TARGETS eoscta_stub DESTINATION usr/bin)
-
