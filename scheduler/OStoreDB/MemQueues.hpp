@@ -144,6 +144,9 @@ private:
   
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
   static void specializedAddJobToQueue(typename Request::JobDump & job, Request & request, Queue & queue);
+  
+  /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
+  static void specializedUpdateCachedQueueStats(Queue &queue);
 };
 
 template <class Request, class Queue>
@@ -253,7 +256,11 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
     auto & queue = *ret->m_queue;
     auto & aql = *ret->m_lock;
     objectstore::Helpers::getLockedAndFetchedQueue<Queue>(queue, aql, *oStoreDB.m_agentReference, queueIndex);
-    size_t aqSizeBefore=queue.dumpJobs().size();
+    size_t qJobsBefore=queue.dumpJobs().size();
+    uint64_t qBytesBefore=0;
+    for (auto j: queue.dumpJobs()) {
+      qBytesBefore+=j.size;
+    }
     size_t addedJobs=1;
     // First add the job for this thread
     specializedAddJobToQueue(job, request, queue);
@@ -267,16 +274,24 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
     }
     // We can now commit the multi-request addition to the object store
     queue.commit();
+    // Update the cache stats in memory as we hold the queue.
+    specializedUpdateCachedQueueStats(queue);
     // The next update of the queue can now proceed
     ANNOTATE_HAPPENS_BEFORE(promiseForSuccessor.get());
     promiseForSuccessor->set_value();
     // Log
-    size_t aqSizeAfter=queue.dumpJobs().size();
+    size_t qJobsAfter=queue.dumpJobs().size();
+    uint64_t qBytesAfter=0;
+    for (auto j: queue.dumpJobs()) {
+      qBytesAfter+=j.size;
+    }
     {
       log::ScopedParamContainer params(logContext);
       params.add("objectQueue", queue.getAddressIfSet())
-            .add("sizeBefore", aqSizeBefore)
-            .add("sizeAfter", aqSizeAfter)
+            .add("jobsBefore", qJobsBefore)
+            .add("jobsAfter", qJobsAfter)
+            .add("bytesBefore", qBytesBefore)
+            .add("bytesAfter", qBytesAfter)
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
             .add("enqueueTime", timer.secs());

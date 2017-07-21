@@ -212,16 +212,15 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
 // Helpers::updateRetrieveQueueStatisticsCache()
 //------------------------------------------------------------------------------
 void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority) {
-  // We will not update the status of the tape if we already cached it (called did not check),
-  // but of course we will suppose the tape is not disabled if the cache entry is either absent
-  // or stale.
+  // We will not update the status of the tape if we already cached it (caller did not check),
+  // We will also not update the update time, to force an update after a while.
+  // If we update the entry while another thread is updating it, this is harmless (cache users will
+  // anyway wait, and just not profit from our update.
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   try {
-    if (g_retrieveQueueStatistics.at(vid).updateTime + c_retrieveQueueCacheMaxAge < time(nullptr))
-      g_retrieveQueueStatistics.at(vid).tapeStatus.disabled=false;
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
     g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
-    g_retrieveQueueStatistics.at(vid).updateTime=time(nullptr);
+    g_retrieveQueueStatistics.at(vid).stats.currentPriority = priority;
   } catch (std::out_of_range &) {
     // The entry is missing. We just create it.
     g_retrieveQueueStatistics[vid].stats.bytesQueued=bytes;
@@ -230,6 +229,8 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics[vid].stats.vid=vid;
     g_retrieveQueueStatistics[vid].tapeStatus.disabled=false;
     g_retrieveQueueStatistics[vid].tapeStatus.full=false;
+    g_retrieveQueueStatistics[vid].updating = false;
+    g_retrieveQueueStatistics[vid].updateTime = time(nullptr);
   }
 }
 
