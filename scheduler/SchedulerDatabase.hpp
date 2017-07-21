@@ -249,10 +249,11 @@ public:
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
+   * @param logContext context allowing logging db operation
    * @return the selected vid (mostly for logging)
    */
   virtual std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) = 0;
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then

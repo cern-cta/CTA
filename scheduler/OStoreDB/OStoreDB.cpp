@@ -408,7 +408,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       // The queueing implicitly sets the job owner as the queue (as should be). The queue should not
       // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
       // stale and the job would be dereferenced from the queue.
-      auto shareLock = ostoredb::MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::sharedAddToQueue(j, aReq, *this, logContext);
+      auto shareLock = ostoredb::MemArchiveQueue::sharedAddToQueue(j, j.tapePool, aReq, *this, logContext);
       double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       arTotalQueueingTime += qTime;
       aReq.commit();
@@ -768,17 +768,27 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
 std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
-  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
+  const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   // Get the best vid from the cache
   std::set<std::string> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.second.vid);
   std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
-  // Check that the requested retrieve job (for the provided vid) exists.
-  if (!std::count_if(criteria.archiveFile.tapeFiles.cbegin(), 
-                     criteria.archiveFile.tapeFiles.end(),
-                     [bestVid](decltype(*criteria.archiveFile.tapeFiles.cbegin()) & tf){ return tf.second.vid == bestVid; }))
-    throw RetrieveRequestHasNoCopies("In OStoreDB::queueRetrieve(): no tape file for requested vid.");
+  // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
+  uint64_t bestCopyNb;
+  for (auto & tf: criteria.archiveFile.tapeFiles) {
+    if (tf.second.vid == bestVid) {
+      bestCopyNb = tf.second.copyNb;
+      goto vidFound;
+    }
+  }
+  {
+    std::stringstream err;
+    err << "In OStoreDB::queueRetrieve(): no tape file for requested vid. archiveId=" << criteria.archiveFile.archiveFileID
+        << " vid=" << bestVid;
+    throw RetrieveRequestHasNoCopies(err.str());
+  }
+  vidFound:
   // In order to post the job, construct it first in memory.
   objectstore::RetrieveRequest rReq(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
   rReq.initialize();
@@ -791,34 +801,29 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq.setActiveCopyNumber(1);
   rReq.insert();
   ScopedExclusiveLock rrl(rReq);
-  // Find the retrieve queue (or create it if necessary)
-  RootEntry re(m_objectStore);
-  ScopedExclusiveLock rel(re);
-  re.fetch();
-  auto rqAddr=re.addOrGetRetrieveQueueAndCommit(bestVid, *m_agentReference);
-  // Create the request.
-  rel.release();
-  RetrieveQueue rq(rqAddr, m_objectStore);
-  ScopedExclusiveLock rql(rq);
-  rq.fetch();
-  // We need to find the job corresponding to the vid
-  for (auto & j: rReq.getArchiveFile().tapeFiles) {
-    if (j.second.vid == bestVid) {
-      rq.addJob(j.second.copyNb, j.second.fSeq, rReq.getAddressIfSet(), criteria.archiveFile.fileSize, 
-          criteria.mountPolicy, rReq.getEntryLog().time);
-      rReq.setActiveCopyNumber(j.second.copyNb);
-      goto jobAdded;
+  // Find the job corresponding to the vid (and check we indeed have one).
+  auto jobs = rReq.getJobs();
+  objectstore::RetrieveRequest::JobDump * job = nullptr;
+  for (auto & j:jobs) {
+    if (j.copyNb == bestCopyNb) {
+      job = &j;
+      goto jobFound;
     }
   }
-  // Getting here means the expected job was not found. This is an internal error.
-  throw cta::exception::Exception("In OStoreDB::queueRetrieve(): job not found for this vid");
-  jobAdded:;
-  // We can now commit the queue.
-  rq.commit();
-  rql.release();
-  // Set the request ownership.
-  rReq.setOwner(rqAddr);
-  rReq.commit();
+  {
+    std::stringstream err;
+    err << "In OStoreDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
+        << " vid=" << bestVid << " copyNb=" << bestCopyNb;
+    throw RetrieveRequestHasNoCopies(err.str());
+  }
+  jobFound:
+  {
+    // Add the request to the queue (with a shared access).
+    auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(*job, bestVid, rReq, *this, logContext);
+    // The object ownership was set in SharedAdd.
+    rReq.commit();
+    // The lock on the queue is released here (has to be after the request commit for consistency.
+  }
   rrl.release();
   // And relinquish ownership form agent
   m_agentReference->removeFromOwnership(rReq.getAddressIfSet(), m_objectStore);
@@ -2336,7 +2341,7 @@ void OStoreDB::ArchiveJob::fail() {
   // The job still has a chance, return it to its original tape pool's queue
   objectstore::ArchiveQueue aq(m_objectStore);
   objectstore::ScopedExclusiveLock aqlock;
-  objectstore::Helpers::getLockedAndFetchedArchiveQueue(aq, aqlock, m_agentReference, m_tapePool);
+  objectstore::Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aqlock, m_agentReference, m_tapePool);
   // Find the right job
   auto jl = m_archiveRequest.dumpJobs();
   for (auto & j:jl) {

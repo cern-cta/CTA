@@ -31,7 +31,8 @@ namespace cta { namespace objectstore {
 //------------------------------------------------------------------------------
 // Helpers::getLockedAndFetchedArchiveQueue()
 //------------------------------------------------------------------------------
-void Helpers::getLockedAndFetchedArchiveQueue(ArchiveQueue& archiveQueue,
+template <>
+void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
   const std::string& tapePool) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
@@ -74,7 +75,8 @@ void Helpers::getLockedAndFetchedArchiveQueue(ArchiveQueue& archiveQueue,
 //------------------------------------------------------------------------------
 // Helpers::getLockedAndFetchedRetrieveQueue()
 //------------------------------------------------------------------------------
-void Helpers::getLockedAndFetchedRetrieveQueue(RetrieveQueue& retrieveQueue, ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference, const std::string& vid) {
+template <>
+void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue, ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference, const std::string& vid) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.

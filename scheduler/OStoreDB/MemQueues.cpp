@@ -23,12 +23,32 @@
 
 namespace cta { namespace ostoredb {
 
-SharedQueueLock::~SharedQueueLock() {
-  m_lock->release();
-  log::ScopedParamContainer params(m_logContext);
-  params.add("objectQueue", m_queue->getAddressIfSet())
-        .add("waitAndUnlockTime", m_timer.secs());
-  m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
+template<>
+void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobToQueue(
+  objectstore::ArchiveRequest::JobDump& job, objectstore::ArchiveRequest& request, objectstore::ArchiveQueue& queue) {
+  auto af = request.getArchiveFile();
+  queue.addJob(job, request.getAddressIfSet(), af.archiveFileID,
+      af.fileSize, request.getMountPolicy(), request.getEntryLog().time);
+  // Back reference the queue in the job and archive request
+  job.owner = queue.getAddressIfSet();
+  request.setJobOwner(job.copyNb, job.owner);
+}
+
+template<>
+void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobToQueue(
+  objectstore::RetrieveRequest::JobDump& job, objectstore::RetrieveRequest& request, objectstore::RetrieveQueue& queue) {
+  // We need to find corresponding to the copyNb
+  for (auto & j: request.getArchiveFile().tapeFiles) {
+    if (j.second.copyNb == job.copyNb) {
+      auto criteria = request.getRetrieveFileQueueCriteria();
+      queue.addJob(j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
+          criteria.mountPolicy, request.getEntryLog().time);
+      request.setActiveCopyNumber(j.second.copyNb);
+      request.setOwner(queue.getAddressIfSet());
+      goto jobAdded;
+    }
+  }
+  jobAdded:;
 }
 
 }} // namespac ecta::ostoredb

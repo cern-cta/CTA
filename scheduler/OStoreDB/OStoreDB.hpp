@@ -234,7 +234,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
   std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria) override;
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
   

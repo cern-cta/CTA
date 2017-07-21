@@ -140,8 +140,8 @@ public:
   }
 
   std::string queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria) override {
-    return m_OStoreDB.queueRetrieve(rqst, criteria);
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
   std::list<cta::common::dataStructures::DriveState> getDriveStates() const override {

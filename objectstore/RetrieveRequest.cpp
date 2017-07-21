@@ -132,7 +132,7 @@ jobFound:;
   // We now need to grab the queue a requeue the request.
   RetrieveQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
-  Helpers::getLockedAndFetchedRetrieveQueue(rq, rql, agentReference, bestVid);
+  Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid);
   // Enqueue add the job to the queue
   objectstore::MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());
@@ -322,7 +322,15 @@ uint32_t RetrieveRequest::getActiveCopyNumber() {
 }
 
 cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  checkPayloadReadable();
+  cta::common::dataStructures::RetrieveFileQueueCriteria ret;
+  ArchiveFileSerDeser afsd;
+  afsd.deserialize(m_payload.archivefile());
+  ret.archiveFile = afsd;
+  MountPolicySerDeser mpsd;
+  mpsd.deserialize(m_payload.mountpolicy());
+  ret.mountPolicy  = mpsd;
+  return ret;
 }
 
 cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {

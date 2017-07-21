@@ -311,7 +311,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock tpl;
-        Helpers::getLockedAndFetchedArchiveQueue(aq, tpl, agentReference, j->tapepool());
+        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, tpl, agentReference, j->tapepool());
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();

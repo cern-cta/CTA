@@ -44,16 +44,17 @@ class AgentReference;
 class Helpers {
 public:
   /**
-   * Find or create an archive queue, and return it locked and fetched to the caller
-   * (ArchiveQueue and ScopedExclusiveLock objects are provided empty)
-   * @param archiveQueue the ArchiveQueue object, empty
-   * @param archiveQueueLock the lock, not initialized
+   * Find or create an archive or retrieve queue, and return it locked and fetched to the caller
+   * (Queue and ScopedExclusiveLock objects are provided empty)
+   * @param queue the queue object, empty
+   * @param queueLock the lock, not initialized
    * @param agentReference the agent reference that will be needed in case of object creation
-   * @param tapePool the name of the needed tape pool
+   * @param tapePool or vid the name of the needed tape pool
    */
-  static void getLockedAndFetchedArchiveQueue(ArchiveQueue & archiveQueue, 
-    ScopedExclusiveLock & archiveQueueLock, AgentReference & agentReference, 
-    const std::string & tapePool);
+  template <class Queue>
+  static void getLockedAndFetchedQueue(Queue & queue, 
+    ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
+    const std::string & tapePoolOrVid);
   
   /**
    * Find the most appropriate queue (bid) to add the retrieve request to. The potential
@@ -64,18 +65,6 @@ public:
    */
   static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue, 
   objectstore::Backend & objectstore);
-  
-  /**
-   * Find or create a retrieve queue, and return it locked and fetched to the caller
-   * (RetrieveQueue and ScopedExclusiveLock objects are provided empty)
-   * @param archiveQueue the ArchiveQueue object, empty
-   * @param archiveQueueLock the lock, not initialized
-   * @param agentReference the agent reference that will be needed in case of object creation
-   * @param vid the name of the needed tape pool
-   */
-  static void getLockedAndFetchedRetrieveQueue(RetrieveQueue & retrieveQueue, 
-    ScopedExclusiveLock & retrieveQueueLock, AgentReference & agentReference, 
-    const std::string & vid);
   
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB

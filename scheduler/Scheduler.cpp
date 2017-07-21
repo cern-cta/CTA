@@ -130,7 +130,7 @@ void Scheduler::queueRetrieve(
   // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
-  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria);
+  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
