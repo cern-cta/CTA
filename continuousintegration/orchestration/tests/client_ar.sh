@@ -169,5 +169,7 @@ test -z $TAILPID || kill ${TAILPID}
 
 test ${RETRIEVED} = ${NB_FILES} && exit 0
 
-echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files."
+echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files:"
+grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;"
+
 exit 1
