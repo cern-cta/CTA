@@ -63,7 +63,7 @@ public:
    * @param presumedOwner address of the agent which pointed to the object
    * @param agent reference object allowing creation of new objects when needed (at least for requeuing of requests)
    * @params lc log context passed to garbage collection routines to log GC steps.
-   * @params catalogue reference to the catalogue, used by some garbage collection routines (specially for RetriveRequests
+   * @params catalogue reference to the catalogue, used by some garbage collection routines (specially for RetrieveRequests
    * which are tape status dependent.
    */
   void garbageCollectDispatcher(ScopedExclusiveLock & lock, const std::string &presumedOwner, AgentReference & agentReference, 

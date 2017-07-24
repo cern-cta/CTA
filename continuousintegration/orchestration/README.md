@@ -302,10 +302,10 @@ driveRegister-makeMinimalVFS-init-624-20161216-14:14:17-1
 makeMinimalVFS-init-624-20161216-14:14:17
 agentRegister-makeMinimalVFS-init-624-20161216-14:14:17-0
 root
-retriveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
+RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
 
 [root@ctafrontend /]# rados get -p $OBJECTSTOREPOOL --id $OBJECTSTOREID \
- --namespace $OBJECTSTORENAMESPACE retriveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3 \
+ --namespace $OBJECTSTORENAMESPACE RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3 \
  - | protoc --decode_raw
 1: 10
 2: 0

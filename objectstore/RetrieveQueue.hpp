@@ -70,7 +70,7 @@ public:
   };
   std::list<JobDump> dumpJobs();
   
-  void removeJob(const std::string & retriveToFileAddress);
+  void removeJob(const std::string & retrieveToFileAddress);
   // -- Generic parameters
   std::string getVid();
 };

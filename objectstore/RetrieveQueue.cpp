@@ -231,7 +231,7 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFileAddress) {
+void cta::objectstore::RetrieveQueue::removeJob(const std::string& retrieveToFileAddress) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_retrievejobs();
   bool found=false;
@@ -239,7 +239,7 @@ void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFile
     found=false;
     // Push the found entry all the way to the end.
     for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == retriveToFileAddress) {
+      if (jl->Get(i).address() == retrieveToFileAddress) {
         found = true;
         // Keep track of the mounting criteria
         ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());

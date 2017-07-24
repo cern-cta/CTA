@@ -229,7 +229,8 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   } catch (serializers::NotFound &) {}
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string retrieveQueueAddress = agentRef.nextId("RetriveQueue");
+  // The make of the vid in the object name will be handy.
+  std::string retrieveQueueAddress = agentRef.nextId(std::string("RetrieveQueue-")+vid);
   agentRef.addToOwnership(retrieveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);

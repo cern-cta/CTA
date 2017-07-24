@@ -26,7 +26,7 @@
 
 namespace cta {
   /**
-   * A placeholder class from which will derive ArchiveSession and RetriveSession.
+   * A placeholder class from which will derive ArchiveSession and RetrieveSession.
    * It's just here to allow RTTI.
    */
   class TapeMount {
