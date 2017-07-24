@@ -24,6 +24,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/GetOptThreadSafe.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/NonRetryableError.hpp"
@@ -2185,7 +2186,13 @@ std::string XrdCtaFile::xCom_deletearchive() {
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id.value();
   request.requester=originator;
+  cta::utils::Timer t;
   m_scheduler->deleteArchive(m_cliIdentity.username, request);
+  log::LogContext lc(m_log);
+  log::ScopedParamContainer params(lc);
+  params.add("fileId", request.archiveFileID)
+        .add("catalogueTime", t.secs());
+  lc.log(log::INFO, "In XrdCtaFile::xCom_deletearchive(): deleted archive file.");
   return "";
 }
 
