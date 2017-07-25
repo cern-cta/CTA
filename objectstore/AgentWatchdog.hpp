@@ -43,6 +43,10 @@ public:
     return true; 
   }
   
+  bool checkExists() {
+    return m_agent.exists();
+  }
+  
   void setTimeout(double timeout) {
     m_timeout = timeout;
   }

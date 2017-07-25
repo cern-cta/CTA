@@ -139,17 +139,27 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   for (std::map<std::string, AgentWatchdog * >::iterator wa = m_watchedAgents.begin();
       wa != m_watchedAgents.end();) {
     // Get the heartbeat. Clean dead agents and remove references to them
-    if (!wa->second->checkAlive()) {
-      cleanupDeadAgent(wa->first, lc);
-      Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
-      ScopedExclusiveLock oaLock(ourAgent);
-      ourAgent.fetch();
-      ourAgent.removeFromOwnership(wa->first);
-      ourAgent.commit();
-      delete wa->second;
-      m_watchedAgents.erase(wa++);
-    } else {
-      wa++;
+    try {
+      if (!wa->second->checkAlive()) {
+        cleanupDeadAgent(wa->first, lc);
+        Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
+        ScopedExclusiveLock oaLock(ourAgent);
+        ourAgent.fetch();
+        ourAgent.removeFromOwnership(wa->first);
+        ourAgent.commit();
+        delete wa->second;
+        m_watchedAgents.erase(wa++);
+      } else {
+        wa++;
+      }
+    } catch (cta::exception::Exception & ex) {
+      if (wa->second->checkExists()) {
+        // We really have a problem: we failed to check on an agent, that is still present.
+        throw;
+      } else {
+        // The agent is simply gone on the wrong time. It will be trimmed from the list on the next pass.
+        wa++;
+      }
     }
   }
 }
