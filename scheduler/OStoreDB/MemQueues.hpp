@@ -202,7 +202,7 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
   utils::Timer timer;
   // Re-check the queue is not there
   if (g_queues.end() != g_queues.find(queueIndex)) {
-    throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the queue is present, while it should not!");
+    throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the queue is present, while it should not!");
   }
   // Create the queue and reference it.
   auto maq = (g_queues[queueIndex] = std::make_shared<MemQueue>());
@@ -215,7 +215,7 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
     try {
       futureFromPredecessor = std::move(g_futures.at(queueIndex));
     } catch (std::out_of_range &) {
-      throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the future is not present, while it should!");
+      throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the future is not present, while it should!");
     }
   }
   // Create the promise and future for successor.
@@ -235,10 +235,10 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
   // Remove the queue for our tape pool. It should be present.
   try {
     if (g_queues.at(queueIndex).get() != maq.get()) {
-      throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the queue is not ours, while it should!");
+      throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the queue is not ours, while it should!");
     }
   } catch (std::out_of_range &) {
-    throw cta::exception::Exception("In MemArchiveQueue::sharedAddToArchiveQueueWithNewQueue(): the queue is not present, while it should!");
+    throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the queue is not present, while it should!");
   }
   // Checks are fine, let's just drop the queue from the map
   g_queues.erase(queueIndex);
@@ -295,7 +295,7 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
             .add("enqueueTime", timer.secs());
-      logContext.log(log::INFO, "In MemArchiveQueue::sharedAddToArchiveQueue(): added batch of jobs to the queue.");
+      logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }
     // We will also count how much time we mutually wait for the other threads.
     ret->m_timer.reset();
@@ -327,9 +327,9 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(logContext);
       params.add("message", ex.getMessageValue());
-      logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got an exception writing. Will propagate to other threads.");
+      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
     } catch (...) {
-      logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): got a non cta exception writing. Will propagate to other threads.");
+      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got a non cta exception writing. Will propagate to other threads.");
     }
     size_t exceptionsNotPassed = 0;
     // Something went wrong. We should inform the other threads
@@ -348,13 +348,13 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
         std::rethrow_exception(std::current_exception());
       } catch (std::exception & ex) {
         std::stringstream err;
-        err << "In MemArchiveQueue::sharedAddToArchiveQueue(), in main thread, failed to notify "
+        err << "In MemQueue::sharedAddToNewQueue(), in main thread, failed to notify "
             << exceptionsNotPassed << " other threads out of  " << maq->m_requests.size()
             << " : " << ex.what();
         log::ScopedParamContainer params(logContext);
         params.add("what", ex.what())
               .add("exceptionsNotPassed", exceptionsNotPassed);
-        logContext.log(log::ERR, "In MemArchiveQueue::sharedAddToArchiveQueue(): Failed to propagate exceptions to other threads.");
+        logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): Failed to propagate exceptions to other threads.");
 
         throw cta::exception::Exception(err.str());
       }
