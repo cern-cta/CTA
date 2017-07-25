@@ -875,7 +875,7 @@ int DriveHandler::runChild() {
   try {
     std::string processName="DriveProcess-";
     processName+=m_configLine.unitName;
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, m_processManager.logContext()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());

@@ -108,7 +108,7 @@ protected:
   /**
    * The object used to populate the backend
    */
-  cta::objectstore::BackendPopulator m_backendPopulator;
+  std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;
   
   /**
    * The database or object store holding all CTA persistent objects

@@ -26,7 +26,8 @@ namespace cta { namespace objectstore {
 // Constructor
 //------------------------------------------------------------------------------
 BackendPopulator::BackendPopulator(cta::objectstore::Backend & be, 
-    const std::string &agentType): m_backend(be), m_agentReference(agentType) {
+    const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType),
+    m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
@@ -52,9 +53,16 @@ BackendPopulator::~BackendPopulator() throw() {
     agent.fetch();
     agent.removeAndUnregisterSelf();
   } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer params(m_lc);
+    params.add("errorMessage", ex.getMessageValue());
+    m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
+    m_lc.logBacktrace(log::ERR, ex.backtrace());
     // We have an exception (we should not), let's core dump.
     *((int*)nullptr)=0;
   } catch (std::exception & ex) {
+    cta::log::ScopedParamContainer params(m_lc);
+    params.add("exceptionWhat", ex.what());
+    m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (std::exception).");
     // We have an exception (we should not), let's core dump.
     *((int*)nullptr)=0;    
   }
