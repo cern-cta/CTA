@@ -407,14 +407,24 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
       [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         serializers::ObjectHeader oh;
-        oh.ParseFromString(in);
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In ArchiveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
         if (oh.type() != serializers::ObjectType::ArchiveRequest_t) {
           std::stringstream err;
           err << "In ArchiveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
           throw cta::exception::Exception(err.str());
         }
         serializers::ArchiveRequest payload;
-        payload.ParseFromString(oh.payload());
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In ArchiveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
         // Find the copy number and change the owner.
         auto *jl=payload.mutable_jobs();
         for (auto j=jl->begin(); j!=jl->end(); j++) {

@@ -37,7 +37,10 @@ void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::lis
     lp->set_value(p.getValue());
   }
   std::string buffer;
-  watchdogMessage.SerializeToString(&buffer);
+  if (!watchdogMessage.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
+        watchdogMessage.InitializationErrorString());
+  }
   m_socketPair.send(buffer);
 }
 
@@ -50,7 +53,10 @@ void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::
     *lpn = pn;
   }
   std::string buffer;
-  watchdogMessage.SerializeToString(&buffer);
+  if (!watchdogMessage.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
+        watchdogMessage.InitializationErrorString());
+  }
   m_socketPair.send(buffer);
 }
 
@@ -66,7 +72,10 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
   watchdogMessage.set_totaltapebytesmoved(totalTapeBytesMoved);
   watchdogMessage.set_totaldiskbytesmoved(totalDiskBytesMoved);
   std::string buffer;
-  watchdogMessage.SerializeToString(&buffer);
+  if (!watchdogMessage.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
+        watchdogMessage.InitializationErrorString());
+  }
   m_socketPair.send(buffer);
 }
 
@@ -80,7 +89,10 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   watchdogMessage.set_sessiontype((uint32_t)type);
   watchdogMessage.set_vid(vid);
   std::string buffer;
-  watchdogMessage.SerializeToString(&buffer);
+  if (!watchdogMessage.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")+
+        watchdogMessage.InitializationErrorString());
+  }
   m_socketPair.send(buffer);
 }
 

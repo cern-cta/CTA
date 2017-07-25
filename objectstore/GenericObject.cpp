@@ -37,7 +37,13 @@ void GenericObject::fetch() {
     throw NotLocked("In ObjectOps::fetch(): object not locked");
   m_existingObject = true;
   // Get the header from the object store. We don't care for the type
-  m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+  auto objData=m_objectStore.read(getAddressIfSet());
+  if (!m_header.ParseFromString(objData)) {
+    // Use a the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
+      m_header.InitializationErrorString());
+  }
   m_headerInterpreted = true;
 }
 

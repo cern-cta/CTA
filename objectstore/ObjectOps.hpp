@@ -296,12 +296,23 @@ public:
 protected:
   
   void getPayloadFromHeader () {
-    m_payload.ParseFromString(m_header.payload());
+    if (!m_payload.ParseFromString(m_header.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(m_header.payload());
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString());
+    }
     m_payloadInterpreted = true;
   }
 
   void getHeaderFromObjectStore () {
-    m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+    auto objData=m_objectStore.read(getAddressIfSet());
+    if (!m_header.ParseFromString(objData)) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(objData);
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString());
+    }
     if (m_header.type() != payloadTypeId) {
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "

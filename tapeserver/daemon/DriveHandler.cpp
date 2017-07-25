@@ -274,7 +274,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair 
   try {
     serializers::WatchdogMessage message;
-    message.ParseFromString(m_socketPair->receive());
+    auto datagram=m_socketPair->receive();
+    if (!message.ParseFromString(datagram)) {
+      // Use a the tolerant parser to assess the situation.
+      message.ParsePartialFromString(datagram);
+      throw cta::exception::Exception(std::string("In SubprocessHandler::ProcessingStatus(): could not parse message: ")+
+        message.InitializationErrorString());
+    }
     // Logs are processed in all cases
     processLogs(message);
     // If we report bytes, process the report (this is a heartbeat)

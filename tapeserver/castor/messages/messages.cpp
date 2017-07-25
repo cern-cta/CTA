@@ -49,7 +49,10 @@ std::string castor::messages::computeSHA1Base64(const std::string &data) {
 std::string castor::messages::computeSHA1Base64(
   const google::protobuf::Message& msg) {
   std::string buffer;
-  msg.SerializeToString(&buffer);
+  if (!msg.SerializeToString(&buffer)) {
+    throw cta::exception::Exception(std::string("In castor::messages::computeSHA1Base64(): could not serialize: ")+
+        msg.InitializationErrorString());
+  }
   return computeSHA1Base64(buffer.c_str(),buffer.size());
 }
 
