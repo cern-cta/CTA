@@ -85,12 +85,14 @@ public:
    auto GetFuture() { return m_promise.get_future(); }
 
 private:
-   std::string  m_request_str;                  //!< Request buffer
-   char        *m_response_bufptr;              //!< Pointer to the Response buffer
-   int          m_response_bufsize;             //!< Size of the Response buffer
+   void ProcessResponseMetadata();
 
-   std::promise<MetadataType> m_promise;        //!< Promise a reply of Metadata type
-   RequestCallback<AlertType> AlertCallback;    //!< Callback for Alerts
+   std::string                m_request_str;         //!< Request buffer
+   char                      *m_response_bufptr;     //!< Pointer to the Response buffer
+   int                        m_response_bufsize;    //!< Size of the Response buffer
+   std::promise<MetadataType> m_promise;             //!< Promise a reply of Metadata type
+
+   RequestCallback<AlertType> AlertCallback;         //!< Callback for Alert messages
 };
 
 
@@ -140,6 +142,27 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
    try {
       switch(rInfo.rType) {
 
+      // Data and Metadata responses
+
+      case XrdSsiRespInfo::isData:
+
+         // Process Metadata
+
+         ProcessResponseMetadata();
+
+         // Process Data
+
+         // The documentation implies that it should be possible to detect if the Response is metadata-only,
+         // and thus avoid this allocation. But the mechanism described in the docs does not exist.
+
+         m_response_bufptr = new char[m_response_bufsize];
+
+         // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
+
+         GetResponseData(m_response_bufptr, m_response_bufsize);
+
+         break;
+
       // Handle errors in the XRootD framework (e.g. no response from server)
 
       case XrdSsiRespInfo::isError:     throw XrdSsiException(eInfo);
@@ -156,50 +179,10 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
       case XrdSsiRespInfo::isStream:    throw XrdSsiException("Stream requests are not implemented.");
 
-      // Metadata-only responses and data responses
+      // Handle invalid responses
 
       case XrdSsiRespInfo::isNone:
-      case XrdSsiRespInfo::isData:
-         // Check for metadata. The Protocol Buffers Metadata format is used for simple Responses. It
-         // can also be used as the header for large asynchronous data transfers or streaming data.
-
-         int metadata_len;
-         const char *metadata_buffer = GetMetadata(metadata_len);
-
-         if(metadata_len > 0)
-         {
-            // Deserialize the metadata
-
-            MetadataType metadata;
-
-            if(metadata.ParseFromArray(metadata_buffer, metadata_len))
-            {
-               m_promise.set_value(metadata);
-            }
-            else
-            {
-               throw PbException("metadata.ParseFromArray() failed");
-            }
-         }
-
-         if(rInfo.rType == XrdSsiRespInfo::isNone)
-         {
-            // If this is a metadata-only response, we are done
-
-            Finished();
-            delete this;
-            break;
-         }
-         else // XrdSsiRespInfo::isData
-         {
-            // Allocate response buffer
-
-            m_response_bufptr = new char[m_response_bufsize];
-
-            // Read the first chunk of data into the buffer, and pass it to ProcessResponseData()
-
-            GetResponseData(m_response_bufptr, m_response_bufsize);
-         }
+      default:                          throw XrdSsiException("Invalid Response.");
       }
    } catch(std::exception &ex) {
       // Use the exception to fulfil the promise
@@ -222,6 +205,38 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
    }
 
    return true;
+}
+
+
+
+/*!
+ * Process Response Metadata
+ *
+ * A Response can (optionally) contain Metadata. This can be used for simple responses (e.g. status
+ * code, short message) or as the header for large asynchronous data transfers or streaming data.
+ */
+
+template<typename RequestType, typename MetadataType, typename AlertType>
+void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
+{
+   int metadata_len;
+   const char *metadata_buffer = GetMetadata(metadata_len);
+
+   if(metadata_len > 0)
+   {
+      // Deserialize the metadata
+
+      MetadataType metadata;
+
+      if(metadata.ParseFromArray(metadata_buffer, metadata_len))
+      {
+         m_promise.set_value(metadata);
+      }
+      else
+      {
+         throw PbException("metadata.ParseFromArray() failed");
+      }
+   }
 }
 
 

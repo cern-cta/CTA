@@ -269,7 +269,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    // Obtain a Service Provider
 
    std::string host("localhost");
-   int port = 10955;
+   int port = 10956;
    std::string resource("/ctafrontend");
 
    XrdSsiPbServiceType cta_service(host, port, resource);
