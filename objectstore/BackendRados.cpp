@@ -154,10 +154,8 @@ std::string BackendRados::createUniqueClientId() {
 
 BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   // In Rados, locking a non-existing object will create it. This is not our intended
-  // behavior. So we test for existence beforehand.
-  if (!exists(name)) {
-    throw cta::exception::Errnum(ENOENT, "In BackendRados::lockExclusive(): trying to lock a non-existing object");
-  }
+  // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
+  // (while we own the lock).
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
@@ -170,14 +168,29 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ") +
       name + "/" + "lock" + "/" + client + "//");
+  // We could have created an empty object by trying to lock it. We can find this out: if the object is
+  // empty, we should delete it and throw an exception.
+  // Get the size:
+  uint64_t size;
+  time_t date;
+  cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
+      std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::stat: ") +
+      name + "/" + "lock" + "/" + client + "//");
+  if (!size) {
+    // The object has a zero size: we probably created it by attempting the locking.
+    cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
+        std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::remove: ") +
+        name + "//");
+    throw cta::exception::Errnum(ENOENT, "In BackendRados::lockExclusive(): trying to lock a non-existing object");
+  }
   ret->set(name, client);
   return ret.release();
 }
 
 BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   // In Rados, locking a non-existing object will create it. This is not our intended
-  // behavior. So we test for existence beforehand.
-  if (!exists(name)) throw cta::exception::Errnum(ENOENT, "In BackendRados::lockShared(): trying to lock a non-existing object");
+  // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
+  // (while we own the lock).
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
@@ -190,6 +203,21 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ") +
       name + "/" + "lock" + "/" + client + "//");
+  // We could have created an empty object by trying to lock it. We can find this out: if the object is
+  // empty, we should delete it and throw an exception.
+  // Get the size:
+  uint64_t size;
+  time_t date;
+  cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
+      std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::stat: ") +
+      name + "/" + "lock" + "/" + client + "//");
+  if (!size) {
+    // The object has a zero size: we probably created it by attempting the locking.
+    cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
+        std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::remove: ") +
+        name + "//");
+    throw cta::exception::Errnum(ENOENT, "In BackendRados::lockShared(): trying to lock a non-existing object");
+  }
   ret->set(name, client);
   return ret.release();
 }
