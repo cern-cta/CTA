@@ -450,9 +450,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
-    std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
+    auto * archiveJob = archiveJobBatch.front().get();
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
@@ -460,8 +460,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->complete();
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
+    archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
 
@@ -596,19 +596,17 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     // The file should be retried 10 times
     for (int i=0; i<=5; i++) {
-      std::unique_ptr<cta::ArchiveJob> archiveJob(archiveMount->getNextJob(lc));
-      if (!archiveJob.get()) {
+      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1,1,lc);
+      if (!archiveJobList.front().get()) {
         int __attribute__((__unused__)) debugI=i;
       }
-      ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
+      ASSERT_NE(0, archiveJobList.size());
       // Validate we got the right file
-      ASSERT_EQ(archiveFileId, archiveJob->archiveFile.archiveFileID);
-      archiveJob->failed(cta::exception::Exception("Archive failed"));
+      ASSERT_EQ(archiveFileId, archiveJobList.front()->archiveFile.archiveFileID);
+      archiveJobList.front()->failed(cta::exception::Exception("Archive failed"));
     }
     // Then the request should be gone
-    std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
+    ASSERT_EQ(0, archiveMount->getNextJobBatch(1,1,lc).size());
   }
 }
 

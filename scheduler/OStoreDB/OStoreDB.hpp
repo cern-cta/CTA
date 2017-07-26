@@ -127,7 +127,6 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) override;
     std::list<std::unique_ptr<ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
       uint64_t bytesRequested, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;

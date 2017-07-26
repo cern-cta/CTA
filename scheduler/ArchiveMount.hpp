@@ -110,15 +110,6 @@ namespace cta {
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     /**
-     * Job factory
-     *
-     * @param logContext log context for logging internal operations.
-     * @return A unique_ptr to the next archive job or NULL if there are no more
-     * archive jobs left for this tape mount.
-     */
-    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext);
-    
-    /**
      * Batch job factory
      * 
      * @param filesRequested the number of files requested

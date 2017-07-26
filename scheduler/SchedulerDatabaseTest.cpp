@@ -201,11 +201,11 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   bool done = false;
   size_t count = 0;
   while (!done) {
-    auto aj = am->getNextJob(lc);
-    if (aj.get()) {
+    auto aj = am->getNextJobBatch(1,1,lc);
+    if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj->succeed();
+      aj.front()->succeed();
     }
     else
       done = true;
@@ -287,11 +287,11 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   count = 0;
 #endif
   while (!done) {
-    auto aj = am->getNextJob(lc);
-    if (aj.get()) {
+    auto aj = am->getNextJobBatch(1,1,lc);
+    if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj->succeed();
+      aj.front()->succeed();
     }
     else
       done = true;
