@@ -16,8 +16,8 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_EXCEPTION_H
-#define __XRD_SSI_EXCEPTION_H
+#ifndef __XRD_SSI_PB_EXCEPTION_H
+#define __XRD_SSI_PB_EXCEPTION_H
 
 #include <stdexcept>
 #include <XrdSsi/XrdSsiErrInfo.hh>

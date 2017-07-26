@@ -21,6 +21,7 @@
 
 #include "XrdSsiPbDebug.hpp" // for Json output
 #include "XrdSsiPbException.hpp"
+#include "XrdSsiPbResource.hpp"
 #include "XrdSsiPbRequestProc.hpp"
 #include "eos/messages/eos_messages.pb.h"
 
@@ -61,6 +62,8 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 {
    try
    {
+      getClient(m_resource);
+
       // Instantiate the scheduler
 
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
@@ -106,7 +109,7 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
       request.storageClass     = m_request.file().xattr().at("CTA_StorageClass");
       request.archiveReportURL = "null:";
 
-      std::string client_username = m_request.cli().user().username();
+      std::string client_username = getClient(m_resource);
 
       // Queue the request
 
@@ -138,4 +141,3 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 }
 
 } // namespace XrdSsiPb
-

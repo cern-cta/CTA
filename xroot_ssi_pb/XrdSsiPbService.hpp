@@ -63,12 +63,33 @@ public:
 
    virtual void ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef) override;
 
-   /*
-    * The following additional virtual methods are available but have not been defined:
-    *
-    * Attach()     optimize handling of detached requests
-    * Prepare()    perform preauthorization and resource optimization
+   /*!
+    * Perform Request pre-authorisation and/or resource optimisation.
     */
+
+   virtual bool Prepare(XrdSsiErrInfo &eInfo, const XrdSsiResource &rDesc) override
+   {
+#ifdef XRDSSI_DEBUG
+      std::cout << "[DEBUG] Service::Prepare()" << std::endl;
+#endif
+      return true;
+   }
+
+   /*!
+    * Receive notification that a Request has been attached.
+    *
+    * This is required only if the service needs to make decisions on how to run a request based on whether
+    * it is attached or detached. See Sect. 3.3.1 "Detached Requests" in the XRootD SSI documentation.
+    */
+
+   virtual bool Attach(XrdSsiErrInfo &eInfo, const std::string &handle,
+                       XrdSsiRequest &reqRef, XrdSsiResource *resp) override
+   {
+#ifdef XRDSSI_DEBUG
+      std::cout << "[DEBUG] Service::Attach()" << std::endl;
+#endif
+      return true;
+   }
 };
 
 
@@ -84,14 +105,13 @@ public:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resRef)
 {
-   XrdSsiPb::RequestProc<RequestType, MetadataType, AlertType> processor;
+   XrdSsiPb::RequestProc<RequestType, MetadataType, AlertType> processor(resRef);
 
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
 
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Binding Processor to Request" << std::endl;
 #endif
-
    processor.BindRequest(reqRef);
 
    // Execute the request, upon return the processor is deleted

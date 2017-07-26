@@ -22,6 +22,7 @@
 #include <future>
 
 #include <XrdSsi/XrdSsiResponder.hh>
+#include <XrdSsi/XrdSsiResource.hh>
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbAlert.hpp"
 
@@ -60,7 +61,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-            RequestProc() {
+   RequestProc(XrdSsiResource &resource) : m_resource(resource) {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] RequestProc() constructor" << std::endl;
 #endif
@@ -108,26 +109,26 @@ private:
    }
 
    /*
+    * Member variables
+    */
+
+   const XrdSsiResource &m_resource;   //!< Resource associated with the Request
+   std::promise<void>    m_promise;    //!< Promise that the Request has been processed
+
+   /*
     * Protocol Buffer members
     *
-    * A metadata-only reply is appropriate when we just need to send a short response/acknowledgement,
-    * as it has less overhead than a full response.
-    *
-    * Note that Metadata and Response buffers need to be member variables as they must stay in scope
-    * after calling RequestProc() (until Finished() is called).
+    * The Serialized Metadata Response buffer needs to be a member variable as it must stay in scope
+    * after calling RequestProc(), until Finished() is called.
     *
     * The maximum amount of metadata that may be sent is defined by XrdSsiResponder::MaxMetaDataSZ
     * constant member.
     */
 
-   RequestType  m_request;         //!< Request object
-   MetadataType m_metadata;        //!< Metadata Response object
-
-
-   std::string  m_metadata_str;    //!< Serialized Metadata Response buffer
-   std::string  m_response_str;    //!< Response buffer
-
-   std::promise<void> m_promise;   //!< Promise that the Request has been processed
+   RequestType  m_request;             //!< Request object
+   MetadataType m_metadata;            //!< Metadata Response object
+   std::string  m_metadata_str;        //!< Serialized Metadata Response buffer
+   std::string  m_response_str;        //!< Response buffer
 };
 
 
