@@ -152,15 +152,27 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
          // Process Data
 
-         // The documentation implies that it should be possible to detect if the Response is metadata-only,
-         // and thus avoid this allocation. But the mechanism described in the docs does not exist.
+         if(rInfo.blen > 0)
+         {
+            // Process Data Response
 
-         m_response_bufptr = new char[m_response_bufsize];
+            m_response_bufptr = new char[m_response_bufsize];
 
-         // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
+            // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
 
-         GetResponseData(m_response_bufptr, m_response_bufsize);
+            GetResponseData(m_response_bufptr, m_response_bufsize);
+         } else {
+            // Response is Metadata-only
 
+            // Return control of the object to the calling thread and delete rInfo
+
+            Finished();
+
+            // It is now safe to delete the Request object (implies that the pointer on the calling side will
+            // never refer to it again and the destructor of the base class doesn't access any class members)
+
+            delete this;
+         }
          break;
 
       // Handle errors in the XRootD framework (e.g. no response from server)
@@ -189,13 +201,7 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
       m_promise.set_exception(std::current_exception());
 
-      // Return control of the object to the calling thread and delete rInfo
-
       Finished();
-
-      // It is now safe to delete the Request object (implies that the pointer on the calling side will
-      // never refer to it again and the destructor of the base class doesn't access any class members)
-
       delete this;
    } catch(...) {
       // set_exception() above can also throw an exception...
