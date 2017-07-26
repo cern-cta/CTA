@@ -2,24 +2,65 @@
 #include <iostream>
 #endif
 
+#include <XrdSsi/XrdSsiProvider.hh>
+
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
-#include "XrdSsiCtaServiceProvider.h"
 #include "eos/messages/eos_messages.pb.h"
 
 
 
 /*!
- * The service provider object is pointed to by the global pointer XrdSsiProviderServer.
+ * The Service Provider class.
  *
- * The shared object must define and set this at library load time (i.e. it is a file-level global
- * static symbol). When the shared object is loaded, initialization fails if the appropriate symbol
- * cannot be found or it is a null pointer.
+ * Instantiate a Service to process client requests.
+ */
+
+class XrdSsiCtaServiceProvider : public XrdSsiProvider
+{
+public:
+            XrdSsiCtaServiceProvider() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "[DEBUG] XrdSsiCtaServiceProvider() constructor" << std::endl;
+#endif
+            }
+   virtual ~XrdSsiCtaServiceProvider() {
+#ifdef XRDSSI_DEBUG
+               std::cout << "[DEBUG] ~XrdSsiCtaServiceProvider() destructor" << std::endl;
+#endif
+   }
+
+   //! Initialize the object for its intended use. This is always called before any other method.
+
+   bool Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms,
+             int argc, char **argv) override;
+
+   //! Called exactly once after initialisation to obtain an instance of an XrdSsiService object
+
+   XrdSsiService *GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold=256) override;
+
+   //! Determine resource availability. Can be called any time the client asks for the resource status.
+
+   XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
+};
+
+
+
+/*!
+ * Global pointer to the Service Provider object.
+ *
+ * This must be defined at library load time (i.e. it is a file-level global static symbol). When the
+ * shared library is loaded, XRootD initialization fails if the appropriate symbol cannot be found (or
+ * it is a null pointer).
  */
 
 XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 
+
+/*!
+ * Initialise the Service Provider
+ */
 
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
@@ -33,6 +74,10 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 }
 
 
+
+/*!
+ * Instantiate a Service object
+ */
 
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
