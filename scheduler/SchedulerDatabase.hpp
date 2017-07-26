@@ -430,6 +430,7 @@ public:
     std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
     std::vector<ExistingMount> existingOrNextMounts; /**< Existing mounts */
     std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
+    bool queueTrimRequired = false; /**< Indicates an empty queue was encountered */
     /**
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
@@ -456,6 +457,12 @@ public:
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+  
+  /**
+   * A function running a queue trim. This should be called if the corresponding
+   * bit was set in the TapeMountDecisionInfo returned by getMountInfo().
+   */
+  virtual void trimEmptyQueues(log::LogContext & lc) = 0;
   
   /**
    * A function dumping the relevant mount information for reporting the system

@@ -129,7 +129,11 @@ public:
   std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
   }
-
+  
+  void trimEmptyQueues(log::LogContext& lc) override {
+    m_OStoreDB.trimEmptyQueues(lc);
+  }
+  
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock() override {
     return m_OStoreDB.getMountInfoNoLock();
   }

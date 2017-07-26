@@ -405,6 +405,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // First, get the mount-related info from the DB
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo();
+  if (mountInfo->queueTrimRequired) m_db.trimEmptyQueues(lc);
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
   // The library information is not know for the tapes involved in retrieves. We 

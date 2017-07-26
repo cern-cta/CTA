@@ -113,6 +113,7 @@ private:
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
+  void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {

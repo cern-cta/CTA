@@ -106,6 +106,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
       m.minArchiveRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
       m.logicalLibrary = "";
+    } else {
+      tmdi.queueTrimRequired = true;
     }
   }
   // Walk the retrieve queues for statistics
@@ -129,6 +131,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
       m.minArchiveRequestAge = rqueue.getJobsSummary().minArchiveRequestAge;
       m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
+    } else {
+      tmdi.queueTrimRequired = true;
     }
   }
   // Collect information about the existing and next mounts
@@ -201,6 +205,53 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::trimEmptyQueues()
+//------------------------------------------------------------------------------
+void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
+  // We will trim empty queues from the root entry.
+  lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): will start trimming empty queues");
+  // Get an exclusive lock on the root entry, we have good chances to need it.
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  try {
+    auto archiveQueueList = re.dumpArchiveQueues();
+    for (auto & a: archiveQueueList) {
+      ArchiveQueue aq(a.address, m_objectStore);
+      ScopedSharedLock aql(aq);
+      aq.fetch();
+      if (!aq.dumpJobs().size()) {
+        aql.release();
+        re.removeArchiveQueueAndCommit(a.tapePool);
+        log::ScopedParamContainer params(lc);
+        params.add("tapePool", a.tapePool)
+              .add("queueObject", a.address);
+        lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty archive queue.");
+      }
+    }
+    auto retrieveQeueueList = re.dumpRetrieveQueues();
+    for (auto & r:retrieveQeueueList) {
+      RetrieveQueue rq(r.address, m_objectStore);
+      ScopedSharedLock rql(rq);
+      rq.fetch();
+      if (!rq.dumpJobs().size()) {
+        rql.release();
+        re.removeRetrieveQueueAndCommit(r.vid);
+        log::ScopedParamContainer params(lc);
+        params.add("vid", r.vid)
+              .add("queueObject", r.address);
+        lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty retrieve queue.");
+      }
+    }
+  } catch (cta::exception::Exception & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    lc.log(log::ERR, "In OStoreDB::trimEmptyQueues(): got an exception. Stack trace follows.");
+    lc.logBacktrace(log::ERR, ex.backtrace());
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfoNoLock()
