@@ -1,10 +1,20 @@
-/var/log/cta/cta-frontend*.log {
-    compress
+/var/log/cta/cta-frontend.log {
     daily
     missingok
     rotate 500
+    compress
     delaycompress
     postrotate
         /bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true
     endscript
+}
+
+/var/log/cta/cta-frontend-xrootd.log {
+    daily
+    missingok
+    rotate 500
+    copytruncate
+    create 755 cta cta
+    compress
+    delaycompress
 }
