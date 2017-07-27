@@ -82,7 +82,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
 # Add eos_wfe_scripts directory inside ctaeos specific folder
-ADD eos_wfe_scripts ${LOCALORCHESTRATIONDIR}/var/eos/wfe/bash/
+ADD eos_wfe_scripts ${LOCALORCHESTRATIONDIR}/ctaeos/var/eos/wfe/bash/
 
 # Add orchestration run scripts locally
 ADD ${BASEDIR}/opt /opt

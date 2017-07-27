@@ -3,7 +3,7 @@
 EINVAL=22
 ECANCELED=125
 export XrdSecPROTOCOL=sss
-export XrdSecSSSKT=/etc/cta/cta-cli.sss.keytab
+export XrdSecSSSKT=/etc/ctafrontend_SSS_c.keytab
 
 if test $# -ne 9; then
   echo "Wrong number of command-line arguments"

@@ -173,6 +173,10 @@ eos attr set sys.workflow.sync::prepare.default="bash:shell:cta XrdSecPROTOCOL=$
 # to set the CTA_retrieved_timestamp attribute.
 eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${CTA_WF_DIR}
 
+
+# configure preprod directory separately
+/opt/run/bin/eos_configure_preprod.sh
+
 echo "### ctaeos mgm ready ###"
 
 /bin/bash
