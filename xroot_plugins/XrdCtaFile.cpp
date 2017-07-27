@@ -577,7 +577,6 @@ std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string
         columnSize=responseTable.at(i).at(j).size();
       }
     }
-    columnSize++; //add one space
     columnSizes.push_back(columnSize);//loops here
   }
   std::stringstream responseSS;
@@ -1826,7 +1825,9 @@ std::string XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desired", "vid", "tapepool","session id","since","files","Mbytes","speed", "since update"};
+        std::vector<std::string> headers = {"drive", "host", "library", "mountType", 
+          "status", "since", "desired", "vid", "tapepool", "files", "Mbytes",
+          "speed", "since", "session"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
         driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
@@ -1839,10 +1840,6 @@ std::string XrdCtaFile::xCom_drive() {
           currentRow.push_back(ds.logicalLibrary);
           currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
-          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
-          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
-          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
           // print the time spent in the current state
           switch(ds.driveStatus) {
           case cta::common::dataStructures::DriveStatus::Up:
@@ -1874,10 +1871,14 @@ std::string XrdCtaFile::xCom_drive() {
             currentRow.push_back("-");
             break;
           }
+          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
+          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
+          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
           currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
-          currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/1000.0/1000.0));
-          currentRow.push_back(std::to_string((long double)ds.latestBandwidth/1000.0/1000.0));
+          currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/Mbytes));
+          currentRow.push_back(std::to_string((long double)ds.latestBandwidth/Mbytes));
           currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
+          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
           responseTable.push_back(currentRow);
         }
         if (singleDrive && !driveFound) {
@@ -2034,8 +2035,8 @@ std::string XrdCtaFile::xCom_showqueues() {
   auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"type","tapepool","vid","files queued","bytes queued","oldest age","priority","min age","max drives",
-      "cur. mounts", "cur. files", "cur. Mbytes", "speed", "next mounts", "tapes capacity", "files on tapes", "data on tapes", "full tapes", "empty tapes",
+    std::vector<std::string> header = {"type","tapepool","vid","files queued","Mbytes queued","oldest age","priority","min age","max drives",
+      "cur. mounts", "cur. files", "cur. Mbytes", "speed", "next mounts", "tapes capacity", "files on tapes", "Mbytes on tapes", "full tapes", "empty tapes",
       "disabled tapes", "writables tapes"};
     if(hasOption("-h", "--header")) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
@@ -2044,7 +2045,7 @@ std::string XrdCtaFile::xCom_showqueues() {
       currentRow.push_back(q.tapePool);
       currentRow.push_back(q.vid);
       currentRow.push_back(std::to_string(q.filesQueued));
-      currentRow.push_back(std::to_string(q.bytesQueued));
+      currentRow.push_back(std::to_string((long double)q.bytesQueued/Mbytes));
       currentRow.push_back(std::to_string(q.oldestJobAge));
       if (common::dataStructures::MountType::Archive == q.mountType) {
         currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
@@ -2061,12 +2062,12 @@ std::string XrdCtaFile::xCom_showqueues() {
       }
       currentRow.push_back(std::to_string(q.currentMounts));
       currentRow.push_back(std::to_string(q.currentFiles));
-      currentRow.push_back(std::to_string((long double)q.currentBytes/1000.0/1000.0));
-      currentRow.push_back(std::to_string((long double)q.latestBandwidth/1000.0/1000.0));
+      currentRow.push_back(std::to_string((long double)q.currentBytes/Mbytes));
+      currentRow.push_back(std::to_string((long double)q.latestBandwidth/Mbytes));
       currentRow.push_back(std::to_string(q.nextMounts));
-      currentRow.push_back(std::to_string(q.tapesCapacity));
+      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)Mbytes));
       currentRow.push_back(std::to_string(q.filesOnTapes));
-      currentRow.push_back(std::to_string(q.dataOnTapes));
+      currentRow.push_back(std::to_string((long double)q.dataOnTapes/Mbytes));
       currentRow.push_back(std::to_string(q.fullTapes));
       currentRow.push_back(std::to_string(q.emptyTapes));
       currentRow.push_back(std::to_string(q.disabledTapes));
