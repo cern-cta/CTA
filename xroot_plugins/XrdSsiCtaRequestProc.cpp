@@ -114,11 +114,16 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
       // Queue the request
 
       uint64_t archiveFileId = scheduler->queueArchive(client_username, request, lc);
-      std::cout << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
+      std::string result_str = "<eos::wfe::path::fxattr:sys.archiveFileId>" + std::to_string(archiveFileId);
+      std::cout << result_str << std::endl;
 
       // Set metadata
 
       m_metadata.set_type(eos::wfe::Response::RSP_SUCCESS);
+
+      // Temporary hack to send back archiveFileId (deprecated)
+
+      m_metadata.set_message_txt(result_str);
    }
    catch(std::exception &ex)
    {

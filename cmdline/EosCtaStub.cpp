@@ -112,7 +112,11 @@ void base64Decode(eos::wfe::Notification &notification, const std::string &argva
       else if(key == "xs") notification.mutable_file()->mutable_cks()->set_value(val);
       else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
       else if(key == "file") notification.mutable_file()->set_lpath(val);
-      else { cout << "No match in protobuf for fmd:" << key << "=" << val << endl; }
+      else {
+#ifdef XRDSSI_DEBUG
+         cout << "No match in protobuf for fmd:" << key << "=" << val << endl;
+#endif
+      }
    }
 
    // Process directory metadata
@@ -154,7 +158,11 @@ void base64Decode(eos::wfe::Notification &notification, const std::string &argva
 
          notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
       }
-      else { cout << "No match in protobuf for dmd:" << key << "=" << val << endl; }
+      else {
+#ifdef XRDSSI_DEBUG
+         cout << "No match in protobuf for dmd:" << key << "=" << val << endl;
+#endif
+      }
    }
 }
 
