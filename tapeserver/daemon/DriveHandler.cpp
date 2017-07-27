@@ -78,7 +78,8 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeT
   // We expect the process to exit within 5 minutes of getting in this state. This state
   // potentially covers the draining of metadata to central storage (if not faster that 
   // unmounting the tape).
-  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))}
+  // TODO: this is set temporarily to 15 minutes while the reporting is not yet parallelized.
+  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::minutes(15))}
 };
 
 //------------------------------------------------------------------------------
