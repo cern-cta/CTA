@@ -53,7 +53,7 @@ private:
   std::unique_ptr<objectstore::ScopedExclusiveLock> m_lock;
   std::unique_ptr<Queue> m_queue;
   std::string m_queueIndex;
-  std::shared_ptr<std::promise<void>> m_promiseForNext;
+  std::shared_ptr<std::promise<void>> m_promiseForSuccessor;
   log::LogContext m_logContext;
   utils::Timer m_timer;
 };
@@ -66,14 +66,14 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
         .add("waitAndUnlockTime", m_timer.secs());
   m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
   // The next update of the queue can now proceed
-  ANNOTATE_HAPPENS_BEFORE(m_promiseForNext.get());
-  m_promiseForNext->set_value();
+  ANNOTATE_HAPPENS_BEFORE(m_promiseForSuccessor.get());
+  m_promiseForSuccessor->set_value();
     // We can now cleanup the promise/future couple if they were not picked up to trim the maps.
     // A next thread finding them unlocked or absent will be equivalent.
     threading::MutexLocker globalLock(MemQueue<Queue, Request>::g_mutex);
     // If there is an promise AND it is ours, we remove it.
     try {
-      if (MemQueue<Queue, Request>::g_promises.at(m_queueIndex).get() == m_promiseForNext.get()) {
+      if (MemQueue<Queue, Request>::g_promises.at(m_queueIndex).get() == m_promiseForSuccessor.get()) {
         MemQueue<Queue, Request>::g_futures.erase(m_queueIndex);
         MemQueue<Queue, Request>::g_promises.erase(m_queueIndex);
       }
@@ -268,7 +268,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   // We can now proceed with the queuing of the jobs in the object store.
   try {
     std::shared_ptr<SharedQueueLock<Queue, Request>> ret(new SharedQueueLock<Queue, Request>(logContext));
-    ret->m_promiseForNext=promiseForSuccessor;
+    ret->m_promiseForSuccessor=promiseForSuccessor;
     ret->m_queueIndex=queueIndex;
     ret->m_queue.reset(new Queue(oStoreDB.m_objectStore));
     ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
