@@ -1,7 +1,7 @@
 #!/bin/bash
 
 EOSINSTANCE=ctaeos
-EOS_DIR=/eos/ctaeos/cta/$(uuidgen)
+EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 
 NB_PROCS=1
@@ -11,14 +11,26 @@ VERBOSE=0
 TAILPID=''
 
 
+die() {
+  echo "$@" 1>&2
+  exit 1
+}
+
+
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>]
 EOF
 exit 1
 }
 
-while getopts "n:s:p:v" o; do
+while getopts "d:e:n:s:p:v" o; do
     case "${o}" in
+        e)
+            EOSINSTANCE=${OPTARG}
+            ;;
+        d)
+            EOS_BASEDIR=${OPTARG}
+            ;;
         n)
             NB_FILES=${OPTARG}
             ;;
@@ -53,11 +65,11 @@ if [[ $VERBOSE == 1 ]]; then
   TAILPID=$!
 fi
 
-
+EOS_DIR="${EOS_BASEDIR}/$(uuidgen)"
 echo "Creating test dir in eos: ${EOS_DIR}"
 # uuid should be unique no need to remove dir before...
 # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR}
-eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}
+eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}." 
 
 echo -n "Copying files to ${EOS_DIR} using ${NB_PROCS} processes..."
 for ((i=0;i<${NB_FILES};i++)); do
