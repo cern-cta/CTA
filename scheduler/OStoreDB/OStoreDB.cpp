@@ -2012,6 +2012,15 @@ auto OStoreDB::RetrieveMount::getNextJob(log::LogContext & logContext) -> std::u
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::getNextJobBatch()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested, 
+    uint64_t bytesRequested, log::LogContext& logContext) {
+  throw cta::exception::Exception("In OStoreDB::RetrieveMount::getNextJobBatch(): not implemented.");
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::complete()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::complete(time_t completionTime) {

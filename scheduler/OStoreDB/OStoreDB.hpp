@@ -168,6 +168,7 @@ public:
     catalogue::Catalogue & m_catalogue;
   public:
     const MountInfo & getMountInfo() override;
+    std::list<std::unique_ptr<RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
     std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
