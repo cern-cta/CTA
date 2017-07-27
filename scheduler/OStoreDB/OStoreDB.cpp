@@ -215,6 +215,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
   // Get an exclusive lock on the root entry, we have good chances to need it.
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
+  re.fetch();
   try {
     auto archiveQueueList = re.dumpArchiveQueues();
     for (auto & a: archiveQueueList) {
