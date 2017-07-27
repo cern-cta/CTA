@@ -256,6 +256,7 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
     auto & queue = *ret->m_queue;
     auto & aql = *ret->m_lock;
     objectstore::Helpers::getLockedAndFetchedQueue<Queue>(queue, aql, *oStoreDB.m_agentReference, queueIndex);
+    double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
     size_t qJobsBefore=queue.dumpJobs().size();
     uint64_t qBytesBefore=0;
     for (auto j: queue.dumpJobs()) {
@@ -272,13 +273,17 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
       specializedAddJobToQueue(maqr->m_job, maqr->m_request, queue);
       addedJobs++;
     }
+    double inMemoryQueueProcessTime = timer.secs(utils::Timer::resetCounter);
     // We can now commit the multi-request addition to the object store
     queue.commit();
+    double queueCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.
     specializedUpdateCachedQueueStats(queue);
+    double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
     // The next update of the queue can now proceed
     ANNOTATE_HAPPENS_BEFORE(promiseForSuccessor.get());
     promiseForSuccessor->set_value();
+    double successorPromiseSetTime = timer.secs(utils::Timer::resetCounter);
     // Log
     size_t qJobsAfter=queue.dumpJobs().size();
     uint64_t qBytesAfter=0;
@@ -294,7 +299,13 @@ std::shared_ptr<SharedQueueLock<Queue>> MemQueue<Request, Queue>::sharedAddToNew
             .add("bytesAfter", qBytesAfter)
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
-            .add("enqueueTime", timer.secs());
+            .add("getFetchedQueueTime", getFetchedQueueTime)
+            .add("inMemoryQueueProcessTime", inMemoryQueueProcessTime)
+            .add("queueCommitTime", queueCommitTime)
+            .add("cacheUpdateTime", cacheUpdateTime)
+            .add("successorPromiseSetTime", successorPromiseSetTime)      
+            .add("totalEnqueueTime", getFetchedQueueTime + inMemoryQueueProcessTime + queueCommitTime 
+                                    + cacheUpdateTime + successorPromiseSetTime + timer.secs());
       logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }
     // We will also count how much time we mutually wait for the other threads.
