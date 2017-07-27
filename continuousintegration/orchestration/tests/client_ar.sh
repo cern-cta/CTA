@@ -99,29 +99,24 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
 
   # Updating all files statuses
-  eos --batch root://${EOSINSTANCE} ${EOS_BATCHFILE} | egrep '^ *File|tape' | while read line; do
-    if echo $line | grep -q File; then
-      filename=$(basename $(echo $line | awk '{print $2}' | sed -e "s/'//g"))
-    elif echo $line | awk '{print $4}' | grep -q tape; then
-      # file is on tape
-      sed -i ${STATUS_FILE} -e "s/${filename} copied/${filename} archived/"
-    fi
-  done
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
 
 done
 
-ARCHIVED=$(grep -c archived$ ${STATUS_FILE})
+ARCHIVED=$(egrep -c 'archived$|tapeonly' ${STATUS_FILE})
 
 
 echo "###"
 echo "${ARCHIVED}/${NB_FILES} archived"
 echo "###"
 
-echo "Removing disk replica of all archived files"
+grep -q 'archived$' ${STATUS_FILE} && echo "Removing disk replica of $(grep -c 'archived$' ${STATUS_FILE}) archived files" || echo "$(grep -c 'tapeonly$' ${STATUS_FILE}) files are on tape with no disk replica"
 for TEST_FILE_NAME in $(grep archived$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
     XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop ${EOS_DIR}/${TEST_FILE_NAME} 1 &> /dev/null || echo "Could not remove disk replica for ${EOS_DIR}/${TEST_FILE_NAME}"
-    test 1 = $(eos root://${EOSINSTANCE} info ${EOS_DIR}/${TEST_FILE_NAME} | grep -c nodrain) && sed -i ${STATUS_FILE} -e "s/${TEST_FILE_NAME} archived/${TEST_FILE_NAME} tapeonly/"
 done
+# Updating all files statuses
+eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
+
 
 TAPEONLY=$(grep -c tapeonly$ ${STATUS_FILE})
 
