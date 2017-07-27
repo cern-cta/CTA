@@ -201,7 +201,7 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
   parent.m_lc.log(cta::log::ERR,m_failedRetrieveJob->failureMessage);
-  m_failedRetrieveJob->failed();
+  m_failedRetrieveJob->failed(parent.m_lc);
 }
 
 //------------------------------------------------------------------------------

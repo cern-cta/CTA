@@ -162,9 +162,10 @@ public:
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &);
+    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &);
     objectstore::Backend & m_objectStore;
     objectstore::AgentReference & m_agentReference;
+    catalogue::Catalogue & m_catalogue;
   public:
     const MountInfo & getMountInfo() override;
     std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
@@ -180,17 +181,18 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void succeed() override;
-    virtual void fail() override;
+    virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, 
+    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &, 
       objectstore::AgentReference &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
-    RetrieveMount & m_retrieveMount;
+    OStoreDB::RetrieveMount & m_retrieveMount;
   };
   
   /* === Archive requests handling  ========================================= */

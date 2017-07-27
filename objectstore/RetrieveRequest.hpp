@@ -48,7 +48,6 @@ public:
   void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
-  bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   class JobDump {
   public:
     uint64_t copyNb;
@@ -60,15 +59,11 @@ public:
   };
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
-  struct FailuresCount {
-    uint16_t failuresWithinMount;
-    uint16_t totalFailures;
-  };
-  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
+  bool addJobFailure(uint16_t copyNumber, uint64_t mountId); /**< Returns true is the request is completely failed 
+                                                                   (telling wheather we should requeue or not). */
+  bool finishIfNecessary();                   /**< Handling of the consequences of a job status change for the entire request.
+                                               * This function returns true if the request got finished. */
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
-  // Handling of the consequences of a job status. This is simpler that archival
-  // as one finish is enough.
-  void finish();
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setAllJobsLinkingToTapePool();
   // Mark all the jobs as being deleted, in case of a cancellation

@@ -1536,7 +1536,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
   std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
-    new OStoreDB::RetrieveMount(m_objectStore, m_agentReference));
+    new OStoreDB::RetrieveMount(m_objectStore, m_agentReference, m_catalogue));
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -1896,8 +1896,8 @@ OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress,
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::RetrieveMount()
 //------------------------------------------------------------------------------
-OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::AgentReference& ar):
-  m_objectStore(os), m_agentReference(ar) { }
+OStoreDB::RetrieveMount::RetrieveMount(objectstore::Backend& os, objectstore::AgentReference& ar, catalogue::Catalogue & c):
+  m_objectStore(os), m_agentReference(ar), m_catalogue(c) { }
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::getMountInfo()
@@ -1969,7 +1969,7 @@ auto OStoreDB::RetrieveMount::getNextJob(log::LogContext & logContext) -> std::u
       // Prepare the return value
       auto job=rq.dumpJobs().front();
       std::unique_ptr<OStoreDB::RetrieveJob> privateRet(new OStoreDB::RetrieveJob(
-        job.address, m_objectStore, m_agentReference, *this));
+        job.address, m_objectStore, m_catalogue, m_agentReference, *this));
       privateRet->selectedCopyNb = job.copyNb;
       objectstore::ScopedExclusiveLock rrl;
       try {
@@ -2252,17 +2252,80 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::RetrieveJob()
 //------------------------------------------------------------------------------
-OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, 
-    objectstore::Backend& os, objectstore::AgentReference& ar, 
+OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress,
+    objectstore::Backend& os, catalogue::Catalogue & c, objectstore::AgentReference& ar,
     OStoreDB::RetrieveMount& rm): m_jobOwned(false),
-  m_objectStore(os), m_agentReference(ar), m_retrieveRequest(jobAddress, os), 
+  m_objectStore(os), m_catalogue(c), m_agentReference(ar), m_retrieveRequest(jobAddress, os), 
   m_retrieveMount(rm) { }
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::fail()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::fail() {
-  throw NotImplemented("");
+void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
+  if (!m_jobOwned)
+    throw JobNowOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
+  // Lock the retrieve request. Fail the job.
+  objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+  // Add a job failure. If the job is failed, we will delete it.
+  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId)) {
+    // The job will not be retried. Either another jobs for the same request is 
+    // queued and keeps the request referenced or the request has been deleted.
+    // In any case, we can forget it.
+    m_agentReference.removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_objectStore);
+    m_jobOwned = false;
+    log::ScopedParamContainer params(logContext);
+    params.add("object", m_retrieveRequest.getAddressIfSet());
+    logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
+    return;
+  }
+  // The job still has a chance, requeue is to the best tape.
+  // Get the best vid from the cache
+  std::set<std::string> candidateVids;
+  using serializers::RetrieveJobStatus;
+  std::set<serializers::RetrieveJobStatus> finishedStatuses(
+    {RetrieveJobStatus::RJS_Complete, RetrieveJobStatus::RJS_Failed});
+  for (auto & tf: m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.tapeFiles)
+    if (!finishedStatuses.count(m_retrieveRequest.getJobStatus(tf.second.copyNb)))
+      candidateVids.insert(tf.second.vid);
+  if (candidateVids.empty())
+    throw cta::exception::Exception("In OStoreDB::RetrieveJob::fail(): no active job after addJobFailure() returned false.");
+  std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
+  // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
+  uint64_t bestCopyNb;
+  for (auto & tf: m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.tapeFiles) {
+    if (tf.second.vid == bestVid) {
+      bestCopyNb = tf.second.copyNb;
+      goto vidFound;
+    }
+  }
+  {
+    std::stringstream err;
+    err << "In OStoreDB::RetrieveJob::fail(): no tape file for requested vid. archiveId="
+        << m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.archiveFileID
+        << " vid=" << bestVid;
+    throw RetrieveRequestHasNoCopies(err.str());
+  }
+  vidFound:
+  {
+    // Add the request to the queue.
+    objectstore::RetrieveQueue rq(m_objectStore);
+    objectstore::ScopedExclusiveLock rql;
+    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, m_agentReference, bestVid);
+    auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+    auto & af=rfqc.archiveFile;
+    auto & tf = af.tapeFiles.at(bestCopyNb);
+    auto sr = m_retrieveRequest.getSchedulerRequest();
+    rq.addJobIfNecessary(bestCopyNb, tf.fSeq, m_retrieveRequest.getAddressIfSet(), af.fileSize, rfqc.mountPolicy, sr.creationLog.time);
+    m_retrieveRequest.setOwner(rq.getAddressIfSet());
+    m_retrieveRequest.commit();
+    // We do not own the request anymore
+    m_jobOwned = false;
+    // The lock on the queue is released here (has to be after the request commit for consistency.
+  }
+  rrl.release();
+  // And relinquish ownership form agent
+  m_agentReference.removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -2343,16 +2406,11 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 // OStoreDB::RetrieveJob::succeed()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::succeed() {
-  // Lock the request and set the job as successful.
+  // Lock the request and set the request as successful (delete it).
   objectstore::ScopedExclusiveLock rtfrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
   std::string rtfrAddress = m_retrieveRequest.getAddressIfSet();
-  if (m_retrieveRequest.setJobSuccessful(selectedCopyNb)) {
-    m_retrieveRequest.remove();
-  } else {
-    m_retrieveRequest.commit();
-  }
-  // We no more own the job (which could be gone)
+  m_retrieveRequest.remove();
   m_jobOwned = false;
   // Remove ownership form the agent
   m_agentReference.removeFromOwnership(rtfrAddress, m_objectStore);

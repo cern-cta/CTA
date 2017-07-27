@@ -89,23 +89,24 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
     uint64_t mountId) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
-  // Find the job and update the number of failures (and return the new count)
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      if (j->lastmountwithfailure() == mountId) {
-        j->set_retrieswithinmount(j->retrieswithinmount() + 1);
+  // Find the job and update the number of failures 
+  // (and return the job status: failed (true) or to be retried (false))
+  for (auto & j: *jl) {
+    if (j.copynb() == copyNumber) {
+      if (j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
       } else {
-        j->set_retrieswithinmount(1);
-        j->set_lastmountwithfailure(mountId);
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
       }
-      j->set_totalretries(j->totalretries() + 1);
+      j.set_totalretries(j.totalretries() + 1);
     }
-    if (j->totalretries() >= j->maxtotalretries()) {
-      j->set_status(serializers::AJS_Failed);
+    if (j.totalretries() >= j.maxtotalretries()) {
+      j.set_status(serializers::AJS_Failed);
       finishIfNecessary();
       return true;
     } else {
-      j->set_status(serializers::AJS_PendingMount);
+      j.set_status(serializers::AJS_PendingMount);
       return false;
     }
   }
@@ -492,17 +493,15 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
 bool ArchiveRequest::finishIfNecessary() {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
-  // in memory. If the job is complete, we will just remove it.
-  // TODO: we will have to push the result to the ArchiveToDirRequest when
-  // it gets implemented.
+  // in memory. If the request is complete, we will just remove it.
   // If all the jobs are either complete or failed, we can remove the request.
   auto & jl=m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    if (j->status() != serializers::AJS_Complete 
-        && j->status() != serializers::AJS_Failed) {
+  using serializers::ArchiveJobStatus;
+  std::set<serializers::ArchiveJobStatus> finishedStatuses(
+    {ArchiveJobStatus::AJS_Complete, ArchiveJobStatus::AJS_Failed});
+  for (auto & j: jl)
+    if (!finishedStatuses.count(j.status()))
       return false;
-    }
-  }
   remove();
   return true;
 }

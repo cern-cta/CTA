@@ -163,33 +163,13 @@ void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uin
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
   tf->set_copynb(copyNb);
+  tf->set_lastmountwithfailure(0);
   tf->set_maxretrieswithinmount(maxRetiesWithinMount);
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
   tf->set_totalretries(0);
   tf->set_status(serializers::RetrieveJobStatus::RJS_Pending);
 }
-
-//------------------------------------------------------------------------------
-// setJobSuccessful
-//------------------------------------------------------------------------------
-bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      j->set_status(serializers::RetrieveJobStatus::RJS_Complete);
-      for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
-        if (j2->status()!= serializers::RetrieveJobStatus::RJS_Complete &&
-            j2->status()!= serializers::RetrieveJobStatus::RJS_Failed)
-          return false;
-      }
-      return true;
-    }
-  }
-  throw NoSuchJob("In RetrieveRequest::setJobSuccessful(): job not found");
-}
-
 
 //------------------------------------------------------------------------------
 // setSchedulerRequest
@@ -304,12 +284,57 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   return ret;
 }
 
-RetrieveRequest::FailuresCount RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t sessionId) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  // Find the job and update the number of failures
+  // (and return the full request status: failed (true) or to be retried (false))
+  // The request will go through a full requeueing if retried (in caller).
+  for (auto j: *jl) {
+    if (j.copynb() == copyNumber) {
+      if (j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+      } else {
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
+      }
+      j.set_totalretries(j.totalretries() + 1);
+    }
+    if (j.totalretries() >= j.maxtotalretries()) {
+      j.set_status(serializers::RJS_Failed);
+      return finishIfNecessary();
+    } else {
+      j.set_status(serializers::RJS_Pending);
+      return false;
+    }
+  }
+  throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
-void RetrieveRequest::finish() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+bool RetrieveRequest::finishIfNecessary() {
+  checkPayloadWritable();
+  // This function is typically called after changing the status of one job
+  // in memory. If the request is complete, we will just remove it.
+  // If all the jobs are either complete or failed, we can remove the request.
+  auto & jl=m_payload.jobs();
+  using serializers::RetrieveJobStatus;
+  std::set<serializers::RetrieveJobStatus> finishedStatuses(
+    {RetrieveJobStatus::RJS_Complete, RetrieveJobStatus::RJS_Failed});
+  for (auto & j: jl)
+    if (!finishedStatuses.count(j.status()))
+      return false;
+  remove();
+  return true;
+}
+
+serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto & j: m_payload.jobs())
+    if (j.copynb() == copyNumber)
+      return j.status();
+  std::stringstream err;
+  err << "In RetrieveRequest::getJobStatus(): could not find job for copynb=" << copyNumber;
+  throw exception::Exception(err.str());
 }
 
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
