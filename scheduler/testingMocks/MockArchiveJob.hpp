@@ -34,15 +34,13 @@ namespace cta {
       
     ~MockArchiveJob() throw() {} 
 
-    virtual bool complete() {
+    bool complete() override {
       completes++;
       return false;
     }
     
-    virtual void failed(const cta::exception::Exception& ex) {
+    void failed(const cta::exception::Exception& ex, log::LogContext & lc) override {
       failures++;
     }
-
-    virtual void retry() {}
   };
 }

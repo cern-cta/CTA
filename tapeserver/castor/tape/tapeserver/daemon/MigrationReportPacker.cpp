@@ -340,7 +340,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
   }
   try {
-    m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
+    m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()), reportPacker.m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())

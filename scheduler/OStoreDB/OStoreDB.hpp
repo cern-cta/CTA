@@ -141,7 +141,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     bool succeed() override;
-    void fail() override;
+    void fail(log::LogContext & lc) override;
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:

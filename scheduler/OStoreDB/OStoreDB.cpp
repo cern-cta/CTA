@@ -2173,7 +2173,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::fail() {
+void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
@@ -2191,7 +2191,7 @@ void OStoreDB::ArchiveJob::fail() {
   // The job still has a chance, return it to its original tape pool's queue
   objectstore::ArchiveQueue aq(m_objectStore);
   objectstore::ScopedExclusiveLock aqlock;
-  objectstore::Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aqlock, m_agentReference, m_tapePool);
+  objectstore::Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aqlock, m_agentReference, m_tapePool, lc);
   // Find the right job
   auto jl = m_archiveRequest.dumpJobs();
   for (auto & j:jl) {
@@ -2320,7 +2320,7 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     // Add the request to the queue.
     objectstore::RetrieveQueue rq(m_objectStore);
     objectstore::ScopedExclusiveLock rql;
-    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, m_agentReference, bestVid);
+    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, m_agentReference, bestVid, logContext);
     auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
     auto & af=rfqc.archiveFile;
     auto & tf = af.tapeFiles.at(bestCopyNb);

@@ -54,7 +54,7 @@ public:
   template <class Queue>
   static void getLockedAndFetchedQueue(Queue & queue, 
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
-    const std::string & tapePoolOrVid);
+    const std::string & tapePoolOrVid, log::LogContext & lc);
   
   /**
    * Find the most appropriate queue (bid) to add the retrieve request to. The potential

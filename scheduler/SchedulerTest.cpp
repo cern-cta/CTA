@@ -603,7 +603,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
       ASSERT_NE(0, archiveJobList.size());
       // Validate we got the right file
       ASSERT_EQ(archiveFileId, archiveJobList.front()->archiveFile.archiveFileID);
-      archiveJobList.front()->failed(cta::exception::Exception("Archive failed"));
+      archiveJobList.front()->failed(cta::exception::Exception("Archive failed"), lc);
     }
     // Then the request should be gone
     ASSERT_EQ(0, archiveMount->getNextJobBatch(1,1,lc).size());

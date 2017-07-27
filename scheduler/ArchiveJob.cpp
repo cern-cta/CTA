@@ -106,6 +106,6 @@ std::string cta::ArchiveJob::reportURL() {
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
-  m_dbJob->fail();
+void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogContext & lc) {
+  m_dbJob->fail(lc);
 }

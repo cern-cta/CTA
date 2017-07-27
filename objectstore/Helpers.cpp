@@ -34,35 +34,75 @@ namespace cta { namespace objectstore {
 template <>
 void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const std::string& tapePool) {
+  const std::string& tapePool, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
   // Try and find an existing one first, create if needed
   Backend & be = archiveQueue.m_objectStore;
   for (size_t i=0; i<5; i++) {
+    double rootLockSharedTime = 0;
+    double rootFetchTime = 0;
+    double rootUnlockSharedTime = 0;
+    double rootRelockExclusiveTime = 0;
+    double rootUnlockExclusiveTime = 0;
+    double rootRefetchTime = 0;
+    double addOrGetQueueandCommitTime = 0;
+    utils::Timer t;
     {
       RootEntry re (be);
       ScopedSharedLock rel(re);
+      rootLockSharedTime = t.secs(utils::Timer::resetCounter);
       re.fetch();
+      rootFetchTime = t.secs(utils::Timer::resetCounter);
       try {
         archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool));
       } catch (cta::exception::Exception & ex) {
         rel.release();
+        rootUnlockSharedTime = t.secs(utils::Timer::resetCounter);
         ScopedExclusiveLock rexl(re);
+        rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
+        rootRefetchTime = t.secs(utils::Timer::resetCounter);
         archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference));
+        addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
+    if (!rootUnlockSharedTime)
+      rootUnlockSharedTime = t.secs(utils::Timer::resetCounter);
+    else
+      rootUnlockExclusiveTime = t.secs(utils::Timer::resetCounter);
     try {
       archiveQueueLock.lock(archiveQueue);
+      double queueLockTime = t.secs(utils::Timer::resetCounter);
       archiveQueue.fetch();
+      double queueFetchTime = t.secs(utils::Timer::resetCounter);
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("queueObject", archiveQueue.getAddressIfSet())
+            .add("rootLockSharedTime", rootLockSharedTime)
+            .add("rootFetchTime", rootFetchTime)
+            .add("rootUnlockSharedTime", rootUnlockSharedTime)
+            .add("rootRelockExclusiveTime", rootRelockExclusiveTime)
+            .add("rootRefetchTime", rootRefetchTime)
+            .add("addOrGetQueueandCommitTime", addOrGetQueueandCommitTime)
+            .add("rootUnlockExclusiveTime", rootUnlockExclusiveTime)
+            .add("queueLockTime", queueLockTime)
+            .add("queueFetchTime", queueFetchTime);
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): Successfully found and locked an archive queue.");
       return;
     } catch (cta::exception::Exception & ex) {
       // We have a (rare) opportunity for a race condition, where we identify the
       // queue and it gets deleted before we manage to lock it.
       // The locking of fetching will fail in this case.
       // We hence allow ourselves to retry a couple times.
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("queueObject", archiveQueue.getAddressIfSet())
+            .add("rootLockSharedTime", rootLockSharedTime)
+            .add("rootFetchTime", rootFetchTime)
+            .add("rootUnlockSharedTime", rootUnlockSharedTime);
+      lc.log(log::ERR, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
       continue;
     }
   }
@@ -76,7 +116,9 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
 // Helpers::getLockedAndFetchedRetrieveQueue()
 //------------------------------------------------------------------------------
 template <>
-void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue, ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference, const std::string& vid) {
+void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
+  ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
+  const std::string& vid, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.

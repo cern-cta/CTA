@@ -69,13 +69,13 @@ namespace unitTests {
        int & completes, int &failures):
     MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
     
-    virtual bool complete() {
+    bool complete() override {
       completesRef++;
       return false;
     }
     
     
-    virtual void failed(const cta::exception::Exception& ex) {
+    void failed(const cta::exception::Exception& ex, cta::log::LogContext & lc) override {
       failuresRef++;
     }
     
