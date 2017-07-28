@@ -20,7 +20,9 @@
 #define __XRD_SSI_CTA_SERVICE_PROVIDER_H
 
 #include <XrdSsi/XrdSsiProvider.hh>
+
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 
 
 
@@ -71,20 +73,22 @@ public:
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
 
    /*!
-    * Get a reference to the Log Context for this Service
-    */
-
-   cta::log::LogContext &getLogContext() { return *m_log_context_ptr; }
-
-   /*!
     * Get a reference to the Scheduler for this Service
     */
 
    cta::Scheduler &getScheduler() { return *m_scheduler_ptr; }
 
+   /*!
+    * Get a reference to the Log Context for this Service
+    */
+
+   cta::log::LogContext &getLogContext() { return *m_log_context_ptr; }
+
 private:
-   std::unique_ptr<cta::log::LogContext> m_log_context_ptr;    //!< Log Context for this Service
-   std::unique_ptr<cta::Scheduler>       m_scheduler_ptr;      //!< Scheduler for this Service
+   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue_ptr;      //!< Catalogue for the Service
+   std::unique_ptr<cta::objectstore::Backend> m_backend_ptr;        //!< Backend for the Service
+   std::unique_ptr<cta::Scheduler>            m_scheduler_ptr;      //!< Scheduler for the Service
+   std::unique_ptr<cta::log::LogContext>      m_log_context_ptr;    //!< Log Context for the Service
 };
 
 #endif

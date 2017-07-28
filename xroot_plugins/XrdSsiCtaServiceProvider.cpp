@@ -24,7 +24,6 @@
 #include "rdbms/Login.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/Configuration.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -59,21 +58,25 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    std::cout << "[DEBUG] Called Init(" << cfgFn << "," << parms << ")" << std::endl;
 #endif
 
+   // Instantiate the catalogue
+
    const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
    const uint64_t nbConns = 10;
    const uint64_t nbArchiveFileListingConns = 2;
 
-   std::unique_ptr<cta::catalogue::Catalogue> my_catalogue = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+   m_catalogue_ptr = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+
+   // Instantiate the backend
+
    cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf");
    std::string backend_str = ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr);
-
-   std::unique_ptr<cta::objectstore::Backend> backend(cta::objectstore::BackendFactory::createBackend(backend_str));
-   cta::objectstore::BackendPopulator backendPopulator(*backend, "Frontend");
-   cta::OStoreDBWithAgent scheddb(*backend, backendPopulator.getAgentReference());
+   m_backend_ptr = cta::objectstore::BackendFactory::createBackend(backend_str);
 
    // Instantiate the scheduler
 
-   m_scheduler_ptr = cta::make_unique<cta::Scheduler>(*my_catalogue, scheddb, 5, 2*1000*1000);
+   cta::objectstore::BackendPopulator backendPopulator(*m_backend_ptr, "Frontend");
+   cta::OStoreDBWithAgent scheddb(*m_backend_ptr, backendPopulator.getAgentReference());
+   m_scheduler_ptr = cta::make_unique<cta::Scheduler>(*m_catalogue_ptr, scheddb, 5, 2*1000*1000);
 
    // Instantiate the logger
 
