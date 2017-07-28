@@ -1,10 +1,9 @@
 #!/bin/sh
 
-sudo docker build . -f ./Dockerfile -t buildxroot
+id=$1
 
-id=$(sudo docker create buildxroot bash)
-
+sudo docker cp ${id}:xrootd/packaging/rhel/xrootd.spec.in .
 sudo docker cp ${id}:rpmbuild_xrootd/RPMS/noarch/ .
 sudo docker cp ${id}:rpmbuild_xrootd/RPMS/x86_64/ .
 
-sudo docker rm -v ${id}
+#sudo docker rm -v ${id}
