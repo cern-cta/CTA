@@ -1258,6 +1258,7 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.startStartTime=inputs.reportTime;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
