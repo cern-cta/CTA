@@ -16,25 +16,18 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <memory>
+#include "common/dataStructures/ArchiveRequest.hpp"
+#include "common/exception/Exception.hpp"
 
-#include "XrdSsiPbDebug.hpp" // for Json output
+#ifdef XRDSSI_DEBUG
+#include "XrdSsiPbDebug.hpp"
+#endif
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbResource.hpp"
 #include "XrdSsiPbRequestProc.hpp"
 #include "eos/messages/eos_messages.pb.h"
 
-#include "common/Configuration.hpp"
-#include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/log/StdoutLogger.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "catalogue/CatalogueFactory.hpp"
-#include "rdbms/Login.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
-#include "common/make_unique.hpp"
+#include "XrdSsiCtaServiceProvider.hpp"
 
 
 
@@ -62,30 +55,20 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 {
    try
    {
-      getClient(m_resource);
+      // Perform a capability query on the XrdSsiProviderServer object: it must be a XrdSsiCtaServiceProvider
 
-      // Instantiate the scheduler
+      XrdSsiCtaServiceProvider *cta_service_ptr;
+     
+      if(!(cta_service_ptr = dynamic_cast<XrdSsiCtaServiceProvider *>(XrdSsiProviderServer)))
+      {
+         throw cta::exception::Exception("XRootD Service is not a CTA Service");
+      }
 
-      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
-      const uint64_t nbConns = 10;
-      const uint64_t nbArchiveFileListingConns = 2;
+#ifdef XRDSSI_DEBUG
+      // Output message in Json format
 
-      std::unique_ptr<cta::catalogue::Catalogue> my_catalogue = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
-      cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf");
-      std::string backend_str = ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr);
-
-      std::unique_ptr<cta::objectstore::Backend> backend(cta::objectstore::BackendFactory::createBackend(backend_str));
-      cta::objectstore::BackendPopulator backendPopulator(*backend, "Frontend");
-      cta::OStoreDBWithAgent scheddb(*backend, backendPopulator.getAgentReference());
-
-      cta::Scheduler *scheduler = new cta::Scheduler(*my_catalogue, scheddb, 5, 2*1000*1000);
-      cta::log::StdoutLogger log("ctafrontend");
-      cta::log::LogContext lc(log);
-
-      // Output message in Json format (for debugging)
-
-      std::cerr << "Received message:" << std::endl;
       OutputJsonString(std::cerr, &m_request);
+#endif
 
       // Unpack message
 
@@ -113,31 +96,32 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 
       // Queue the request
 
-      uint64_t archiveFileId = scheduler->queueArchive(client_username, request, lc);
+      uint64_t archiveFileId = cta_service_ptr->getScheduler().queueArchive(client_username, request, cta_service_ptr->getLogContext());
+
+      // Temporary hack to send back archiveFileId (deprecated)
+
       std::string result_str = "<eos::wfe::path::fxattr:sys.archiveFileId>" + std::to_string(archiveFileId);
-      std::cout << result_str << std::endl;
+#ifdef XRDSSI_DEBUG
+      std::cerr << result_str << std::endl;
+#endif
+      m_metadata.set_message_txt(result_str);
 
       // Set metadata
 
       m_metadata.set_type(eos::wfe::Response::RSP_SUCCESS);
-
-      // Temporary hack to send back archiveFileId (deprecated)
-
-      m_metadata.set_message_txt(result_str);
    }
    catch(std::exception &ex)
    {
-      // Send a log message
+#ifdef XRDSSI_DEBUG
+      // Serialize and send a log message
 
       eos::wfe::Alert alert_msg;
 
       alert_msg.set_audience(eos::wfe::Alert::EOSLOG);
       alert_msg.set_message_txt("Something bad happened");
 
-      // Serialize and send the alert message
-
       Alert(alert_msg);
-
+#endif
       // Set the response
 
       m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
