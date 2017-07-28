@@ -1622,6 +1622,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
   re.fetch();
+  // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
+  // Get drive register
+  {
+    objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
+    ScopedSharedLock drl(dr);
+    dr.fetch();
+    auto drs = dr.getDriveState(mountInfo.drive);
+    if (!drs.desiredDriveState.up && drs.desiredDriveState.forceDown) {
+      logContext.log(log::INFO, "In OStoreDB::ArchiveMount::getNextJobBatch(): returning no job as we are forcibly going down.");
+      return std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> >();
+    }
+  }
   auto aql = re.dumpArchiveQueues();
   rel.release();
   std::string aqAddress;
