@@ -19,18 +19,20 @@
 #ifdef XRDSSI_DEBUG
 #include <iostream>
 #endif
-#include "common/make_unique.hpp"
-
-#include "rdbms/Login.hpp"
-#include "catalogue/CatalogueFactory.hpp"
-#include "common/Configuration.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "objectstore/BackendPopulator.hpp"
-#include "common/log/StdoutLogger.hpp"
 
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
 #include "eos/messages/eos_messages.pb.h"
+
+#include "version.h"
+#include "common/make_unique.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/SyslogLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/log/FileLogger.hpp"
+#include "rdbms/Login.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
 
 #include "XrdSsiCtaServiceProvider.hpp"
 
@@ -54,34 +56,51 @@ XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
+   using namespace cta;
+
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] Called Init(" << cfgFn << "," << parms << ")" << std::endl;
 #endif
+  
+   // Try to instantiate the logging system API
 
-   // Instantiate the catalogue
-
-   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
-   const uint64_t nbConns = 10;
+   try {
+      std::string loggerURL = m_ctaConf.getConfEntString("Log", "URL", "syslog:");
+      if (loggerURL == "syslog:") {
+         m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
+      } else if (loggerURL == "stdout:") {
+         m_log.reset(new log::StdoutLogger("cta-frontend"));
+      } else if (loggerURL.substr(0, 5) == "file:") {
+         m_log.reset(new log::FileLogger("cta-frontend", loggerURL.substr(5), log::DEBUG));
+      } else {
+         throw exception::Exception(std::string("Unknown log URL: ")+loggerURL);
+      }
+   } catch(exception::Exception &ex) {
+      std::string ex_str("Failed to instantiate object representing CTA logging system: ");
+      throw exception::Exception(ex_str + ex.getMessage().str());
+   }
+  
+   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+   const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
    const uint64_t nbArchiveFileListingConns = 2;
 
-   m_catalogue_ptr = cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+   m_catalogue = catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+   m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, m_scheddb, 5, 2*1000*1000);
 
-   // Instantiate the backend
+   // If the backend is a VFS, make sure we don't delete it on exit. If not, never mind.
+   try {
+      dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
+   } catch (std::bad_cast &) {}
 
-   cta::common::Configuration ctaConf("/etc/cta/cta-frontend.conf");
-   std::string backend_str = ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr);
-   m_backend_ptr = cta::objectstore::BackendFactory::createBackend(backend_str);
+   const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
+   log::Logger &log = *m_log;
+   log(log::INFO, std::string("cta-frontend started"), params);
+  
+   // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
 
-   // Instantiate the scheduler
-
-   cta::objectstore::BackendPopulator backendPopulator(*m_backend_ptr, "Frontend");
-   cta::OStoreDBWithAgent scheddb(*m_backend_ptr, backendPopulator.getAgentReference());
-   m_scheduler_ptr = cta::make_unique<cta::Scheduler>(*m_catalogue_ptr, scheddb, 5, 2*1000*1000);
-
-   // Instantiate the logger
-
-   cta::log::StdoutLogger log("ctafrontend");
-   m_log_context_ptr = cta::make_unique<cta::log::LogContext>(log);
+   auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator.getAgentReference(), *m_backend, *m_log);
+   aht->startThread();
+   m_agentHeartbeat = std::move(UniquePtrAgentHeartbeatThread(aht));
 
    return true;
 }

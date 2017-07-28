@@ -96,7 +96,8 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 
       // Queue the request
 
-      uint64_t archiveFileId = cta_service_ptr->getScheduler().queueArchive(client_username, request, cta_service_ptr->getLogContext());
+      auto lc = cta_service_ptr->getLogContext();
+      uint64_t archiveFileId = cta_service_ptr->Scheduler().queueArchive(client_username, request, lc);
 
       // Temporary hack to send back archiveFileId (deprecated)
 
