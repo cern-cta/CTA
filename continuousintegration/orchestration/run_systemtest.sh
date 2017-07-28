@@ -108,9 +108,27 @@ mkdir -p ${log_dir}
 function execute_log {
   mycmd=$1
   logfile=$2
+  timeout=$3
   echo "$(date): Launching ${mycmd}"
-  eval "${mycmd} | tee -a ${logfile}"
-  execute_log_rc=$?
+  eval "(${mycmd} | tee -a ${logfile}) &"
+  execute_log_pid=$!
+  execute_log_rc=''
+
+  for ((i=0;i<${timeout};i++)); do
+    sleep 1
+    if [ ! -d /proc/${execute_log_pid} ]; then
+      wait ${execute_log_pid}
+      execute_log_rc=$?
+      break
+    fi
+  done
+  echo $i
+
+  if [ "${execute_log_rc}" == "" ]; then
+    echo "TIMEOUTING COMMAND, setting exit status to 1"
+    kill -9 ${execute_log_pid}
+    execute_log_rc=1
+  fi
 
   if [ "${execute_log_rc}" != "0" ]; then
     echo "FAILURE: cleaning up environment"
@@ -122,12 +140,12 @@ function execute_log {
   fi
 }
 
-# create instance
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log"
+# create instance timeout after 10 minutes
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 600
 
-# launch system test
+# launch system test and timeout after 40 minutes (2400 seconds)
 cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log"
+execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" 2400
 cd ${orchestration_dir}
 
 # delete instance?
