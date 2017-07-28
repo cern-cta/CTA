@@ -82,7 +82,7 @@ eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" |
 
 echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   echo "Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -135,7 +135,7 @@ grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --m
 
 # Wait for the copy to appear on disk
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
   echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
