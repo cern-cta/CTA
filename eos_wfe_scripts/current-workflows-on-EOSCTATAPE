@@ -1,0 +1,20 @@
+This should be made into a script at some point.
+
+Vladimir Bahyl - 07/2017
+
+-------------------------------------------------------------------------
+DATE: Fri Jul 28 10:23:12 CEST 2017
+
+[root@p06253947b39467 ~]# eos attr ls /eos/dev/proc/cta/workflow
+CTA_TapeFsId="65535"
+
+sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>"
+
+sys.workflow.closew.CTA_retrieve="bash:shell:cta XRD_STREAMTIMEOUT=600 XRD_TIMEOUTRESOLUTION=600 eos attr set 'CTA_retrieved_timestamp="`date`"' <eos::wfe::path>"
+
+sys.workflow.closew.default="bash:shell:cta XRD_STREAMTIMEOUT=600 XRD_TIMEOUTRESOLUTION=600 XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/cta-cli.sss.keytab /usr/bin/cta archive --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --diskid <eos::wfe::fid> --instance eoscta --srcurl <eos::wfe::turl> --size <eos::wfe::size> --checksumtype <eos::wfe::checksumtype> --checksumvalue <eos::wfe::checksum> --storageclass <eos::wfe::cxattr:CTA_StorageClass> --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --reportURL 'eosQuery://p06253947b39467.cern.ch//eos/wfe/passwd?mgm.pcmd=event\&mgm.fid=<eos::wfe::fxid>\&mgm.logid=cta\&mgm.event=archived\&mgm.workflow=default\&mgm.path=/eos/wfe/passwd\&mgm.ruid=0\&mgm.rgid=0' --stderr"
+
+sys.workflow.sync::delete.default="bash:delete_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::path>"
+
+sys.workflow.sync::prepare.default="bash:retrieve_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::turl> <eos::wfe::username> <eos::wfe::groupname> <eos::wfe::base64:metadata> <eos::wfe::path>"
+-------------------------------------------------------------------------
