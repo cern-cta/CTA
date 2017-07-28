@@ -2,8 +2,12 @@
 
 EINVAL=22
 ECANCELED=125
+
 export XrdSecPROTOCOL=sss
 export XrdSecSSSKT=/etc/ctafrontend_SSS_c.keytab
+
+export XRD_STREAMTIMEOUT=600     # increased from 60s
+export XRD_TIMEOUTRESOLUTION=600 # increased from 15s
 
 if test $# -ne 9; then
   echo "Wrong number of command-line arguments"

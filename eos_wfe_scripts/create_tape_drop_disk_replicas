@@ -5,6 +5,9 @@ if test $# -ne 3; then
   exit -1
 fi
 
+export XRD_STREAMTIMEOUT=600     # increased from 60s
+export XRD_TIMEOUTRESOLUTION=600 # increased from 15s
+
 WF_TAG="$1"
 FILE_PATH="$2"
 TAPE_FS_ID="$3"
