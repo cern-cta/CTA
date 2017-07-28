@@ -583,7 +583,7 @@ std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string
   for(auto row=responseTable.cbegin(); row!=responseTable.cend(); row++) {
     if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[31;1m";
     for(uint i=0; i<row->size(); i++) {
-      responseSS << " " << std::setw(columnSizes.at(i)) << row->at(i);
+      responseSS << std::string(i?"  ":"")<< std::setw(columnSizes.at(i)) << row->at(i);
     }
     if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
     else responseSS << std::endl;
@@ -1825,9 +1825,9 @@ std::string XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", 
+        std::vector<std::string> headers = {"drive", "host", "library", "request",
           "status", "since", "desired", "vid", "tapepool", "files", "Mbytes",
-          "speed", "since", "session"};
+          "speed", "session", "age"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
         driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
@@ -1877,8 +1877,8 @@ std::string XrdCtaFile::xCom_drive() {
           currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
           currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/Mbytes));
           currentRow.push_back(std::to_string((long double)ds.latestBandwidth/Mbytes));
-          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
         }
         if (singleDrive && !driveFound) {

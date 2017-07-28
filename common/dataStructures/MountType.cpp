@@ -27,7 +27,7 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::M
     case cta::common::dataStructures::MountType::Label:
       return "Label";
     case cta::common::dataStructures::MountType::NoMount:
-      return "NoMount";
+      return "-";
     default:
       return "UNKNOWN";
   }
