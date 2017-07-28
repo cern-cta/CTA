@@ -454,7 +454,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
         params.add("vid", em.vid)
-              .add("mountType", common::dataStructures::toString(em.type));
+              .add("mountType", common::dataStructures::toString(em.type))
+              .add("drive", em.driveName);
         lc.log(log::DEBUG,"In Scheduler::getNextMount(): tapeAlreadyInUse found.");
       }
     }
