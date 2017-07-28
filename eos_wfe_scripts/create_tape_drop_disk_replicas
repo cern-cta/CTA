@@ -13,7 +13,7 @@ FILE_PATH="$2"
 TAPE_FS_ID="$3"
 
 LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
-LOG_SCRIPT_NAME=`basename $0`
+LOG_SCRIPT_NAME=`/usr/bin/basename $0`
 LOG_FILE="/var/log/eos/wfe/${WF_TAG}.log"
 
 echo "$LOG_DATE $LOG_SCRIPT_NAME creating tape replica with fsid ${TAPE_FS_ID} for ${FILE_PATH}" >> ${LOG_FILE}

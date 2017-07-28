@@ -4,7 +4,8 @@ EINVAL=22
 ECANCELED=125
 
 export XrdSecPROTOCOL=sss
-export XrdSecSSSKT=/etc/ctafrontend_SSS_c.keytab
+#export XrdSecSSSKT=/etc/cta/cta-cli.sss.keytab   # This location is used on EOSCTATAPE
+export XrdSecSSSKT=/etc/ctafrontend_SSS_c.keytab # This location is used for CI
 
 export XRD_STREAMTIMEOUT=600     # increased from 60s
 export XRD_TIMEOUTRESOLUTION=600 # increased from 15s
@@ -22,7 +23,7 @@ ARCHIVE_FILE_ID="$4"
 FILE_PATH="$5"
 
 LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
-LOG_SCRIPT_NAME=`basename $0`
+LOG_SCRIPT_NAME=`/usr/bin/basename $0`
 LOG_FILE="/var/log/eos/wfe/${WF_TAG}.log"
 
 if test UNDEF = ${ARCHIVE_FILE_ID}; then
