@@ -48,6 +48,8 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
     double rootUnlockExclusiveTime = 0;
     double rootRefetchTime = 0;
     double addOrGetQueueandCommitTime = 0;
+    double queueLockTime = 0;
+    double queueFetchTime = 0;
     utils::Timer t;
     {
       RootEntry re (be);
@@ -74,9 +76,9 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       rootUnlockExclusiveTime = t.secs(utils::Timer::resetCounter);
     try {
       archiveQueueLock.lock(archiveQueue);
-      double queueLockTime = t.secs(utils::Timer::resetCounter);
+      queueLockTime = t.secs(utils::Timer::resetCounter);
       archiveQueue.fetch();
-      double queueFetchTime = t.secs(utils::Timer::resetCounter);
+      queueFetchTime = t.secs(utils::Timer::resetCounter);
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
             .add("queueObject", archiveQueue.getAddressIfSet())
@@ -96,16 +98,31 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       // queue and it gets deleted before we manage to lock it.
       // The locking of fetching will fail in this case.
       // We hence allow ourselves to retry a couple times.
+      // We also need to make sure the lock on the queue is released (it is in
+      // an object and hence not scoped).
+      if (archiveQueueLock.isLocked()) archiveQueueLock.release();
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
+            .add("exceptionMessage", ex.getMessageValue())
             .add("queueObject", archiveQueue.getAddressIfSet())
             .add("rootLockSharedTime", rootLockSharedTime)
             .add("rootFetchTime", rootFetchTime)
-            .add("rootUnlockSharedTime", rootUnlockSharedTime);
+            .add("rootUnlockSharedTime", rootUnlockSharedTime)
+            .add("rootRefetchTime", rootRefetchTime)
+            .add("addOrGetQueueandCommitTime", addOrGetQueueandCommitTime)
+            .add("rootUnlockExclusiveTime", rootUnlockExclusiveTime)
+            .add("queueLockTime", queueLockTime)
+            .add("queueFetchTime", queueFetchTime);
       lc.log(log::ERR, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
       continue;
+    } catch (...) {
+      // Also release the lock if needed here.
+      if (archiveQueueLock.isLocked()) archiveQueueLock.release();
+      throw;
     }
   }
+  // Also release the lock if needed here.
+  if (archiveQueueLock.isLocked()) archiveQueueLock.release();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
       + tapePool);

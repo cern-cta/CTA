@@ -152,6 +152,10 @@ public:
     releaseIfNeeded();
   }
   
+  bool isLocked() {
+    return m_locked;
+  }
+  
   /** Move the locked object reference to a new one. This is done when the locked
    * object is a GenericObject and the caller instantiated a derived object from
    * it. The lock follows the move.
