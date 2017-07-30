@@ -59,7 +59,7 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testObjectName = "testObject";
   const std::string nonExistingObject = "thisObjectShouldNotExist";
-  m_os->create(testObjectName, "");
+  m_os->create(testObjectName, "X");
   {
     // If we don't scope the object, the release will blow up after
     // removal of the file.
@@ -108,7 +108,7 @@ TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
   const size_t threadCount=100;
   const size_t passCount=100;
   for (size_t i=0; i<threadCount; i++) {
-    lambdas.emplace_back([&testObjectName,os,&passCount,&counter](){
+    lambdas.emplace_back([&testObjectName,os,&passCount,&counter,i](){
       for (size_t pass=0; pass<passCount; pass++) {
         std::unique_ptr<cta::objectstore::Backend::ScopedLock> sl(os->lockExclusive(testObjectName));
         uint64_t val;
@@ -118,7 +118,11 @@ TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
         valStr.append((char*)&val, sizeof(val));
         os->atomicOverwrite(testObjectName, valStr);
         counter++;
+//        printf("%03ld ",(uint64_t)i);
+//        fflush(stdout);
       }
+//      printf("--- ");
+//      fflush(stdout);
     });
     insertCompletions.emplace_back(std::async(std::launch::async, lambdas.back()));
   }
