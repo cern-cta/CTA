@@ -45,7 +45,7 @@ namespace XrdSsiPb {
  * tident          const char*    Trace identifier (always preset)
  */
 
-static const char *getClient(const XrdSsiResource &resource)
+static const XrdSsiEntity &getClient(const XrdSsiResource &resource)
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] Resource name: " << resource.rName << std::endl
@@ -69,16 +69,12 @@ static const char *getClient(const XrdSsiResource &resource)
              << std::endl;
 #endif
 
-   if(resource.client == nullptr || resource.client->name == nullptr)
+   if(resource.client == nullptr)
    {
-      throw XrdSsiException("getClient(): resource.client contains a null pointer");
+      throw XrdSsiException("getClient(): resource.client is a null pointer");
    }
 
-#ifdef XRDSSI_DEBUG
-   std::cerr << "resource.client->name = " << resource.client->name << std::endl;
-#endif
-
-   return resource.client->name;
+   return *(resource.client);
 }
 
 } // namespace XrdSsiPb
