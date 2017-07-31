@@ -235,8 +235,10 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
          google::protobuf::MapPair<std::string,std::string> sc("CTA_StorageClass", argval);
          notification.mutable_file()->mutable_xattr()->insert(sc);
       }
-
-      else if(argstr == "--id")                  {} // eos::wfe::fxattr:sys.archiveFileId, not used for archive WF
+      else if(argstr == "--id")                  {
+         google::protobuf::MapPair<std::string,std::string> id("CTA_ArchiveFileId", argval);
+         notification.mutable_file()->mutable_xattr()->insert(id);
+      }
       else if(argstr == "--diskpool")            {} // = default?
       else if(argstr == "--throughput")          {} // = 10000?
       else if(argstr == "--recoveryblob:base64") base64Decode(notification, argval);
