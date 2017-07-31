@@ -83,7 +83,7 @@ public:
     * Get a reference to the Scheduler for this Service
     */
     
-   cta::Scheduler &Scheduler() { return *m_scheduler; }
+   cta::Scheduler &getScheduler() { return *m_scheduler; }
 
    /*!
     * Get the log context for this Service

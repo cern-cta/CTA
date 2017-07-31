@@ -34,9 +34,61 @@
 namespace XrdSsiPb {
 
 /*!
+ * Process the CLOSEW workflow event
+ *
+ * @param[in,out]    scheduler       CTA Scheduler to queue this request
+ * @param[in,out]    lc              Log Context for this request
+ * @param[in]        cli_username    Client username, from authentication key for the request
+ * @param[in]        notification    EOS WFE Notification message
+ * @param[out]       response        Response message to return to EOS
+ */
+static void requestProcCLOSEW(cta::Scheduler &scheduler, cta::log::LogContext &lc,
+   const std::string &cli_username, const eos::wfe::Notification &notification, eos::wfe::Response &response)
+{
+   // Unpack message
+
+   cta::common::dataStructures::UserIdentity originator;
+   originator.name          = notification.cli().user().username();
+   originator.group         = notification.cli().user().groupname();
+
+   cta::common::dataStructures::DiskFileInfo diskFileInfo;
+   diskFileInfo.owner       = notification.file().owner().username();
+   diskFileInfo.group       = notification.file().owner().groupname();
+   diskFileInfo.path        = notification.file().lpath();
+
+   cta::common::dataStructures::ArchiveRequest request;
+   request.checksumType     = notification.file().cks().name();
+   request.checksumValue    = notification.file().cks().value();
+   request.diskFileInfo     = diskFileInfo;
+   request.diskFileID       = notification.file().fid();
+   request.fileSize         = notification.file().size();
+   request.requester        = originator;
+   request.srcURL           = notification.wf().instance().url();
+   request.storageClass     = notification.file().xattr().at("CTA_StorageClass");
+   request.archiveReportURL = "null:";
+
+   // Queue the request
+
+   uint64_t archiveFileId = scheduler.queueArchive(cli_username, request, lc);
+
+   // Return archiveFileId (deprecated)
+
+   std::string result_str = "<eos::wfe::path::fxattr:sys.archiveFileId>" + std::to_string(archiveFileId);
+#ifdef XRDSSI_DEBUG
+   std::cerr << result_str << std::endl;
+#endif
+   response.set_message_txt(result_str);
+
+   // Set metadata
+
+   response.set_type(eos::wfe::Response::RSP_SUCCESS);
+}
+
+
+
+/*!
  * Convert a framework exception into a Response
  */
-
 template<>
 void ExceptionHandler<eos::wfe::Response, PbException>::operator()(eos::wfe::Response &response, const PbException &ex)
 {
@@ -47,9 +99,8 @@ void ExceptionHandler<eos::wfe::Response, PbException>::operator()(eos::wfe::Res
 
 
 /*!
- * Process a Notification Request
+ * Process the Notification Request
  */
-
 template <>
 void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAction()
 {
@@ -69,47 +120,30 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 
       OutputJsonString(std::cerr, &m_request);
 #endif
+      // Get client username
 
-      // Unpack message
+      std::string cli_username = getClient(m_resource);
 
-      cta::common::dataStructures::UserIdentity originator;
-      originator.name          = m_request.cli().user().username();
-      originator.group         = m_request.cli().user().groupname();
+      // Get CTA Scheduler and Log Context
 
-      cta::common::dataStructures::DiskFileInfo diskFileInfo;
-      diskFileInfo.owner       = m_request.file().owner().username();
-      diskFileInfo.group       = m_request.file().owner().groupname();
-      diskFileInfo.path        = m_request.file().lpath();
-
-      cta::common::dataStructures::ArchiveRequest request;
-      request.checksumType     = m_request.file().cks().name();
-      request.checksumValue    = m_request.file().cks().value();
-      request.diskFileInfo     = diskFileInfo;
-      request.diskFileID       = m_request.file().fid();
-      request.fileSize         = m_request.file().size();
-      request.requester        = originator;
-      request.srcURL           = m_request.wf().instance().url();
-      request.storageClass     = m_request.file().xattr().at("CTA_StorageClass");
-      request.archiveReportURL = "null:";
-
-      std::string client_username = getClient(m_resource);
-
-      // Queue the request
-
+      auto scheduler = cta_service_ptr->getScheduler();
       auto lc = cta_service_ptr->getLogContext();
-      uint64_t archiveFileId = cta_service_ptr->Scheduler().queueArchive(client_username, request, lc);
 
-      // Temporary hack to send back archiveFileId (deprecated)
+      // Determine the message type
 
-      std::string result_str = "<eos::wfe::path::fxattr:sys.archiveFileId>" + std::to_string(archiveFileId);
-#ifdef XRDSSI_DEBUG
-      std::cerr << result_str << std::endl;
-#endif
-      m_metadata.set_message_txt(result_str);
+      switch(m_request.wf().event())
+      {
+         using namespace eos::wfe;
 
-      // Set metadata
+         case(Workflow::CLOSEW):
+            requestProcCLOSEW(scheduler, lc, cli_username, m_request, m_metadata);
+            break;
+         case(Workflow::PREPARE):
+         case(Workflow::DELETE):
+         default:
+            throw PbException("Workflow Event type " + std::to_string(m_request.wf().event()) + " is not supported.");
+      }
 
-      m_metadata.set_type(eos::wfe::Response::RSP_SUCCESS);
    }
    catch(std::exception &ex)
    {

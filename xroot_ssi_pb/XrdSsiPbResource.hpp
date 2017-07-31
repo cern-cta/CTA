@@ -28,7 +28,21 @@
 namespace XrdSsiPb {
 
 /*!
- * Get the client username from the Resource
+ * Get the client username from the Resource.
+ *
+ * The following fields are available in the client:
+ *
+ * prot            char*          Protocol used
+ * name            const char*    Entity's name
+ * host            const char*    Entity's host name or address
+ * vorg            const char*    Entity's virtual organization
+ * role            const char*    Entity's role
+ * grps            const char*    Entity's group names
+ * endorsements    const char*    Protocol-specific endorsements
+ * creds           const char*    Raw client credentials or certificate
+ * credslen        int            Length of the 'creds' field
+ * rsvd            int            Reserved
+ * tident          const char*    Trace identifier (always preset)
  */
 
 static const char *getClient(const XrdSsiResource &resource)
@@ -54,22 +68,6 @@ static const char *getClient(const XrdSsiResource &resource)
              << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
              << std::endl;
 #endif
-
-/*
- * The following fields are available in the client:
- *
-         char    prot[XrdSsiPROTOIDSIZE]; //!< Protocol used
-const    char   *name;                    //!< Entity's name
-const    char   *host;                    //!< Entity's host name or address
-const    char   *vorg;                    //!< Entity's virtual organization
-const    char   *role;                    //!< Entity's role
-const    char   *grps;                    //!< Entity's group names
-const    char   *endorsements;            //!< Protocol specific endorsements
-const    char   *creds;                   //!< Raw client credentials or cert
-         int     credslen;                //!< Length of the 'creds' field
-         int     rsvd;                    //!< Reserved field
-const    char   *tident;                  //!< Trace identifier always preset
- */
 
    if(resource.client == nullptr || resource.client->name == nullptr)
    {
