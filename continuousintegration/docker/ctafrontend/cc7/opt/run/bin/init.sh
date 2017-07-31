@@ -2,12 +2,15 @@
 
 . /opt/run/bin/init_pod.sh
 
+# oracle sqlplus client binary path
+ORACLE_SQLPLUS="/usr/bin/sqlplus64"
+
 # enable cta repository from previously built artifacts
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
 # install needed packages
-yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common
+yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
 yum clean packages
 
 echo "Using this configuration for library:"
@@ -54,6 +57,10 @@ if [ "$KEEP_DATABASE" == "0" ]; then
     cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
   else
+    # Oracle DB
+    echo "Purging Oracle recycle bin"
+    test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
+    LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
     cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
   fi
 else
