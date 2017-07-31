@@ -84,37 +84,47 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
       // First, check that the agent entry exists, and that ownership
       // is indeed pointing to the agent register
       Agent ag(*c, m_objectStore);
-      if (!ag.exists()) {
-        // This is a dangling pointer to a dead object:
-        // remove it in the agentRegister.
-        m_agentRegister.removeAgent(*c);
-        continue;
-      }
-      ScopedExclusiveLock agLock(ag);
-      ag.fetch();
-      // Check that the actual owner is the agent register.
-      // otherwise, it should not be listed as an agent to monitor
-      if (ag.getOwner() != m_agentRegister.getAddressIfSet()) {
-        m_agentRegister.trackAgent(ag.getAddressIfSet());
-        agLock.release();
-        continue;
-      }
-      // We are now interested in tracking this agent. So we will transfer its
-      // ownership. We alredy have an exclusive lock on the agent.
-      // Lock ours
+      ScopedExclusiveLock agLock;
       Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
-      ScopedExclusiveLock oaLock(ourAgent);
-      ourAgent.fetch();
-      ourAgent.addToOwnership(ag.getAddressIfSet());
-      ourAgent.commit();
-      // We now have a pointer to the agent, we can make the ownership official
-      ag.setOwner(ourAgent.getAddressIfSet());
-      ag.commit();
+      ScopedExclusiveLock oaLock;
+      try {
+        if (!ag.exists()) {
+          // This is a dangling pointer to a dead object:
+          // remove it in the agentRegister.
+          m_agentRegister.removeAgent(*c);
+          continue;
+        }
+        agLock.lock(ag);
+        ag.fetch();
+        // Check that the actual owner is the agent register.
+        // otherwise, it should not be listed as an agent to monitor
+        if (ag.getOwner() != m_agentRegister.getAddressIfSet()) {
+          m_agentRegister.trackAgent(ag.getAddressIfSet());
+          agLock.release();
+          continue;
+        }
+        // We are now interested in tracking this agent. So we will transfer its
+        // ownership. We alredy have an exclusive lock on the agent.
+        // Lock ours
+        
+        oaLock.lock(ourAgent);
+        ourAgent.fetch();
+        ourAgent.addToOwnership(ag.getAddressIfSet());
+        ourAgent.commit();
+        // We now have a pointer to the agent, we can make the ownership official
+        ag.setOwner(ourAgent.getAddressIfSet());
+        ag.commit();
+      } catch (cta::exception::Exception & ex) {
+        // We received an exception. This can happen is the agent disappears under our feet.
+        // This is fine, we just let go this time, and trimGoneTargets() will just de-reference
+        // it later. But if the object is present, we have a problem.
+        if (m_objectStore.exists(*c)) throw;
+      }
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", ag.getAddressIfSet())
             .add("gcAgentAddress", ourAgent.getAddressIfSet());
       lc.log(log::INFO, "In GarbageCollector::aquireTargets(): started tracking an untracked agent");
-      // Agent is officially our, we can remove it from the untracked agent's
+      // Agent is officially ours, we can remove it from the untracked agent's
       // list
       m_agentRegister.trackAgent(ag.getAddressIfSet());
       m_agentRegister.commit();
