@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Login.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
+#include "Login.hpp"
 
 #include <fstream>
 
@@ -153,5 +153,5 @@ Login Login::parseOracleUserPassAndDb(const std::string &userPassAndDb) {
   return Login(DBTYPE_ORACLE, user, pass, db);
 }
 
-} // namesapce catalogue
+} // namespace catalogue
 } // namespace cta

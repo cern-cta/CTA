@@ -19,8 +19,7 @@
 #pragma once
 
 #include "catalogue/RdbmsCatalogue.hpp"
-#include "rdbms/OcciColumn.hpp"
-#include "rdbms/PooledConn.hpp"
+#include "rdbms/Conn.hpp"
 
 #include <occi.h>
 #include <string.h>
@@ -117,7 +116,7 @@ public:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Notifies the catalogue that the specified files have been written to tape.
@@ -134,81 +133,7 @@ private:
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid);
-
-  /**
-   * Structure used to assemble a batch of rows to insert into the TAPE_FILE
-   * table.
-   */
-  struct TapeFileBatch {
-    size_t nbRows;
-    rdbms::OcciColumn vid;
-    rdbms::OcciColumn fSeq;
-    rdbms::OcciColumn blockId;
-    rdbms::OcciColumn compressedSize;
-    rdbms::OcciColumn copyNb;
-    rdbms::OcciColumn creationTime;
-    rdbms::OcciColumn archiveFileId;
-
-    /**
-     * Constructor.
-     *
-     * @param nbRowsValue  The Number of rows to be inserted.
-     */
-    TapeFileBatch(const size_t nbRowsValue):
-      nbRows(nbRowsValue),
-      vid("VID", nbRows),
-      fSeq("FSEQ", nbRows),
-      blockId("BLOCK_ID", nbRows),
-      compressedSize("COMPRESSED_SIZE_IN_BYTES", nbRows),
-      copyNb("COPY_NB", nbRows),
-      creationTime("CREATION_TIME", nbRows),
-      archiveFileId("ARCHIVE_FILE_ID", nbRows) {
-    }
-  }; // struct TapeFileBatch
-
-  /**
-   * Structure used to assemble a batch of rows to insert into the ARCHIVE_FILE
-   * table.
-   */
-  struct ArchiveFileBatch {
-    size_t nbRows;
-    rdbms::OcciColumn archiveFileId;
-    rdbms::OcciColumn diskInstance;
-    rdbms::OcciColumn diskFileId;
-    rdbms::OcciColumn diskFilePath;
-    rdbms::OcciColumn diskFileUser;
-    rdbms::OcciColumn diskFileGroup;
-    rdbms::OcciColumn diskFileRecoveryBlob;
-    rdbms::OcciColumn size;
-    rdbms::OcciColumn checksumType;
-    rdbms::OcciColumn checksumValue;
-    rdbms::OcciColumn storageClassName;
-    rdbms::OcciColumn creationTime;
-    rdbms::OcciColumn reconciliationTime;
-
-    /**
-     * Constructor.
-     *
-     * @param nbRowsValue  The Number of rows to be inserted.
-     */
-    ArchiveFileBatch(const size_t nbRowsValue):
-      nbRows(nbRowsValue),
-      archiveFileId("ARCHIVE_FILE_ID", nbRows),
-      diskInstance("DISK_INSTANCE_NAME", nbRows),
-      diskFileId("DISK_FILE_ID", nbRows),
-      diskFilePath("DISK_FILE_PATH", nbRows),
-      diskFileUser("DISK_FILE_USER", nbRows),
-      diskFileGroup("DISK_FILE_GROUP", nbRows),
-      diskFileRecoveryBlob("DISK_FILE_RECOVERY_BLOB", nbRows),
-      size("SIZE_IN_BYTES", nbRows),
-      checksumType("CHECKSUM_TYPE", nbRows),
-      checksumValue("CHECKSUM_VALUE", nbRows),
-      storageClassName("STORAGE_CLASS_NAME", nbRows),
-      creationTime("CREATION_TIME", nbRows),
-      reconciliationTime("RECONCILIATION_TIME", nbRows) {
-    }
-  }; // struct ArchiveFileBatch
+  common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid);
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -227,7 +152,7 @@ private:
    * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn, const rdbms::Stmt::AutocommitMode autocommitMode,
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
     const std::set<TapeFileWritten> &events);
 
 }; // class OracleCatalogue

@@ -26,7 +26,6 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -41,7 +40,7 @@ SqliteCatalogue::SqliteCatalogue(
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
-    rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
+    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename),
     nbConns,
     nbArchiveFileListingConns) {
 }
@@ -117,17 +116,17 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.executeNonQuery();
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.executeNonQuery();
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -198,17 +197,17 @@ void SqliteCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt.executeNonQuery();
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt.executeNonQuery();
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -257,7 +256,7 @@ void SqliteCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
+uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
     // The SQLite implemenation of getNextArchiveFileId() serializes access to
     // the SQLite database in order to avoid busy errors
@@ -265,7 +264,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
 
     rdbms::AutoRollback autoRollback(conn);
 
-    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::Stmt::AutocommitMode::OFF);
+    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::AutocommitMode::OFF);
     uint64_t archiveFileId = 0;
     {
       const char *const sql =
@@ -273,8 +272,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
           "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      auto rset = stmt->executeQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      auto rset = stmt.executeQuery();
       if(!rset.next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
@@ -294,8 +293,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Stmt::AutocommitMode autocommitMode,
-  rdbms::PooledConn &conn, const std::string &vid) {
+common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::AutocommitMode autocommitMode,
+  rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -334,8 +333,8 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Stmt::Auto
         "VID = :VID;";
 
     auto stmt = conn.createStmt(sql, autocommitMode);
-    stmt->bindString(":VID", vid);
-    auto rset = stmt->executeQuery();
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
@@ -407,7 +406,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
 
-    const auto tape = selectTape(rdbms::Stmt::AutocommitMode::ON, conn, firstEvent.vid);
+    const auto tape = selectTape(rdbms::AutocommitMode::ON, conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
@@ -432,11 +431,11 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeFileWritten &lastEvent = *lastEventItor;
-    updateTape(conn, rdbms::Stmt::AutocommitMode::ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::AutocommitMode::ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     for(const auto &event : events) {
-      fileWrittenToTape(rdbms::Stmt::AutocommitMode::ON, conn, event);
+      fileWrittenToTape(rdbms::AutocommitMode::ON, conn, event);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
@@ -446,7 +445,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 //------------------------------------------------------------------------------
 // fileWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autocommitMode, rdbms::PooledConn &conn,
+void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
   const TapeFileWritten &event) {
   try {
     checkTapeFileWrittenFieldsAreSet(event);

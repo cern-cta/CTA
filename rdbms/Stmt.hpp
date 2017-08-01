@@ -18,50 +18,42 @@
 
 #pragma once
 
-#include "common/optional.hpp"
-#include "rdbms/ParamNameToIdx.hpp"
 #include "rdbms/Rset.hpp"
+#include "common/optional.hpp"
 
+#include <list>
 #include <memory>
-#include <stdint.h>
-#include <string>
+#include <mutex>
 
 namespace cta {
 namespace rdbms {
 
+namespace wrapper {
+  class Stmt;
+}
+
+class StmtPool;
+
 /**
- * Abstract class specifying the interface to a database statement.
+ * A smart database statement that will automatically return the underlying
+ * database statement to its parent database connection when it goes out of
+ * scope.
  */
 class Stmt {
 public:
 
   /**
-   * A statement can either have auto commiting mode turned on or off.
+   * Constructor.
    */
-  enum class AutocommitMode {
-    ON,
-    OFF
-  };
+  Stmt();
 
   /**
    * Constructor.
    *
-   * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
+   * @param stmt The database statement.
+   * @param stmtPool The database statement pool to which the m_stmt should be returned.
    */
-  Stmt(const std::string &sql, const AutocommitMode autocommitMode);
-
-  /**
-   * Returns the autocommit mode of teh statement.
-   *
-   * @return The autocommit mode of teh statement.
-   */
-  AutocommitMode getAutoCommitMode() const noexcept;
-
-  /**
-   * Destructor.
-   */
-  virtual ~Stmt() throw() = 0;
+  Stmt(std::unique_ptr<wrapper::Stmt> stmt, StmtPool &stmtPool);
 
   /**
    * Deletion of the copy constructor.
@@ -69,9 +61,18 @@ public:
   Stmt(Stmt &) = delete;
 
   /**
-   * Deletion of the move constructor.
+   * Move constructor.
+   *
+   * @param other The other object.
    */
-  Stmt(Stmt &&) = delete;
+  Stmt(Stmt &&other);
+
+  /**
+   * Destructor.
+   *
+   * Returns the database statement back to its connection.
+   */
+  ~Stmt() noexcept;
 
   /**
    * Deletion of the copy assignment operator.
@@ -79,14 +80,12 @@ public:
   Stmt &operator=(const Stmt &) = delete;
 
   /**
-   * Deletion of the move assignment operator.
+   * Move assignment operator.
+   *
+   * @param rhs The object on the right-hand side of the operator.
+   * @return This object.
    */
-  Stmt &operator=(Stmt &&) = delete;
-
-  /**
-   * Idempotent close() method.  The destructor calls this method.
-   */
-  virtual void close() = 0;
+  Stmt &operator=(Stmt &&rhs);
 
   /**
    * Returns the SQL statement.
@@ -109,7 +108,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const std::string &paramName, const uint64_t paramValue) = 0;
+  void bindUint64(const std::string &paramName, const uint64_t paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -117,7 +116,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue) = 0;
+  void bindOptionalUint64(const std::string &paramName, const optional<uint64_t> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -145,7 +144,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bindString(const std::string &paramName, const std::string &paramValue) = 0;
+  void bindString(const std::string &paramName, const std::string &paramValue);
 
   /** 
    * Binds an SQL parameter of type optional-string.
@@ -157,19 +156,19 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  virtual void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) = 0;
+  void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue);
 
   /**
    *  Executes the statement and returns the result set.
    *
    *  @return The result set.
    */
-  virtual Rset executeQuery() = 0;
+  Rset executeQuery();
 
   /**
    * Executes the statement.
    */
-  virtual void executeNonQuery() = 0;
+  void executeNonQuery();
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -177,43 +176,25 @@ public:
    *
    * @return The number of affected rows.
    */
-  virtual uint64_t getNbAffectedRows() const = 0;
-
-protected:
+  uint64_t getNbAffectedRows() const;
 
   /**
-   * The maximum length an SQL statement can have in exception error message.
+   * Returns a reference to the underlying statement object that is not pool
+   * aware.
    */
-  const uint32_t c_maxSqlLenInExceptions = 80;
-
-  /**
-   * Returns the SQL string to be used in an exception message.  The string
-   * will be clipped at a maxmum of c_maxSqlLenInExceptions characters.  If the
-   * string is actually clipped then the three last characters will be an
-   * replaced by an ellipsis of three dots, in other word "...".  These 3
-   * characters will indicate to the reader of the exception message that the
-   * SQL statement has been clipped.
-   *
-   * @return The SQL string to be used in an exception message.
-   */
-  std::string getSqlForException() const;
+  wrapper::Stmt &getStmt();
 
 private:
 
   /**
-   * The SQL statement.
+   * The database statement.
    */
-  std::string m_sql;
+  std::unique_ptr<wrapper::Stmt> m_stmt;
 
   /**
-   * The autocommit mode of the statement.
+   * The database statement pool to which the m_stmt should be returned.
    */
-  AutocommitMode m_autoCommitMode;
-
-  /**
-   * Map from SQL parameter name to parameter index.
-   */
-  ParamNameToIdx m_paramNameToIdx;
+  StmtPool *m_stmtPool;
 
 }; // class Stmt
 

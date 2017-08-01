@@ -17,11 +17,10 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/Login.hpp"
 
 #include <gtest/gtest.h>
-#include <sstream>
 
 namespace unitTests {
 
@@ -39,24 +38,22 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-  auto connFactory = ConnFactoryFactory::create(login);
   const uint64_t nbConns = 2;
-  ConnPool pool(*connFactory, nbConns);
+  ConnPool pool(login, nbConns);
 
-  PooledConn conn = pool.getConn();
+  Conn conn = pool.getConn();
 }
 
 TEST_F(cta_rdbms_ConnPoolTest, assignment) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-  auto connFactory = ConnFactoryFactory::create(login);
   const uint64_t nbConns = 2;
-  ConnPool pool(*connFactory, nbConns);
+  ConnPool pool(login, nbConns);
 
-  PooledConn conn = pool.getConn();
+  Conn conn = pool.getConn();
 
-  PooledConn conn2(nullptr, nullptr);
+  Conn conn2(nullptr, nullptr);
 
   conn2 = pool.getConn();
 }
@@ -65,13 +62,12 @@ TEST_F(cta_rdbms_ConnPoolTest, moveConstructor) {
   using namespace cta::rdbms;
 
   const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-  auto connFactory = ConnFactoryFactory::create(login);
   const uint64_t nbConns = 2;
-  ConnPool pool(*connFactory, nbConns);
+  ConnPool pool(login, nbConns);
 
-  PooledConn conn = pool.getConn();
+  Conn conn = pool.getConn();
 
-  PooledConn conn2(std::move(conn));
+  Conn conn2(std::move(conn));
 }
 
 } // namespace unitTests

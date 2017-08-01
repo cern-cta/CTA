@@ -17,8 +17,10 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <memory>
 
@@ -28,15 +30,10 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConnPool::ConnPool(ConnFactory &connFactory, const uint64_t maxNbConns):
-  m_connFactory(connFactory),
+ConnPool::ConnPool(const Login &login, const uint64_t maxNbConns):
+  m_connFactory(wrapper::ConnFactoryFactory::create(login)),
   m_maxNbConns(maxNbConns),
-  m_nbConnsOnLoan(0) {
-  try {
-    createConns(m_maxNbConns);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  m_nbConnsOnLoan(0){
 }
 
 //------------------------------------------------------------------------------
@@ -45,7 +42,10 @@ ConnPool::ConnPool(ConnFactory &connFactory, const uint64_t maxNbConns):
 void ConnPool::createConns(const uint64_t nbConns) {
   try {
     for(uint64_t i = 0; i < nbConns; i++) {
-      m_conns.push_back(m_connFactory.create());
+      auto connAndStmts = cta::make_unique<ConnAndStmts>();
+      connAndStmts->conn = m_connFactory->create();
+      connAndStmts->stmtPool = cta::make_unique<StmtPool>();
+      m_connsAndStmts.push_back(std::move(connAndStmts));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -55,42 +55,50 @@ void ConnPool::createConns(const uint64_t nbConns) {
 //------------------------------------------------------------------------------
 // getConn
 //------------------------------------------------------------------------------
-PooledConn ConnPool::getConn() {
-  threading::MutexLocker locker(m_connsMutex);
+Conn ConnPool::getConn() {
+  threading::MutexLocker locker(m_connsAndStmtsMutex);
 
-  while(m_conns.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
-    m_connsCv.wait(locker);
+  while(m_connsAndStmts.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
+    m_connsAndStmtsCv.wait(locker);
   }
 
-  if(m_conns.size() == 0) {
-    m_conns.push_back(m_connFactory.create());
+  if(m_connsAndStmts.size() == 0) {
+    auto connAndStmts = cta::make_unique<ConnAndStmts>();
+    connAndStmts->conn = m_connFactory->create();
+    connAndStmts->stmtPool = cta::make_unique<StmtPool>();
+    m_connsAndStmts.push_back(std::move(connAndStmts));
   }
 
-  std::unique_ptr<Conn> conn = std::move(m_conns.front());
-  m_conns.pop_front();
+  std::unique_ptr<ConnAndStmts> connAndStmts = std::move(m_connsAndStmts.front());
+  m_connsAndStmts.pop_front();
   m_nbConnsOnLoan++;
-  if(conn->isOpen()) {
-    return PooledConn(std::move(conn), this);
+  if(connAndStmts->conn->isOpen()) {
+    return Conn(std::move(connAndStmts), this);
   } else {
-    return PooledConn(m_connFactory.create(), this);
+    auto newConnAndStmts = cta::make_unique<ConnAndStmts>();
+    newConnAndStmts->conn = m_connFactory->create();
+    newConnAndStmts->stmtPool = cta::make_unique<StmtPool>();
+    return Conn(std::move(newConnAndStmts), this);
   }
 }
 
 //------------------------------------------------------------------------------
 // returnConn
 //------------------------------------------------------------------------------
-void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
+void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
   try {
     // If the connection is open
-    if(conn->isOpen()) {
+    if(connAndStmts->conn->isOpen()) {
 
       // Try to commit the connection and put it back in the pool
       try {
-        conn->commit();
+        connAndStmts->conn->commit();
       } catch(...) {
-        // If the commit failed then close the connection
+        // If the commit failed then destroy any prepare statements and then
+        // close the connection
         try {
-          conn->close();
+          connAndStmts->stmtPool->clear();
+          connAndStmts->conn->close();
         } catch(...) {
           // Ignore any exceptions
         }
@@ -99,25 +107,25 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
         // connection, if there is one, has been lost.  Delete all the connections
         // currently in the pool because their underlying TCP/IP connections may
         // also have been lost.
-        threading::MutexLocker locker(m_connsMutex);
-        while(!m_conns.empty()) {
-          m_conns.pop_front();
+        threading::MutexLocker locker(m_connsAndStmtsMutex);
+        while(!m_connsAndStmts.empty()) {
+          m_connsAndStmts.pop_front();
         }
         if(0 == m_nbConnsOnLoan) {
           throw exception::Exception("Would have reached -1 connections on loan");
         }
         m_nbConnsOnLoan--;
-        m_connsCv.signal();
+        m_connsAndStmtsCv.signal();
         return;
       }
 
-      threading::MutexLocker locker(m_connsMutex);
+      threading::MutexLocker locker(m_connsAndStmtsMutex);
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
-      m_conns.push_back(std::move(conn));
-      m_connsCv.signal();
+      m_connsAndStmts.push_back(std::move(connAndStmts));
+      m_connsAndStmtsCv.signal();
 
     // Else the connection is closed
     } else {
@@ -126,15 +134,15 @@ void ConnPool::returnConn(std::unique_ptr<Conn> conn) {
       // connection, if there is one, has been lost.  Delete all the connections
       // currently in the pool because their underlying TCP/IP connections may
       // also have been lost.
-      threading::MutexLocker locker(m_connsMutex);
-      while(!m_conns.empty()) {
-        m_conns.pop_front();
+      threading::MutexLocker locker(m_connsAndStmtsMutex);
+      while(!m_connsAndStmts.empty()) {
+        m_connsAndStmts.pop_front();
       }
       if(0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
-      m_connsCv.signal();
+      m_connsAndStmtsCv.signal();
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

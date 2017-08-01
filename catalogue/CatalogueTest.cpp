@@ -21,7 +21,7 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -53,7 +53,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
   try {
     const rdbms::Login &login = GetParam()->create();
-    auto connFactory = rdbms::ConnFactoryFactory::create(login);
+    auto connFactory = rdbms::wrapper::ConnFactoryFactory::create(login);
     const uint64_t nbConns = 2;
     const uint64_t nbArchiveFileListingConns = 2;
 

@@ -16,10 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Rset.hpp"
-#include "RsetImpl.hpp"
-#include "NullDbValue.hpp"
-
+#include "rdbms/NullDbValue.hpp"
+#include "rdbms/Rset.hpp"
+#include "rdbms/wrapper/Rset.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -34,9 +33,9 @@ Rset::Rset():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset(RsetImpl *const impl):
-  m_impl(impl) {
-  if(nullptr == impl) {
+Rset::Rset(std::unique_ptr<wrapper::Rset> impl):
+  m_impl(std::move(impl)) {
+  if(nullptr == m_impl.get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
   }
 }
@@ -45,23 +44,16 @@ Rset::Rset(RsetImpl *const impl):
 // constructor
 //------------------------------------------------------------------------------
 Rset::Rset(Rset &&other):
-  m_impl(other.m_impl) {
-  other.m_impl = nullptr;
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-Rset::~Rset() {
-  delete m_impl;
+  m_impl(std::move(other.m_impl)) {
 }
 
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
 Rset &Rset::operator=(Rset &&rhs) {
-  m_impl = rhs.m_impl;
-  rhs.m_impl = nullptr;
+  if(m_impl != rhs.m_impl) {
+    m_impl = std::move(rhs.m_impl);
+  }
   return *this;
 }
 

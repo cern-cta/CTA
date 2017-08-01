@@ -25,13 +25,89 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
-#include "rdbms/OcciStmt.hpp"
+#include "rdbms/wrapper/OcciColumn.hpp"
+#include "rdbms/wrapper/OcciStmt.hpp"
 
 #include <string.h>
 
 namespace cta {
 namespace catalogue {
+
+namespace {
+  /**
+   * Structure used to assemble a batch of rows to insert into the TAPE_FILE
+   * table.
+   */
+  struct TapeFileBatch {
+    size_t nbRows;
+    rdbms::wrapper::OcciColumn vid;
+    rdbms::wrapper::OcciColumn fSeq;
+    rdbms::wrapper::OcciColumn blockId;
+    rdbms::wrapper::OcciColumn compressedSize;
+    rdbms::wrapper::OcciColumn copyNb;
+    rdbms::wrapper::OcciColumn creationTime;
+    rdbms::wrapper::OcciColumn archiveFileId;
+
+    /**
+     * Constructor.
+     *
+     * @param nbRowsValue  The Number of rows to be inserted.
+     */
+    TapeFileBatch(const size_t nbRowsValue):
+      nbRows(nbRowsValue),
+      vid("VID", nbRows),
+      fSeq("FSEQ", nbRows),
+      blockId("BLOCK_ID", nbRows),
+      compressedSize("COMPRESSED_SIZE_IN_BYTES", nbRows),
+      copyNb("COPY_NB", nbRows),
+      creationTime("CREATION_TIME", nbRows),
+      archiveFileId("ARCHIVE_FILE_ID", nbRows) {
+    }
+  }; // struct TapeFileBatch
+
+  /**
+   * Structure used to assemble a batch of rows to insert into the ARCHIVE_FILE
+   * table.
+   */
+  struct ArchiveFileBatch {
+    size_t nbRows;
+    rdbms::wrapper::OcciColumn archiveFileId;
+    rdbms::wrapper::OcciColumn diskInstance;
+    rdbms::wrapper::OcciColumn diskFileId;
+    rdbms::wrapper::OcciColumn diskFilePath;
+    rdbms::wrapper::OcciColumn diskFileUser;
+    rdbms::wrapper::OcciColumn diskFileGroup;
+    rdbms::wrapper::OcciColumn diskFileRecoveryBlob;
+    rdbms::wrapper::OcciColumn size;
+    rdbms::wrapper::OcciColumn checksumType;
+    rdbms::wrapper::OcciColumn checksumValue;
+    rdbms::wrapper::OcciColumn storageClassName;
+    rdbms::wrapper::OcciColumn creationTime;
+    rdbms::wrapper::OcciColumn reconciliationTime;
+
+    /**
+     * Constructor.
+     *
+     * @param nbRowsValue  The Number of rows to be inserted.
+     */
+    ArchiveFileBatch(const size_t nbRowsValue):
+      nbRows(nbRowsValue),
+      archiveFileId("ARCHIVE_FILE_ID", nbRows),
+      diskInstance("DISK_INSTANCE_NAME", nbRows),
+      diskFileId("DISK_FILE_ID", nbRows),
+      diskFilePath("DISK_FILE_PATH", nbRows),
+      diskFileUser("DISK_FILE_USER", nbRows),
+      diskFileGroup("DISK_FILE_GROUP", nbRows),
+      diskFileRecoveryBlob("DISK_FILE_RECOVERY_BLOB", nbRows),
+      size("SIZE_IN_BYTES", nbRows),
+      checksumType("CHECKSUM_TYPE", nbRows),
+      checksumValue("CHECKSUM_VALUE", nbRows),
+      storageClassName("STORAGE_CLASS_NAME", nbRows),
+      creationTime("CREATION_TIME", nbRows),
+      reconciliationTime("RECONCILIATION_TIME", nbRows) {
+    }
+  }; // struct ArchiveFileBatch
+} // anonymous namespace
 
 //------------------------------------------------------------------------------
 // constructor
@@ -45,7 +121,7 @@ OracleCatalogue::OracleCatalogue(
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
-    rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database)),
+    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database),
     nbConns,
     nbArchiveFileListingConns) {
 
@@ -94,11 +170,11 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     utils::Timer t;
     auto conn = m_connPool.getConn();
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto selectStmt = conn.createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
+    auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
     const auto createStmtTime = t.secs();
-    selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    selectStmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     t.reset();
-    rdbms::Rset selectRset = selectStmt->executeQuery();
+    rdbms::Rset selectRset = selectStmt.executeQuery();
     const auto selectFromArchiveFileTime = t.secs();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset.next()) {
@@ -189,17 +265,17 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.executeNonQuery();
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+      stmt.executeNonQuery();
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -284,12 +360,12 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
     utils::Timer t;
     auto conn = m_connPool.getConn();
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto selectStmt = conn.createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
+    auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
     const auto createStmtTime = t.secs();
-    selectStmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    selectStmt->bindString(":DISK_FILE_ID", diskFileId);
+    selectStmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    selectStmt.bindString(":DISK_FILE_ID", diskFileId);
     t.reset();
-    rdbms::Rset selectRset = selectStmt->executeQuery();
+    rdbms::Rset selectRset = selectStmt.executeQuery();
     const auto selectFromArchiveFileTime = t.secs();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset.next()) {
@@ -339,17 +415,17 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt.executeNonQuery();
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt->executeNonQuery();
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt.executeNonQuery();
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -399,15 +475,15 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
 //------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
-uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
+uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   try {
     const char *const sql =
       "SELECT "
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    auto rset = stmt->executeQuery();
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
@@ -421,7 +497,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
 //------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
-common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid) {
+common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
       "SELECT "
@@ -459,9 +535,9 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledC
       "WHERE "
         "VID = :VID "
       "FOR UPDATE";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    stmt->bindString(":VID", vid);
-    auto rset = stmt->executeQuery();
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
@@ -568,10 +644,10 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeFileWritten &lastEvent = *lastEventItor;
-    updateTape(conn, rdbms::Stmt::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
-    idempotentBatchInsertArchiveFiles(conn, rdbms::Stmt::AutocommitMode::OFF, events);
+    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, events);
 
     // Store the value of each field
     i = 0;
@@ -603,8 +679,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    rdbms::OcciStmt &occiStmt = dynamic_cast<rdbms::OcciStmt &>(*stmt);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt.setColumn(tapeFileBatch.vid);
     occiStmt.setColumn(tapeFileBatch.fSeq);
     occiStmt.setColumn(tapeFileBatch.blockId);
@@ -626,8 +702,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 //------------------------------------------------------------------------------
 // idempotentBatchInsertArchiveFiles
 //------------------------------------------------------------------------------
-void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn,
-  const rdbms::Stmt::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events) {
+void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
+  const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events) {
   try {
     ArchiveFileBatch archiveFileBatch(events.size());
     const time_t now = time(nullptr);
@@ -701,7 +777,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn,
         ":CREATION_TIME,"
         ":RECONCILIATION_TIME)";
     auto stmt = conn.createStmt(sql, autocommitMode);
-    rdbms::OcciStmt &occiStmt = dynamic_cast<rdbms::OcciStmt &>(*stmt);
+    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt->setBatchErrorMode(true);
 
     occiStmt.setColumn(archiveFileBatch.archiveFileId);

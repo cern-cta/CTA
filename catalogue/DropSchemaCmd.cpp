@@ -22,11 +22,9 @@
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
 #include "catalogue/DropSqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
-#include "rdbms/OcciConn.hpp"
+#include "rdbms/ConnPool.hpp"
 
 #include <algorithm>
-#include <rdbms/OcciConn.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -59,45 +57,20 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
   }
 
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
-  auto factory = rdbms::ConnFactoryFactory::create(dbLogin);
-  auto conn = factory->create();
+  const uint64_t maxNbConns = 1;
+  rdbms::ConnPool connPool(dbLogin, maxNbConns);
+  auto conn = connPool.getConn();
 
   // Abort if the schema is already dropped
-  switch(dbLogin.dbType) {
-  case rdbms::Login::DBTYPE_IN_MEMORY:
-  case rdbms::Login::DBTYPE_SQLITE:
-    if (conn->getTableNames().empty()) {
-      m_out << "Database contains no tables." << std::endl <<
-        "Assuming the schema has already been dropped." << std::endl;
-      return 0;
-    }
-    break;
-  case rdbms::Login::DBTYPE_ORACLE:
-    {
-      rdbms::OcciConn *const occiConn = dynamic_cast<rdbms::OcciConn *>(conn.get());
-      if(nullptr == occiConn) {
-        throw exception::Exception("Failed to down cast rdbms::conn to rdbms::OcciConn");
-      }
-      if(occiConn->getTableNames().empty() && occiConn->getSequenceNames().empty()) {
-        m_out << "Database contains no tables and no sequences." << std::endl <<
-          "Assuming the schema has already been dropped." << std::endl;
-        return 0;
-      }
-    }
-    break;
-  case rdbms::Login::DBTYPE_NONE:
-    throw exception::Exception("Cannot delete the schema of  catalogue database without a database type");
-  default:
-    {
-      exception::Exception ex;
-      ex.getMessage() << "Unknown database type: value=" << dbLogin.dbType;
-      throw ex;
-    }
+  if(conn.getTableNames().empty() && conn.getSequenceNames().empty()) {
+    m_out << "Database contains no tables and no sequences." << std::endl <<
+      "Assuming the schema has already been dropped." << std::endl;
+    return 0;
   }
 
   if(userConfirmsDropOfSchema(dbLogin)) {
     m_out << "DROPPING the schema of the CTA calalogue database" << std::endl;
-    dropCatalogueSchema(dbLogin.dbType, *conn);
+    dropCatalogueSchema(dbLogin.dbType, conn);
   } else {
     m_out << "Aborting" << std::endl;
   }
@@ -186,7 +159,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn, const std::list<std::s
     for(auto tableToDrop : tablesToDrop) {
       const bool tableToDropIsInDb = tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop);
       if(tableToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::Stmt::AutocommitMode::ON);
+        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::AutocommitMode::ON);
         m_out << "Dropped table " << tableToDrop << std::endl;
       }
     }
@@ -220,8 +193,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
     dropDatabaseTables(conn, tablesToDrop);
 
     std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ"};
-    rdbms::OcciConn &occiConn = dynamic_cast<rdbms::OcciConn &>(conn);
-    dropDatabaseSequences(occiConn, sequencesToDrop);
+    dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -230,14 +202,14 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
 //------------------------------------------------------------------------------
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
-void DropSchemaCmd::dropDatabaseSequences(rdbms::OcciConn &conn, const std::list<std::string> &sequencesToDrop) {
+void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std::string> &sequencesToDrop) {
   try {
     std::list<std::string> sequencesInDb = conn.getSequenceNames();
     for(auto sequenceToDrop : sequencesToDrop) {
       const bool sequenceToDropIsInDb = sequencesInDb.end() != std::find(sequencesInDb.begin(), sequencesInDb.end(),
         sequenceToDrop);
       if(sequenceToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::Stmt::AutocommitMode::ON);
+        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::AutocommitMode::ON);
         m_out << "Dropped sequence " << sequenceToDrop << std::endl;
       }
     }

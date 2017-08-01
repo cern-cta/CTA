@@ -20,16 +20,16 @@
 
 #include "common/optional.hpp"
 
+#include <memory>
 #include <stdint.h>
 #include <string>
 
 namespace cta {
 namespace rdbms {
 
-/**
- * Forward declarartion.
- */
-class RsetImpl;
+namespace wrapper {
+  class Rset;
+}
 
 /**
  * A wrapper around an object that iterators over a result set from the
@@ -50,7 +50,7 @@ public:
    *
    * @param impl The object actually implementing this result set.
    */
-  Rset(RsetImpl *const impl);
+  Rset(std::unique_ptr<wrapper::Rset> impl);
 
   /**
    * Deletion of copy constructor.
@@ -63,11 +63,6 @@ public:
    * @param other The other object to be moved.
    */
   Rset(Rset &&other);
-
-  /**
-   * Destructor.
-   */
-  ~Rset() throw();
 
   /**
    * Deletion of copy assignment.
@@ -176,7 +171,7 @@ private:
   /**
    * The object actually implementing this result set.
    */
-  RsetImpl *m_impl;
+  std::unique_ptr<wrapper::Rset> m_impl;
 
 }; // class Rset
 

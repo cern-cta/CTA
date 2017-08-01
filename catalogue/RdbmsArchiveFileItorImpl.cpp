@@ -198,38 +198,38 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     }
 
     auto conn = connPool.getConn();
-    m_stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    m_stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     if(searchCriteria.archiveFileId) {
-      m_stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
+      m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
     if(searchCriteria.diskInstance) {
-      m_stmt->bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
+      m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
     }
     if(searchCriteria.diskFileId) {
-      m_stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
+      m_stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
     }
     if(searchCriteria.diskFilePath) {
-      m_stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
+      m_stmt.bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
     }
     if(searchCriteria.diskFileUser) {
-      m_stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
+      m_stmt.bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
     }
     if(searchCriteria.diskFileGroup) {
-      m_stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
+      m_stmt.bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
     }
     if(searchCriteria.storageClass) {
-      m_stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
+      m_stmt.bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
     }
     if(searchCriteria.vid) {
-      m_stmt->bindString(":VID", searchCriteria.vid.value());
+      m_stmt.bindString(":VID", searchCriteria.vid.value());
     }
     if(searchCriteria.tapeFileCopyNb) {
-      m_stmt->bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
+      m_stmt.bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
     }
     if(searchCriteria.tapePool) {
-      m_stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+      m_stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
-    m_rset = m_stmt->executeQuery();
+    m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
   } catch(exception::Exception &ex) {
