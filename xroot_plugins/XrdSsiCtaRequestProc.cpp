@@ -171,41 +171,14 @@ static void requestProcDELETE(cta::Scheduler &scheduler, cta::log::LogContext &l
 
    // Queue the request
 
-   const cta::common::dataStructures::ArchiveFile archiveFile = scheduler.deleteArchive(client.name, request);  
+   cta::utils::Timer t;
+   scheduler.deleteArchive(client.name, request);
 
    // Create a log entry
 
-   std::list<cta::log::Param> params;
-   params.push_back(cta::log::Param("USERNAME", client.name));
-   params.push_back(cta::log::Param("HOST", client.host));
-   params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
-   params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
-   params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
-   params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
-   params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
-   params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
-   params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
-   params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
-   params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
-   params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
-   params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
-   params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
-   params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
-
-   for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
-      std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-                        << " vid: " << it->second.vid
-                        << " fSeq: " << it->second.fSeq
-                        << " blockId: " << it->second.blockId
-                        << " creationTime: " << it->second.creationTime
-                        << " compressedSize: " << it->second.compressedSize
-                        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-                        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-                        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-      params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
-   }  
-   lc.logger()(cta::log::INFO, "Archive File Deleted", params);  
+   cta::log::ScopedParamContainer params(lc);
+   params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
+   lc.log(cta::log::INFO, "In requestProcDELETE(): deleted archive file.");
 
    // Set response type
 

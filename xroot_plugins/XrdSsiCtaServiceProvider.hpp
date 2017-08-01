@@ -45,12 +45,7 @@ extern XrdSsiProvider *XrdSsiProviderServer;
 class XrdSsiCtaServiceProvider : public XrdSsiProvider
 {
 public:
-   XrdSsiCtaServiceProvider() :
-      m_ctaConf("/etc/cta/cta-frontend.conf"),
-      m_backend(cta::objectstore::BackendFactory
-         ::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
-      m_backendPopulator(*m_backend, "Frontend"),
-      m_scheddb(*m_backend, m_backendPopulator.getAgentReference())
+   XrdSsiCtaServiceProvider() : m_ctaConf("/etc/cta/cta-frontend.conf")
    {
 #ifdef XRDSSI_DEBUG
       std::cout << "[DEBUG] XrdSsiCtaServiceProvider() constructor" << std::endl;
@@ -64,7 +59,9 @@ public:
    }
 
    /*!
-    * Initialize the object for its intended use. This is always called before any other method.
+    * Initialize the object.
+    *
+    * This is always called before any other method.
     */
    bool Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn,
              const std::string parms, int argc, char **argv) override;
@@ -82,22 +79,20 @@ public:
    /*!
     * Get a reference to the Scheduler for this Service
     */
-    
    cta::Scheduler &getScheduler() { return *m_scheduler; }
 
    /*!
     * Get the log context for this Service
     */
-
    cta::log::LogContext getLogContext() { return cta::log::LogContext(*m_log); }
 
 private:
    /*!
     * Deleter for instances of the AgentHeartbeatThread class.
     *
-    * As the object is initialised by Init() rather than in the constructor, we can't simply call this
-    * from the destructor. Using a deleter guarantees that we only call stopAndWaitThread() after the
-    * AgentHeartbeatThread has been started by Init().
+    * As the aht object is initialised by Init() rather than in the constructor, we can't simply call
+    * stopAndWaitThread() in the destructor. Using a deleter guarantees that we call stopAndWaitThread()
+    * after the AgentHeartbeatThread has been started by Init().
     */
    struct AgentHeartbeatThreadDeleter {
       void operator()(cta::objectstore::AgentHeartbeatThread *aht) {
@@ -115,15 +110,15 @@ private:
     * Member variables
     */
 
-   cta::common::Configuration                 m_ctaConf;             //!< CTA configuration
-   std::unique_ptr<cta::objectstore::Backend> m_backend;             //!< VFS backend for the objectstore DB
-   cta::objectstore::BackendPopulator         m_backendPopulator;    //!< Object used to populate the backend
-   cta::OStoreDBWithAgent                     m_scheddb;             //!< Database or Object Store holding all
-                                                                     //!< CTA persistent objects
-   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;           //!< CTA catalogue of tapes and tape files
-   std::unique_ptr<cta::Scheduler>            m_scheduler;           //!< The scheduler
-   std::unique_ptr<cta::log::Logger>          m_log;                 //!< The logger
-   UniquePtrAgentHeartbeatThread              m_agentHeartbeat;      //!< Agent heartbeat thread
+   cta::common::Configuration                          m_ctaConf;             //!< CTA configuration
+
+   std::unique_ptr<cta::objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
+   std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend
+   std::unique_ptr<cta::OStoreDBWithAgent>             m_scheddb;             //!< DB/Object Store of persistent objects
+   std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;           //!< CTA catalogue of tapes and tape files
+   std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
+   std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
+   UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
 };
 
 #endif
