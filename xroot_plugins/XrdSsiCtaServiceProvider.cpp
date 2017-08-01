@@ -83,14 +83,13 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
    log::Logger &log = *m_log;
 
-   // Initialise the catalogue and scheduler
+   // Initialise the catalogue
   
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
    const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
    const uint64_t nbArchiveFileListingConns = 2;
 
    m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
-   m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
    // Initialise the Backend
 
@@ -98,11 +97,16 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
    m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
 
-   // If the backend is a VFS, make sure we don't delete it on exit. If not, never mind.
+   // Initialise the Scheduler
+
+   m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
    try {
+      // If the backend is a VFS, make sure we don't delete it on exit
       dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
-   } catch (std::bad_cast &) {}
+   } catch (std::bad_cast &) {
+      // If not, never mind
+   }
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
 
