@@ -85,6 +85,11 @@ namespace cta {
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status);
+    
+    /**
+     * Report a tape session statistics
+     */
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
 
     /**
      * Indicates that the disk thread of the mount was completed. This
@@ -118,7 +123,7 @@ namespace cta {
      * @return A unique_ptr to the next archive job or NULL if there are no more
      * archive jobs left for this tape mount.
      */
-    virtual std::unique_ptr<RetrieveJob> getNextJob();
+    virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext);
     
     /**
      * Destructor.

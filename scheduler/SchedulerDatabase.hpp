@@ -37,6 +37,7 @@
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "scheduler/TapeMount.hpp"
 
 #include <list>
 #include <limits>
@@ -177,11 +178,11 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
-    virtual std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -197,7 +198,7 @@ public:
     cta::common::dataStructures::TapeFile tapeFile;
     /// Indicates a success to the DB. If this is the last job, return true.
     virtual bool succeed() = 0;
-    virtual void fail() = 0;
+    virtual void fail(log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
@@ -241,16 +242,17 @@ public:
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
     const std::set<std::string> & vidsToConsider) = 0;
   /**
-   * Queues the specified request.
+   * Queues the specified request. As the object store has access to the catalogue,
+   * the best queue (most likely to go, and not disabled can be chosen directly there).
    *
    * @param rqst The request.
    * @param criteria The criteria retrieved from the CTA catalogue to be used to
    * decide how to quue the request.
-   * @param vid: the vid of the retrieve queue on which we will queue the request.
+   * @param logContext context allowing logging db operation
+   * @return the selected vid (mostly for logging)
    */
-  virtual void queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-    const std::string &vid) = 0;
+  virtual std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest &rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) = 0;
 
   /**
    * Returns all of the existing retrieve jobs grouped by tape and then
@@ -328,9 +330,12 @@ public:
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
-    virtual std::unique_ptr<RetrieveJob> getNextJob() = 0;
+    virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
+      uint64_t bytesRequested, log::LogContext& logContext) = 0;
+    virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -342,7 +347,7 @@ public:
     cta::common::dataStructures::ArchiveFile archiveFile;
     uint64_t selectedCopyNb;
     virtual void succeed() = 0;
-    virtual void fail() = 0;
+    virtual void fail(log::LogContext &) = 0;
     virtual ~RetrieveJob() {}
   };
 
@@ -426,6 +431,7 @@ public:
     std::vector<PotentialMount> potentialMounts; /**< All the potential mounts */
     std::vector<ExistingMount> existingOrNextMounts; /**< Existing mounts */
     std::map<std::string, DedicationEntry> dedicationInfo; /**< Drives dedication info */
+    bool queueTrimRequired = false; /**< Indicates an empty queue was encountered */
     /**
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
@@ -452,6 +458,12 @@ public:
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+  
+  /**
+   * A function running a queue trim. This should be called if the corresponding
+   * bit was set in the TapeMountDecisionInfo returned by getMountInfo().
+   */
+  virtual void trimEmptyQueues(log::LogContext & lc) = 0;
   
   /**
    * A function dumping the relevant mount information for reporting the system

@@ -107,7 +107,8 @@ bool cta::objectstore::Agent::isEmpty() {
   return true;
 }
 
-void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
+void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // We are here limited to checking the presumed owner and mark the agent as 
   // untracked in the agent register in case of match, else we do nothing

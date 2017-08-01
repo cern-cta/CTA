@@ -260,7 +260,8 @@ protected:
         m_lc.log(cta::log::DEBUG,"going to report");
         m_reportTimer.reset();
         m_initialProcess.reportHeartbeat(m_TapeBytesMovedMoved, 0);
-        reportStats();
+        reportStats(); 
+        m_mount.setTapeSessionStats(m_stats);
       } 
       else{
         usleep(m_pollPeriod*1000*1000);
@@ -271,6 +272,7 @@ protected:
     {
       cta::threading::MutexLocker locker(m_mutex);
       reportStats();
+      m_mount.setTapeSessionStats(m_stats);
       // Flush the one-of parameters one last time.
       std::list<Param> params;
       while (m_toAddParamsQueue.size())

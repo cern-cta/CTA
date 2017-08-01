@@ -19,6 +19,9 @@ ln -s -v -t /usr/bin \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-dump-object \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-list \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-initialize \
+  ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-unfollow-agent \
+  ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-dereference-removed-queues \
+  ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/objectstore/cta-objectstore-collect-orphaned-object \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/nameserver/makeMockNameServerBasePath \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/tapeserver/castor/tape/tapeserver/drive/TapeDriveReadWriteTest \
   ${BUILDTREE_BASE}/${BUILDTREE_SUBDIR}/tapeserver/castor/tape/tapeserver/daemon/cta-tapeserverd \

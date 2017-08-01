@@ -11,7 +11,7 @@ for DRIVE in $(admin_cta dr ls | grep Down | sed -e 's/ \+/ /g' | cut -d\  -f2);
   admin_cta dr up ${DRIVE}
 done
 
-for ((i=0;i<3;i++)); do
+for ((i=0;i<4;i++)); do
   echo "Launching bash ./client_ar.sh -n 1000 -s 10 -p 4 -v"
   bash ./client_ar.sh -n 1000 -s 10 -p 4 -v &
 done

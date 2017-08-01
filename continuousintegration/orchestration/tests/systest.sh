@@ -154,7 +154,7 @@ echo "Preparing CTA for tests"
   echo "Information about the testing file without disk replica"
     kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
   echo
-  echo "trigger EOS retrive workflow"
+  echo "trigger EOS retrieve workflow"
   echo "xrdfs localhost prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}"  
     kubectl --namespace ${NAMESPACE} exec ctaeos -- xrdfs localhost prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}
 

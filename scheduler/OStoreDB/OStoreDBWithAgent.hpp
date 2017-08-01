@@ -33,7 +33,8 @@ public:
    * @param be The objectstore backend
    * @param ag The agent
    */
-  OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar);
+  OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar,
+  catalogue::Catalogue & catalogue, log::Logger & logger);
   
   /**
    * Destructor

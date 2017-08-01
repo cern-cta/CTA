@@ -130,41 +130,7 @@ void Scheduler::queueRetrieve(
   // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
     m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
-  // Get the statuses of the tapes on which we have files.
-  std::set<std::string> vids;
-  for (auto & tf: queueCriteria.archiveFile.tapeFiles) {
-    vids.insert(tf.second.vid);
-  }
-  auto tapeStatuses = m_catalogue.getTapesByVid(vids);
-  // Filter out the tapes with are disabled
-  for (auto & t: tapeStatuses) {
-    if (t.second.disabled)
-      vids.erase(t.second.vid);
-  }
-  if (vids.empty())
-    throw exception::NonRetryableError("In Scheduler::queueRetrieve(): all copies are on disabled tapes");
-  auto catalogueTime = t.secs(utils::Timer::resetCounter);
-  // Get the statistics for the potential tapes on which we will retrieve.
-  auto stats=m_db.getRetrieveQueueStatistics(queueCriteria, vids);
-  // Sort the potential queues.
-  stats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
-  // If there are several equivalent entries, choose randomly among them.
-  // First element will always be selected.
-  std::set<std::string> candidateVids;
-  for (auto & s: stats) {
-    if (!(s<stats.front()) && !(s>stats.front()))
-      candidateVids.insert(s.vid);
-  }
-  if (candidateVids.empty())
-    throw exception::Exception("In Scheduler::queueRetrieve(): failed to sort and select candidate VIDs");
-  // We need to get a random number [0, candidateVids.size() -1]
-  std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-  std::uniform_int_distribution<size_t> distribution(0, candidateVids.size() -1);
-  size_t index=distribution(dre);
-  auto it=candidateVids.cbegin();
-  std::advance(it, index);
-  std::string selectedVid=*it;
-  m_db.queueRetrieve(request, queueCriteria, selectedVid);
+  std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
@@ -174,9 +140,9 @@ void Scheduler::queueRetrieve(
      .add("diskFileGroup", request.diskFileInfo.group)
      .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
      .add("dstURL", request.dstURL)
-     .add("creationHost", request.entryLog.host)
-     .add("creationTime", request.entryLog.time)
-     .add("creationUser", request.entryLog.username)
+     .add("creationHost", request.creationLog.host)
+     .add("creationTime", request.creationLog.time)
+     .add("creationUser", request.creationLog.username)
      .add("requesterName", request.requester.name)
      .add("requesterGroup", request.requester.group)
      .add("criteriaArchiveFileId", queueCriteria.archiveFile.archiveFileID)
@@ -201,7 +167,6 @@ void Scheduler::queueRetrieve(
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
-     .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "Queued retrieve request");
 }
@@ -209,30 +174,27 @@ void Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
-  try {
-    m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
-  } catch (exception::Exception &dbEx) {
-    // The file was apparently not queued. If we fail to remove it from the
-    // catalogue for any reason other than it does not exist in the catalogue,
-    // then it is an error.
-    try {
-      return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
-    } catch(catalogue::ArchiveFileDoesNotExist &e) {
-      return common::dataStructures::ArchiveFile();
-    } catch(...) {
-      throw;
-    }
-  }
+// TEMPORARILY commenting out SchedulerDatabase::deleteArchiveRequest() in order
+// to reduce latency.  PLEASE NOTE however that this means files "in-flight" to
+// tape will not be deleted and they will appear in the CTA catalogue when they
+// are finally written to tape.
+//try {
+//  m_db.deleteArchiveRequest(instanceName, request.archiveFileID);
+//} catch (exception::Exception &dbEx) {
+//  // The file was apparently not queued. If we fail to remove it from the
+//  // catalogue for any reason other than it does not exist in the catalogue,
+//  // then it is an error.
+//  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+//}
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).
   try {
-    return m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
   } catch (exception::UserError &) {}
-  return common::dataStructures::ArchiveFile();
 }
 
 //------------------------------------------------------------------------------
@@ -443,6 +405,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // First, get the mount-related info from the DB
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo();
+  if (mountInfo->queueTrimRequired) m_db.trimEmptyQueues(lc);
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
   // The library information is not know for the tapes involved in retrieves. We 
@@ -491,7 +454,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         tapesInUse.insert(em.vid);
         log::ScopedParamContainer params(lc);
         params.add("vid", em.vid)
-              .add("mountType", common::dataStructures::toString(em.type));
+              .add("mountType", common::dataStructures::toString(em.type))
+              .add("drive", em.driveName);
         lc.log(log::DEBUG,"In Scheduler::getNextMount(): tapeAlreadyInUse found.");
       }
     }
@@ -526,12 +490,28 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-            .add("minArchiveRequestAge", m->minArchiveRequestAge);
+            .add("minArchiveRequestAge", m->minArchiveRequestAge)
+            .add("existingMounts", existingMounts)
+            .add("maxDrivesAllowed", m->maxDrivesAllowed);
       lc.log(log::DEBUG, "Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", m->tapePool)
+            .add("mountType", common::dataStructures::toString(m->type))
+            .add("existingMounts", existingMounts)
+            .add("bytesQueued", m->bytesQueued)
+            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("filesQueued", m->filesQueued)
+            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("minArchiveRequestAge", m->minArchiveRequestAge)
+            .add("existingMounts", existingMounts)
+            .add("maxDrivesAllowed", m->maxDrivesAllowed)
+            .add("ratioOfMountQuotaUsed", m->ratioOfMountQuotaUsed);
+      lc.log(log::DEBUG, "Will consider potential mount");
       m++;
    }
   }
@@ -673,7 +653,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
+      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
       break;
     case common::dataStructures::MountType::Retrieve:
       // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
@@ -682,7 +662,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.mountPolicy.maxDrivesAllowed = pm.maxDrivesAllowed;
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
-      summary.oldestJobAge = pm.oldestJobStartTime - time(nullptr);
+      summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
       break;
     default:
       break;
@@ -740,6 +720,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       if (t.disabled) mountOrQueue.disabledTapes++;
       if (t.full) mountOrQueue.fullTapes++;
       if (!t.full && !t.disabled) mountOrQueue.writableTapes++;
+      mountOrQueue.tapePool = t.tapePoolName;
     }
   }
   return ret;

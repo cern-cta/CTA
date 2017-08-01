@@ -55,7 +55,8 @@ public:
   void removeIfEmpty();
   
   // Garbage collection (disallowed for root entry).
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   
   // ArchiveQueue handling  ====================================================
   CTA_GENERATE_EXCEPTION_CLASS(ArchivelQueueNotEmpty);
@@ -86,7 +87,7 @@ public:
   void removeMissingRetrieveQueueReference(const std::string & address);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
   void removeRetrieveQueueAndCommit(const std::string & vid);
-  std::string getRetrieveQueue(const std::string & vid);
+  std::string getRetrieveQueueAddress(const std::string & vid);
   struct RetrieveQueueDump {
     std::string vid;
     std::string address;

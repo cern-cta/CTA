@@ -33,7 +33,7 @@ namespace cta {
     ~MockRetrieveMount() throw() {
     }
 
-    std::unique_ptr<cta::RetrieveJob> getNextJob() override {
+    std::unique_ptr<cta::RetrieveJob> getNextJob(log::LogContext & logContext) override {
       getJobs++;
       if(m_jobs.empty()) {
         return std::unique_ptr<cta::RetrieveJob>();
@@ -57,7 +57,8 @@ namespace cta {
     bool bothSidesComplete() override { return false; }
     
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
-
+    
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 
   private:
 

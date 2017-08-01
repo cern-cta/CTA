@@ -78,7 +78,8 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeT
   // We expect the process to exit within 5 minutes of getting in this state. This state
   // potentially covers the draining of metadata to central storage (if not faster that 
   // unmounting the tape).
-  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))}
+  // TODO: this is set temporarily to 15 minutes while the reporting is not yet parallelized.
+  {SessionState::ShuttingDown, std::chrono::duration_cast<Timeout>(std::chrono::minutes(15))}
 };
 
 //------------------------------------------------------------------------------
@@ -274,7 +275,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair 
   try {
     serializers::WatchdogMessage message;
-    message.ParseFromString(m_socketPair->receive());
+    auto datagram=m_socketPair->receive();
+    if (!message.ParseFromString(datagram)) {
+      // Use a the tolerant parser to assess the situation.
+      message.ParsePartialFromString(datagram);
+      throw cta::exception::Exception(std::string("In SubprocessHandler::ProcessingStatus(): could not parse message: ")+
+        message.InitializationErrorString());
+    }
     // Logs are processed in all cases
     processLogs(message);
     // If we report bytes, process the report (this is a heartbeat)
@@ -869,8 +876,7 @@ int DriveHandler::runChild() {
   try {
     std::string processName="DriveProcess-";
     processName+=m_configLine.unitName;
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName));
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, m_processManager.logContext()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());
@@ -884,7 +890,8 @@ int DriveHandler::runChild() {
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
-    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+    catalogue=cta::catalogue::CatalogueFactory::create(m_sessionEndContext.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());

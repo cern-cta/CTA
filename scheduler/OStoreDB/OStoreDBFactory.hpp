@@ -30,6 +30,8 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendFactory.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include <memory>
 
 namespace cta {
@@ -127,7 +129,11 @@ public:
   std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
     return m_OStoreDB.getMountInfo();
   }
-
+  
+  void trimEmptyQueues(log::LogContext& lc) override {
+    m_OStoreDB.trimEmptyQueues(lc);
+  }
+  
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock() override {
     return m_OStoreDB.getMountInfoNoLock();
   }
@@ -137,10 +143,9 @@ public:
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-  void queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria,
-    const std::string &vid) override {
-    m_OStoreDB.queueRetrieve(rqst, criteria, vid);
+  std::string queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
   std::list<cta::common::dataStructures::DriveState> getDriveStates() const override {
@@ -160,6 +165,8 @@ public:
 
 private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
+  std::unique_ptr <cta::log::Logger> m_logger;
+  std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
   cta::OStoreDB m_OStoreDB;
   objectstore::AgentReference m_agentReference;
 };
@@ -167,10 +174,10 @@ private:
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
-m_backend(new cta::objectstore::BackendVFS()),
-m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
+m_backend(new cta::objectstore::BackendVFS()), m_logger(new cta::log::DummyLogger("")), 
+m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory") {
   // We need to populate the root entry before using.
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
@@ -193,9 +200,9 @@ m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
 template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
-m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()),
-m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
+m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()), m_logger(new cta::log::DummyLogger("")), 
+m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory") {
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {

@@ -107,12 +107,12 @@ protected:
   /**
    * The object used to populate the backend
    */
-  cta::objectstore::BackendPopulator m_backendPopulator;
+  std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;
   
   /**
    * The database or object store holding all CTA persistent objects
    */
-  cta::OStoreDBWithAgent m_scheddb;
+  std::unique_ptr<cta::OStoreDBWithAgent> m_scheddb;
 
   /**
    * The CTA catalogue of tapes and tape files.

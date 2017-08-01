@@ -68,11 +68,11 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 //------------------------------------------------------------------------------
 // getNextJob
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
+std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob(log::LogContext & logContext) {
   if (!m_sessionRunning)
     throw SessionNotRunning("In RetrieveMount::getNextJob(): trying to get job from complete/not started session");
   // Try and get a new job from the DB
-  std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> dbJob(m_dbMount->getNextJob().release());
+  std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> dbJob(m_dbMount->getNextJob(logContext).release());
   if (!dbJob.get())
     return std::unique_ptr<cta::RetrieveJob>();
   // We have something to retrieve: prepare the response
@@ -128,6 +128,13 @@ void cta::RetrieveMount::abort() {
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
+}
+
+//------------------------------------------------------------------------------
+// setTapeSessionStats()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  m_dbMount->setTapeSessionStats(stats);
 }
 
 //------------------------------------------------------------------------------

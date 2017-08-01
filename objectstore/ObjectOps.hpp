@@ -21,6 +21,8 @@
 #include "Backend.hpp"
 #include "common/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
+#include "common/log/LogContext.hpp"
+#include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
 
@@ -148,6 +150,10 @@ public:
   void release() {
     checkLocked();
     releaseIfNeeded();
+  }
+  
+  bool isLocked() {
+    return m_locked;
   }
   
   /** Move the locked object reference to a new one. This is done when the locked
@@ -288,17 +294,29 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) = 0;
+  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) = 0;
   
 protected:
   
   void getPayloadFromHeader () {
-    m_payload.ParseFromString(m_header.payload());
+    if (!m_payload.ParseFromString(m_header.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(m_header.payload());
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString());
+    }
     m_payloadInterpreted = true;
   }
 
   void getHeaderFromObjectStore () {
-    m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+    auto objData=m_objectStore.read(getAddressIfSet());
+    if (!m_header.ParseFromString(objData)) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(objData);
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString());
+    }
     if (m_header.type() != payloadTypeId) {
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "

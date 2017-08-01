@@ -57,3 +57,6 @@ spec:
   - name: stgstorage
     persistentVolumeClaim:
       claimName: claimstg
+
+  imagePullSecrets:
+  - name: ctaregsecret

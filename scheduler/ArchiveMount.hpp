@@ -99,20 +99,16 @@ namespace cta {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
     
     /**
+     * Report a tape session statistics
+     */
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+    
+    /**
      * Report that the tape is full.
      */
     void setTapeFull();
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
-    /**
-     * Job factory
-     *
-     * @param logContext log context for logging internal operations.
-     * @return A unique_ptr to the next archive job or NULL if there are no more
-     * archive jobs left for this tape mount.
-     */
-    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext);
-    
     /**
      * Batch job factory
      * 

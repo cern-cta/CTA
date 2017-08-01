@@ -21,6 +21,7 @@
 #include "common/admin/AdminUser.hpp"
 #include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -69,7 +70,7 @@ struct SchedulerTestParam {
 class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
-  SchedulerTest() {
+  SchedulerTest(): m_dummyLog("dummy") {
   }
 
   class FailedToGetCatalogue: public std::exception {
@@ -101,7 +102,7 @@ public:
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(nbConns, nbArchiveFileListingConns);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
 
@@ -212,6 +213,7 @@ private:
   // Prevent assignment
   SchedulerTest & operator= (const SchedulerTest &) = delete;
 
+  cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
@@ -282,70 +284,75 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 }
 
-TEST_P(SchedulerTest, delete_archive_request) {
-  using namespace cta;
-
-  Scheduler &scheduler = getScheduler();
-  
-  setupDefaultCatalogue();
-
-  cta::common::dataStructures::EntryLog creationLog;
-  creationLog.host="host2";
-  creationLog.time=0;
-  creationLog.username="admin1";
-  cta::common::dataStructures::DiskFileInfo diskFileInfo;
-  diskFileInfo.recoveryBlob="blob";
-  diskFileInfo.group="group2";
-  diskFileInfo.owner="cms_user";
-  diskFileInfo.path="path/to/file";
-  cta::common::dataStructures::ArchiveRequest request;
-  request.checksumType="ADLER32";
-  request.checksumValue="1111";
-  request.creationLog=creationLog;
-  request.diskFileInfo=diskFileInfo;
-  request.diskFileID="diskFileID";
-  request.fileSize=100*1000*1000;
-  cta::common::dataStructures::UserIdentity requester;
-  requester.name = s_userName;
-  requester.group = "userGroup";
-  request.requester = requester;
-  request.srcURL="srcURL";
-  request.storageClass=s_storageClassName;
-
-  log::DummyLogger dl("");
-  log::LogContext lc(dl);
-  auto archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
-  
-  // Check that we have the file in the queues
-  // TODO: for this to work all the time, we need an index of all requests
-  // (otherwise we miss the selected ones).
-  // Could also be limited to querying by ID (global index needed)
-  bool found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs()) {
-    for (auto & req: tp.second) {
-      if (req.archiveFileID == archiveFileId)
-        found = true;
-    }
-  }
-  ASSERT_TRUE(found);
-  
-  // Remove the request
-  cta::common::dataStructures::DeleteArchiveRequest dar;
-  dar.archiveFileID = archiveFileId;
-  dar.requester.group = "group1";
-  dar.requester.name = "user1";
-  scheduler.deleteArchive("disk_instance", dar);
-  
-  // Validate that the request is gone.
-  found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs()) {
-    for (auto & req: tp.second) {
-      if (req.archiveFileID == archiveFileId)
-        found = true;
-    }
-  }
-  ASSERT_FALSE(found);
-}
+// smurray commented this test out on Mon 17 Jul 2017.  The test assumes that
+// Scheduler::deleteArchive() calls SchedulerDatabase::deleteArchiveRequest().
+// This fact is currently not true as Scheduler::deleteArchive() has been
+// temporarily modified to only call Catalogue::deleteArchiveFile().
+//
+//TEST_P(SchedulerTest, delete_archive_request) {
+//  using namespace cta;
+//
+//  Scheduler &scheduler = getScheduler();
+//
+//  setupDefaultCatalogue();
+//
+//  cta::common::dataStructures::EntryLog creationLog;
+//  creationLog.host="host2";
+//  creationLog.time=0;
+//  creationLog.username="admin1";
+//  cta::common::dataStructures::DiskFileInfo diskFileInfo;
+//  diskFileInfo.recoveryBlob="blob";
+//  diskFileInfo.group="group2";
+//  diskFileInfo.owner="cms_user";
+//  diskFileInfo.path="path/to/file";
+//  cta::common::dataStructures::ArchiveRequest request;
+//  request.checksumType="ADLER32";
+//  request.checksumValue="1111";
+//  request.creationLog=creationLog;
+//  request.diskFileInfo=diskFileInfo;
+//  request.diskFileID="diskFileID";
+//  request.fileSize=100*1000*1000;
+//  cta::common::dataStructures::UserIdentity requester;
+//  requester.name = s_userName;
+//  requester.group = "userGroup";
+//  request.requester = requester;
+//  request.srcURL="srcURL";
+//  request.storageClass=s_storageClassName;
+//
+//  log::DummyLogger dl("");
+//  log::LogContext lc(dl);
+//  auto archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
+//
+//  // Check that we have the file in the queues
+//  // TODO: for this to work all the time, we need an index of all requests
+//  // (otherwise we miss the selected ones).
+//  // Could also be limited to querying by ID (global index needed)
+//  bool found=false;
+//  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+//    for (auto & req: tp.second) {
+//      if (req.archiveFileID == archiveFileId)
+//        found = true;
+//    }
+//  }
+//  ASSERT_TRUE(found);
+//
+//  // Remove the request
+//  cta::common::dataStructures::DeleteArchiveRequest dar;
+//  dar.archiveFileID = archiveFileId;
+//  dar.requester.group = "group1";
+//  dar.requester.name = "user1";
+//  scheduler.deleteArchive("disk_instance", dar);
+//
+//  // Validate that the request is gone.
+//  found=false;
+//  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+//    for (auto & req: tp.second) {
+//      if (req.archiveFileID == archiveFileId)
+//        found = true;
+//    }
+//  }
+//  ASSERT_FALSE(found);
+//}
 
 TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   using namespace cta;
@@ -443,9 +450,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
-    std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
+    auto * archiveJob = archiveJobBatch.front().get();
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
@@ -453,8 +460,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->complete();
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
+    archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
+    ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
 
@@ -470,7 +477,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = archiveFileId;
-    request.entryLog = creationLog;
+    request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
@@ -507,10 +514,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    retrieveJob.reset(retrieveMount->getNextJob().release());
+    retrieveJob.reset(retrieveMount->getNextJob(lc).release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
     retrieveJob->complete();
-    retrieveJob.reset(retrieveMount->getNextJob().release());
+    retrieveJob.reset(retrieveMount->getNextJob(lc).release());
     ASSERT_EQ((cta::RetrieveJob*)NULL, retrieveJob.get());
   }
 }
@@ -589,19 +596,17 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     // The file should be retried 10 times
     for (int i=0; i<=5; i++) {
-      std::unique_ptr<cta::ArchiveJob> archiveJob(archiveMount->getNextJob(lc));
-      if (!archiveJob.get()) {
+      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1,1,lc);
+      if (!archiveJobList.front().get()) {
         int __attribute__((__unused__)) debugI=i;
       }
-      ASSERT_NE((cta::ArchiveJob*)NULL, archiveJob.get());
+      ASSERT_NE(0, archiveJobList.size());
       // Validate we got the right file
-      ASSERT_EQ(archiveFileId, archiveJob->archiveFile.archiveFileID);
-      archiveJob->failed(cta::exception::Exception("Archive failed"));
+      ASSERT_EQ(archiveFileId, archiveJobList.front()->archiveFile.archiveFileID);
+      archiveJobList.front()->failed(cta::exception::Exception("Archive failed"), lc);
     }
     // Then the request should be gone
-    std::unique_ptr<cta::ArchiveJob> archiveJob;
-    archiveJob.reset(archiveMount->getNextJob(lc).release());
-    ASSERT_EQ((cta::ArchiveJob*)NULL, archiveJob.get());
+    ASSERT_EQ(0, archiveMount->getNextJobBatch(1,1,lc).size());
   }
 }
 
@@ -627,7 +632,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     diskFileInfo.path="path/to/file";
     cta::common::dataStructures::RetrieveRequest request;
     request.archiveFileID = 12345;
-    request.entryLog = creationLog;
+    request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
     request.requester.name = s_userName;

@@ -37,7 +37,13 @@ void GenericObject::fetch() {
     throw NotLocked("In ObjectOps::fetch(): object not locked");
   m_existingObject = true;
   // Get the header from the object store. We don't care for the type
-  m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+  auto objData=m_objectStore.read(getAddressIfSet());
+  if (!m_header.ParseFromString(objData)) {
+    // Use a the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
+      m_header.InitializationErrorString());
+  }
   m_headerInterpreted = true;
 }
 
@@ -77,47 +83,50 @@ namespace {
   using cta::objectstore::ScopedExclusiveLock;
   template <class C>
   void garbageCollectWithType(GenericObject * gop, ScopedExclusiveLock& lock,
-      const std::string &presumedOwner, AgentReference & agentReference) {
+      const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
     C typedObject(*gop);
     lock.transfer(typedObject);
-    typedObject.garbageCollect(presumedOwner, agentReference);
+    typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
     // Release the lock now as if we let the caller do, it will point
     // to the then-removed typedObject.
     lock.release();
   }
 }
 
-void GenericObject::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
+void GenericObject::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
 }
 
 void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock, 
-    const std::string &presumedOwner, AgentReference & agentReference) {
+    const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkHeaderWritable();
   switch(m_header.type()) {
     case serializers::AgentRegister_t:
-      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::Agent_t:
-      garbageCollectWithType<Agent>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<Agent>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::DriveRegister_t:
-      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::SchedulerGlobalLock_t:
-      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::ArchiveRequest_t:
-      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::RetrieveRequest_t:
-      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::ArchiveQueue_t:
-      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::RetrieveQueue_t:
-      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner, agentReference);
+      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     default: {
       std::stringstream err;

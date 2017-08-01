@@ -19,6 +19,7 @@
 #pragma once
 
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 
@@ -31,6 +32,13 @@ namespace catalogue {
  */
 class ArchiveFileBuilder {
 public:
+
+  /**
+   * Constructor.
+   *
+   * @param log Object representing the API to the CTA logging system.
+   */
+  ArchiveFileBuilder(log::Logger &log);
 
   /**
    * Appends the specified tape file to the ArchiveFile object currently
@@ -75,6 +83,11 @@ public:
   void clear();
 
 private:
+
+  /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
 
   /**
    * The Archivefile object currently under construction.

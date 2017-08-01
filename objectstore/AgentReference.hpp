@@ -55,12 +55,6 @@ public:
   std::string nextId(const std::string & childType);
   
   /**
-   * Modifies the timeout for queue flushes. Useful for unit tests.
-   * @param timeout the new timeout
-   */
-  void setQueueFlushTimeout(std::chrono::duration<uint64_t, std::milli> timeout);
-  
-  /**
    * Adds an object address to the referenced agent. The additions and removals
    * are queued in memory so that several threads can share the same access.
    * The execution order is guaranteed.
@@ -141,7 +135,6 @@ private:
   struct ActionQueue {
     threading::Mutex mutex;
     std::list<std::shared_ptr<Action>> queue;
-    std::promise<void> promise;
   };
   
   /**
@@ -175,8 +168,6 @@ private:
    * This future will be immediately extracted from the m_nextQueueExecutionPromise before any other thread touches it.
    */
   std::future<void> m_nextQueueExecutionFuture;
-  const size_t m_maxQueuedItems = 100;
-  std::chrono::duration<uint64_t, std::milli> m_queueFlushTimeout = std::chrono::milliseconds(100); 
 };
 
 }} 

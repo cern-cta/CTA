@@ -24,6 +24,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/GetOptThreadSafe.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/NonRetryableError.hpp"
@@ -576,14 +577,13 @@ std::string XrdCtaFile::formatResponse(const std::vector<std::vector<std::string
         columnSize=responseTable.at(i).at(j).size();
       }
     }
-    columnSize++; //add one space
     columnSizes.push_back(columnSize);//loops here
   }
   std::stringstream responseSS;
   for(auto row=responseTable.cbegin(); row!=responseTable.cend(); row++) {
     if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[31;1m";
     for(uint i=0; i<row->size(); i++) {
-      responseSS << " " << std::setw(columnSizes.at(i)) << row->at(i);
+      responseSS << std::string(i?"  ":"")<< std::setw(columnSizes.at(i)) << row->at(i);
     }
     if(withHeader && row==responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
     else responseSS << std::endl;
@@ -1825,7 +1825,9 @@ std::string XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "mountType", "status", "desiredUp", "vid", "tapepool","session id","since","files","bytes","latest speed", "last updated"};
+        std::vector<std::string> headers = {"drive", "host", "library", "request",
+          "status", "since", "desired", "vid", "tapepool", "files", "Mbytes",
+          "speed", "session", "age"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
         driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
@@ -1838,10 +1840,6 @@ std::string XrdCtaFile::xCom_drive() {
           currentRow.push_back(ds.logicalLibrary);
           currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
-          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
-          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
-          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
           // print the time spent in the current state
           switch(ds.driveStatus) {
           case cta::common::dataStructures::DriveStatus::Up:
@@ -1854,7 +1852,7 @@ std::string XrdCtaFile::xCom_drive() {
           case cta::common::dataStructures::DriveStatus::Mounting:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.mountStartTime)));
             break;
-          case cta::common::dataStructures::DriveStatus::Transfering:
+          case cta::common::dataStructures::DriveStatus::Transferring:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.transferStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::CleaningUp:
@@ -1873,9 +1871,13 @@ std::string XrdCtaFile::xCom_drive() {
             currentRow.push_back("-");
             break;
           }
+          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
+          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
+          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
           currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
-          currentRow.push_back(std::to_string((unsigned long long)ds.bytesTransferredInSession));
-          currentRow.push_back(std::to_string((long double)ds.latestBandwidth));
+          currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/Mbytes));
+          currentRow.push_back(std::to_string((long double)ds.latestBandwidth/Mbytes));
+          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
           currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
         }
@@ -2033,8 +2035,8 @@ std::string XrdCtaFile::xCom_showqueues() {
   auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"type","tapepool","vid","files queued","bytes queued","oldest age","priority","min age","max drives",
-      "cur. mounts", "cur. files", "cur. bytes", "bandwidth", "next mounts", "tapes capacity", "files on tapes", "data on tapes", "full tapes", "empty tapes",
+    std::vector<std::string> header = {"type","tapepool","vid","files queued","Mbytes queued","oldest age","priority","min age","max drives",
+      "cur. mounts", "cur. files", "cur. Mbytes", "speed", "next mounts", "tapes capacity", "files on tapes", "Mbytes on tapes", "full tapes", "empty tapes",
       "disabled tapes", "writables tapes"};
     if(hasOption("-h", "--header")) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
@@ -2043,7 +2045,7 @@ std::string XrdCtaFile::xCom_showqueues() {
       currentRow.push_back(q.tapePool);
       currentRow.push_back(q.vid);
       currentRow.push_back(std::to_string(q.filesQueued));
-      currentRow.push_back(std::to_string(q.bytesQueued));
+      currentRow.push_back(std::to_string((long double)q.bytesQueued/Mbytes));
       currentRow.push_back(std::to_string(q.oldestJobAge));
       if (common::dataStructures::MountType::Archive == q.mountType) {
         currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
@@ -2060,12 +2062,12 @@ std::string XrdCtaFile::xCom_showqueues() {
       }
       currentRow.push_back(std::to_string(q.currentMounts));
       currentRow.push_back(std::to_string(q.currentFiles));
-      currentRow.push_back(std::to_string(q.currentBytes));
-      currentRow.push_back(std::to_string(q.latestBandwidth));
+      currentRow.push_back(std::to_string((long double)q.currentBytes/Mbytes));
+      currentRow.push_back(std::to_string((long double)q.latestBandwidth/Mbytes));
       currentRow.push_back(std::to_string(q.nextMounts));
-      currentRow.push_back(std::to_string(q.tapesCapacity));
+      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)Mbytes));
       currentRow.push_back(std::to_string(q.filesOnTapes));
-      currentRow.push_back(std::to_string(q.dataOnTapes));
+      currentRow.push_back(std::to_string((long double)q.dataOnTapes/Mbytes));
       currentRow.push_back(std::to_string(q.fullTapes));
       currentRow.push_back(std::to_string(q.emptyTapes));
       currentRow.push_back(std::to_string(q.disabledTapes));
@@ -2120,6 +2122,9 @@ std::string XrdCtaFile::xCom_archive() {
   request.srcURL=srcurl.value();
   request.storageClass=storageclass.value();
   request.archiveReportURL=archiveReportURL.value();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = time(nullptr);
   log::LogContext lc(m_log);
   uint64_t archiveFileId = m_scheduler->queueArchive(m_cliIdentity.username, request, lc);
   cmdlineOutput << "<eos::wfe::path::fxattr:sys.archiveFileId>" << archiveFileId << std::endl;
@@ -2157,6 +2162,9 @@ std::string XrdCtaFile::xCom_retrieve() {
   request.archiveFileID=id.value();
   request.requester=originator;
   request.dstURL=dsturl.value();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = time(nullptr);
   log::LogContext lc(m_log);
   m_scheduler->queueRetrieve(m_cliIdentity.username, request, lc);
   return cmdlineOutput.str();
@@ -2166,7 +2174,6 @@ std::string XrdCtaFile::xCom_retrieve() {
 // xCom_deletearchive
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::xCom_deletearchive() {
-  std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2180,38 +2187,14 @@ std::string XrdCtaFile::xCom_deletearchive() {
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id.value();
   request.requester=originator;
-  const cta::common::dataStructures::ArchiveFile archiveFile = m_scheduler->deleteArchive(m_cliIdentity.username, request);  
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
-  params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
-  params.push_back(cta::log::Param("fileId", std::to_string(archiveFile.archiveFileID)));
-  params.push_back(cta::log::Param("diskInstance", archiveFile.diskInstance));
-  params.push_back(cta::log::Param("diskFileId", archiveFile.diskFileId));
-  params.push_back(cta::log::Param("diskFileInfo.path", archiveFile.diskFileInfo.path));
-  params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile.diskFileInfo.owner));
-  params.push_back(cta::log::Param("diskFileInfo.group", archiveFile.diskFileInfo.group));
-  params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile.diskFileInfo.recoveryBlob));
-  params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile.fileSize)));
-  params.push_back(cta::log::Param("checksumType", archiveFile.checksumType));
-  params.push_back(cta::log::Param("checksumValue", archiveFile.checksumValue));
-  params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile.creationTime)));
-  params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile.reconciliationTime)));
-  params.push_back(cta::log::Param("storageClass", archiveFile.storageClass));
-  for(auto it=archiveFile.tapeFiles.begin(); it!=archiveFile.tapeFiles.end(); it++) {
-    std::stringstream tapeCopyLogStream;
-    tapeCopyLogStream << "copy number: " << it->first
-            << " vid: " << it->second.vid
-            << " fSeq: " << it->second.fSeq
-            << " blockId: " << it->second.blockId
-            << " creationTime: " << it->second.creationTime
-            << " compressedSize: " << it->second.compressedSize
-            << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-            << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-            << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-    params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
-  }  
-  m_log(log::INFO, "Archive File Deleted", params);  
-  return cmdlineOutput.str();
+  cta::utils::Timer t;
+  m_scheduler->deleteArchive(m_cliIdentity.username, request);
+  log::LogContext lc(m_log);
+  log::ScopedParamContainer params(lc);
+  params.add("fileId", request.archiveFileID)
+        .add("catalogueTime", t.secs());
+  lc.log(log::INFO, "In XrdCtaFile::xCom_deletearchive(): deleted archive file.");
+  return "";
 }
 
 //------------------------------------------------------------------------------

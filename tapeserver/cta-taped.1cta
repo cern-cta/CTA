@@ -167,7 +167,7 @@ The number of disk I/O threads.
 
 .TP
 \fBTapeServer RemoteFileProtocol
-The protocol to be used when transfering files to and from disk servers.
+The protocol to be used when transferring files to and from disk servers.
 Possible values are RFIO or XROOT.  The value is not case sensitive.
 
 .TP

@@ -73,6 +73,10 @@ public:
     std::string m_oid;
   };
   
+  static const size_t c_maxBackoff;
+  static const size_t c_backoffFraction;
+  static const uint64_t c_maxWait;
+  
 private:
   static std::string createUniqueClientId();
   

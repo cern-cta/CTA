@@ -75,12 +75,15 @@ namespace {
 // constructor
 //------------------------------------------------------------------------------
 RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
+  log::Logger &log,
   rdbms::ConnPool &connPool,
   const TapeFileSearchCriteria &searchCriteria):
+  m_log(log),
   m_connPool(connPool),
   m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
-  m_hasMoreHasBeenCalled(false) {
+  m_hasMoreHasBeenCalled(false),
+  m_archiveFileBuilder(log) {
   try {
     std::string sql =
       "SELECT "

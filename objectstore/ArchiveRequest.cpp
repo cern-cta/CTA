@@ -89,23 +89,24 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
     uint64_t mountId) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
-  // Find the job and update the number of failures (and return the new count)
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      if (j->lastmountwithfailure() == mountId) {
-        j->set_retrieswithinmount(j->retrieswithinmount() + 1);
+  // Find the job and update the number of failures 
+  // (and return the job status: failed (true) or to be retried (false))
+  for (auto & j: *jl) {
+    if (j.copynb() == copyNumber) {
+      if (j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
       } else {
-        j->set_retrieswithinmount(1);
-        j->set_lastmountwithfailure(mountId);
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
       }
-      j->set_totalretries(j->totalretries() + 1);
+      j.set_totalretries(j.totalretries() + 1);
     }
-    if (j->totalretries() >= j->maxtotalretries()) {
-      j->set_status(serializers::AJS_Failed);
+    if (j.totalretries() >= j.maxtotalretries()) {
+      j.set_status(serializers::AJS_Failed);
       finishIfNecessary();
       return true;
     } else {
-      j->set_status(serializers::AJS_PendingMount);
+      j.set_status(serializers::AJS_PendingMount);
       return false;
     }
   }
@@ -283,7 +284,11 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   return ret;
 }
 
-void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) {
+//------------------------------------------------------------------------------
+// garbageCollect
+//------------------------------------------------------------------------------
+void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // The behavior here depends on which job the agent is supposed to own.
   // We should first find this job (if any). This is for covering the case
@@ -307,7 +312,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock tpl;
-        Helpers::getLockedAndFetchedArchiveQueue(aq, tpl, agentReference, j->tapepool());
+        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, tpl, agentReference, j->tapepool(), lc);
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
@@ -403,14 +408,24 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
       [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         serializers::ObjectHeader oh;
-        oh.ParseFromString(in);
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In ArchiveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
         if (oh.type() != serializers::ObjectType::ArchiveRequest_t) {
           std::stringstream err;
           err << "In ArchiveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
           throw cta::exception::Exception(err.str());
         }
         serializers::ArchiveRequest payload;
-        payload.ParseFromString(oh.payload());
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In ArchiveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
         // Find the copy number and change the owner.
         auto *jl=payload.mutable_jobs();
         for (auto j=jl->begin(); j!=jl->end(); j++) {
@@ -478,17 +493,15 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
 bool ArchiveRequest::finishIfNecessary() {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
-  // in memory. If the job is complete, we will just remove it.
-  // TODO: we will have to push the result to the ArchiveToDirRequest when
-  // it gets implemented.
+  // in memory. If the request is complete, we will just remove it.
   // If all the jobs are either complete or failed, we can remove the request.
   auto & jl=m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    if (j->status() != serializers::AJS_Complete 
-        && j->status() != serializers::AJS_Failed) {
+  using serializers::ArchiveJobStatus;
+  std::set<serializers::ArchiveJobStatus> finishedStatuses(
+    {ArchiveJobStatus::AJS_Complete, ArchiveJobStatus::AJS_Failed});
+  for (auto & j: jl)
+    if (!finishedStatuses.count(j.status()))
       return false;
-    }
-  }
   remove();
   return true;
 }

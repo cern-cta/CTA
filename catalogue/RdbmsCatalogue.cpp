@@ -39,9 +39,11 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 RdbmsCatalogue::RdbmsCatalogue(
+  log::Logger &log,
   std::unique_ptr<rdbms::ConnFactory> connFactory,
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
+  Catalogue(log),
   m_connFactory(std::move(connFactory)),
   m_connPool(*m_connFactory, nbConns),
   m_archiveFileListingConnPool(*m_connFactory, nbArchiveFileListingConns) {
@@ -3562,7 +3564,7 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
   checkTapeFileSearchCriteria(searchCriteria);
 
   try {
-    auto impl = new RdbmsArchiveFileItorImpl(m_archiveFileListingConnPool, searchCriteria);
+    auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
     return ArchiveFileItor(impl);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

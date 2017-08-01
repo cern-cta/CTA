@@ -47,11 +47,10 @@ public:
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
-  bool addJobFailure(uint16_t copyNumber, uint64_t sessionId); //< returns true the job failed
+  bool addJobFailure(uint16_t copyNumber, uint64_t sessionId); //< returns true the job is failed
   serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
-  // Handling of the consequences of a job status change for the entire request.
-  // This function returns true if the request got finished.
-  bool finishIfNecessary();
+  bool finishIfNecessary();                   /**< Handling of the consequences of a job status change for the entire request.
+                                               * This function returns true if the request got finished. */
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setAllJobsLinkingToArchiveQueue();
   // Mark all the jobs as being deleted, in case of a cancellation
@@ -112,7 +111,8 @@ public:
   };
   
   std::list<JobDump> dumpJobs();
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   std::string  dump();
 };
 

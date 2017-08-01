@@ -60,6 +60,10 @@ void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status)
   // TODO
 }
 
+void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  throw 0;
+  // TODO
+}
 
 LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount): 
   m_catalogue(catalogue) {

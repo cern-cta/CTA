@@ -107,12 +107,11 @@ public:
     log::LogContext &lc);
   
   /** 
-   * Delete an archived file or a file which is in the process of being archived. Returns the information 
-   * about the deleted file.
+   * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  cta::common::dataStructures::ArchiveFile deleteArchive(const std::string &instanceName, 
+  void deleteArchive(const std::string &instanceName,
     const cta::common::dataStructures::DeleteArchiveRequest &request);
   
   /** 

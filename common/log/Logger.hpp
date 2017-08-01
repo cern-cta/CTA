@@ -203,12 +203,12 @@ protected:
   /**
    * Default size of a syslog message.
    */
-  static const size_t DEFAULT_SYSLOG_MSGLEN = 1024;
+  static const size_t LOG_MIN_MSGLEN = 1024;
 
   /**
    * Default size of a rsyslog message.
    */
-  static const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
+  static const size_t DEFAULT_RSYSLOG_MSGLEN = 8192;
 
   /**
    * Maximum length of a log message.

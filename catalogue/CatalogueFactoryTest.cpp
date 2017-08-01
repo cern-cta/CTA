@@ -19,6 +19,7 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -27,7 +28,8 @@ namespace unitTests {
 
 class cta_catalogue_CatalogueFactoryTest : public ::testing::Test {
 public:
-  cta_catalogue_CatalogueFactoryTest() {
+  cta_catalogue_CatalogueFactoryTest():
+    m_dummyLog("dummy") {
     m_localAdmin.username = "local_admin_user";
     m_localAdmin.host = "local_admin_host";
 
@@ -43,6 +45,7 @@ protected:
   virtual void TearDown() {
   }
 
+  cta::log::DummyLogger m_dummyLog;
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;
 };
@@ -54,7 +57,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   rdbms::Login login(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
-  std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(login, nbConns, nbArchiveFileListingConns));
+  std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(m_dummyLog, login, nbConns, nbArchiveFileListingConns));
   ASSERT_TRUE(nullptr != catalogue.get());
 
   ASSERT_TRUE(catalogue->getAdminUsers().empty());

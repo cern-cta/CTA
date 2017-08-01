@@ -456,4 +456,5 @@ protected:
   optional<std::string> EOS2CTAChecksumValue(const optional<std::string> &EOSChecksumValue);
 };
 
+const long double Mbytes = 1000.0*1000.0;
 }}

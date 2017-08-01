@@ -100,7 +100,8 @@ public:
  
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   // Garbage collection
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   
   std::string dump();
 };

@@ -267,12 +267,12 @@ int GarbageCollectorHandler::runChild() {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector"));
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector", m_processManager.logContext()));
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
-    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
+    catalogue=cta::catalogue::CatalogueFactory::create(m_processManager.logContext().logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping();
@@ -297,7 +297,7 @@ int GarbageCollectorHandler::runChild() {
   agentHeartbeat.startThread();
   
   // Create the garbage collector itself
-  objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference());
+  objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference(), *catalogue);
   
   // Run the gc in a loop
   try {

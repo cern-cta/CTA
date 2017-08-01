@@ -1,0 +1,31 @@
+#!/bin/bash
+if test $# -ne 3; then
+  echo "Wrong number of command-line arguments"
+  echo "Usage: create_tape_drop_disk_replicas wf_tag file_path tape_fs_id"
+  exit -1
+fi
+
+export XRD_STREAMTIMEOUT=600     # increased from 60s
+export XRD_TIMEOUTRESOLUTION=600 # increased from 15s
+
+WF_TAG="$1"
+FILE_PATH="$2"
+TAPE_FS_ID="$3"
+
+LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
+LOG_SCRIPT_NAME=`/usr/bin/basename $0`
+LOG_FILE="/var/log/eos/wfe/${WF_TAG}.log"
+
+echo "$LOG_DATE $LOG_SCRIPT_NAME creating tape replica with fsid ${TAPE_FS_ID} for ${FILE_PATH}" >> ${LOG_FILE}
+if ! eos -r 0 0 file tag "${FILE_PATH}" +${TAPE_FS_ID}; then
+  echo "$LOG_DATE $LOG_SCRIPT_NAME failed to create tape replica with fsid ${TAPE_FS_ID} for ${FILE_PATH}" >> ${LOG_FILE}
+  exit 1
+fi
+
+for DISK_FSID in `eos file info "${FILE_PATH}" -m | sed s/\ /'\n'/g | grep fsid | sed s/fsid=// | grep -v ${TAPE_FS_ID}`; do
+  echo "$LOG_DATE $LOG_SCRIPT_NAME deleting disk replica with fsid ${DISK_FSID} for ${FILE_PATH}" >> ${LOG_FILE}
+  if ! eos -r 0 0 file drop "${FILE_PATH}" ${DISK_FSID}; then
+    echo "$LOG_DATE $LOG_SCRIPT_NAME failed to delete disk replica with fsid ${DISK_FSID} for ${FILE_PATH}" >> ${LOG_FILE}
+    exit 1
+  fi
+done

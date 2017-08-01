@@ -152,6 +152,7 @@ message RetrieveJobPointer {
   required uint64 size = 3101;
   required string address = 3102;
   required uint32 copynb = 3103;
+  required uint64 fseq = 3107;
   required uint64 priority = 3104;
   required uint64 minretrieverequestage = 3105;
   required uint64 maxdrivesallowed = 3106;
@@ -219,19 +220,6 @@ message FilePathAndStatus {
   required uint64 mode = 4451;
   required uint64 size = 4452;
   required UserIdentity owner = 4453;
-}
-
-message ArchiveJobEntry {
-  required uint32 copynb = 4400;
-  required string tapepool = 4401;
-  required string archivequeueaddress = 4402;
-  required string owner = 4403;
-  required ArchiveJobStatus status = 4404;
-  required uint32 totalretries = 4405;
-  required uint32 retrieswithinmount = 4406;
-  required uint64 lastmountwithfailure = 4407;
-  required uint32 maxtotalretries = 4408;
-  required uint32 maxretrieswithinmount = 4409;
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------
@@ -330,6 +318,19 @@ message MountPolicy {
   required string comment = 8988;
 }
 
+message ArchiveJob {
+  required uint32 copynb = 4400;
+  required string tapepool = 4401;
+  required string archivequeueaddress = 4402;
+  required string owner = 4403;
+  required ArchiveJobStatus status = 4404;
+  required uint32 totalretries = 4405;
+  required uint32 retrieswithinmount = 4406;
+  required uint64 lastmountwithfailure = 4407;
+  required uint32 maxtotalretries = 4408;
+  required uint32 maxretrieswithinmount = 4409;
+}
+
 message ArchiveRequest {
   required uint64 archiveFileID = 8990;
   required MountPolicy mountpolicy = 8995;
@@ -346,7 +347,7 @@ message ArchiveRequest {
   required string srcurl = 9080;
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
-  repeated ArchiveJobEntry jobs = 9092;
+  repeated ArchiveJob jobs = 9092;
 }
 
 message SchedulerRetrieveRequest {
@@ -364,6 +365,7 @@ message RetrieveJob {
   required uint32 retrieswithinmount = 9203;
   required uint32 totalretries = 9204;
   required RetrieveJobStatus status = 9205;
+  required uint64 lastmountwithfailure = 9206;
 }
 
 message RetrieveRequest {

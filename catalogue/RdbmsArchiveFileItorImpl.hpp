@@ -21,6 +21,7 @@
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/ArchiveFileItorImpl.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
+#include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Rset.hpp"
 #include "rdbms/Stmt.hpp"
@@ -37,8 +38,15 @@ public:
   /**
    * Constructor.
    *
+   * @param log Object representing the API to the CTA logging system.
+   * @param connPool The database connection pool.
+   * @param searchCriteria The search criteria to be used when listing archive
+   * files.
    */
-  RdbmsArchiveFileItorImpl(rdbms::ConnPool &connPool, const TapeFileSearchCriteria &searchCriteria);
+  RdbmsArchiveFileItorImpl(
+    log::Logger &log,
+    rdbms::ConnPool &connPool,
+    const TapeFileSearchCriteria &searchCriteria);
 
   /**
    * Destructor.
@@ -57,8 +65,19 @@ public:
 
 private:
 
+  /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * The database connection pool.
+   */
   rdbms::ConnPool &m_connPool;
 
+  /**
+   * The search criteria to be used when listing archive files.
+   */
   TapeFileSearchCriteria m_searchCriteria;
 
   /**

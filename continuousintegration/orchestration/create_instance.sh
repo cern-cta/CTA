@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# CTA registry secret name
+ctareg_secret='ctaregsecret'
+
 # defaults objectstore to file
 config_objectstore="./objectstore-file.yaml"
 # defaults DB to sqlite
@@ -141,6 +144,13 @@ fi
 echo -n "Creating ${instance} instance "
 
 kubectl create namespace ${instance} || die "FAILED"
+
+# The CTA registry secret must be copied in the instance namespace to be usable
+kubectl get secret ${ctareg_secret} &> /dev/null
+if [ $? -eq 0 ]; then
+  echo "Copying ${ctareg_secret} secret in ${instance} namespace"
+  kubectl get secret ctaregsecret -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${instance} create -f -
+fi
 
 kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 

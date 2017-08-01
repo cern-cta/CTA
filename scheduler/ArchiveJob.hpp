@@ -84,7 +84,7 @@ public:
    * in a second thread.
    *
    */
-  virtual void failed(const cta::exception::Exception &ex);
+  virtual void failed(const cta::exception::Exception &ex, log::LogContext & lc);
   
   /**
    * Get the URL used for reporting

@@ -125,6 +125,11 @@ protected:
    * into it more records from the CTA catalogue.
    */
   void refreshReadBuffer();
+
+  /**
+   * Indirectly implements the XrdSfsFile::read() method.
+   */
+  XrdSfsXferSize exceptionThrowingRead(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size);
 }; // class ListArchiveFilesCmd
 
 } // namespace xrootPlugins

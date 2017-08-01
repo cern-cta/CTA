@@ -43,6 +43,30 @@ ListArchiveFilesCmd::ListArchiveFilesCmd(
 // read
 //------------------------------------------------------------------------------
 XrdSfsXferSize ListArchiveFilesCmd::read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
+  try {
+    return exceptionThrowingRead(offset, buffer, size);
+  } catch(exception::Exception &ex) {
+    std::ostringstream errMsg;
+    errMsg << __FUNCTION__ << " failed: " << ex.getMessage().str();
+    m_xrdSfsFileError.setErrInfo(ECANCELED, errMsg.str().c_str());
+    return SFS_ERROR;
+  } catch(std::exception &se) {
+    std::ostringstream errMsg;
+    errMsg << __FUNCTION__ << " failed: " << se.what();
+    m_xrdSfsFileError.setErrInfo(ECANCELED, errMsg.str().c_str());
+    return SFS_ERROR;
+  } catch(...) {
+    std::ostringstream errMsg;
+    errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
+    m_xrdSfsFileError.setErrInfo(ECANCELED, errMsg.str().c_str());
+    return SFS_ERROR;
+  }
+}
+
+//------------------------------------------------------------------------------
+// exceptionThrowingRead
+//------------------------------------------------------------------------------
+XrdSfsXferSize ListArchiveFilesCmd::exceptionThrowingRead(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size) {
   if(State::LISTED_LAST_ARCHIVE_FILE == m_state) {
     return SFS_OK;
   }

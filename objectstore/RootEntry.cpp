@@ -82,7 +82,8 @@ void RootEntry::removeIfEmpty() {
   remove();
 }
 
-void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference) {
+void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   // The root entry cannot be garbage collected.
   throw ForbiddenOperation("In RootEntry::garbageCollect(): RootEntry cannot be garbage collected");
 }
@@ -109,7 +110,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   } catch (serializers::NotFound &) {}
   // Insert the archive queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string archiveQueueAddress = agentRef.nextId("archiveQueue");
+  std::string archiveQueueAddress = agentRef.nextId("ArchiveQueue");
   agentRef.addToOwnership(archiveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
@@ -228,7 +229,8 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   } catch (serializers::NotFound &) {}
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string retrieveQueueAddress = agentRef.nextId("retriveQueue");
+  // The make of the vid in the object name will be handy.
+  std::string retrieveQueueAddress = agentRef.nextId(std::string("RetrieveQueue-")+vid);
   agentRef.addToOwnership(retrieveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
@@ -268,7 +270,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
       rql.lock(rq);
       rq.fetch();
     } catch (cta::exception::Exception & ex) {
-      // The archive queue seems to not be there. Make sure this is the case:
+      // The retrieve queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
         // Let the exception pass through.
@@ -305,8 +307,14 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
 }
 
 
-std::string RootEntry::getRetrieveQueue(const std::string& vid) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::string RootEntry::getRetrieveQueueAddress(const std::string& vid) {
+  checkPayloadReadable();
+  try {
+    auto & rqp = serializers::findElement(m_payload.retrievequeuepointers(), vid);
+    return rqp.address();
+  } catch (serializers::NotFound &) {
+    throw NoSuchRetrieveQueue("In RootEntry::getRetreveQueueAddress: retrieve queue not allocated");
+  }
 }
 
 void RootEntry::removeArchiveQueueIfAddressMatchesAndCommit(const std::string& tapePool, const std::string& archiveQueueAddress) {
@@ -337,7 +345,7 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
     return getDriveRegisterAddress();
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent.
-    std::string drAddress (agentRef.nextId("driveRegister"));
+    std::string drAddress (agentRef.nextId("DriveRegister"));
     agentRef.addToOwnership(drAddress, m_objectStore);
     // Then create the drive register object
     DriveRegister dr(drAddress, m_objectStore);
@@ -425,7 +433,7 @@ std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& age
       return m_payload.agentregisterpointer().address();
     }
     // decide on the object's name
-    std::string arAddress (agentRef.nextId("agentRegister"));
+    std::string arAddress (agentRef.nextId("AgentRegister"));
     // Record the agent registry in our own intent
     addIntendedAgentRegistry(arAddress);
     commit();
@@ -544,7 +552,7 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agen
     return getSchedulerGlobalLock();
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent.
-    std::string sglAddress (agentRef.nextId("schedulerGlobalLock"));
+    std::string sglAddress (agentRef.nextId("SchedulerGlobalLock"));
     agentRef.addToOwnership(sglAddress, m_objectStore);
     // Then create the drive register object
     SchedulerGlobalLock sgl(sglAddress, m_objectStore);

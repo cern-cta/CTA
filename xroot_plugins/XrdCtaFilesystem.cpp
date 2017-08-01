@@ -251,10 +251,7 @@ void XrdCtaFilesystem::EnvInfo(XrdOucEnv *envP)
 //------------------------------------------------------------------------------
 XrdCtaFilesystem::XrdCtaFilesystem():
   m_xrdOucBuffPool(1024, 65536), // XrdOucBuffPool(minsz, maxsz)
-  m_ctaConf("/etc/cta/cta-frontend.conf"),
-  m_backend(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)).release()),
-  m_backendPopulator(*m_backend, "Frontend"),
-  m_scheddb(*m_backend, m_backendPopulator.getAgentReference()) {
+  m_ctaConf("/etc/cta/cta-frontend.conf") {
   using namespace cta;
   
   // Try to instantiate the logging system API
@@ -273,11 +270,15 @@ XrdCtaFilesystem::XrdCtaFilesystem():
     throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
   }
   
+  m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
+  m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
+  
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
   const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
   const uint64_t nbArchiveFileListingConns = 2;
-  m_catalogue = catalogue::CatalogueFactory::create(catalogueLogin, nbConns, nbArchiveFileListingConns);
-  m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, m_scheddb, 5, 2*1000*1000);
+  m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
+  m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
+  m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
@@ -290,7 +291,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   log(log::INFO, std::string("cta-frontend started"), params);
   
   // Start the heartbeat thread for the agent object
-  m_agentHeartbeat = cta::make_unique<objectstore::AgentHeartbeatThread> (m_backendPopulator.getAgentReference(), *m_backend, *m_log);
+  m_agentHeartbeat = cta::make_unique<objectstore::AgentHeartbeatThread> (m_backendPopulator->getAgentReference(), *m_backend, *m_log);
   m_agentHeartbeat->startThread();
 }
 

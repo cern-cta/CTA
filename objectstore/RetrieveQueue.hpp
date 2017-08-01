@@ -32,17 +32,25 @@ class GenericObject;
 class RetrieveQueue: public ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t> {
 public:
   RetrieveQueue(const std::string & address, Backend & os);
+  // Undefined object constructor
+  RetrieveQueue(Backend & os);
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
   void commit();
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty();
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  void addJob(uint64_t copyNb,
+  void addJob(uint64_t copyNb, uint64_t fSeq,
+    const std::string & retrieveRequestAddress, uint64_t size,
+    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  /// This version will check for existence of the job in the queue before
+  // returns true if a new job was actually inserted.
+  bool addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
     const std::string & retrieveRequestAddress, uint64_t size,
     const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
   struct JobsSummary {
@@ -62,7 +70,7 @@ public:
   };
   std::list<JobDump> dumpJobs();
   
-  void removeJob(const std::string & retriveToFileAddress);
+  void removeJob(const std::string & retrieveToFileAddress);
   // -- Generic parameters
   std::string getVid();
 };

@@ -201,7 +201,7 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
   parent.m_lc.log(cta::log::ERR,m_failedRetrieveJob->failureMessage);
-  m_failedRetrieveJob->failed();
+  m_failedRetrieveJob->failed(parent.m_lc);
 }
 
 //------------------------------------------------------------------------------
@@ -286,12 +286,14 @@ void RecallReportPacker::WorkerThread::run(){
   // Cross check that the queue is indeed empty.
   while (m_parent.m_fifo.size()) {
     // There is at least one extra report we missed.
+    // The drive status reports are not a problem though.
     cta::log::ScopedParamContainer spc(m_parent.m_lc);
     std::unique_ptr<Report> missedReport(m_parent.m_fifo.pop());
     spc.add("ReportType", typeid(*missedReport).name());
     if (missedReport->goingToEnd())
       spc.add("goingToEnd", "true");
-    m_parent.m_lc.log(cta::log::ERR, "Popping missed report (memory leak)");
+    if (typeid(*missedReport) != typeid(RecallReportPacker::ReportDriveStatus))
+      m_parent.m_lc.log(cta::log::ERR, "Popping missed report (memory leak)");
   }
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallReportPacker thread");
 }

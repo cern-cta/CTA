@@ -16,7 +16,7 @@ yes | cp -r /opt/ci/ctafrontend/etc /
 
 echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
 echo "Catalogue NumberOfConnections 1" >>/etc/cta/cta-frontend.conf
-echo "Log URL file:/cta-frontend.log" >>/etc/cta/cta-frontend.conf
+echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 
 /opt/run/bin/init_database.sh
@@ -48,9 +48,9 @@ echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
 for ((;;)); do test -e /etc/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-touch /cta-frontend.log
-chmod a+w /cta-frontend.log
-tail -F /cta-frontend.log &
+touch /var/log/cta/cta-frontend.log
+chmod a+w /var/log/cta/cta-frontend.log
+tail -F /var/log/cta/cta-frontend.log &
 
 echo "Launching frontend"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta

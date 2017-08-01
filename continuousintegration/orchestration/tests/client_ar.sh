@@ -1,7 +1,7 @@
 #!/bin/bash
 
 EOSINSTANCE=ctaeos
-EOS_DIR=/eos/ctaeos/cta/$(uuidgen)
+EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 
 NB_PROCS=1
@@ -11,14 +11,26 @@ VERBOSE=0
 TAILPID=''
 
 
+die() {
+  echo "$@" 1>&2
+  exit 1
+}
+
+
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>]
 EOF
 exit 1
 }
 
-while getopts "n:s:p:v" o; do
+while getopts "d:e:n:s:p:v" o; do
     case "${o}" in
+        e)
+            EOSINSTANCE=${OPTARG}
+            ;;
+        d)
+            EOS_BASEDIR=${OPTARG}
+            ;;
         n)
             NB_FILES=${OPTARG}
             ;;
@@ -53,11 +65,11 @@ if [[ $VERBOSE == 1 ]]; then
   TAILPID=$!
 fi
 
-
+EOS_DIR="${EOS_BASEDIR}/$(uuidgen)"
 echo "Creating test dir in eos: ${EOS_DIR}"
 # uuid should be unique no need to remove dir before...
 # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR}
-eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}
+eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR} || die "Cannot create directory ${EOS_DIR} in eos instance ${EOSINSTANCE}." 
 
 echo -n "Copying files to ${EOS_DIR} using ${NB_PROCS} processes..."
 for ((i=0;i<${NB_FILES};i++)); do
@@ -70,7 +82,7 @@ eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" |
 
 echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   echo "Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -87,29 +99,24 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
 
   # Updating all files statuses
-  eos --batch root://${EOSINSTANCE} ${EOS_BATCHFILE} | egrep '^ *File|tape' | while read line; do
-    if echo $line | grep -q File; then
-      filename=$(basename $(echo $line | awk '{print $2}' | sed -e "s/'//g"))
-    elif echo $line | awk '{print $4}' | grep -q tape; then
-      # file is on tape
-      sed -i ${STATUS_FILE} -e "s/${filename} copied/${filename} archived/"
-    fi
-  done
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
 
 done
 
-ARCHIVED=$(grep -c archived$ ${STATUS_FILE})
+ARCHIVED=$(egrep -c 'archived$|tapeonly' ${STATUS_FILE})
 
 
 echo "###"
 echo "${ARCHIVED}/${NB_FILES} archived"
 echo "###"
 
-echo "Removing disk replica of all archived files"
+grep -q 'archived$' ${STATUS_FILE} && echo "Removing disk replica of $(grep -c 'archived$' ${STATUS_FILE}) archived files" || echo "$(grep -c 'tapeonly$' ${STATUS_FILE}) files are on tape with no disk replica"
 for TEST_FILE_NAME in $(grep archived$ ${STATUS_FILE} | sed -e 's/ .*$//'); do
     XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop ${EOS_DIR}/${TEST_FILE_NAME} 1 &> /dev/null || echo "Could not remove disk replica for ${EOS_DIR}/${TEST_FILE_NAME}"
-    test 1 = $(eos root://${EOSINSTANCE} info ${EOS_DIR}/${TEST_FILE_NAME} | grep -c nodrain) && sed -i ${STATUS_FILE} -e "s/${TEST_FILE_NAME} archived/${TEST_FILE_NAME} tapeonly/"
 done
+# Updating all files statuses
+eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
+
 
 TAPEONLY=$(grep -c tapeonly$ ${STATUS_FILE})
 
@@ -128,7 +135,7 @@ grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --m
 
 # Wait for the copy to appear on disk
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/20))
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
   echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -169,5 +176,7 @@ test -z $TAILPID || kill ${TAILPID}
 
 test ${RETRIEVED} = ${NB_FILES} && exit 0
 
-echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files."
+echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files:"
+grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;"
+
 exit 1

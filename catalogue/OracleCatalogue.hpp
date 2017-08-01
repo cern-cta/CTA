@@ -39,6 +39,7 @@ public:
   /**
    * Constructor.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param username The database username.
    * @param password The database password.
    * @param database The database name.
@@ -50,6 +51,7 @@ public:
    * listing archive files.
    */
   OracleCatalogue(
+    log::Logger       &log,
     const std::string &username,
     const std::string &password,
     const std::string &database,
@@ -69,15 +71,16 @@ public:
    * prevent a disk instance deleting an archive file that belongs to another
    * disk instance.
    *
-   * @param instanceName The name of the instance from where the deletion request originated
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
    * @param archiveFileId The unique identifier of the archive file.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
-   * @throw ArchiveFileDoesNotExistInCatalogue If the specified archive file
-   * does not exist in the catalogue.
    */
-  common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
-    const uint64_t archiveFileId) override;
+  void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within

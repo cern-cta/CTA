@@ -34,8 +34,8 @@ namespace cta {
       archiveFile.tapeFiles[1];
     } 
     
-    virtual void complete() { completes++;  }
-    virtual void failed() { failures++; };
+    virtual void complete() override { completes++;  }
+    virtual void failed(cta::log::LogContext &) override { failures++; };
     
     ~MockRetrieveJob() throw() {} 
   };

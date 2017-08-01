@@ -33,9 +33,13 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns,
+SqliteCatalogue::SqliteCatalogue(
+  log::Logger &log,
+  const std::string &filename,
+  const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
+    log,
     rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
     nbConns,
     nbArchiveFileListingConns) {
@@ -50,19 +54,17 @@ SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName,
-  const uint64_t archiveFileId) {
+void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
   try {
     auto conn = m_connPool.getConn();
     rdbms::AutoRollback autoRollback(conn);
     const auto archiveFile = getArchiveFile(conn, archiveFileId);
 
     if(nullptr == archiveFile.get()) {
-      ArchiveFileDoesNotExist e;
-      e.archiveFileId = archiveFileId;
-      e.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " from the catalogue because it"
-        " does not exist in the catalogue";
-      throw e;
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("fileId", std::to_string(archiveFileId)));
+      m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+      return;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {
@@ -90,7 +92,34 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
 
     conn.commit();
 
-    return *archiveFile;
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("fileId", std::to_string(archiveFile->archiveFileID)));
+    params.push_back(cta::log::Param("diskInstance", archiveFile->diskInstance));
+    params.push_back(cta::log::Param("diskFileId", archiveFile->diskFileId));
+    params.push_back(cta::log::Param("diskFileInfo.path", archiveFile->diskFileInfo.path));
+    params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile->diskFileInfo.owner));
+    params.push_back(cta::log::Param("diskFileInfo.group", archiveFile->diskFileInfo.group));
+    params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob));
+    params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile->fileSize)));
+    params.push_back(cta::log::Param("checksumType", archiveFile->checksumType));
+    params.push_back(cta::log::Param("checksumValue", archiveFile->checksumValue));
+    params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile->creationTime)));
+    params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile->reconciliationTime)));
+    params.push_back(cta::log::Param("storageClass", archiveFile->storageClass));
+    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+      std::stringstream tapeCopyLogStream;
+      tapeCopyLogStream << "copy number: " << it->first
+        << " vid: " << it->second.vid
+        << " fSeq: " << it->second.fSeq
+        << " blockId: " << it->second.blockId
+        << " creationTime: " << it->second.creationTime
+        << " compressedSize: " << it->second.compressedSize
+        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
+    }
+    m_log(log::INFO, "Archive File Deleted", params);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -259,7 +288,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       checkTapeFileWrittenFieldsAreSet(firstEvent);
 
       if(event.vid != firstEvent.vid) {
-        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=event.vid");
+        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
 
       if(expectedFSeq != event.fSeq) {

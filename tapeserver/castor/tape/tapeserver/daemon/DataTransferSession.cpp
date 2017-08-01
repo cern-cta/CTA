@@ -133,7 +133,8 @@ schedule:
   } catch (cta::exception::Exception & e) {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());
-    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down.");
+    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
+    lc.logBacktrace(cta::log::ERR, e.backtrace());
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
     cta::common::dataStructures::SecurityIdentity cliId;
     m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false);
