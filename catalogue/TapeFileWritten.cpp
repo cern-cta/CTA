@@ -61,7 +61,7 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
 // operator<
 //------------------------------------------------------------------------------
 bool TapeFileWritten::operator<(const TapeFileWritten &rhs) const {
-  return archiveFileId < rhs.archiveFileId;
+  return fSeq < rhs.fSeq;
 }
 
 //------------------------------------------------------------------------------
