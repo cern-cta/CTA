@@ -101,7 +101,6 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       // We also need to make sure the lock on the queue is released (it is in
       // an object and hence not scoped).
       if (archiveQueueLock.isLocked()) archiveQueueLock.release();
-      archiveQueue.resetAddress();
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
             .add("exceptionMessage", ex.getMessageValue())
@@ -115,6 +114,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
             .add("queueLockTime", queueLockTime)
             .add("queueFetchTime", queueFetchTime);
       lc.log(log::ERR, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
+      archiveQueue.resetAddress();
       continue;
     } catch (...) {
       // Also release the lock if needed here.
