@@ -130,16 +130,6 @@ void cta::objectstore::ArchiveRequest::setAllJobsFailed() {
   }
 }
 
-void cta::objectstore::ArchiveRequest::setAllJobsPendingNSdeletion() {
-  checkPayloadWritable();
-  auto * jl=m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    j->set_status(serializers::AJS_PendingNsDeletion);
-  }
-}
-
-
-
 void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile) {
   checkPayloadWritable();
   // TODO: factor out the archivefile structure from the flat ArchiveRequest.
@@ -295,6 +285,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
   // of a selected job. The Request could also still being connected to tape
   // pools. In this case we will finish the connection to tape pools unconditionally.
   auto * jl = m_payload.mutable_jobs();
+  bool anythingGarbageCollected=false;
   for (auto j=jl->begin(); j!=jl->end(); j++) {
     auto owner=j->owner();
     auto status=j->status();
@@ -307,12 +298,15 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // (Re)connect the job to the tape pool and make it pending.
         // If we fail to reconnect, we have to fail the job and potentially
         // finish the request.
+      std::string queueObject="Not defined yet";
+      anythingGarbageCollected=true;
       try {
         // Get the queue where we should requeue the job. The queue might need to be
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock tpl;
         Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, tpl, agentReference, j->tapepool(), lc);
+        queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
@@ -323,65 +317,47 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
         commit();
+        log::ScopedParamContainer params(lc);
+        params.add("jobObject", getAddressIfSet())
+              .add("queueObject", queueObject)
+              .add("presumedOwner", presumedOwner)
+              .add("copyNb", j->copynb());
+        lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): requeued job.");
       } catch (...) {
+        // We could not requeue the job: fail it.
         j->set_status(serializers::AJS_Failed);
+        log::ScopedParamContainer params(lc);
+        params.add("jobObject", getAddressIfSet())
+              .add("queueObject", queueObject)
+              .add("presumedOwner", presumedOwner)
+              .add("copyNb", j->copynb());
+        // Log differently depending on the exception type.
+        try {
+          std::rethrow_exception(std::current_exception());
+        } catch (cta::exception::Exception &ex) {
+          params.add("exceptionMessage", ex.getMessageValue());
+        } catch (std::exception & ex) {
+          params.add("exceptionWhat", ex.what());
+        } catch (...) {
+          params.add("exceptionType", "unknown");
+        }        
         // This could be the end of the request, with various consequences.
         // This is handled here:
-        if (finishIfNecessary())
+        if (finishIfNecessary()) {
+          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence.");
           return;
+        } else {
+          commit();
+          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job and failed it.");
+        }
       }
-    } else if (status==serializers::AJS_PendingNsCreation) {
-      // If the job is pending NsCreation, we have to queue it in the tape pool's
-      // queue for files orphaned pending ns creation. Some user process will have
-      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
-      try {
-        ArchiveQueue aq(j->owner(), m_objectStore);
-        ScopedExclusiveLock tpl(aq);
-        aq.fetch();
-        ArchiveRequest::JobDump jd;
-        jd.copyNb = j->copynb();
-        jd.tapePool = j->tapepool();
-        jd.owner = j->owner();
-        if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(),
-          m_payload.archivefileid(), m_payload.filesize(), getMountPolicy()))
-          aq.commit();
-        j->set_owner(aq.getAddressIfSet());
-        commit();
-      } catch (...) {
-        j->set_status(serializers::AJS_Failed);
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary())
-          return;
-      }
-    } else if (status==serializers::AJS_PendingNsDeletion) {
-      // If the job is pending NsDeletion, we have to queue it in the tape pool's
-      // queue for files orphaned pending ns deletion. Some user process will have
-      // to pick them up actively (recovery involves schedulerDB + NameServerDB)
-      try {
-        ArchiveQueue aq(j->owner(), m_objectStore);
-        ScopedExclusiveLock tpl(aq);
-        aq.fetch();
-        ArchiveRequest::JobDump jd;
-        jd.copyNb = j->copynb();
-        jd.tapePool = j->tapepool();
-        jd.owner = j->owner();
-        if (aq.addOrphanedJobPendingNsCreation(jd, getAddressIfSet(), 
-          m_payload.archivefileid(), m_payload.filesize(), getMountPolicy()))
-          aq.commit();
-        j->set_owner(aq.getAddressIfSet());
-        j->set_status(serializers::AJS_PendingMount);
-        commit();
-      } catch (...) {
-        j->set_status(serializers::AJS_Failed);
-        // This could be the end of the request, with various consequences.
-        // This is handled here:
-        if (finishIfNecessary())
-          return;
-      }
-    } else {
-      return;
     }
+  }
+  if (!anythingGarbageCollected) {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("presumedOwner", presumedOwner);
+    lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): nothing to garbage collect.");
   }
 }
 

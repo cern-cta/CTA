@@ -225,7 +225,6 @@ public:
     bool m_closed;
     friend class OStoreDB;
   };
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override;
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override;
   

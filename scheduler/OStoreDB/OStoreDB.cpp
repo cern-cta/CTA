@@ -571,65 +571,6 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::markArchiveRequestForDeletion()
-//------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation>
-  OStoreDB::markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity& requester,
-  uint64_t fileId) {
-  assertAgentAddressSet();
-  // Construct the return value immediately
-  std::unique_ptr<cta::OStoreDB::ArchiveToFileRequestCancelation>
-    internalRet(new cta::OStoreDB::ArchiveToFileRequestCancelation(*m_agentReference, m_objectStore, m_catalogue, m_logger));
-  cta::objectstore::ArchiveRequest & ar = internalRet->m_request;
-  cta::objectstore::ScopedExclusiveLock & atfrl = internalRet->m_lock;
-  // Attempt to find the request
-  objectstore::RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
-  auto tpl=re.dumpArchiveQueues();
-  rel.release();
-  for (auto tpp=tpl.begin(); tpp!=tpl.end(); tpp++) {
-    try {
-      objectstore::ArchiveQueue aq(tpp->address, m_objectStore);
-      ScopedSharedLock tpl(aq);
-      aq.fetch();
-      auto arl = aq.dumpJobs();
-      tpl.release();
-      for (auto arp=arl.begin(); arp!=arl.end(); arp++) {
-        objectstore::ArchiveRequest tar(arp->address, m_objectStore);
-        objectstore::ScopedSharedLock tatfrl(tar);
-        tar.fetch();
-        if (tar.getArchiveFile().archiveFileID == fileId) {
-          // Point the agent to the request
-          m_agentReference->addToOwnership(arp->address, m_objectStore);
-          // Mark all jobs are being pending NS deletion (for being deleted them selves) 
-          tatfrl.release();
-          ar.setAddress(arp->address);
-          atfrl.lock(ar);
-          ar.fetch();
-          ar.setAllJobsPendingNSdeletion();
-          ar.commit();
-          // Unlink the jobs from the tape pools (it is safely referenced in the agent)
-          auto arJobs=ar.dumpJobs();
-          for (auto atpp=arJobs.begin(); atpp!=arJobs.end(); atpp++) {
-            objectstore::ArchiveQueue aqp(atpp->owner, m_objectStore);
-            objectstore::ScopedExclusiveLock atpl(aqp);
-            aqp.fetch();
-            aqp.removeJob(arp->address);
-            aqp.commit();
-          }
-          // Return the object to the caller, so complete() can be called later.
-          std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> ret;
-          ret.reset(internalRet.release());
-          return ret;
-        }
-      }
-    } catch (...) {}
-  }
-  throw NoSuchArchiveRequest("In OStoreDB::markArchiveRequestForDeletion: ArchiveToFileRequest no found");
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::ArchiveToFileRequestCancelation::complete()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveToFileRequestCancelation::complete() {
@@ -2267,7 +2208,11 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
     atfrl.release();
     // Remove ownership from agent
+    log::ScopedParamContainer params(lc);
+    params.add("agentObject", m_agentReference.getAgentAddress())
+          .add("jobObject", m_archiveRequest.getAddressIfSet());
     m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
+    lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): removed job from ownership after garbage collection.");
   }
 }
 

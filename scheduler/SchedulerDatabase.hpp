@@ -150,17 +150,6 @@ public:
     virtual void complete() = 0;
     virtual ~ArchiveToFileRequestCancelation() {};
   };
-  /**
-   * Marks the specified archive request for deletion.  The request can only be
-   * fully deleted once the corresponding entry has been deleted from the
-   * archive namespace.
-   *
-   * @param requester The identity of the requester.
-   * @param fileId Id of the destination file within the archive catalogue.
-   */
-  virtual std::unique_ptr<ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(
-    const common::dataStructures::SecurityIdentity &cliIdentity,
-    uint64_t fileId) = 0;
 
   /*============ Archive management: tape server side =======================*/
   /**
