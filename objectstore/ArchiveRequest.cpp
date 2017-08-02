@@ -344,7 +344,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // This could be the end of the request, with various consequences.
         // This is handled here:
         if (finishIfNecessary()) {
-          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence.");
+          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence. Backtrace follows.");
+          lc.logBacktrace(log::ERR, "In ArchiveRequest::garbageCollect(): ");
           return;
         } else {
           commit();
