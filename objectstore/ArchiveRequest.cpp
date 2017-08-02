@@ -332,10 +332,12 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
               .add("presumedOwner", presumedOwner)
               .add("copyNb", j->copynb());
         // Log differently depending on the exception type.
+        std::string backtrace = "";
         try {
           std::rethrow_exception(std::current_exception());
         } catch (cta::exception::Exception &ex) {
           params.add("exceptionMessage", ex.getMessageValue());
+          backtrace = ex.backtrace();
         } catch (std::exception & ex) {
           params.add("exceptionWhat", ex.what());
         } catch (...) {
@@ -344,8 +346,10 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // This could be the end of the request, with various consequences.
         // This is handled here:
         if (finishIfNecessary()) {
-          lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence. Backtrace follows.");
-          lc.logBacktrace(log::ERR, "In ArchiveRequest::garbageCollect(): ");
+          std::string message="In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence.";
+          if (backtrace.size()) message += " Backtrace follows.";
+          lc.log(log::ERR, message);
+          if (backtrace.size()) lc.logBacktrace(log::ERR, backtrace);
           return;
         } else {
           commit();
