@@ -52,6 +52,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
   CTA_GENERATE_EXCEPTION_CLASS(InvalidAddress);
   CTA_GENERATE_EXCEPTION_CLASS(FailedToSerialize);
+  CTA_GENERATE_EXCEPTION_CLASS(StillLocked);
 protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 
@@ -91,11 +92,22 @@ public:
   
   void setAddress(const std::string & name) {
     if (m_nameSet)
-      throw AddressAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
+      throw AddressAlreadySet("In ObjectOps::setAddress(): trying to overwrite an already set name");
     if (name.empty())
-      throw InvalidAddress("In ObjectOps::setName: empty name");
+      throw InvalidAddress("In ObjectOps::setAddress(): empty name");
     m_name = name;
     m_nameSet = true;
+  }
+  
+  void resetAddress() {
+    if (m_locksCount || m_locksForWriteCount) {
+      throw StillLocked("In ObjectOps::resetAddress: reset the address of a locked object");
+    }
+    m_nameSet = false;
+    m_name = "";
+    m_headerInterpreted = false;
+    m_payloadInterpreted = false;
+    m_existingObject = false;
   }
   
   std::string & getAddressIfSet() {
