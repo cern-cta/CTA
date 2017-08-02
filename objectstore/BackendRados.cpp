@@ -338,12 +338,17 @@ void BackendRados::AsyncUpdater::statCallback(librados::completion_t completion,
           std::string("In BackendRados::AsyncUpdater::statCallback(): could not stat object: ") + au.m_name);
       throw Backend::NoSuchObject(errnum.getMessageValue());
     }
-    // Check the size. If zero, we locked an empty object: delete and throw an exception.
+    // Check the size. If zero, we locked an empty object: delete and throw an exception in the deleteCallback
     if (!au.m_size) {
-      // TODO. This is going to lock the callback thread of the rados context for a while.
-      // As this is not supposde to happen often, this is acceptable.
-      au.m_backend.remove(au.m_name);
-      throw Backend::NoSuchObject(std::string("In BackendRados::AsyncUpdater::statCallback(): no such object: ") + au.m_name);
+      // launch the delete operation (async).
+      librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteEmptyCallback, nullptr);
+      auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
+      aioc->release();
+      if (rc) {
+        cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+au.m_name);
+        throw Backend::CouldNotDelete(errnum.getMessageValue());
+      }
+      return;
     }
     // Stat is done, we can launch the read operation (async).
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, fetchCallback, nullptr);
@@ -353,6 +358,23 @@ void BackendRados::AsyncUpdater::statCallback(librados::completion_t completion,
       cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+au.m_name);
       throw Backend::NoSuchObject(errnum.getMessageValue());
     }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncUpdater::deleteEmptyCallback(librados::completion_t completion, void* pThis) {
+  AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  try {
+    // Check that the object could be deleted.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncUpdater::deleteEmptyCallback(): could not delete object: ") + au.m_name);
+      throw Backend::CouldNotDelete(errnum.getMessageValue());
+    }
+    // object deleted then throw an exception
+    throw Backend::NoSuchObject(std::string("In BackendRados::AsyncUpdater::deleteEmptyCallback(): no such object: ") + au.m_name);
   } catch (...) {
     ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
@@ -483,6 +505,153 @@ void BackendRados::AsyncUpdater::wait() {
   ANNOTATE_HAPPENS_AFTER(&m_job);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
+
+
+Backend::AsyncDeleter* BackendRados::asyncDelete(const std::string & name)
+{
+  return new AsyncDeleter(*this, name);
+}
+
+BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& name):
+  m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
+  // At construction time, we just fire a lock.
+  try {
+    // Rados does not have aio_lock, so we do it in an async.
+    // Operation is lock (synchronous), and then launch an async stat, then read.
+    // The async function never fails, exceptions go to the promise (as everywhere).
+    m_lockAsync.reset(new std::future<void>(std::async(std::launch::async,
+        [this](){
+          try {
+            m_lockClient = BackendRados::createUniqueClientId();
+            struct timeval tv;
+            tv.tv_usec = 0;
+            tv.tv_sec = 60;
+            int rc;
+            // TODO: could be improved (but need aio_lock in rados, not available at the time
+            // of writing).
+            // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
+            // by the number of tries (and capped by a maximum). Then the value will be randomized 
+            // (betweend and 50-150%)
+            size_t backoff=1;
+            utils::Timer t;
+            while (true) {
+              rc = m_backend.m_radosCtx.lock_exclusive(m_name, "lock", m_lockClient, "", &tv, 0);
+              if (-EBUSY != rc) break;
+              timespec ts;
+              auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
+              wait = std::min(wait, c_maxWait);
+              if (backoff>c_maxBackoff) backoff=1;
+              // We need to get a random number [50, 150]
+              std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
+              std::uniform_int_distribution<size_t> distribution(50, 150);
+              decltype(wait) randFactor=distribution(dre);
+              wait=(wait * randFactor)/100;
+              ts.tv_sec = wait/(1000*1000);
+              ts.tv_nsec = (wait % (1000*1000)) * 1000;
+              nanosleep(&ts, nullptr);
+            }
+            if (rc) {
+              cta::exception::Errnum errnum(-rc,
+                std::string("In BackendRados::AsyncDeleter::statCallback::lock_lambda(): failed to librados::IoCtx::lock_exclusive: ") +
+                m_name + "/" + "lock" + "/" + m_lockClient + "//");
+              throw CouldNotLock(errnum.getMessageValue());
+            }
+            // Locking is done, we can launch the stat operation (async).
+            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
+            rc=m_backend.m_radosCtx.aio_stat(m_name, aioc, &m_size, &date);
+            aioc->release();
+            if (rc) {
+              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::AsyncDeleter::lock_lambda(): failed to launch aio_stat(): ")+m_name);
+              throw Backend::NoSuchObject(errnum.getMessageValue());
+            }
+          } catch (...) {
+            ANNOTATE_HAPPENS_BEFORE(&m_job);
+            m_job.set_exception(std::current_exception());
+          }
+        }
+        )));
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&m_job);
+    m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncDeleter::statCallback(librados::completion_t completion, void* pThis) {
+  AsyncDeleter & au = *((AsyncDeleter *) pThis);
+  try {
+    // Get the object size (it's already locked).
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncDeleter::statCallback(): could not stat object: ") + au.m_name);
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+    // Check the size. If zero, we locked an empty object: delete and throw an exception.
+    if (!au.m_size) {
+      // launch the delete operation (async).
+      librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteEmptyCallback, nullptr);
+      auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
+      aioc->release();
+      if (rc) {
+        cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::statCallback():"
+          " failed to launch aio_remove() for zero size object: ")+au.m_name);
+        throw Backend::CouldNotDelete(errnum.getMessageValue());
+      }
+      return;
+    }
+    // Stat is done, we can launch the delete operation (async).
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteCallback, nullptr);
+    auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+au.m_name);
+      throw Backend::CouldNotDelete(errnum.getMessageValue());
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncDeleter::deleteCallback(librados::completion_t completion, void* pThis) {
+  AsyncDeleter & au = *((AsyncDeleter *) pThis);
+  try {
+    // Check that the object could be deleted.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncDeleter::deleteCallback(): could not delete object: ") + au.m_name);
+      throw Backend::CouldNotDelete(errnum.getMessageValue());
+    }
+    // Done!
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_value();
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncDeleter::deleteEmptyCallback(librados::completion_t completion, void* pThis) {
+  AsyncDeleter & au = *((AsyncDeleter *) pThis);
+  try {
+    // Check that the object could be deleted.
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncDeleter::deleteEmptyCallback(): could not delete object: ") + au.m_name);
+      throw Backend::CouldNotDelete(errnum.getMessageValue());
+    }
+    // object deleted then throw an exception
+    throw Backend::NoSuchObject(std::string("In BackendRados::AsyncDeleter::deleteEmptyCallback(): no such object: ") + au.m_name);
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncDeleter::wait() {
+  m_jobFuture.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+} 
 
 std::string BackendRados::Parameters::toStr() {
   std::stringstream ret;

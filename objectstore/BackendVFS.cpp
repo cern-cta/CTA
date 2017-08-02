@@ -377,6 +377,46 @@ void BackendVFS::AsyncUpdater::wait() {
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
+BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name):
+  m_backend(be), m_name(name),
+  m_job(std::async(std::launch::async, 
+    [&](){
+      std::unique_ptr<ScopedLock> sl;
+      try { // locking already throws proper exceptions for no such file.
+        sl.reset(m_backend.lockExclusive(m_name));
+      } catch (Backend::NoSuchObject &) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw;
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotLock(ex.getMessageValue());
+      }
+      try {
+        m_backend.remove(m_name);
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotDelete(ex.getMessageValue());
+      }
+      try {
+        sl->release();
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotUnlock(ex.getMessageValue());
+      }
+      ANNOTATE_HAPPENS_BEFORE(&m_job);
+    })) 
+{}
+
+Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string & name) {
+  // Create the object. Done.
+  return new AsyncDeleter(*this, name);
+}
+
+void BackendVFS::AsyncDeleter::wait() {
+  m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
 
 std::string BackendVFS::Parameters::toStr() {
   std::stringstream ret;

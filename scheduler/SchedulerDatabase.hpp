@@ -336,7 +336,8 @@ public:
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
     cta::common::dataStructures::ArchiveFile archiveFile;
     uint64_t selectedCopyNb;
-    virtual void succeed() = 0;
+    virtual void asyncSucceed() = 0;
+    virtual void checkSucceed() = 0;
     virtual void fail(log::LogContext &) = 0;
     virtual ~RetrieveJob() {}
   };

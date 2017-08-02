@@ -521,7 +521,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
-    retrieveJob->complete();
+    retrieveJob->asyncComplete();
+    retrieveJob->checkComplete();
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }

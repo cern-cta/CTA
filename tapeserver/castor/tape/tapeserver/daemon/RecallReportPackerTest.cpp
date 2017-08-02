@@ -51,11 +51,12 @@ protected:
   public:
     MockRetrieveJobExternalStats(cta::RetrieveMount & rm, int & completes, int &failures):
     MockRetrieveJob(rm), completesRef(completes), failuresRef(failures) {}
-    
-    virtual void complete() override {
+
+    virtual void asyncComplete() override {
       completesRef++;
     }
     
+    virtual void checkComplete() override {}
     
     virtual void failed(cta::log::LogContext &) override {
       failuresRef++;

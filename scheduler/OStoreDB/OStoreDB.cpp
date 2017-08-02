@@ -2594,24 +2594,26 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::succeed()
+// OStoreDB::RetrieveJob::asyncSucceed()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::succeed() {
-  // Lock the request and set the request as successful (delete it).
-  utils::Timer t;
-  objectstore::ScopedExclusiveLock rtfrl(m_retrieveRequest);
-  m_retrieveRequest.fetch();
-  std::string rtfrAddress = m_retrieveRequest.getAddressIfSet();
-  m_retrieveRequest.remove();
+void OStoreDB::RetrieveJob::asyncSucceed() {
+  // set the request as successful (delete it).
+  m_jobDelete.reset(m_retrieveRequest.asyncDeleteJob());
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::checkSucceed()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::checkSucceed() {
+  m_jobDelete->wait();
+  m_retrieveRequest.resetValues();
+  // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Remove ownership form the agent
+  const std::string rtfrAddress = m_retrieveRequest.getAddressIfSet();
   m_agentReference.removeFromOwnership(rtfrAddress, m_objectStore);
-  log::LogContext lc(m_logger);
-  log::ScopedParamContainer params(lc);
-  params.add("requestObject", rtfrAddress)
-        .add("schedulerDbTime", t.secs());
-  lc.log(log::INFO, "In RetrieveJob::succeed(): deleted completed retrieve request.");
 }
+
 
 
 } // namespace cta

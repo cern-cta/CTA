@@ -120,6 +120,8 @@ public:
     std::unique_ptr<std::future<void>> m_updateAsync;
     /** The first callback operation (after checking existence) */
     static void statCallback(librados::completion_t completion, void *pThis);
+    /** Async delete in case of zero sized object */
+    static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
     /** The second callback operation (after reading) */
     static void fetchCallback(librados::completion_t completion, void *pThis);
     /** The third callback operation (after writing) */
@@ -130,6 +132,45 @@ public:
   
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
 
+  /**
+   * A class following up the check existence-lock-delete. 
+   * Constructor implicitly starts the lock step.
+   */
+  class AsyncDeleter: public Backend::AsyncDeleter {
+  public:
+    AsyncDeleter(BackendRados & be, const std::string & name);
+    void wait() override;
+  private:
+    /** A reference to the backend */
+    BackendRados &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** Storage for stat operation (size) */
+    uint64_t m_size;
+    /** Storage for stat operation (date) */
+    time_t date;
+    /** The promise that will both do the job and allow synchronization with the caller. */
+    std::promise<void> m_job;
+    /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
+    std::future<void> m_jobFuture;
+    /** A future used to hold the structure of the lock operation. It will be either empty of complete at 
+     destruction time */
+    std::unique_ptr<std::future<void>> m_lockAsync;
+    /** A string used to identify the locker */
+    std::string m_lockClient;
+    /** A future the hole the the structure of the update operation. It will be either empty of complete at 
+     destruction time */
+    std::unique_ptr<std::future<void>> m_updateAsync;
+    /** The first callback operation (after checking existence) */
+    static void statCallback(librados::completion_t completion, void *pThis);
+    /** The second callback operation (after deleting) */
+    static void deleteCallback(librados::completion_t completion, void *pThis);
+    /** Async delete in case of zero sized object */
+    static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
+  };
+  
+  Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
+  
   class Parameters: public Backend::Parameters {
     friend class BackendRados;
   public:

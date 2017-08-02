@@ -188,7 +188,8 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void succeed() override;
+    virtual void asyncSucceed() override;
+    virtual void checkSucceed() override;
     virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
@@ -202,6 +203,7 @@ public:
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount & m_retrieveMount;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
   
   /* === Archive requests handling  ========================================= */
