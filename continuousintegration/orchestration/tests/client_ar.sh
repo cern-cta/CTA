@@ -80,9 +80,6 @@ echo Done.
 
 eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" | sed -e 's/$/ copied/' > ${STATUS_FILE}
 
-echo status before
-head ${STATUS_FILE}
-
 echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
@@ -102,10 +99,7 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
 
   # Updating all files statuses
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | head
   eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | sed -e 's/^\(d.::t.\).*\(test[0-9]\+\)$/\2 \1/;s/d[^0]::t[^0]/archived/;s/d[^0]::t0/copied/;s/d0::t0/error/;s/d0::t[^0]/tapeonly/' > ${STATUS_FILE}
-  echo status in loop
-  head ${STATUS_FILE}
 
 done
 
