@@ -114,15 +114,18 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
             .add("queueLockTime", queueLockTime)
             .add("queueFetchTime", queueFetchTime);
       lc.log(log::ERR, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
+      archiveQueue.resetAddress();
       continue;
     } catch (...) {
       // Also release the lock if needed here.
       if (archiveQueueLock.isLocked()) archiveQueueLock.release();
+      archiveQueue.resetAddress();
       throw;
     }
   }
   // Also release the lock if needed here.
   if (archiveQueueLock.isLocked()) archiveQueueLock.release();
+  archiveQueue.resetAddress();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
       + tapePool);

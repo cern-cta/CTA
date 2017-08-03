@@ -206,10 +206,8 @@ message ArchiveFile {
 // This life cycle represented by the following enum
 
 enum ArchiveJobStatus {
-  AJS_PendingNsCreation = 0;
   AJS_LinkingToArchiveQueue = 1;
   AJS_PendingMount = 2;
-  AJS_PendingNsDeletion = 99;
   AJS_Selected = 3;
   AJS_Complete = 4;
   AJS_Failed = 999;

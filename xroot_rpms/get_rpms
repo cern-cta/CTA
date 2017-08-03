@@ -1,9 +1,24 @@
 #!/bin/sh
 
-id=$1
+# Ensure Docker is running
 
-sudo docker cp ${id}:xrootd/packaging/rhel/xrootd.spec.in .
+HAS_DOCKER=$(ps ax|grep dockerd-current|grep -v grep|wc -l)
+if [ $HAS_DOCKER -eq 0 ]
+then
+  echo -n Starting Docker...
+  sudo systemctl start docker
+  echo done.
+fi
+
+sudo docker build . -f ./Dockerfile -t buildxroot
+
+id=$(sudo docker create buildxroot bash)
+
+echo $id
+
 sudo docker cp ${id}:rpmbuild_xrootd/RPMS/noarch/ .
 sudo docker cp ${id}:rpmbuild_xrootd/RPMS/x86_64/ .
 
-#sudo docker rm -v ${id}
+# Clean up
+
+sudo docker rm -v ${id}

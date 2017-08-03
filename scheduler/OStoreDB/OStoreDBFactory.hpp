@@ -89,10 +89,6 @@ public:
     m_OStoreDB.deleteArchiveRequest(diskInstanceName, archiveFileId);
   }
 
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override {
-    return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, fileId);
-  }
-
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }

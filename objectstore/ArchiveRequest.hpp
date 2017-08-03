@@ -55,8 +55,6 @@ public:
   void setAllJobsLinkingToArchiveQueue();
   // Mark all the jobs as being deleted, in case of a cancellation
   void setAllJobsFailed();
-  // Mark all the jobs as pending deletion from NS.
-  void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);
