@@ -136,9 +136,9 @@ private:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
-   const int ExecuteTimeout = 15;    //< Maximum no. of seconds to wait before deleting myself
-                                     //< What is a sensible number? Does it need to be configurable?
-                                     //< In any case it should be <= timeout on the client side?
+   const int ExecuteTimeout = 600;    //< Maximum no. of seconds to wait before deleting myself
+                                      //< What is a sensible number? Does it need to be configurable?
+                                      //< In any case it should be <= timeout on the client side?
 
 #ifdef XRDSSI_DEBUG
    std::cout << "[DEBUG] RequestProc::Execute()" << std::endl;
