@@ -24,18 +24,24 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
 find_package(Protobuf3 REQUIRED)
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
+
+# XRootD OFS plugin for CTA Frontend
+
 add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
 target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
 set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-# XRootD SSI/CTA Frontend shared library
+# XRootD SSI plugin for CTA Frontend
+
 add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
+
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib ctaeosmessages ${PROTOBUF3_LIBRARIES} ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+INSTALL (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
 INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)

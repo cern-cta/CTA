@@ -113,6 +113,7 @@ The xroot plugin
 %files -n cta-cli
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta
+%attr(0755,root,root) %{_bindir}/eoscta_stub
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
 %else
@@ -158,6 +159,7 @@ The xroot plugin
 %attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
 %attr(0755,root,root) %{_libdir}/libXrdCtaOfs.so
+%attr(0755,root,root) %{_libdir}/libXrdSsiCta.so
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
 
@@ -174,6 +176,7 @@ The xroot plugin
 %files -n cta-cli
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta
+%attr(0755,root,root) %{_bindir}/eoscta_stub
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
 %package -n cta-lib
