@@ -46,6 +46,20 @@ int main(int argc, char ** argv) {
     } catch (std::bad_cast &){}
     std::cout /* << "Object store path: " << be->getParams()->toURL() 
         << " agent */<< "name=" << argv[2] << std::endl;
+    if (!be->exists(argv[2])) {
+      // Agent does not exist: remove from registry.
+      cta::objectstore::RootEntry re (*be);
+      cta::objectstore::ScopedSharedLock rel(re);
+      re.fetch();
+      cta::objectstore::AgentRegister ar(re.getAgentRegisterAddress(), *be);
+      rel.release();
+      cta::objectstore::ScopedExclusiveLock arl(ar);
+      ar.fetch();
+      ar.removeAgent(argv[2]);
+      ar.commit();
+      std::cout << "De-listed a non-existing agent." << std::endl;
+      exit (EXIT_SUCCESS);
+    }
     cta::objectstore::Agent ag(argv[2], *be);
     cta::objectstore::ScopedExclusiveLock agl(ag);
     try {
