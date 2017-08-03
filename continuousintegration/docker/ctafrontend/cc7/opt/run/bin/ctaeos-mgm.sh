@@ -31,7 +31,8 @@ eoshost=`hostname -f`
 
 EOS_INSTANCE=`hostname -s`
 TAPE_FS_ID=65535
-CTA_BIN=/usr/bin/cta
+#CTA_BIN=/usr/bin/cta
+CTA_BIN=/usr/bin/eoscta_stub
 CTA_KT=/etc/ctafrontend_SSS_c.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta

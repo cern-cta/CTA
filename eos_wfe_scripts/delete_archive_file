@@ -16,6 +16,9 @@ if test $# -ne 5; then
   exit ${EINVAL}
 fi
 
+#CTA_BIN=/usr/bin/cta
+CTA_BIN=/usr/bin/eoscta_stub
+
 WF_TAG="$1"
 RUSERNAME="$2"
 RGROUPNAME="$3"
@@ -31,7 +34,7 @@ if test UNDEF = ${ARCHIVE_FILE_ID}; then
   exit 0
 fi
 
-if RESULT=`2>&1 /usr/bin/cta deletearchive --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID}`; then
+if RESULT=`2>&1 ${CTA_BIN} deletearchive --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID}`; then
   echo "$LOG_DATE $LOG_SCRIPT_NAME deleted tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 else
