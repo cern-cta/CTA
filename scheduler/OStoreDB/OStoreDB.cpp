@@ -101,6 +101,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
             .add("tapepool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
+      continue;
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
@@ -135,7 +136,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       params.add("queueObject", rqp.address)
             .add("vid", rqp.vid)
             .add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an retrieve queue. Skipping it.");
+      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
+      continue;
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
