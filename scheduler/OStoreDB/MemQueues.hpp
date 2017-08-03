@@ -61,11 +61,23 @@ private:
 template <class Queue, class Request>
 SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
-  m_lock->release();
+  bool skipQueuesTrim=false;
+  if (m_lock.get() && m_lock->isLocked()) {
+    m_lock->release();
+  } else {
+    m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
+    skipQueuesTrim=true;
+  }
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // The next update of the queue can now proceed
-  ANNOTATE_HAPPENS_BEFORE(m_promiseForSuccessor.get());
-  m_promiseForSuccessor->set_value();
+  if (m_promiseForSuccessor.get()) {
+    ANNOTATE_HAPPENS_BEFORE(m_promiseForSuccessor.get());
+    m_promiseForSuccessor->set_value();
+  } else {
+    m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the promise was not present. Skipping value setting.");
+    skipQueuesTrim=true;
+  }
+  if (skipQueuesTrim) return;
   double successorUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // We can now cleanup the promise/future couple if they were not picked up to trim the maps.
   // A next thread finding them unlocked or absent will be equivalent.
