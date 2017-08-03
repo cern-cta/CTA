@@ -43,8 +43,10 @@ RUN yum install -y \
     # => need to set epel prio to 4: yum-config-manager --setopt="epel.priority=4"
     # or if taking the older version from eos, eos-citrine-depend must be enabled so that
     # the older version of xroot is installed by cta-cli and is not conflicting later when installing eos...
-    # Newer version of CTA requires xroot >= 4.4.1-1...
-    # therefore set epel priority to 4...
+    #
+    # The newest version of CTA with SSI requires xroot >= 20170801
+    # therefore delete epel priority and use our local repo
+
     # Create local repo for cta artifacts and to cache RPMs locally
     mkdir -p ${CTAREPODIR}/RPMS/x86_64 ${LOCALORCHESTRATIONDIR}
 
@@ -52,7 +54,7 @@ RUN yum install -y \
 ADD build_rpm/RPM ${CTAREPODIR}
 
 # Populate local repository and enable it
-RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
+RUN yum-config-manager --enable epel \
   && \
     yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 \
       eos-client \
