@@ -90,8 +90,18 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
-    objectstore::ScopedSharedLock aqlock(aqueue);
-    aqueue.fetch();
+    objectstore::ScopedSharedLock aqlock;
+    try {
+      aqlock.lock(aqueue);
+      aqueue.fetch();
+    } catch (cta::exception::Exception &ex) {
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params (lc);
+      params.add("queueObject", aqp.address)
+            .add("tapepool", aqp.tapePool)
+            .add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
+    }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
     if (aqueue.getJobsSummary().files) {
@@ -115,8 +125,18 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     RetrieveQueue rqueue(rqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) vid = rqp.vid;
-    ScopedSharedLock rqlock(rqueue);
-    rqueue.fetch();
+    ScopedSharedLock rqlock;
+    try {
+      rqlock.lock(rqueue);
+      rqueue.fetch();
+    } catch (cta::exception::Exception &ex) {
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params (lc);
+      params.add("queueObject", rqp.address)
+            .add("vid", rqp.vid)
+            .add("exceptionMessage", ex.getMessageValue());
+      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an retrieve queue. Skipping it.");
+    }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
     if (rqueue.getJobsSummary().files) {
@@ -1608,7 +1628,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         params.add("tapepool", mountInfo.tapePool)
               .add("queueObject", aq.getAddressIfSet());
         logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
-      } catch (RootEntry::ArchivelQueueNotEmpty & ex) {
+      } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
         // TODO: improve: if we fail here we could retry to fetch a job.
         log::ScopedParamContainer params(logContext);
         params.add("tapepool", mountInfo.tapePool)
