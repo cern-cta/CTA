@@ -33,22 +33,3 @@ INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
 INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
 
-set (OPAQUE_QUERY_CMD_SRC_FILES
-  CmdLineTool.cpp
-  OpaqueQueryCmd.cpp
-  OpaqueQueryCmdLineArgs.cpp
-  OpaqueQueryCmdMain.cpp)
-
-add_executable (cta-xrootd_plugins-opaque-query ${OPAQUE_QUERY_CMD_SRC_FILES})
-add_dependencies (cta-xrootd_plugins-opaque-query generate_notification.pb.h)
-target_link_libraries (cta-xrootd_plugins-opaque-query ctacommon)
-
-set (WRITE_NOTIFICATION_MSG_CMD_SRC_FILES
-  CmdLineTool.cpp
-  WriteNotificationMsgCmd.cpp
-  WriteNotificationMsgCmdLineArgs.cpp
-  WriteNotificationMsgCmdMain.cpp)
-
-add_executable (cta-xrootd_plugins-write-notification-msg ${WRITE_NOTIFICATION_MSG_CMD_SRC_FILES})
-add_dependencies (cta-xrootd_plugins-write-notification-msg generate_notification.pb.h)
-target_link_libraries (cta-xrootd_plugins-write-notification-msg ctacommon ctaeosmessages)
