@@ -254,7 +254,7 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
         std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::remove: ") +
         name + "//");
-    throw cta::exception::Errnum(ENOENT, std::string ("In BackendRados::lockShared(): trying to lock a non-existing object") + name);
+    throw cta::exception::Errnum(ENOENT, std::string ("In BackendRados::lockShared(): trying to lock a non-existing object: ") + name);
   }
   ret->set(name, client);
   return ret.release();
