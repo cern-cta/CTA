@@ -473,10 +473,13 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     } catch (std::out_of_range &) {
       existingMounts = 0;
     } 
+    uint32_t effectiveExistingMounts = 0;
+    if (m->type == common::dataStructures::MountType::Archive) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
-    if (m->bytesQueued / (1 + existingMounts) >= m_minBytesToWarrantAMount)
+    
+    if (m->bytesQueued / (1 + effectiveExistingMounts) >= m_minBytesToWarrantAMount)
       mountPassesACriteria = true;
-    if (m->filesQueued / (1 + existingMounts) >= m_minFilesToWarrantAMount)
+    if (m->filesQueued / (1 + effectiveExistingMounts) >= m_minFilesToWarrantAMount)
       mountPassesACriteria = true;
     if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
       mountPassesACriteria = true;
