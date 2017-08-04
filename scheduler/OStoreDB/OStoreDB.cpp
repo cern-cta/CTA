@@ -1838,7 +1838,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       log::ScopedParamContainer params(logContext);
       params.add("tapepool", mountInfo.tapePool)
             .add("files", nFiles)
-            .add("bytes", nBytes);
+            .add("bytes", nBytes)
+            .add("queueObject", aq.getAddressIfSet());
       logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
     }
     // We can construct the return value.
