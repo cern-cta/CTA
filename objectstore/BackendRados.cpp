@@ -161,7 +161,7 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
-  tv.tv_sec = 60;
+  tv.tv_sec = 240;
   int rc;
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
@@ -214,7 +214,7 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
-  tv.tv_sec = 60;
+  tv.tv_sec = 240;
   int rc;
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
@@ -278,7 +278,7 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
             m_lockClient = BackendRados::createUniqueClientId();
             struct timeval tv;
             tv.tv_usec = 0;
-            tv.tv_sec = 60;
+            tv.tv_sec = 240;
             int rc;
             // TODO: could be improved (but need aio_lock in rados, not available at the time
             // of writing).
