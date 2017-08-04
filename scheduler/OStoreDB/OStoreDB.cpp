@@ -1736,6 +1736,27 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
                   .add("queueObject", aq.getAddressIfSet())
                   .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
             logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): skipped job not owned or not present.");
+          } else if (typeid(e) == typeid(Backend::CouldNotUnlock)) {
+            // We failed to unlock the object. The request was successfully updated, so we do own it. This is a non-fatal
+            // situation, so we just issue a warning. Removing the request from our agent ownership would 
+            // orphan it.
+            log::ScopedParamContainer params(logContext);
+            int demangleStatus;
+            char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
+            params.add("tapepool", mountInfo.tapePool)
+                  .add("queueObject", aq.getAddressIfSet())
+                  .add("archiveRequest", (*j)->m_archiveRequest.getAddressIfSet());
+            if (!demangleStatus) {
+              params.add("exceptionType", exceptionTypeStr);
+            } else {
+              params.add("exceptionType", typeid(e).name());
+            }
+            free(exceptionTypeStr);
+            exceptionTypeStr = nullptr;
+            params.add("message", e.getMessageValue());
+            logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): Failed to unlock the request (lock expiration). Request remains selected.");
+            validatedJobs.emplace_back(std::move(*j));
+            jobsInThisRound++;
           } else {
             // This is not a success, yet we could not confirm the job status due to an unexpected error.
             // We leave the queue as is. We forget about owning this job. This is an error.
