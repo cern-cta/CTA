@@ -1825,8 +1825,8 @@ std::string XrdCtaFile::xCom_drive() {
       auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"drive", "host", "library", "request",
-          "status", "since", "desired", "vid", "tapepool", "files", "Mbytes",
+        std::vector<std::string> headers = {"drive", "host", "library", "desired", "request",
+          "status", "since", "vid", "tapepool", "files", "Mbytes",
           "speed", "session", "age"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
@@ -1838,6 +1838,7 @@ std::string XrdCtaFile::xCom_drive() {
           currentRow.push_back(ds.driveName);
           currentRow.push_back(ds.host);
           currentRow.push_back(ds.logicalLibrary);
+          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
           currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
           // print the time spent in the current state
@@ -1871,13 +1872,28 @@ std::string XrdCtaFile::xCom_drive() {
             currentRow.push_back("-");
             break;
           }
-          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
           currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
           currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
-          currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
-          currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/Mbytes));
-          currentRow.push_back(std::to_string((long double)ds.latestBandwidth/Mbytes));
-          currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+          switch (ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Transferring:
+              currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
+              currentRow.push_back(std::to_string((long double)ds.bytesTransferredInSession/Mbytes));
+              currentRow.push_back(std::to_string((long double)ds.latestBandwidth/Mbytes));
+              break;
+            default:
+              currentRow.push_back("-");
+              currentRow.push_back("-");
+              currentRow.push_back("-");
+          }
+          switch(ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Up:
+            case cta::common::dataStructures::DriveStatus::Down:
+            case cta::common::dataStructures::DriveStatus::Unknown:
+              currentRow.push_back("-");
+              break;
+            default:
+              currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+          }
           currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
         }

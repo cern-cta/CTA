@@ -25,7 +25,7 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
     case cta::common::dataStructures::DriveStatus::Down:
       return "Down";
     case cta::common::dataStructures::DriveStatus::Up:
-      return "Up";
+      return "Free";
     case cta::common::dataStructures::DriveStatus::Starting:
       return "Start";
     case cta::common::dataStructures::DriveStatus::Mounting:
