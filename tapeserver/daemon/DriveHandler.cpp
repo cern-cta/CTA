@@ -97,10 +97,11 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_heartbeatTim
 //------------------------------------------------------------------------------
 // The following structure represents the data movement timeouts for the session states involving
 // data movements and heartbeats.
-// TODO: decide on values
+// TODO: decide on values. TODO: bumped up to 15 minutes for the time being as the
+// efficient retrieve requests pop is not implemented yet.
 const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_dataMovementTimeouts = {
-  {SessionState::Running, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))},
-  {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))}
+  {SessionState::Running, std::chrono::duration_cast<Timeout>(std::chrono::minutes(15))},
+  {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(15))}
 };
 
 //------------------------------------------------------------------------------
