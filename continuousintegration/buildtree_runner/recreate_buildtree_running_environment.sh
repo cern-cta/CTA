@@ -8,9 +8,11 @@ echo Wiping mhvtl and kubernetes library info...
 systemctl stop mhvtl || true
 sleep 2
 rm -rf /etc/mhvtl
+umount /opt/mhvtl || true
 rm -rf /opt/mhvtl
 rm -rf /opt/kubernetes/CTA/library
 mkdir -p /opt/mhvtl
+mount -t tmpfs -o size=512m tmpfs /opt/mhvtl
 
 ################################################################################
 ### puppet:///modules/hg_cta/00-cta-tape.rules
