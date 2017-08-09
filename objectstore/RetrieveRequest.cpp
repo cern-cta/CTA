@@ -387,19 +387,9 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
             retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
             retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
-            retRef.m_archiveFile.archiveFileID = payload.archivefile().archivefileid();
-            retRef.m_archiveFile.checksumType = payload.archivefile().checksumtype();
-            retRef.m_archiveFile.checksumValue = payload.archivefile().checksumvalue();
-            retRef.m_archiveFile.creationTime = payload.archivefile().creationtime();
-            retRef.m_archiveFile.diskFileId = payload.archivefile().diskfileid();
-            retRef.m_archiveFile.diskFileInfo.group = payload.archivefile().diskfileinfo().group();
-            retRef.m_archiveFile.diskFileInfo.owner = payload.archivefile().diskfileinfo().owner();
-            retRef.m_archiveFile.diskFileInfo.path = payload.archivefile().diskfileinfo().path();
-            retRef.m_archiveFile.diskFileInfo.recoveryBlob = payload.archivefile().diskfileinfo().recoveryblob();
-            retRef.m_archiveFile.diskInstance = payload.archivefile().diskinstance();
-            retRef.m_archiveFile.fileSize = payload.archivefile().filesize();
-            retRef.m_archiveFile.reconciliationTime = payload.archivefile().reconciliationtime();
-            retRef.m_archiveFile.storageClass = payload.archivefile().storageclass();
+            objectstore::ArchiveFileSerDeser af;
+            af.deserialize(payload.archivefile());
+            retRef.m_archiveFile = af;
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
           }

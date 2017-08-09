@@ -99,6 +99,7 @@ void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::
   m_catalogue.filesWrittenToTape(tapeFilesWritten);
 }
 
+//------------------------------------------------------------------------------
 // getNextJobBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, 
