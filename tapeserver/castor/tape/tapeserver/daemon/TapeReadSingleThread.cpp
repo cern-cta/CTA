@@ -394,6 +394,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
                   /1000/1000/m_stats.totalTime:0.0)
           .add("driveTransferSpeedMBps", m_stats.totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
                   /1000/1000/m_stats.totalTime:0.0);
+    m_logContext.moveToTheEndIfPresent("status");
     m_logContext.log(level,msg);  
 }
 

@@ -764,6 +764,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       m_sessionEndContext.pushOrReplace({"status", "failure"});
     }
     // In all cases we log the end of the session.
+    m_sessionEndContext.moveToTheEndIfPresent("status");
     m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
     m_sessionEndContext.clear();
     // And record we do not have a process anymore.

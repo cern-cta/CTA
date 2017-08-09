@@ -59,6 +59,14 @@ public:
    * @param param
    */
   void pushOrReplace(const Param & param) throw();
+  
+  /**
+   * Move a parameter with a given name to the end of the container it it 
+   * present.
+   * 
+   * @param paramName  The name of the parameter to check and move.
+   */
+  void moveToTheEndIfPresent(const std::string &paramName) throw();
 
   /**
    * Removes a parameter from the list.
