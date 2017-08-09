@@ -337,6 +337,92 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
   throw exception::Exception(err.str());
 }
 
+auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
+  -> AsyncOwnerUpdater* {
+  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
+  ret->m_updaterCallback=
+      [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
+        // We have a locked and fetched object, so we just need to work on its representation.
+        serializers::ObjectHeader oh;
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
+        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+          std::stringstream err;
+          err << "In RetrieveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        // We don't need to deserialize the payload to update owner...
+        if (oh.owner() != previousOwner)
+          throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): Request not owned.");
+        oh.set_owner(owner);
+        // ... but we still need to extract information
+        serializers::RetrieveRequest payload;
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
+        // Find the copy number
+        auto jl=payload.jobs();
+        for (auto & j: jl) {
+          if (j.copynb() == copyNumber) {
+            // We also need to gather all the job content for the user to get in-memory
+            // representation.
+            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
+            // We could try and refactor this.
+            retRef.m_retieveRequest.archiveFileID = payload.archivefile().archivefileid();
+            objectstore::EntryLogSerDeser el;
+            el.deserialize(payload.schedulerrequest().entrylog());
+            retRef.m_retieveRequest.creationLog = el;
+            objectstore::DiskFileInfoSerDeser dfi;
+            dfi.deserialize(payload.schedulerrequest().diskfileinfo());
+            retRef.m_retieveRequest.diskFileInfo = dfi;
+            retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
+            retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
+            retRef.m_archiveFile.archiveFileID = payload.archivefile().archivefileid();
+            retRef.m_archiveFile.checksumType = payload.archivefile().checksumtype();
+            retRef.m_archiveFile.checksumValue = payload.archivefile().checksumvalue();
+            retRef.m_archiveFile.creationTime = payload.archivefile().creationtime();
+            retRef.m_archiveFile.diskFileId = payload.archivefile().diskfileid();
+            retRef.m_archiveFile.diskFileInfo.group = payload.archivefile().diskfileinfo().group();
+            retRef.m_archiveFile.diskFileInfo.owner = payload.archivefile().diskfileinfo().owner();
+            retRef.m_archiveFile.diskFileInfo.path = payload.archivefile().diskfileinfo().path();
+            retRef.m_archiveFile.diskFileInfo.recoveryBlob = payload.archivefile().diskfileinfo().recoveryblob();
+            retRef.m_archiveFile.diskInstance = payload.archivefile().diskinstance();
+            retRef.m_archiveFile.fileSize = payload.archivefile().filesize();
+            retRef.m_archiveFile.reconciliationTime = payload.archivefile().reconciliationtime();
+            retRef.m_archiveFile.storageClass = payload.archivefile().storageclass();
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        // If we do not find the copy, return not owned as well...
+        throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+      };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
+  }
+
+void RetrieveRequest::AsyncOwnerUpdater::wait() {
+  m_backendUpdater->wait();
+}
+
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
+  return m_archiveFile;
+}
+
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
+  return m_retieveRequest;
+}
+
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   checkPayloadWritable();
   m_payload.set_activecopynb(activeCopyNb);

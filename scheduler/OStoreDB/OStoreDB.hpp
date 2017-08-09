@@ -164,10 +164,11 @@ public:
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &);
+    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
     objectstore::Backend & m_objectStore;
-    objectstore::AgentReference & m_agentReference;
     catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
+    objectstore::AgentReference & m_agentReference;
   public:
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
@@ -187,12 +188,13 @@ public:
     virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &, 
-      objectstore::AgentReference &, RetrieveMount &);
+    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
+      log::Logger &, objectstore::AgentReference &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
     catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount & m_retrieveMount;
