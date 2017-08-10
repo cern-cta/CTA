@@ -94,7 +94,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 schedule:
   while (true) {
     try {
-      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName);
+      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
       if (!desiredState.up) {
         downUpTransition  = true;
         // We wait a bit before polling the scheduler again.

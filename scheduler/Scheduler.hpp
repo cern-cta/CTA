@@ -84,7 +84,7 @@ public:
    * Validates that the underlying storages are accessible
    * Lets the exception through in case of failure.
    */
-  void ping();
+  void ping(log::LogContext & lc);
 
   /** 
    * Queue an archive request and return the CTA file ID. 
@@ -112,7 +112,8 @@ public:
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
   void deleteArchive(const std::string &instanceName,
-    const cta::common::dataStructures::DeleteArchiveRequest &request);
+    const cta::common::dataStructures::DeleteArchiveRequest &request,
+    log::LogContext & lc);
   
   /** 
    * Cancel an ongoing retrieval.
@@ -201,7 +202,7 @@ public:
    * @param driveName
    * @return The structure representing the desired states
    */
-  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName);
+  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc);
   
   /**
    * Sets the desired drive state. This function is used by the front end to pass instructions to the 
@@ -254,7 +255,7 @@ public:
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
   /*============== Administrator management ==================================*/
-  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
 
 private:
 

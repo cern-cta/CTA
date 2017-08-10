@@ -920,7 +920,7 @@ int DriveHandler::runChild() {
   // Before launching the transfer session, we validate that the scheduler is reachable.
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
-    scheduler.ping();
+    scheduler.ping(lc);
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer param (m_processManager.logContext());
     param.add("errorMessage", ex.getMessageValue());

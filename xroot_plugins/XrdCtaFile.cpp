@@ -137,7 +137,8 @@ void XrdCtaFile::authorizeAdmin(){
   if(m_protocol!="krb5") {
     throw cta::exception::Exception(std::string("[ERROR] Admin commands are possible only through Kerberos 5 protocol authentication. Protocol used for this connection: ")+m_protocol);
   }
-  m_scheduler->authorizeAdmin(m_cliIdentity);
+  log::LogContext lc(m_log);
+  m_scheduler->authorizeAdmin(m_cliIdentity, lc);
 }
 
 //------------------------------------------------------------------------------
@@ -2213,12 +2214,10 @@ std::string XrdCtaFile::xCom_deletearchive() {
   cta::common::dataStructures::DeleteArchiveRequest request;
   request.archiveFileID=id.value();
   request.requester=originator;
-  cta::utils::Timer t;
-  m_scheduler->deleteArchive(m_cliIdentity.username, request);
   log::LogContext lc(m_log);
+  m_scheduler->deleteArchive(m_cliIdentity.username, request, lc);
   log::ScopedParamContainer params(lc);
-  params.add("fileId", request.archiveFileID)
-        .add("catalogueTime", t.secs());
+  params.add("fileId", request.archiveFileID);
   lc.log(log::INFO, "In XrdCtaFile::xCom_deletearchive(): deleted archive file.");
   return "";
 }
