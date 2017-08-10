@@ -2471,6 +2471,7 @@ bool OStoreDB::ArchiveJob::checkSucceed() {
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::~ArchiveJob() {
   if (m_jobOwned) {
+    utils::Timer t;
     log::LogContext lc(m_logger);
     // Return the job to the pot if we failed to handle it.
     objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
@@ -2482,6 +2483,7 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     params.add("agentObject", m_agentReference.getAgentAddress())
           .add("jobObject", m_archiveRequest.getAddressIfSet());
     m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
+    params.add("schedulerDbTime", t.secs());
     lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): removed job from ownership after garbage collection.");
   }
 }
@@ -2569,74 +2571,22 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
 // OStoreDB::RetrieveJob::~RetrieveJob()
 //------------------------------------------------------------------------------
 OStoreDB::RetrieveJob::~RetrieveJob() {
-//  if (m_jobOwned) {
-//    // Re-queue the job entirely if we failed to handle it.
-//    try {
-//      // We now need to select the tape from which we will migrate next. This should
-//      // be the tape with the most jobs already queued.
-//      // TODO: this will have to look at tape statuses on the long run as well
-//      uint16_t selectedCopyNumber;
-//      uint64_t bestTapeQueuedBytes;
-//      std::string selectedVid;
-//      std::string selectedTapeAddress;
-//      objectstore::ScopedExclusiveLock rtfrl(m_rtfr);
-//      m_rtfr.fetch();
-//      auto jl=m_rtfr.dumpJobs();
-//      {
-//        // First tape copy is always better than nothing. 
-//        auto tc=jl.begin();
-//        selectedCopyNumber = tc->copyNb;
-//        selectedVid = tc->tape;
-//        selectedTapeAddress = tc->tapeAddress;
-//        // Get info for the tape.
-//        {
-//          objectstore::Tape t(tc->tapeAddress, m_objectStore);
-//          objectstore::ScopedSharedLock tl(t);
-//          t.fetch();
-//          bestTapeQueuedBytes = t.getJobsSummary().bytes;
-//        }
-//        tc++;
-//        // Compare with the next ones
-//        for (;tc!=jl.end(); tc++) {
-//          objectstore::Tape t(tc->tapeAddress, m_objectStore);
-//          objectstore::ScopedSharedLock tl(t);
-//          t.fetch();
-//          if (t.getJobsSummary().bytes > bestTapeQueuedBytes) {
-//            bestTapeQueuedBytes = t.getJobsSummary().bytes;
-//            selectedCopyNumber = tc->copyNb;
-//            selectedVid = tc->tape;
-//            selectedTapeAddress = tc->tapeAddress;
-//          }
-//        }
-//      }
-//      // We now can enqueue the request on this most promising tape.
-//      {
-//        objectstore::Tape tp(selectedTapeAddress, m_objectStore);
-//        ScopedExclusiveLock tpl(tp);
-//        tp.fetch();
-//        objectstore::RetrieveToFileRequest::JobDump jd;
-//        jd.copyNb = selectedCopyNumber;
-//        jd.tape = selectedVid;
-//        jd.tapeAddress = selectedTapeAddress;
-//        tp.addJob(jd, m_rtfr.getAddressIfSet(), m_rtfr.getSize(), m_rtfr.getPriority(), m_rtfr.getEntryLog().time);
-//        tp.commit();
-//      }
-//      // The request is now fully set. It belongs to the tape.
-//      std::string previousOwner = m_rtfr.getOwner();
-//      m_rtfr.setOwner(selectedTapeAddress);
-//      m_rtfr.commit();
-//      // And remove reference from the agent (if it was owned by an agent)
-//      try {
-//        if (!previousOwner.size())
-//          return;
-//        objectstore::Agent agent(previousOwner, m_objectStore);
-//        objectstore::ScopedExclusiveLock al(agent);
-//        agent.fetch();
-//        agent.removeFromOwnership(m_rtfr.getAddressIfSet());
-//        agent.commit();
-//      } catch (...) {}
-//    } catch (...) {}
-//  }
+  if (m_jobOwned) {
+    utils::Timer t;
+    log::LogContext lc(m_logger);
+    // Return the job to the pot if we failed to handle it.
+    objectstore::ScopedExclusiveLock rr(m_retrieveRequest);
+    m_retrieveRequest.fetch();
+    m_retrieveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
+    rr.release();
+    // Remove ownership from agent
+    log::ScopedParamContainer params(lc);
+    params.add("agentObject", m_agentReference.getAgentAddress())
+          .add("jobObject", m_retrieveRequest.getAddressIfSet());
+    m_agentReference.removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_objectStore);
+    params.add("schdulerDbTime", t.secs());
+    lc.log(log::INFO, "In OStoreDB::RetrieveJob::~RetrieveJob(): removed job from ownership after garbage collection.");
+  }
 }
 
 //------------------------------------------------------------------------------
