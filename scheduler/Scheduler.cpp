@@ -481,7 +481,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       mountPassesACriteria = true;
     if (m->filesQueued / (1 + effectiveExistingMounts) >= m_minFilesToWarrantAMount)
       mountPassesACriteria = true;
-    if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
+    if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
