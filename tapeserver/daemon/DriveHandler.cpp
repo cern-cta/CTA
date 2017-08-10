@@ -862,6 +862,12 @@ int DriveHandler::runChild() {
   
   std::string hostname=cta::utils::getShortHostname();
   
+  auto &lc=m_processManager.logContext();
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("objectStoreURL", m_tapedConfig.objectStoreURL.value());
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
+  }
   // Before anything, we need to check we have access to the scheduler's central storages.
   std::unique_ptr<cta::objectstore::Backend> backend(
     cta::objectstore::BackendFactory::createBackend(m_tapedConfig.objectStoreURL.value()).release());
@@ -877,6 +883,9 @@ int DriveHandler::runChild() {
   try {
     std::string processName="DriveProcess-";
     processName+=m_configLine.unitName;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName);
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry.");
     backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, m_processManager.logContext()));
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(m_processManager.logContext());
@@ -888,9 +897,13 @@ int DriveHandler::runChild() {
   }
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   try {
+    log::ScopedParamContainer params(lc);
+    params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will get catalogue login information.");
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 0;
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to catalogue.");
     catalogue=cta::catalogue::CatalogueFactory::create(m_sessionEndContext.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
   } catch(cta::exception::Exception &ex) {
@@ -901,9 +914,11 @@ int DriveHandler::runChild() {
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
+  lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
   cta::Scheduler scheduler(*catalogue, *osdb, m_tapedConfig.mountCriteria.value().maxFiles,
       m_tapedConfig.mountCriteria.value().maxBytes);
   // Before launching the transfer session, we validate that the scheduler is reachable.
+  lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
     scheduler.ping();
   } catch (cta::exception::Exception &ex) {
@@ -914,6 +929,7 @@ int DriveHandler::runChild() {
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   
+  lc.log(log::DEBUG, "In DriveHandler::runChild(): will start agent heartbeat.");
   // The object store is accessible, let's turn the agent heartbeat on.
   objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, m_processManager.logContext().logger());
   agentHeartbeat.startThread();
@@ -943,7 +959,7 @@ int DriveHandler::runChild() {
     }
   }
 
-  // 2) In the previous session crashed, we might want to run a cleaner session, depending
+  // 2) If the previous session crashed, we might want to run a cleaner session, depending
   // on the previous state
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting, 
     SessionState::Running, SessionState::Unmounting };
