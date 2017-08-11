@@ -501,10 +501,12 @@ public:
    * @param instanceName The name of the instance from where the deletion request
    * originated
    * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId) = 0;
+  virtual void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+    log::LogContext &lc) = 0;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on

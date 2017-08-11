@@ -209,7 +209,7 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
   
   try {
     utils::Timer t;
-    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
     auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
     log::ScopedParamContainer spc(lc);
     spc.add("catalogueTime", catalogueTime);
