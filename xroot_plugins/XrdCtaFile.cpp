@@ -1787,6 +1787,7 @@ std::string XrdCtaFile::xCom_test() {
 // xCom_drive
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::xCom_drive() {
+  log::LogContext lc(m_log);
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
@@ -1833,7 +1834,7 @@ std::string XrdCtaFile::xCom_drive() {
       // We will dump all the drives, and select the one asked for if needed.
       bool singleDrive = (m_requestTokens.size() == 4);
       bool driveFound = false;
-      auto driveStates = m_scheduler->getDriveStates(m_cliIdentity);
+      auto driveStates = m_scheduler->getDriveStates(m_cliIdentity, lc);
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> headers = {"library", "drive", "host", "desired", "request",
@@ -2052,7 +2053,7 @@ std::string XrdCtaFile::xCom_listpendingretrieves() {
 }
 
 //------------------------------------------------------------------------------
-// xCom_listpendingretrieves
+// xCom_showqueues
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::xCom_showqueues() {
   std::stringstream cmdlineOutput;

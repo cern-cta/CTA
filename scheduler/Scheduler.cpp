@@ -410,8 +410,14 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_db.getDriveStates();
+std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
+  utils::Timer t;
+  auto ret = m_db.getDriveStates();
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getDriveStates(): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -667,10 +673,15 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   return std::unique_ptr<TapeMount>();
 }
 
+//------------------------------------------------------------------------------
+// getQueuesAndMountSummaries
+//------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   // Extract relevant information from the object store.
+  utils::Timer t;
   auto mountDecisionInfo=m_db.getMountInfoNoLock();
+  auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
@@ -752,6 +763,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
+  auto respondPreparationTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime)
+     .add("respondPreparationTime", respondPreparationTime);
+  lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;
 }
 

@@ -236,7 +236,7 @@ public:
    * @return A list of drive state structures.
    */
   std::list<cta::common::dataStructures::DriveState> getDriveStates(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
+    const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
 
   /*============== Actual mount scheduling and queue status reporting ========*/
   /**
