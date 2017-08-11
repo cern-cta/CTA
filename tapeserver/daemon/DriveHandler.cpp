@@ -886,11 +886,11 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry.");
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, m_processManager.logContext()));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, lc));
   } catch(cta::exception::Exception &ex) {
-    log::ScopedParamContainer param(m_processManager.logContext());
+    log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate agent entry. Reporting fatal error.");
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate agent entry. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -905,11 +905,11 @@ int DriveHandler::runChild() {
     const uint64_t nbArchiveFileListingConns = 0;
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to catalogue.");
     catalogue=cta::catalogue::CatalogueFactory::create(m_sessionEndContext.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, lc.logger()));
   } catch(cta::exception::Exception &ex) {
-    log::ScopedParamContainer param(m_processManager.logContext());
+    log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -922,23 +922,23 @@ int DriveHandler::runChild() {
   try {
     scheduler.ping(lc);
   } catch (cta::exception::Exception &ex) {
-    log::ScopedParamContainer param (m_processManager.logContext());
+    log::ScopedParamContainer param (lc);
     param.add("errorMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
+    lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
     driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will start agent heartbeat.");
   // The object store is accessible, let's turn the agent heartbeat on.
-  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, m_processManager.logContext().logger());
+  objectstore::AgentHeartbeatThread agentHeartbeat(backendPopulator->getAgentReference(), *backend, lc.logger());
   agentHeartbeat.startThread();
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
-    log::ScopedParamContainer params(m_processManager.logContext());
+    log::ScopedParamContainer params(lc);
     params.add("driveUnit", m_configLine.unitName);
-    m_processManager.logContext().log(log::ERR, "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.");
+    lc.log(log::ERR, "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.");
     // Get hold of the scheduler.
     try {
       cta::common::dataStructures::DriveInfo driveInfo;
@@ -947,12 +947,12 @@ int DriveHandler::runChild() {
       driveInfo.host=hostname;
       scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
-      scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false);
+      scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception &ex) {
-      log::ScopedParamContainer param(m_processManager.logContext());
+      log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
-      m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
+      lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
       driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       sleep(1);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -965,7 +965,7 @@ int DriveHandler::runChild() {
     SessionState::Running, SessionState::Unmounting };
   if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
     if (!m_previousVid.size()) {
-      m_processManager.logContext().log(log::ERR, "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.");
+      lc.log(log::ERR, "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.");
       try {
         cta::common::dataStructures::DriveInfo driveInfo;
         driveInfo.driveName=m_configLine.unitName;
@@ -973,12 +973,12 @@ int DriveHandler::runChild() {
         driveInfo.host=hostname;
         scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
-        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false);
+        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception &ex) {
-        log::ScopedParamContainer param(m_processManager.logContext());
+        log::ScopedParamContainer param(lc);
         param.add("errorMessage", ex.getMessageValue());
-        m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
+        lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         sleep(1);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -986,25 +986,25 @@ int DriveHandler::runChild() {
     }
     // Log the decision
     {
-      log::ScopedParamContainer params(m_processManager.logContext());
+      log::ScopedParamContainer params(lc);
       params.add("VID", m_previousVid)
             .add("driveUnit", m_configLine.unitName)
             .add("PreviousState", session::toString(m_sessionState))
             .add("PreviousType", session::toString(m_sessionType));
-      m_processManager.logContext().log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
+      lc.log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
     }
     // Capabilities management.
     cta::server::ProcessCap capUtils;
     
     // Mounting management.
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(lc.logger());
     
     castor::tape::System::realWrapper sWrapper;
     
     // TODO: the cleaner session does not yet report to the scheduler.
 //    // Before launching the transfer session, we validate that the scheduler is reachable.
 //    if (!scheduler.ping()) {
-//      m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before cleaner. Reporting fatal error.");
+//      lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before cleaner. Reporting fatal error.");
 //      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
 //      sleep(1);
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -1013,7 +1013,7 @@ int DriveHandler::runChild() {
     castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
       capUtils,
       mediaChangerFacade,
-      m_processManager.logContext().logger(),
+      lc.logger(),
       m_configLine,
       sWrapper,
       m_previousVid,
@@ -1027,7 +1027,7 @@ int DriveHandler::runChild() {
     cta::server::ProcessCap capUtils;
     
     // Mounting management.
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(lc.logger());
     
     castor::tape::System::realWrapper sWrapper;
     
@@ -1054,9 +1054,9 @@ int DriveHandler::runChild() {
     // put the drive down.
     if (m_previousSession == PreviousSession::Initiating) {
       // Log that we put the drive's desired state to down and do it.
-      log::ScopedParamContainer params(m_processManager.logContext());
+      log::ScopedParamContainer params(lc);
       params.add("Drive", m_configLine.unitName);
-      m_processManager.logContext().log(log::INFO, "Setting the drive down at daemon startup");
+      lc.log(log::INFO, "Setting the drive down at daemon startup");
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
@@ -1066,10 +1066,10 @@ int DriveHandler::runChild() {
         driveInfo.host=hostname;
         scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
-        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/);
+        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue());
-        m_processManager.logContext().log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
+        lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -1078,7 +1078,7 @@ int DriveHandler::runChild() {
   
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
-      m_processManager.logContext().logger(),
+      lc.logger(),
       sWrapper,
       m_configLine,
       mediaChangerFacade,

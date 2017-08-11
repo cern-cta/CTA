@@ -347,8 +347,8 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   auto driveStates = m_db.getDriveStates();
   for (auto & d: driveStates) {
     if (d.driveName == driveName) {
-      log::ScopedParamContainer spc(lc);
       auto schedulerDbTime = t.secs();
+      log::ScopedParamContainer spc(lc);
       spc.add("drive", driveName)
          .add("schedulerDbTime", schedulerDbTime);
       lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
@@ -361,11 +361,19 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
+void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force, log::LogContext & lc) {
+  utils::Timer t;
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = up;
   desiredDriveState.forceDown = force;
   m_db.setDesiredDriveState(driveName, desiredDriveState);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveName)
+     .add("up", up?"up":"down")
+     .add("force", force?"yes":"no")
+     .add("schedulerDbTime", schedulerDbTime);
+   lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");   
 }
 
 //------------------------------------------------------------------------------

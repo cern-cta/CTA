@@ -1806,7 +1806,7 @@ std::string XrdCtaFile::xCom_drive() {
     // Here the drive name is required in addition
     if (m_requestTokens.size() != 4)
       throw cta::exception::UserError(help.str());
-    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), true, false);
+    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), true, false, lc);
     cmdlineOutput << "Drive " << m_requestTokens.at(3) << " set UP." << std::endl;
   } else if ("down" == m_requestTokens.at(2)) {
     // Parse the command line for option and drive name.
@@ -1823,7 +1823,7 @@ std::string XrdCtaFile::xCom_drive() {
     }
     // Check if the force option was present.
     bool force=reply.options.size() && (reply.options.at(0).option == "f");
-    m_scheduler->setDesiredDriveState(m_cliIdentity, reply.remainder.at(0), false, force);
+    m_scheduler->setDesiredDriveState(m_cliIdentity, reply.remainder.at(0), false, force, lc);
     cmdlineOutput << "Drive " <<  reply.remainder.at(0) << " set DOWN";
     if (force) {
       cmdlineOutput << " (forced down)";
