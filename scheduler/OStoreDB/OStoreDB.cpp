@@ -84,7 +84,8 @@ void OStoreDB::ping() {
 //------------------------------------------------------------------------------
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
-void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re) {
+void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
+    FetchFlavour fetchFlavour) {
   // Walk the archive queues for statistics
   for (auto & aqp: re.dumpArchiveQueues()) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
@@ -92,14 +93,19 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
     objectstore::ScopedSharedLock aqlock;
     try {
-      aqlock.lock(aqueue);
-      aqueue.fetch();
+      if (fetchFlavour == FetchFlavour::lock) {
+        aqlock.lock(aqueue);
+        aqueue.fetch();
+      } else {
+        aqueue.fetchNoLock();
+      }
     } catch (cta::exception::Exception &ex) {
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params (lc);
       params.add("queueObject", aqp.address)
             .add("tapepool", aqp.tapePool)
-            .add("exceptionMessage", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("fetchFlavour", (fetchFlavour == FetchFlavour::lock)?"lock":"noLock");
       lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
       continue;
     }
@@ -286,9 +292,9 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
   objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   TapeMountDecisionInfoNoLock & tmdi=*privateRet;
-  fetchMountInfo(tmdi, re);
+  fetchMountInfo(tmdi, re, FetchFlavour::noLock);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   return ret;
 }
@@ -961,12 +967,10 @@ std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB:
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates() const {
   RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
-  dr.fetch();
+  dr.fetchNoLock();
   return dr.getAllDrivesState();
 }
 

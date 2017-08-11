@@ -109,7 +109,12 @@ private:
    * @param tmdi The TapeMountDecisionInfo where to store the data.
    * @param re A RootEntry object that should be locked and fetched.
    */
-  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re);
+   enum class FetchFlavour: bool {
+    lock,
+    noLock
+  };
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
+    FetchFlavour fetchFlavour=FetchFlavour::lock);
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
