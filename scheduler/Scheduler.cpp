@@ -141,7 +141,7 @@ void Scheduler::queueRetrieve(
   utils::Timer t;
   // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
+    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();

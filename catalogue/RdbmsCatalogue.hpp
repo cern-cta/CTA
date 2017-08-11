@@ -147,13 +147,15 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
    */
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &instanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user) override;
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) override;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in

@@ -4881,11 +4881,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
+  log::LogContext dummyLc(m_dummyLog);
+
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -4893,7 +4895,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, dummyLc),
     exception::UserError);
 }
 

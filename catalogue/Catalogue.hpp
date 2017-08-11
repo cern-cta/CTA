@@ -58,6 +58,7 @@
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 
 #include <list>
@@ -159,13 +160,15 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &instanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in

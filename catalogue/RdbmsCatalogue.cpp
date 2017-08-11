@@ -25,6 +25,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 
@@ -3959,10 +3960,14 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
   const std::string &diskInstanceName,
   const uint64_t archiveFileId,
-  const common::dataStructures::UserIdentity &user) {
+  const common::dataStructures::UserIdentity &user,
+  log::LogContext &lc) {
   try {
+    cta::utils::Timer t;
     auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs(utils::Timer::resetCounter);
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, archiveFileId);
+    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     if(nullptr == archiveFile.get()) {
       exception::Exception ex;
       ex.getMessage() << "Archive file with ID " << archiveFileId << " does not exist";
@@ -3977,8 +3982,17 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       throw ue;
     }
 
+    t.reset();
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
       user.group);
+     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+
+    log::ScopedParamContainer spc(lc);
+    spc.add("getConnTime", getConnTime)
+       .add("getArchiveFileTime", getArchiveFileTime)
+       .add("getMountPoliciesTime", getMountPoliciesTime);
+    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
+
     // Requester mount policies overrule requester group mount policies
     common::dataStructures::MountPolicy mountPolicy;
     if(!mountPolicies.requesterMountPolicies.empty()) {
