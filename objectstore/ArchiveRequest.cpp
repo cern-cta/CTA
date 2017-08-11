@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <google/protobuf/util/json_util.h>
+#include <cmath>
 
 namespace cta { namespace objectstore {
 
@@ -301,11 +302,12 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
       std::string queueObject="Not defined yet";
       anythingGarbageCollected=true;
       try {
+        utils::Timer t;
         // Get the queue where we should requeue the job. The queue might need to be
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
-        ScopedExclusiveLock tpl;
-        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, tpl, agentReference, j->tapepool(), lc);
+        ScopedExclusiveLock aql;
+        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -314,14 +316,32 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
+        auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
         j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
         commit();
+        aql.release();
+        auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+        timespec ts;
+        // We will sleep a bit to make sure other processes can also access the queue
+        // as we are very likely to be part of a tight loop.
+        // TODO: ideally, end of session requeueing and garbage collection should be
+        // done in parallel.
+        // We sleep half the time it took to queue to give a chance to other lockers.
+        double secSleep, fracSecSleep;
+        fracSecSleep = std::modf(queueUpdateTime / 2, &secSleep);
+        ts.tv_sec = secSleep;
+        ts.tv_nsec = std::round(fracSecSleep * 1000 * 1000 * 1000);
+        nanosleep(&ts, nullptr);
+        auto sleepTime = t.secs();
         log::ScopedParamContainer params(lc);
         params.add("jobObject", getAddressIfSet())
               .add("queueObject", queueObject)
               .add("presumedOwner", presumedOwner)
-              .add("copyNb", j->copynb());
+              .add("copyNb", j->copynb())
+              .add("queueUpdateTime", queueUpdateTime)
+              .add("commitUnlockQueueTime", commitUnlockQueueTime)
+              .add("sleepTime", sleepTime);
         lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): requeued job.");
       } catch (...) {
         // We could not requeue the job: fail it.

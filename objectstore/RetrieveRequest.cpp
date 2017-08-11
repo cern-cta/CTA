@@ -26,6 +26,7 @@
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include <google/protobuf/util/json_util.h>
+#include <cmath>
 
 namespace cta { namespace objectstore {
 
@@ -63,6 +64,7 @@ void RetrieveRequest::initialize() {
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
+  utils::Timer t;
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);
@@ -117,6 +119,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
     throw exception::Exception(err.str());
   }
 tapeFileFound:;
+  auto tapeSelectionTime = t.secs(utils::Timer::resetCounter);
   auto bestJob=m_payload.mutable_jobs()->begin();
   while (bestJob!=m_payload.mutable_jobs()->end()) {
     if (bestJob->copynb() == bestTapeFile->copynb())
@@ -140,20 +143,39 @@ jobFound:;
     mp, m_payload.schedulerrequest().entrylog().time());
   auto jobsSummary=rq.getJobsSummary();
   rq.commit();
+  auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
   // We can now make the transition official
   bestJob->set_status(serializers::RetrieveJobStatus::RJS_Pending);
   m_payload.set_activecopynb(bestJob->copynb());
   setOwner(rq.getAddressIfSet());
   commit();
+  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
+  rql.release();
+  auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+  timespec ts;
+  // We will sleep a bit to make sure other processes can also access the queue
+  // as we are very likely to be part of a tight loop.
+  // TODO: ideally, end of session requeueing and garbage collection should be
+  // done in parallel.
+  // We sleep half the time it took to queue to give a chance to other lockers.
+  double secSleep, fracSecSleep;
+  fracSecSleep = std::modf(queueUpdateTime / 2, &secSleep);
+  ts.tv_sec = secSleep;
+  ts.tv_nsec = std::round(fracSecSleep * 1000 * 1000 * 1000);
+  nanosleep(&ts, nullptr);
+  auto sleepTime = t.secs();
   {
     log::ScopedParamContainer params(lc);
     params.add("jobObject", getAddressIfSet())
           .add("queueObject", rq.getAddressIfSet())
           .add("copynb", bestTapeFile->copynb())
-          .add("vid", bestTapeFile->vid());
+          .add("vid", bestTapeFile->vid())
+          .add("tapeSelectionTime", tapeSelectionTime)
+          .add("queueUpdateTime", queueUpdateTime)
+          .add("commitUnlockQueueTime", commitUnlockQueueTime)
+          .add("sleepTime", sleepTime);
     lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
   }
-  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
 }
 
 //------------------------------------------------------------------------------
