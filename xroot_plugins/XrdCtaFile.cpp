@@ -1837,8 +1837,8 @@ std::string XrdCtaFile::xCom_drive() {
       if (driveStates.size()) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> headers = {"library", "drive", "host", "desired", "request",
-          "status", "since", "vid", "tapepool", "files", "Mbytes",
-          "Mb/s", "session", "age"};
+          "status", "since", "vid", "tapepool", "files", "MBytes",
+          "MB/s", "session", "age"};
         responseTable.push_back(headers);
         typedef decltype(*driveStates.begin()) dStateVal;
         driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
@@ -2062,8 +2062,8 @@ std::string XrdCtaFile::xCom_showqueues() {
   auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"type","tapepool","vid","files queued","Mbytes queued","oldest age","priority","min age","max drives",
-      "cur. mounts", "cur. files", "cur. Mbytes", "Mb/s", "next mounts", "tapes capacity", "files on tapes", "Mbytes on tapes", "full tapes", "empty tapes",
+    std::vector<std::string> header = {"type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age","max drives",
+      "cur. mounts", "cur. files", "cur. MBytes", "MB/s", "next mounts", "tapes capacity", "files on tapes", "MBytes on tapes", "full tapes", "empty tapes",
       "disabled tapes", "writables tapes"};
     if(hasOption("-h", "--header")) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
@@ -2092,7 +2092,7 @@ std::string XrdCtaFile::xCom_showqueues() {
       currentRow.push_back(BytesToMbString(q.currentBytes));
       currentRow.push_back(BytesToMbString(q.latestBandwidth));
       currentRow.push_back(std::to_string(q.nextMounts));
-      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)Mbytes));
+      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)MBytes));
       currentRow.push_back(std::to_string(q.filesOnTapes));
       currentRow.push_back(BytesToMbString(q.dataOnTapes));
       currentRow.push_back(std::to_string(q.fullTapes));
