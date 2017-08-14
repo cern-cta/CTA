@@ -47,6 +47,7 @@ public:
   virtual int chmod(const char *path, XrdSfsMode mode, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual void Disc(const XrdSecEntity *client = 0);
   virtual void EnvInfo(XrdOucEnv *envP);
+  virtual int FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0);
   virtual int fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client = 0);
   virtual int getStats(char *buff, int blen);
   virtual const char *getVersion();
