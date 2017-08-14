@@ -71,6 +71,22 @@ public:
   // Mark all the jobs as pending deletion from NS.
   void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
+  // An asynchronous job ownership updating class.
+  class AsyncOwnerUpdater {
+    friend class RetrieveRequest;
+  public:
+    void wait();
+    const common::dataStructures::RetrieveRequest & getRetrieveRequest();
+    const common::dataStructures::ArchiveFile & getArchiveFile();
+  private:
+    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    common::dataStructures::RetrieveRequest m_retieveRequest;
+    common::dataStructures::ArchiveFile m_archiveFile;
+  };
+  // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
+  CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
+  AsyncOwnerUpdater * asyncUpdateOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
   // Request management ========================================================
   void setSuccessful();
   void setFailed();

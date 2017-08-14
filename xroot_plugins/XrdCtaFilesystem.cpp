@@ -90,6 +90,15 @@ XrdSfsDirectory * XrdCtaFilesystem::newDir(char *user, int MonID)
 }
 
 //------------------------------------------------------------------------------
+// FSctl
+//------------------------------------------------------------------------------
+int XrdCtaFilesystem::FSctl(const int cmd, XrdSfsFSctl &args, XrdOucErrInfo &eInfo, const XrdSecEntity *client) {
+  (void)cmd; (void)args; (void)eInfo; (void)client;
+  eInfo.setErrInfo(ENOTSUP, "Not supported.");
+  return SFS_ERROR;
+}
+
+//------------------------------------------------------------------------------
 // fsctl
 //------------------------------------------------------------------------------
 int XrdCtaFilesystem::fsctl(const int cmd, const char *args, XrdOucErrInfo &eInfo, const XrdSecEntity *client)

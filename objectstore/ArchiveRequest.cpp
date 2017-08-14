@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <google/protobuf/util/json_util.h>
+#include <cmath>
 
 namespace cta { namespace objectstore {
 
@@ -301,11 +302,12 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
       std::string queueObject="Not defined yet";
       anythingGarbageCollected=true;
       try {
+        utils::Timer t;
         // Get the queue where we should requeue the job. The queue might need to be
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
-        ScopedExclusiveLock tpl;
-        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, tpl, agentReference, j->tapepool(), lc);
+        ScopedExclusiveLock aql;
+        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -314,14 +316,32 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
+        auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
         j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
         commit();
+        aql.release();
+        auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+        timespec ts;
+        // We will sleep a bit to make sure other processes can also access the queue
+        // as we are very likely to be part of a tight loop.
+        // TODO: ideally, end of session requeueing and garbage collection should be
+        // done in parallel.
+        // We sleep half the time it took to queue to give a chance to other lockers.
+        double secSleep, fracSecSleep;
+        fracSecSleep = std::modf(queueUpdateTime / 2, &secSleep);
+        ts.tv_sec = secSleep;
+        ts.tv_nsec = std::round(fracSecSleep * 1000 * 1000 * 1000);
+        nanosleep(&ts, nullptr);
+        auto sleepTime = t.secs();
         log::ScopedParamContainer params(lc);
         params.add("jobObject", getAddressIfSet())
               .add("queueObject", queueObject)
               .add("presumedOwner", presumedOwner)
-              .add("copyNb", j->copynb());
+              .add("copyNb", j->copynb())
+              .add("queueUpdateTime", queueUpdateTime)
+              .add("commitUnlockQueueTime", commitUnlockQueueTime)
+              .add("sleepTime", sleepTime);
         lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): requeued job.");
       } catch (...) {
         // We could not requeue the job: fail it.
@@ -459,6 +479,51 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
 
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
   return m_srcURL;
+}
+
+ArchiveRequest::AsyncJobSuccessfulUpdater * ArchiveRequest::asyncUpdateJobSuccessful(const uint16_t copyNumber ) { 
+  std::unique_ptr<AsyncJobSuccessfulUpdater> ret(new AsyncJobSuccessfulUpdater);  
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
+  ret->m_updaterCallback=
+    [this,copyNumber, &retRef](const std::string &in)->std::string { 
+      // We have a locked and fetched object, so we just need to work on its representation.
+      serializers::ObjectHeader oh;
+      oh.ParseFromString(in);
+      if (oh.type() != serializers::ObjectType::ArchiveRequest_t) {
+        std::stringstream err;
+        err << "In ArchiveRequest::asyncUpdateJobSuccessful()::lambda(): wrong object type: " << oh.type();
+        throw cta::exception::Exception(err.str());
+      }
+      serializers::ArchiveRequest payload;
+      payload.ParseFromString(oh.payload());
+      auto * jl = payload.mutable_jobs();
+      for (auto j=jl->begin(); j!=jl->end(); j++) {
+        if (j->copynb() == copyNumber) {
+          j->set_status(serializers::ArchiveJobStatus::AJS_Complete);
+          for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
+            if (j2->status()!= serializers::ArchiveJobStatus::AJS_Complete && 
+                j2->status()!= serializers::ArchiveJobStatus::AJS_Failed) {
+                retRef.m_isLastJob = false;
+                oh.set_payload(payload.SerializePartialAsString());
+                return oh.SerializeAsString();
+            }
+          }
+          retRef.m_isLastJob = true;
+          oh.set_payload(payload.SerializePartialAsString());
+          throw cta::objectstore::Backend::AsyncUpdateWithDelete(oh.SerializeAsString());
+        }
+      }
+      std::stringstream err;
+      err << "In ArchiveRequest::asyncUpdateJobSuccessful()::lambda(): copyNb not found";
+      throw cta::exception::Exception(err.str());
+    };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
+}
+
+void ArchiveRequest::AsyncJobSuccessfulUpdater::wait() {
+  m_backendUpdater->wait();
 }
 
 std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {

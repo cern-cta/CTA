@@ -70,10 +70,12 @@ public:
    * @param instanceName The name of the instance from where the deletion request
    * originated
    * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) override;
+  void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId, log::LogContext &lc)
+    override;
 
 protected:
 

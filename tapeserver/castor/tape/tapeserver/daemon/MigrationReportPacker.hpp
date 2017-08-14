@@ -165,6 +165,18 @@ private:
       ReportFlush(drive::compressionStats compressStats):m_compressStats(compressStats){}
       
       void execute(MigrationReportPacker& reportPacker) override;
+      void proceedJobsBatch(const MigrationReportPacker& reportPacker,
+        std::queue<std::unique_ptr<cta::ArchiveJob> > successfulArchiveJobs, 
+        cta::log::LogContext &log);
+      void asyncUpdateBackendWithJobsSucceeded(
+        const std::list<std::unique_ptr<cta::ArchiveJob> > &validatedSuccessfulArchiveJobs);
+      void checkAndAsyncReportCompletedJobs(
+         std::list<std::unique_ptr<cta::ArchiveJob> > &validatedSuccessfulArchiveJobs,
+        cta::log::LogContext &logContext);
+      void updateCatalogueWithTapeFilesWritten(
+        const MigrationReportPacker &reportPacker,
+        const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten,
+        cta::log::LogContext &logContext);
   };
   class ReportTapeFull: public Report {
     public:

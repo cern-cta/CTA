@@ -77,8 +77,8 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
-  return m_reporterFactory.createDiskReporter(URL);
+cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL, std::promise<void> &reporterState) {
+  return m_reporterFactory.createDiskReporter(URL, reporterState);
 }
 
 //------------------------------------------------------------------------------
@@ -90,6 +90,13 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
     throw exception::Exception("In cta::ArchiveMount::getMountTransactionId(): got NULL dbMount");
   id << m_dbMount->mountInfo.mountId;
   return id.str();
+}
+
+//------------------------------------------------------------------------------
+// updateCatalogueWithTapeFilesWritten
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten) {
+  m_catalogue.filesWrittenToTape(tapeFilesWritten);
 }
 
 //------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all
   --error-exitcode=1 --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr              \
   /usr/bin/cta-unitTests
 
-valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000      \
+valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=10000000      \
   --error-exitcode=1 --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr              \
   /usr/bin/cta-unitTests
 
@@ -17,6 +17,6 @@ valgrind --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all
   --error-exitcode=1 --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr              \
   --child-silent-after-fork=yes /usr/bin/cta-unitTests-multiProcess
 
-valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=30000000      \
+valgrind --tool=helgrind -v --demangle=yes --gen-suppressions=all --conflict-cache-size=10000000      \
   --error-exitcode=1 --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr              \
   /usr/bin/cta-unitTests-multiProcess

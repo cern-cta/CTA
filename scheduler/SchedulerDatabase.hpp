@@ -185,9 +185,11 @@ public:
     std::string archiveReportURL;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    /// Indicates a success to the DB. If this is the last job, return true.
-    virtual bool succeed() = 0;
     virtual void fail(log::LogContext & lc) = 0;
+    /// Indicates a success to the DB. 
+    virtual void asyncSucceed() = 0;
+    /// Check a succeed job status. If this is the last job, return true.
+    virtual bool checkSucceed() = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
@@ -321,7 +323,6 @@ public:
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
-    virtual std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;

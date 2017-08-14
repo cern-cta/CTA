@@ -109,6 +109,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUpdateValue);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotCommit);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUnlock);
+  CTA_GENERATE_EXCEPTION_CLASS(AsyncUpdateWithDelete);
   
   /**
    * A base class handling asynchronous sequence of lock exclusive, fetch, call user 

@@ -94,7 +94,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 schedule:
   while (true) {
     try {
-      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName);
+      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
       if (!desiredState.up) {
         downUpTransition  = true;
         // We wait a bit before polling the scheduler again.
@@ -119,7 +119,7 @@ schedule:
     if (!emptyDriveProbe.driveIsEmpty()) {
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
-      m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false);
+      m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false, lc);
       lc.log(cta::log::ERR, "A tape was detected in the drive. Putting the drive back down.");
       goto schedule;
     } else {
@@ -137,7 +137,7 @@ schedule:
     lc.logBacktrace(cta::log::ERR, e.backtrace());
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
     cta::common::dataStructures::SecurityIdentity cliId;
-    m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false);
+    m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false, lc);
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...

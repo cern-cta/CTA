@@ -59,7 +59,7 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   
   // ArchiveQueue handling  ====================================================
-  CTA_GENERATE_EXCEPTION_CLASS(ArchivelQueueNotEmpty);
+  CTA_GENERATE_EXCEPTION_CLASS(ArchiveQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */

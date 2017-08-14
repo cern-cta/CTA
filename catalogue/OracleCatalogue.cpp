@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -59,7 +60,8 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId) {
+void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
+  log::LogContext &lc) {
   try {
     const char *selectSql =
       "SELECT "
@@ -89,10 +91,15 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
+    utils::Timer t;
     auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs(utils::Timer::resetCounter);
     auto selectStmt = conn.createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
+    const auto createStmtTime = t.secs();
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    t.reset();
     rdbms::Rset selectRset = selectStmt->executeQuery();
+    const auto selectFromArchiveFileTime = t.secs();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while(selectRset.next()) {
       if(nullptr == archiveFile.get()) {
@@ -146,12 +153,14 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       throw ue;
     }
 
+    t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
       auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
@@ -159,23 +168,31 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
     conn.commit();
+    const auto commitTime = t.secs();
 
-    std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("fileId", std::to_string(archiveFile->archiveFileID)));
-    params.push_back(cta::log::Param("diskInstance", archiveFile->diskInstance));
-    params.push_back(cta::log::Param("diskFileId", archiveFile->diskFileId));
-    params.push_back(cta::log::Param("diskFileInfo.path", archiveFile->diskFileInfo.path));
-    params.push_back(cta::log::Param("diskFileInfo.owner", archiveFile->diskFileInfo.owner));
-    params.push_back(cta::log::Param("diskFileInfo.group", archiveFile->diskFileInfo.group));
-    params.push_back(cta::log::Param("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob));
-    params.push_back(cta::log::Param("fileSize", std::to_string(archiveFile->fileSize)));
-    params.push_back(cta::log::Param("checksumType", archiveFile->checksumType));
-    params.push_back(cta::log::Param("checksumValue", archiveFile->checksumValue));
-    params.push_back(cta::log::Param("creationTime", std::to_string(archiveFile->creationTime)));
-    params.push_back(cta::log::Param("reconciliationTime", std::to_string(archiveFile->reconciliationTime)));
-    params.push_back(cta::log::Param("storageClass", archiveFile->storageClass));
+    log::ScopedParamContainer spc(lc);
+    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+       .add("diskInstance", archiveFile->diskInstance)
+       .add("diskFileId", archiveFile->diskFileId)
+       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob)
+       .add("fileSize", std::to_string(archiveFile->fileSize))
+       .add("checksumType", archiveFile->checksumType)
+       .add("checksumValue", archiveFile->checksumValue)
+       .add("creationTime", std::to_string(archiveFile->creationTime))
+       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+       .add("storageClass", archiveFile->storageClass)
+       .add("getConnTime", getConnTime)
+       .add("createStmtTime", createStmtTime)
+       .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
+       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("commitTime", commitTime);
     for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
       std::stringstream tapeCopyLogStream;
       tapeCopyLogStream << "copy number: " << it->first
@@ -187,9 +204,9 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
         << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
         << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-      params.push_back(cta::log::Param("TAPE FILE", tapeCopyLogStream.str()));
+      spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
-    m_log(log::INFO, "Archive File Deleted", params);
+    lc.log(log::INFO, "Archive File Deleted");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

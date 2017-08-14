@@ -55,20 +55,32 @@ Scheduler::~Scheduler() throw() { }
 //------------------------------------------------------------------------------
 // ping
 //------------------------------------------------------------------------------
-void Scheduler::ping() {
-  m_db.ping();
+void Scheduler::ping(log::LogContext & lc) {
+  cta::utils::Timer t;
   m_catalogue.ping();
+  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+  m_db.ping();
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::ping(): success.");
 }
 
 //------------------------------------------------------------------------------
 // authorizeAdmin
 //------------------------------------------------------------------------------
-void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &cliIdentity){
+void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc){
+  cta::utils::Timer t;
   if(!(m_catalogue.isAdmin(cliIdentity))) {
     std::stringstream msg;
     msg << "User: " << cliIdentity.username << " on host: " << cliIdentity.host << " is not authorized to execute CTA admin commands";
     throw exception::UserError(msg.str());
   }
+  auto catalogueTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("catalogueTime", catalogueTime);
+  lc.log(log::INFO, "In Scheduler::authorizeAdmin(): success.");
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +141,8 @@ void Scheduler::queueRetrieve(
   utils::Timer t;
   // Get the queue criteria
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester);
+    m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, lc);
+  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   std::string selectedVid = m_db.queueRetrieve(request, queueCriteria, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
@@ -167,6 +180,7 @@ void Scheduler::queueRetrieve(
      .add("policyMaxDrives", queueCriteria.mountPolicy.maxDrivesAllowed)
      .add("policyMinAge", queueCriteria.mountPolicy.retrieveMinRequestAge)
      .add("policyPriority", queueCriteria.mountPolicy.retrievePriority)
+     .add("catalogueTime", catalogueTime)
      .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "Queued retrieve request");
 }
@@ -174,7 +188,7 @@ void Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
@@ -192,8 +206,14 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
 //}
   // We did delete the file from the queue. It hence might be absent from the catalogue.
   // Errors are not fatal here (so we filter them out).
+  
   try {
-    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
+    utils::Timer t;
+    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
+    auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+    log::ScopedParamContainer spc(lc);
+    spc.add("catalogueTime", catalogueTime);
+    lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
   } catch (exception::UserError &) {}
 }
 
@@ -322,10 +342,16 @@ common::dataStructures::WriteTestResult Scheduler::write_autoTest(const common::
 //------------------------------------------------------------------------------
 // getDesiredDriveState
 //------------------------------------------------------------------------------
-common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName) {
+common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName, log::LogContext & lc) {
+  utils::Timer t;
   auto driveStates = m_db.getDriveStates();
   for (auto & d: driveStates) {
     if (d.driveName == driveName) {
+      auto schedulerDbTime = t.secs();
+      log::ScopedParamContainer spc(lc);
+      spc.add("drive", driveName)
+         .add("schedulerDbTime", schedulerDbTime);
+      lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
       return d.desiredDriveState;
     }
   }
@@ -335,11 +361,19 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force) {
+void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force, log::LogContext & lc) {
+  utils::Timer t;
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = up;
   desiredDriveState.forceDown = force;
   m_db.setDesiredDriveState(driveName, desiredDriveState);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveName)
+     .add("up", up?"up":"down")
+     .add("force", force?"yes":"no")
+     .add("schedulerDbTime", schedulerDbTime);
+   lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");   
 }
 
 //------------------------------------------------------------------------------
@@ -384,8 +418,14 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity) const {
-  return m_db.getDriveStates();
+std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
+  utils::Timer t;
+  auto ret = m_db.getDriveStates();
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getDriveStates(): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -473,12 +513,15 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
     } catch (std::out_of_range &) {
       existingMounts = 0;
     } 
+    uint32_t effectiveExistingMounts = 0;
+    if (m->type == common::dataStructures::MountType::Archive) effectiveExistingMounts = existingMounts;
     bool mountPassesACriteria = false;
-    if (m->bytesQueued / (1 + existingMounts) >= m_minBytesToWarrantAMount)
+    
+    if (m->bytesQueued / (1 + effectiveExistingMounts) >= m_minBytesToWarrantAMount)
       mountPassesACriteria = true;
-    if (m->filesQueued / (1 + existingMounts) >= m_minFilesToWarrantAMount)
+    if (m->filesQueued / (1 + effectiveExistingMounts) >= m_minFilesToWarrantAMount)
       mountPassesACriteria = true;
-    if (!existingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
+    if (!effectiveExistingMounts && ((time(NULL) - m->oldestJobStartTime) > m->minArchiveRequestAge))
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
@@ -638,10 +681,15 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   return std::unique_ptr<TapeMount>();
 }
 
+//------------------------------------------------------------------------------
+// getQueuesAndMountSummaries
+//------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   // Extract relevant information from the object store.
+  utils::Timer t;
   auto mountDecisionInfo=m_db.getMountInfoNoLock();
+  auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
@@ -723,6 +771,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
+  auto respondPreparationTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime)
+     .add("respondPreparationTime", respondPreparationTime);
+  lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success."); 
   return ret;
 }
 

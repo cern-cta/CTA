@@ -96,7 +96,8 @@ void cta_catalogue_CatalogueTest::SetUp() {
       auto itor = m_catalogue->getArchiveFiles();
       while(itor.hasMore()) {
         const auto archiveFile = itor.next();
-        m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID);
+        log::LogContext dummyLc(m_dummyLog);
+        m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
       }
     }
     {
@@ -4881,11 +4882,13 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
+  log::LogContext dummyLc(m_dummyLog);
+
   common::dataStructures::UserIdentity userIdentity;
   userIdentity.name = requesterName;
   userIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
@@ -4893,7 +4896,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFile) {
   ASSERT_EQ(maxDrivesAllowed, queueCriteria.mountPolicy.maxDrivesAllowed);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, userIdentity, dummyLc),
     exception::UserError);
 }
 
@@ -6187,7 +6190,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  m_catalogue->deleteArchiveFile("disk_instance", archiveFileId);
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->deleteArchiveFile("disk_instance", archiveFileId, dummyLc);
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
 }
@@ -6497,14 +6501,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_of_another_disk_instance) 
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  ASSERT_THROW(m_catalogue->deleteArchiveFile("another_disk_instance", archiveFileId), exception::UserError);
+  log::LogContext dummyLc(m_dummyLog);
+  ASSERT_THROW(m_catalogue->deleteArchiveFile("another_disk_instance", archiveFileId, dummyLc), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_non_existant) {
   using namespace cta;
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
-  m_catalogue->deleteArchiveFile("disk_instance", 12345678);
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->deleteArchiveFile("disk_instance", 12345678, dummyLc);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {
@@ -6794,7 +6800,10 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  m_catalogue->deleteArchiveFile(diskInstanceName1, file1Written.archiveFileId);
+  {
+    log::LogContext dummyLc(m_dummyLog);
+    m_catalogue->deleteArchiveFile(diskInstanceName1, file1Written.archiveFileId, dummyLc);
+  }
 
   {
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();

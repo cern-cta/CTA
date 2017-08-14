@@ -26,6 +26,7 @@
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include <google/protobuf/util/json_util.h>
+#include <cmath>
 
 namespace cta { namespace objectstore {
 
@@ -63,6 +64,7 @@ void RetrieveRequest::initialize() {
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
+  utils::Timer t;
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);
@@ -117,6 +119,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
     throw exception::Exception(err.str());
   }
 tapeFileFound:;
+  auto tapeSelectionTime = t.secs(utils::Timer::resetCounter);
   auto bestJob=m_payload.mutable_jobs()->begin();
   while (bestJob!=m_payload.mutable_jobs()->end()) {
     if (bestJob->copynb() == bestTapeFile->copynb())
@@ -140,20 +143,39 @@ jobFound:;
     mp, m_payload.schedulerrequest().entrylog().time());
   auto jobsSummary=rq.getJobsSummary();
   rq.commit();
+  auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
   // We can now make the transition official
   bestJob->set_status(serializers::RetrieveJobStatus::RJS_Pending);
   m_payload.set_activecopynb(bestJob->copynb());
   setOwner(rq.getAddressIfSet());
   commit();
+  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
+  rql.release();
+  auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+  timespec ts;
+  // We will sleep a bit to make sure other processes can also access the queue
+  // as we are very likely to be part of a tight loop.
+  // TODO: ideally, end of session requeueing and garbage collection should be
+  // done in parallel.
+  // We sleep half the time it took to queue to give a chance to other lockers.
+  double secSleep, fracSecSleep;
+  fracSecSleep = std::modf(queueUpdateTime / 2, &secSleep);
+  ts.tv_sec = secSleep;
+  ts.tv_nsec = std::round(fracSecSleep * 1000 * 1000 * 1000);
+  nanosleep(&ts, nullptr);
+  auto sleepTime = t.secs();
   {
     log::ScopedParamContainer params(lc);
     params.add("jobObject", getAddressIfSet())
           .add("queueObject", rq.getAddressIfSet())
           .add("copynb", bestTapeFile->copynb())
-          .add("vid", bestTapeFile->vid());
+          .add("vid", bestTapeFile->vid())
+          .add("tapeSelectionTime", tapeSelectionTime)
+          .add("queueUpdateTime", queueUpdateTime)
+          .add("commitUnlockQueueTime", commitUnlockQueueTime)
+          .add("sleepTime", sleepTime);
     lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
   }
-  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
 }
 
 //------------------------------------------------------------------------------
@@ -335,6 +357,82 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
   std::stringstream err;
   err << "In RetrieveRequest::getJobStatus(): could not find job for copynb=" << copyNumber;
   throw exception::Exception(err.str());
+}
+
+auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
+  -> AsyncOwnerUpdater* {
+  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
+  ret->m_updaterCallback=
+      [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
+        // We have a locked and fetched object, so we just need to work on its representation.
+        serializers::ObjectHeader oh;
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
+        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+          std::stringstream err;
+          err << "In RetrieveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        // We don't need to deserialize the payload to update owner...
+        if (oh.owner() != previousOwner)
+          throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): Request not owned.");
+        oh.set_owner(owner);
+        // ... but we still need to extract information
+        serializers::RetrieveRequest payload;
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
+        // Find the copy number
+        auto jl=payload.jobs();
+        for (auto & j: jl) {
+          if (j.copynb() == copyNumber) {
+            // We also need to gather all the job content for the user to get in-memory
+            // representation.
+            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
+            // We could try and refactor this.
+            retRef.m_retieveRequest.archiveFileID = payload.archivefile().archivefileid();
+            objectstore::EntryLogSerDeser el;
+            el.deserialize(payload.schedulerrequest().entrylog());
+            retRef.m_retieveRequest.creationLog = el;
+            objectstore::DiskFileInfoSerDeser dfi;
+            dfi.deserialize(payload.schedulerrequest().diskfileinfo());
+            retRef.m_retieveRequest.diskFileInfo = dfi;
+            retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
+            retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
+            objectstore::ArchiveFileSerDeser af;
+            af.deserialize(payload.archivefile());
+            retRef.m_archiveFile = af;
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        // If we do not find the copy, return not owned as well...
+        throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+      };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
+  }
+
+void RetrieveRequest::AsyncOwnerUpdater::wait() {
+  m_backendUpdater->wait();
+}
+
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
+  return m_archiveFile;
+}
+
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
+  return m_retieveRequest;
 }
 
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {

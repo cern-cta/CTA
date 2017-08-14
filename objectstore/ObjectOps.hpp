@@ -84,7 +84,7 @@ protected:
   }
   
   void checkReadable() {
-    if (!m_locksCount)
+    if (!m_locksCount && !m_noLock)
      throw NotLocked("In ObjectOps::checkReadable: object not locked");
   }
   
@@ -125,6 +125,12 @@ public:
     m_payloadInterpreted = false;
   }
   
+  void resetValues () {
+    m_existingObject = false;
+    m_headerInterpreted = false;
+    m_payloadInterpreted = false;
+  }
+  
   void setOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_owner(owner);
@@ -155,6 +161,7 @@ protected:
   bool m_existingObject;
   int m_locksCount;
   int m_locksForWriteCount;
+  bool m_noLock = false;
 };
 
 class ScopedLock {
@@ -280,6 +287,15 @@ public:
     // Check that the object is locked, one way or another
     if(!m_locksCount)
       throw NotLocked("In ObjectOps::fetch(): object not locked");
+    fetchBottomHalf();
+  }
+  
+  void fetchNoLock() {
+    m_noLock = true;
+    fetchBottomHalf();
+  }
+  
+  void fetchBottomHalf() {
     m_existingObject = true;
     // Get the header from the object store
     getHeaderFromObjectStore();

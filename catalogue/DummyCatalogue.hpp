@@ -46,7 +46,7 @@ public:
   void createTapePool(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string& comment) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteAdminHost(const std::string& hostName) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteAdminUser(const std::string& username) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void deleteArchiveFile(const std::string& instanceName, const uint64_t archiveFileId) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void deleteArchiveFile(const std::string& instanceName, const uint64_t archiveFileId, log::LogContext &lc) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteArchiveRoute(const std::string& diskInstanceName, const std::string& storageClassName, const uint64_t copyNb) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteLogicalLibrary(const std::string& name) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteMountPolicy(const std::string& name) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -99,7 +99,7 @@ public:
   void noSpaceLeftOnTape(const std::string& vid) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void ping() { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(const std::string& diskInstanceName, const std::string& storageClassName, const common::dataStructures::UserIdentity& user) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& instanceName, const uint64_t archiveFileId, const common::dataStructures::UserIdentity& user) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& instanceName, const uint64_t archiveFileId, const common::dataStructures::UserIdentity& user, log::LogContext &lc) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin, const std::string& vid) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool disabledValue) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

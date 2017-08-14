@@ -161,7 +161,7 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
-  tv.tv_sec = 60;
+  tv.tv_sec = 240;
   int rc;
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
@@ -214,7 +214,7 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
-  tv.tv_sec = 60;
+  tv.tv_sec = 240;
   int rc;
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
   // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
@@ -254,7 +254,7 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
         std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::remove: ") +
         name + "//");
-    throw cta::exception::Errnum(ENOENT, std::string ("In BackendRados::lockShared(): trying to lock a non-existing object") + name);
+    throw cta::exception::Errnum(ENOENT, std::string ("In BackendRados::lockShared(): trying to lock a non-existing object: ") + name);
   }
   ret->set(name, client);
   return ret.release();
@@ -278,7 +278,7 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
             m_lockClient = BackendRados::createUniqueClientId();
             struct timeval tv;
             tv.tv_usec = 0;
-            tv.tv_sec = 60;
+            tv.tv_sec = 240;
             int rc;
             // TODO: could be improved (but need aio_lock in rados, not available at the time
             // of writing).
@@ -382,25 +382,48 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
                   std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ") +
                   au.m_name + ": "+ ex.what());
             }
-            // Execute the user's callback. Let exceptions fly through. User knows his own exceptions.
-            value=au.m_update(value);
-            try {
-              // Prepare result in buffer list.
-              au.m_radosBufferList.clear();
-              au.m_radosBufferList.append(value);
-            } catch (std::exception & ex) {
-              throw CouldNotUpdateValue(
-                  std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to prepare write buffer(): ") +
-                  au.m_name + ": " + ex.what());
+            
+            bool updateWithDelete = false;
+            try {      
+              // Execute the user's callback.
+              value=au.m_update(value);
+            } catch (AsyncUpdateWithDelete & ex) {
+              updateWithDelete = true;               
+            } catch (...) {
+              // Let exceptions fly through. User knows his own exceptions.
+              throw; 
             }
-            // Launch the write
-            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, commitCallback, nullptr);
-            auto rc=au.m_backend.m_radosCtx.aio_write_full(au.m_name, aioc, au.m_radosBufferList);
-            aioc->release();
-            if (rc) {
-              cta::exception::Errnum errnum (-rc, 
-                std::string("In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to launch aio_write_full(): ") + au.m_name);
-              throw Backend::CouldNotCommit(errnum.getMessageValue());
+             
+            if(updateWithDelete) {
+              try {
+                au.m_backend.remove(au.m_name);
+              } catch (cta::exception::Exception &ex) {
+                throw CouldNotUpdateValue(
+                    std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to remove value: ") +
+                    au.m_name + ex.what());
+              }
+              // Done!
+              ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+              au.m_job.set_value();
+            } else {
+              try {
+                // Prepare result in buffer list.
+                au.m_radosBufferList.clear();
+                au.m_radosBufferList.append(value);
+              } catch (std::exception & ex) {
+                throw CouldNotUpdateValue(
+                    std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to prepare write buffer(): ") + 
+                    au.m_name + ex.what());
+              }
+              // Launch the write
+              librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, commitCallback, nullptr);
+              auto rc=au.m_backend.m_radosCtx.aio_write_full(au.m_name, aioc, au.m_radosBufferList);
+              aioc->release();
+              if (rc) {
+                cta::exception::Errnum errnum (-rc, 
+                  "In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to launch aio_write_full()" + au.m_name);
+                throw Backend::CouldNotCommit(errnum.getMessageValue());
+              }
             }
           } catch (...) {
             ANNOTATE_HAPPENS_BEFORE(&au.m_job);

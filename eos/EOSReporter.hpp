@@ -21,15 +21,28 @@
 #include "DiskReporter.hpp"
 #include <XrdCl/XrdClFileSystem.hh>
 
-namespace cta { namespace eos {
+#include <future>
 
+namespace cta { namespace eos {
+const uint16_t CTA_EOS_QUERY_TIMEOUT = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
+    
 class EOSReporter: public DiskReporter {
 public:
-  EOSReporter(const std::string & hostURL, const std::string & queryValue);
+  EOSReporter(const std::string & hostURL, const std::string & queryValue, std::promise<void> &reporterState);
   void reportArchiveFullyComplete() override;
+  void asyncReportArchiveFullyComplete() override;
 private:
   XrdCl::FileSystem m_fs;
   std::string m_query;
+  std::promise<void> &m_reporterState;
+  class AsyncQueryHandler: public XrdCl::ResponseHandler {
+  public:
+    AsyncQueryHandler(std::promise<void> &handlerPromise);
+    virtual void HandleResponse(XrdCl::XRootDStatus *status,
+                                  XrdCl::AnyObject    *response);
+  private:
+    std::promise<void> &m_handlerPromise;
+  };
 };
 
 }} // namespace cta::disk

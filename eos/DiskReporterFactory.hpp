@@ -23,12 +23,13 @@
 #include "common/threading/Mutex.hpp"
 
 #include <string>
+#include <future>
 
 namespace cta { namespace eos {
 
 class DiskReporterFactory {
 public:
-  DiskReporter * createDiskReporter(const std::string URL);
+  DiskReporter * createDiskReporter(const std::string URL, std::promise<void> &sreporterState);
 private:
   // The typical call to give report to EOS will be:
   // xrdfs localhost query opaquefile "/eos/wfe/passwd?mgm.pcmd=event&mgm.fid=112&mgm.logid=cta&mgm.event=migrated&mgm.workflow=default&mgm.path=/eos/wfe/passwd&mgm.ruid=0&mgm.rgid=0"

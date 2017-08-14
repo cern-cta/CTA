@@ -275,7 +275,7 @@ int GarbageCollectorHandler::runChild() {
     catalogue=cta::catalogue::CatalogueFactory::create(m_processManager.logContext().logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
-    scheduler->ping();
+    scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
     {
       log::ScopedParamContainer param(m_processManager.logContext());

@@ -16,13 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <future>
+
 #include "EOSReporter.hpp"
 #include "common/exception/XrootCl.hpp"
 
 namespace cta { namespace eos {
 
-EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
-  m_fs(hostURL), m_query(queryValue) {}
+EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue, std::promise<void>& reporterState):
+  m_fs(hostURL), m_query(queryValue), m_reporterState(reporterState) {}
 
 
 void EOSReporter::reportArchiveFullyComplete() {
@@ -30,11 +32,48 @@ void EOSReporter::reportArchiveFullyComplete() {
   XrdCl::Buffer arg (m_query.size());
   arg.FromString(m_query);
   XrdCl::Buffer * resp = nullptr;
-  const uint16_t queryTimeout = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
-  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp, queryTimeout);
+  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp, CTA_EOS_QUERY_TIMEOUT);
   delete (resp);
   cta::exception::XrootCl::throwOnError(status,
       "In EOSReporter::reportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
 } 
 
+void EOSReporter::asyncReportArchiveFullyComplete() {
+  auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
+  XrdCl::Buffer arg (m_query.size());
+  arg.FromString(m_query);
+  AsyncQueryHandler *handler = new AsyncQueryHandler(m_reporterState);
+  XrdCl::XRootDStatus status=m_fs.Query( qcOpaque, arg, handler, CTA_EOS_QUERY_TIMEOUT);
+  cta::exception::XrootCl::throwOnError(status,
+      "In EOSReporter::asyncReportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
+}
+
+//------------------------------------------------------------------------------
+//EOSReporter::AsyncQueryHandler::AsyncQueryHandler
+//------------------------------------------------------------------------------
+EOSReporter::AsyncQueryHandler::AsyncQueryHandler(std::promise<void> &handlerPromise):
+  m_handlerPromise(handlerPromise) {}
+
+//------------------------------------------------------------------------------
+//EOSReporter::AsyncQueryHandler::HandleResponse
+//------------------------------------------------------------------------------
+void EOSReporter::AsyncQueryHandler::HandleResponse(XrdCl::XRootDStatus *status,
+                                                    XrdCl::AnyObject    *response) {
+  try {
+    cta::exception::XrootCl::throwOnError(*status,
+      "In EOSReporter::AsyncQueryHandler::HandleResponse(): failed to XrdCl::FileSystem::Query()");
+  } catch (...) {
+    try {
+      // store anything thrown in the promise
+      m_handlerPromise.set_exception(std::current_exception());
+    } catch(...) {
+      // set_exception() may throw too
+    }
+  }
+
+  m_handlerPromise.set_value();
+  delete response;
+  delete status;
+  delete this;
+  }
 }} // namespace cta::disk

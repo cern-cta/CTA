@@ -172,6 +172,7 @@ protected:
     xbuf->SetLen(dataSize);
     return UniqueXrdOucBuffer(xbuf);
   }
+
 }; // XrdCtaFilesystem
 
 }}

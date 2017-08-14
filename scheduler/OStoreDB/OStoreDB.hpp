@@ -109,7 +109,12 @@ private:
    * @param tmdi The TapeMountDecisionInfo where to store the data.
    * @param re A RootEntry object that should be locked and fetched.
    */
-  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re);
+   enum class FetchFlavour: bool {
+    lock,
+    noLock
+  };
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
+    FetchFlavour fetchFlavour=FetchFlavour::lock);
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
@@ -140,8 +145,9 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    bool succeed() override;
     void fail(log::LogContext & lc) override;
+    void asyncSucceed() override;
+    bool checkSucceed() override;
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
@@ -156,20 +162,21 @@ public:
     objectstore::AgentReference & m_agentReference;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
   };
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &);
+    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
     objectstore::Backend & m_objectStore;
-    objectstore::AgentReference & m_agentReference;
     catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
+    objectstore::AgentReference & m_agentReference;
   public:
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
-    std::unique_ptr<RetrieveJob> getNextJob(log::LogContext & logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
@@ -185,12 +192,13 @@ public:
     virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &, 
-      objectstore::AgentReference &, RetrieveMount &);
+    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
+      log::Logger &, objectstore::AgentReference &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
     catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount & m_retrieveMount;

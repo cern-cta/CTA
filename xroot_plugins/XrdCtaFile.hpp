@@ -380,6 +380,14 @@ protected:
   std::string timeToString(const time_t &time);
   
   /**
+   * Returns a string representation for bytes in Mbytes with .00 precision
+   *
+   * @param  bytes The input number of bytes
+   * @return a string representation in Mbytes
+   */
+  std::string BytesToMbString(const uint64_t bytes);
+
+  /**
    * Adds the creation log and the last modification log to the current response row
    * 
    * @param  responseRow The current response row to modify
@@ -456,5 +464,5 @@ protected:
   optional<std::string> EOS2CTAChecksumValue(const optional<std::string> &EOSChecksumValue);
 };
 
-const long double Mbytes = 1000.0*1000.0;
+const long double MBytes = 1000.0*1000.0;
 }}
