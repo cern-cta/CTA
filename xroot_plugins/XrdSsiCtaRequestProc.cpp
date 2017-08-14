@@ -172,7 +172,7 @@ static void requestProcDELETE(cta::Scheduler &scheduler, cta::log::LogContext &l
    // Queue the request
 
    cta::utils::Timer t;
-   scheduler.deleteArchive(client.name, request);
+   scheduler.deleteArchive(client.name, request, lc);
 
    // Create a log entry
 
