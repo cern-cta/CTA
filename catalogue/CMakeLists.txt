@@ -61,7 +61,9 @@ else (OCCI_SUPPORT)
 endif (OCCI_SUPPORT)
 
 add_library (ctacatalogue SHARED
-  ${CATALOGUE_LIB_SRC_FILES})
+   ${CATALOGUE_LIB_SRC_FILES})
+set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -94,6 +96,8 @@ set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue)
@@ -106,6 +110,8 @@ set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctacatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctacatalogueunittests
   ctacatalogue)
@@ -195,4 +201,7 @@ set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctacataloguecmdlineunittests SHARED
   ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacataloguecmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

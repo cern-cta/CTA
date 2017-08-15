@@ -76,6 +76,8 @@ add_library(unitTestHelper
 
 add_library(systemTestHelperTests SHARED
   SubprocessSystemTests.cpp)
+set_property(TARGET systemTestHelperTests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET systemTestHelperTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(systemTestHelperTests
   ctacommon)

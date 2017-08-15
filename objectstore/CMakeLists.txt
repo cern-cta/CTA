@@ -70,6 +70,9 @@ add_library (ctaobjectstore SHARED
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp
   Helpers.cpp)
+set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 target_link_libraries(ctaobjectstore rados json-c ctautils)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -82,6 +85,9 @@ set(ObjectStoreUnitTests
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
+set_property(TARGET ctaobjectstoreunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 target_link_libraries(ctaobjectstoreunittests
   ${PROTOBUF3_LIBRARIES} rados ctacommon gtest ctaobjectstore)
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

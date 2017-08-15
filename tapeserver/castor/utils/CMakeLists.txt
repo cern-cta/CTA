@@ -26,6 +26,8 @@ set (UTILS_LIB_SRC_FILES
   ../common/CastorConfiguration.cpp)
 
 add_library (ctautils SHARED ${UTILS_LIB_SRC_FILES})
+set_property(TARGET ctautils PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctautils PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctautils)
 

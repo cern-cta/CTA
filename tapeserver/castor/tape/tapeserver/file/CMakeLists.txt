@@ -79,6 +79,8 @@ add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp
   FileTest.cpp
   CryptoPPTest.cpp)
+set_property(TARGET ctatapeserverfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapeserverfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeserverfileunittests
   File)
