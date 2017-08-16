@@ -45,3 +45,11 @@ add_executable(eoscta_stub EosCtaStub.cpp)
 target_link_libraries(eoscta_stub cryptopp ctaeosmessages ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
 install(TARGETS eoscta_stub DESTINATION usr/bin)
 
+#
+# cta_admin is a drop-in replacement for "cta <admin_command>"
+#
+
+add_executable(cta_admin CtaAdminCmdMain.cpp)
+target_link_libraries(cta_admin ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
+install(TARGETS cta_admin DESTINATION usr/bin)
+

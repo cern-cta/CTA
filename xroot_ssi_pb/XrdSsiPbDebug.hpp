@@ -29,7 +29,7 @@ namespace XrdSsiPb {
  * Wrapper around google::protobuf::util::MessageToJsonString() which outputs to a stream
  */
 
-static void OutputJsonString(std::ostream &os, const google::protobuf::Message *message)
+inline void OutputJsonString(std::ostream &os, const google::protobuf::Message *message)
 {
    using namespace google::protobuf::util;
 
