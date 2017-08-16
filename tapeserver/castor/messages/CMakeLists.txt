@@ -33,6 +33,9 @@ add_library(ctamessagesprotobuf
 
 add_library(ctamessagesutils SHARED
   TapeserverProxyDummy.cpp)
+set_property(TARGET ctamessagesutils PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamessagesutils PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(CtaMessageSrcs
@@ -44,6 +47,9 @@ set(CtaMessageSrcs
 
 add_library(ctamessages SHARED
   ${CtaMessageSrcs})
+set_property(TARGET ctamessages PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamessages PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install (TARGETS ctamessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_dependencies(ctamessages ctamessagesprotobuf)

@@ -66,6 +66,8 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(ctatapeserverdriveunittests SHARED
   DriveTest.cpp)
+set_property(TARGET ctatapeserverdriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapeserverdriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeserverdriveunittests
   ctaTapeServerDaemon

@@ -443,7 +443,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
-    auto mi=osdb.getMountInfo();
+    auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TestTapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
@@ -521,7 +521,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
-    retrieveJob->complete();
+    retrieveJob->asyncComplete();
+    retrieveJob->checkComplete();
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }

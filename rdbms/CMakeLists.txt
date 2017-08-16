@@ -75,6 +75,8 @@ endif (OCCI_SUPPORT)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})
+set_property(TARGET ctardbms PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctardbms PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 set (CTARDBMS_LINK_LIBRARIES
   ctacommon
@@ -108,6 +110,8 @@ endif (OCCI_SUPPORT)
 
 add_library (ctardbmsunittests SHARED
   ${RDBMS_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctardbmsunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctardbmsunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbmsunittests
   ctacatalogue)

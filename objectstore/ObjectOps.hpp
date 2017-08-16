@@ -124,13 +124,13 @@ public:
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
   }
-  
+   
   void resetValues () {
     m_existingObject = false;
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
   }
-  
+   
   void setOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_owner(owner);

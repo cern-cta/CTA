@@ -114,10 +114,10 @@ private:
     noLock
   };
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
-    FetchFlavour fetchFlavour=FetchFlavour::lock);
+    log::LogContext & logContext, FetchFlavour fetchFlavour=FetchFlavour::lock);
 public:
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */
@@ -188,7 +188,8 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void succeed() override;
+    virtual void asyncSucceed() override;
+    virtual void checkSucceed() override;
     virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
@@ -202,6 +203,7 @@ public:
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount & m_retrieveMount;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
   
   /* === Archive requests handling  ========================================= */

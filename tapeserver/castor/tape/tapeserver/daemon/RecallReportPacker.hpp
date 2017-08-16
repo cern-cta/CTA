@@ -125,6 +125,7 @@ private:
   public:
     virtual ~Report(){}
     virtual void execute(RecallReportPacker& packer)=0;
+    virtual void waitForAsyncExecuteFinished() {};
     virtual bool goingToEnd() {return false;}
   };
   class ReportTestGoingToEnd :  public Report {
@@ -144,6 +145,7 @@ private:
     ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob): 
     m_successfulRetrieveJob(std::move(successfulRetrieveJob)){}
     void execute(RecallReportPacker& reportPacker) override;
+    void waitForAsyncExecuteFinished() override;
   };
   class ReportError : public Report {
     /**
@@ -220,6 +222,27 @@ private:
    * Tracking of the disk thread end
    */
   bool m_diskThreadComplete;
+public:
+  /*
+   * Check if flush limit is reached and proceed finish procedure for async execute
+   *  
+   * @param reportedSuccessfuly The successful reports to check
+   * @return The number of reports proceeded
+   */
+  unsigned int flushCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully);
+  
+  /*
+   * Proceed finish procedure for async execute for all reports.
+   *  
+   * @param reportedSuccessfuly The successful reports to check
+   * @return The number of reports proceeded
+   */
+  unsigned int fullCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully);
+  
+  /*
+   * The limit for successful reports to trigger flush.
+   */
+  const unsigned int RECALL_REPORT_PACKER_FLUSH_SIZE = 32;
 };
 
 }}}}

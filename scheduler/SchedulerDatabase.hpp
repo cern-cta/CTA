@@ -336,7 +336,8 @@ public:
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
     cta::common::dataStructures::ArchiveFile archiveFile;
     uint64_t selectedCopyNb;
-    virtual void succeed() = 0;
+    virtual void asyncSucceed() = 0;
+    virtual void checkSucceed() = 0;
     virtual void fail(log::LogContext &) = 0;
     virtual ~RetrieveJob() {}
   };
@@ -447,7 +448,7 @@ public:
    * tape to mount next. This also starts the mount decision process (and takes
    * a global lock on for scheduling).
    */
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo() = 0;
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   
   /**
    * A function running a queue trim. This should be called if the corresponding
@@ -459,7 +460,7 @@ public:
    * A function dumping the relevant mount information for reporting the system
    * status. It is identical to getMountInfo, yet does not take the global lock.
    */
-  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock() = 0;
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) = 0;
   
   /* === Drive state handling  ============================================== */
   /**

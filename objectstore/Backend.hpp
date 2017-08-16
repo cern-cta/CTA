@@ -108,6 +108,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotFetch);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUpdateValue);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotCommit);
+  CTA_GENERATE_EXCEPTION_CLASS(CouldNotDelete);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUnlock);
   CTA_GENERATE_EXCEPTION_CLASS(AsyncUpdateWithDelete);
   
@@ -137,6 +138,34 @@ public:
    * @return pointer to a newly created AsyncUpdater (for RAII)
    */
   virtual AsyncUpdater * asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) = 0;
+  
+  
+  /**
+   * A base class handling asynchronous sequence of lock exclusive, delete.
+   * Each operation will be asynchronous, and the result
+   * (success or exception) will be returned via the wait() function call. 
+   */
+  class AsyncDeleter { 
+ public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     */
+    virtual void wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncDeleter() {}
+  };
+  
+  /**
+   * Triggers the asynchronous object delete sequence, as described in 
+   * AsyncDeleter class description.
+   * 
+   * @param name The name of the object to be deleted.
+   * @return pointer to a newly created AsyncDeleter
+   */
+  virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
   
   /**
    * Base class for the representation of the parameters of the BackendStore.

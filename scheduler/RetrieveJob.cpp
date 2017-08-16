@@ -40,12 +40,19 @@ cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
   transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
 //------------------------------------------------------------------------------
-// complete
+// asyncComplete
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::complete() {
-  m_dbJob->succeed();
+void cta::RetrieveJob::asyncComplete() {
+  m_dbJob->asyncSucceed();
 }
-  
+
+//------------------------------------------------------------------------------
+// checkComplete
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::checkComplete() {
+  m_dbJob->checkSucceed();
+}
+
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------

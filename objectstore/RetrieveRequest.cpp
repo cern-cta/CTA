@@ -476,5 +476,15 @@ std::string RetrieveRequest::dump() {
   return headerDump;
 }
 
+RetrieveRequest::AsyncJobDeleter * RetrieveRequest::asyncDeleteJob() {
+  std::unique_ptr<AsyncJobDeleter> ret(new AsyncJobDeleter);
+  ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
+  return ret.release();
+}
+
+void RetrieveRequest::AsyncJobDeleter::wait() {
+ m_backendDeleter->wait();
+}
+
 }} // namespace cta::objectstore
 

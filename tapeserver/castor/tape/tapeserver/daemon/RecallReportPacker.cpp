@@ -112,7 +112,14 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  m_successfulRetrieveJob->complete();
+  m_successfulRetrieveJob->asyncComplete();
+}
+
+//------------------------------------------------------------------------------
+//ReportSuccessful::waitForAsyncExecuteFinished
+//------------------------------------------------------------------------------
+void RecallReportPacker::ReportSuccessful::waitForAsyncExecuteFinished(){
+  m_successfulRetrieveJob->checkComplete();
 }
 
 //------------------------------------------------------------------------------
@@ -217,6 +224,8 @@ void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
+  
+  std::list <std::unique_ptr<Report>> reportedSuccessfully;
   while(1) {
     std::string debugType;
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
@@ -242,6 +251,17 @@ void RecallReportPacker::WorkerThread::run(){
     // as opposed to migrations where one failure fails the session.
     try {
       rep->execute(m_parent);
+      if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful)) {
+        reportedSuccessfully.emplace_back(std::move(rep)); 
+        cta::utils::Timer timing;
+        const unsigned int checkedReports = m_parent.flushCheckAndFinishAsyncExecute(reportedSuccessfully);    
+        if(checkedReports) {
+          cta::log::ScopedParamContainer params(m_parent.m_lc);
+          params.add("checkedReports", checkedReports)
+                .add("reportingTime", timing.secs());
+          m_parent.m_lc.log(cta::log::DEBUG, "After flushCheckAndFinishAsyncExecute()");
+        }
+      }
     } catch(const cta::exception::Exception& e){
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
@@ -275,6 +295,42 @@ void RecallReportPacker::WorkerThread::run(){
     }
     if (endFound) break;
   }
+  
+  try {
+    cta::utils::Timer timing;
+    const unsigned int checkedReports = m_parent.fullCheckAndFinishAsyncExecute(reportedSuccessfully); 
+    if (checkedReports) {
+      cta::log::ScopedParamContainer params(m_parent.m_lc);
+      params.add("checkedReports", checkedReports)
+            .add("reportingTime", timing.secs());
+      m_parent.m_lc.log(cta::log::DEBUG, "After fullCheckAndFinishAsyncExecute()");    
+    } 
+  } catch(const cta::exception::Exception& e){
+      cta::log::ScopedParamContainer params(m_parent.m_lc);
+      params.add("exceptionWhat", e.getMessageValue())
+            .add("exceptionType", typeid(e).name());
+      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a CTA exception.");
+      if (m_parent.m_watchdog) {
+        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+      } 
+  } catch(const std::exception& e){
+      cta::log::ScopedParamContainer params(m_parent.m_lc);
+      params.add("exceptionWhat", e.what())
+            .add("exceptionType", typeid(e).name());
+      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a standard exception.");
+      if (m_parent.m_watchdog) {
+        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+      }
+  } catch(...){
+      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got an unknown exception.");
+      if (m_parent.m_watchdog) {
+        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+      }
+  } 
+  
   // Drain the fifo in case we got an exception
   if (!endFound) {
     while (1) {
@@ -303,6 +359,38 @@ void RecallReportPacker::WorkerThread::run(){
 //------------------------------------------------------------------------------
 bool RecallReportPacker::errorHappened() {
   return m_errorHappened || (m_watchdog && m_watchdog->errorHappened());
+}
+
+//------------------------------------------------------------------------------
+//flushCheckAndFinishAsyncExecute()
+//------------------------------------------------------------------------------
+unsigned int RecallReportPacker::flushCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully) {
+  unsigned int checkedReports = 0;
+  if (reportedSuccessfully.size() >= RECALL_REPORT_PACKER_FLUSH_SIZE) {
+    while (!reportedSuccessfully.empty()) {
+      std::unique_ptr<Report> report=std::move(reportedSuccessfully.back());
+      reportedSuccessfully.pop_back();
+      if (!report.get()) continue;
+      report->waitForAsyncExecuteFinished();
+      checkedReports ++;
+    }
+  }  
+  return checkedReports;
+}
+
+//------------------------------------------------------------------------------
+//fullCheckAndFinishAsyncExecute()
+//------------------------------------------------------------------------------
+unsigned int RecallReportPacker::fullCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully) {
+  unsigned int checkedReports = 0;
+  while (!reportedSuccessfully.empty()) {
+    std::unique_ptr<Report> report=std::move(reportedSuccessfully.back());
+    reportedSuccessfully.pop_back();
+    if (!report.get()) continue;
+    report->waitForAsyncExecuteFinished();
+    checkedReports++;
+  }
+  return checkedReports;
 }
 
 //------------------------------------------------------------------------------

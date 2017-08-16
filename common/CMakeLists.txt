@@ -135,6 +135,9 @@ set (COMMON_LIB_SRC_FILES
 
 add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})
+set_property(TARGET ctacommon PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
@@ -176,6 +179,8 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

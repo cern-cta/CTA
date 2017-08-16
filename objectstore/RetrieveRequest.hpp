@@ -57,6 +57,15 @@ public:
     uint32_t totalRetries;
     // TODO: status
   };
+  // An asynchronous job ownership updating class.
+  class AsyncJobDeleter {
+    friend class RetrieveRequest;
+  public:
+    void wait();
+  private:
+    std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
+  };
+  AsyncJobDeleter * asyncDeleteJob();
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
   bool addJobFailure(uint16_t copyNumber, uint64_t mountId); /**< Returns true is the request is completely failed 

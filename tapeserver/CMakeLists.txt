@@ -25,6 +25,8 @@ install (FILES cta-taped.service DESTINATION /etc/systemd/system)
 # CTA's cta-taped system tests.
 add_library(cta-tapedSystemTests SHARED
   cta-tapedSystemtests.cpp)
+set_property(TARGET cta-tapedSystemTests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET cta-tapedSystemTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(cta-tapedSystemTests
   unitTestHelper

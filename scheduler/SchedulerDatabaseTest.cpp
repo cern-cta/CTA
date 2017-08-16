@@ -193,7 +193,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   
   // Then load all archive jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo();
+  auto moutInfo = db.getMountInfo(lc);
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
@@ -282,7 +282,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  moutInfo = db.getMountInfo();
+  moutInfo = db.getMountInfo(lc);
   am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
   done = false;
   count = 0;

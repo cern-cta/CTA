@@ -90,6 +90,8 @@ add_library(ctatapeserverdaemonunittests SHARED
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
 )
+set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeserverdaemonunittests
   ctamessagesutils)

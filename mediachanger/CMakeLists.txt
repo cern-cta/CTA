@@ -55,6 +55,8 @@ set (MEDIACHANGER_LIB_SRC_FILES
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
+set_property(TARGET ctamediachanger PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachanger
   ctacommon
@@ -77,6 +79,8 @@ set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctamediachangerunittests SHARED
   ${MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctamediachangerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamediachangerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachangerunittests
   ctamediachanger)
