@@ -19,12 +19,12 @@
 
 #include <stdexcept>
 #include <iostream>
-//#include <sstream>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
 
 #include "XrdSsiPbDebug.hpp"
-#include "CtaAdminApi.h"
+#include "CtaAdminApi.hpp"
+#include "CtaAdminCmd.hpp"
 
 
 
@@ -68,6 +68,9 @@ const std::runtime_error Usage("Usage: cta_admin [command] [options]");
 
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
+   // Tokenize the command line arguments
+
+   CtaAdminCmd cmd(argc, argv);
 #if 0
    // Verify that the Google Protocol Buffer header and linked library versions are compatible
 

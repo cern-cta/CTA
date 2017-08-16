@@ -25,7 +25,7 @@
 #include "common/dataStructures/FrontendReturnCode.hpp"
 
 #include "XrdSsiPbDebug.hpp"
-#include "EosCtaApi.h"
+#include "EosCtaApi.hpp"
 
 
 
