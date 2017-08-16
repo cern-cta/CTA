@@ -35,13 +35,14 @@
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 #include <iomanip>
-#include <iostream>
 #include <memory>
 #include <pwd.h>
-#include <sstream>
 #include <string>
 #include <time.h>
 #endif
+
+#include <iostream> // for debug output
+#include <sstream>
 
 #include "CtaAdminCmd.hpp"
 
@@ -49,11 +50,111 @@
 
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv)
 {
+   // Check we have at least one parameter
+
+   if(argc < 2) throw std::runtime_error(getGenericHelp(argv[0]));
+
+   // Tokenize the command
+
    for(int i = 0; i < argc; ++i)
    {
       m_requestTokens.push_back(argv[i]);
    }
+
+   // Parse the command
+
+   std::string &command = m_requestTokens.at(1);
+  
+   if     ("ad"   == command || "admin"                  == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_admin();}
+   else if("ah"   == command || "adminhost"              == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_adminhost();}
+   else if("tp"   == command || "tapepool"               == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_tapepool();}
+   else if("ar"   == command || "archiveroute"           == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_archiveroute();}
+   else if("ll"   == command || "logicallibrary"         == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_logicallibrary();}
+   else if("ta"   == command || "tape"                   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_tape();}
+   else if("sc"   == command || "storageclass"           == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_storageclass();}
+   else if("rmr"  == command || "requestermountrule"     == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_requestermountrule();}
+   else if("gmr"  == command || "groupmountrule"         == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_groupmountrule();}
+   else if("mp"   == command || "mountpolicy"            == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_mountpolicy();}
+   else if("re"   == command || "repack"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_repack();}
+   else if("sh"   == command || "shrink"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_shrink();}
+   else if("ve"   == command || "verify"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_verify();}
+   else if("af"   == command || "archivefile"            == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_archivefile();}
+   else if("te"   == command || "test"                   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_test();}
+   else if("dr"   == command || "drive"                  == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_drive();}
+   else if("lpa"  == command || "listpendingarchives"    == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_listpendingarchives();}
+   else if("lpr"  == command || "listpendingretrieves"   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_listpendingretrieves();}
+   else if("sq"   == command || "showqueues"             == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_showqueues();}
+
+   else if("a"    == command || "archive"                == command) xCom_notimpl(); //{return xCom_archive();}
+   else if("r"    == command || "retrieve"               == command) xCom_notimpl(); //{return xCom_retrieve();}
+   else if("da"   == command || "deletearchive"          == command) xCom_notimpl(); //{return xCom_deletearchive();}
+   else if("cr"   == command || "cancelretrieve"         == command) xCom_notimpl(); //{return xCom_cancelretrieve();}
+   else if("ufi"  == command || "updatefileinfo"         == command) xCom_notimpl(); //{return xCom_updatefileinfo();}
+   else if("ufsc" == command || "updatefilestorageclass" == command) xCom_notimpl(); //{return xCom_updatefilestorageclass();}
+   else if("lsc"  == command || "liststorageclass"       == command) xCom_notimpl(); //{return xCom_liststorageclass();}
+
+   else {
+     throw std::runtime_error(getGenericHelp(m_requestTokens.at(0)));
+   }
 }
+
+
+
+std::string CtaAdminCmd::getGenericHelp(const std::string &programName) const
+{
+   std::stringstream help;
+
+   help << "CTA ADMIN commands:"                                                 << std::endl
+                                                                                 << std::endl
+        << "For each command there is a short version and a long one. "
+        << "Subcommands (add/rm/ls/ch/reclaim) do not have short versions."      << std::endl
+                                                                                 << std::endl;
+
+   help << programName << " admin/ad                 add/ch/rm/ls"               << std::endl
+        << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl
+        << programName << " archivefile/af           ls"                         << std::endl
+        << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl
+        << programName << " drive/dr                 up/down/ls"                 << std::endl
+        << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl
+        << programName << " listpendingarchives/lpa"                             << std::endl
+        << programName << " listpendingretrieves/lpr"                            << std::endl
+        << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl
+        << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl
+        << programName << " repack/re                add/rm/ls/err"              << std::endl
+        << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl
+        << programName << " shrink/sh"                                           << std::endl
+        << programName << " storageclass/sc          add/ch/rm/ls"               << std::endl
+        << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl
+        << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl
+        << programName << " test/te                  read/write"                 << std::endl
+        << programName << " verify/ve                add/rm/ls/err"              << std::endl
+                                                                                 << std::endl;
+
+   help << "CTA EOS commands: [NOT IMPLEMENTED]"                                 << std::endl
+                                                                                 << std::endl
+        << "For each command there is a short version and a long one."           << std::endl
+                                                                                 << std::endl
+        << programName << " archive/a"                                           << std::endl
+        << programName << " cancelretrieve/cr"                                   << std::endl
+        << programName << " deletearchive/da"                                    << std::endl
+        << programName << " liststorageclass/lsc"                                << std::endl
+        << programName << " retrieve/r"                                          << std::endl
+        << programName << " updatefileinfo/ufi"                                  << std::endl
+        << programName << " updatefilestorageclass/ufsc"                         << std::endl
+                                                                                 << std::endl
+        << "Special option for running " << programName
+        << " within the EOS workflow engine:"                                    << std::endl
+                                                                                 << std::endl
+        << programName << " ... --stderr" << std::endl
+                                                                                 << std::endl
+        << "The option tells " << programName
+        << " to write results to both standard out and standard error."          << std::endl
+        << "The option must be specified as the very last command-line argument of "
+        << programName << "."                                                    << std::endl;
+
+   return help.str();
+}
+
 
 
 #if 0
@@ -121,46 +222,6 @@ void CtaAdminCmd::logRequestAndSetCmdlineResult(const cta::common::dataStructure
   }
 }
 
-
-
-/*!
- * commandDispatcher
- */
-std::string CtaAdminCmd::dispatchCommand() {
-  std::string command(m_requestTokens.at(1));
-  
-  if     ("ad"   == command || "admin"                  == command) {authorizeAdmin(); return xCom_admin();}
-  else if("ah"   == command || "adminhost"              == command) {authorizeAdmin(); return xCom_adminhost();}
-  else if("tp"   == command || "tapepool"               == command) {authorizeAdmin(); return xCom_tapepool();}
-  else if("ar"   == command || "archiveroute"           == command) {authorizeAdmin(); return xCom_archiveroute();}
-  else if("ll"   == command || "logicallibrary"         == command) {authorizeAdmin(); return xCom_logicallibrary();}
-  else if("ta"   == command || "tape"                   == command) {authorizeAdmin(); return xCom_tape();}
-  else if("sc"   == command || "storageclass"           == command) {authorizeAdmin(); return xCom_storageclass();}
-  else if("rmr"  == command || "requestermountrule"     == command) {authorizeAdmin(); return xCom_requestermountrule();}
-  else if("gmr"  == command || "groupmountrule"         == command) {authorizeAdmin(); return xCom_groupmountrule();}
-  else if("mp"   == command || "mountpolicy"            == command) {authorizeAdmin(); return xCom_mountpolicy();}
-  else if("re"   == command || "repack"                 == command) {authorizeAdmin(); return xCom_repack();}
-  else if("sh"   == command || "shrink"                 == command) {authorizeAdmin(); return xCom_shrink();}
-  else if("ve"   == command || "verify"                 == command) {authorizeAdmin(); return xCom_verify();}
-  else if("af"   == command || "archivefile"            == command) {authorizeAdmin(); return xCom_archivefile();}
-  else if("te"   == command || "test"                   == command) {authorizeAdmin(); return xCom_test();}
-  else if("dr"   == command || "drive"                  == command) {authorizeAdmin(); return xCom_drive();}
-  else if("lpa"  == command || "listpendingarchives"    == command) {authorizeAdmin(); return xCom_listpendingarchives();}
-  else if("lpr"  == command || "listpendingretrieves"   == command) {authorizeAdmin(); return xCom_listpendingretrieves();}
-  else if("sq"   == command || "showqueues"             == command) {authorizeAdmin(); return xCom_showqueues();}
-  
-  else if("a"    == command || "archive"                == command) {return xCom_archive();}
-  else if("r"    == command || "retrieve"               == command) {return xCom_retrieve();}
-  else if("da"   == command || "deletearchive"          == command) {return xCom_deletearchive();}
-  else if("cr"   == command || "cancelretrieve"         == command) {return xCom_cancelretrieve();}
-  else if("ufi"  == command || "updatefileinfo"         == command) {return xCom_updatefileinfo();}
-  else if("ufsc" == command || "updatefilestorageclass" == command) {return xCom_updatefilestorageclass();}
-  else if("lsc"  == command || "liststorageclass"       == command) {return xCom_liststorageclass();}
-  
-  else {
-    throw cta::exception::UserError(getGenericHelp(m_requestTokens.at(0)));
-  }
-}
 
 
 
@@ -2276,57 +2337,5 @@ std::string CtaAdminCmd::xCom_liststorageclass() {
   m_scheduler->listStorageClass(m_cliIdentity.username, request);
   return cmdlineOutput.str();
 }
-  
-
-
-/*!
- * getGenericHelp
- */
-std::string CtaAdminCmd::getGenericHelp(const std::string &programName) const {  
-  std::stringstream help;
-  help << "CTA ADMIN commands:" << std::endl;
-  help << "" << std::endl;
-  help << "For each command there is a short version and a long one. Subcommands (add/rm/ls/ch/reclaim) do not have short versions." << std::endl;
-  help << "" << std::endl;
-  help << programName << " admin/ad                 add/ch/rm/ls"               << std::endl;
-  help << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl;
-  help << programName << " archivefile/af           ls"                         << std::endl;
-  help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
-  help << programName << " drive/dr                 up/down/ls"                 << std::endl;
-  help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
-  help << programName << " listpendingarchives/lpa"                             << std::endl;
-  help << programName << " listpendingretrieves/lpr"                            << std::endl;
-  help << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl;
-  help << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl;
-  help << programName << " repack/re                add/rm/ls/err"              << std::endl;
-  help << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl;
-  help << programName << " shrink/sh"                                           << std::endl;
-  help << programName << " storageclass/sc          add/ch/rm/ls"               << std::endl;
-  help << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl;
-  help << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl;
-  help << programName << " test/te                  read/write"                 << std::endl;
-  help << programName << " verify/ve                add/rm/ls/err"              << std::endl;
-  help << "" << std::endl;
-  help << "CTA EOS commands:" << std::endl;
-  help << "" << std::endl;
-  help << "For each command there is a short version and a long one." << std::endl;
-  help << "" << std::endl;
-  help << programName << " archive/a"                                           << std::endl;
-  help << programName << " cancelretrieve/cr"                                   << std::endl;
-  help << programName << " deletearchive/da"                                    << std::endl;
-  help << programName << " liststorageclass/lsc"                                << std::endl;
-  help << programName << " retrieve/r"                                          << std::endl;
-  help << programName << " updatefileinfo/ufi"                                  << std::endl;
-  help << programName << " updatefilestorageclass/ufsc"                         << std::endl;
-  help << "" << std::endl;
-  help << "Special option for running " << programName << " within the EOS worflow engine:" << std::endl;
-  help << "" << std::endl;
-  help << programName << " ... --stderr" << std::endl;
-  help << "" << std::endl;
-  help << "The option tells " << programName << " to write results to both standard out and standard error." <<
-    std::endl;
-  help << "The option must be specified as the very last command-line argument of " << programName << "." << std::endl;
-  return help.str();
-}
 #endif
-
+  

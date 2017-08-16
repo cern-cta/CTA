@@ -20,6 +20,7 @@
 #ifndef __CTA_ADMIN_CMD_HPP
 #define __CTA_ADMIN_CMD_HPP
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -32,8 +33,22 @@ public:
 
 private:
    /*!
-    * The command line parameters represented as a vector of strings
+    * Returns the help string
+    * 
+    * @param      programName    The name of the client program
+    *
+    * @returns    the help string
     */
+   std::string getGenericHelp(const std::string &programName) const;
+  
+   /*!
+    * Placeholder for admin commands which have not been implemented yet
+    */
+   void xCom_notimpl() const {
+      throw std::runtime_error("Command not implemented.");
+   }
+
+   //! The command line parameters represented as a vector of strings
    std::vector<std::string> m_requestTokens;
 };
 
@@ -410,14 +425,6 @@ protected:
    * @param  lastModificationLog the last modification log
    */
   void addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog);
-  
-  /**
-   * Returns the help string
-   * 
-   * @param  programName The name of the client program
-   * @return the help string
-   */
-  std::string getGenericHelp(const std::string &programName) const;
   
   /**
    * Converts a parameter string into a uint64_t (throws a cta::exception if it fails)
