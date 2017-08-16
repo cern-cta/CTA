@@ -113,7 +113,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
             .add("rootUnlockExclusiveTime", rootUnlockExclusiveTime)
             .add("queueLockTime", queueLockTime)
             .add("queueFetchTime", queueFetchTime);
-      lc.log(log::ERR, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): failed to fetch an existing queue. Retrying.");
       archiveQueue.resetAddress();
       continue;
     } catch (...) {
