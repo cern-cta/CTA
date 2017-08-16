@@ -151,7 +151,10 @@ test -f /CANSTART && echo OK || exit 1
   xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
 
 # prepare EOS workflow
+  # enable eos workflow engine
   eos space config default space.wfe=on
+  # set the thread-pool size of concurrently running workflows
+  eos space config default space.wfe.ntx=3
 
 # ATTENTION
 # for sss authorisation  unix has to be replaced by sss
