@@ -444,7 +444,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // implemented in the scheduler itself.
   // First, get the mount-related info from the DB
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfo();
+  mountInfo = m_db.getMountInfo(lc);
   if (mountInfo->queueTrimRequired) m_db.trimEmptyQueues(lc);
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
@@ -688,7 +688,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   std::list<common::dataStructures::QueueAndMountSummary> ret;
   // Extract relevant information from the object store.
   utils::Timer t;
-  auto mountDecisionInfo=m_db.getMountInfoNoLock();
+  auto mountDecisionInfo=m_db.getMountInfoNoLock(lc);
   auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
   for (auto & pm: mountDecisionInfo->potentialMounts) {

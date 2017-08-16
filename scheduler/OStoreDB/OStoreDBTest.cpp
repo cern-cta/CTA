@@ -158,7 +158,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     ar.commit();
   }
   // We can now fetch all jobs.
-  auto mountInfo = osdbi.getMountInfo();
+  auto mountInfo = osdbi.getMountInfo(lc);
   cta::catalogue::TapeForWriting tape;
   tape.capacityInBytes = 1;
   tape.dataOnTapeInBytes = 0;

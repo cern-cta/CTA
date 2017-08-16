@@ -114,10 +114,10 @@ private:
     noLock
   };
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
-    FetchFlavour fetchFlavour=FetchFlavour::lock);
+    log::LogContext & logContext, FetchFlavour fetchFlavour=FetchFlavour::lock);
 public:
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock() override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */

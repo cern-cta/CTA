@@ -85,28 +85,32 @@ void OStoreDB::ping() {
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re, 
-    FetchFlavour fetchFlavour) {
+    log::LogContext & logContext, FetchFlavour fetchFlavour) {
+  utils::Timer t, t2;
   // Walk the archive queues for statistics
   for (auto & aqp: re.dumpArchiveQueues()) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
     objectstore::ScopedSharedLock aqlock;
+    double queueLockTime = 0;
+    double queueFetchTime = 0;
     try {
       if (fetchFlavour == FetchFlavour::lock) {
         aqlock.lock(aqueue);
+        queueLockTime = t.secs(utils::Timer::resetCounter);
         aqueue.fetch();
       } else {
         aqueue.fetchNoLock();
       }
+      queueFetchTime = t.secs(utils::Timer::resetCounter);
     } catch (cta::exception::Exception &ex) {
-      log::LogContext lc(m_logger);
-      log::ScopedParamContainer params (lc);
+      log::ScopedParamContainer params (logContext);
       params.add("queueObject", aqp.address)
             .add("tapepool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue())
             .add("fetchFlavour", (fetchFlavour == FetchFlavour::lock)?"lock":"noLock");
-      lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
+      logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
       continue;
     }
     // If there are files queued, we create an entry for this tape pool in the
@@ -126,6 +130,15 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } else {
       tmdi.queueTrimRequired = true;
     }
+    auto processingTime = t.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params (logContext);
+    params.add("queueObject", aqp.address)
+          .add("tapepool", aqp.tapePool)
+          .add("queueLockTime", queueLockTime)
+          .add("queueFetchTime", queueFetchTime)
+          .add("processingTime", processingTime)
+          .add("fetchFlavour", (fetchFlavour == FetchFlavour::lock)?"lock":"noLock");
+    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive queue.");
   }
   // Walk the retrieve queues for statistics
   for (auto & rqp: re.dumpRetrieveQueues()) {
@@ -133,9 +146,17 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // debug utility variable
     std::string __attribute__((__unused__)) vid = rqp.vid;
     ScopedSharedLock rqlock;
+    double queueLockTime = 0;
+    double queueFetchTime = 0;
     try {
-      rqlock.lock(rqueue);
-      rqueue.fetch();
+      if (fetchFlavour == FetchFlavour::lock) {
+        rqlock.lock(rqueue);
+        rqueue.fetch();
+        queueLockTime = t.secs(utils::Timer::resetCounter);
+      } else {
+        rqueue.fetchNoLock();
+      }
+      queueFetchTime = t.secs(utils::Timer::resetCounter);
     } catch (cta::exception::Exception &ex) {
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params (lc);
@@ -162,13 +183,31 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } else {
       tmdi.queueTrimRequired = true;
     }
+    auto processingTime = t.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params (logContext);
+    params.add("queueObject", rqp.address)
+          .add("vid", rqp.vid)
+          .add("queueLockTime", queueLockTime)
+          .add("queueFetchTime", queueFetchTime)
+          .add("processingTime", processingTime)
+          .add("fetchFlavour", (fetchFlavour == FetchFlavour::lock)?"lock":"noLock");
+    logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched a retrieve queue.");
   }
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-  objectstore::ScopedSharedLock drl(dr);
-  dr.fetch();
+  objectstore::ScopedSharedLock drl;
+  double regsiterLockTime = 0;
+  double registerFetchTime = 0;
+  if (fetchFlavour == FetchFlavour::lock) {
+    drl.lock(dr);
+    regsiterLockTime = t.secs(utils::Timer::resetCounter);
+    dr.fetch();
+  } else {
+    dr.fetchNoLock();
+  }
+  registerFetchTime = t.secs(utils::Timer::resetCounter);
   auto dl = dr.getAllDrivesState();
   using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {
@@ -207,13 +246,21 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().latestBandwidth = 0;
     }
   }
+  auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
+  log::ScopedParamContainer params (logContext);
+  params.add("queueLockTime", regsiterLockTime)
+        .add("queueFetchTime", registerFetchTime)
+        .add("processingTime", registerProcessingTime)
+        .add("fetchFlavour", (fetchFlavour == FetchFlavour::lock)?"lock":"noLock");
+  logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched the drive register.");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> 
-  OStoreDB::getMountInfo() {
+  OStoreDB::getMountInfo(log::LogContext& logContext) {
+  utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
   std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet (new OStoreDB::TapeMountDecisionInfo(
@@ -221,19 +268,54 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   TapeMountDecisionInfo & tmdi=*privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
+  auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
   // Take an exclusive lock on the scheduling and fetch it.
   tmdi.m_schedulerGlobalLock.reset(
     new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
   tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
+  auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
-  fetchMountInfo(tmdi, re);
+  auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);;
+  fetchMountInfo(tmdi, re, logContext);
+  auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  {
+    log::ScopedParamContainer params(logContext);
+    params.add("rootFetchNoLockTime", rootFetchNoLockTime)
+          .add("lockSchedGlobalTime", lockSchedGlobalTime)
+          .add("fetchSchedGlobalTime", fetchSchedGlobalTime)
+          .add("fetchMountInfoTime", fetchMountInfoTime);
+    logContext.log(log::INFO, "In OStoreDB::getMountInfo(): success.");
+  }
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfoNoLock()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfoNoLock(log::LogContext & logContext) {
+  utils::Timer t;
+  //Allocate the getMountInfostructure to return.
+  assertAgentAddressSet();
+  std::unique_ptr<OStoreDB::TapeMountDecisionInfoNoLock> privateRet (new OStoreDB::TapeMountDecisionInfoNoLock);
+  // Get all the tape pools and tapes with queues (potential mounts)
+  objectstore::RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
+  TapeMountDecisionInfoNoLock & tmdi=*privateRet;
+  fetchMountInfo(tmdi, re, logContext, FetchFlavour::noLock);
+  auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  {
+    log::ScopedParamContainer params(logContext);
+    params.add("rootFetchNoLockTime", rootFetchNoLockTime)
+          .add("fetchMountInfoTime", fetchMountInfoTime);
+    logContext.log(log::INFO, "In OStoreDB::getMountInfoNoLock(): success.");
+  }
+  return ret;
+}
 //------------------------------------------------------------------------------
 // OStoreDB::trimEmptyQueues()
 //------------------------------------------------------------------------------
@@ -279,24 +361,6 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
     lc.log(log::ERR, "In OStoreDB::trimEmptyQueues(): got an exception. Stack trace follows.");
     lc.logBacktrace(log::ERR, ex.backtrace());
   }
-}
-
-
-//------------------------------------------------------------------------------
-// OStoreDB::getMountInfoNoLock()
-//------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfoNoLock() {
-  //Allocate the getMountInfostructure to return.
-  assertAgentAddressSet();
-  std::unique_ptr<OStoreDB::TapeMountDecisionInfoNoLock> privateRet (new OStoreDB::TapeMountDecisionInfoNoLock);
-  // Get all the tape pools and tapes with queues (potential mounts)
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetchNoLock();
-  TapeMountDecisionInfoNoLock & tmdi=*privateRet;
-  fetchMountInfo(tmdi, re, FetchFlavour::noLock);
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
-  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -979,8 +1043,7 @@ std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates() co
 //------------------------------------------------------------------------------
 void OStoreDB::setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) {
   RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
   objectstore::ScopedExclusiveLock drl(dr);
@@ -1002,8 +1065,7 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   using common::dataStructures::DriveStatus;
   // Lock the drive register and try to find the drive entry
   RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
   objectstore::ScopedExclusiveLock drl(dr);
@@ -1434,10 +1496,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
     throw SchedulingLockNotHeld("In OStoreDB::TapeMountDecisionInfo::createArchiveMount: "
       "cannot create mount without holding scheduling lock");
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
-  rel.release();
   am.nbFilesCurrentlyOnTape = tape.lastFSeq;
   am.mountInfo.vid = tape.vid;
   // Fill up the mount info
@@ -1512,10 +1572,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
       "cannot create mount without holding scheduling lock");
   // Find the tape and update it
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
-  rel.release();
   // Fill up the mount info
   rm.mountInfo.vid = vid;
   rm.mountInfo.drive = driveName;
