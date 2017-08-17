@@ -17,8 +17,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CTA_ADMIN_CMD_HPP
-#define __CTA_ADMIN_CMD_HPP
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -482,4 +481,3 @@ const long double MBytes = 1000.0*1000.0;
 }}
 #endif
 
-#endif

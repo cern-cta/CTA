@@ -1,0 +1,79 @@
+// @project        The CERN Tape Archive (CTA)
+// @brief          CTA Frontend XRootD API definition
+// @copyright      Copyright 2017 CERN
+// @license        This program is free software: you can redistribute it and/or modify
+//                 it under the terms of the GNU General Public License as published by
+//                 the Free Software Foundation, either version 3 of the License, or
+//                 (at your option) any later version.
+//
+//                 This program is distributed in the hope that it will be useful,
+//                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+//                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//                 GNU General Public License for more details.
+//
+//                 You should have received a copy of the GNU General Public License
+//                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+syntax = "proto3";
+package cta.xrd;
+
+// CTA-EOS API
+
+import "cta_eos.proto";
+
+
+
+//
+// CTA Admin Command API
+//
+
+message AdminCmd {
+  enum CmdType {
+     CMD_ADMIN                        = 0;      //< admin command
+  }
+  CmdType cmd                         = 1;      //< Specifies the command
+  map<string, bool> flags             = 2;      //< List of flags
+  map<string, string> parameters      = 3;      //< List of parameters
+}
+
+
+
+//
+// Requests sent to the CTA Frontend
+//
+
+message Request {
+  oneof request {
+    cta.eos.Notification notification = 1;      //< EOS WFE Notification
+    AdminCmd admincmd                 = 2;      //< CTA Admin Command
+  }
+}
+
+
+
+//
+// Responses sent by the CTA Frontend
+//
+
+message Response {
+  enum ResponseType {
+    RSP_SUCCESS                       = 0;      //< Notification was queued successfully
+    RSP_ERR_PROTOBUF                  = 1;      //< Framework error caused by Google Protocol Buffers layer
+    RSP_ERR_CTA                       = 2;      //< Server error reported by CTA Frontend
+  }
+  ResponseType type                   = 1;      //< Encode the type of this reply
+  string message_txt                  = 2;      //< Text of the reply
+}
+
+
+
+//
+// Alert Messages
+//
+
+message Alert {
+  enum Audience { LOG = 0; ENDUSER = 1; }
+  Audience audience                   = 1;      //< The intended audience of the message
+  string message_txt                  = 2;      //< Text of the message
+}
+

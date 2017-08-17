@@ -25,7 +25,7 @@
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbResource.hpp"
 #include "XrdSsiPbRequestProc.hpp"
-#include "eos/messages/eos_messages.pb.h"
+#include "xroot_plugins/messages/cta_frontend.pb.h"
 
 #include "XrdSsiCtaServiceProvider.hpp"
 
@@ -39,11 +39,11 @@ namespace XrdSsiPb {
  * @param[in,out]    scheduler       CTA Scheduler to queue this request
  * @param[in,out]    lc              CTA Log Context for this request
  * @param[in]        client          XRootD Client Entity, taken from authentication key for the request
- * @param[in]        notification    EOS WFE Notification message
+ * @param[in]        request         Request message from EOS
  * @param[out]       response        Response message to return to EOS
  */
 static void requestProcCLOSEW(cta::Scheduler &scheduler, cta::log::LogContext &lc, XrdSsiEntity &client,
-   const eos::wfe::Notification &notification, eos::wfe::Response &response)
+   const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -81,7 +81,7 @@ static void requestProcCLOSEW(cta::Scheduler &scheduler, cta::log::LogContext &l
 
    // Set response type
 
-   response.set_type(eos::wfe::Response::RSP_SUCCESS);
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -96,7 +96,7 @@ static void requestProcCLOSEW(cta::Scheduler &scheduler, cta::log::LogContext &l
  * @param[out]       response        Response message to return to EOS
  */
 static void requestProcPREPARE(cta::Scheduler &scheduler, cta::log::LogContext &lc, XrdSsiEntity &client,
-   const eos::wfe::Notification &notification, eos::wfe::Response &response)
+   const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -129,7 +129,7 @@ static void requestProcPREPARE(cta::Scheduler &scheduler, cta::log::LogContext &
 
    // Set response type
 
-   response.set_type(eos::wfe::Response::RSP_SUCCESS);
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -144,7 +144,7 @@ static void requestProcPREPARE(cta::Scheduler &scheduler, cta::log::LogContext &
  * @param[out]       response        Response message to return to EOS
  */
 static void requestProcDELETE(cta::Scheduler &scheduler, cta::log::LogContext &lc, XrdSsiEntity &client,
-   const eos::wfe::Notification &notification, eos::wfe::Response &response)
+   const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -182,7 +182,7 @@ static void requestProcDELETE(cta::Scheduler &scheduler, cta::log::LogContext &l
 
    // Set response type
 
-   response.set_type(eos::wfe::Response::RSP_SUCCESS);
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -191,9 +191,9 @@ static void requestProcDELETE(cta::Scheduler &scheduler, cta::log::LogContext &l
  * Convert a framework exception into a Response
  */
 template<>
-void ExceptionHandler<eos::wfe::Response, PbException>::operator()(eos::wfe::Response &response, const PbException &ex)
+void ExceptionHandler<cta::xrd::Response, PbException>::operator()(cta::xrd::Response &response, const PbException &ex)
 {
-   response.set_type(eos::wfe::Response::RSP_ERR_PROTOBUF);
+   response.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
    response.set_message_txt(ex.what());
 }
 
@@ -203,7 +203,7 @@ void ExceptionHandler<eos::wfe::Response, PbException>::operator()(eos::wfe::Res
  * Process the Notification Request
  */
 template <>
-void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::ExecuteAction()
+void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::ExecuteAction()
 {
    try
    {
@@ -232,21 +232,23 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 
       // Determine the message type
 
-      switch(m_request.wf().event())
+      const cta::eos::Notification &notification = m_request.notification();
+
+      switch(notification.wf().event())
       {
-         using namespace eos::wfe;
+         using namespace cta::eos;
 
          case Workflow::CLOSEW:
-             requestProcCLOSEW(scheduler, lc, client, m_request, m_metadata); break;
+             requestProcCLOSEW(scheduler, lc, client, notification, m_metadata); break;
 
          case Workflow::PREPARE:
-             requestProcPREPARE(scheduler, lc, client, m_request, m_metadata); break;
+             requestProcPREPARE(scheduler, lc, client, notification, m_metadata); break;
 
          case Workflow::DELETE:
-             requestProcDELETE(scheduler, lc, client, m_request, m_metadata); break;
+             requestProcDELETE(scheduler, lc, client, notification, m_metadata); break;
 
          default:
-            throw PbException("Workflow Event type " + std::to_string(m_request.wf().event()) + " is not supported.");
+            throw PbException("Workflow Event type " + std::to_string(notification.wf().event()) + " is not supported.");
       }
 
    }
@@ -255,16 +257,16 @@ void RequestProc<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>::E
 #ifdef XRDSSI_DEBUG
       // Serialize and send a log message
 
-      eos::wfe::Alert alert_msg;
+      cta::xrd::Alert alert_msg;
 
-      alert_msg.set_audience(eos::wfe::Alert::EOSLOG);
+      alert_msg.set_audience(cta::xrd::Alert::LOG);
       alert_msg.set_message_txt("Something bad happened");
 
       Alert(alert_msg);
 #endif
       // Set the response
 
-      m_metadata.set_type(eos::wfe::Response::RSP_ERR_CTA);
+      m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.what());
    }
 }

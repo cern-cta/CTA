@@ -23,9 +23,9 @@
 #include <cryptopp/base64.h>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "xroot_plugins/messages/CtaFrontendApi.hpp"
 
 #include "XrdSsiPbDebug.hpp"
-#include "EosCtaApi.hpp"
 
 
 
@@ -40,7 +40,7 @@ namespace XrdSsiPb {
  */
 
 template<>
-void RequestCallback<eos::wfe::Alert>::operator()(const eos::wfe::Alert &alert)
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
    OutputJsonString(std::cout, &alert);
@@ -63,7 +63,7 @@ const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [opti
  * @param[in]     argval          A base64-encoded blob
  */
 
-void base64Decode(eos::wfe::Notification &notification, const std::string &argval)
+void base64Decode(cta::eos::Notification &notification, const std::string &argval)
 {
    using namespace std;
 
@@ -178,7 +178,7 @@ void base64Decode(eos::wfe::Notification &notification, const std::string &argva
  * @param[in]     argv            The command-line arguments
  */
 
-void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool &isJson, int argc, const char *const *const argv)
+void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool &isJson, int argc, const char *const *const argv)
 {
    isStderr = false;
    isJson = false;
@@ -191,15 +191,15 @@ void fillNotification(eos::wfe::Notification &notification, bool &isStderr, bool
 
    if(wf_command == "archive")
    {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::CLOSEW);
+      notification.mutable_wf()->set_event(cta::eos::Workflow::CLOSEW);
    }
    else if(wf_command == "retrieve")
    {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::PREPARE);
+      notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
    }
    else if(wf_command == "delete")
    {
-      notification.mutable_wf()->set_event(eos::wfe::Workflow::DELETE);
+      notification.mutable_wf()->set_event(cta::eos::Workflow::DELETE);
    }
    else throw Usage;
 
@@ -261,7 +261,8 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-   eos::wfe::Notification notification;
+   cta::xrd::Request request;
+   cta::eos::Notification &notification = *(request.mutable_notification());
 
    // Parse the command line arguments: fill the Notification fields
 
@@ -286,7 +287,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Send the Request to the Service and get a Response
 
-   eos::wfe::Response response = cta_service.Send(notification);
+   cta::xrd::Response response = cta_service.Send(request);
 
    if(isJson)
    {
@@ -297,7 +298,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    switch(response.type())
    {
-      using namespace eos::wfe;
+      using namespace cta::xrd;
 
       case Response::RSP_SUCCESS:         myout << response.message_txt() << std::endl; break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());

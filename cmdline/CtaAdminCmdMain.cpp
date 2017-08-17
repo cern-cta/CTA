@@ -21,9 +21,9 @@
 #include <iostream>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "xroot_plugins/messages/CtaFrontendApi.hpp"
 
 #include "XrdSsiPbDebug.hpp"
-#include "CtaAdminApi.hpp"
 #include "CtaAdminCmd.hpp"
 
 

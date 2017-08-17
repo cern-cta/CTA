@@ -41,7 +41,7 @@ add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
-target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ${PROTOBUF3_LIBRARIES} ctascheduler ctacommon ctaobjectstore ctacatalogue)
+target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

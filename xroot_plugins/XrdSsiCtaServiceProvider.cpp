@@ -22,7 +22,7 @@
 
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
-#include "eos/messages/eos_messages.pb.h"
+#include "xroot_plugins/messages/cta_frontend.pb.h"
 
 #include "version.h"
 #include "common/make_unique.hpp"
@@ -133,7 +133,7 @@ XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const 
    std::cout << "[DEBUG] Called GetService(" << contact << "," << oHold << ")" << std::endl;
 #endif
 
-   XrdSsiService *ptr = new XrdSsiPb::Service<eos::wfe::Notification, eos::wfe::Response, eos::wfe::Alert>;
+   XrdSsiService *ptr = new XrdSsiPb::Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>;
 
    return ptr;
 }

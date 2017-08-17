@@ -16,21 +16,17 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CTA_ADMIN_API_H
-#define __CTA_ADMIN_API_H
+#pragma once
 
-#include "XrdSsiPbServiceClientSide.hpp"     //!< XRootD SSI/Protocol Buffer Service, client-side bindings
-#if 0
-#include "eos/messages/eos_messages.pb.h"    //!< Auto-generated message types from .proto file
+#include "XrdSsiPbServiceClientSide.hpp"                   //!< XRootD SSI/Protocol Buffer Service, client-side bindings
+#include "xroot_plugins/messages/cta_frontend.pb.h"        //!< Auto-generated message types from .proto file
 
 /*!
  * Bind the type of the XrdSsiService to the types defined in the .proto file
  */
 
-typedef XrdSsiPb::ServiceClientSide<eos::wfe::Notification,    //!< XrdSSi Request message type
-                                    eos::wfe::Response,        //!< XrdSsi Metadata message type
-                                    eos::wfe::Alert>           //!< XrdSsi Alert message type
+typedef XrdSsiPb::ServiceClientSide<cta::xrd::Request,     //!< XrdSSi Request message type
+                                    cta::xrd::Response,    //!< XrdSsi Metadata message type
+                                    cta::xrd::Alert>       //!< XrdSsi Alert message type
         XrdSsiPbServiceType;
-#endif
 
-#endif

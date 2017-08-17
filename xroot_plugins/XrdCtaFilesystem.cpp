@@ -27,7 +27,6 @@
 #include "common/Configuration.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/TapePool.hpp"
-#include "eos/messages/eos_messages.pb.h"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "scheduler/LogicalLibrary.hpp"

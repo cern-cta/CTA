@@ -42,7 +42,7 @@ find_package(cryptopp REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS} ${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private ../xroot_ssi_pb)
 add_executable(eoscta_stub EosCtaStub.cpp)
-target_link_libraries(eoscta_stub cryptopp XrdCtaMessages ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
+target_link_libraries(eoscta_stub cryptopp XrdCtaMessages XrdSsi-4 XrdSsiLib)
 install(TARGETS eoscta_stub DESTINATION usr/bin)
 
 #
@@ -50,6 +50,6 @@ install(TARGETS eoscta_stub DESTINATION usr/bin)
 #
 
 add_executable(cta_admin CtaAdminCmdMain.cpp CtaAdminCmd.cpp)
-target_link_libraries(cta_admin ${PROTOBUF3_LIBRARIES} XrdSsi-4 XrdSsiLib)
+target_link_libraries(cta_admin XrdCtaMessages XrdSsi-4 XrdSsiLib)
 install(TARGETS cta_admin DESTINATION usr/bin)
 
