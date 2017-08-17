@@ -30,7 +30,7 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
 set_property(TARGET XrdCtaOfs PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET XrdCtaOfs PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
+target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaobjectstore cryptopp)
 set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 # XRootD SSI plugin for CTA Frontend
@@ -41,7 +41,7 @@ add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp)
-target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib ctaeosmessages ${PROTOBUF3_LIBRARIES} ctascheduler ctacommon ctaobjectstore ctacatalogue)
+target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ${PROTOBUF3_LIBRARIES} ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -25,7 +25,6 @@ endforeach(PROTO_SRC)
 set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
-add_library (ctaeosmessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
+add_library (XrdCtaMessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
 
-target_link_libraries (ctaeosmessages
-  ${PROTOBUF3_LIBRARIES})
+target_link_libraries (XrdCtaMessages ${PROTOBUF3_LIBRARIES})
