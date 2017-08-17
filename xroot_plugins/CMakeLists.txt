@@ -35,6 +35,8 @@ set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 # XRootD SSI plugin for CTA Frontend
 
+add_subdirectory(messages)
+
 add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 

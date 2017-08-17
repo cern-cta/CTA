@@ -16,8 +16,6 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory(messages)
-
 find_package (xrootdclient REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
