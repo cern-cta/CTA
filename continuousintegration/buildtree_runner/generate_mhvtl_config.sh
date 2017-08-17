@@ -19,6 +19,8 @@ Library: ${libid} CHANNEL: $(printf %.2d ${lib}) TARGET: 00 LUN: 00
  Product identification: VLSTK${libid}
  Unit serial number: LIB${libid}
  NAA: 30:22:33:44:ab:$(printf %.2x ${lib}):00:00
+ Compression: factor 1 enabled 1
+ Compression type: lzo
  Home directory: /opt/mhvtl
  PERSIST: False
  Backoff: 400
