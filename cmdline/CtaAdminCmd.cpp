@@ -42,7 +42,9 @@
 #endif
 
 #include <iostream> // for debug output
-#include <sstream>
+
+#include "common/optional.hpp"
+using cta::optional;
 
 #include "CtaAdminCmd.hpp"
 
@@ -50,22 +52,29 @@
 
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv)
 {
-   // Check we have at least one parameter
-
-   if(argc < 2) throw std::runtime_error(getGenericHelp(argv[0]));
-
    // Tokenize the command
 
-   for(int i = 0; i < argc; ++i)
+   std::string filename(argv[0]);
+
+   size_t p = filename.find_last_of('/');
+   if(p != std::string::npos) filename.erase(0, p+1);
+
+   m_requestTokens.push_back(filename);
+
+   for(int i = 1; i < argc; ++i)
    {
       m_requestTokens.push_back(argv[i]);
    }
+
+   // Check we have at least one parameter
+
+   if(argc < 2) throwUsage();
 
    // Parse the command
 
    std::string &command = m_requestTokens.at(1);
   
-   if     ("ad"   == command || "admin"                  == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_admin();}
+   if     ("ad"   == command || "admin"                  == command) xCom_admin();
    else if("ah"   == command || "adminhost"              == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_adminhost();}
    else if("tp"   == command || "tapepool"               == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_tapepool();}
    else if("ar"   == command || "archiveroute"           == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_archiveroute();}
@@ -93,82 +102,200 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv)
    else if("ufsc" == command || "updatefilestorageclass" == command) xCom_notimpl(); //{return xCom_updatefilestorageclass();}
    else if("lsc"  == command || "liststorageclass"       == command) xCom_notimpl(); //{return xCom_liststorageclass();}
 
-   else {
-     throw std::runtime_error(getGenericHelp(m_requestTokens.at(0)));
+   else throwUsage();
+}
+
+
+
+void CtaAdminCmd::xCom_admin()
+{
+   m_help << "Usage: " << m_requestTokens.at(0) << " ad/admin add/ch/rm/ls:" << std::endl
+          << "\tadd --username/-u <user_name> --comment/-m <\"comment\">"   << std::endl
+          << "\tch  --username/-u <user_name> --comment/-m <\"comment\">"   << std::endl
+          << "\trm  --username/-u <user_name>"                              << std::endl
+          << "\tls  [--header/-h]"                                          << std::endl;
+
+   if(m_requestTokens.size() < 3) {
+      throw std::runtime_error(m_help.str());
+   }
+
+   if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2))
+   {
+      optional<std::string> username = getOptionValue<std::string>("-u", "--username", true, false);
+
+      if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2))
+      {
+         optional<std::string> comment = getOptionValue<std::string>("-m", "--comment", true, false);
+         checkOptions();
+      }
+#if 0
+         if("add" == m_requestTokens.at(2)) { //add
+           m_catalogue->createAdminUser(m_cliIdentity, username.value(), comment.value());
+         }
+         else { //ch
+           m_catalogue->modifyAdminUserComment(m_cliIdentity, username.value(), comment.value());
+         }
+      }
+      else // rm
+      {
+         checkOptions(help.str());
+         m_catalogue->deleteAdminUser(username.value());
+      }
+#endif
+   }
+   else if("ls" == m_requestTokens.at(2))
+   {
+      bool is_option_header = hasOption("-h", "--header");
+      if(is_option_header) {}
+#if 0
+      std::list<cta::common::dataStructures::AdminUser> list= m_catalogue->getAdminUsers();
+      if(list.size()>0)
+      {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+        if(hasOption("-h", "--header")) responseTable.push_back(header);    
+        for(auto it = list.cbegin(); it != list.cend(); it++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(it->name);
+          addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+          currentRow.push_back(it->comment);
+          responseTable.push_back(currentRow);
+        }
+        cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      }
+#endif
+   }
+   else
+   {
+      throw std::runtime_error(m_help.str());
    }
 }
 
 
 
-std::string CtaAdminCmd::getGenericHelp(const std::string &programName) const
+void CtaAdminCmd::throwUsage()
 {
-   std::stringstream help;
+   std::string &programName = m_requestTokens.at(0);
 
-   help << "CTA ADMIN commands:"                                                 << std::endl
-                                                                                 << std::endl
-        << "For each command there is a short version and a long one. "
-        << "Subcommands (add/rm/ls/ch/reclaim) do not have short versions."      << std::endl
-                                                                                 << std::endl;
+   m_help << "CTA ADMIN commands:"                                                 << std::endl
+                                                                                   << std::endl
+          << "For each command there is a short version and a long one. "
+          << "Subcommands (add/rm/ls/ch/reclaim) do not have short versions."      << std::endl
+                                                                                   << std::endl;
 
-   help << programName << " admin/ad                 add/ch/rm/ls"               << std::endl
-        << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl
-        << programName << " archivefile/af           ls"                         << std::endl
-        << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl
-        << programName << " drive/dr                 up/down/ls"                 << std::endl
-        << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl
-        << programName << " listpendingarchives/lpa"                             << std::endl
-        << programName << " listpendingretrieves/lpr"                            << std::endl
-        << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl
-        << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl
-        << programName << " repack/re                add/rm/ls/err"              << std::endl
-        << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl
-        << programName << " shrink/sh"                                           << std::endl
-        << programName << " storageclass/sc          add/ch/rm/ls"               << std::endl
-        << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl
-        << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl
-        << programName << " test/te                  read/write"                 << std::endl
-        << programName << " verify/ve                add/rm/ls/err"              << std::endl
-                                                                                 << std::endl;
+   m_help << programName << " admin/ad                 add/ch/rm/ls"               << std::endl
+          << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl
+          << programName << " archivefile/af           ls"                         << std::endl
+          << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl
+          << programName << " drive/dr                 up/down/ls"                 << std::endl
+          << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl
+          << programName << " listpendingarchives/lpa"                             << std::endl
+          << programName << " listpendingretrieves/lpr"                            << std::endl
+          << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl
+          << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl
+          << programName << " repack/re                add/rm/ls/err"              << std::endl
+          << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl
+          << programName << " shrink/sh"                                           << std::endl
+          << programName << " storageclass/sc          add/ch/rm/ls"               << std::endl
+          << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl
+          << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl
+          << programName << " test/te                  read/write"                 << std::endl
+          << programName << " verify/ve                add/rm/ls/err"              << std::endl
+                                                                                   << std::endl;
 
-   help << "CTA EOS commands: [NOT IMPLEMENTED]"                                 << std::endl
-                                                                                 << std::endl
-        << "For each command there is a short version and a long one."           << std::endl
-                                                                                 << std::endl
-        << programName << " archive/a"                                           << std::endl
-        << programName << " cancelretrieve/cr"                                   << std::endl
-        << programName << " deletearchive/da"                                    << std::endl
-        << programName << " liststorageclass/lsc"                                << std::endl
-        << programName << " retrieve/r"                                          << std::endl
-        << programName << " updatefileinfo/ufi"                                  << std::endl
-        << programName << " updatefilestorageclass/ufsc"                         << std::endl
-                                                                                 << std::endl
-        << "Special option for running " << programName
-        << " within the EOS workflow engine:"                                    << std::endl
-                                                                                 << std::endl
-        << programName << " ... --stderr" << std::endl
-                                                                                 << std::endl
-        << "The option tells " << programName
-        << " to write results to both standard out and standard error."          << std::endl
-        << "The option must be specified as the very last command-line argument of "
-        << programName << "."                                                    << std::endl;
+   m_help << "CTA EOS commands: [NOT IMPLEMENTED]"                                 << std::endl
+                                                                                   << std::endl
+          << "For each command there is a short version and a long one."           << std::endl
+                                                                                   << std::endl
+          << programName << " archive/a"                                           << std::endl
+          << programName << " cancelretrieve/cr"                                   << std::endl
+          << programName << " deletearchive/da"                                    << std::endl
+          << programName << " liststorageclass/lsc"                                << std::endl
+          << programName << " retrieve/r"                                          << std::endl
+          << programName << " updatefileinfo/ufi"                                  << std::endl
+          << programName << " updatefilestorageclass/ufsc"                         << std::endl
+                                                                                   << std::endl
+          << "Special option for running " << programName
+          << " within the EOS workflow engine:"                                    << std::endl
+                                                                                   << std::endl
+          << programName << " ... --stderr" << std::endl
+                                                                                   << std::endl
+          << "The option tells " << programName
+          << " to write results to both standard out and standard error."          << std::endl
+          << "The option must be specified as the very last command-line argument of "
+          << programName << "."                                                    << std::endl;
 
-   return help.str();
+   throw std::runtime_error(m_help.str());
+}
+
+
+
+template<typename T>
+optional<T> CtaAdminCmd::getOptionValue(const std::string& optionShortName, const std::string& optionLongName,
+   const bool required, const bool useDefaultIfMissing, const std::string& defaultValue)
+{
+   std::string option = getOption(optionShortName, optionLongName);
+   if(option.empty() && useDefaultIfMissing) {
+      option = defaultValue;
+   }
+   if(option.empty()) {
+      if(required) {
+         m_missingRequiredOptions.push_back(optionLongName);
+      }
+      else {
+         m_missingOptionalOptions.push_back(optionLongName);
+      }
+      return optional<T>();
+   }
+   if(!required) {
+      m_optionalOptions.push_back(optionLongName);
+   }
+   return optional<T>(option);
+}
+
+
+
+std::string CtaAdminCmd::getOption(const std::string& optionShortName, const std::string& optionLongName)
+{
+   for(auto it = m_requestTokens.cbegin(); it != m_requestTokens.cend(); it++)
+   {
+      if(optionShortName == *it || optionLongName == *it)
+      {
+         auto it_next = it + 1;
+         if(it_next != m_requestTokens.cend())
+         {
+            std::string value = *it_next;
+            return value;
+         }
+         break;
+      }
+   }
+   return "";
+}
+
+
+
+bool CtaAdminCmd::hasOption(const std::string& optionShortName, const std::string& optionLongName) {
+   for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
+      if(optionShortName == *it || optionLongName == *it) {
+        return true;
+      }
+   }
+   return false;
+}
+
+
+
+void CtaAdminCmd::checkOptions()
+{
+   if(!m_missingRequiredOptions.empty() || (!m_missingOptionalOptions.empty() && m_optionalOptions.empty())) {
+      throw std::runtime_error(m_help.str());
+   }
 }
 
 
 
 #if 0
-/*!
- * checkOptions
- */
-void CtaAdminCmd::checkOptions(const std::string &helpString) {
-  if(!m_missingRequiredOptions.empty()||(!m_missingOptionalOptions.empty() && m_optionalOptions.empty())) {
-    throw cta::exception::UserError(helpString);
-  }
-}
-
-
-
 /*!
  * logRequestAndSetCmdlineResult
  */
@@ -328,60 +455,6 @@ void CtaAdminCmd::replaceAll(std::string& str, const std::string& from, const st
 
 
 
-/*!
- * getOption
- */
-std::string CtaAdminCmd::getOption(const std::string& optionShortName, const std::string& optionLongName) {
-  bool encoded = false;
-  for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
-    if(optionShortName == *it || optionLongName == *it || optionLongName+":base64" == *it) {
-      if(optionLongName+":base64" == *it) {
-        encoded = true;
-      }
-      auto it_next=it+1;
-      if(it_next!=m_requestTokens.cend()) {
-        std::string value = *it_next;
-        if(!encoded) return value;
-        else return decode(value.erase(0,7)); //erasing the first 7 characters "base64:" and decoding the rest
-      }
-      else {
-        return "";
-      }
-    }
-  }
-  return "";
-}
-
-
-
-/*!
- * getOptionStringValue
- */
-optional<std::string> CtaAdminCmd::getOptionStringValue(const std::string& optionShortName, 
-        const std::string& optionLongName,
-        const bool required, 
-        const bool useDefaultIfMissing, 
-        const std::string& defaultValue) {
-  std::string option = getOption(optionShortName, optionLongName);
-  if(option.empty()&&useDefaultIfMissing) {
-    option = defaultValue;
-  }
-  if(option.empty()) {
-    if(required) {
-      m_missingRequiredOptions.push_back(optionLongName);
-    }
-    else {
-      m_missingOptionalOptions.push_back(optionLongName);
-    }
-    return optional<std::string>();
-  }
-  if(!required) {
-    m_optionalOptions.push_back(optionLongName);
-  }
-  return optional<std::string>(option);
-}
-
-
 
 /*!
  * getOptionUint64Value
@@ -469,18 +542,6 @@ optional<time_t> CtaAdminCmd::getOptionTimeValue(const std::string& optionShortN
 }
 
 
-
-/*!
- * hasOption
- */
-bool CtaAdminCmd::hasOption(const std::string& optionShortName, const std::string& optionLongName) {
-  for(auto it=m_requestTokens.cbegin(); it!=m_requestTokens.cend(); it++) {
-    if(optionShortName == *it || optionLongName == *it) {
-      return true;
-    }
-  }
-  return false;
-}
 
 
 
@@ -624,67 +685,10 @@ optional<std::string> CtaAdminCmd::EOS2CTAChecksumValue(const optional<std::stri
 
 
 /*!
- * xCom_admin
- */
-std::string CtaAdminCmd::xCom_admin() {
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  help << m_requestTokens.at(0) << " ad/admin add/ch/rm/ls:" << std::endl
-       << "\tadd --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
-       << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
-       << "\trm  --username/-u <user_name>" << std::endl
-       << "\tls  [--header/-h]" << std::endl;
-  if(m_requestTokens.size() < 3) {
-    throw cta::exception::UserError(help.str());
-  }
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> username = getOptionStringValue("-u", "--username", true, false);
-    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      if("add" == m_requestTokens.at(2)) { //add
-        checkOptions(help.str());
-        m_catalogue->createAdminUser(m_cliIdentity, username.value(), comment.value());
-      }
-      else { //ch
-        checkOptions(help.str());
-        m_catalogue->modifyAdminUserComment(m_cliIdentity, username.value(), comment.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue->deleteAdminUser(username.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::AdminUser> list= m_catalogue->getAdminUsers();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->name);
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
-    }
-  }
-  else {
-    throw cta::exception::UserError(help.str());
-  }
-  return cmdlineOutput.str();
-}
-
-
-
-/*!
  * xCom_adminhost
  */
 std::string CtaAdminCmd::xCom_adminhost() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ah/adminhost add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
@@ -740,7 +744,6 @@ std::string CtaAdminCmd::xCom_adminhost() {
  */
 std::string CtaAdminCmd::xCom_tapepool() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " tp/tapepool add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <tapepool_name> --partialtapesnumber/-p <number_of_partial_tapes> --encrypted/-e <\"true\" or \"false\"> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--encrypted/-e <\"true\" or \"false\">] [--comment/-m <\"comment\">]" << std::endl
@@ -809,7 +812,6 @@ std::string CtaAdminCmd::xCom_tapepool() {
  */
 std::string CtaAdminCmd::xCom_archiveroute() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ar/archiveroute add/ch/rm/ls:" << std::endl
        << "\tadd --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number> --tapepool/-t <tapepool_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
@@ -876,7 +878,6 @@ std::string CtaAdminCmd::xCom_archiveroute() {
  */
 std::string CtaAdminCmd::xCom_logicallibrary() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ll/logicallibrary add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
@@ -932,7 +933,6 @@ std::string CtaAdminCmd::xCom_logicallibrary() {
  */
 std::string CtaAdminCmd::xCom_tape() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ta/tape add/ch/rm/reclaim/ls/label:" << std::endl
        << "\tadd     --vid/-v <vid> --logicallibrary/-l <logical_library_name> --tapepool/-t <tapepool_name> --capacity/-c <capacity_in_bytes>" << std::endl
        << "\t        --disabled/-d <\"true\" or \"false\"> --full/-f <\"true\" or \"false\"> [--comment/-m <\"comment\">] " << std::endl
@@ -1085,7 +1085,6 @@ std::string CtaAdminCmd::xCom_tape() {
  */
 std::string CtaAdminCmd::xCom_storageclass() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " sc/storageclass add/ch/rm/ls:" << std::endl
        << "\tadd --instance/-i <instance_name> --name/-n <storage_class_name> --copynb/-c <number_of_tape_copies> --comment/-m <\"comment\">" << std::endl
        << "\tch  --instance/-i <instance_name> --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
@@ -1155,7 +1154,6 @@ std::string CtaAdminCmd::xCom_storageclass() {
  */
 std::string CtaAdminCmd::xCom_requestermountrule() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " rmr/requestermountrule add/ch/rm/ls:" << std::endl
        << "\tadd --instance/-i <instance_name> --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
@@ -1221,7 +1219,6 @@ std::string CtaAdminCmd::xCom_requestermountrule() {
  */
 std::string CtaAdminCmd::xCom_groupmountrule() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " gmr/groupmountrule add/ch/rm/ls:" << std::endl
        << "\tadd --instance/-i <instance_name> --name/-n <user_name> --mountpolicy/-u <policy_name> --comment/-m <\"comment\">" << std::endl
        << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
@@ -1287,7 +1284,6 @@ std::string CtaAdminCmd::xCom_groupmountrule() {
  */
 std::string CtaAdminCmd::xCom_mountpolicy() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " mp/mountpolicy add/ch/rm/ls:" << std::endl
        << "\tadd --name/-n <mountpolicy_name> --archivepriority/--ap <priority_value> --minarchiverequestage/--aa <minRequestAge> --retrievepriority/--rp <priority_value>" << std::endl
        << "\t    --minretrieverequestage/--ra <minRequestAge> --maxdrivesallowed/-d <maxDrivesAllowed> --comment/-m <\"comment\">" << std::endl
@@ -1377,7 +1373,6 @@ std::string CtaAdminCmd::xCom_mountpolicy() {
  */
 std::string CtaAdminCmd::xCom_repack() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " re/repack add/rm/ls/err:" << std::endl
        << "\tadd --vid/-v <vid> [--justexpand/-e or --justrepack/-r] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
@@ -1486,7 +1481,6 @@ std::string CtaAdminCmd::xCom_repack() {
  */
 std::string CtaAdminCmd::xCom_shrink() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
   checkOptions(help.str());
@@ -1501,7 +1495,6 @@ std::string CtaAdminCmd::xCom_shrink() {
  */
 std::string CtaAdminCmd::xCom_verify() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ve/verify add/rm/ls/err:" << std::endl
        << "\tadd --vid/-v <vid> [--nbfiles <number_of_files_per_tape>] [--tag/-t <tag_name>]" << std::endl
        << "\trm  --vid/-v <vid>" << std::endl
@@ -1583,7 +1576,6 @@ std::string CtaAdminCmd::xCom_verify() {
  */
 std::string CtaAdminCmd::xCom_archivefile() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--diskid/-d <disk_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--instance/-i <instance>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
   if(m_requestTokens.size() < 3) {
@@ -1666,7 +1658,6 @@ std::string CtaAdminCmd::xCom_archivefile() {
  */
 std::string CtaAdminCmd::xCom_test() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " te/test read/write/write_auto (to be run on an empty self-dedicated drive; it is a synchronous command that returns performance stats and errors; all locations are local to the tapeserver):" << std::endl
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
@@ -1767,7 +1758,6 @@ std::string CtaAdminCmd::xCom_test() {
 std::string CtaAdminCmd::xCom_drive() {
   log::LogContext lc(m_log);
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
        << "Set the requested state of the drive. The drive will complete any running mount" << std::endl
        << "unless it is preempted with the --force option."                                 << std::endl
@@ -1908,7 +1898,6 @@ std::string CtaAdminCmd::xCom_drive() {
  */
 std::string CtaAdminCmd::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
   bool extended = hasOption("-x", "--extended");
@@ -1975,7 +1964,6 @@ std::string CtaAdminCmd::xCom_listpendingarchives() {
  */
 std::string CtaAdminCmd::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
   optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
   bool extended = hasOption("-x", "--extended");
@@ -2041,7 +2029,6 @@ std::string CtaAdminCmd::xCom_listpendingretrieves() {
  */
 std::string CtaAdminCmd::xCom_showqueues() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " sq/showqueues [--header/-h]" << std::endl;
   log::LogContext lc(m_log);
   auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
@@ -2099,7 +2086,6 @@ std::string CtaAdminCmd::xCom_showqueues() {
  */
 std::string CtaAdminCmd::xCom_archive() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " a/archive --user <user> --group <group> --diskid <disk_id> --srcurl <src_URL> --size <size> --checksumtype <checksum_type>" << std::endl
        << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
        << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --reportURL <reportURL>" << std::endl
@@ -2152,7 +2138,6 @@ std::string CtaAdminCmd::xCom_archive() {
  */
 std::string CtaAdminCmd::xCom_retrieve() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " r/retrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2192,7 +2177,6 @@ std::string CtaAdminCmd::xCom_retrieve() {
  * xCom_deletearchive
  */
 std::string CtaAdminCmd::xCom_deletearchive() {
-  std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
@@ -2220,7 +2204,6 @@ std::string CtaAdminCmd::xCom_deletearchive() {
  */
 std::string CtaAdminCmd::xCom_cancelretrieve() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " cr/cancelretrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2257,7 +2240,6 @@ std::string CtaAdminCmd::xCom_cancelretrieve() {
  */
 std::string CtaAdminCmd::xCom_updatefilestorageclass() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2294,7 +2276,6 @@ std::string CtaAdminCmd::xCom_updatefilestorageclass() {
  */
 std::string CtaAdminCmd::xCom_updatefileinfo() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " ufi/updatefileinfo --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
@@ -2323,7 +2304,6 @@ std::string CtaAdminCmd::xCom_updatefileinfo() {
  */
 std::string CtaAdminCmd::xCom_liststorageclass() {
   std::stringstream cmdlineOutput;
-  std::stringstream help;
   help << m_requestTokens.at(0) << " lsc/liststorageclass --user <user> --group <group>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
@@ -2338,4 +2318,4 @@ std::string CtaAdminCmd::xCom_liststorageclass() {
   return cmdlineOutput.str();
 }
 #endif
-  
+

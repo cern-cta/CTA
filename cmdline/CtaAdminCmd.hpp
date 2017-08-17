@@ -22,7 +22,11 @@
 
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <vector>
+
+#include "common/optional.hpp"
+using cta::optional;
 
 
 
@@ -33,14 +37,10 @@ public:
 
 private:
    /*!
-    * Returns the help string
-    * 
-    * @param      programName    The name of the client program
-    *
-    * @returns    the help string
+    * Throw an exception with generic usage help
     */
-   std::string getGenericHelp(const std::string &programName) const;
-  
+   void throwUsage();
+
    /*!
     * Placeholder for admin commands which have not been implemented yet
     */
@@ -48,8 +48,65 @@ private:
       throw std::runtime_error("Command not implemented.");
    }
 
+   /*!
+    * cta admin command
+    */
+   void xCom_admin();
+
+   /*!
+    * Return the value of the specified option
+    * 
+    * @param optionShortName      The short name of the required option
+    * @param optionLongName       The long name of the required option
+    * @param required             True if the option is required, false otherwise
+    * @param useDefaultIfMissing  True if the default value (next parameter) is to be used if option
+    *                             is missing from cmdline, false otherwise
+    * @param default              Value of the default in case option is missing from cmdline (and
+    *                             useDefaultIfMissing is true)
+    *
+    * @return the option value (empty if absent)
+    */
+   template<typename T>
+   optional<T> getOptionValue(const std::string& optionShortName, const std::string& optionLongName,
+      const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="-");
+
+   /*!
+    * Return the string value of the specified option
+    * 
+    * @param optionShortName The short name of the required option
+    * @param optionLongName  The long name of the required option
+    * @return the option value (empty if absent)
+    */
+   std::string getOption(const std::string& optionShortName, const std::string& optionLongName);
+
+   /*!
+    * Given the command line string vector it returns true if the specified option is present, false otherwise
+    * 
+    * @param optionShortName The short name of the required option
+    * @param optionLongName  The long name of the required option
+    * @return true if the specified option is present, false otherwise
+    */
+   bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
+
+   /*!
+    * Checks if all needed options are present. Throws an exception otherwise.
+    */
+   void checkOptions();
+
+   //! Help string
+   std::stringstream m_help;
+
    //! The command line parameters represented as a vector of strings
    std::vector<std::string> m_requestTokens;
+
+   //! Vector containing optional options which are present in the user command
+   std::vector<std::string> m_optionalOptions;
+
+   //! Vector containing required options which are missing from the user command
+   std::vector<std::string> m_missingRequiredOptions;
+
+   //! Vector containing optional options which are missing from the user command
+   std::vector<std::string> m_missingOptionalOptions;
 };
 
 #if 0
@@ -74,9 +131,9 @@ namespace cta { namespace xrootPlugins {
  * documentation can be found in XrdSfs/XrdSfsInterface.hh.
  */
 class XrdCtaFile : public XrdSfsFile {
-  
+
 public:
-  
+
   virtual int open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int close();
   virtual int fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo);
@@ -94,59 +151,44 @@ public:
   virtual int getCXinfo(char cxtype[4], int &cxrsz);
   XrdCtaFile(cta::catalogue::Catalogue *catalogue, cta::Scheduler *scheduler, cta::log::Logger *log, const char *user=0, int MonID=0);
   ~XrdCtaFile();
-  
+
 protected:
 
   /**
    * The catalogue object pointer.
    */
   cta::catalogue::Catalogue *m_catalogue;
-  
+
   /**
    * The scheduler object pointer
    */
   cta::Scheduler *m_scheduler;
-  
+
   /**
    * The scheduler object pointer
    */
   cta::log::Logger &m_log;
-  
+
   /**
    * This is the string holding the result of the command
    */
   std::string m_cmdlineOutput;
-  
+
   /**
    * The client identity info: username and host
    */
   cta::common::dataStructures::SecurityIdentity m_cliIdentity;  
-  
+
   /**
    * The protocol used by the xroot client
    */
   std::string m_protocol;  
-  
-  /**
-   * Vector containing required options which are missing from the user command
-   */
-  std::vector<std::string> m_missingRequiredOptions;
-  
-  /**
-   * Vector containing optional options which are missing from the user command
-   */
-  std::vector<std::string> m_missingOptionalOptions;
-  
-  /**
-   * Vector containing optional options which are present in the user command
-   */
-  std::vector<std::string> m_optionalOptions;
-  
+
   /**
    * Flag used to suppress missing optional options. Set to false by default (used only in file and tape listings)
    */
   bool m_suppressOptionalOptionsWarning;
-  
+
   /**
    * Points to a ListArchiveFilesCmd object if the current command is to list archive files.
    */
@@ -169,14 +211,14 @@ protected:
    * @return decoded string
    */
   std::string decode(const std::string msg) const;
-  
+
   /**
    * Checks whether client has correct permissions and fills the corresponding SecurityIdentity structure
    * 
    * @param client  The client security entity
    */
   void checkClient(const XrdSecEntity *client);
-  
+
   /**
    * Replaces all occurrences in a string "str" of a substring "from" with the string "to"
    * 
@@ -185,7 +227,7 @@ protected:
    * @param to   The replacement string
    */
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
-  
+
   /**
    * Parses the command line, dispatches it to the relevant function and returns
    * the output for the command-line.
@@ -194,49 +236,6 @@ protected:
    * @return           The output for the command-line.
    */
   std::string dispatchCommand();
-  
-  /**
-   * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
-   * 
-   * @param optionShortName      The short name of the required option
-   * @param optionLongName       The long name of the required option
-   * @param required             True if the option is required, false otherwise
-   * @param useDefaultIfMissing  True if the default value (next parameter) is to be used if option is missing from cmdline, false otherwise
-   * @param default              Value of the default in case option is missing from cmdline (and useDefaultIfMissing is true)
-   * @return the option value (empty if absent)
-   */
-  optional<std::string> getOptionStringValue(const std::string& optionShortName, const std::string& optionLongName, 
-    const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="-");
-  optional<uint64_t> getOptionUint64Value(const std::string& optionShortName, const std::string& optionLongName, 
-    const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="0");
-  optional<bool> getOptionBoolValue(const std::string& optionShortName, const std::string& optionLongName, 
-    const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="false");
-  optional<time_t> getOptionTimeValue(const std::string& optionShortName, const std::string& optionLongName, 
-    const bool required, const bool useDefaultIfMissing, const std::string& defaultValue="01/01/1970");
-  
-  /**
-   * Returns the string/numerical/boolean value of the specified option
-   * 
-   * @param optionShortName The short name of the required option
-   * @param optionLongName  The long name of the required option
-   * @return the option value (empty if absent)
-   */
-  std::string getOption(const std::string& optionShortName, const std::string& optionLongName);
-  
-  /**
-   * Given the command line string vector it returns true if the specified option is present, false otherwise
-   * 
-   * @param optionShortName The short name of the required option
-   * @param optionLongName  The long name of the required option
-   * @return true if the specified option is present, false otherwise
-   */
-  bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
-
-  /**
-   * Executes a command and returns the output for the command-line.
-   * @return The output for the command-line.
-   */
-  std::string xCom_admin();
 
   /**
    * Executes a command and returns the output for the command-line.
@@ -345,7 +344,7 @@ protected:
    * @return The output for the command-line.
    */
   std::string xCom_showqueues();
-  
+
   /**
    * Executes a command and returns the output for the command-line.
    * @return The output for the command-line.
@@ -392,7 +391,7 @@ protected:
    * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
    */
   void authorizeAdmin();
-  
+
   /**
    * Returns the response string properly formatted in a table
    * 
@@ -400,7 +399,7 @@ protected:
    * @return the response string properly formatted in a table
    */
   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable, const bool withHeader);
-  
+
   /**
    * Returns a string representation of the time
    * 
@@ -408,7 +407,7 @@ protected:
    * @return a string representation of the time
    */
   std::string timeToString(const time_t &time);
-  
+
   /**
    * Returns a string representation for bytes in Mbytes with .00 precision
    *
@@ -425,7 +424,7 @@ protected:
    * @param  lastModificationLog the last modification log
    */
   void addLogInfoToResponseRow(std::vector<std::string> &responseRow, const cta::common::dataStructures::EntryLog &creationLog, const cta::common::dataStructures::EntryLog &lastModificationLog);
-  
+
   /**
    * Converts a parameter string into a uint64_t (throws a cta::exception if it fails)
    * 
@@ -434,7 +433,7 @@ protected:
    * @return the conversion result
    */
   uint64_t stringParameterToUint64(const std::string &parameterName, const std::string &parameterValue) const;
-  
+
   /**
    * Converts a parameter string into a bool (throws a cta::exception if it fails)
    * 
@@ -443,7 +442,7 @@ protected:
    * @return the conversion result
    */
   bool stringParameterToBool(const std::string &parameterName, const std::string &parameterValue) const;
-  
+
   /**
    * Converts a parameter string into a time_t (throws a cta::exception if it fails)
    * 
@@ -452,7 +451,7 @@ protected:
    * @return the conversion result
    */
   time_t stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const;
-  
+
   /**
    * Sets the return code of the cmdline client and its output.
    * Logs the original request and any error in processing it.
@@ -461,14 +460,7 @@ protected:
    * @param  returnString The output of the cmdline client
    */
   void logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
-  
-  /**
-   * Checks if all needed options are present. Throws UserError otherwise.
-   * 
-   * @param  helpString The help string to be included in the exception message
-   */
-  void checkOptions(const std::string &helpString);
-  
+
   /**
    * Converts the checksum type string format from EOS to CTA
    * 
@@ -476,7 +468,7 @@ protected:
    * @return the checksum type string converted to CTA format
    */
   optional<std::string> EOS2CTAChecksumType(const optional<std::string> &EOSChecksumType);
-  
+
   /**
    * Converts the checksum value string format from EOS to CTA
    * 

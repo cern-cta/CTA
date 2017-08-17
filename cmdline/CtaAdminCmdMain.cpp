@@ -147,12 +147,14 @@ int main(int argc, const char **argv)
       std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
    } catch (XrdSsiPb::XrdSsiException &ex) {
       std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+   } catch (std::runtime_error &ex) {
+      std::cerr << ex.what() << std::endl;
    } catch (std::exception &ex) {
       std::cerr << "Caught exception: " << ex.what() << std::endl;
    } catch (...) {
       std::cerr << "Caught an unknown exception" << std::endl;
    }
 
-   return cta::common::dataStructures::FrontendReturnCode::ctaErrorNoRetry;
+   return 1;
 }
 
