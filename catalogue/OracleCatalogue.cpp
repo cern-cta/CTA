@@ -89,8 +89,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
-      "FOR UPDATE";
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     utils::Timer t;
     auto conn = m_connPool.getConn();
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
