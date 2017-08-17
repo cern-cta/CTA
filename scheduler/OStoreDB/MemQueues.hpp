@@ -368,8 +368,12 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       log::ScopedParamContainer params(logContext);
       params.add("message", ex.getMessageValue());
       logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
+    } catch (std::exception & ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("exceptionWhat", ex.what());
+      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got a standard exception writing. Will propagate to other threads.");
     } catch (...) {
-      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got a non cta exception writing. Will propagate to other threads.");
+      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an unknown exception writing. Will propagate to other threads.");
     }
     size_t exceptionsNotPassed = 0;
     // Something went wrong. We should inform the other threads
