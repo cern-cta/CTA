@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_REQUEST_PROC_H
-#define __XRD_SSI_PB_REQUEST_PROC_H
+#pragma once
 
 #include <future>
 
@@ -242,4 +241,3 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
 
 } // namespace XrdSsiPb
 
-#endif

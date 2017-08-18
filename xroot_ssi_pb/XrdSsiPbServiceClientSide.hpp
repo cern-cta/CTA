@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_SERVICE_CLIENT_SIDE_H
-#define __XRD_SSI_PB_SERVICE_CLIENT_SIDE_H
+#pragma once
 
 #include <XrdSsi/XrdSsiProvider.hh>
 #include <XrdSsi/XrdSsiService.hh>
@@ -174,4 +173,3 @@ MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const
 
 } // namespace XrdSsiPb
 
-#endif

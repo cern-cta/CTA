@@ -16,8 +16,11 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_CTA_SERVICE_PROVIDER_H
-#define __XRD_SSI_CTA_SERVICE_PROVIDER_H
+#pragma once
+
+#ifdef XRDSSI_DEBUG
+#include <iostream>
+#endif
 
 #include <XrdSsi/XrdSsiProvider.hh>
 
@@ -79,12 +82,12 @@ public:
    /*!
     * Get a reference to the Scheduler for this Service
     */
-   cta::Scheduler &getScheduler() { return *m_scheduler; }
+   cta::Scheduler &getScheduler() const { return *m_scheduler; }
 
    /*!
     * Get the log context for this Service
     */
-   cta::log::LogContext getLogContext() { return cta::log::LogContext(*m_log); }
+   cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
 
 private:
    /*!
@@ -106,9 +109,7 @@ private:
    typedef std::unique_ptr<cta::objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter>
       UniquePtrAgentHeartbeatThread;
 
-   /*
-    * Member variables
-    */
+   // Member variables
 
    cta::common::Configuration                          m_ctaConf;             //!< CTA configuration
 
@@ -121,4 +122,3 @@ private:
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
 };
 
-#endif

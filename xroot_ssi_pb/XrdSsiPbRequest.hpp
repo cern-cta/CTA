@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_REQUEST_H
-#define __XRD_SSI_PB_REQUEST_H
+#pragma once
 
 #include <future>
 #include <XrdSsi/XrdSsiRequest.hh>
@@ -352,4 +351,3 @@ void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &ale
 
 } // namespace XrdSsiPb
 
-#endif

@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_SERVICE_H
-#define __XRD_SSI_PB_SERVICE_H
+#pragma once
 
 #include <XrdSsi/XrdSsiService.hh>
 #include "XrdSsiPbRequestProc.hpp"
@@ -129,4 +128,3 @@ void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest
 
 } // namespace XrdSsiPb
 
-#endif

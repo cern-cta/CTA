@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_DEBUG
-#define __XRD_SSI_PB_DEBUG
+#pragma once
 
 #include <iostream>
 #include <stdio.h>
@@ -61,4 +60,3 @@ inline void DumpBuffer(const std::string &buffer)
 
 } // namespace XrdSsiPb
 
-#endif

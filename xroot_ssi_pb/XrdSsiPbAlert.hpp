@@ -16,8 +16,7 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XRD_SSI_PB_ALERT_H
-#define __XRD_SSI_PB_ALERT_H
+#pragma once
 
 #include <XrdSsi/XrdSsiRespInfo.hh>
 #include "XrdSsiPbException.hpp"
@@ -81,4 +80,3 @@ private:
 
 } // namespace XrdSsiPb
 
-#endif
