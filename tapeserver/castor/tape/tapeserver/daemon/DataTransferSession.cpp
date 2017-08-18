@@ -154,7 +154,8 @@ schedule:
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
-  params.add("TPVID", m_volInfo.vid);
+  params.add("vid", m_volInfo.vid)
+        .add("mountId", tapeMount->getMountTransactionId());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
