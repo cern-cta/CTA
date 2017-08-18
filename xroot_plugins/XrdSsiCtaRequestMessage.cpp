@@ -33,12 +33,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
    {
       using namespace cta::xrd;
 
-      case Request::kAdmincmd:
+      case Request::kAdmincmd:       processAdminCmd(request.admincmd(), response); break;
       case Request::kNotification:   processNotification(request.notification(), response); break;
       case Request::REQUEST_NOT_SET: throw PbException("Request message has not been set.");
       default:                       throw PbException("Unrecognized Request message. "
                                            "Possible Protocol Buffer version mismatch between client and server.");
    }
+}
+
+
+
+void RequestMessage::processAdminCmd(const cta::xrd::AdminCmd &admin_cmd, cta::xrd::Response &response)
+{
 }
 
 
