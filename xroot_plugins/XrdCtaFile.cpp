@@ -1927,6 +1927,7 @@ std::string XrdCtaFile::xCom_drive() {
 // xCom_listpendingarchives
 //------------------------------------------------------------------------------
 std::string XrdCtaFile::xCom_listpendingarchives() {
+  log::LogContext lc(m_log);
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
@@ -1934,10 +1935,10 @@ std::string XrdCtaFile::xCom_listpendingarchives() {
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
   if(!tapepool) {
-    result = m_scheduler->getPendingArchiveJobs();
+    result = m_scheduler->getPendingArchiveJobs(lc);
   }
   else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool.value());
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool.value(), lc);
     if(list.size()>0) {
       result[tapepool.value()] = list;
     }
@@ -1994,15 +1995,16 @@ std::string XrdCtaFile::xCom_listpendingarchives() {
 std::string XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
+  log::LogContext lc(m_log);
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
   optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
   if(!vid) {
-    result = m_scheduler->getPendingRetrieveJobs();
+    result = m_scheduler->getPendingRetrieveJobs(lc);
   }
   else {
-    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(vid.value());
+    std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler->getPendingRetrieveJobs(vid.value(), lc);
     if(list.size()>0) {
       result[vid.value()] = list;
     }

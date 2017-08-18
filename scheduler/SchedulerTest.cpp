@@ -265,7 +265,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   scheduler.queueArchive(s_diskInstance, request, lc);
 
   {
-    auto rqsts = scheduler.getPendingArchiveJobs();
+    auto rqsts = scheduler.getPendingArchiveJobs(lc);
     ASSERT_EQ(1, rqsts.size());
     auto poolItor = rqsts.cbegin();
     ASSERT_FALSE(poolItor == rqsts.cend());
@@ -401,7 +401,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   // (otherwise we miss the selected ones).
   // Could also be limited to querying by ID (global index needed)
   bool found=false;
-  for (auto & tp: scheduler.getPendingArchiveJobs()) {
+  for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
     for (auto & req: tp.second) {
       if (req.archiveFileID == archiveFileId)
         found = true;
@@ -490,7 +490,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
 
   // Check that the retrieve request is queued
   {
-    auto rqsts = scheduler.getPendingRetrieveJobs();
+    auto rqsts = scheduler.getPendingRetrieveJobs(lc);
     // We expect 1 tape with queued jobs
     ASSERT_EQ(1, rqsts.size());
     // We expect the queue to contain 1 job

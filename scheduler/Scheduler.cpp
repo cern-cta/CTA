@@ -387,37 +387,57 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName)
      .add("schedulerDbTime", schedulerDbTime);
-   lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");   
+  lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler::getPendingArchiveJobs() const {
-  return m_db.getArchiveJobs();
+std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler::getPendingArchiveJobs(log::LogContext & lc) const {
+  utils::Timer t;
+  auto ret = m_db.getArchiveJobs();
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getPendingArchiveJobs(): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(const std::string &tapePoolName) const {
+std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext & lc) const {
+  utils::Timer t;
   if(!m_catalogue.tapePoolExists(tapePoolName)) {
     throw exception::Exception(std::string("Tape pool ") + tapePoolName + " does not exist");
   }
-  return m_db.getArchiveJobs(tapePoolName);
+  auto catalogueTime = t.secs(utils::Timer::resetCounter);
+  auto ret = m_db.getArchiveJobs(tapePoolName);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getPendingArchiveJobs(tapePool): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler::getPendingRetrieveJobs() const {
-  return m_db.getRetrieveJobs();
+std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler::getPendingRetrieveJobs(log::LogContext & lc) const {
+  utils::Timer t;
+  auto ret =  m_db.getRetrieveJobs();
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getPendingRetrieveJobs(): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid) const {
+std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid, log::LogContext &lc) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
