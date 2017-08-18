@@ -469,9 +469,24 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   // Many steps for this logic are not specific for the database and are hence
   // implemented in the scheduler itself.
   // First, get the mount-related info from the DB
+  utils::Timer timer;
+  double getMountInfoTime = 0;
+  double queueTrimingTime = 0;
+  double getTapeInfoTime = 0;
+  double candidateSortingTime = 0;
+  double getTapeForWriteTime = 0;
+  double decisionTime = 0;
+  double mountCreationTime = 0;
+  double driveStatusSetTime = 0;
+  double schedulerDbTime = 0;
+  double catalogueTime = 0;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfo(lc);
-  if (mountInfo->queueTrimRequired) m_db.trimEmptyQueues(lc);
+  getMountInfoTime = timer.secs(utils::Timer::resetCounter);
+  if (mountInfo->queueTrimRequired) {
+    m_db.trimEmptyQueues(lc);
+    queueTrimingTime = timer.secs(utils::Timer::resetCounter);
+  }
   __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
   
   // The library information is not know for the tapes involved in retrieves. We 
@@ -483,6 +498,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   }
   if (tapeSet.size()) {
     auto tapesInfo=m_catalogue.getTapesByVid(tapeSet);
+    getTapeInfoTime = timer.secs(utils::Timer::resetCounter);
     for (auto &m:mountInfo->potentialMounts) {
       if (m.type==common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
@@ -591,6 +607,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   std::sort(mountInfo->potentialMounts.begin(), mountInfo->potentialMounts.end());
   std::reverse(mountInfo->potentialMounts.begin(), mountInfo->potentialMounts.end());
   
+  candidateSortingTime = timer.secs(utils::Timer::resetCounter);
+  
   // Find out if we have any potential archive mount in the list. If so, get the
   // list of tapes from the catalogue.
   std::list<catalogue::TapeForWriting> tapeList;
@@ -598,6 +616,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
         [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::Archive; } )) {
     tapeList = m_catalogue.getTapesForWriting(logicalLibraryName);
+    getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
         
   // Remove from the tape list the ones already or soon to be mounted
@@ -626,18 +645,23 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
           std::unique_ptr<ArchiveMount> internalRet(new ArchiveMount(m_catalogue));
           // Get the db side of the session
           try {
+            decisionTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
                 utils::getShortHostname(), 
                 time(NULL)).release());
+            mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
             internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
+            driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
             log::ScopedParamContainer params(lc);
             uint32_t existingMounts = 0;
             try {
               existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
             } catch (...) {}
+            schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
+            catalogueTime = getTapeInfoTime + getTapeForWriteTime;
             params.add("tapepool", m->tapePool)
                   .add("vid", t.vid)
                   .add("mountType", common::dataStructures::toString(m->type))
@@ -647,7 +671,17 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
                   .add("filesQueued", m->filesQueued)
                   .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
                   .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-                  .add("minArchiveRequestAge", m->minArchiveRequestAge);
+                  .add("minArchiveRequestAge", m->minArchiveRequestAge)
+                  .add("getMountInfoTime", getMountInfoTime)
+                  .add("queueTrimingTime", queueTrimingTime)
+                  .add("getTapeInfoTime", getTapeInfoTime)
+                  .add("candidateSortingTime", candidateSortingTime)
+                  .add("getTapeForWriteTime", getTapeForWriteTime)
+                  .add("decisionTime", decisionTime)
+                  .add("mountCreationTime", mountCreationTime)
+                  .add("driveStatusSetTime", driveStatusSetTime)
+                  .add("schedulerDbTime", schedulerDbTime)
+                  .add("catalogueTime", catalogueTime);
             lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (archive)");
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
@@ -665,6 +699,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       if (tapesInUse.count(m->vid)) continue;
       try {
         // create the mount, and populate its DB side.
+        decisionTime += timer.secs(utils::Timer::resetCounter);
         std::unique_ptr<RetrieveMount> internalRet (
           new RetrieveMount(mountInfo->createRetrieveMount(m->vid, 
             m->tapePool,
@@ -672,15 +707,19 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             logicalLibraryName, 
             utils::getShortHostname(), 
             time(NULL))));
+        mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
         internalRet->m_tapeRunning = true;
         internalRet->setDriveStatus(common::dataStructures::DriveStatus::Starting);
+        driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
         log::ScopedParamContainer params(lc);
         uint32_t existingMounts = 0;
         try {
           existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
         } catch (...) {}
+        schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
+        catalogueTime = getTapeInfoTime + getTapeForWriteTime;
         params.add("tapepool", m->tapePool)
               .add("vid", m->vid)
               .add("mountType", common::dataStructures::toString(m->type))
@@ -690,7 +729,17 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
               .add("filesQueued", m->filesQueued)
               .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
               .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-              .add("minArchiveRequestAge", m->minArchiveRequestAge);
+              .add("minArchiveRequestAge", m->minArchiveRequestAge)
+              .add("getMountInfoTime", getMountInfoTime)
+              .add("queueTrimingTime", queueTrimingTime)
+              .add("getTapeInfoTime", getTapeInfoTime)
+              .add("candidateSortingTime", candidateSortingTime)
+              .add("getTapeForWriteTime", getTapeForWriteTime)
+              .add("decisionTime", decisionTime)
+              .add("mountCreationTime", mountCreationTime)
+              .add("driveStatusSetTime", driveStatusSetTime)
+              .add("schedulerDbTime", schedulerDbTime)
+              .add("catalogueTime", catalogueTime);
         lc.log(log::DEBUG, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
         return std::unique_ptr<TapeMount> (internalRet.release()); 
       } catch (exception::Exception & ex) {
@@ -703,6 +752,19 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
+  schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  log::ScopedParamContainer params(lc);
+  params.add("getMountInfoTime", getMountInfoTime)
+        .add("queueTrimingTime", queueTrimingTime)
+        .add("getTapeInfoTime", getTapeInfoTime)
+        .add("candidateSortingTime", candidateSortingTime)
+        .add("getTapeForWriteTime", getTapeForWriteTime)
+        .add("decisionTime", decisionTime)
+        .add("mountCreationTime", mountCreationTime)
+        .add("driveStatusSetTime", driveStatusSetTime)
+        .add("schedulerDbTime", schedulerDbTime)
+        .add("catalogueTime", catalogueTime);
   lc.log(log::DEBUG, "In Scheduler::getNextMount(): No valid mount found.");
   return std::unique_ptr<TapeMount>();
 }
