@@ -2196,7 +2196,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             params.add("tapepool", mountInfo.tapePool)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
-            logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): skipped job not owned or not present.");
+            logContext.log(log::WARNING, "In RetrieveMount::getNextJobBatch(): skipped job not owned or not present.");
           } else if (typeid(e) == typeid(Backend::CouldNotUnlock)) {
             // We failed to unlock the object. The request was successfully updated, so we do own it. This is a non-fatal
             // situation, so we just issue a warning. Removing the request from our agent ownership would 
@@ -2215,7 +2215,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             free(exceptionTypeStr);
             exceptionTypeStr = nullptr;
             params.add("message", e.getMessageValue());
-            logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): Failed to unlock the request (lock expiration). Request remains selected.");
+            logContext.log(log::WARNING, "In RetrieveMount::getNextJobBatch(): Failed to unlock the request (lock expiration). Request remains selected.");
             validatedJobs.emplace_back(std::move(*j));
           } else {
             // This is not a success, yet we could not confirm the job status due to an unexpected error.
@@ -2234,7 +2234,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             free(exceptionTypeStr);
             exceptionTypeStr = nullptr;
             params.add("message", e.getMessageValue());
-            logContext.log(log::ERR, "In ArchiveMount::getNextJobBatch(): unexpected error. Leaving the job queued.");
+            logContext.log(log::ERR, "In RetrieveMount::getNextJobBatch(): unexpected error. Leaving the job queued.");
             jobsToForget.emplace_back((*j)->m_retrieveRequest.getAddressIfSet());
             retrieveRequestsToSkip.insert((*j)->m_retrieveRequest.getAddressIfSet());
           }
@@ -2272,13 +2272,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", rq.getAddressIfSet());
-          logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): deleted empty queue");
+          logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): deleted empty queue");
         } catch (cta::exception::Exception &ex) {
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
-          logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not delete a presumably empty queue");
+          logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not delete a presumably empty queue");
         }
       }
       // We can now summarize this round
@@ -2293,7 +2293,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
               .add("filesAfter", currentFiles)
               .add("bytesAfter", currentBytes)
               .add("iterationCount", iterationCount);
-        logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): did one round of jobs retrieval.");
+        logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): did one round of jobs retrieval.");
       }
       // We could be done now.
       if (currentBytes >= bytesRequested || currentFiles >= filesRequested)
@@ -2305,16 +2305,16 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     } catch (cta::exception::Exception & ex) {
       log::ScopedParamContainer params (logContext);
       params.add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::ERR, "In OStoreDB::ArchiveMount::getNextJobBatch(): error (CTA exception) getting more jobs. Backtrace follows.");
+      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::getNextJobBatch(): error (CTA exception) getting more jobs. Backtrace follows.");
       logContext.logBacktrace(log::ERR, ex.backtrace());
       break;
     } catch (std::exception & e) {
       log::ScopedParamContainer params (logContext);
       params.add("exceptionWhat", e.what());
-      logContext.log(log::ERR, "In OStoreDB::ArchiveMount::getNextJobBatch(): error (std exception) getting more jobs.");
+      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::getNextJobBatch(): error (std exception) getting more jobs.");
       break;
     } catch (...) {
-      logContext.log(log::ERR, "In OStoreDB::ArchiveMount::getNextJobBatch(): error (unknown exception) getting more jobs.");
+      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::getNextJobBatch(): error (unknown exception) getting more jobs.");
       break;
     }
   }
@@ -2330,7 +2330,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     params.add("tapepool", mountInfo.tapePool)
           .add("files", nFiles)
           .add("bytes", nBytes);
-    logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
+    logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): jobs retrieval complete.");
   }
   // We can construct the return value.
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > ret;

@@ -330,7 +330,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
       return false;
     }
   }
-  throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
+  throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
 bool RetrieveRequest::finishIfNecessary() {
@@ -417,7 +417,7 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
           }
         }
         // If we do not find the copy, return not owned as well...
-        throw WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+        throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
       };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
   return ret.release();
