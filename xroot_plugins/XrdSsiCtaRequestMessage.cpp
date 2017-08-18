@@ -19,37 +19,39 @@
 #include "XrdSsiPbException.hpp"
 using XrdSsiPb::PbException;
 
-#include "xroot_plugins/messages/cta_frontend.pb.h"
-#include "XrdSsiCtaEos.hpp"
-
-
-#if 0
-#include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/exception/Exception.hpp"
-
-#ifdef XRDSSI_DEBUG
-#include "XrdSsiPbDebug.hpp"
-#endif
-#include "XrdSsiPbResource.hpp"
-#include "XrdSsiPbRequestProc.hpp"
-#include "xroot_plugins/messages/cta_frontend.pb.h"
-
-#include "XrdSsiCtaServiceProvider.hpp"
-#endif
+#include "XrdSsiCtaRequestMessage.hpp"
 
 
 
-namespace cta { namespace frontend {
+namespace cta { namespace xrd {
 
-void EosNotificationRequest::process(const cta::eos::Notification &notification, cta::xrd::Response &response)
+void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response)
+{
+   // Branch on the Request payload type
+
+   switch(request.request_case())
+   {
+      using namespace cta::xrd;
+
+      case Request::kAdmincmd:
+      case Request::kNotification:   processNotification(request.notification(), response); break;
+      case Request::REQUEST_NOT_SET: throw PbException("Request message has not been set.");
+      default:                       throw PbException("Unrecognized Request message. "
+                                           "Possible Protocol Buffer version mismatch between client and server.");
+   }
+}
+
+
+
+void RequestMessage::processNotification(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    switch(notification.wf().event())
    {
       using namespace cta::eos;
 
-      case Workflow::CLOSEW:  requestProcCLOSEW (notification, response); break;
-      case Workflow::PREPARE: requestProcPREPARE(notification, response); break;
-      case Workflow::DELETE:  requestProcDELETE (notification, response); break;
+      case Workflow::CLOSEW:  processCLOSEW (notification, response); break;
+      case Workflow::PREPARE: processPREPARE(notification, response); break;
+      case Workflow::DELETE:  processDELETE (notification, response); break;
 
       default:
          throw PbException("Workflow Event type " + std::to_string(notification.wf().event()) + " is not supported.");
@@ -58,8 +60,7 @@ void EosNotificationRequest::process(const cta::eos::Notification &notification,
 
 
 
-
-void EosNotificationRequest::requestProcCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response)
+void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -102,7 +103,7 @@ void EosNotificationRequest::requestProcCLOSEW(const cta::eos::Notification &not
 
 
 
-void EosNotificationRequest::requestProcPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
+void RequestMessage::processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -140,7 +141,7 @@ void EosNotificationRequest::requestProcPREPARE(const cta::eos::Notification &no
 
 
 
-void EosNotificationRequest::requestProcDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response)
+void RequestMessage::processDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -174,12 +175,12 @@ void EosNotificationRequest::requestProcDELETE(const cta::eos::Notification &not
 
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In requestProcDELETE(): deleted archive file.");
+   m_lc.log(cta::log::INFO, "In processDELETE(): deleted archive file.");
 
    // Set response type
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-}} // namespace cta::frontend
+}} // namespace cta::xrd
 

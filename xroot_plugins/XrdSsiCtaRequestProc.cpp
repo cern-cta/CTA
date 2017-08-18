@@ -24,10 +24,9 @@
 #endif
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbRequestProc.hpp"
-#include "xroot_plugins/messages/cta_frontend.pb.h"
 
 #include "XrdSsiCtaServiceProvider.hpp"
-#include "XrdSsiCtaEos.hpp"
+#include "XrdSsiCtaRequestMessage.hpp"
 
 
 
@@ -67,12 +66,16 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 
       OutputJsonString(std::cerr, &m_request);
 #endif
-      // Process EOS Request
 
-      //const cta::eos::Notification &notification = m_request.notification();
+      cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
+      request_msg.process(m_request, m_metadata);
+   }
+   catch(PbException &ex)
+   {
+      // Set the response
 
-      cta::frontend::EosNotificationRequest eos_rq(*(m_resource.client), cta_service_ptr);
-      eos_rq.process(m_request.notification(), m_metadata);
+      m_metadata.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+      m_metadata.set_message_txt(ex.what());
    }
    catch(std::exception &ex)
    {

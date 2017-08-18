@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          XRootD EOS Notification handler
+ * @brief          CTA Frontend Message handler
  * @copyright      Copyright 2017 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -21,16 +21,17 @@
 #include <XrdSsi/XrdSsiEntity.hh>
 
 #include "XrdSsiCtaServiceProvider.hpp"
+#include "xroot_plugins/messages/cta_frontend.pb.h"
 
-namespace cta { namespace frontend {
+namespace cta { namespace xrd {
 
 /*!
- * EOS Notification handler class
+ * CTA Frontend Request Message class
  */
-class EosNotificationRequest
+class RequestMessage
 {
 public:
-   EosNotificationRequest(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
+   RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
       m_scheduler(service->getScheduler()),
       m_lc(service->getLogContext()),
       m_instance_name(client.name) {}
@@ -38,19 +39,27 @@ public:
    /*!
     * Process the Notification request
     *
+    * @param[in]     request
+    * @param[out]    response        Response message to return to EOS
+    */
+   void process(const cta::xrd::Request &request, cta::xrd::Response &response);
+
+private:
+   /*!
+    * Process the EOS WFE Notification message type
+    *
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   void process(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   void processNotification(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
-private:
    /*!
     * Process the CLOSEW workflow event
     *
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   void requestProcCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   void processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
    /*!
     * Process the PREPARE workflow event
@@ -58,7 +67,7 @@ private:
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   void requestProcPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   void processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
    /*!
     * Process the DELETE workflow event
@@ -66,7 +75,7 @@ private:
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   void requestProcDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   void processDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
    // Member variables
 
@@ -75,4 +84,4 @@ private:
    const char * const    m_instance_name;    //< Instance name = XRootD client name
 };
 
-}} // namespace cta::frontend
+}} // namespace cta::xrd
