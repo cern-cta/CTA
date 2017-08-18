@@ -1643,22 +1643,33 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
+  utils::Timer t;
+  double driveRegisterCheckTime = 0;
+  double findQueueTime = 0;
+  double lockFetchQueueTime = 0;
+  double emptyQueueCleanupTime = 0;
+  double jobSelectionTime = 0;
+  double ownershipAdditionTime = 0;
+  double asyncUpdateLaunchTime = 0;
+  double jobsUpdateTime = 0;
+  double queueProcessTime = 0;
+  double ownershipRemovalTime = 0;
+  double queueCommitTime = 0;
   // Find the next files to archive
   // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
   // Get drive register
   {
     // Get the archive queue
     objectstore::RootEntry re(m_objectStore);
-    objectstore::ScopedSharedLock rel(re);
-    re.fetch();
+    re.fetchNoLock();
     objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-    ScopedSharedLock drl(dr);
-    dr.fetch();
+    dr.fetchNoLock();
     auto drs = dr.getDriveState(mountInfo.drive);
     if (!drs.desiredDriveState.up && drs.desiredDriveState.forceDown) {
       logContext.log(log::INFO, "In OStoreDB::ArchiveMount::getNextJobBatch(): returning no job as we are forcibly going down.");
       return std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> >();
     }
+    driveRegisterCheckTime = t.secs(utils::Timer::resetCounter);
   }
   // Now, we should repeatedly fetch jobs from the queue until we fulfilled the request or there is nothing to get form the
   // queue anymore.
@@ -1675,8 +1686,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
     uint64_t beforeFiles=currentFiles;
     // Try and get access to a queue.
     objectstore::RootEntry re(m_objectStore);
-    objectstore::ScopedSharedLock rel(re);
-    re.fetch();
+    re.fetchNoLock();
     std::string aqAddress;
     auto aql = re.dumpArchiveQueues();
     for (auto & aqp : aql) {
@@ -1687,16 +1697,16 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
     // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
     objectstore::ArchiveQueue aq(aqAddress, m_objectStore);
     objectstore::ScopedExclusiveLock aqlock;
+    findQueueTime += t.secs(utils::Timer::resetCounter);
     try {
       try {
         aqlock.lock(aq);
-        rel.release();
         aq.fetch();
+        lockFetchQueueTime += t.secs(utils::Timer::resetCounter);
       } catch (cta::exception::Exception & ex) {
         // The queue is now absent. We can remove its reference in the root entry.
         // A new queue could have been added in the mean time, and be non-empty.
         // We will then fail to remove from the RootEntry (non-fatal).
-        if (rel.isLocked()) rel.release();
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
@@ -1713,6 +1723,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
         }
+        emptyQueueCleanupTime += t.secs(utils::Timer::resetCounter);
         continue;
       }
       // We now have the queue.
@@ -1754,17 +1765,20 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
               .add("requestedBytes", bytesRequested);
         logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): will process a set of candidate jobs.");
       }
+      jobSelectionTime += t.secs(utils::Timer::resetCounter);
       // We now have a batch of jobs to try and dequeue. Should not be empty.
       // First add the jobs to the owned list of the agent.
       std::list<std::string> addedJobs;
       for (const auto &j: candidateJobs) addedJobs.emplace_back(j->m_archiveRequest.getAddressIfSet());
       m_agentReference.addBatchToOwnership(addedJobs, m_objectStore);
+      ownershipAdditionTime += t.secs(utils::Timer::resetCounter);
       // We can now attempt to switch the ownership of the jobs. Depending on the type of failure (if any) we
       // will adapt the rest.
       // First, start the parallel updates of jobs
       std::list<std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater>> jobUpdates;
       for (const auto &j: candidateJobs) jobUpdates.emplace_back(
         j->m_archiveRequest.asyncUpdateJobOwner(j->tapeFile.copyNb, m_agentReference.getAgentAddress(), aqAddress));
+      asyncUpdateLaunchTime += t.secs(utils::Timer::resetCounter);
       // Now run through the results of the asynchronous updates. Non-success results come in the form of exceptions.
       std::list<std::string> jobsToForget; // The jobs either absent or not owned, for which we should just remove references (agent).
       std::list<std::string> jobsToDequeue; // The jobs that should not be queued anymore. All of them indeed (invalid or successfully poped).
@@ -1789,10 +1803,14 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           (*j)->m_mountId = mountInfo.mountId;
           (*j)->m_tapePool = mountInfo.tapePool;
           log::ScopedParamContainer params(logContext);
+          auto timingsReport = (*ju)->getTimeingsReport();
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
                 .add("requestObject", (*j)->m_archiveRequest.getAddressIfSet())
-                .add("fileId", (*j)->archiveFile.archiveFileID);
+                .add("fileId", (*j)->archiveFile.archiveFileID)
+                .add("lockFetchTime", timingsReport.lockFetchTime)
+                .add("processTime", timingsReport.processTime)
+                .add("commitUnlockTime", timingsReport.commitUnlockTime);
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): popped one job");
           validatedJobs.emplace_back(std::move(*j));
         } catch (cta::exception::Exception & e) {
@@ -1855,15 +1873,21 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           currentFiles--;
           currentBytes-=(*j)->archiveFile.fileSize;
         }
+        jobsUpdateTime += t.secs(utils::Timer::resetCounter);
         // In all cases: move to the nexts.
         ju=jobUpdates.erase(ju);
         j=candidateJobs.erase(j);
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
       for (const auto &j: jobsToDequeue) aq.removeJob(j);
-      if (jobsToForget.size()) m_agentReference.removeBatchFromOwnership(addedJobs, m_objectStore);
+      queueProcessTime += t.secs(utils::Timer::resetCounter);
+      if (jobsToForget.size()) {
+        m_agentReference.removeBatchFromOwnership(addedJobs, m_objectStore);
+        ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
+      }
       // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
       aq.commit();
+      queueCommitTime += t.secs(utils::Timer::resetCounter);
       // We can now add the validated jobs to the return value.
       auto vj = validatedJobs.begin();
       while (vj != validatedJobs.end()) {
@@ -1940,7 +1964,18 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
     log::ScopedParamContainer params(logContext);
     params.add("tapepool", mountInfo.tapePool)
           .add("files", nFiles)
-          .add("bytes", nBytes);
+          .add("bytes", nBytes)
+          .add("driveRegisterCheckTime", driveRegisterCheckTime)
+          .add("findQueueTime", findQueueTime)
+          .add("lockFetchQueueTime", lockFetchQueueTime)
+          .add("emptyQueueCleanupTime", emptyQueueCleanupTime)
+          .add("jobSelectionTime", jobSelectionTime)
+          .add("ownershipAdditionTime", ownershipAdditionTime)
+          .add("asyncUpdateLaunchTime", asyncUpdateLaunchTime)
+          .add("jobsUpdateTime", jobsUpdateTime)
+          .add("queueProcessTime", queueProcessTime)
+          .add("ownershipRemovalTime", ownershipRemovalTime)
+          .add("queueCommitTime", queueCommitTime);
     logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
   }
   // We can construct the return value.
