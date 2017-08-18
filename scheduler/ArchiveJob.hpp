@@ -22,6 +22,7 @@
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "eos/DiskReporter.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -121,6 +122,11 @@ public:
   
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
+  
+  /**
+   * The reporter for the job.
+   */
+  std::unique_ptr<cta::eos::DiskReporter> m_reporter;
   
   /**
    * The mount that generated this job
