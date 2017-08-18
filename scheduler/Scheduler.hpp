@@ -227,7 +227,7 @@ public:
    * error encountered by the drive.
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, 
-    cta::common::dataStructures::DriveStatus status);
+    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
 
   /**
    * Dumps the states of all drives for display

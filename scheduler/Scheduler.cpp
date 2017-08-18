@@ -379,9 +379,15 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status) {
+void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
   // TODO: mount type should be transmitted too.
+  utils::Timer t;
   m_db.reportDriveStatus(driveInfo, type, status, time(NULL));
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveInfo.driveName)
+     .add("schedulerDbTime", schedulerDbTime);
+   lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");   
 }
 
 //------------------------------------------------------------------------------

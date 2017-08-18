@@ -437,8 +437,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
-    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
-    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());

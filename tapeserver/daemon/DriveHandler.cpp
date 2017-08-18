@@ -946,7 +946,7 @@ int DriveHandler::runChild() {
       driveInfo.driveName=m_configLine.unitName;
       driveInfo.logicalLibrary=m_configLine.logicalLibrary;
       driveInfo.host=hostname;
-      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -972,7 +972,7 @@ int DriveHandler::runChild() {
         driveInfo.driveName=m_configLine.unitName;
         driveInfo.logicalLibrary=m_configLine.logicalLibrary;
         driveInfo.host=hostname;
-        scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+        scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false, false, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -1065,7 +1065,7 @@ int DriveHandler::runChild() {
         driveInfo.driveName=m_configLine.unitName;
         driveInfo.logicalLibrary=m_configLine.logicalLibrary;
         driveInfo.host=hostname;
-        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down);
+        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, false /* down */, false /* no force down*/, lc);
       } catch (cta::exception::Exception & ex) {

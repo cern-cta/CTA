@@ -99,7 +99,7 @@ schedule:
         downUpTransition  = true;
         // We wait a bit before polling the scheduler again.
         // TODO: parametrize the duration?
-        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         sleep (5);
       } else {
         break;
@@ -107,7 +107,7 @@ schedule:
     } catch (cta::Scheduler::NoSuchDrive & e) {
       // The object store does not even know about this drive. We will report our state
       // (default status is down).
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     }
   }
   // If we get here after seeing a down desired state, we are transitioning  from
@@ -117,7 +117,7 @@ schedule:
     castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
     lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
     if (!emptyDriveProbe.driveIsEmpty()) {
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false, lc);
       lc.log(cta::log::ERR, "A tape was detected in the drive. Putting the drive back down.");
@@ -135,7 +135,7 @@ schedule:
     localParams.add("errorMessage", e.getMessageValue());
     lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
     lc.logBacktrace(cta::log::ERR, e.backtrace());
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     cta::common::dataStructures::SecurityIdentity cliId;
     m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false, lc);
     return MARK_DRIVE_AS_DOWN;
@@ -143,7 +143,7 @@ schedule:
   // No mount to be done found, that was fast...
   if (!tapeMount.get()) {
     lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     sleep (10);
     goto schedule;
     // return MARK_DRIVE_AS_UP;
