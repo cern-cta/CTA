@@ -15,7 +15,7 @@ yes | cp -r /opt/ci/ctafrontend/etc /
 . /tmp/objectstore-rc.sh
 
 echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
-echo "Catalogue NumberOfConnections 1" >>/etc/cta/cta-frontend.conf
+echo "Catalogue NumberOfConnections 10" >>/etc/cta/cta-frontend.conf
 echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 
