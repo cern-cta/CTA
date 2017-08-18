@@ -8,7 +8,7 @@ yum-config-manager --enable eos-citrine-depend
 yum-config-manager --enable eos-citrine
 
 # Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
+yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
@@ -96,6 +96,25 @@ for ((i=0;i<600;i++)); do
   echo -n .
 done
 test -f /CANSTART && echo OK || exit 1
+
+# setting higher OS limits for EOS processes
+maxproc=$(ulimit -u)
+echo "Setting nproc for user daemon to ${maxproc}"
+cat >> /etc/security/limits.conf <<EOF
+daemon soft nproc ${maxproc}
+daemon hard nproc ${maxproc}
+EOF
+echo "Checking limits..."
+echo -n "nproc..."
+if [ "${maxproc}" -eq "$(sudo -u daemon bash -c 'ulimit -u')" ]; then
+  echo OK
+else
+  echo FAILED
+fi
+echo
+echo "Limits summary for user daemon:"
+sudo -u daemon bash -c 'ulimit -a'
+
 
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
