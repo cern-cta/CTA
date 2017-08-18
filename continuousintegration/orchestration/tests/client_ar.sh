@@ -3,6 +3,7 @@
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
+DATA_SOURCE=/dev/urandom
 
 NB_PROCS=1
 NB_FILES=1
@@ -18,12 +19,12 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>]
 EOF
 exit 1
 }
 
-while getopts "d:e:n:s:p:v" o; do
+while getopts "d:e:n:s:p:vS:" o; do
     case "${o}" in
         e)
             EOSINSTANCE=${OPTARG}
@@ -42,6 +43,9 @@ while getopts "d:e:n:s:p:v" o; do
             ;;
         v)
             VERBOSE=1
+            ;;
+        S)
+            DATA_SOURCE=${OPTARG}
             ;;
         *)
             usage
