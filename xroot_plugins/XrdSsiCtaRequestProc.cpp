@@ -23,7 +23,6 @@
 #include "XrdSsiPbDebug.hpp"
 #endif
 #include "XrdSsiPbException.hpp"
-#include "XrdSsiPbResource.hpp"
 #include "XrdSsiPbRequestProc.hpp"
 #include "xroot_plugins/messages/cta_frontend.pb.h"
 
@@ -72,7 +71,7 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 
       //const cta::eos::Notification &notification = m_request.notification();
 
-      cta::frontend::EosNotificationRequest eos_rq(getClient(m_resource), cta_service_ptr);
+      cta::frontend::EosNotificationRequest eos_rq(*(m_resource.client), cta_service_ptr);
       eos_rq.process(m_request.notification(), m_metadata);
    }
    catch(std::exception &ex)
