@@ -95,23 +95,23 @@ message AdminCmd {
   enum Cmd {
     CMD_ADMIN                          =  0;
     CMD_ADMINHOST                      =  1;
-    CMD_TAPEPOOL                       =  2;
+    CMD_ARCHIVEFILE                    =  2;
     CMD_ARCHIVEROUTE                   =  3;
-    CMD_LOGICALLIBRARY                 =  4;
-    CMD_TAPE                           =  5;
-    CMD_STORAGECLASS                   =  6;
-    CMD_REQUESTERMOUNTRULE             =  7;
-    CMD_GROUPMOUNTRULE                 =  8;
+    CMD_DRIVE                          =  4;
+    CMD_GROUPMOUNTRULE                 =  5;
+    CMD_LISTPENDINGARCHIVES            =  6;
+    CMD_LISTPENDINGRETRIEVES           =  7;
+    CMD_LOGICALLIBRARY                 =  8;
     CMD_MOUNTPOLICY                    =  9;
     CMD_REPACK                         = 10;
-    CMD_SHRINK                         = 11;
-    CMD_VERIFY                         = 12;
-    CMD_ARCHIVEFILE                    = 13;
-    CMD_TEST                           = 14;
-    CMD_DRIVE                          = 15;
-    CMD_LISTPENDINGARCHIVES            = 16;
-    CMD_LISTPENDINGRETRIEVES           = 17;
-    CMD_SHOWQUEUES                     = 18;
+    CMD_REQUESTERMOUNTRULE             = 11;
+    CMD_SHOWQUEUES                     = 12;
+    CMD_SHRINK                         = 13;
+    CMD_STORAGECLASS                   = 14;
+    CMD_TAPE                           = 15;
+    CMD_TAPEPOOL                       = 16;
+    CMD_TEST                           = 17;
+    CMD_VERIFY                         = 18;
   }
   enum SubCmd {
     CMD_NONE                           =  0;

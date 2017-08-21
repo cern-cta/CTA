@@ -49,7 +49,7 @@ install(TARGETS eoscta_stub DESTINATION usr/bin)
 # cta_admin is a drop-in replacement for "cta <admin_command>"
 #
 
-add_executable(cta_admin CtaAdminCmdMain.cpp CtaAdminCmd.cpp)
+add_executable(cta_admin CtaAdminCmd.cpp)
 target_link_libraries(cta_admin XrdCtaMessages XrdSsi-4 XrdSsiLib)
 install(TARGETS cta_admin DESTINATION usr/bin)
 
