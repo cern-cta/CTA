@@ -38,45 +38,34 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    size_t p = m_execname.find_last_of('/');
    if(p != std::string::npos) m_execname.erase(0, p+1);
 
+   // Parse the command
+
+   if(argc < 2) throwUsage();
+
+   auto cmd_it = shortCmd.find(argv[1]);
+
+   if(cmd_it == shortCmd.end())
+   {
+      // Short version didn't match, check the long version
+
+      auto longcmd_it = longCmd.find(argv[1]);
+
+      if(longcmd_it == longCmd.end() ||
+         (cmd_it = shortCmd.find(longcmd_it->second)) == shortCmd.end())
+      {
+         throwUsage();
+      }
+   }
+
+
+#if 0  
    // Tokenize the command
 
    for(int i = 1; i < argc; ++i)
    {
       m_requestTokens.push_back(argv[i]);
    }
-
-   // Check we have at least one parameter
-
-   if(argc < 2) throwUsage();
-
-#if 0  
-   // Parse the command
-
-   std::string &command = m_requestTokens.at(1);
-
-   if     ("ad"   == command || "admin"                  == command) xCom_admin();
-   else if("ah"   == command || "adminhost"              == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_adminhost();}
-   else if("tp"   == command || "tapepool"               == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_tapepool();}
-   else if("ar"   == command || "archiveroute"           == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_archiveroute();}
-   else if("ll"   == command || "logicallibrary"         == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_logicallibrary();}
-   else if("ta"   == command || "tape"                   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_tape();}
-   else if("sc"   == command || "storageclass"           == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_storageclass();}
-   else if("rmr"  == command || "requestermountrule"     == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_requestermountrule();}
-   else if("gmr"  == command || "groupmountrule"         == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_groupmountrule();}
-   else if("mp"   == command || "mountpolicy"            == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_mountpolicy();}
-   else if("re"   == command || "repack"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_repack();}
-   else if("sh"   == command || "shrink"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_shrink();}
-   else if("ve"   == command || "verify"                 == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_verify();}
-   else if("af"   == command || "archivefile"            == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_archivefile();}
-   else if("te"   == command || "test"                   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_test();}
-   else if("dr"   == command || "drive"                  == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_drive();}
-   else if("lpa"  == command || "listpendingarchives"    == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_listpendingarchives();}
-   else if("lpr"  == command || "listpendingretrieves"   == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_listpendingretrieves();}
-   else if("sq"   == command || "showqueues"             == command) xCom_notimpl(); //{authorizeAdmin(); return xCom_showqueues();}
-
-   else throwUsage();
 #endif
-   throwUsage();
 }
 
 
@@ -89,16 +78,16 @@ void CtaAdminCmd::throwUsage()
         << "For each command there is a short version and a long one. "
         << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
 
-   for(auto lo_it = longOptions.begin(); lo_it != longOptions.end(); ++lo_it)
+   for(auto lo_it = longCmd.begin(); lo_it != longCmd.end(); ++lo_it)
    {
       std::string cmd = lo_it->first + "/" + lo_it->second;
-      cmd.resize(30, ' ');
+      cmd.resize(25, ' ');
       help << "  " << m_execname << " " << cmd;
 
-      auto &sub_cmd = options.at(lo_it->second).sub_cmd;
+      auto &sub_cmd = shortCmd.at(lo_it->second).sub_cmd;
       for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it)
       {
-         help << (sc_it == sub_cmd.begin() ? "" : "/") << *sc_it;
+         help << (sc_it == sub_cmd.begin() ? ' ' : '/') << *sc_it;
       }
       help << std::endl;
    }

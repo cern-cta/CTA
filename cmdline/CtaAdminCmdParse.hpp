@@ -34,7 +34,7 @@ struct SubCommand
    std::set<std::string> sub_cmd;
 };
 
-const std::map<std::string, std::string> longOptions = {
+const std::map<std::string, std::string> longCmd = {
    { "admin", "ad" },
    { "adminhost", "ah" },
    { "archivefile", "af" },
@@ -55,7 +55,7 @@ const std::map<std::string, std::string> longOptions = {
    { "verify",  "ve" }
 };
 
-const std::map<std::string, SubCommand> options = {
+const std::map<std::string, SubCommand> shortCmd = {
    { "ad",  { AdminCmd::CMD_ADMIN,                { "add", "ch", "rm", "ls" }} },
    { "ah",  { AdminCmd::CMD_ADMINHOST,            { "add", "ch", "rm", "ls" }} },
    { "af",  { AdminCmd::CMD_ARCHIVEFILE,          { "ls" }} },
@@ -76,25 +76,5 @@ const std::map<std::string, SubCommand> options = {
    { "ve",  { AdminCmd::CMD_VERIFY,               { "add", "rm", "ls", "err" }} }
 };
 
-#if 0
-   m_help << programName << " admin/ad                 add/ch/rm/ls"               << std::endl
-          << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl
-          << programName << " archivefile/af           ls"                         << std::endl
-          << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl
-          << programName << " drive/dr                 up/down/ls"                 << std::endl
-          << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl
-          << programName << " listpendingarchives/lpa"                             << std::endl
-          << programName << " listpendingretrieves/lpr"                            << std::endl
-          << programName << " logicallibrary/ll        add/ch/rm/ls"               << std::endl
-          << programName << " mountpolicy/mp           add/ch/rm/ls"               << std::endl
-          << programName << " repack/re                add/rm/ls/err"              << std::endl
-          << programName << " requestermountrule/rmr   add/rm/ls/err"              << std::endl
-          << programName << " shrink/sh"                                           << std::endl
-          << programName << " storageclass/sc          add/ch/rm/ls"               << std::endl
-          << programName << " tape/ta                  add/ch/rm/reclaim/ls/label" << std::endl
-          << programName << " tapepool/tp              add/ch/rm/ls"               << std::endl
-          << programName << " test/te                  read/write"                 << std::endl
-          << programName << " verify/ve                add/rm/ls/err"              << std::endl
-#endif
 }} // namespace cta::admin
 
