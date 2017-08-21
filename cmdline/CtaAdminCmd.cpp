@@ -23,7 +23,7 @@
 #include "CtaAdminCmdParse.hpp"
 #include "CtaAdminCmd.hpp"
 
-#include "XrdSsiPbException.hpp"
+#include "XrdSsiPbDebug.hpp"
 
 
 
@@ -33,6 +33,8 @@ namespace admin {
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
 {
+   auto &admincmd = *(m_request.mutable_admincmd());
+
    // Strip path from execname
 
    size_t p = m_execname.find_last_of('/');
@@ -57,6 +59,22 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
       }
    }
 
+   admincmd.set_cmd(cmd_it->second.cmd);
+
+   // Parse the subcommand
+
+   int nextarg = 2;
+
+   if(cmd_it->second.sub_cmd.size() > 0)
+   {
+      if(argc < 3) throwUsage();
+
+      auto sub_it = cmd_it->second.sub_cmd.find(argv[nextarg++]);
+
+      if(sub_it == cmd_it->second.sub_cmd.end()) throwUsage();
+
+      admincmd.set_subcmd(subCmd.at(*sub_it));
+   }
 
 #if 0  
    // Tokenize the command
@@ -95,6 +113,13 @@ void CtaAdminCmd::throwUsage()
    throw std::runtime_error(help.str());
 }
 
+
+
+void CtaAdminCmd::send()
+{
+   XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());
+}
+
 }} // namespace cta::admin
 
 
@@ -112,8 +137,11 @@ int main(int argc, const char **argv)
 
    try {    
       // Tokenize and parse the command line arguments
-
       CtaAdminCmd cmd(argc, argv);
+
+      // Send the protocol buffer
+      cmd.send();
+
       return 0;
    } catch (XrdSsiPb::PbException &ex) {
       std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;

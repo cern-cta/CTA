@@ -29,9 +29,14 @@ class CtaAdminCmd
 public:
    CtaAdminCmd(int argc, const char *const *const argv);
 
+   /*!
+    * Send the protocol buffer across the XRootD SSI transport
+    */
+   void send();
+
 private:
    /*!
-    * Throw an exception with generic usage help
+    * Throw an exception with usage help
     */
    void throwUsage();
 
@@ -40,6 +45,7 @@ private:
     */
    std::string              m_execname;         //!< Executable name of this program
    std::vector<std::string> m_requestTokens;    //!< The command line parameters represented as a vector of strings
+   cta::xrd::Request        m_request;          //!< Protocol Buffer for the command and parameters
 };
 
 }} // namespace cta::admin

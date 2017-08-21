@@ -93,39 +93,40 @@ message OptionString {
 
 message AdminCmd {
   enum Cmd {
-    CMD_ADMIN                          =  0;
-    CMD_ADMINHOST                      =  1;
-    CMD_ARCHIVEFILE                    =  2;
-    CMD_ARCHIVEROUTE                   =  3;
-    CMD_DRIVE                          =  4;
-    CMD_GROUPMOUNTRULE                 =  5;
-    CMD_LISTPENDINGARCHIVES            =  6;
-    CMD_LISTPENDINGRETRIEVES           =  7;
-    CMD_LOGICALLIBRARY                 =  8;
-    CMD_MOUNTPOLICY                    =  9;
-    CMD_REPACK                         = 10;
-    CMD_REQUESTERMOUNTRULE             = 11;
-    CMD_SHOWQUEUES                     = 12;
-    CMD_SHRINK                         = 13;
-    CMD_STORAGECLASS                   = 14;
-    CMD_TAPE                           = 15;
-    CMD_TAPEPOOL                       = 16;
-    CMD_TEST                           = 17;
-    CMD_VERIFY                         = 18;
+    CMD_NONE                           =  0;
+    CMD_ADMIN                          =  1;
+    CMD_ADMINHOST                      =  2;
+    CMD_ARCHIVEFILE                    =  3;
+    CMD_ARCHIVEROUTE                   =  4;
+    CMD_DRIVE                          =  5;
+    CMD_GROUPMOUNTRULE                 =  6;
+    CMD_LISTPENDINGARCHIVES            =  7;
+    CMD_LISTPENDINGRETRIEVES           =  8;
+    CMD_LOGICALLIBRARY                 =  9;
+    CMD_MOUNTPOLICY                    = 10;
+    CMD_REPACK                         = 11;
+    CMD_REQUESTERMOUNTRULE             = 12;
+    CMD_SHOWQUEUES                     = 13;
+    CMD_SHRINK                         = 14;
+    CMD_STORAGECLASS                   = 15;
+    CMD_TAPE                           = 16;
+    CMD_TAPEPOOL                       = 17;
+    CMD_TEST                           = 18;
+    CMD_VERIFY                         = 19;
   }
   enum SubCmd {
-    CMD_NONE                           =  0;
-    CMD_ADD                            =  1;
-    CMD_CH                             =  2;
-    CMD_ERR                            =  3;
-    CMD_LABEL                          =  4;
-    CMD_LS                             =  5;
-    CMD_RECLAIM                        =  6;
-    CMD_RM                             =  7;
-    CMD_UP                             =  8;
-    CMD_DOWN                           =  9;
-    CMD_READ                           = 10;
-    CMD_WRITE                          = 11;
+    SUBCMD_NONE                        =  0;
+    SUBCMD_ADD                         =  1;
+    SUBCMD_CH                          =  2;
+    SUBCMD_ERR                         =  3;
+    SUBCMD_LABEL                       =  4;
+    SUBCMD_LS                          =  5;
+    SUBCMD_RECLAIM                     =  6;
+    SUBCMD_RM                          =  7;
+    SUBCMD_UP                          =  8;
+    SUBCMD_DOWN                        =  9;
+    SUBCMD_READ                        = 10;
+    SUBCMD_WRITE                       = 11;
   }
 
   Cmd cmd                              =  1;    //< The primary command

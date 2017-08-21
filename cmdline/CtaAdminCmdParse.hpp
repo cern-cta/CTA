@@ -76,5 +76,18 @@ const std::map<std::string, SubCommand> shortCmd = {
    { "ve",  { AdminCmd::CMD_VERIFY,               { "add", "rm", "ls", "err" }} }
 };
 
-}} // namespace cta::admin
+const std::map<std::string, AdminCmd::SubCmd> subCmd = {
+   { "add",     AdminCmd::SUBCMD_ADD },
+   { "ch",      AdminCmd::SUBCMD_CH },
+   { "err",     AdminCmd::SUBCMD_ERR },
+   { "label",   AdminCmd::SUBCMD_LABEL },
+   { "ls",      AdminCmd::SUBCMD_LS },
+   { "reclaim", AdminCmd::SUBCMD_RECLAIM },
+   { "rm",      AdminCmd::SUBCMD_RM },
+   { "up",      AdminCmd::SUBCMD_UP },
+   { "down",    AdminCmd::SUBCMD_DOWN },
+   { "read",    AdminCmd::SUBCMD_READ },
+   { "write",   AdminCmd::SUBCMD_WRITE }
+};
 
+}} // namespace cta::admin
