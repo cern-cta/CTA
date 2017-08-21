@@ -1,0 +1,137 @@
+// @project        The CERN Tape Archive (CTA)
+// @brief          CTA Admin Command API definition
+// @copyright      Copyright 2017 CERN
+// @license        This program is free software: you can redistribute it and/or modify
+//                 it under the terms of the GNU General Public License as published by
+//                 the Free Software Foundation, either version 3 of the License, or
+//                 (at your option) any later version.
+//
+//                 This program is distributed in the hope that it will be useful,
+//                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+//                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//                 GNU General Public License for more details.
+//
+//                 You should have received a copy of the GNU General Public License
+//                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+syntax  = "proto3";
+package cta.admin;
+
+//
+// Command Options
+//
+
+message OptionBoolean {
+  enum Key {
+    ALL                                =  0;
+    CHECK_CHECKSUM                     =  1;
+    DISABLED                           =  2;
+    ENCRYPTED                          =  3;
+    FORCE                              =  4;
+    FULL                               =  5;
+    JUSTEXPAND                         =  6;
+    JUSTREPACK                         =  7;
+    LBP                                =  8;
+    SHOW_HEADER                        =  9;
+  }
+
+  Key key                              =  1;
+  bool value                           =  2;
+}
+
+message OptionInteger {
+  enum Key {
+    ARCHIVE_FILE_ID                    =  0;
+    ARCHIVE_PRIORITY                   =  1;
+    RETRIEVE_PRIORITY                  =  2;
+    CAPACITY                           =  3;
+    COPY_NUMBER                        =  4;
+    FIRST_FSEQ                         =  5;
+    LAST_FSEQ                          =  6;
+    MAX_DRIVES_ALLOWED                 =  7;
+    MIN_ARCHIVE_REQUEST_AGE            =  8;
+    MIN_RETRIEVE_REQUEST_AGE           =  9;
+    NUMBER_OF_FILES                    = 10;
+    PARTIAL_TAPES_NUMBER               = 11;
+  }
+
+  Key key                              =  1;
+  int64 value                          =  2;
+}
+
+message OptionString {
+  enum Key {
+    COMMENT                            =  0;
+    DISKID                             =  1;
+    DRIVE                              =  2;
+    ENCRYPTION_KEY                     =  3;
+    FILENAME                           =  4;
+    GROUP                              =  5;
+    HOSTNAME                           =  6;
+    INPUT                              =  7;
+    INSTANCE                           =  8;
+    LOGICAL_LIBRARY                    =  9;
+    MOUNT_POLICY                       = 10;
+    OUTPUT                             = 11;
+    OWNER                              = 12;
+    PATH                               = 13;
+    SIZE                               = 14;
+    STORAGE_CLASS                      = 15;
+    TAG                                = 16;
+    TAPE_POOL                          = 17;
+    USERNAME                           = 18;
+    VID                                = 19;
+  }
+
+  Key key                              =  1;
+  string value                         =  2;
+}
+
+//
+// CTA Admin Command API
+//
+
+message AdminCmd {
+  enum Cmd {
+    CMD_ADMIN                          =  0;
+    CMD_ADMINHOST                      =  1;
+    CMD_TAPEPOOL                       =  2;
+    CMD_ARCHIVEROUTE                   =  3;
+    CMD_LOGICALLIBRARY                 =  4;
+    CMD_TAPE                           =  5;
+    CMD_STORAGECLASS                   =  6;
+    CMD_REQUESTERMOUNTRULE             =  7;
+    CMD_GROUPMOUNTRULE                 =  8;
+    CMD_MOUNTPOLICY                    =  9;
+    CMD_REPACK                         = 10;
+    CMD_SHRINK                         = 11;
+    CMD_VERIFY                         = 12;
+    CMD_ARCHIVEFILE                    = 13;
+    CMD_TEST                           = 14;
+    CMD_DRIVE                          = 15;
+    CMD_LISTPENDINGARCHIVES            = 16;
+    CMD_LISTPENDINGRETRIEVES           = 17;
+    CMD_SHOWQUEUES                     = 18;
+  }
+  enum SubCmd {
+    CMD_NONE                           =  0;
+    CMD_ADD                            =  1;
+    CMD_CH                             =  2;
+    CMD_ERR                            =  3;
+    CMD_LABEL                          =  4;
+    CMD_LS                             =  5;
+    CMD_RECLAIM                        =  6;
+    CMD_RM                             =  7;
+    CMD_UP                             =  8;
+    CMD_DOWN                           =  9;
+    CMD_READ                           = 10;
+    CMD_WRITE                          = 11;
+  }
+
+  Cmd cmd                              =  1;    //< The primary command
+  SubCmd subcmd                        =  2;    //< The secondary command
+  repeated OptionBoolean option_bool   =  3;    //< List of boolean options
+  repeated OptionInteger option_int    =  4;    //< List of integer options
+  repeated OptionString option_str     =  5;    //< List of string options
+}
+

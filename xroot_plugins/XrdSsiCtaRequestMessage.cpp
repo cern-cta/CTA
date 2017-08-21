@@ -43,7 +43,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 
 
-void RequestMessage::processAdminCmd(const cta::xrd::AdminCmd &admin_cmd, cta::xrd::Response &response)
+void RequestMessage::processAdminCmd(const cta::admin::AdminCmd &admin_cmd, cta::xrd::Response &response)
 {
 }
 

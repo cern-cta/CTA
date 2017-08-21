@@ -17,26 +17,8 @@
 syntax = "proto3";
 package cta.xrd;
 
-// CTA-EOS API
-
+import "cta_admin.proto";
 import "cta_eos.proto";
-
-
-
-//
-// CTA Admin Command API
-//
-
-message AdminCmd {
-  enum CmdType {
-     CMD_ADMIN                        = 0;      //< admin command
-  }
-  CmdType cmd                         = 1;      //< Specifies the command
-  map<string, bool> flags             = 2;      //< List of flags
-  map<string, string> parameters      = 3;      //< List of parameters
-}
-
-
 
 //
 // Requests sent to the CTA Frontend
@@ -45,7 +27,7 @@ message AdminCmd {
 message Request {
   oneof request {
     cta.eos.Notification notification = 1;      //< EOS WFE Notification
-    AdminCmd admincmd                 = 2;      //< CTA Admin Command
+    cta.admin.AdminCmd admincmd       = 2;      //< CTA Admin Command
   }
 }
 

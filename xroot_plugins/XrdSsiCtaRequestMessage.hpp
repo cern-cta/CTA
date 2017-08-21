@@ -51,7 +51,7 @@ private:
     * @param[in]     admincmd        Admin command from the cta admin cli
     * @param[out]    response        Response message
     */
-   void processAdminCmd(const cta::xrd::AdminCmd &admin_cmd, cta::xrd::Response &response);
+   void processAdminCmd(const cta::admin::AdminCmd &admin_cmd, cta::xrd::Response &response);
 
    /*!
     * Process the EOS WFE Notification message type
