@@ -28,8 +28,8 @@
 namespace cta {
 namespace admin {
 
-typedef std::map<std::string, AdminCmd::Cmd> cmdLookup_t;
-typedef std::map<std::string, AdminCmd::SubCmd> subCmdLookup_t;
+using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
+using subCmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
 
 
 
@@ -170,88 +170,6 @@ const std::map<std::string, OptionString::Key> strOptions = {
 };
 
 
-#if 0
-/*!
- * Map option names to Protocol Buffer enum values
- */
-//const subCmdLookup_t subCmdLookup = {
-BoolValue("-d", "--disabled", false, false);
-BoolValue("-d", "--disabled", true, false);
-BoolValue("-e", "--encrypted", false, false);
-BoolValue("-e", "--encrypted", true, false);
-BoolValue("-f", "--force", false, true, "false");
-BoolValue("-f", "--full", false, false);
-BoolValue("-f", "--full", true, false);
-BoolValue("-l", "--lbp", false, true, "true");
-BoolValue("-p", "--lbp", false, false);
-StringValue("", "--checksumtype", true, false));
-StringValue("", "--checksumvalue", true, false));
-StringValue("-d", "--diskid", false, false);
-StringValue("-d", "--drive", true, false);
-StringValue("", "--diskfilegroup", true, false);
-StringValue("", "--diskfileowner", true, false);
-StringValue("", "--diskfilepath", true, false);
-StringValue("", "--diskid", true, false);
-StringValue("", "--dsturl", true, false);
-StringValue("-f", "--file", true, false);
-StringValue("-g", "--group", false, false);
-StringValue("", "--group", true, false);
-StringValue("-i", "--input", true, false);
-StringValue("-i", "--instance", false, false);
-StringValue("-i", "--instance", true, false);
-StringValue("-k", "--encryptionkey", false, false);
-StringValue("-l", "--logicallibrary", false, false);
-StringValue("-l", "--logicallibrary", true, false);
-StringValue("-m", "--comment", false, false);
-StringValue("-m", "--comment", true, false);
-StringValue("-m", "--comment", true, true, "-");
-StringValue("-n", "--name", true, false);
-StringValue("-o", "--output", true, false);        
-StringValue("-o", "--owner", false, false);
-StringValue("-p", "--path", false, false);
-StringValue("", "--recoveryblob", true, false);
-StringValue("", "--reportURL", false, true, "null:");
-StringValue("", "--srcurl", true, false);
-StringValue("-s", "--storageclass", false, false);
-StringValue("-s", "--storageclass", true, false);
-StringValue("", "--storageclass", true, false);
-StringValue("-t", "--tag", false, false);
-StringValue("-t", "--tag", false, false); 
-StringValue("-t", "--tapepool", false, false);
-StringValue("-t", "--tapepool", true, false);
-StringValue("-u", "--mountpolicy", false, false);
-StringValue("-u", "--mountpolicy", true, false);
-StringValue("", "--user", true, false);
-StringValue("-u", "--username", true, false);
-StringValue("-v", "--vid", false, false);
-StringValue("-v", "--vid", true, false);
-Uint64Value("--aa", "--minarchiverequestage", false, false);
-Uint64Value("--aa", "--minarchiverequestage", true, false);
-Uint64Value("--ap", "--archivepriority", false, false);
-Uint64Value("--ap", "--archivepriority", true, false);
-Uint64Value("-c", "--capacity", false, false);
-Uint64Value("-c", "--capacity", true, false);
-Uint64Value("-c", "--copynb", false, false);
-Uint64Value("-c", "--copynb", true, false);
-Uint64Value("-d", "--maxdrivesallowed", false, false);
-Uint64Value("-d", "--maxdrivesallowed", true, false);
-Uint64Value("-f", "--firstfseq", true, false);
-Uint64Value("", "--id", true, false);
-Uint64Value("-I", "--id", false, false);
-Uint64Value("-l", "--lastfseq", true, false);
-Uint64Value("-n", "--number", true, false);
-Uint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
-Uint64Value("-p", "--partialtapesnumber", false, false);
-Uint64Value("-p", "--partialtapesnumber", true, false);
-Uint64Value("--ra", "--minretrieverequestage", false, false);
-Uint64Value("--ra", "--minretrieverequestage", true, false);
-Uint64Value("--rp", "--retrievepriority", false, false);
-Uint64Value("--rp", "--retrievepriority", true, false);
-Uint64Value("", "--size", true, false);
-Uint64Value("-s", "--size", true, false);
-#endif
-
-
 
 /*!
  * Help text structure
@@ -298,17 +216,38 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 
 
 
-struct Command
+/*!
+ * Command line options
+ */
+struct Option
 {
-   bool tmp;
+   enum option_t { OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
+
+   option_t    type;
+   std::string long_opt;
+   std::string short_opt;
+   std::string help_txt;
+   bool        optional;
 };
 
-typedef std::pair<AdminCmd::Cmd, AdminCmd::SubCmd> cmd_key_t;
+/*
+ * Enumerate options
+ */
+const Option opt_header   = { Option::OPT_FLAG, "--header",   "-h", "",              true  };
+const Option opt_comment  = { Option::OPT_STR,  "--comment",  "-m", "<\"comment\">", false };
+const Option opt_hostname = { Option::OPT_STR,  "--hostname", "-n", "<host_name>",   false };
 
-//const std::pair<cmd_key_t, Command> c{ { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { true } };
+using cmd_key_t = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
+using cmd_val_t = std::vector<Option>;
 
-const std::map<cmd_key_t, Command> command = {
-   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { true } }
+/*!
+ * Map valid options to commands
+ */
+const std::map<cmd_key_t, cmd_val_t> command = {
+   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { opt_hostname, opt_comment }},
+   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH  }, { opt_hostname, opt_comment }},
+   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM  }, { opt_hostname }},
+   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS  }, { opt_header }},
 };
 
 }} // namespace cta::admin
