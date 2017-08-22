@@ -93,7 +93,8 @@ const subCmdLookup_t subCmdLookup = {
    { "up",                   AdminCmd::SUBCMD_UP },
    { "down",                 AdminCmd::SUBCMD_DOWN },
    { "read",                 AdminCmd::SUBCMD_READ },
-   { "write",                AdminCmd::SUBCMD_WRITE }
+   { "write",                AdminCmd::SUBCMD_WRITE },
+   { "write_auto",           AdminCmd::SUBCMD_WRITE_AUTO }
 };
 
 
@@ -120,20 +121,24 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" }, "" }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" }, "" }},
-   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" }, "" }},
-   { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "rm", "ls", "err" }, "" }},
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" },
+                                           "(it is a synchronous command)" }},
+   { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { }, "" }},
    { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { }, "" }},
    { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" }, "" }},
-   { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "rm", "ls", "err" }, "" }},
+   { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { }, "" }},
    { AdminCmd::CMD_SHRINK,               { "shrink",               "sh",  { }, "" }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" }, "" }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" }, "" }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" }, "" }},
-   { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write" }, "" }},
+   { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write", "write_auto" },
+                                           "(to be run on an empty self-dedicated\n"
+                                           "drive; it is a synchronous command that returns performance stats and errors;\n"
+                                           "all locations are local to the tapeserver)" }},
    { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" }, "" }}
 };
 

@@ -50,30 +50,20 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
       admincmd.set_cmd(cmd_it->second);
    }
 
-#if 0
    // Parse the subcommand
 
-   int nextarg = 2;
-   int &num_subcmds = cmd_it->second.sub_cmd.size();
+   bool has_subcommand = cmdHelp.at(admincmd.cmd()).sub_cmd.size() > 0;
 
-   if(num_subcmds > 0)
+   if(has_subcommand)
    {
-      if(argc < 3) throwUsage();
+      subCmdLookup_t::const_iterator subcmd_it;
 
-      int i;
-      for(i = 0; i < num_subcmds; ++i)
-      {
-         if(argv[2] == cmd_it->second.sub_cmd.at(i))
-         {
-            admincmd.set_subcmd(subCmd.at(argv[2]));
-            break;
-         }
+      if(argc < 3 || (subcmd_it = subCmdLookup.find(argv[2])) == subCmdLookup.end()) {
+         throwUsage();
+      } else {
+         admincmd.set_subcmd(subcmd_it->second);
       }
-      if(i == num_subcmds) throwUsage();
-
-      ++nextarg;
    }
-#endif
 
 #if 0  
    // Tokenize the command
@@ -99,13 +89,13 @@ void CtaAdminCmd::throwUsage()
            << "For each command there is a short version and a long one. "
            << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
 
-      for(auto lo_it = cmdHelp.begin(); lo_it != cmdHelp.end(); ++lo_it)
+      for(auto cmd_it = cmdHelp.begin(); cmd_it != cmdHelp.end(); ++cmd_it)
       {
-         std::string cmd = lo_it->second.cmd_long + '/' + lo_it->second.cmd_short;
+         std::string cmd = cmd_it->second.cmd_long + '/' + cmd_it->second.cmd_short;
          cmd.resize(25, ' ');
-         help << "  " << m_execname << " " << cmd;
+         help << "  " << m_execname << ' ' << cmd;
    
-         auto &sub_cmd = lo_it->second.sub_cmd;
+         auto &sub_cmd = cmd_it->second.sub_cmd;
          for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it)
          {
             help << (sc_it == sub_cmd.begin() ? ' ' : '/') << *sc_it;
@@ -117,7 +107,30 @@ void CtaAdminCmd::throwUsage()
    {
       // Show command-specific help
 
-      help << "hello" << std::endl;
+      auto &cmd_help = cmdHelp.at(m_request.admincmd().cmd());
+
+      help << m_execname << ' ' << cmd_help.cmd_short << '/' << cmd_help.cmd_long;
+
+      for(auto sc_it = cmd_help.sub_cmd.begin(); sc_it != cmd_help.sub_cmd.end(); ++sc_it)
+      {
+         help << (sc_it == cmd_help.sub_cmd.begin() ? ' ' : '/') << *sc_it;
+      }
+      if(cmd_help.help_str.size() > 0)
+      {
+         help << ' ' << cmd_help.help_str;
+      }
+
+      // Show per-option help
+
+      if(cmd_help.sub_cmd.size() > 0)
+      {
+         help << ':' << std::endl;
+      }
+
+      for(auto sc_it = cmd_help.sub_cmd.begin(); sc_it != cmd_help.sub_cmd.end(); ++sc_it)
+      {
+         help << '\t' << *sc_it << std::endl;
+      }
    }
 
    throw std::runtime_error(help.str());

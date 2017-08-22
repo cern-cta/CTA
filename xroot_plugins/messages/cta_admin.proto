@@ -127,6 +127,7 @@ message AdminCmd {
     SUBCMD_DOWN                        =  9;
     SUBCMD_READ                        = 10;
     SUBCMD_WRITE                       = 11;
+    SUBCMD_WRITE_AUTO                  = 12;
   }
 
   Cmd cmd                              =  1;    //< The primary command
