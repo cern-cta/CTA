@@ -181,6 +181,50 @@ struct CmdHelp
    std::vector<std::string> sub_cmd;    //!< Subcommands which are valid for this command, listed in
                                         //!< the order that they should be displayed in the help
    std::string help_str;                //!< Optional extra help text for the command
+
+   /*!
+    * Return the command name
+    */
+   std::string cmd_name() const {
+      std::string cmd = cmd_long + '/' + cmd_short;
+      cmd.resize(25, ' ');
+      return cmd;
+   }
+
+   /*!
+    * Return the list of command options
+    */
+   std::string option_list() const {
+      std::string options;
+      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
+         options += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
+      }
+      options += '\n';
+      return options;
+   }
+
+   /*!
+    * Return the detailed help message
+    */
+   std::string help() const {
+      std::string help = cmd_short + '/' + cmd_long;
+
+      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
+         help += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
+      }
+      if(help_str.size() > 0) {
+         help += ' ' + help_str;
+      }
+
+      // Show per-option help
+      if(sub_cmd.size() > 0) {
+         help += ":\n";
+      }
+      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
+         help += '\t' + *sc_it + '\n';
+      }
+      return help;
+   }
 };
 
 

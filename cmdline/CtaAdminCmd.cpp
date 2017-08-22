@@ -80,8 +80,9 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 void CtaAdminCmd::throwUsage()
 {
    std::stringstream help;
+   const auto &admincmd = m_request.admincmd().cmd();
 
-   if(m_request.admincmd().cmd() == AdminCmd::CMD_NONE)
+   if(admincmd == AdminCmd::CMD_NONE)
    {
       // Command has not been set: show generic help
 
@@ -91,46 +92,14 @@ void CtaAdminCmd::throwUsage()
 
       for(auto cmd_it = cmdHelp.begin(); cmd_it != cmdHelp.end(); ++cmd_it)
       {
-         std::string cmd = cmd_it->second.cmd_long + '/' + cmd_it->second.cmd_short;
-         cmd.resize(25, ' ');
-         help << "  " << m_execname << ' ' << cmd;
-   
-         auto &sub_cmd = cmd_it->second.sub_cmd;
-         for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it)
-         {
-            help << (sc_it == sub_cmd.begin() ? ' ' : '/') << *sc_it;
-         }
-         help << std::endl;
+         help << "  " << m_execname << ' ' << cmd_it->second.cmd_name() << cmd_it->second.option_list();
       }
    }
    else
    {
       // Show command-specific help
 
-      auto &cmd_help = cmdHelp.at(m_request.admincmd().cmd());
-
-      help << m_execname << ' ' << cmd_help.cmd_short << '/' << cmd_help.cmd_long;
-
-      for(auto sc_it = cmd_help.sub_cmd.begin(); sc_it != cmd_help.sub_cmd.end(); ++sc_it)
-      {
-         help << (sc_it == cmd_help.sub_cmd.begin() ? ' ' : '/') << *sc_it;
-      }
-      if(cmd_help.help_str.size() > 0)
-      {
-         help << ' ' << cmd_help.help_str;
-      }
-
-      // Show per-option help
-
-      if(cmd_help.sub_cmd.size() > 0)
-      {
-         help << ':' << std::endl;
-      }
-
-      for(auto sc_it = cmd_help.sub_cmd.begin(); sc_it != cmd_help.sub_cmd.end(); ++sc_it)
-      {
-         help << '\t' << *sc_it << std::endl;
-      }
+      help << m_execname << ' ' << cmdHelp.at(admincmd).help();
    }
 
    throw std::runtime_error(help.str());
