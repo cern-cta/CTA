@@ -28,66 +28,128 @@
 namespace cta {
 namespace admin {
 
-struct SubCommand
+typedef std::map<std::string, AdminCmd::Cmd> cmdLookup_t;
+typedef std::map<std::string, AdminCmd::SubCmd> subCmdLookup_t;
+
+
+
+/*!
+ * Map short and long command names to Protocol Buffer enum values
+ */
+const cmdLookup_t cmdLookup = {
+   { "admin",                AdminCmd::CMD_ADMIN },
+   { "ad",                   AdminCmd::CMD_ADMIN },
+   { "adminhost",            AdminCmd::CMD_ADMINHOST },
+   { "ah",                   AdminCmd::CMD_ADMINHOST },
+   { "archivefile",          AdminCmd::CMD_ARCHIVEFILE },
+   { "af",                   AdminCmd::CMD_ARCHIVEFILE },
+   { "archiveroute",         AdminCmd::CMD_ARCHIVEROUTE },
+   { "ar",                   AdminCmd::CMD_ARCHIVEROUTE },
+   { "drive",                AdminCmd::CMD_DRIVE },
+   { "dr",                   AdminCmd::CMD_DRIVE },
+   { "groupmountrule",       AdminCmd::CMD_GROUPMOUNTRULE },
+   { "gmr",                  AdminCmd::CMD_GROUPMOUNTRULE },
+   { "listpendingarchives",  AdminCmd::CMD_LISTPENDINGARCHIVES },
+   { "lpa",                  AdminCmd::CMD_LISTPENDINGARCHIVES },
+   { "listpendingretrieves", AdminCmd::CMD_LISTPENDINGRETRIEVES },
+   { "lpr",                  AdminCmd::CMD_LISTPENDINGRETRIEVES },
+   { "logicallibrary",       AdminCmd::CMD_LOGICALLIBRARY },
+   { "ll",                   AdminCmd::CMD_LOGICALLIBRARY },
+   { "mountpolicy",          AdminCmd::CMD_MOUNTPOLICY },
+   { "mp",                   AdminCmd::CMD_MOUNTPOLICY },
+   { "repack",               AdminCmd::CMD_REPACK },
+   { "re",                   AdminCmd::CMD_REPACK },
+   { "requestermountrule",   AdminCmd::CMD_REQUESTERMOUNTRULE },
+   { "rmr",                  AdminCmd::CMD_REQUESTERMOUNTRULE },
+   { "showqueues",           AdminCmd::CMD_SHOWQUEUES },
+   { "sq",                   AdminCmd::CMD_SHOWQUEUES },
+   { "shrink",               AdminCmd::CMD_SHRINK },
+   { "sh",                   AdminCmd::CMD_SHRINK },
+   { "storageclass",         AdminCmd::CMD_STORAGECLASS },
+   { "sc",                   AdminCmd::CMD_STORAGECLASS },
+   { "tape",                 AdminCmd::CMD_TAPE },
+   { "ta",                   AdminCmd::CMD_TAPE },
+   { "tapepool",             AdminCmd::CMD_TAPEPOOL },
+   { "tp",                   AdminCmd::CMD_TAPEPOOL },
+   { "test",                 AdminCmd::CMD_TEST },
+   { "te",                   AdminCmd::CMD_TEST },
+   { "verify",               AdminCmd::CMD_VERIFY },
+   { "ve",                   AdminCmd::CMD_VERIFY }
+};
+
+
+
+/*!
+ * Map subcommand names to Protocol Buffer enum values
+ */
+const subCmdLookup_t subCmdLookup = {
+   { "add",                  AdminCmd::SUBCMD_ADD },
+   { "ch",                   AdminCmd::SUBCMD_CH },
+   { "err",                  AdminCmd::SUBCMD_ERR },
+   { "label",                AdminCmd::SUBCMD_LABEL },
+   { "ls",                   AdminCmd::SUBCMD_LS },
+   { "reclaim",              AdminCmd::SUBCMD_RECLAIM },
+   { "rm",                   AdminCmd::SUBCMD_RM },
+   { "up",                   AdminCmd::SUBCMD_UP },
+   { "down",                 AdminCmd::SUBCMD_DOWN },
+   { "read",                 AdminCmd::SUBCMD_READ },
+   { "write",                AdminCmd::SUBCMD_WRITE }
+};
+
+
+
+/*!
+ * Help text structure
+ */
+struct CmdHelp
 {
-   AdminCmd::Cmd cmd;
-   std::set<std::string> sub_cmd;
+   std::string cmd_long;                //!< Command string (long version)
+   std::string cmd_short;               //!< Command string (short version)
+   std::vector<std::string> sub_cmd;    //!< Subcommands which are valid for this command, listed in
+                                        //!< the order that they should be displayed in the help
+   std::string help_str;                //!< Optional extra help text for the command
 };
 
-const std::map<std::string, std::string> longCmd = {
-   { "admin", "ad" },
-   { "adminhost", "ah" },
-   { "archivefile", "af" },
-   { "archiveroute", "ar" },
-   { "drive", "dr" },
-   { "groupmountrule", "gmr" },
-   { "listpendingarchives", "lpa" },
-   { "listpendingretrieves", "lpr" },
-   { "logicallibrary", "ll" },
-   { "mountpolicy", "mp" },
-   { "repack", "re" },
-   { "requestermountrule", "rmr" },
-   { "shrink", "sh" },
-   { "storageclass", "sc" },
-   { "tape", "ta" },
-   { "tapepool", "tp" },
-   { "test", "te" },
-   { "verify",  "ve" }
+
+
+/*!
+ * Specify the help text for commands
+ */
+const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
+   { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" }, "" }},
+   { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" }, "" }},
+   { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "rm", "ls", "err" }, "" }},
+   { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { }, "" }},
+   { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { }, "" }},
+   { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" }, "" }},
+   { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "rm", "ls", "err" }, "" }},
+   { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { }, "" }},
+   { AdminCmd::CMD_SHRINK,               { "shrink",               "sh",  { }, "" }},
+   { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" }, "" }},
+   { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" }, "" }},
+   { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write" }, "" }},
+   { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" }, "" }}
 };
 
-const std::map<std::string, SubCommand> shortCmd = {
-   { "ad",  { AdminCmd::CMD_ADMIN,                { "add", "ch", "rm", "ls" }} },
-   { "ah",  { AdminCmd::CMD_ADMINHOST,            { "add", "ch", "rm", "ls" }} },
-   { "af",  { AdminCmd::CMD_ARCHIVEFILE,          { "ls" }} },
-   { "ar",  { AdminCmd::CMD_ARCHIVEROUTE,         { "add", "ch", "rm", "ls" }} },
-   { "dr",  { AdminCmd::CMD_DRIVE,                { "up", "down", "ls" }} },
-   { "gmr", { AdminCmd::CMD_GROUPMOUNTRULE,       { "add", "rm", "ls", "err" }} },
-   { "lpa", { AdminCmd::CMD_LISTPENDINGARCHIVES,  {}} },
-   { "lpr", { AdminCmd::CMD_LISTPENDINGRETRIEVES, {}} },
-   { "ll",  { AdminCmd::CMD_LOGICALLIBRARY,       { "add", "ch", "rm", "ls" }} },
-   { "mp",  { AdminCmd::CMD_MOUNTPOLICY,          { "add", "ch", "rm", "ls" }} },
-   { "re",  { AdminCmd::CMD_REPACK,               { "add", "rm", "ls", "err" }} },
-   { "rmr", { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "add", "rm", "ls", "err" }} },
-   { "sh",  { AdminCmd::CMD_SHOWQUEUES,           {}} },
-   { "sc",  { AdminCmd::CMD_STORAGECLASS,         { "add", "ch", "rm", "ls" }} },
-   { "ta",  { AdminCmd::CMD_TAPE,                 { "add", "ch", "rm", "reclaim", "ls", "label" }} },
-   { "tp",  { AdminCmd::CMD_TAPEPOOL,             { "add", "ch", "rm", "ls" }} },
-   { "te",  { AdminCmd::CMD_TEST,                 { "read", "write" }} },
-   { "ve",  { AdminCmd::CMD_VERIFY,               { "add", "rm", "ls", "err" }} }
+
+
+struct Command
+{
+   bool tmp;
 };
 
-const std::map<std::string, AdminCmd::SubCmd> subCmd = {
-   { "add",     AdminCmd::SUBCMD_ADD },
-   { "ch",      AdminCmd::SUBCMD_CH },
-   { "err",     AdminCmd::SUBCMD_ERR },
-   { "label",   AdminCmd::SUBCMD_LABEL },
-   { "ls",      AdminCmd::SUBCMD_LS },
-   { "reclaim", AdminCmd::SUBCMD_RECLAIM },
-   { "rm",      AdminCmd::SUBCMD_RM },
-   { "up",      AdminCmd::SUBCMD_UP },
-   { "down",    AdminCmd::SUBCMD_DOWN },
-   { "read",    AdminCmd::SUBCMD_READ },
-   { "write",   AdminCmd::SUBCMD_WRITE }
+typedef std::pair<AdminCmd::Cmd, AdminCmd::SubCmd> cmd_key_t;
+
+//const std::pair<cmd_key_t, Command> c{ { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { true } };
+
+const std::map<cmd_key_t, Command> command = {
+   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { true } }
 };
 
 }} // namespace cta::admin

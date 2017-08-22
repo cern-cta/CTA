@@ -42,39 +42,38 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    // Parse the command
 
-   if(argc < 2) throwUsage();
+   cmdLookup_t::const_iterator cmd_it;
 
-   auto cmd_it = shortCmd.find(argv[1]);
-
-   if(cmd_it == shortCmd.end())
-   {
-      // Short version didn't match, check the long version
-
-      auto longcmd_it = longCmd.find(argv[1]);
-
-      if(longcmd_it == longCmd.end() ||
-         (cmd_it = shortCmd.find(longcmd_it->second)) == shortCmd.end())
-      {
-         throwUsage();
-      }
+   if(argc < 2 || (cmd_it = cmdLookup.find(argv[1])) == cmdLookup.end()) {
+      throwUsage();
+   } else {
+      admincmd.set_cmd(cmd_it->second);
    }
 
-   admincmd.set_cmd(cmd_it->second.cmd);
-
+#if 0
    // Parse the subcommand
 
    int nextarg = 2;
+   int &num_subcmds = cmd_it->second.sub_cmd.size();
 
-   if(cmd_it->second.sub_cmd.size() > 0)
+   if(num_subcmds > 0)
    {
       if(argc < 3) throwUsage();
 
-      auto sub_it = cmd_it->second.sub_cmd.find(argv[nextarg++]);
+      int i;
+      for(i = 0; i < num_subcmds; ++i)
+      {
+         if(argv[2] == cmd_it->second.sub_cmd.at(i))
+         {
+            admincmd.set_subcmd(subCmd.at(argv[2]));
+            break;
+         }
+      }
+      if(i == num_subcmds) throwUsage();
 
-      if(sub_it == cmd_it->second.sub_cmd.end()) throwUsage();
-
-      admincmd.set_subcmd(subCmd.at(*sub_it));
+      ++nextarg;
    }
+#endif
 
 #if 0  
    // Tokenize the command
@@ -92,22 +91,33 @@ void CtaAdminCmd::throwUsage()
 {
    std::stringstream help;
 
-   help << "CTA Admin commands:"                                            << std::endl << std::endl
-        << "For each command there is a short version and a long one. "
-        << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
-
-   for(auto lo_it = longCmd.begin(); lo_it != longCmd.end(); ++lo_it)
+   if(m_request.admincmd().cmd() == AdminCmd::CMD_NONE)
    {
-      std::string cmd = lo_it->first + "/" + lo_it->second;
-      cmd.resize(25, ' ');
-      help << "  " << m_execname << " " << cmd;
+      // Command has not been set: show generic help
 
-      auto &sub_cmd = shortCmd.at(lo_it->second).sub_cmd;
-      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it)
+      help << "CTA Admin commands:"                                            << std::endl << std::endl
+           << "For each command there is a short version and a long one. "
+           << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
+
+      for(auto lo_it = cmdHelp.begin(); lo_it != cmdHelp.end(); ++lo_it)
       {
-         help << (sc_it == sub_cmd.begin() ? ' ' : '/') << *sc_it;
+         std::string cmd = lo_it->second.cmd_long + '/' + lo_it->second.cmd_short;
+         cmd.resize(25, ' ');
+         help << "  " << m_execname << " " << cmd;
+   
+         auto &sub_cmd = lo_it->second.sub_cmd;
+         for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it)
+         {
+            help << (sc_it == sub_cmd.begin() ? ' ' : '/') << *sc_it;
+         }
+         help << std::endl;
       }
-      help << std::endl;
+   }
+   else
+   {
+      // Show command-specific help
+
+      help << "hello" << std::endl;
    }
 
    throw std::runtime_error(help.str());
