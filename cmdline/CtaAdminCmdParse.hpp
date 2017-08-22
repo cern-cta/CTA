@@ -37,44 +37,44 @@ typedef std::map<std::string, AdminCmd::SubCmd> subCmdLookup_t;
  * Map short and long command names to Protocol Buffer enum values
  */
 const cmdLookup_t cmdLookup = {
-   { "admin",                AdminCmd::CMD_ADMIN },
-   { "ad",                   AdminCmd::CMD_ADMIN },
-   { "adminhost",            AdminCmd::CMD_ADMINHOST },
-   { "ah",                   AdminCmd::CMD_ADMINHOST },
-   { "archivefile",          AdminCmd::CMD_ARCHIVEFILE },
-   { "af",                   AdminCmd::CMD_ARCHIVEFILE },
-   { "archiveroute",         AdminCmd::CMD_ARCHIVEROUTE },
-   { "ar",                   AdminCmd::CMD_ARCHIVEROUTE },
-   { "drive",                AdminCmd::CMD_DRIVE },
-   { "dr",                   AdminCmd::CMD_DRIVE },
-   { "groupmountrule",       AdminCmd::CMD_GROUPMOUNTRULE },
-   { "gmr",                  AdminCmd::CMD_GROUPMOUNTRULE },
-   { "listpendingarchives",  AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "lpa",                  AdminCmd::CMD_LISTPENDINGARCHIVES },
-   { "listpendingretrieves", AdminCmd::CMD_LISTPENDINGRETRIEVES },
-   { "lpr",                  AdminCmd::CMD_LISTPENDINGRETRIEVES },
-   { "logicallibrary",       AdminCmd::CMD_LOGICALLIBRARY },
-   { "ll",                   AdminCmd::CMD_LOGICALLIBRARY },
-   { "mountpolicy",          AdminCmd::CMD_MOUNTPOLICY },
-   { "mp",                   AdminCmd::CMD_MOUNTPOLICY },
-   { "repack",               AdminCmd::CMD_REPACK },
-   { "re",                   AdminCmd::CMD_REPACK },
-   { "requestermountrule",   AdminCmd::CMD_REQUESTERMOUNTRULE },
-   { "rmr",                  AdminCmd::CMD_REQUESTERMOUNTRULE },
-   { "showqueues",           AdminCmd::CMD_SHOWQUEUES },
-   { "sq",                   AdminCmd::CMD_SHOWQUEUES },
-   { "shrink",               AdminCmd::CMD_SHRINK },
-   { "sh",                   AdminCmd::CMD_SHRINK },
-   { "storageclass",         AdminCmd::CMD_STORAGECLASS },
-   { "sc",                   AdminCmd::CMD_STORAGECLASS },
-   { "tape",                 AdminCmd::CMD_TAPE },
-   { "ta",                   AdminCmd::CMD_TAPE },
-   { "tapepool",             AdminCmd::CMD_TAPEPOOL },
-   { "tp",                   AdminCmd::CMD_TAPEPOOL },
-   { "test",                 AdminCmd::CMD_TEST },
-   { "te",                   AdminCmd::CMD_TEST },
-   { "verify",               AdminCmd::CMD_VERIFY },
-   { "ve",                   AdminCmd::CMD_VERIFY }
+   { "admin",                   AdminCmd::CMD_ADMIN },
+   { "ad",                      AdminCmd::CMD_ADMIN },
+   { "adminhost",               AdminCmd::CMD_ADMINHOST },
+   { "ah",                      AdminCmd::CMD_ADMINHOST },
+   { "archivefile",             AdminCmd::CMD_ARCHIVEFILE },
+   { "af",                      AdminCmd::CMD_ARCHIVEFILE },
+   { "archiveroute",            AdminCmd::CMD_ARCHIVEROUTE },
+   { "ar",                      AdminCmd::CMD_ARCHIVEROUTE },
+   { "drive",                   AdminCmd::CMD_DRIVE },
+   { "dr",                      AdminCmd::CMD_DRIVE },
+   { "groupmountrule",          AdminCmd::CMD_GROUPMOUNTRULE },
+   { "gmr",                     AdminCmd::CMD_GROUPMOUNTRULE },
+   { "listpendingarchives",     AdminCmd::CMD_LISTPENDINGARCHIVES },
+   { "lpa",                     AdminCmd::CMD_LISTPENDINGARCHIVES },
+   { "listpendingretrieves",    AdminCmd::CMD_LISTPENDINGRETRIEVES },
+   { "lpr",                     AdminCmd::CMD_LISTPENDINGRETRIEVES },
+   { "logicallibrary",          AdminCmd::CMD_LOGICALLIBRARY },
+   { "ll",                      AdminCmd::CMD_LOGICALLIBRARY },
+   { "mountpolicy",             AdminCmd::CMD_MOUNTPOLICY },
+   { "mp",                      AdminCmd::CMD_MOUNTPOLICY },
+   { "repack",                  AdminCmd::CMD_REPACK },
+   { "re",                      AdminCmd::CMD_REPACK },
+   { "requestermountrule",      AdminCmd::CMD_REQUESTERMOUNTRULE },
+   { "rmr",                     AdminCmd::CMD_REQUESTERMOUNTRULE },
+   { "showqueues",              AdminCmd::CMD_SHOWQUEUES },
+   { "sq",                      AdminCmd::CMD_SHOWQUEUES },
+   { "shrink",                  AdminCmd::CMD_SHRINK },
+   { "sh",                      AdminCmd::CMD_SHRINK },
+   { "storageclass",            AdminCmd::CMD_STORAGECLASS },
+   { "sc",                      AdminCmd::CMD_STORAGECLASS },
+   { "tape",                    AdminCmd::CMD_TAPE },
+   { "ta",                      AdminCmd::CMD_TAPE },
+   { "tapepool",                AdminCmd::CMD_TAPEPOOL },
+   { "tp",                      AdminCmd::CMD_TAPEPOOL },
+   { "test",                    AdminCmd::CMD_TEST },
+   { "te",                      AdminCmd::CMD_TEST },
+   { "verify",                  AdminCmd::CMD_VERIFY },
+   { "ve",                      AdminCmd::CMD_VERIFY }
 };
 
 
@@ -83,19 +83,173 @@ const cmdLookup_t cmdLookup = {
  * Map subcommand names to Protocol Buffer enum values
  */
 const subCmdLookup_t subCmdLookup = {
-   { "add",                  AdminCmd::SUBCMD_ADD },
-   { "ch",                   AdminCmd::SUBCMD_CH },
-   { "err",                  AdminCmd::SUBCMD_ERR },
-   { "label",                AdminCmd::SUBCMD_LABEL },
-   { "ls",                   AdminCmd::SUBCMD_LS },
-   { "reclaim",              AdminCmd::SUBCMD_RECLAIM },
-   { "rm",                   AdminCmd::SUBCMD_RM },
-   { "up",                   AdminCmd::SUBCMD_UP },
-   { "down",                 AdminCmd::SUBCMD_DOWN },
-   { "read",                 AdminCmd::SUBCMD_READ },
-   { "write",                AdminCmd::SUBCMD_WRITE },
-   { "write_auto",           AdminCmd::SUBCMD_WRITE_AUTO }
+   { "add",                     AdminCmd::SUBCMD_ADD },
+   { "ch",                      AdminCmd::SUBCMD_CH },
+   { "err",                     AdminCmd::SUBCMD_ERR },
+   { "label",                   AdminCmd::SUBCMD_LABEL },
+   { "ls",                      AdminCmd::SUBCMD_LS },
+   { "reclaim",                 AdminCmd::SUBCMD_RECLAIM },
+   { "rm",                      AdminCmd::SUBCMD_RM },
+   { "up",                      AdminCmd::SUBCMD_UP },
+   { "down",                    AdminCmd::SUBCMD_DOWN },
+   { "read",                    AdminCmd::SUBCMD_READ },
+   { "write",                   AdminCmd::SUBCMD_WRITE },
+   { "write_auto",              AdminCmd::SUBCMD_WRITE_AUTO }
 };
+
+
+
+/*!
+ * Map boolean options to Protocol Buffer enum values
+ */
+const std::map<std::string, OptionBoolean::Key> boolOptions = {
+   // Boolean options
+   { "--all",                   OptionBoolean::BOOL_ALL },
+   { "--disabled",              OptionBoolean::BOOL_DISABLED },
+   { "--encrypted",             OptionBoolean::BOOL_ENCRYPTED },
+   { "--force",                 OptionBoolean::BOOL_FORCE },
+   { "--full",                  OptionBoolean::BOOL_FULL },
+   { "--lbp",                   OptionBoolean::BOOL_LBP },
+
+   // hasOption options
+   { "--checkchecksum",         OptionBoolean::BOOL_CHECK_CHECKSUM },
+   { "--extended",              OptionBoolean::BOOL_EXTENDED },
+   { "--header",                OptionBoolean::BOOL_SHOW_HEADER },
+   { "--justexpand",            OptionBoolean::BOOL_JUSTEXPAND },
+   { "--justrepack",            OptionBoolean::BOOL_JUSTREPACK },
+   { "--summary",               OptionBoolean::BOOL_SUMMARY }
+};
+
+
+
+/*!
+ * Map integer options to Protocol Buffer enum values
+ */
+const std::map<std::string, OptionInteger::Key> intOptions = {
+   { "--archivepriority",       OptionInteger::INT_ARCHIVE_PRIORITY },
+   { "--capacity",              OptionInteger::INT_CAPACITY },
+   { "--copynb",                OptionInteger::INT_COPY_NUMBER },
+   { "--firstfseq",             OptionInteger::INT_FIRST_FSEQ },
+   { "--id",                    OptionInteger::INT_ARCHIVE_FILE_ID },
+   { "--lastfseq",              OptionInteger::INT_LAST_FSEQ },
+   { "--maxdrivesallowed",      OptionInteger::INT_MAX_DRIVES_ALLOWED },
+   { "--minarchiverequestage",  OptionInteger::INT_MIN_ARCHIVE_REQUEST_AGE },
+   { "--minretrieverequestage", OptionInteger::INT_MIN_RETRIEVE_REQUEST_AGE },
+   { "--number",                OptionInteger::INT_NUMBER_OF_FILES },
+   { "--partial",               OptionInteger::INT_PARTIAL }, 
+   { "--partialtapesnumber",    OptionInteger::INT_PARTIAL_TAPES_NUMBER },
+   { "--retrievepriority",      OptionInteger::INT_RETRIEVE_PRIORITY },
+   { "--size",                  OptionInteger::INT_FILE_SIZE }                  
+};
+
+
+
+/*!
+ * Map string options to Protocol Buffer enum values
+ */
+const std::map<std::string, OptionString::Key> strOptions = {
+   { "--comment",               OptionString::STR_COMMENT },
+   { "--diskid",                OptionString::STR_DISKID },
+   { "--drive",                 OptionString::STR_DRIVE },
+   { "--encryptionkey",         OptionString::STR_ENCRYPTION_KEY },
+   { "--file",                  OptionString::STR_FILENAME },
+   { "--group",                 OptionString::STR_GROUP },
+   { "--hostname",              OptionString::STR_HOSTNAME },
+   { "--input",                 OptionString::STR_INPUT },
+   { "--instance",              OptionString::STR_INSTANCE },
+   { "--logicallibrary",        OptionString::STR_LOGICAL_LIBRARY },
+   { "--mountpolicy",           OptionString::STR_MOUNT_POLICY },
+   { "--output",                OptionString::STR_OUTPUT },
+   { "--owner",                 OptionString::STR_OWNER },
+   { "--path",                  OptionString::STR_PATH },
+   { "--storageclass",          OptionString::STR_STORAGE_CLASS },
+   { "--tag",                   OptionString::STR_TAG },
+   { "--tapepool",              OptionString::STR_TAPE_POOL },
+   { "--username",              OptionString::STR_USERNAME },
+   { "--vid",                   OptionString::STR_VID }
+};
+
+
+#if 0
+/*!
+ * Map option names to Protocol Buffer enum values
+ */
+//const subCmdLookup_t subCmdLookup = {
+BoolValue("-d", "--disabled", false, false);
+BoolValue("-d", "--disabled", true, false);
+BoolValue("-e", "--encrypted", false, false);
+BoolValue("-e", "--encrypted", true, false);
+BoolValue("-f", "--force", false, true, "false");
+BoolValue("-f", "--full", false, false);
+BoolValue("-f", "--full", true, false);
+BoolValue("-l", "--lbp", false, true, "true");
+BoolValue("-p", "--lbp", false, false);
+StringValue("", "--checksumtype", true, false));
+StringValue("", "--checksumvalue", true, false));
+StringValue("-d", "--diskid", false, false);
+StringValue("-d", "--drive", true, false);
+StringValue("", "--diskfilegroup", true, false);
+StringValue("", "--diskfileowner", true, false);
+StringValue("", "--diskfilepath", true, false);
+StringValue("", "--diskid", true, false);
+StringValue("", "--dsturl", true, false);
+StringValue("-f", "--file", true, false);
+StringValue("-g", "--group", false, false);
+StringValue("", "--group", true, false);
+StringValue("-i", "--input", true, false);
+StringValue("-i", "--instance", false, false);
+StringValue("-i", "--instance", true, false);
+StringValue("-k", "--encryptionkey", false, false);
+StringValue("-l", "--logicallibrary", false, false);
+StringValue("-l", "--logicallibrary", true, false);
+StringValue("-m", "--comment", false, false);
+StringValue("-m", "--comment", true, false);
+StringValue("-m", "--comment", true, true, "-");
+StringValue("-n", "--name", true, false);
+StringValue("-o", "--output", true, false);        
+StringValue("-o", "--owner", false, false);
+StringValue("-p", "--path", false, false);
+StringValue("", "--recoveryblob", true, false);
+StringValue("", "--reportURL", false, true, "null:");
+StringValue("", "--srcurl", true, false);
+StringValue("-s", "--storageclass", false, false);
+StringValue("-s", "--storageclass", true, false);
+StringValue("", "--storageclass", true, false);
+StringValue("-t", "--tag", false, false);
+StringValue("-t", "--tag", false, false); 
+StringValue("-t", "--tapepool", false, false);
+StringValue("-t", "--tapepool", true, false);
+StringValue("-u", "--mountpolicy", false, false);
+StringValue("-u", "--mountpolicy", true, false);
+StringValue("", "--user", true, false);
+StringValue("-u", "--username", true, false);
+StringValue("-v", "--vid", false, false);
+StringValue("-v", "--vid", true, false);
+Uint64Value("--aa", "--minarchiverequestage", false, false);
+Uint64Value("--aa", "--minarchiverequestage", true, false);
+Uint64Value("--ap", "--archivepriority", false, false);
+Uint64Value("--ap", "--archivepriority", true, false);
+Uint64Value("-c", "--capacity", false, false);
+Uint64Value("-c", "--capacity", true, false);
+Uint64Value("-c", "--copynb", false, false);
+Uint64Value("-c", "--copynb", true, false);
+Uint64Value("-d", "--maxdrivesallowed", false, false);
+Uint64Value("-d", "--maxdrivesallowed", true, false);
+Uint64Value("-f", "--firstfseq", true, false);
+Uint64Value("", "--id", true, false);
+Uint64Value("-I", "--id", false, false);
+Uint64Value("-l", "--lastfseq", true, false);
+Uint64Value("-n", "--number", true, false);
+Uint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
+Uint64Value("-p", "--partialtapesnumber", false, false);
+Uint64Value("-p", "--partialtapesnumber", true, false);
+Uint64Value("--ra", "--minretrieverequestage", false, false);
+Uint64Value("--ra", "--minretrieverequestage", true, false);
+Uint64Value("--rp", "--retrievepriority", false, false);
+Uint64Value("--rp", "--retrievepriority", true, false);
+Uint64Value("", "--size", true, false);
+Uint64Value("-s", "--size", true, false);
+#endif
 
 
 
