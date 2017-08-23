@@ -183,13 +183,23 @@ struct Option
    bool        optional;
 
    /*!
+    * Constructor
+    */
+   Option(option_t otype, const std::string &olong, const std::string &oshort, const std::string &ohelp) :
+      type(otype),
+      long_opt(olong),
+      short_opt(oshort),
+      help_txt(ohelp),
+      optional(false) {}
+
+   /*!
     * Per-option help
     */
    std::string help()
    {
       std::string help = " ";
       help += optional ? "[" : "";
-      help += long_opt + ' ' + short_opt + help_txt;
+      help += long_opt + '/' + short_opt + help_txt;
       help += optional ? "]" : "";
       return help;
    }
@@ -298,9 +308,21 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 /*
  * Enumerate options
  */
-const Option opt_header   = { Option::OPT_FLAG, "--header",   "-h", "",               true  };
-const Option opt_comment  = { Option::OPT_STR,  "--comment",  "-m", " <\"comment\">", false };
-const Option opt_hostname = { Option::OPT_STR,  "--hostname", "-n", " <host_name>",   false };
+const Option opt_comment      { Option::OPT_STR,  "--comment",            "-m", " <\"comment\">" };
+const Option opt_encrypted    { Option::OPT_BOOL, "--encrypted",          "-e", " <\"true\" or \"false\">" };
+const Option opt_header       { Option::OPT_FLAG, "--header",             "-h", "" };
+const Option opt_hostname     { Option::OPT_STR,  "--hostname",           "-n", " <host_name>" };
+const Option opt_partialfiles { Option::OPT_INT,  "--partial",            "-p", " <number_of_files_per_tape>" };
+const Option opt_partialtapes { Option::OPT_INT,  "--partialtapesnumber", "-p", " <number_of_partial_tapes>" };
+const Option opt_tapepool     { Option::OPT_STR,  "--tapepool",           "-n", " <tapepool_name>" };
+const Option opt_username     { Option::OPT_STR,  "--username",           "-u", " <user_name>" };
+
+
+
+/*!
+ * Make an option optional
+ */
+inline Option optional(Option opt) { opt.optional = true; return opt; }
 
 
 
@@ -308,10 +330,20 @@ const Option opt_hostname = { Option::OPT_STR,  "--hostname", "-n", " <host_name
  * Map valid options to commands
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
-   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { opt_hostname, opt_comment }},
-   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH  }, { opt_hostname, opt_comment }},
-   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM  }, { opt_hostname }},
-   { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS  }, { opt_header }},
+   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_ADD }, { opt_username, opt_comment }},
+   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_CH  }, { opt_username, opt_comment }},
+   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_RM  }, { opt_username }},
+   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
+   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD }, { opt_hostname, opt_comment }},
+   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH  }, { opt_hostname, opt_comment }},
+   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM  }, { opt_hostname }},
+   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
+   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_ADD }, { opt_tapepool, opt_partialtapes, opt_encrypted, opt_comment }},
+   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_CH  }, { opt_tapepool, optional(opt_partialtapes), optional(opt_encrypted), optional(opt_comment) }},
+   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_RM  }, { opt_tapepool }},
+   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
 };
+
+
 
 }} // namespace cta::admin
