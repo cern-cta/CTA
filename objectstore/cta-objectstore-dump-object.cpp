@@ -22,6 +22,7 @@
  * the path the backend store and exit
  */
 
+#include "common/Configuration.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
 #include "GenericObject.hpp"
@@ -31,19 +32,25 @@
 int main(int argc, char ** argv) {
   try {
     std::unique_ptr<cta::objectstore::Backend> be;
+    std::string objectName;
     if (3 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+      objectName = argv[2];
+    } else if (2 == argc ){
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
+      objectName = argv[1];
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 2");
+      throw std::runtime_error("Wrong number of arguments: expected 1 or 2: [objectstoreURL] objectname");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
-    std::cout << "Object store path: " << be->getParams()->toURL() 
-        << " object name=" << argv[2] << std::endl;
-    cta::objectstore::GenericObject ge(argv[2], *be);
+    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl 
+        << "Object name: " << objectName << std::endl;
+    cta::objectstore::GenericObject ge(objectName, *be);
     cta::objectstore::ScopedSharedLock gel(ge);
     ge.fetch();
     std::cout << ge.dump(gel) << std::endl;

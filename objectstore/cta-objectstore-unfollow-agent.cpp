@@ -22,6 +22,7 @@
  * the path the backend store and exit
  */
 
+#include "common/Configuration.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
 #include "Agent.hpp"
@@ -33,11 +34,17 @@
 
 int main(int argc, char ** argv) {
   try {
+    std::string agentName;
     std::unique_ptr<cta::objectstore::Backend> be;
     if (3 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+      agentName = argv[2];
+    } else if (2 == argc) {
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
+      agentName = argv[1];
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 2");
+      throw std::runtime_error("Wrong number of arguments: expected 1 or 2: [objectstoreURL] agentName");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
@@ -45,8 +52,8 @@ int main(int argc, char ** argv) {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
     std::cout /* << "Object store path: " << be->getParams()->toURL() 
-        << " agent */<< "name=" << argv[2] << std::endl;
-    if (!be->exists(argv[2])) {
+        << " agent */<< "name=" << agentName << std::endl;
+    if (!be->exists(agentName)) {
       // Agent does not exist: remove from registry.
       cta::objectstore::RootEntry re (*be);
       cta::objectstore::ScopedSharedLock rel(re);
@@ -55,12 +62,12 @@ int main(int argc, char ** argv) {
       rel.release();
       cta::objectstore::ScopedExclusiveLock arl(ar);
       ar.fetch();
-      ar.removeAgent(argv[2]);
+      ar.removeAgent(agentName);
       ar.commit();
       std::cout << "De-listed a non-existing agent." << std::endl;
       exit (EXIT_SUCCESS);
     }
-    cta::objectstore::Agent ag(argv[2], *be);
+    cta::objectstore::Agent ag(agentName, *be);
     cta::objectstore::ScopedExclusiveLock agl(ag);
     try {
       ag.fetch();

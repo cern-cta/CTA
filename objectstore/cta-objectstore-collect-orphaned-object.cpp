@@ -30,6 +30,7 @@
 #include "RetrieveRequest.hpp"
 #include "GenericObject.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/Configuration.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include <iostream>
 #include <stdexcept>
@@ -41,14 +42,24 @@ int main(int argc, char ** argv) {
     std::unique_ptr<cta::catalogue::Catalogue> catalogue;
     cta::log::StringLogger sl("cta-objectstore-collect-orphaned", cta::log::DEBUG);
     cta::log::LogContext lc(sl);
+    std::string objectName;
     if (4 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(argv[2]);
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
       catalogue=std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
+      objectName = argv[3];
+    } else if (2 == argc) {
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
+      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+      const uint64_t nbConns = 1;
+      const uint64_t nbArchiveFileListingConns = 0;
+      catalogue = std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
+      objectName = argv[1];
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 3: <objectstoreURL> <catalogue login file> <objectname>");
+      throw std::runtime_error("Wrong number of arguments: expected 1 or 3: [objectstoreURL catalogueLoginFile] objectname");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
@@ -57,7 +68,7 @@ int main(int argc, char ** argv) {
     } catch (std::bad_cast &){}
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     // Try and open the object.
-    cta::objectstore::GenericObject go(argv[3], *be);
+    cta::objectstore::GenericObject go(objectName, *be);
     cta::objectstore::ScopedExclusiveLock gol(go);
     std::cout << "Object address: " << go.getAddressIfSet() << std::endl;
     go.fetch();
@@ -74,7 +85,7 @@ int main(int argc, char ** argv) {
       gol.release();
       bool someGcDone=false;
     gcpass:
-      cta::objectstore::ArchiveRequest ar(argv[3], *be);
+      cta::objectstore::ArchiveRequest ar(objectName, *be);
       cta::objectstore::ScopedExclusiveLock arl(ar);
       ar.fetch();
       for (auto & j: ar.dumpJobs()) {
@@ -100,7 +111,7 @@ int main(int argc, char ** argv) {
       // Reopen the object as an ArchiveRequest
       std::cout << "The object is an RetrieveRequest" << std::endl;
       gol.release();
-      cta::objectstore::RetrieveRequest rr(argv[3], *be);
+      cta::objectstore::RetrieveRequest rr(objectName, *be);
       cta::objectstore::ScopedExclusiveLock rrl(rr);
       rr.fetch();
       if (!be->exists(rr.getOwner())) {

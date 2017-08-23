@@ -22,6 +22,7 @@
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
 
+#include "common/Configuration.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
 #include "Agent.hpp"
@@ -35,8 +36,11 @@ int main(int argc, char ** argv) {
     std::unique_ptr<cta::objectstore::Backend> be;
     if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+    } else if (1 == argc) {
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 1");
+      throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
