@@ -115,6 +115,14 @@ echo
 echo "Limits summary for user daemon:"
 sudo -u daemon bash -c 'ulimit -a'
 
+# Using jemalloc as specified in
+# it-puppet-module-eos:
+#  code/templates/etc_sysconfig_mgm.erb
+#  code/templates/etc_sysconfig_mgm_env.erb
+#  code/templates/etc_sysconfig_fst.erb
+#  code/templates/etc_sysconfig_fst_env.erb
+test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
+test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
 
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
