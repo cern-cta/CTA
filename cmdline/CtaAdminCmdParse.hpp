@@ -29,9 +29,7 @@ namespace cta {
 namespace admin {
 
 using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
-using subCmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
-
-
+using subcmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
 
 /*!
  * Map short and long command names to Protocol Buffer enum values
@@ -82,7 +80,7 @@ const cmdLookup_t cmdLookup = {
 /*!
  * Map subcommand names to Protocol Buffer enum values
  */
-const subCmdLookup_t subCmdLookup = {
+const subcmdLookup_t subcmdLookup = {
    { "add",                     AdminCmd::SUBCMD_ADD },
    { "ch",                      AdminCmd::SUBCMD_CH },
    { "err",                     AdminCmd::SUBCMD_ERR },
@@ -172,7 +170,41 @@ const std::map<std::string, OptionString::Key> strOptions = {
 
 
 /*!
- * Help text structure
+ * Command line option help structure
+ */
+struct Option
+{
+   enum option_t { OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
+
+   option_t    type;
+   std::string long_opt;
+   std::string short_opt;
+   std::string help_txt;
+   bool        optional;
+
+   /*!
+    * Per-option help
+    */
+   std::string help()
+   {
+      std::string help = " ";
+      help += optional ? "[" : "";
+      help += long_opt + ' ' + short_opt + help_txt;
+      help += optional ? "]" : "";
+      return help;
+   }
+};
+
+using cmd_key_t = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
+using cmd_val_t = std::vector<Option>;
+
+// Forward declaration of command options map (see definition below)
+extern const std::map<cmd_key_t, cmd_val_t> cmdOptions;
+
+
+
+/*!
+ * Command/subcommand help structure
  */
 struct CmdHelp
 {
@@ -183,24 +215,16 @@ struct CmdHelp
    std::string help_str;                //!< Optional extra help text for the command
 
    /*!
-    * Return the command name
+    * Return the short help message
     */
-   std::string cmd_name() const {
-      std::string cmd = cmd_long + '/' + cmd_short;
-      cmd.resize(25, ' ');
-      return cmd;
-   }
+   std::string short_help() const {
+      std::string help = cmd_long + '/' + cmd_short;
+      help.resize(25, ' ');
 
-   /*!
-    * Return the list of command options
-    */
-   std::string option_list() const {
-      std::string options;
       for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
-         options += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
+         help += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
       }
-      options += '\n';
-      return options;
+      return help;
    }
 
    /*!
@@ -212,16 +236,27 @@ struct CmdHelp
       for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
          help += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
       }
-      if(help_str.size() > 0) {
-         help += ' ' + help_str;
-      }
+      help += (help_str.size() > 0) ? ' ' + help_str : "";
 
-      // Show per-option help
-      if(sub_cmd.size() > 0) {
-         help += ":\n";
-      }
+      // Find the length of the longest subcommand (if there is one)
+      auto max_sub_cmd = std::max_element(sub_cmd.begin(), sub_cmd.end(),
+                         [](std::string const& lhs, std::string const& rhs) { return lhs.size() < rhs.size(); });
+      help += (max_sub_cmd != sub_cmd.end()) ? ":\n" : "\n";
+
+      // Per-subcommand help
       for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
-         help += '\t' + *sc_it + '\n';
+         std::string cmd_name = *sc_it;
+         cmd_name.resize(max_sub_cmd->size(), ' ');
+         help += '\t' + cmd_name;
+
+         auto key = cmd_key_t{ cmdLookup.at(cmd_short), subcmdLookup.at(*sc_it) };
+         auto options = cmdOptions.at(key);
+
+         for(auto op_it = options.begin(); op_it != options.end(); ++op_it)
+         {
+            help += op_it->help();
+         }
+         help += '\n';
       }
       return help;
    }
@@ -260,34 +295,19 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 
 
 
-/*!
- * Command line options
- */
-struct Option
-{
-   enum option_t { OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
-
-   option_t    type;
-   std::string long_opt;
-   std::string short_opt;
-   std::string help_txt;
-   bool        optional;
-};
-
 /*
  * Enumerate options
  */
-const Option opt_header   = { Option::OPT_FLAG, "--header",   "-h", "",              true  };
-const Option opt_comment  = { Option::OPT_STR,  "--comment",  "-m", "<\"comment\">", false };
-const Option opt_hostname = { Option::OPT_STR,  "--hostname", "-n", "<host_name>",   false };
+const Option opt_header   = { Option::OPT_FLAG, "--header",   "-h", "",               true  };
+const Option opt_comment  = { Option::OPT_STR,  "--comment",  "-m", " <\"comment\">", false };
+const Option opt_hostname = { Option::OPT_STR,  "--hostname", "-n", " <host_name>",   false };
 
-using cmd_key_t = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
-using cmd_val_t = std::vector<Option>;
+
 
 /*!
  * Map valid options to commands
  */
-const std::map<cmd_key_t, cmd_val_t> command = {
+const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD }, { opt_hostname, opt_comment }},
    { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH  }, { opt_hostname, opt_comment }},
    { { AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM  }, { opt_hostname }},

@@ -56,9 +56,9 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    if(has_subcommand)
    {
-      subCmdLookup_t::const_iterator subcmd_it;
+      subcmdLookup_t::const_iterator subcmd_it;
 
-      if(argc < 3 || (subcmd_it = subCmdLookup.find(argv[2])) == subCmdLookup.end()) {
+      if(argc < 3 || (subcmd_it = subcmdLookup.find(argv[2])) == subcmdLookup.end()) {
          throwUsage();
       } else {
          admincmd.set_subcmd(subcmd_it->second);
@@ -92,12 +92,12 @@ void CtaAdminCmd::throwUsage()
 
       for(auto cmd_it = cmdHelp.begin(); cmd_it != cmdHelp.end(); ++cmd_it)
       {
-         help << "  " << m_execname << ' ' << cmd_it->second.cmd_name() << cmd_it->second.option_list();
+         help << "  " << m_execname << ' ' << cmd_it->second.short_help() << std::endl;
       }
    }
    else
    {
-      // Show command-specific help
+      // Command has been set: show command-specific help
 
       help << m_execname << ' ' << cmdHelp.at(admincmd).help();
    }
