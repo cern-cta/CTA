@@ -176,21 +176,24 @@ struct Option
 {
    enum option_t { OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
 
-   option_t    type;
-   std::string long_opt;
-   std::string short_opt;
-   std::string help_txt;
-   bool        optional;
+   option_t    type;          //!< Option type
+   std::string alias;         //!< Alias for lookups (needed for duplicate options)
+   std::string long_opt;      //!< Long command option
+   std::string short_opt;     //!< Short command option
+   std::string help_txt;      //!< Option help text
+   bool        is_optional;   //!< Option is optional or compulsory
 
    /*!
     * Constructor
     */
-   Option(option_t otype, const std::string &olong, const std::string &oshort, const std::string &ohelp) :
+   Option(option_t otype, const std::string &olong, const std::string &oshort, const std::string &ohelp, const std::string &oalias = "") :
       type(otype),
       long_opt(olong),
       short_opt(oshort),
       help_txt(ohelp),
-      optional(false) {}
+      is_optional(false) {
+         alias = (oalias.size() == 0) ? olong : oalias;
+   }
 
    /*!
     * Per-option help
@@ -198,9 +201,9 @@ struct Option
    std::string help()
    {
       std::string help = " ";
-      help += optional ? "[" : "";
+      help += is_optional ? "[" : "";
       help += long_opt + '/' + short_opt + help_txt;
-      help += optional ? "]" : "";
+      help += is_optional ? "]" : "";
       return help;
    }
 };
@@ -257,7 +260,7 @@ struct CmdHelp
       for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
          std::string cmd_name = *sc_it;
          cmd_name.resize(max_sub_cmd->size(), ' ');
-         help += '\t' + cmd_name;
+         help += "  " + cmd_name;
 
          auto key = cmd_key_t{ cmdLookup.at(cmd_short), subcmdLookup.at(*sc_it) };
          auto options = cmdOptions.at(key);
@@ -308,21 +311,28 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 /*
  * Enumerate options
  */
-const Option opt_comment      { Option::OPT_STR,  "--comment",            "-m", " <\"comment\">" };
-const Option opt_encrypted    { Option::OPT_BOOL, "--encrypted",          "-e", " <\"true\" or \"false\">" };
-const Option opt_header       { Option::OPT_FLAG, "--header",             "-h", "" };
-const Option opt_hostname     { Option::OPT_STR,  "--hostname",           "-n", " <host_name>" };
-const Option opt_partialfiles { Option::OPT_INT,  "--partial",            "-p", " <number_of_files_per_tape>" };
-const Option opt_partialtapes { Option::OPT_INT,  "--partialtapesnumber", "-p", " <number_of_partial_tapes>" };
-const Option opt_tapepool     { Option::OPT_STR,  "--tapepool",           "-n", " <tapepool_name>" };
-const Option opt_username     { Option::OPT_STR,  "--username",           "-u", " <user_name>" };
+const Option opt_comment       { Option::OPT_STR,  "--comment",            "-m", " <\"comment\">" };
+const Option opt_copynb        { Option::OPT_INT,  "--copynb",             "-c", " <copy_number>" };
+const Option opt_encrypted     { Option::OPT_BOOL, "--encrypted",          "-e", " <\"true\" or \"false\">" };
+const Option opt_header        { Option::OPT_FLAG, "--header",             "-h", "" };
+const Option opt_hostname      { Option::OPT_STR,  "--name",               "-n", " <host_name>", "--hostname" };
+const Option opt_instance      { Option::OPT_STR,  "--instance",           "-i", " <instance_name>" };
+const Option opt_logicallibrary{ Option::OPT_STR,  "--name",               "-n", " <logical_library_name>", "--logicallibrary" };
+const Option opt_partialfiles  { Option::OPT_INT,  "--partial",            "-p", " <number_of_files_per_tape>" };
+const Option opt_partialtapes  { Option::OPT_INT,  "--partialtapesnumber", "-p", " <number_of_partial_tapes>" };
+const Option opt_storageclass  { Option::OPT_STR,  "--storageclass",       "-s", " <storage_class_name>" };
+const Option opt_tapepool      { Option::OPT_STR,  "--tapepool",           "-n", " <tapepool_name>" };
+const Option opt_tapepool_name { Option::OPT_STR,  "--name",               "-n", " <tapepool_name>", "--tapepool" };
+const Option opt_username      { Option::OPT_STR,  "--username",           "-u", " <user_name>" };
+
+
 
 
 
 /*!
  * Make an option optional
  */
-inline Option optional(Option opt) { opt.optional = true; return opt; }
+inline Option optional(Option opt) { opt.is_optional = true; return opt; }
 
 
 
@@ -330,19 +340,33 @@ inline Option optional(Option opt) { opt.optional = true; return opt; }
  * Map valid options to commands
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
-   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_ADD }, { opt_username, opt_comment }},
-   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_CH  }, { opt_username, opt_comment }},
-   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_RM  }, { opt_username }},
-   {{ AdminCmd::CMD_ADMIN,     AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
-   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD }, { opt_hostname, opt_comment }},
-   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH  }, { opt_hostname, opt_comment }},
-   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM  }, { opt_hostname }},
-   {{ AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
-   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_ADD }, { opt_tapepool, opt_partialtapes, opt_encrypted, opt_comment }},
-   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_CH  }, { opt_tapepool, optional(opt_partialtapes), optional(opt_encrypted), optional(opt_comment) }},
-   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_RM  }, { opt_tapepool }},
-   {{ AdminCmd::CMD_TAPEPOOL,  AdminCmd::SUBCMD_LS  }, { optional(opt_header) }},
+   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_ADD },  { opt_username, opt_comment }},
+   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH  },  { opt_username, opt_comment }},
+   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM  },  { opt_username }},
+   {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS  },  { optional(opt_header) }},
+   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_ADD },  { opt_hostname, opt_comment }},
+   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_CH  },  { opt_hostname, opt_comment }},
+   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_RM  },  { opt_hostname }},
+   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_LS  },  { optional(opt_header) }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_ADD },  { opt_instance, opt_storageclass, opt_copynb, opt_tapepool, opt_comment }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_CH  },  { opt_instance, opt_storageclass, opt_copynb, optional(opt_tapepool), optional(opt_comment) }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_RM  },  { opt_instance, opt_storageclass, opt_copynb }},
+   {{ AdminCmd::CMD_ARCHIVEROUTE,         AdminCmd::SUBCMD_LS  },  { optional(opt_header) }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD },  { opt_logicallibrary, opt_comment }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH  },  { opt_logicallibrary, opt_comment }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM  },  { opt_logicallibrary }},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS  },  { optional(opt_header) }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD },  { opt_tapepool_name, opt_partialtapes, opt_encrypted, opt_comment }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH  },  { opt_tapepool_name, optional(opt_partialtapes), optional(opt_encrypted), optional(opt_comment) }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM  },  { opt_tapepool_name }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS  },  { optional(opt_header) }},
+   {{ AdminCmd::CMD_LISTPENDINGARCHIVES,  AdminCmd::SUBCMD_NONE }, { }},
+   {{ AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE }, { }},
+   {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE }, { }},
+   {{ AdminCmd::CMD_SHRINK,               AdminCmd::SUBCMD_NONE }, { }},
 };
+
+
 
 
 
