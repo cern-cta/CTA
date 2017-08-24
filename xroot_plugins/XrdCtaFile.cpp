@@ -24,6 +24,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
+#include "common/utils/Regex.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/GetOptThreadSafe.hpp"
 #include "common/exception/UserError.hpp"
@@ -1791,10 +1792,10 @@ std::string XrdCtaFile::xCom_drive() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
-       << "Set the requested state of the drive. The drive will complete any running mount" << std::endl
+       << "Set the requested state of the drives. The drives will complete any running mount" << std::endl
        << "unless it is preempted with the --force option."                                 << std::endl
-       << "\tup <drive_name>"                                                               << std::endl
-       << "\tdown <drive_name> [--force/-f]"                                                << std::endl
+       << "\tup <drives_name>"                                                               << std::endl
+       << "\tdown <drives_name> [--force/-f]"                                                << std::endl
        << ""                                                                                << std::endl
        << "List the states for one or all drives"                                           << std::endl
        << "\tls [<drive_name>]"                                                             << std::endl;
@@ -1806,8 +1807,7 @@ std::string XrdCtaFile::xCom_drive() {
     // Here the drive name is required in addition
     if (m_requestTokens.size() != 4)
       throw cta::exception::UserError(help.str());
-    m_scheduler->setDesiredDriveState(m_cliIdentity, m_requestTokens.at(3), true, false, lc);
-    cmdlineOutput << "Drive " << m_requestTokens.at(3) << " set UP." << std::endl;
+    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, true, false);
   } else if ("down" == m_requestTokens.at(2)) {
     // Parse the command line for option and drive name.
     cta::utils::GetOpThreadSafe::Request req;
@@ -1823,12 +1823,7 @@ std::string XrdCtaFile::xCom_drive() {
     }
     // Check if the force option was present.
     bool force=reply.options.size() && (reply.options.at(0).option == "f");
-    m_scheduler->setDesiredDriveState(m_cliIdentity, reply.remainder.at(0), false, force, lc);
-    cmdlineOutput << "Drive " <<  reply.remainder.at(0) << " set DOWN";
-    if (force) {
-      cmdlineOutput << " (forced down)";
-    }
-    cmdlineOutput << "." << std::endl;
+    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, false, force);
   } else if ("ls" == m_requestTokens.at(2)) {
     if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
       // We will dump all the drives, and select the one asked for if needed.
@@ -1921,6 +1916,31 @@ std::string XrdCtaFile::xCom_drive() {
     throw cta::exception::UserError(help.str());
   }
   return cmdlineOutput.str();
+}
+
+//------------------------------------------------------------------------------
+// changeStateForDrivesByRegex
+//------------------------------------------------------------------------------
+void XrdCtaFile::changeStateForDrivesByRegex(const std::string &regex,
+  log::LogContext &lc, std::stringstream &cmdlineOutput, const bool toMakeUp,
+  const bool isForceSet) {
+  cta::utils::Regex driveNameRegex(regex.c_str());
+    auto driveStates = m_scheduler->getDriveStates(m_cliIdentity, lc);
+    bool drivesNotFound = true;
+    for (auto driveState: driveStates) {
+      const auto regexResult = driveNameRegex.exec(driveState.driveName);
+      if (regexResult.size()) {
+        m_scheduler->setDesiredDriveState(m_cliIdentity, driveState.driveName, toMakeUp, isForceSet, lc);
+        cmdlineOutput << "Drive " << driveState.driveName << " set "
+                      << (toMakeUp?"Up":"Down")
+                      << (isForceSet?" (forced)":"")
+                      << "." << std::endl;
+        drivesNotFound = false;
+      }
+    }
+    if (drivesNotFound) {
+      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
+    }
 }
 
 //------------------------------------------------------------------------------
