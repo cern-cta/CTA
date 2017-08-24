@@ -277,7 +277,12 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" } }},
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" },
+                        "\n  This is a synchronous command that sets the requested state of the drive\n"
+                          "  (\"up\" or \"down\") or lists the state of one or all drives (\"ls\"). The\n"
+                          "  drive will complete any running mount unless it is preempted with the\n"
+                          "  --force option.\n\n"
+                                         }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
    { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
@@ -291,17 +296,12 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write", "write_auto" },
-                          "\n  This is a synchronous command that returns performance stats and errors. It\n"
-                          "  should be run on an empty self-dedicated drive. All locations are local to\n"
-                          "  the tapeserver.\n\n"
+                        "\n  This is a synchronous command that returns performance stats and errors.\n"
+                          "  It should be run on an empty self-dedicated drive. All locations are local\n"
+                          "  to the tapeserver.\n\n"
                                          }},
    { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" } }}
 };
-
-// help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
-//<< "Set the requested state of the drive. The drive will complete any running mount" << std::endl
-//<< "unless it is preempted with the --force option."                                 << std::endl
-//<< "List the states for one or all drives"                                           << std::endl
 
 
 
