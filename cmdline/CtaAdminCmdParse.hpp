@@ -61,12 +61,19 @@ public:
    /*!
     * Return per-option help string
     */
-   std::string help() {
+   std::string help() const {
       std::string help = m_is_optional ? " [" : " ";
       help += (m_type == OPT_CMD) ? "" : m_long_opt + '/' + m_short_opt;
       help += m_help_txt;
       help += m_is_optional ? "]" : "";
       return help;
+   }
+
+   /*!
+    * Check for a matching option string
+    */
+   bool operator==(const std::string &option) const {
+      return option == m_short_opt || option == m_long_opt;
    }
 
 private:

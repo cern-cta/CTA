@@ -20,7 +20,6 @@
 #include <sstream>
 #include <iostream>
 
-#include "CtaAdminCmdParse.hpp"
 #include "CtaAdminCmd.hpp"
 
 #include "XrdSsiPbDebug.hpp"
@@ -52,7 +51,9 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    // Parse the subcommand
 
-   if(cmdHelp.at(admincmd.cmd()).has_subcommand())
+   bool has_subcommand = cmdHelp.at(admincmd.cmd()).has_subcommand();
+
+   if(has_subcommand)
    {
       subcmdLookup_t::const_iterator subcmd_it;
 
@@ -63,28 +64,60 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
       }
    }
 
-#if 0  
-   // Tokenize the command
+   // Parse the options
 
-   for(int i = 1; i < argc; ++i)
-   {
-      m_requestTokens.push_back(argv[i]);
+   auto option_list_it = cmdOptions.find(cmd_key_t{ admincmd.cmd(), admincmd.subcmd() });
+
+   if(option_list_it == cmdOptions.end()) {
+      throwUsage();
    }
-#endif
+
+   parseOptions(has_subcommand ? 3 : 2, argc, argv, option_list_it->second);
 }
 
 
 
-void CtaAdminCmd::throwUsage()
+void CtaAdminCmd::send() const
+{
+   // Validate the Protocol Buffer
+
+   // Send the Protocol Buffer
+   XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());
+}
+
+
+
+void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options)
+{
+   for(int i = start; i < argc; ++i)
+   {
+      cmd_val_t::const_iterator opt_it;
+
+      // Scan options for a match
+      for(opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
+         if(*opt_it == argv[i]) break;
+      }
+      if(opt_it == options.end()) throwUsage(std::string("Invalid option: ") + argv[i]);
+
+   }
+}
+
+
+
+void CtaAdminCmd::throwUsage(const std::string &error_txt) const
 {
    std::stringstream help;
    const auto &admincmd = m_request.admincmd().cmd();
+
+   if(error_txt != "") {
+      help << error_txt << std::endl;
+   }
 
    if(admincmd == AdminCmd::CMD_NONE)
    {
       // Command has not been set: show generic help
 
-      help << "CTA Admin commands:"                                            << std::endl << std::endl
+      help << "CTA Admin commands:"                                         << std::endl << std::endl
            << "For each command there is a short version and a long one. "
            << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
 
@@ -103,13 +136,6 @@ void CtaAdminCmd::throwUsage()
    throw std::runtime_error(help.str());
 }
 
-
-
-void CtaAdminCmd::send()
-{
-   XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());
-}
-
 }} // namespace cta::admin
 
 
@@ -126,7 +152,7 @@ int main(int argc, const char **argv)
    using namespace cta::admin;
 
    try {    
-      // Tokenize and parse the command line arguments
+      // Parse the command line arguments
       CtaAdminCmd cmd(argc, argv);
 
       // Send the protocol buffer

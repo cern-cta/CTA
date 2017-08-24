@@ -19,7 +19,7 @@
 
 #pragma once
 
-
+#include "CtaAdminCmdParse.hpp"
 
 namespace cta {
 namespace admin {
@@ -32,19 +32,24 @@ public:
    /*!
     * Send the protocol buffer across the XRootD SSI transport
     */
-   void send();
+   void send() const;
 
 private:
    /*!
+    * Parse the options for a specific command/subcommand
+    */
+   void parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options);
+
+   /*!
     * Throw an exception with usage help
     */
-   void throwUsage();
+   void throwUsage(const std::string &error_txt = "") const;
 
    /*
     * Member variables
     */
-   std::string              m_execname;         //!< Executable name of this program
-   cta::xrd::Request        m_request;          //!< Protocol Buffer for the command and parameters
+   std::string       m_execname;         //!< Executable name of this program
+   cta::xrd::Request m_request;          //!< Protocol Buffer for the command and parameters
 };
 
 }} // namespace cta::admin
