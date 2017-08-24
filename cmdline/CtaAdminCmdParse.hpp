@@ -28,8 +28,97 @@
 namespace cta {
 namespace admin {
 
+/*!
+ * Command line option help structure
+ */
+struct Option
+{
+   enum option_t { OPT_PARAM, OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
+
+   option_t    type;          //!< Option type
+   std::string lookup_key;    //!< Key to map option string to Protocol Buffer enum
+   std::string long_opt;      //!< Long command option
+   std::string short_opt;     //!< Short command option
+   std::string help_txt;      //!< Option help text
+   bool        is_optional;   //!< Option is optional or compulsory
+
+   /*!
+    * Constructor
+    */
+   Option(option_t otype, const std::string &olong, const std::string &oshort, const std::string &ohelp, const std::string &alias = "") :
+      type(otype),
+      long_opt(olong),
+      short_opt(oshort),
+      help_txt(ohelp),
+      is_optional(false) {
+        lookup_key = (alias.size() == 0) ? olong : alias;
+   }
+
+   /*!
+    * Return per-option help string
+    */
+   std::string help()
+   {
+      std::string help = " ";
+      help += is_optional ? "[" : "";
+      help += (type == OPT_PARAM) ? "" : long_opt + '/' + short_opt;
+      help += help_txt;
+      help += is_optional ? "]" : "";
+      return help;
+   }
+};
+
+
+
+/*!
+ * Command/subcommand help class
+ */
+class CmdHelp
+{
+public:
+   /*!
+    * Constructor
+    */
+   CmdHelp(const std::string &cmd_long, const std::string &cmd_short, const std::vector<std::string> &sub_cmd, const std::string &help_txt = "") :
+      m_cmd_long(cmd_long),
+      m_cmd_short(cmd_short),
+      m_sub_cmd(sub_cmd),
+      m_help_txt(help_txt) {}
+
+   /*!
+    * Can we parse subcommands for this command?
+    */
+   bool has_subcommand() const { return m_sub_cmd.size() > 0; }
+
+   /*!
+    * Return the short help message
+    */
+   std::string short_help() const;
+
+   /*!
+    * Return the detailed help message
+    */
+   std::string help() const;
+
+private:
+   std::string              m_cmd_long;     //!< Command string (long version)
+   std::string              m_cmd_short;    //!< Command string (short version)
+   std::vector<std::string> m_sub_cmd;      //!< Subcommands which are valid for this command, in the
+                                            //!< same order that they should be displayed in the help
+   std::string              m_help_txt;     //!< Optional extra help text above the options
+};
+
+
+
+/*
+ * Type aliases
+ */
 using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
 using subcmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
+using cmd_key_t      = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
+using cmd_val_t      = std::vector<Option>;
+
+
 
 /*!
  * Map short and long command names to Protocol Buffer enum values
@@ -170,146 +259,37 @@ const std::map<std::string, OptionString::Key> strOptions = {
 
 
 /*!
- * Command line option help structure
- */
-struct Option
-{
-   enum option_t { OPT_PARAM, OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
-
-   option_t    type;          //!< Option type
-   std::string alias;         //!< Alias for lookups (needed for duplicate options)
-   std::string long_opt;      //!< Long command option
-   std::string short_opt;     //!< Short command option
-   std::string help_txt;      //!< Option help text
-   bool        is_optional;   //!< Option is optional or compulsory
-
-   /*!
-    * Constructor
-    */
-   Option(option_t otype, const std::string &olong, const std::string &oshort, const std::string &ohelp, const std::string &oalias = "") :
-      type(otype),
-      long_opt(olong),
-      short_opt(oshort),
-      help_txt(ohelp),
-      is_optional(false) {
-         alias = (oalias.size() == 0) ? olong : oalias;
-   }
-
-   /*!
-    * Per-option help
-    */
-   std::string help()
-   {
-      std::string help = " ";
-      help += is_optional ? "[" : "";
-      help += (type == OPT_PARAM) ? "" : long_opt + '/' + short_opt;
-      help += help_txt;
-      help += is_optional ? "]" : "";
-      return help;
-   }
-};
-
-using cmd_key_t = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
-using cmd_val_t = std::vector<Option>;
-
-// Forward declaration of command options map (see definition below)
-extern const std::map<cmd_key_t, cmd_val_t> cmdOptions;
-
-
-
-/*!
- * Command/subcommand help structure
- */
-struct CmdHelp
-{
-   std::string cmd_long;                //!< Command string (long version)
-   std::string cmd_short;               //!< Command string (short version)
-   std::vector<std::string> sub_cmd;    //!< Subcommands which are valid for this command, listed in
-                                        //!< the order that they should be displayed in the help
-   std::string help_before;             //!< Optional extra help text above the options
-   std::string help_after;              //!< Optional extra help text below the options
-
-   /*!
-    * Return the short help message
-    */
-   std::string short_help() const {
-      std::string help = cmd_long + '/' + cmd_short;
-      help.resize(25, ' ');
-
-      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
-         help += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
-      }
-      return help;
-   }
-
-   /*!
-    * Return the detailed help message
-    */
-   std::string help() const {
-      std::string help = cmd_short + '/' + cmd_long;
-
-      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
-         help += (sc_it == sub_cmd.begin() ? ' ' : '/') + *sc_it;
-      }
-      help += (help_before.size() > 0) ? ' ' + help_before : "";
-
-      // Find the length of the longest subcommand (if there is one)
-      auto max_sub_cmd = std::max_element(sub_cmd.begin(), sub_cmd.end(),
-                         [](std::string const& lhs, std::string const& rhs) { return lhs.size() < rhs.size(); });
-      help += (max_sub_cmd != sub_cmd.end()) ? ":\n" : "\n";
-
-      // Per-subcommand help
-      for(auto sc_it = sub_cmd.begin(); sc_it != sub_cmd.end(); ++sc_it) {
-         std::string cmd_name = *sc_it;
-         cmd_name.resize(max_sub_cmd->size(), ' ');
-         help += '\t' + cmd_name;
-
-         auto key = cmd_key_t{ cmdLookup.at(cmd_short), subcmdLookup.at(*sc_it) };
-         auto options = cmdOptions.at(key);
-
-         for(auto op_it = options.begin(); op_it != options.end(); ++op_it)
-         {
-            help += op_it->help();
-         }
-         help += '\n';
-      }
-
-      help += help_after;
-      return help;
-   }
-};
-
-
-
-/*!
  * Specify the help text for commands
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
-   { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" }, "", "" }},
-   { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" },
-                                           "(it is a synchronous command)", "" }},
-   { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { }, "", "" }},
-   { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { }, "", "" }},
-   { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" }, "", "" }},
-   { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { }, "", "" }},
-   { AdminCmd::CMD_SHRINK,               { "shrink",               "sh",  { }, "", "" }},
-   { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" }, "", "" }},
-   { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" }, "", 
-                                           "Where\n\t<encryption_key> is the name of the encryption key used to encrypt the tape\n" }},
-   { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" }, "", "" }},
+   { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
+   { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" } }},
+   { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
+   { AdminCmd::CMD_LISTPENDINGRETRIEVES, { "listpendingretrieves", "lpr", { } }},
+   { AdminCmd::CMD_LOGICALLIBRARY,       { "logicallibrary",       "ll",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" } }},
+   { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
+   { AdminCmd::CMD_SHRINK,               { "shrink",               "sh",  { } }},
+   { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
+   { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TEST,                 { "test",                 "te",  { "read", "write", "write_auto" },
                                            "(to be run on an empty self-dedicated\n"
                                            "drive; it is a synchronous command that returns performance stats and errors;\n"
-                                           "all locations are local to the tapeserver)", "" }},
-   { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" }, "", "" }}
+                                           "all locations are local to the tapeserver)" }},
+   { AdminCmd::CMD_VERIFY,               { "verify",               "ve",  { "add", "rm", "ls", "err" } }}
 };
+
+// help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
+//<< "Set the requested state of the drive. The drive will complete any running mount" << std::endl
+//<< "unless it is preempted with the --force option."                                 << std::endl
+//<< "List the states for one or all drives"                                           << std::endl
 
 
 
@@ -341,12 +321,6 @@ const Option opt_tapepool_alias      { Option::OPT_STR,   "--name",             
 const Option opt_username            { Option::OPT_STR,   "--username",           "-u", " <user_name>" };
 const Option opt_vid                 { Option::OPT_STR,   "--vid",                "-v", " <vid>" };
 const Option opt_full                { Option::OPT_BOOL,  "--full",               "-f", " <\"true\" or \"false\">" };
-
-
-// help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
-//<< "Set the requested state of the drive. The drive will complete any running mount" << std::endl
-//<< "unless it is preempted with the --force option."                                 << std::endl
-//<< "List the states for one or all drives"                                           << std::endl
 
 
 
@@ -395,6 +369,5 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE    }, { }},
    {{ AdminCmd::CMD_SHRINK,               AdminCmd::SUBCMD_NONE    }, { }},
 };
-
 
 }} // namespace cta::admin

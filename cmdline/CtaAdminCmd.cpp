@@ -52,9 +52,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    // Parse the subcommand
 
-   bool has_subcommand = cmdHelp.at(admincmd.cmd()).sub_cmd.size() > 0;
-
-   if(has_subcommand)
+   if(cmdHelp.at(admincmd.cmd()).has_subcommand())
    {
       subcmdLookup_t::const_iterator subcmd_it;
 
