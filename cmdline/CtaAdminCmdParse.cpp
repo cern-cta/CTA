@@ -35,6 +35,9 @@ std::string CmdHelp::short_help() const {
 
 
 std::string CmdHelp::help() const {
+   const int INDENT      = 4;
+   const int WRAP_MARGIN = 80;
+
    std::string help = m_cmd_short + '/' + m_cmd_long;
 
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
@@ -53,18 +56,24 @@ std::string CmdHelp::help() const {
 
    // Per-subcommand help
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
-      std::string cmd_name = *sc_it;
-      cmd_name.resize(max_sub_cmd->size(), ' ');
-      help += '\t' + cmd_name;
+      std::string cmd_line(INDENT, ' ');
+      cmd_line += *sc_it;
+      cmd_line.resize(INDENT + max_sub_cmd->size(), ' ');
 
       auto key = cmd_key_t{ cmdLookup.at(m_cmd_short), subcmdLookup.at(*sc_it) };
       auto options = cmdOptions.at(key);
 
       for(auto op_it = options.begin(); op_it != options.end(); ++op_it)
       {
-         help += op_it->help();
+         if(cmd_line.size() + op_it->help().size() > WRAP_MARGIN)
+         {
+             help += cmd_line + '\n';
+             cmd_line = std::string(INDENT + max_sub_cmd->size(), ' ');
+         }
+
+         cmd_line += op_it->help();
       }
-      help += '\n';
+      help += cmd_line + '\n';
    }
 
    return help;
