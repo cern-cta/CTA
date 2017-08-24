@@ -40,12 +40,16 @@ std::string CmdHelp::help() const {
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
       help += (sc_it == m_sub_cmd.begin() ? ' ' : '/') + *sc_it;
    }
-   help += (m_help_txt.size() > 0) ? ' ' + m_help_txt : "";
 
    // Find the length of the longest subcommand (if there is one)
    auto max_sub_cmd = std::max_element(m_sub_cmd.begin(), m_sub_cmd.end(),
                       [](std::string const& lhs, std::string const& rhs) { return lhs.size() < rhs.size(); });
+
+   // Terminate with a colon if there are subcommands to follow
    help += (max_sub_cmd != m_sub_cmd.end()) ? ":\n" : "\n";
+
+   // Optional additional help
+   help += m_help_txt;
 
    // Per-subcommand help
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
