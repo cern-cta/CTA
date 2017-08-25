@@ -21,7 +21,6 @@
 #include <iostream>
 
 #include "CtaAdminCmd.hpp"
-
 #include "XrdSsiPbDebug.hpp"
 
 
@@ -144,12 +143,16 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          }
          break;
       }
-      case Option::OPT_INT: {
+      case Option::OPT_UINT: try {
          auto key = uint64Options.at(option.get_key());
          auto new_opt = admincmd_ptr->add_option_uint64();
          new_opt->set_key(key);
          new_opt->set_value(std::stoul(value));
          break;
+      } catch(std::invalid_argument &) {
+         throw std::runtime_error(value + " is not a valid uint64: " + option.help());
+      } catch(std::out_of_range &) {
+         throw std::runtime_error(value + " is out of range: " + option.help());
       }
    }
 }

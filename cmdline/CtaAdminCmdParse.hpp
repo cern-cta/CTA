@@ -34,7 +34,7 @@ namespace admin {
 class Option
 {
 public:
-   enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_INT, OPT_STR };
+   enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_UINT, OPT_STR };
 
    /*!
     * Constructor
@@ -224,20 +224,20 @@ const subcmdLookup_t subcmdLookup = {
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
    // Boolean options
-   { "--all",                   OptionBoolean::BOOL_ALL },
-   { "--disabled",              OptionBoolean::BOOL_DISABLED },
-   { "--encrypted",             OptionBoolean::BOOL_ENCRYPTED },
-   { "--force",                 OptionBoolean::BOOL_FORCE },
-   { "--full",                  OptionBoolean::BOOL_FULL },
-   { "--lbp",                   OptionBoolean::BOOL_LBP },
+   { "--all",                   OptionBoolean::ALL },
+   { "--disabled",              OptionBoolean::DISABLED },
+   { "--encrypted",             OptionBoolean::ENCRYPTED },
+   { "--force",                 OptionBoolean::FORCE },
+   { "--full",                  OptionBoolean::FULL },
+   { "--lbp",                   OptionBoolean::LBP },
 
    // hasOption options
-   { "--checkchecksum",         OptionBoolean::BOOL_CHECK_CHECKSUM },
-   { "--extended",              OptionBoolean::BOOL_EXTENDED },
-   { "--header",                OptionBoolean::BOOL_SHOW_HEADER },
-   { "--justexpand",            OptionBoolean::BOOL_JUSTEXPAND },
-   { "--justrepack",            OptionBoolean::BOOL_JUSTREPACK },
-   { "--summary",               OptionBoolean::BOOL_SUMMARY }
+   { "--checkchecksum",         OptionBoolean::CHECK_CHECKSUM },
+   { "--extended",              OptionBoolean::EXTENDED },
+   { "--header",                OptionBoolean::SHOW_HEADER },
+   { "--justexpand",            OptionBoolean::JUSTEXPAND },
+   { "--justrepack",            OptionBoolean::JUSTREPACK },
+   { "--summary",               OptionBoolean::SUMMARY }
 };
 
 
@@ -246,20 +246,20 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
  * Map integer options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionUInt64::Key> uint64Options = {
-   { "--archivepriority",       OptionUInt64::UINT64_ARCHIVE_PRIORITY },
-   { "--capacity",              OptionUInt64::UINT64_CAPACITY },
-   { "--copynb",                OptionUInt64::UINT64_COPY_NUMBER },
-   { "--firstfseq",             OptionUInt64::UINT64_FIRST_FSEQ },
-   { "--id",                    OptionUInt64::UINT64_ARCHIVE_FILE_ID },
-   { "--lastfseq",              OptionUInt64::UINT64_LAST_FSEQ },
-   { "--maxdrivesallowed",      OptionUInt64::UINT64_MAX_DRIVES_ALLOWED },
-   { "--minarchiverequestage",  OptionUInt64::UINT64_MIN_ARCHIVE_REQUEST_AGE },
-   { "--minretrieverequestage", OptionUInt64::UINT64_MIN_RETRIEVE_REQUEST_AGE },
-   { "--nbfiles",               OptionUInt64::UINT64_NUMBER_OF_FILES },
-   { "--partial",               OptionUInt64::UINT64_PARTIAL }, 
-   { "--partialtapesnumber",    OptionUInt64::UINT64_PARTIAL_TAPES_NUMBER },
-   { "--retrievepriority",      OptionUInt64::UINT64_RETRIEVE_PRIORITY },
-   { "--size",                  OptionUInt64::UINT64_FILE_SIZE }                  
+   { "--archivepriority",       OptionUInt64::ARCHIVE_PRIORITY },
+   { "--capacity",              OptionUInt64::CAPACITY },
+   { "--copynb",                OptionUInt64::COPY_NUMBER },
+   { "--firstfseq",             OptionUInt64::FIRST_FSEQ },
+   { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
+   { "--lastfseq",              OptionUInt64::LAST_FSEQ },
+   { "--maxdrivesallowed",      OptionUInt64::MAX_DRIVES_ALLOWED },
+   { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
+   { "--minretrieverequestage", OptionUInt64::MIN_RETRIEVE_REQUEST_AGE },
+   { "--nbfiles",               OptionUInt64::NUMBER_OF_FILES },
+   { "--partial",               OptionUInt64::PARTIAL }, 
+   { "--partialtapesnumber",    OptionUInt64::PARTIAL_TAPES_NUMBER },
+   { "--retrievepriority",      OptionUInt64::RETRIEVE_PRIORITY },
+   { "--size",                  OptionUInt64::FILE_SIZE }                  
 };
 
 
@@ -268,25 +268,25 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
  * Map string options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionString::Key> strOptions = {
-   { "--comment",               OptionString::STR_COMMENT },
-   { "--diskid",                OptionString::STR_DISKID },
-   { "--drive",                 OptionString::STR_DRIVE },
-   { "--encryptionkey",         OptionString::STR_ENCRYPTION_KEY },
-   { "--file",                  OptionString::STR_FILENAME },
-   { "--group",                 OptionString::STR_GROUP },
-   { "--hostname",              OptionString::STR_HOSTNAME },
-   { "--input",                 OptionString::STR_INPUT },
-   { "--instance",              OptionString::STR_INSTANCE },
-   { "--logicallibrary",        OptionString::STR_LOGICAL_LIBRARY },
-   { "--mountpolicy",           OptionString::STR_MOUNT_POLICY },
-   { "--output",                OptionString::STR_OUTPUT },
-   { "--owner",                 OptionString::STR_OWNER },
-   { "--path",                  OptionString::STR_PATH },
-   { "--storageclass",          OptionString::STR_STORAGE_CLASS },
-   { "--tag",                   OptionString::STR_TAG },
-   { "--tapepool",              OptionString::STR_TAPE_POOL },
-   { "--username",              OptionString::STR_USERNAME },
-   { "--vid",                   OptionString::STR_VID }
+   { "--comment",               OptionString::COMMENT },
+   { "--diskid",                OptionString::DISKID },
+   { "--drive",                 OptionString::DRIVE },
+   { "--encryptionkey",         OptionString::ENCRYPTION_KEY },
+   { "--file",                  OptionString::FILENAME },
+   { "--group",                 OptionString::GROUP },
+   { "--hostname",              OptionString::HOSTNAME },
+   { "--input",                 OptionString::INPUT },
+   { "--instance",              OptionString::INSTANCE },
+   { "--logicallibrary",        OptionString::LOGICAL_LIBRARY },
+   { "--mountpolicy",           OptionString::MOUNT_POLICY },
+   { "--output",                OptionString::OUTPUT },
+   { "--owner",                 OptionString::OWNER },
+   { "--path",                  OptionString::PATH },
+   { "--storageclass",          OptionString::STORAGE_CLASS },
+   { "--tag",                   OptionString::TAG },
+   { "--tapepool",              OptionString::TAPE_POOL },
+   { "--username",              OptionString::USERNAME },
+   { "--vid",                   OptionString::VID }
 };
 
 
@@ -331,12 +331,12 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
  * Enumerate options
  */
 const Option opt_all                  { Option::OPT_FLAG, "--all",                   "-a",   "" };
-const Option opt_archivefileid        { Option::OPT_INT,  "--id",                    "-I",   " <archive_file_id>" };
-const Option opt_archivepriority      { Option::OPT_INT,  "--archivepriority",       "--ap", " <priority_value>" };
-const Option opt_capacity             { Option::OPT_INT,  "--capacity",              "-c",   " <capacity_in_bytes>" };
+const Option opt_archivefileid        { Option::OPT_UINT, "--id",                    "-I",   " <archive_file_id>" };
+const Option opt_archivepriority      { Option::OPT_UINT, "--archivepriority",       "--ap", " <priority_value>" };
+const Option opt_capacity             { Option::OPT_UINT, "--capacity",              "-c",   " <capacity_in_bytes>" };
 const Option opt_checkchecksum        { Option::OPT_FLAG, "--checkchecksum",         "-c",   "" };
 const Option opt_comment              { Option::OPT_STR,  "--comment",               "-m",   " <\"comment\">" };
-const Option opt_copynb               { Option::OPT_INT,  "--copynb",                "-c",   " <copy_number>" };
+const Option opt_copynb               { Option::OPT_UINT, "--copynb",                "-c",   " <copy_number>" };
 const Option opt_disabled             { Option::OPT_BOOL, "--disabled",              "-d",   " <\"true\" or \"false\">" };
 const Option opt_diskid               { Option::OPT_STR,  "--diskid",                "-d",   " <disk_id>" };
 const Option opt_drivename            { Option::OPT_STR,  "--drive",                 "-d",   " <drive_name>" };
@@ -345,7 +345,7 @@ const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",        
 const Option opt_encryptionkey        { Option::OPT_STR,  "--encryptionkey",         "-k",   " <encryption_key>" };
 const Option opt_extended             { Option::OPT_FLAG, "--extended",              "-x",   "" };
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
-const Option opt_firstfseq            { Option::OPT_INT,  "--firstfseq",             "-f",   " <first_fseq>" };
+const Option opt_firstfseq            { Option::OPT_UINT, "--firstfseq",             "-f",   " <first_fseq>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
 const Option opt_group                { Option::OPT_STR,  "--group",                 "-g",   " <group>" };
@@ -356,27 +356,27 @@ const Option opt_input                { Option::OPT_STR,  "--input",            
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <instance_name>" };
 const Option opt_justexpand           { Option::OPT_FLAG, "--justexpand",            "-e",   "" };
 const Option opt_justrepack           { Option::OPT_FLAG, "--justrepack",            "-r",   "" };
-const Option opt_lastfseq             { Option::OPT_INT,  "--lastfseq",              "-l",   " <last_fseq>" };
+const Option opt_lastfseq             { Option::OPT_UINT, "--lastfseq",              "-l",   " <last_fseq>" };
 const Option opt_lbp                  { Option::OPT_BOOL, "--lbp",                   "-p",   " <\"true\" or \"false\">" };
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
                                         "--logicallibrary" };
-const Option opt_maxdrivesallowed     { Option::OPT_INT,  "--maxdrivesallowed",      "-d",   " <maxDrivesAllowed>" };
-const Option opt_minarchiverequestage { Option::OPT_INT,  "--minarchiverequestage",  "--aa", " <minRequestAge>" };
-const Option opt_minretrieverequestage{ Option::OPT_INT,  "--minretrieverequestage", "--ra", " <minRequestAge>" };
+const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <maxDrivesAllowed>" };
+const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <minRequestAge>" };
+const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <minRequestAge>" };
 const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mountpolicy_name>" };
 const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mountpolicy_name>",
                                         "--mountpolicy" };
-const Option opt_number_of_files      { Option::OPT_INT,  "--nbfiles",               "-n",   " <number_of_files_per_tape>" };
-const Option opt_number_of_files_alias{ Option::OPT_INT,  "--number",                "-n",   " <number_of_files>",
+const Option opt_number_of_files      { Option::OPT_UINT, "--nbfiles",               "-n",   " <number_of_files_per_tape>" };
+const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>",
                                         "--nbfiles" };
 const Option opt_output               { Option::OPT_STR,  "--output",                "-o",   " <\"null\" or output_dir>" };
 const Option opt_owner                { Option::OPT_STR,  "--owner",                 "-o",   " <owner>" };
-const Option opt_partialfiles         { Option::OPT_INT,  "--partial",               "-p",   " <number_of_files_per_tape>" };
-const Option opt_partialtapes         { Option::OPT_INT,  "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
+const Option opt_partialfiles         { Option::OPT_UINT, "--partial",               "-p",   " <number_of_files_per_tape>" };
+const Option opt_partialtapes         { Option::OPT_UINT, "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
 const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <fullpath>" };
-const Option opt_retrievepriority     { Option::OPT_INT,  "--retrievepriority",      "--rp", " <priority_value>" };
-const Option opt_size                 { Option::OPT_INT,  "--size",                  "-s",   " <file_size>" };
+const Option opt_retrievepriority     { Option::OPT_UINT, "--retrievepriority",      "--rp", " <priority_value>" };
+const Option opt_size                 { Option::OPT_UINT, "--size",                  "-s",   " <file_size>" };
 const Option opt_storageclass         { Option::OPT_STR,  "--storageclass",          "-s",   " <storage_class_name>" };
 const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",                  "-n",   " <storage_class_name>",
                                         "--storageclass" };

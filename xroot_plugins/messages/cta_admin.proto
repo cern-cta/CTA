@@ -23,20 +23,20 @@ package cta.admin;
 
 message OptionBoolean {
   enum Key {
-    BOOL_DISABLED                      =  0;
-    BOOL_ENCRYPTED                     =  1;
-    BOOL_FORCE                         =  2;
-    BOOL_FULL                          =  3;
-    BOOL_LBP                           =  4;
+    DISABLED                           =  0;
+    ENCRYPTED                          =  1;
+    FORCE                              =  2;
+    FULL                               =  3;
+    LBP                                =  4;
 
     // hasOption options
-    BOOL_ALL                           =  5;
-    BOOL_CHECK_CHECKSUM                =  6;
-    BOOL_EXTENDED                      =  7;
-    BOOL_SHOW_HEADER                   =  8;
-    BOOL_JUSTEXPAND                    =  9;
-    BOOL_JUSTREPACK                    = 10;
-    BOOL_SUMMARY                       = 11;
+    ALL                                =  5;
+    CHECK_CHECKSUM                     =  6;
+    EXTENDED                           =  7;
+    SHOW_HEADER                        =  8;
+    JUSTEXPAND                         =  9;
+    JUSTREPACK                         = 10;
+    SUMMARY                            = 11;
   }
 
   Key key                              =  1;
@@ -45,20 +45,20 @@ message OptionBoolean {
 
 message OptionUInt64 {
   enum Key {
-    UINT64_ARCHIVE_FILE_ID             =  0;
-    UINT64_ARCHIVE_PRIORITY            =  1;
-    UINT64_RETRIEVE_PRIORITY           =  2;
-    UINT64_CAPACITY                    =  3;
-    UINT64_COPY_NUMBER                 =  4;
-    UINT64_FIRST_FSEQ                  =  5;
-    UINT64_FILE_SIZE                   =  6;
-    UINT64_LAST_FSEQ                   =  7;
-    UINT64_MAX_DRIVES_ALLOWED          =  8;
-    UINT64_MIN_ARCHIVE_REQUEST_AGE     =  9;
-    UINT64_MIN_RETRIEVE_REQUEST_AGE    = 10;
-    UINT64_NUMBER_OF_FILES             = 11;
-    UINT64_PARTIAL                     = 12;
-    UINT64_PARTIAL_TAPES_NUMBER        = 13;
+    ARCHIVE_FILE_ID                    =  0;
+    ARCHIVE_PRIORITY                   =  1;
+    RETRIEVE_PRIORITY                  =  2;
+    CAPACITY                           =  3;
+    COPY_NUMBER                        =  4;
+    FIRST_FSEQ                         =  5;
+    FILE_SIZE                          =  6;
+    LAST_FSEQ                          =  7;
+    MAX_DRIVES_ALLOWED                 =  8;
+    MIN_ARCHIVE_REQUEST_AGE            =  9;
+    MIN_RETRIEVE_REQUEST_AGE           = 10;
+    NUMBER_OF_FILES                    = 11;
+    PARTIAL                            = 12;
+    PARTIAL_TAPES_NUMBER               = 13;
   }
 
   Key key                              =  1;
@@ -67,25 +67,25 @@ message OptionUInt64 {
 
 message OptionString {
   enum Key {
-    STR_COMMENT                        =  0;
-    STR_DISKID                         =  1;
-    STR_DRIVE                          =  2;
-    STR_ENCRYPTION_KEY                 =  3;
-    STR_FILENAME                       =  4;
-    STR_GROUP                          =  5;
-    STR_HOSTNAME                       =  6;
-    STR_INPUT                          =  7;
-    STR_INSTANCE                       =  8;
-    STR_LOGICAL_LIBRARY                =  9;
-    STR_MOUNT_POLICY                   = 10;
-    STR_OUTPUT                         = 11;
-    STR_OWNER                          = 12;
-    STR_PATH                           = 13;
-    STR_STORAGE_CLASS                  = 14;
-    STR_TAG                            = 15;
-    STR_TAPE_POOL                      = 16;
-    STR_USERNAME                       = 17;
-    STR_VID                            = 18;
+    COMMENT                            =  0;
+    DISKID                             =  1;
+    DRIVE                              =  2;
+    ENCRYPTION_KEY                     =  3;
+    FILENAME                           =  4;
+    GROUP                              =  5;
+    HOSTNAME                           =  6;
+    INPUT                              =  7;
+    INSTANCE                           =  8;
+    LOGICAL_LIBRARY                    =  9;
+    MOUNT_POLICY                       = 10;
+    OUTPUT                             = 11;
+    OWNER                              = 12;
+    PATH                               = 13;
+    STORAGE_CLASS                      = 14;
+    TAG                                = 15;
+    TAPE_POOL                          = 16;
+    USERNAME                           = 17;
+    VID                                = 18;
   }
 
   Key key                              =  1;
