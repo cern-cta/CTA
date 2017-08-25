@@ -59,18 +59,16 @@ public:
    }
 
    /*!
-    * Check if the option is a command.
-    *
-    * Commands take no key, only a value
-    */
-   bool is_cmd() const { return m_type == OPT_CMD; }
-
-   /*!
     * Check if the supplied key matches the option
     */
    bool operator==(const std::string &option) const {
       return option == m_short_opt || option == m_long_opt;
    }
+
+   /*!
+    * Return the type of this option
+    */
+   option_t get_type() const { return m_type; }
 
    /*!
     * Return the key for this option
@@ -247,21 +245,21 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
 /*!
  * Map integer options to Protocol Buffer enum values
  */
-const std::map<std::string, OptionInteger::Key> intOptions = {
-   { "--archivepriority",       OptionInteger::INT_ARCHIVE_PRIORITY },
-   { "--capacity",              OptionInteger::INT_CAPACITY },
-   { "--copynb",                OptionInteger::INT_COPY_NUMBER },
-   { "--firstfseq",             OptionInteger::INT_FIRST_FSEQ },
-   { "--id",                    OptionInteger::INT_ARCHIVE_FILE_ID },
-   { "--lastfseq",              OptionInteger::INT_LAST_FSEQ },
-   { "--maxdrivesallowed",      OptionInteger::INT_MAX_DRIVES_ALLOWED },
-   { "--minarchiverequestage",  OptionInteger::INT_MIN_ARCHIVE_REQUEST_AGE },
-   { "--minretrieverequestage", OptionInteger::INT_MIN_RETRIEVE_REQUEST_AGE },
-   { "--nbfiles",               OptionInteger::INT_NUMBER_OF_FILES },
-   { "--partial",               OptionInteger::INT_PARTIAL }, 
-   { "--partialtapesnumber",    OptionInteger::INT_PARTIAL_TAPES_NUMBER },
-   { "--retrievepriority",      OptionInteger::INT_RETRIEVE_PRIORITY },
-   { "--size",                  OptionInteger::INT_FILE_SIZE }                  
+const std::map<std::string, OptionUInt64::Key> uint64Options = {
+   { "--archivepriority",       OptionUInt64::UINT64_ARCHIVE_PRIORITY },
+   { "--capacity",              OptionUInt64::UINT64_CAPACITY },
+   { "--copynb",                OptionUInt64::UINT64_COPY_NUMBER },
+   { "--firstfseq",             OptionUInt64::UINT64_FIRST_FSEQ },
+   { "--id",                    OptionUInt64::UINT64_ARCHIVE_FILE_ID },
+   { "--lastfseq",              OptionUInt64::UINT64_LAST_FSEQ },
+   { "--maxdrivesallowed",      OptionUInt64::UINT64_MAX_DRIVES_ALLOWED },
+   { "--minarchiverequestage",  OptionUInt64::UINT64_MIN_ARCHIVE_REQUEST_AGE },
+   { "--minretrieverequestage", OptionUInt64::UINT64_MIN_RETRIEVE_REQUEST_AGE },
+   { "--nbfiles",               OptionUInt64::UINT64_NUMBER_OF_FILES },
+   { "--partial",               OptionUInt64::UINT64_PARTIAL }, 
+   { "--partialtapesnumber",    OptionUInt64::UINT64_PARTIAL_TAPES_NUMBER },
+   { "--retrievepriority",      OptionUInt64::UINT64_RETRIEVE_PRIORITY },
+   { "--size",                  OptionUInt64::UINT64_FILE_SIZE }                  
 };
 
 

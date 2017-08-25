@@ -99,7 +99,7 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const arg
 
       for(opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
          // Special case of OPT_CMD type has an implicit key
-         if(opt_num-- == 0 && opt_it->is_cmd()) break;
+         if(opt_num-- == 0 && opt_it->get_type() == Option::OPT_CMD) break;
 
          if(*opt_it == argv[i]) break;
       }
@@ -107,18 +107,51 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const arg
          throwUsage(std::string("Invalid option: ") + argv[i]);
       }
       if((i += opt_it->num_params()) == argc) {
-         throwUsage(std::string(argv[i-1]) + " expects a parameter");
+         throw std::runtime_error(std::string(argv[i-1]) + " expects a parameter: " + opt_it->help());
       }
 
-      addOption(opt_it->get_key(), argv[i]);
+      addOption(*opt_it, argv[i]);
    }
 }
 
 
 
-void CtaAdminCmd::addOption(const std::string &key, const std::string &value)
+void CtaAdminCmd::addOption(const Option &option, const std::string &value)
 {
-   std::cout << "Setting " << key << " = " << value << std::endl;
+   auto admincmd_ptr = m_request.mutable_admincmd();
+
+   switch(option.get_type())
+   {
+      case Option::OPT_CMD:
+      case Option::OPT_STR: {
+         auto key = strOptions.at(option.get_key());
+         auto new_opt = admincmd_ptr->add_option_str();
+         new_opt->set_key(key);
+         new_opt->set_value(value);
+         break;
+      }
+      case Option::OPT_FLAG:
+      case Option::OPT_BOOL: {
+         auto key = boolOptions.at(option.get_key());
+         auto new_opt = admincmd_ptr->add_option_bool();
+         new_opt->set_key(key);
+         if(option.get_type() == Option::OPT_FLAG || value == "true") {
+            new_opt->set_value(true);
+         } else if(value == "false") {
+            new_opt->set_value(false);
+         } else {
+            throw std::runtime_error(value + " is not a boolean value: " + option.help());
+         }
+         break;
+      }
+      case Option::OPT_INT: {
+         auto key = uint64Options.at(option.get_key());
+         auto new_opt = admincmd_ptr->add_option_uint64();
+         new_opt->set_key(key);
+         new_opt->set_value(std::stoul(value));
+         break;
+      }
+   }
 }
 
 

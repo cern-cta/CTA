@@ -43,7 +43,7 @@ private:
    /*!
     * Add a valid option to the protocol buffer
     */
-   void addOption(const std::string &key, const std::string &value);
+   void addOption(const Option &option, const std::string &value);
 
    /*!
     * Throw an exception with usage help

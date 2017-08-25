@@ -43,26 +43,26 @@ message OptionBoolean {
   bool value                           =  2;
 }
 
-message OptionInteger {
+message OptionUInt64 {
   enum Key {
-    INT_ARCHIVE_FILE_ID                =  0;
-    INT_ARCHIVE_PRIORITY               =  1;
-    INT_RETRIEVE_PRIORITY              =  2;
-    INT_CAPACITY                       =  3;
-    INT_COPY_NUMBER                    =  4;
-    INT_FIRST_FSEQ                     =  5;
-    INT_FILE_SIZE                      =  6;
-    INT_LAST_FSEQ                      =  7;
-    INT_MAX_DRIVES_ALLOWED             =  8;
-    INT_MIN_ARCHIVE_REQUEST_AGE        =  9;
-    INT_MIN_RETRIEVE_REQUEST_AGE       = 10;
-    INT_NUMBER_OF_FILES                = 11;
-    INT_PARTIAL                        = 12;
-    INT_PARTIAL_TAPES_NUMBER           = 13;
+    UINT64_ARCHIVE_FILE_ID             =  0;
+    UINT64_ARCHIVE_PRIORITY            =  1;
+    UINT64_RETRIEVE_PRIORITY           =  2;
+    UINT64_CAPACITY                    =  3;
+    UINT64_COPY_NUMBER                 =  4;
+    UINT64_FIRST_FSEQ                  =  5;
+    UINT64_FILE_SIZE                   =  6;
+    UINT64_LAST_FSEQ                   =  7;
+    UINT64_MAX_DRIVES_ALLOWED          =  8;
+    UINT64_MIN_ARCHIVE_REQUEST_AGE     =  9;
+    UINT64_MIN_RETRIEVE_REQUEST_AGE    = 10;
+    UINT64_NUMBER_OF_FILES             = 11;
+    UINT64_PARTIAL                     = 12;
+    UINT64_PARTIAL_TAPES_NUMBER        = 13;
   }
 
   Key key                              =  1;
-  int64 value                          =  2;
+  uint64 value                         =  2;
 }
 
 message OptionString {
@@ -138,7 +138,7 @@ message AdminCmd {
   Cmd cmd                              =  1;    //< The primary command
   SubCmd subcmd                        =  2;    //< The secondary command
   repeated OptionBoolean option_bool   =  3;    //< List of boolean options
-  repeated OptionInteger option_int    =  4;    //< List of integer options
+  repeated OptionUInt64 option_uint64  =  4;    //< List of integer options
   repeated OptionString option_str     =  5;    //< List of string options
 }
 
