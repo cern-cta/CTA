@@ -41,6 +41,11 @@ private:
    void parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options);
 
    /*!
+    * Add a valid option to the protocol buffer
+    */
+   void addOption(const std::string &key, const std::string &value);
+
+   /*!
     * Throw an exception with usage help
     */
    void throwUsage(const std::string &error_txt = "") const;

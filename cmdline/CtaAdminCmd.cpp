@@ -91,15 +91,34 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const arg
 {
    for(int i = start; i < argc; ++i)
    {
+      int opt_num = i-start;
+
       cmd_val_t::const_iterator opt_it;
 
       // Scan options for a match
+
       for(opt_it = options.begin(); opt_it != options.end(); ++opt_it) {
+         // Special case of OPT_CMD type has an implicit key
+         if(opt_num-- == 0 && opt_it->is_cmd()) break;
+
          if(*opt_it == argv[i]) break;
       }
-      if(opt_it == options.end()) throwUsage(std::string("Invalid option: ") + argv[i]);
+      if(opt_it == options.end()) {
+         throwUsage(std::string("Invalid option: ") + argv[i]);
+      }
+      if((i += opt_it->num_params()) == argc) {
+         throwUsage(std::string(argv[i-1]) + " expects a parameter");
+      }
 
+      addOption(opt_it->get_key(), argv[i]);
    }
+}
+
+
+
+void CtaAdminCmd::addOption(const std::string &key, const std::string &value)
+{
+   std::cout << "Setting " << key << " = " << value << std::endl;
 }
 
 

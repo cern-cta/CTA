@@ -59,6 +59,30 @@ public:
    }
 
    /*!
+    * Check if the option is a command.
+    *
+    * Commands take no key, only a value
+    */
+   bool is_cmd() const { return m_type == OPT_CMD; }
+
+   /*!
+    * Check if the supplied key matches the option
+    */
+   bool operator==(const std::string &option) const {
+      return option == m_short_opt || option == m_long_opt;
+   }
+
+   /*!
+    * Return the key for this option
+    */
+   const std::string &get_key() const { return m_lookup_key; }
+
+   /*!
+    * Return the number of parameters expected after this option
+    */
+   int num_params() const { return m_type == OPT_CMD || m_type == OPT_FLAG ? 0 : 1; }
+
+   /*!
     * Return per-option help string
     */
    std::string help() const {
@@ -67,13 +91,6 @@ public:
       help += m_help_txt;
       help += m_is_optional ? "]" : "";
       return help;
-   }
-
-   /*!
-    * Check for a matching option string
-    */
-   bool operator==(const std::string &option) const {
-      return option == m_short_opt || option == m_long_opt;
    }
 
 private:
