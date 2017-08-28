@@ -45,8 +45,8 @@ struct DriveState {
   std::string host;
   std::string logicalLibrary;
   uint64_t sessionId;
-  uint64_t bytesTransferedInSession;
-  uint64_t filesTransferedInSession;
+  uint64_t bytesTransferredInSession;
+  uint64_t filesTransferredInSession;
   double latestBandwidth; /** < Byte per seconds */
   time_t sessionStartTime;
   time_t mountStartTime;
@@ -63,6 +63,9 @@ struct DriveState {
   DesiredDriveState desiredDriveState;
   std::string currentVid;
   std::string currentTapePool;
+  MountType nextMountType;
+  std::string nextVid;
+  std::string nextTapepool;
 
 }; // struct DriveState
 

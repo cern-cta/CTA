@@ -16,11 +16,11 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package(openssl REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package(zeromq REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 set (MEDIACHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
@@ -52,12 +52,15 @@ set (MEDIACHANGER_LIB_SRC_FILES
   ZmqMsg.cpp
   ZmqSocket.cpp)
 
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
+set_property(TARGET ctamediachanger PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachanger
   ctacommon
-  protobuf
+  ${PROTOBUF3_LIBRARIES}
   ssl
   zmq)
 
@@ -76,6 +79,8 @@ set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctamediachangerunittests SHARED
   ${MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctamediachangerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamediachangerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachangerunittests
   ctamediachanger)

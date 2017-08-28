@@ -48,13 +48,13 @@ struct TapeFileWritten {
   /**
    * Less than operator.
    *
-   * TapeFileWritten events are ordered by their archiveFileId member variable.
+   * TapeFileWritten events are ordered by their tape file sequence number.
    *
    * TapeFileWritten events are written to the catalogue database in batches in
    * order to improve performance by reducing the number of network round trips
-   * to the database.   Thse batches are implemented using sorted containers in
-   * order to avoid deadlocks when two or more batches of overlapping events are
-   * concurrently written to the database.
+   * to the database.  Each batch is ordered by tape file sequence number so
+   * that the CTA catalogue code can easily assert that files that are written
+   * to tape are reported correctly.
    *
    * @param rhs The right hand side of the operator.
    */

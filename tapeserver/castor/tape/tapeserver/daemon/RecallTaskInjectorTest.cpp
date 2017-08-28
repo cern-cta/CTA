@@ -34,6 +34,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 
 #include <gtest/gtest.h>
 
@@ -129,10 +130,11 @@ namespace unitTests
   };
   
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
-    virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
-    virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
-    virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) { throw std::runtime_error("Not implemented"); }
+    const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
+    void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
   };
   
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
@@ -148,7 +150,8 @@ namespace unitTests
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"",lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
@@ -164,8 +167,8 @@ namespace unitTests
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
 
     ASSERT_EQ(true, rti.synchronousFetch());
-    ASSERT_EQ(maxNbJobsInjectedAtOnce+1, diskWrite.m_tasks.size());
-    ASSERT_EQ(maxNbJobsInjectedAtOnce+1, tapeRead.m_tasks.size());
+    ASSERT_EQ(maxNbJobsInjectedAtOnce, diskWrite.m_tasks.size());
+    ASSERT_EQ(maxNbJobsInjectedAtOnce, tapeRead.m_tasks.size());
 
     rti.startThreads();
     rti.requestInjection(false);
@@ -208,7 +211,8 @@ namespace unitTests
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"",lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);

@@ -1,4 +1,7 @@
 .idea
 nbproject/
-cmake-build-debug/
 /build/
+.project
+.cproject
+.settings/
+workbench.xmi

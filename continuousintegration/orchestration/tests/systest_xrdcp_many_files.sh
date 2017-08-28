@@ -151,7 +151,7 @@ for I in `seq 1 ${NB_FILES}`; do
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
   echo
   echo "Removing disk replica"
-  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos file tag /eos/ctaeos/cta/${TEST_FILE_NAME} -1
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
 done
 
 # Request the test files be retrieved from tape
@@ -162,7 +162,7 @@ for I in `seq 1 ${NB_FILES}`; do
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos info /eos/ctaeos/cta/${TEST_FILE_NAME}
   echo
   echo
-  echo "trigger EOS retrive workflow"
+  echo "trigger EOS retrieve workflow"
   echo "xrdfs localhost prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}"  
   kubectl --namespace ${NAMESPACE} exec ctaeos -- xrdfs localhost prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}
 done

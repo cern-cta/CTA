@@ -99,20 +99,16 @@ namespace cta {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
     
     /**
+     * Report a tape session statistics
+     */
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+    
+    /**
      * Report that the tape is full.
      */
     void setTapeFull();
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
-    /**
-     * Job factory
-     *
-     * @param logContext log context for logging internal operations.
-     * @return A unique_ptr to the next archive job or NULL if there are no more
-     * archive jobs left for this tape mount.
-     */
-    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext);
-    
     /**
      * Batch job factory
      * 
@@ -143,9 +139,17 @@ namespace cta {
     /**
      * Creates a disk reporter for the ArchiveJob (this is a wrapper).
      * @param URL: report address
-     * @return poitner to the reporter created.
+     * @param reporterState void promise to be set when the report is done asynchronously.
+     * @return pointer to the reporter created.
      */
-    eos::DiskReporter * createDiskReporter(std::string & URL);
+    eos::DiskReporter * createDiskReporter(std::string & URL, std::promise<void> &reporterState);
+    
+    /**
+     * Update the catalog with a set of TapeFileWritten events.
+     * 
+     * @param tapeFilesWritten The set of report events for the catalog update. 
+     */
+    void updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten); 
     
     /**
      * Destructor.
@@ -163,7 +167,7 @@ namespace cta {
      * A reference to the file catalogue.
      */
     catalogue::Catalogue & m_catalogue;
-
+    
     /**
      * Internal tracking of the session completion
      */

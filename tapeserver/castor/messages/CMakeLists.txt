@@ -21,17 +21,21 @@ include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
 find_package(openssl REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package(zeromq REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctamessagesprotobuf
   ${ProtoSources})
 
 add_library(ctamessagesutils SHARED
   TapeserverProxyDummy.cpp)
+set_property(TARGET ctamessagesutils PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamessagesutils PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install(TARGETS ctamessagesutils DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(CtaMessageSrcs
@@ -43,6 +47,9 @@ set(CtaMessageSrcs
 
 add_library(ctamessages SHARED
   ${CtaMessageSrcs})
+set_property(TARGET ctamessages PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamessages PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 install (TARGETS ctamessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_dependencies(ctamessages ctamessagesprotobuf)
@@ -52,5 +59,5 @@ target_link_libraries(ctamessages
   ctamediachanger
   ctautils
   ctatapesession
-  protobuf
+  ${PROTOBUF3_LIBRARIES}
   ssl)

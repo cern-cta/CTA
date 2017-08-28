@@ -29,8 +29,8 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 DriveState::DriveState():
   sessionId(0),
-  bytesTransferedInSession(0),
-  filesTransferedInSession(0),
+  bytesTransferredInSession(0),
+  filesTransferredInSession(0),
   latestBandwidth(0),
   sessionStartTime(0),
   mountStartTime(0),
@@ -44,7 +44,8 @@ DriveState::DriveState():
   startStartTime(0),
   mountType(dataStructures::MountType::NoMount),
   driveStatus(dataStructures::DriveStatus::Down),
-  desiredDriveState({false, false}) {}
+  desiredDriveState({false, false}),
+  nextMountType(dataStructures::MountType::NoMount) {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -54,8 +55,8 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && host==rhs.host
       && logicalLibrary==rhs.logicalLibrary
       && sessionId==rhs.sessionId
-      && bytesTransferedInSession==rhs.bytesTransferedInSession
-      && filesTransferedInSession==rhs.filesTransferedInSession
+      && bytesTransferredInSession==rhs.bytesTransferredInSession
+      && filesTransferredInSession==rhs.filesTransferredInSession
       && latestBandwidth==rhs.latestBandwidth
       && sessionStartTime==rhs.sessionStartTime
       && mountStartTime==rhs.mountStartTime
@@ -71,7 +72,10 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && driveStatus==rhs.driveStatus
       && desiredDriveState==rhs.desiredDriveState
       && currentVid==rhs.currentVid
-      && currentTapePool==rhs.currentTapePool;
+      && currentTapePool==rhs.currentTapePool
+      && nextMountType == rhs.nextMountType
+      && nextTapepool == rhs.nextTapepool
+      && nextVid == rhs.nextVid;
 }
 
 //------------------------------------------------------------------------------
@@ -90,8 +94,8 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " host=" << obj.host
      << " logicalLibrary=" << obj.logicalLibrary
      << " sessionId=" << obj.sessionId
-     << " bytesTransferedInSession=" << obj.bytesTransferedInSession
-     << " filesTransferedInSession=" << obj.filesTransferedInSession
+     << " bytesTransferedInSession=" << obj.bytesTransferredInSession
+     << " filesTransferedInSession=" << obj.filesTransferredInSession
      << " latestBandwidth=" << obj.latestBandwidth
      << " sessionStartTime=" << obj.sessionStartTime
      << " mountStartTime="  << obj.mountStartTime
@@ -107,7 +111,10 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " status=" << obj.driveStatus
      << " desiredState=" << obj.desiredDriveState
      << " currentVid=" << obj.currentVid
-     << " currentTapePool=" << obj.currentTapePool << ")";
+     << " currentTapePool=" << obj.currentTapePool
+     << " nextMountType=" << obj.nextMountType
+     << " nextVid=" << obj.nextVid
+     << " nextTapePool=" << obj.nextTapepool << ")";
 }
 
 } // namespace dataStructures

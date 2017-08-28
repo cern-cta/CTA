@@ -48,7 +48,7 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
     }
     cta::catalogue::TapeFileSearchCriteria searchCriteria;    
     searchCriteria.diskInstance = path; //the path will be the disk instance that we want the disk id's of
-    m_itor = m_catalogue->getArchiveFileItor(searchCriteria);
+    m_itor = m_catalogue->getArchiveFiles(searchCriteria);
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("USERNAME", m_cliIdentity.username));
     params.push_back(cta::log::Param("HOST", m_cliIdentity.host));
@@ -95,10 +95,10 @@ int XrdCtaDir::open(const char *path, const XrdSecEntity *client, const char *op
 // nextEntry
 //------------------------------------------------------------------------------
 const char* XrdCtaDir::nextEntry() {
-  if(!(m_itor->hasMore())) {
+  if(!(m_itor.hasMore())) {
     return nullptr;
   }
-  return m_itor->next().diskFileId.c_str();
+  return m_itor.next().diskFileId.c_str();
 }
 
 //------------------------------------------------------------------------------

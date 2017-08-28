@@ -22,30 +22,16 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-add_library (XrdCtaOfs MODULE XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
-target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon protobuf ctaobjectstore cryptopp)
+find_package(Protobuf3 REQUIRED)
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
+add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
+set_property(TARGET XrdCtaOfs PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET XrdCtaOfs PROPERTY   VERSION "${CTA_LIBVERSION}")
+target_link_libraries (XrdCtaOfs ctacatalogue ctaeosmessages ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctaobjectstore cryptopp)
+set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
 INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
 
-set (OPAQUE_QUERY_CMD_SRC_FILES
-  CmdLineTool.cpp
-  OpaqueQueryCmd.cpp
-  OpaqueQueryCmdLineArgs.cpp
-  OpaqueQueryCmdMain.cpp)
-
-add_executable (cta-xrootd_plugins-opaque-query ${OPAQUE_QUERY_CMD_SRC_FILES})
-add_dependencies (cta-xrootd_plugins-opaque-query generate_notification.pb.h)
-target_link_libraries (cta-xrootd_plugins-opaque-query ctacommon)
-
-set (WRITE_NOTIFICATION_MSG_CMD_SRC_FILES
-  CmdLineTool.cpp
-  WriteNotificationMsgCmd.cpp
-  WriteNotificationMsgCmdLineArgs.cpp
-  WriteNotificationMsgCmdMain.cpp)
-
-add_executable (cta-xrootd_plugins-write-notification-msg ${WRITE_NOTIFICATION_MSG_CMD_SRC_FILES})
-add_dependencies (cta-xrootd_plugins-write-notification-msg generate_notification.pb.h)
-target_link_libraries (cta-xrootd_plugins-write-notification-msg ctacommon ctaeosmessages)

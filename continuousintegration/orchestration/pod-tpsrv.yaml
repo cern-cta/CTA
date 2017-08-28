@@ -109,3 +109,6 @@ spec:
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
+
+  imagePullSecrets:
+  - name: ctaregsecret

@@ -108,12 +108,12 @@ protected:
   /**
    * The object used to populate the backend
    */
-  cta::objectstore::BackendPopulator m_backendPopulator;
+  std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;
   
   /**
    * The database or object store holding all CTA persistent objects
    */
-  cta::OStoreDBWithAgent m_scheddb;
+  std::unique_ptr<cta::OStoreDBWithAgent> m_scheddb;
 
   /**
    * The CTA catalogue of tapes and tape files.
@@ -173,109 +173,6 @@ protected:
     xbuf->SetLen(dataSize);
     return UniqueXrdOucBuffer(xbuf);
   }
-
-  /**
-   * Processes the specified wrapper message.
-   *
-   * @param msg The message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-  UniqueXrdOucBuffer processWrapperMsg(const eos::wfe::Wrapper &msg, const XrdSecEntity *const client);
-
-  /**
-   * Processes the specified notification message.
-   *
-   * @param msg The message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-  UniqueXrdOucBuffer processNotificationMsg(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
-
-  /**
-   * Processes the specified CLOSEW workflow event.
-   *
-   * @param msg The notification message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-  UniqueXrdOucBuffer processCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
-
-  /**
-   * Processes the specified CLOSEW workflow event triggered by an EOS user
-   * writing a file to disk, as opposed to a tape server writing a file to disk.
-   *
-   * A user uses the "default" workflow when they write a file to disk.  A tape
-   * server uses the "cta" workflow when it writes a file to disk.
-   *
-   * @param msg The message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-  UniqueXrdOucBuffer processDefaultCLOSEW(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
-
-  /**
-   * Processes the specified PREPARE workflow event.
-   *
-   * @param msg The notification message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-  UniqueXrdOucBuffer processPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
-
-  /**
-   * Processes the specified PREPARE workflow event for a default workflow.
-   *
-   * @param msg The notification message.
-   * @param client Same semantic as the XrdCtaFilesystem::FSctl() method.
-   * @return The result in the form of an XrdOucBuffer to be sent back to the
-   * client.
-   */
-   UniqueXrdOucBuffer processDefaultPREPARE(const eos::wfe::Notification &msg, const XrdSecEntity *const client);
-
-  /**
-   * Return the JSON representation of teh specified Google protocol buffer
-   * message.
-   * @param protobufMsg The Google protocol buffer message.
-   * @return The JSON string.
-   */
-  template <typename T> static std::string toJson(T protobufMsg) {
-    google::protobuf::util::JsonPrintOptions jsonPrintOptions;
-    jsonPrintOptions.add_whitespace = false;
-    jsonPrintOptions.always_print_primitive_fields = false;
-    std::string json;
-    google::protobuf::util::MessageToJsonString(protobufMsg, &json, jsonPrintOptions);
-    return json;
-  }
-
-  /**
-   * Returns the value of the specified attribute of the specified directory.
-   *
-   * This method throws an exception if the specified directory does not have
-   * the specified attribute.
-   *
-   * @param attributeName The name pf the attribute.
-   * @param dir The directory.
-   * @return The storage class.
-   */
-  static std::string getDirXattr(const std::string &attributeName, const eos::wfe::Md &dir);
-
-  /**
-   * Returns the value of the specified attribute of the specified file.
-   *
-   * This method throws an exception if the specified file does not have the
-   * specified attribute.
-   *
-   * @param attributeName The name pf the attribute.
-   * @param file The file.
-   * @return The storage class.
-   */
-  static std::string getFileXattr(const std::string &attributeName, const eos::wfe::Md &file);
 
 }; // XrdCtaFilesystem
 

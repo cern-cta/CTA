@@ -44,21 +44,14 @@ RUN yum clean all && \
       vim \
       yum-utils
 
-# Get XRootD
+# Check out XRootD from master (includes SSIV2)
 
 RUN git clone https://github.com/xrootd/xrootd.git
-
-# Check out SSIV2
-
-RUN cd xrootd && git checkout xrdssiV2
-
-# Copy in patched xrootd.spec.in
-
-ADD xrootd.spec.in /xrootd/packaging/rhel/xrootd.spec.in
-RUN cp xrootd/packaging/rhel/xrootd.spec.in xrootd.spec
+RUN cd xrootd && git pull
 
 # Install all necessary build dependencies
 
+RUN cp xrootd/packaging/rhel/xrootd.spec.in xrootd.spec
 RUN yum-builddep -y xrootd.spec
 
 # Create XRootD source RPM

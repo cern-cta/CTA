@@ -27,22 +27,64 @@ namespace cta {
 namespace rdbms {
 
 /**
- * Abstract class specificing the interface to the result set of an sql query.
+ * Forward declarartion.
+ */
+class RsetImpl;
+
+/**
+ * A wrapper around an object that iterators over a result set from the
+ * execution of a database query.
+ *
+ * This wrapper permits the user of the rdbms::Stmt::executeQuery() method to
+ * use different result set implementations whilst only using a result set type.
  */
 class Rset {
 public:
+  /**
+   * Constructor.
+   */
+  Rset();
+
+  /**
+   * Constructor.
+   *
+   * @param impl The object actually implementing this result set.
+   */
+  Rset(RsetImpl *const impl);
+
+  /**
+   * Deletion of copy constructor.
+   */
+  Rset(const Rset &) = delete;
+
+  /**
+   * Move constructor.
+   *
+   * @param other The other object to be moved.
+   */
+  Rset(Rset &&other);
 
   /**
    * Destructor.
    */
-  virtual ~Rset() throw() = 0;
+  ~Rset() throw();
+
+  /**
+   * Deletion of copy assignment.
+   */
+  Rset &operator=(const Rset &) = delete;
+
+  /**
+   * Move assignment.
+   */
+  Rset &operator=(Rset &&rhs);
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const = 0;
+  const std::string &getSql() const;
 
   /**
    * Attempts to get the next row of the result set.
@@ -50,7 +92,7 @@ public:
    * @return True if a row has been retrieved else false if there are no more
    * rows in the result set.
    */
-  virtual bool next() = 0;
+  bool next();
 
   /**
    * Returns true if the specified column contains a null value.
@@ -58,7 +100,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  virtual bool columnIsNull(const std::string &colName) const = 0;
+  bool columnIsNull(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a string.
@@ -79,7 +121,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual optional<std::string> columnOptionalString(const std::string &colName) const = 0;
+  optional<std::string> columnOptionalString(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -114,7 +156,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
+  optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a boolean.
@@ -127,7 +169,14 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<bool> columnOptionalBool(const std::string &colName) const;
+  optional<bool> columnOptionalBool(const std::string &colName) const;
+
+private:
+
+  /**
+   * The object actually implementing this result set.
+   */
+  RsetImpl *m_impl;
 
 }; // class Rset
 

@@ -42,12 +42,12 @@ public:
   RetrieveRequest(const std::string & address, Backend & os);
   RetrieveRequest(GenericObject & go);
   void initialize();
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
   void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
-  bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   class JobDump {
   public:
     uint64_t copyNb;
@@ -57,17 +57,22 @@ public:
     uint32_t totalRetries;
     // TODO: status
   };
+  // An asynchronous job ownership updating class.
+  class AsyncJobDeleter {
+    friend class RetrieveRequest;
+  public:
+    void wait();
+  private:
+    std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
+  };
+  AsyncJobDeleter * asyncDeleteJob();
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
-  struct FailuresCount {
-    uint16_t failuresWithinMount;
-    uint16_t totalFailures;
-  };
-  FailuresCount addJobFailure(uint16_t copyNumber, uint64_t sessionId);
+  bool addJobFailure(uint16_t copyNumber, uint64_t mountId); /**< Returns true is the request is completely failed 
+                                                                   (telling wheather we should requeue or not). */
+  bool finishIfNecessary();                   /**< Handling of the consequences of a job status change for the entire request.
+                                               * This function returns true if the request got finished. */
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
-  // Handling of the consequences of a job status. This is simpler that archival
-  // as one finish is enough.
-  void finish();
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setAllJobsLinkingToTapePool();
   // Mark all the jobs as being deleted, in case of a cancellation
@@ -75,6 +80,22 @@ public:
   // Mark all the jobs as pending deletion from NS.
   void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
+  // An asynchronous job ownership updating class.
+  class AsyncOwnerUpdater {
+    friend class RetrieveRequest;
+  public:
+    void wait();
+    const common::dataStructures::RetrieveRequest & getRetrieveRequest();
+    const common::dataStructures::ArchiveFile & getArchiveFile();
+  private:
+    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    common::dataStructures::RetrieveRequest m_retieveRequest;
+    common::dataStructures::ArchiveFile m_archiveFile;
+  };
+  // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
+  CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
+  AsyncOwnerUpdater * asyncUpdateOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
   // Request management ========================================================
   void setSuccessful();
   void setFailed();
@@ -82,17 +103,13 @@ public:
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
   
-  void setArchiveFile(const cta::common::dataStructures::ArchiveFile & archiveFile);
-  cta::common::dataStructures::ArchiveFile getArchiveFile();
-  
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
+  cta::common::dataStructures::ArchiveFile getArchiveFile();
+  cta::common::dataStructures::EntryLog getEntryLog();
   
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
-  
-  void setEntryLog(const cta::common::dataStructures::EntryLog &creationLog);
-  cta::common::dataStructures::EntryLog getEntryLog();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

@@ -77,8 +77,8 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
-  return m_reporterFactory.createDiskReporter(URL);
+cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL, std::promise<void> &reporterState) {
+  return m_reporterFactory.createDiskReporter(URL, reporterState);
 }
 
 //------------------------------------------------------------------------------
@@ -93,23 +93,11 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 }
 
 //------------------------------------------------------------------------------
-// getNextJob
+// updateCatalogueWithTapeFilesWritten
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::ArchiveJob> cta::ArchiveMount::getNextJob(log::LogContext &logContext) {
-  // Check we are still running the session
-  if (!m_sessionRunning)
-    throw SessionNotRunning("In ArchiveMount::getNextJob(): trying to get job from complete/not started session");
-  // try and get a new job from the DB side
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> dbJob(m_dbMount->getNextJob(logContext).release());
-  if (!dbJob.get())
-    return std::unique_ptr<cta::ArchiveJob>();
-  // We have something to archive: prepare the response
-  std::unique_ptr<cta::ArchiveJob> ret(new ArchiveJob(*this, m_catalogue,
-      dbJob->archiveFile, dbJob->srcURL, dbJob->tapeFile));
-  ret->m_dbJob.reset(dbJob.release());
-  return ret;
+void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten) {
+  m_catalogue.filesWrittenToTape(tapeFilesWritten);
 }
-
 
 //------------------------------------------------------------------------------
 // getNextJobBatch
@@ -160,6 +148,13 @@ cta::ArchiveMount::~ArchiveMount() throw() {
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status) {
   m_dbMount->setDriveStatus(status, time(NULL));
+}
+
+//------------------------------------------------------------------------------
+// setTapeSessionStats()
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  m_dbMount->setTapeSessionStats(stats);
 }
 
 //------------------------------------------------------------------------------

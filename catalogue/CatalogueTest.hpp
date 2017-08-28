@@ -21,6 +21,7 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/LoginFactory.hpp"
 
@@ -38,6 +39,7 @@ public:
 
 protected:
 
+  cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   cta::common::dataStructures::SecurityIdentity m_localAdmin;
   cta::common::dataStructures::SecurityIdentity m_admin;

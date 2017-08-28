@@ -34,28 +34,28 @@ cta::RetrieveMount::RetrieveMount(
 }
 
 //------------------------------------------------------------------------------
-// getMountType
+// getMountType()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::MountType cta::RetrieveMount::getMountType() const{
   return cta::common::dataStructures::MountType::Retrieve;
 }
 
 //------------------------------------------------------------------------------
-// getNbFiles
+// getNbFiles()
 //------------------------------------------------------------------------------
 uint32_t cta::RetrieveMount::getNbFiles() const {
   return m_dbMount->nbFilesCurrentlyOnTape;
 }
 
 //------------------------------------------------------------------------------
-// getVid
+// getVid()
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getVid() const{
   return m_dbMount->mountInfo.vid;
 }
 
 //------------------------------------------------------------------------------
-// getMountTransactionId
+// getMountTransactionId()
 //------------------------------------------------------------------------------
 std::string cta::RetrieveMount::getMountTransactionId() const{
   std::stringstream id;
@@ -66,25 +66,28 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 }
 
 //------------------------------------------------------------------------------
-// getNextJob
+// getNextJobBatch()
 //------------------------------------------------------------------------------
-std::unique_ptr<cta::RetrieveJob> cta::RetrieveMount::getNextJob() {
+std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
+    log::LogContext& logContext) {
   if (!m_sessionRunning)
-    throw SessionNotRunning("In RetrieveMount::getNextJob(): trying to get job from complete/not started session");
+    throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
   // Try and get a new job from the DB
-  std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> dbJob(m_dbMount->getNextJob().release());
-  if (!dbJob.get())
-    return std::unique_ptr<cta::RetrieveJob>();
-  // We have something to retrieve: prepare the response
-  std::unique_ptr<cta::RetrieveJob> ret (new RetrieveJob(*this, 
-    dbJob->retrieveRequest, dbJob->archiveFile, dbJob->selectedCopyNb, 
-    PositioningMethod::ByBlock));
-  ret->m_dbJob.reset(dbJob.release());
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
+      bytesRequested, logContext));
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  // We prepare the response
+  for (auto & sdrj: dbJobBatch) {
+    ret.emplace_back(new RetrieveJob(*this,
+      sdrj->retrieveRequest, sdrj->archiveFile, sdrj->selectedCopyNb,
+      PositioningMethod::ByBlock));
+    ret.back()->m_dbJob.reset(sdrj.release());
+  }
   return ret;
 }
 
 //------------------------------------------------------------------------------
-// tapeComplete())
+// tapeComplete()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::tapeComplete() {
   m_tapeRunning = false;
@@ -101,7 +104,7 @@ void cta::RetrieveMount::tapeComplete() {
 }
 
 //------------------------------------------------------------------------------
-// diskComplete())
+// diskComplete()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::diskComplete() {
   m_diskRunning = false;
@@ -116,7 +119,7 @@ void cta::RetrieveMount::diskComplete() {
 }
 
 //------------------------------------------------------------------------------
-// abort())
+// abort()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::abort() {
   diskComplete();
@@ -131,7 +134,14 @@ void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus
 }
 
 //------------------------------------------------------------------------------
-// bothSidesComplete())
+// setTapeSessionStats()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+  m_dbMount->setTapeSessionStats(stats);
+}
+
+//------------------------------------------------------------------------------
+// bothSidesComplete()
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::bothSidesComplete() {
   return !(m_diskRunning || m_tapeRunning);

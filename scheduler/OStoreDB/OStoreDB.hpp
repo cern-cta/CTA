@@ -27,22 +27,27 @@
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "common/log/Logger.hpp"
 
 namespace cta {
   
 namespace objectstore {
   class Backend;
   class Agent;
+  class RootEntry;
 }
 
 namespace ostoredb {
-  class MemArchiveQueue;
+  template <class, class>
+  class MemQueue;
 }
   
 class OStoreDB: public SchedulerDatabase {
-  friend class cta::ostoredb::MemArchiveQueue;
+  template <class, class>
+  friend class cta::ostoredb::MemQueue;
 public:
-  OStoreDB(objectstore::Backend & be);
+  OStoreDB(objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger);
   virtual ~OStoreDB() throw();
   
   /* === Object store and agent handling ==================================== */
@@ -74,31 +79,64 @@ public:
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
-    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &);
+    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &l);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
   };
-
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo() override;
   
+  class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
+  public:
+    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
+      const catalogue::TapeForWriting & tape,
+      const std::string driveName, const std::string& logicalLibrary, 
+      const std::string & hostName, time_t startTime) override;
+    std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
+      const std::string & vid, const std::string & tapePool,
+      const std::string driveName,
+      const std::string& logicalLibrary, const std::string& hostName, 
+      time_t startTime) override;
+    virtual ~TapeMountDecisionInfoNoLock();
+  };
+
+private:
+  /**
+   * An internal helper function with commonalities of both following functions
+   * @param tmdi The TapeMountDecisionInfo where to store the data.
+   * @param re A RootEntry object that should be locked and fetched.
+   */
+   enum class FetchFlavour: bool {
+    lock,
+    noLock
+  };
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
+    log::LogContext & logContext, FetchFlavour fetchFlavour=FetchFlavour::lock);
+public:
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override;
+  void trimEmptyQueues(log::LogContext& lc) override;
+
   /* === Archive Mount handling ============================================= */
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &);
+    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::unique_ptr<ArchiveJob> getNextJob(log::LogContext &logContext) override;
     std::list<std::unique_ptr<ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
       uint64_t bytesRequested, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
   
   /* === Archive Job Handling =============================================== */
@@ -107,34 +145,41 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    bool succeed() override;
-    void fail() override;
+    void fail(log::LogContext & lc) override;
+    void asyncSucceed() override;
+    bool checkSucceed() override;
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
-    ArchiveJob(const std::string &, objectstore::Backend &,
-      objectstore::AgentReference &, ArchiveMount &);
+    ArchiveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
+      log::Logger &, objectstore::AgentReference &, ArchiveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     std::string m_tapePool;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
   };
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &);
+    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
   public:
     const MountInfo & getMountInfo() override;
-    std::unique_ptr<RetrieveJob> getNextJob() override;
+    std::list<std::unique_ptr<RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
   
   /* === Retrieve Job handling ============================================== */
@@ -143,18 +188,22 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    virtual void succeed() override;
-    virtual void fail() override;
+    virtual void asyncSucceed() override;
+    virtual void checkSucceed() override;
+    virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, 
-      objectstore::AgentReference &, RetrieveMount &);
+    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
+      log::Logger &, objectstore::AgentReference &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference & m_agentReference;
     objectstore::RetrieveRequest m_retrieveRequest;
-    RetrieveMount & m_retrieveMount;
+    OStoreDB::RetrieveMount & m_retrieveMount;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
   
   /* === Archive requests handling  ========================================= */
@@ -165,19 +214,6 @@ public:
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
-private:
-  /**
-   * Find or create an archive queue, and return it locked and fetched to the caller
-   * (ArchiveQueue and ScopedExclusiveLock objects are provided empty)
-   * @param archiveQueue the ArchiveQueue object, empty
-   * @param archiveQueueLock the lock, not initialized
-   * @param tapePool the name of the needed tape pool
-   */
-  void getLockedAndFetchedArchiveQueue(cta::objectstore::ArchiveQueue & archiveQueue, 
-    cta::objectstore::ScopedExclusiveLock & archiveQueueLock,
-    const std::string & tapePool);
-  
-public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
   virtual void deleteArchiveRequest(const std::string &diskInstanceName, uint64_t fileId) override;
@@ -185,19 +221,20 @@ public:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
     ArchiveToFileRequestCancelation(objectstore::AgentReference & agentReference, 
-      objectstore::Backend & be): m_request(be), m_lock(), m_objectStore(be), 
-      m_agentReference(agentReference), m_closed(false) {} 
+      objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger): m_request(be), m_lock(), m_objectStore(be),
+      m_catalogue(catalogue), m_logger(logger), m_agentReference(agentReference), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
     void complete() override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;
     objectstore::Backend & m_objectStore;
+    catalogue::Catalogue & m_catalogue;
+    log::Logger & m_logger;
     objectstore::AgentReference &m_agentReference;
     bool m_closed;
     friend class OStoreDB;
   };
-  std::unique_ptr<SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override;
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override;
   
@@ -208,9 +245,8 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
-  void queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-    const std::string &vid) override;
+  std::string queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
   
@@ -253,11 +289,17 @@ private:
     cta::common::dataStructures::MountType mountType;
     time_t reportTime; 
     uint64_t mountSessionId;
-    uint64_t byteTransfered;
-    uint64_t filesTransfered;
+    uint64_t byteTransferred;
+    uint64_t filesTransferred;
     double latestBandwidth;
     std::string vid;
     std::string tapepool;
+  };
+  /** Collection of smaller scale parts of reportDriveStats */
+  struct ReportDriveStatsInputs {
+    time_t reportTime; 
+    uint64_t bytesTransferred;
+    uint64_t filesTransferred;
   };
   /**
    * Utility implementing the operation get drive state or create, update, set on an
@@ -269,6 +311,17 @@ private:
    */
   static void updateDriveStatusInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
     const ReportDriveStatusInputs & inputs);
+  
+  /**
+   * Utility implementing the operation get drive state and update stats in it if present, set on an
+   * already locked and fetched DriveRegistry. 
+   *  
+   * @param dr
+   * @param driveInfo
+   * @param inputs
+   */
+  static void updateDriveStatsInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
+    const ReportDriveStatsInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
@@ -284,7 +337,7 @@ private:
   static void setDriveMounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
-  static void setDriveTransfering(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveTransferring(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveUnloading(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
@@ -300,6 +353,8 @@ private:
   
 private:
   objectstore::Backend & m_objectStore;
+  catalogue::Catalogue & m_catalogue;
+  log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
 };
   

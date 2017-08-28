@@ -24,14 +24,15 @@
 
 namespace cta { namespace eos {
 
-DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL) {
+DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL, std::promise<void> &reporterState) {
   threading::MutexLocker ml(m_mutex);
   auto regexResult = m_EosUrlRegex.exec(URL);
   if (regexResult.size()) {
-    return new EOSReporter(regexResult[1], regexResult[2]);
+    return new EOSReporter(regexResult[1], regexResult[2], reporterState);
   }
   regexResult = m_NullRegex.exec(URL);
   if (regexResult.size()) {
+    reporterState.set_value();
     return new NullReporter();
   }
   throw cta::exception::Exception(

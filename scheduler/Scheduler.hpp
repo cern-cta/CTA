@@ -40,6 +40,7 @@
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/dataStructures/QueueAndMountSummary.hpp"
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
@@ -83,7 +84,7 @@ public:
    * Validates that the underlying storages are accessible
    * Lets the exception through in case of failure.
    */
-  void ping();
+  void ping(log::LogContext & lc);
 
   /** 
    * Queue an archive request and return the CTA file ID. 
@@ -106,13 +107,13 @@ public:
     log::LogContext &lc);
   
   /** 
-   * Delete an archived file or a file which is in the process of being archived. Returns the information 
-   * about the deleted file.
+   * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  cta::common::dataStructures::ArchiveFile deleteArchive(const std::string &instanceName, 
-    const cta::common::dataStructures::DeleteArchiveRequest &request);
+  void deleteArchive(const std::string &instanceName,
+    const cta::common::dataStructures::DeleteArchiveRequest &request,
+    log::LogContext & lc);
   
   /** 
    * Cancel an ongoing retrieval.
@@ -188,10 +189,10 @@ public:
     const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const;
 
 
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs() const;
-  std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName) const;
-  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs() const;
-  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid) const;
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
+  std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
+  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid, log::LogContext &lc) const;
   
   /*============== Drive state management ====================================*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
@@ -201,7 +202,7 @@ public:
    * @param driveName
    * @return The structure representing the desired states
    */
-  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName);
+  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc);
   
   /**
    * Sets the desired drive state. This function is used by the front end to pass instructions to the 
@@ -213,8 +214,7 @@ public:
    * @param force indicates whether we want to force the drive to be up.
    */ //TODO: replace the 2 bools with a structure.
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, 
-    const bool up, const bool force);
+    const std::string &driveName, const bool up, const bool force, log::LogContext & lc);
   
   /**
    * Reports the state of the drive to the object store. This information is then reported
@@ -227,7 +227,7 @@ public:
    * error encountered by the drive.
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, 
-    cta::common::dataStructures::DriveStatus status);
+    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
 
   /**
    * Dumps the states of all drives for display
@@ -235,13 +235,26 @@ public:
    * @return A list of drive state structures.
    */
   std::list<cta::common::dataStructures::DriveState> getDriveStates(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity) const;
+    const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
 
-  /*============== Actual mount scheduling ===================================*/
-  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName);
+  /*============== Actual mount scheduling and queue status reporting ========*/
+  /**
+   * Actually decide which mount to do next for a given drive.
+   * @param logicalLibraryName library for the drive we are scheduling
+   * @param driveName name of the drive we are scheduling
+   * @param lc log context
+   * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
+   */
+  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
+  /**
+   * A function returning 
+   * @param lc
+   * @return 
+   */
+  std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
   /*============== Administrator management ==================================*/
-  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity);
+  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
 
 private:
 

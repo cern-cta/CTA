@@ -148,7 +148,7 @@ done
 
 echo "Removing the disk replicas of ${NB_FILES} test files in batches of ${NB_CONCURRENT_TRANSFERS} concurrent removes"
 for I in `seq 1 ${NB_FILES}`; do
-  echo eos file tag /eos/ctaeos/cta/test_file_${I} -1
+  echo eos -r 0 0 file drop /eos/ctaeos/cta/test_file_${I} 1
 done | xargs -L 1 -P ${NB_CONCURRENT_TRANSFERS} kubectl --namespace ${NAMESPACE} exec ctaeos --
 
 echo "Requesting ${NB_FILES} test files be retrieved from tape in batches of ${NB_CONCURRENT_TRANSFERS} concurrent transfers"

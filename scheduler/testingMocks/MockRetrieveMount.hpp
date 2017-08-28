@@ -33,15 +33,23 @@ namespace cta {
     ~MockRetrieveMount() throw() {
     }
 
-    std::unique_ptr<cta::RetrieveJob> getNextJob() override {
+    std::list<std::unique_ptr<cta::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, 
+      uint64_t bytesRequested, log::LogContext & logContext) override {
+      std::list<std::unique_ptr<cta::RetrieveJob> > ret;
+      // Count the attempt to get a file (even if not successful).
       getJobs++;
-      if(m_jobs.empty()) {
-        return std::unique_ptr<cta::RetrieveJob>();
-      } else {
-        std::unique_ptr<cta::RetrieveJob> job =  std::move(m_jobs.front());
+      while (m_jobs.size()) {
+        ret.emplace_back(m_jobs.front().release());
         m_jobs.pop_front();
-        return job;
+        // Count the next attempt to get the file"
+        if (filesRequested <= 1 || bytesRequested <= ret.back()->archiveFile.fileSize)
+          break;
+        else
+          getJobs++;
+        bytesRequested -= ret.back()->archiveFile.fileSize;
+        filesRequested--;
       }
+      return ret;
     }
 
     virtual std::string getMountTransactionId() const override {
@@ -57,7 +65,8 @@ namespace cta {
     bool bothSidesComplete() override { return false; }
     
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
-
+    
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 
   private:
 

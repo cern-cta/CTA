@@ -83,6 +83,11 @@ namespace cta {
      * Report a drive status change
      */
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override;
+    
+    /**
+     * Report a tape session statistics
+     */
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
     

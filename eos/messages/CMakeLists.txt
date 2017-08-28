@@ -15,14 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
-
+PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+foreach(PROTO_SRC ${ProtoSources})
+  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers")
+endforeach(PROTO_SRC)
 set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaeosmessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
 
 target_link_libraries (ctaeosmessages
-  protobuf)
+  ${PROTOBUF3_LIBRARIES})

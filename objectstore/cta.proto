@@ -143,12 +143,19 @@ message ArchiveJobPointer {
   required uint64 size = 3001;
   required string address = 3002;
   required uint32 copynb = 3003;
+  required uint64 priority = 3004;
+  required uint64 minarchiverequestage = 3005;
+  required uint64 maxdrivesallowed = 3006;
 }
 
 message RetrieveJobPointer {
   required uint64 size = 3101;
   required string address = 3102;
   required uint32 copynb = 3103;
+  required uint64 fseq = 3107;
+  required uint64 priority = 3104;
+  required uint64 minretrieverequestage = 3105;
+  required uint64 maxdrivesallowed = 3106;
 }
 
 // ------------- Mount criteria and quota  -------------------------------------
@@ -199,10 +206,8 @@ message ArchiveFile {
 // This life cycle represented by the following enum
 
 enum ArchiveJobStatus {
-  AJS_PendingNsCreation = 0;
   AJS_LinkingToArchiveQueue = 1;
   AJS_PendingMount = 2;
-  AJS_PendingNsDeletion = 99;
   AJS_Selected = 3;
   AJS_Complete = 4;
   AJS_Failed = 999;
@@ -213,19 +218,6 @@ message FilePathAndStatus {
   required uint64 mode = 4451;
   required uint64 size = 4452;
   required UserIdentity owner = 4453;
-}
-
-message ArchiveJobEntry {
-  required uint32 copynb = 4400;
-  required string tapepool = 4401;
-  required string archivequeueaddress = 4402;
-  required string owner = 4403;
-  required ArchiveJobStatus status = 4404;
-  required uint32 totalretries = 4405;
-  required uint32 retrieswithinmount = 4406;
-  required uint64 lastmountwithfailure = 4407;
-  required uint32 maxtotalretries = 4408;
-  required uint32 maxretrieswithinmount = 4409;
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------
@@ -283,6 +275,9 @@ message DriveState {
   required bool desiredForceDown = 5020;
   optional string currentvid = 5021;
   optional string currenttapepool = 5022;
+  optional uint32 nextmounttype = 5023;
+  optional string nextvid = 5024;
+  optional string nexttapepool = 5025;
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
@@ -321,6 +316,19 @@ message MountPolicy {
   required string comment = 8988;
 }
 
+message ArchiveJob {
+  required uint32 copynb = 4400;
+  required string tapepool = 4401;
+  required string archivequeueaddress = 4402;
+  required string owner = 4403;
+  required ArchiveJobStatus status = 4404;
+  required uint32 totalretries = 4405;
+  required uint32 retrieswithinmount = 4406;
+  required uint64 lastmountwithfailure = 4407;
+  required uint32 maxtotalretries = 4408;
+  required uint32 maxretrieswithinmount = 4409;
+}
+
 message ArchiveRequest {
   required uint64 archiveFileID = 8990;
   required MountPolicy mountpolicy = 8995;
@@ -337,7 +345,7 @@ message ArchiveRequest {
   required string srcurl = 9080;
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
-  repeated ArchiveJobEntry jobs = 9092;
+  repeated ArchiveJob jobs = 9092;
 }
 
 message SchedulerRetrieveRequest {
@@ -355,6 +363,7 @@ message RetrieveJob {
   required uint32 retrieswithinmount = 9203;
   required uint32 totalretries = 9204;
   required RetrieveJobStatus status = 9205;
+  required uint64 lastmountwithfailure = 9206;
 }
 
 message RetrieveRequest {
@@ -380,6 +389,7 @@ message ArchiveQueue {
   repeated ValueCountPair maxdrivesallowedmap = 10033;
   required uint64 archivejobstotalsize = 10040;
   required uint64 oldestjobcreationtime = 10050;
+  required uint64 mapsrebuildcount = 10060;
 }
 
 message RetrieveQueue {
@@ -390,4 +400,5 @@ message RetrieveQueue {
   repeated ValueCountPair maxdrivesallowedmap = 10133;
   required uint64 retrievejobstotalsize = 10140;
   required uint64 oldestjobcreationtime = 10150;
+  required uint64 mapsrebuildcount = 10160;
 }

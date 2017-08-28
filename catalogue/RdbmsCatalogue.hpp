@@ -48,6 +48,11 @@ namespace catalogue {
 class ArchiveFileRow;
 
 /**
+ * Forward declaration.
+ */
+class RdbmsArchiveFileItorImpl;
+
+/**
  * CTA catalogue implemented using a relational database backend.
  */
 class RdbmsCatalogue: public Catalogue {
@@ -56,11 +61,20 @@ protected:
   /**
    * Protected constructor only to be called by sub-classes.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param connFactory The factory for creating new database connections.
-   * @param nbConns The maximum number of concurrent connections to be
-   * created by the catalogue.
+   * @param nbConns The maximum number of concurrent connections to the
+   * underlying relational database for all operations accept listing archive
+   * files which can be relatively long operations.
+   * @param nbArchiveFileListingConns The maximum number of concurrent
+   * connections to the underlying relational database for the sole purpose of
+   * listing archive files.
    */
-  RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns);
+  RdbmsCatalogue(
+    log::Logger &log,
+    std::unique_ptr<rdbms::ConnFactory> connFactory,
+    const uint64_t nbConns,
+    const uint64_t nbArchiveFileListingConns);
 
 public:
 
@@ -133,13 +147,15 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
    */
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &instanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user) override;
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) override;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -428,30 +444,21 @@ public:
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
   /**
-   * Returns an iterator over the list of archive files that meet the specified
-   * search criteria.
-   *
-   * Please note that the list is ordered by archive file ID.
-   *
-   * Please note that this method will throw an exception if the
-   * nbArchiveFilesToPrefetch parameter is set to 0.  The parameter must be set
-   * to a value greater than or equal to 1.
-   *
-   * @param searchCriteria The search criteria.
-   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-   * This parameter must be set to a value equal to or greater than 1.
-   * @return An iterator over the list of archive files.
-   */
-  std::unique_ptr<ArchiveFileItor> getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
-    const uint64_t nbArchiveFilesToPrefetch) const override;
-
-  /**
    * Throws a UserError exception if the specified searchCriteria is not valid
    * due to a user error.
    *
    * @param searchCriteria The search criteria.
    */
   void checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const;
+
+  /**
+   * Returns the specified archive files.  Please note that the list of files
+   * is ordered by archive file ID.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The archive files.
+   */
+  ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
    * Returns a summary of the tape files that meet the specified search
@@ -505,9 +512,17 @@ protected:
   std::unique_ptr<rdbms::ConnFactory> m_connFactory;
 
   /**
-   * The pool of connections to the underlying relational database.
+   * The pool of connections to the underlying relational database to be used
+   * for all operations accept listing archive files which can be relatively
+   * long operations.
    */
   mutable rdbms::ConnPool m_connPool;
+
+  /**
+   * The pool of connections to the underlying relational database to be used
+   * for the sole purpose of listing archive files.
+   */
+  mutable rdbms::ConnPool m_archiveFileListingConnPool;
 
   /**
    * Returns true if the specified admin user exists.
@@ -894,84 +909,6 @@ protected:
    * the catalogue.
    */
   virtual uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) = 0;
-
-  /**
-   * Nested class used to implement the getArchiveFileItor() method.
-   */
-  class ArchiveFileItorImpl: public ArchiveFileItor {
-  public:
-
-    /**
-     * Constructor.
-     *
-     * @param catalogue The RdbmsCatalogue.
-     * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-     * @param searchCriteria The search criteria.
-     */
-    ArchiveFileItorImpl(
-      const RdbmsCatalogue &catalogue,
-      const uint64_t nbArchiveFilesToPrefetch,
-      const TapeFileSearchCriteria &searchCriteria);
-
-    /**
-     * Destructor.
-     */
-    ~ArchiveFileItorImpl() override;
-
-    /**
-     * Returns true if a call to next would return another archive file.
-     */
-    bool hasMore() const override;
-
-    /**
-     * Returns the next archive or throws an exception if there isn't one.
-     */
-    common::dataStructures::ArchiveFile next() override;
-
-  private:
-
-    /**
-     * The RdbmsCatalogue.
-     */
-    const RdbmsCatalogue &m_catalogue;
-
-    /**
-     * The number of archive files to prefetch.
-     */
-    const uint64_t m_nbArchiveFilesToPrefetch;
-
-    /**
-     * The search criteria.
-     */
-    TapeFileSearchCriteria m_searchCriteria;
-
-    /**
-     * The current offset into the list of archive files in the form of an
-     * archive file ID.
-     */
-    uint64_t m_nextArchiveFileId;
-
-    /**
-     * The current list of prefetched archive files.
-     */
-    std::list<common::dataStructures::ArchiveFile> m_prefechedArchiveFiles;
-  }; // class ArchiveFileItorImpl
-
-  /**
-   * Returns the specified archive files.  This method is called by the nested
-   * class ArchiveFileItorImpl.  Please note that the list of files is ordered
-   * by archive file IDs.
-   *
-   * @param startingArchiveFileId The unique identifier of the first archive
-   * file to be returned.
-   * @param nbArchiveFiles The maximum number of archive files to be returned.
-   * @param searchCriteria The search criteria.
-   * @return The archive files.
-   */
-  std::list<common::dataStructures::ArchiveFile> getArchiveFilesForItor(
-    const uint64_t startingArchiveFileId,
-    const uint64_t maxNbArchiveFiles,
-    const TapeFileSearchCriteria &searchCriteria) const;
 
   /**
    * Returns the mapping from tape copy to tape pool for the specified storage

@@ -52,6 +52,8 @@ cta_rpm:
     - docker
 
 cta_tagged_rpm:
+  only:
+    - tags
   stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
@@ -76,6 +78,8 @@ cta_tagged_rpm:
 
 publish_tagged_rpm:
   stage: publish_rpm
+  only:
+    - tags
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
@@ -109,7 +113,7 @@ ctageneric_docker:
     - ""
   variables:
     TO: gitlab-registry.cern.ch/cta/ctageneric:${CI_PIPELINE_ID}
-    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
+    DOCKER_FILE: continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile
 
 
 ctageneric_docker_rename:
@@ -129,7 +133,7 @@ archiveretrieve:
   stage: test
   script:
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
-    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/systest.sh
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh -O -D
   artifacts:
     when: always
     expire_in: 30 days
@@ -138,3 +142,23 @@ archiveretrieve:
   tags:
     - kubernetes
     - mhvtl
+
+
+nightly1:
+  stage: test
+  only:
+    - triggers
+    - schedules
+  script:
+    - echo "Running  nightly tests"
+    - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - cd continuousintegration/orchestration/; ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/test_nightly1.sh -O -D
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+    - pod_logs
+  tags:
+    - kubernetes
+    - mhvtl
+    - xlarge

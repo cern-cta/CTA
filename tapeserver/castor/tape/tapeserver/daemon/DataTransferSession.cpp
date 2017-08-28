@@ -94,12 +94,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 schedule:
   while (true) {
     try {
-      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName);
+      auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
       if (!desiredState.up) {
         downUpTransition  = true;
         // We wait a bit before polling the scheduler again.
         // TODO: parametrize the duration?
-        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         sleep (5);
       } else {
         break;
@@ -107,7 +107,7 @@ schedule:
     } catch (cta::Scheduler::NoSuchDrive & e) {
       // The object store does not even know about this drive. We will report our state
       // (default status is down).
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     }
   }
   // If we get here after seeing a down desired state, we are transitioning  from
@@ -117,9 +117,9 @@ schedule:
     castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
     lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
     if (!emptyDriveProbe.driveIsEmpty()) {
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
-      m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false);
+      m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, false, false, lc);
       lc.log(cta::log::ERR, "A tape was detected in the drive. Putting the drive back down.");
       goto schedule;
     } else {
@@ -129,20 +129,21 @@ schedule:
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
   try {
-    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName).release());
+    tapeMount.reset(m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc).release());
   } catch (cta::exception::Exception & e) {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("errorMessage", e.getMessageValue());
-    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down.");
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+    lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
+    lc.logBacktrace(cta::log::ERR, e.backtrace());
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     cta::common::dataStructures::SecurityIdentity cliId;
-    m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false);
+    m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, false, false, lc);
     return MARK_DRIVE_AS_DOWN;
   }
   // No mount to be done found, that was fast...
   if (!tapeMount.get()) {
     lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up);
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     sleep (10);
     goto schedule;
     // return MARK_DRIVE_AS_UP;
@@ -153,7 +154,8 @@ schedule:
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
-  params.add("TPVID", m_volInfo.vid);
+  params.add("vid", m_volInfo.vid)
+        .add("mountId", tapeMount->getMountTransactionId());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
@@ -191,7 +193,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     // to refer them to each other)
     RecallReportPacker rrp(retrieveMount, lc);
     rrp.disableBulk(); //no bulk needed anymore
-    RecallWatchDog rwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    RecallWatchDog rwd(15,60*10,m_intialProcess,*retrieveMount,m_driveConfig.unitName,lc);
     
     RecallMemoryManager mm(m_castorConf.nbBufs, m_castorConf.bufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
@@ -293,7 +295,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     MigrationMemoryManager mm(m_castorConf.nbBufs,
         m_castorConf.bufsz,lc);
     MigrationReportPacker mrp(archiveMount, lc);
-    MigrationWatchDog mwd(15,60*10,m_intialProcess,m_driveConfig.unitName,lc);
+    MigrationWatchDog mwd(15,60*10,m_intialProcess,*archiveMount,m_driveConfig.unitName,lc);
     TapeWriteSingleThread twst(*drive,
         m_mc,
         tsr,
@@ -337,11 +339,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       } catch (cta::exception::Exception & e) {
         cta::log::LogContext::ScopedParam sp1(lc, cta::log::Param("errorMessage", e.getMessage().str()));
         lc.log(cta::log::INFO, "Aborting the session after problem with mount details. Notifying the client.");
-        mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666);
+        mrp.synchronousReportEndWithErrors(e.getMessageValue(), 666, lc);
         return MARK_DRIVE_AS_UP;
       } catch (...) {
         lc.log(cta::log::INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
-        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666);
+        mrp.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666, lc);
         return MARK_DRIVE_AS_UP;
       }
 

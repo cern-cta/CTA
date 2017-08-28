@@ -205,15 +205,9 @@ void RecallTaskInjector::injectBulkRecalls() {
 bool RecallTaskInjector::synchronousFetch()
 {
   try {
-    uint64_t files=0;
-    uint64_t bytes=0;
-    while(files<=m_maxFiles && bytes<=m_maxBytes) {
-      std::unique_ptr<cta::RetrieveJob> job=m_retrieveMount.getNextJob();
-      if(!job.get()) break;
-      files++;
-      bytes+=job->archiveFile.fileSize;
-      m_jobs.emplace_back(job.release());
-    }
+    auto jobsList = m_retrieveMount.getNextJobBatch(m_maxFiles, m_maxBytes, m_lc);
+    for (auto & j: jobsList)
+      m_jobs.emplace_back(j.release());
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
@@ -289,16 +283,9 @@ void RecallTaskInjector::WorkerThread::run()
         break;
       }
       m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
-      uint64_t files=0;
-      uint64_t bytes=0;
-      while(files<=req.filesRequested && bytes<=req.bytesRequested) {
-        std::unique_ptr<cta::RetrieveJob> job=m_parent.m_retrieveMount.getNextJob();
-        if(!job.get()) break;
-        files++;
-        bytes+=job->archiveFile.fileSize;
-        m_parent.m_jobs.emplace_back(job.release());
-      }
-      
+      auto jobsList = m_parent.m_retrieveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
+      for (auto & j: jobsList)
+        m_parent.m_jobs.emplace_back(j.release());
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
       
       if (m_parent.m_jobs.empty()) {

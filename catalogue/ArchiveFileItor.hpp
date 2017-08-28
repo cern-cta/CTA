@@ -24,26 +24,79 @@ namespace cta {
 namespace catalogue {
 
 /**
- * Abstract class defining the interface to an iterator over a list of archive
- * files.
+ * Forward declaration.
+ */
+class ArchiveFileItorImpl;
+
+/**
+ * Forward declaration.
+ */
+class Catalogue;
+
+/**
+ * A wrapper around an object that iterators over a list of archive files.
+ *
+ * This wrapper permits the user of the Catalogue API to use different
+ * iterator implementations whilst only using a single iterator type.
  */
 class ArchiveFileItor {
 public:
 
   /**
+   * Constructor.
+   */
+  ArchiveFileItor();
+
+  /**
+   * Constructor.
+   *
+   * @param impl The object actually implementing this iterator.
+   */
+  ArchiveFileItor(ArchiveFileItorImpl *const impl);
+
+  /**
+   * Deletion of copy constructor.
+   */
+  ArchiveFileItor(const ArchiveFileItor &) = delete;
+
+  /**
+   * Move constructor.
+   *
+   * @param other The other object to be moved.
+   */
+  ArchiveFileItor(ArchiveFileItor &&other);
+
+  /**
    * Destructor.
    */
-  virtual ~ArchiveFileItor() = 0;
+  ~ArchiveFileItor();
+
+  /**
+   * Deletion of copy assignment.
+   */
+  ArchiveFileItor &operator=(const ArchiveFileItor &) = delete;
+
+  /**
+   * Move assignment.
+   */
+  ArchiveFileItor &operator=(ArchiveFileItor &&rhs);
 
   /**
    * Returns true if a call to next would return another archive file.
    */
-  virtual bool hasMore() const = 0;
+  bool hasMore();
 
   /**
    * Returns the next archive or throws an exception if there isn't one.
    */
-  virtual common::dataStructures::ArchiveFile next() = 0;
+  common::dataStructures::ArchiveFile next();
+
+private:
+
+  /**
+   * The object actually implementing this iterator.
+   */
+  ArchiveFileItorImpl *m_impl;
 
 }; // class ArchiveFileItor
 

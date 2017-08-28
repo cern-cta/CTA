@@ -23,6 +23,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -33,10 +34,16 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(const std::string &filename, const uint64_t nbConns):
+SqliteCatalogue::SqliteCatalogue(
+  log::Logger &log,
+  const std::string &filename,
+  const uint64_t nbConns,
+  const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
+    log,
     rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename)),
-    nbConns) {
+    nbConns,
+    nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
@@ -48,17 +55,22 @@ SqliteCatalogue::~SqliteCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName,
-  const uint64_t archiveFileId) {
+void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
+  log::LogContext &lc) {
   try {
+    utils::Timer t;
     auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs();
     rdbms::AutoRollback autoRollback(conn);
+    t.reset();
     const auto archiveFile = getArchiveFile(conn, archiveFileId);
+    const auto getArchiveFileTime = t.secs();
 
     if(nullptr == archiveFile.get()) {
-      exception::UserError ue;
-      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
-      throw ue;
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("fileId", std::to_string(archiveFileId)));
+      m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+      return;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {
@@ -70,12 +82,14 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
       throw ue;
     }
 
+    t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
       auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
@@ -83,10 +97,44 @@ common::dataStructures::ArchiveFile SqliteCatalogue::deleteArchiveFile(const std
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
     conn.commit();
+    const auto commitTime = t.secs();
 
-    return *archiveFile;
+    log::ScopedParamContainer spc(lc);
+    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+       .add("diskInstance", archiveFile->diskInstance)
+       .add("diskFileId", archiveFile->diskFileId)
+       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob)
+       .add("fileSize", std::to_string(archiveFile->fileSize))
+       .add("checksumType", archiveFile->checksumType)
+       .add("checksumValue", archiveFile->checksumValue)
+       .add("creationTime", std::to_string(archiveFile->creationTime))
+       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+       .add("storageClass", archiveFile->storageClass)
+       .add("getConnTime", getConnTime)
+       .add("getArchiveFileTime", getArchiveFileTime)
+       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("commitTime", commitTime);
+    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+      std::stringstream tapeCopyLogStream;
+      tapeCopyLogStream << "copy number: " << it->first
+        << " vid: " << it->second.vid
+        << " fSeq: " << it->second.fSeq
+        << " blockId: " << it->second.blockId
+        << " creationTime: " << it->second.creationTime
+        << " compressedSize: " << it->second.compressedSize
+        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      spc.add("TAPE FILE", tapeCopyLogStream.str());
+    }
+    lc.log(log::INFO, "Archive File Deleted");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -115,11 +163,11 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
           "ARCHIVE_FILE_ID";
       auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       auto rset = stmt->executeQuery();
-      if(!rset->next()) {
+      if(!rset.next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
-      archiveFileId = rset->columnUint64("ID");
-      if(rset->next()) {
+      archiveFileId = rset.columnUint64("ID");
+      if(rset.next()) {
         throw exception::Exception("Found more than one ID counter in the ARCHIVE_FILE_ID table");
       }
     }
@@ -176,46 +224,46 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Stmt::Auto
     auto stmt = conn.createStmt(sql, autocommitMode);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
-    if (!rset->next()) {
+    if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
 
     common::dataStructures::Tape tape;
 
-    tape.vid = rset->columnString("VID");
-    tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-    tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
-    tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-    tape.disabled = rset->columnBool("IS_DISABLED");
-    tape.full = rset->columnBool("IS_FULL");
-    tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
+    tape.vid = rset.columnString("VID");
+    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+    tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+    tape.disabled = rset.columnBool("IS_DISABLED");
+    tape.full = rset.columnBool("IS_FULL");
+    tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
-    tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
-    tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-    tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-    tape.comment = rset->columnString("USER_COMMENT");
+    tape.comment = rset.columnString("USER_COMMENT");
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnString("CREATION_LOG_USER_NAME");
+    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+    creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
 
     tape.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnString("LAST_UPDATE_USER_NAME");
+    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+    updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    updateLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    updateLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
     tape.lastModificationLog = updateLog;
 
@@ -255,7 +303,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       checkTapeFileWrittenFieldsAreSet(firstEvent);
 
       if(event.vid != firstEvent.vid) {
-        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=event.vid");
+        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
 
       if(expectedFSeq != event.fSeq) {

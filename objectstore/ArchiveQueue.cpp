@@ -22,7 +22,7 @@
 #include "EntryLogSerDeser.hpp"
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore { 
 
@@ -42,52 +42,12 @@ ArchiveQueue::ArchiveQueue(GenericObject& go):
 
 std::string ArchiveQueue::dump() {  
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "ArchiveQueue" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "name", json_object_new_string(m_payload.tapepool().c_str()));
-  json_object_object_add(jo, "ArchiveJobsTotalSize", json_object_new_int64(m_payload.archivejobstotalsize()));
-  json_object_object_add(jo, "oldestJobCreationTime", json_object_new_int64(m_payload.oldestjobcreationtime()));
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.pendingarchivejobs().begin(); i!=m_payload.pendingarchivejobs().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "pendingarchivejobs", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.orphanedarchivejobsnscreation().begin(); i!=m_payload.orphanedarchivejobsnscreation().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "orphanedarchivejobsnscreation", array);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.orphanedarchivejobsnsdeletion().begin(); i!=m_payload.orphanedarchivejobsnsdeletion().end(); i++) {
-      json_object * jot = json_object_new_object();
-      json_object_object_add(jot, "fileid", json_object_new_int64(i->fileid()));
-      json_object_object_add(jot, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(jot, "copynb", json_object_new_int(i->copynb()));
-      json_object_object_add(jot, "size", json_object_new_int64(i->size()));
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "orphanedarchivejobsnsdeletion", array);
-  }
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 void ArchiveQueue::initialize(const std::string& name) {
@@ -98,9 +58,34 @@ void ArchiveQueue::initialize(const std::string& name) {
   // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
   m_payload.set_oldestjobcreationtime(0);
+  // set the initial summary map rebuild count to zero
+  m_payload.set_mapsrebuildcount(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }
+
+void ArchiveQueue::commit() {
+  // Before calling ObjectOps::commit, check that we have coherent queue summaries
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  if (maxDriveAllowedMap.total() != (uint64_t)m_payload.pendingarchivejobs_size() ||
+      priorityMap.total() != (uint64_t)m_payload.pendingarchivejobs_size() ||
+      minArchiveRequestAgeMap.total() != (uint64_t)m_payload.pendingarchivejobs_size()) {
+    // The maps counts are off: recompute them.
+    maxDriveAllowedMap.clear();
+    priorityMap.clear();
+    minArchiveRequestAgeMap.clear();
+    for (size_t i=0; i<(size_t)m_payload.pendingarchivejobs_size(); i++) {
+      maxDriveAllowedMap.incCount(m_payload.pendingarchivejobs(i).maxdrivesallowed());
+      priorityMap.incCount(m_payload.pendingarchivejobs(i).priority());
+      minArchiveRequestAgeMap.incCount(m_payload.pendingarchivejobs(i).priority());
+    }
+    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
+  }
+  ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::commit();
+}
+
 
 bool ArchiveQueue::isEmpty() {
   checkPayloadReadable();
@@ -113,7 +98,8 @@ bool ArchiveQueue::isEmpty() {
   return true;
 }
 
-void ArchiveQueue::garbageCollect(const std::string &presumedOwner) {
+void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the tape pool creation failed. We have nothing to do.
@@ -180,6 +166,9 @@ void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
   j->set_size(fileSize);
   j->set_fileid(archiveFileId);
   j->set_copynb(job.copyNb);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  j->set_priority(policy.archivePriority);
+  j->set_minarchiverequestage(policy.archiveMinRequestAge);
 }
 
 auto ArchiveQueue::getJobsSummary() -> JobsSummary {
@@ -214,16 +203,33 @@ bool ArchiveQueue::addJobIfNecessary(
     if (j->address() == archiveRequestAddress)
       return false;
   }
+  // Keep track of the mounting criteria
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.incCount(policy.archivePriority);
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  minArchiveRequestAgeMap.incCount(policy.archiveMinRequestAge);
+  if (m_payload.pendingarchivejobs_size()) {
+    if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
+      m_payload.set_oldestjobcreationtime(startTime);
+    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + fileSize);
+  } else {
+    m_payload.set_archivejobstotalsize(fileSize);
+    m_payload.set_oldestjobcreationtime(startTime);
+  }
   auto * j = m_payload.add_pendingarchivejobs();
   j->set_address(archiveRequestAddress);
   j->set_size(fileSize);
   j->set_fileid(archiveFileId);
   j->set_copynb(job.copyNb);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  j->set_priority(policy.archivePriority);
+  j->set_minarchiverequestage(policy.archiveMinRequestAge);
   return true;
 }
 
 void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
-  // TODO: remove the summary of the job from the queue's counts.
   checkPayloadWritable();
   auto * jl=m_payload.mutable_pendingarchivejobs();
   bool found = false;
@@ -233,6 +239,13 @@ void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
     for (size_t i=0; i<(size_t)jl->size(); i++) {
       if (jl->Get(i).address() == archiveToFileAddress) {
         found = true;
+        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
+        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+        priorityMap.decCount(jl->Get(i).priority());
+        ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+        minArchiveRequestAgeMap.decCount(jl->Get(i).minarchiverequestage());
+        m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - jl->Get(i).size());
         while (i+1 < (size_t)jl->size()) {
           jl->SwapElements(i, i+1);
           i++;
@@ -264,7 +277,7 @@ bool ArchiveQueue::addOrphanedJobPendingNsCreation(
   const ArchiveRequest::JobDump& job, 
   const std::string& archiveToFileAddress, 
   uint64_t fileid,
-  uint64_t size) {
+  uint64_t size, const cta::common::dataStructures::MountPolicy & policy) {
   checkPayloadWritable();
   auto & jl=m_payload.orphanedarchivejobsnscreation();
   for (auto j=jl.begin(); j!= jl.end(); j++) {
@@ -276,6 +289,9 @@ bool ArchiveQueue::addOrphanedJobPendingNsCreation(
   j->set_size(size);
   j->set_fileid(fileid);
   j->set_copynb(job.copyNb);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  j->set_priority(policy.archivePriority);
+  j->set_minarchiverequestage(policy.archiveMinRequestAge);
   return true;
 }
 

@@ -27,6 +27,7 @@
 #include "RetrieveQueue.hpp"
 #include "DriveRegister.hpp"
 #include <stdexcept>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta {  namespace objectstore {
 
@@ -36,7 +37,13 @@ void GenericObject::fetch() {
     throw NotLocked("In ObjectOps::fetch(): object not locked");
   m_existingObject = true;
   // Get the header from the object store. We don't care for the type
-  m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+  auto objData=m_objectStore.read(getAddressIfSet());
+  if (!m_header.ParseFromString(objData)) {
+    // Use a the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
+      m_header.InitializationErrorString());
+  }
   m_headerInterpreted = true;
 }
 
@@ -76,47 +83,50 @@ namespace {
   using cta::objectstore::ScopedExclusiveLock;
   template <class C>
   void garbageCollectWithType(GenericObject * gop, ScopedExclusiveLock& lock,
-      const std::string &presumedOwner) {
+      const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
     C typedObject(*gop);
     lock.transfer(typedObject);
-    typedObject.garbageCollect(presumedOwner);
+    typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
     // Release the lock now as if we let the caller do, it will point
     // to the then-removed typedObject.
     lock.release();
   }
 }
 
-void GenericObject::garbageCollect(const std::string& presumedOwner) {
+void GenericObject::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
 }
 
 void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock, 
-    const std::string &presumedOwner) {
+    const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkHeaderWritable();
   switch(m_header.type()) {
     case serializers::AgentRegister_t:
-      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner);
+      garbageCollectWithType<AgentRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::Agent_t:
-      garbageCollectWithType<Agent>(this, lock, presumedOwner);
+      garbageCollectWithType<Agent>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::DriveRegister_t:
-      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner);
+      garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::SchedulerGlobalLock_t:
-      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner);
+      garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::ArchiveRequest_t:
-      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner);
+      garbageCollectWithType<ArchiveRequest>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::RetrieveRequest_t:
-      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner);
+      garbageCollectWithType<RetrieveRequest>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::ArchiveQueue_t:
-      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner);
+      garbageCollectWithType<ArchiveQueue>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::RetrieveQueue_t:
-      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner);
+      garbageCollectWithType<RetrieveQueue>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     default: {
       std::stringstream err;
@@ -144,30 +154,46 @@ namespace {
 
 std::string GenericObject::dump(ScopedSharedLock& lock) {
   checkHeaderReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  std::string bodyDump;
+  google::protobuf::util::MessageToJsonString(m_header, &headerDump, options);
   switch(m_header.type()) {
     case serializers::RootEntry_t:
-      return dumpWithType<RootEntry>(this, lock);
+      bodyDump = dumpWithType<RootEntry>(this, lock);
+      break;
     case serializers::AgentRegister_t:
-      return dumpWithType<AgentRegister>(this, lock);
+      bodyDump = dumpWithType<AgentRegister>(this, lock);
+      break;
     case serializers::Agent_t:
-      return dumpWithType<Agent>(this, lock);
+      bodyDump = dumpWithType<Agent>(this, lock);
+      break;
     case serializers::DriveRegister_t:
-      return dumpWithType<DriveRegister>(this, lock);
+      bodyDump = dumpWithType<DriveRegister>(this, lock);
+      break;
     case serializers::ArchiveQueue_t:
-      return dumpWithType<cta::objectstore::ArchiveQueue>(this, lock);
+      bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this, lock);
+      break;
     case serializers::RetrieveQueue_t:
-      return dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
+      bodyDump = dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
+      break;
     case serializers::ArchiveRequest_t:
-      return dumpWithType<ArchiveRequest>(this, lock);
+      bodyDump = dumpWithType<ArchiveRequest>(this, lock);
+      break;
     case serializers::RetrieveRequest_t:
-      return dumpWithType<RetrieveRequest>(this, lock);
+      bodyDump = dumpWithType<RetrieveRequest>(this, lock);
+      break;
     case serializers::SchedulerGlobalLock_t:
-      return dumpWithType<SchedulerGlobalLock>(this, lock);
+      bodyDump = dumpWithType<SchedulerGlobalLock>(this, lock);
+      break;
     default:
       std::stringstream err;
       err << "Unsupported type: " << m_header.type();
       throw std::runtime_error(err.str());
   }
+  return std::string ("Header dump:\n") + headerDump + "Body dump:\n" + bodyDump;
 }
 
 }}

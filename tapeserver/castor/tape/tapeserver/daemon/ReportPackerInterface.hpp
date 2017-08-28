@@ -108,7 +108,7 @@ template <class PlaceHolder> class ReportPackerInterface{
   }
   
   /**
-   * The  log context, copied du to threads
+   * The  log context, copied due to threads
    */
   cta::log::LogContext m_lc;
   

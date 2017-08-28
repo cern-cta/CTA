@@ -17,13 +17,15 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 
@@ -37,9 +39,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue(std::unique_ptr<rdbms::ConnFactory> connFactory, const uint64_t nbConns):
+RdbmsCatalogue::RdbmsCatalogue(
+  log::Logger &log,
+  std::unique_ptr<rdbms::ConnFactory> connFactory,
+  const uint64_t nbConns,
+  const uint64_t nbArchiveFileListingConns):
+  Catalogue(log),
   m_connFactory(std::move(connFactory)),
-  m_connPool(*m_connFactory, nbConns) {
+  m_connPool(*m_connFactory, nbConns),
+  m_archiveFileListingConnPool(*m_connFactory, nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
@@ -124,7 +132,7 @@ bool RdbmsCatalogue::adminUserExists(rdbms::PooledConn &conn, const std::string 
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":ADMIN_USER_NAME", adminUsername);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -171,21 +179,23 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ADMIN_USER";
+        "ADMIN_USER "
+      "ORDER BY "
+        "ADMIN_USER_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::AdminUser admin;
 
-      admin.name = rset->columnString("ADMIN_USER_NAME");
-      admin.comment = rset->columnString("USER_COMMENT");
-      admin.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      admin.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      admin.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      admin.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      admin.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      admin.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      admin.name = rset.columnString("ADMIN_USER_NAME");
+      admin.comment = rset.columnString("USER_COMMENT");
+      admin.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      admin.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      admin.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      admin.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      admin.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      admin.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       admins.push_back(admin);
     }
@@ -306,7 +316,7 @@ bool RdbmsCatalogue::adminHostExists(rdbms::PooledConn &conn, const std::string 
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":ADMIN_HOST_NAME", adminHost);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -353,21 +363,23 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ADMIN_HOST";
+        "ADMIN_HOST "
+      "ORDER BY "
+        "ADMIN_HOST_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::AdminHost host;
 
-      host.name = rset->columnString("ADMIN_HOST_NAME");
-      host.comment = rset->columnString("USER_COMMENT");
-      host.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      host.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      host.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      host.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      host.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      host.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      host.name = rset.columnString("ADMIN_HOST_NAME");
+      host.comment = rset.columnString("USER_COMMENT");
+      host.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      host.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      host.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      host.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      host.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      host.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       hosts.push_back(host);
     }
@@ -497,7 +509,7 @@ bool RdbmsCatalogue::storageClassExists(rdbms::PooledConn &conn, const std::stri
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -555,23 +567,25 @@ std::list<common::dataStructures::StorageClass>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "STORAGE_CLASS";
+        "STORAGE_CLASS "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::StorageClass storageClass;
 
-      storageClass.diskInstance = rset->columnString("DISK_INSTANCE_NAME");
-      storageClass.name = rset->columnString("STORAGE_CLASS_NAME");
-      storageClass.nbCopies = rset->columnUint64("NB_COPIES");
-      storageClass.comment = rset->columnString("USER_COMMENT");
-      storageClass.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      storageClass.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      storageClass.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      storageClass.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      storageClass.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      storageClass.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      storageClass.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      storageClass.name = rset.columnString("STORAGE_CLASS_NAME");
+      storageClass.nbCopies = rset.columnUint64("NB_COPIES");
+      storageClass.comment = rset.columnString("USER_COMMENT");
+      storageClass.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      storageClass.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      storageClass.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      storageClass.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      storageClass.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      storageClass.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       storageClasses.push_back(storageClass);
     }
@@ -753,7 +767,7 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::PooledConn &conn, const std::string &
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":TAPE_POOL_NAME", tapePoolName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -774,7 +788,7 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::PooledConn &conn, const uint64_t
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -799,7 +813,7 @@ bool RdbmsCatalogue::diskFileIdExists(rdbms::PooledConn &conn, const std::string
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -824,7 +838,7 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::PooledConn &conn, const std::stri
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":DISK_FILE_PATH", diskFilePath);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -849,7 +863,7 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::PooledConn &conn, const std::stri
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":DISK_FILE_USER", diskFileUser);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -874,7 +888,7 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::PooledConn &conn, const std::str
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":DISK_FILE_GROUP", diskFileGroup);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -902,7 +916,7 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::PooledConn &conn, const std::stri
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     stmt->bindUint64(":COPY_NB", copyNb);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -951,23 +965,25 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE_POOL";
+        "TAPE_POOL "
+      "ORDER BY "
+        "TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::TapePool pool;
 
-      pool.name = rset->columnString("TAPE_POOL_NAME");
-      pool.nbPartialTapes = rset->columnUint64("NB_PARTIAL_TAPES");
-      pool.encryption = rset->columnBool("IS_ENCRYPTED");
-      pool.comment = rset->columnString("USER_COMMENT");
-      pool.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      pool.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      pool.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      pool.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      pool.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      pool.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      pool.name = rset.columnString("TAPE_POOL_NAME");
+      pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
+      pool.encryption = rset.columnBool("IS_ENCRYPTED");
+      pool.comment = rset.columnString("USER_COMMENT");
+      pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      pool.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      pool.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      pool.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      pool.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       pools.push_back(pool);
     }
@@ -1224,24 +1240,26 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "ARCHIVE_ROUTE";
+        "ARCHIVE_ROUTE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::ArchiveRoute route;
 
-      route.diskInstanceName = rset->columnString("DISK_INSTANCE_NAME");
-      route.storageClassName = rset->columnString("STORAGE_CLASS_NAME");
-      route.copyNb = rset->columnUint64("COPY_NB");
-      route.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-      route.comment = rset->columnString("USER_COMMENT");
-      route.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      route.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      route.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      route.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      route.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      route.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      route.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+      route.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
+      route.copyNb = rset.columnUint64("COPY_NB");
+      route.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      route.comment = rset.columnString("USER_COMMENT");
+      route.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      route.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      route.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      route.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      route.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      route.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       routes.push_back(route);
     }
@@ -1412,7 +1430,7 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::PooledConn &conn, const std::st
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1460,21 +1478,23 @@ std::list<common::dataStructures::LogicalLibrary>
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "LOGICAL_LIBRARY";
+        "LOGICAL_LIBRARY "
+      "ORDER BY "
+        "LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::LogicalLibrary lib;
 
-      lib.name = rset->columnString("LOGICAL_LIBRARY_NAME");
-      lib.comment = rset->columnString("USER_COMMENT");
-      lib.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      lib.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      lib.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      lib.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      lib.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      lib.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      lib.name = rset.columnString("LOGICAL_LIBRARY_NAME");
+      lib.comment = rset.columnString("USER_COMMENT");
+      lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      lib.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      lib.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      lib.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      lib.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       libs.push_back(lib);
     }
@@ -1641,7 +1661,7 @@ bool RdbmsCatalogue::tapeExists(rdbms::PooledConn &conn, const std::string &vid)
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1767,6 +1787,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledCo
       sql += " LBP_IS_ON = :LBP_IS_ON";
     }
 
+    sql += " ORDER BY VID";
+
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
 
     if(searchCriteria.vid) stmt->bindString(":VID", searchCriteria.vid.value());
@@ -1778,31 +1800,31 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::PooledCo
     if(searchCriteria.lbp) stmt->bindBool(":LBP_IS_ON", searchCriteria.lbp.value());
 
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::Tape tape;
 
-      tape.vid = rset->columnString("VID");
-      tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
-      tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
-      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-      tape.disabled = rset->columnBool("IS_DISABLED");
-      tape.full = rset->columnBool("IS_FULL");
-      tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
+      tape.vid = rset.columnString("VID");
+      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+      tape.disabled = rset.columnBool("IS_DISABLED");
+      tape.full = rset.columnBool("IS_FULL");
+      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
-      tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
-      tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-      tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-      tape.comment = rset->columnString("USER_COMMENT");
-      tape.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      tape.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      tape.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      tape.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      tape.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      tape.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      tape.comment = rset.columnString("USER_COMMENT");
+      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       tapes.push_back(tape);
     }
@@ -1878,31 +1900,31 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     }
 
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::Tape tape;
 
-      tape.vid = rset->columnString("VID");
-      tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
-      tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-      tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
-      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-      tape.disabled = rset->columnBool("IS_DISABLED");
-      tape.full = rset->columnBool("IS_FULL");
-      tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
+      tape.vid = rset.columnString("VID");
+      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+      tape.disabled = rset.columnBool("IS_DISABLED");
+      tape.full = rset.columnBool("IS_FULL");
+      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
-      tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
-      tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-      tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-      tape.comment = rset->columnString("USER_COMMENT");
-      tape.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      tape.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      tape.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      tape.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      tape.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      tape.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      tape.comment = rset.columnString("USER_COMMENT");
+      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       vidToTapeMap[tape.vid] = tape;
     }
@@ -1925,7 +1947,8 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
-        "LAST_FSEQ = 0, "
+        "DATA_IN_BYTES = 0,"
+        "LAST_FSEQ = 0,"
         "IS_FULL = 0,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
@@ -2663,23 +2686,25 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "REQUESTER_MOUNT_RULE";
+        "REQUESTER_MOUNT_RULE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while(rset->next()) {
+    while(rset.next()) {
       common::dataStructures::RequesterMountRule rule;
 
-      rule.diskInstance = rset->columnString("DISK_INSTANCE_NAME");
-      rule.name = rset->columnString("REQUESTER_NAME");
-      rule.mountPolicy = rset->columnString("MOUNT_POLICY_NAME");
-      rule.comment = rset->columnString("USER_COMMENT");
-      rule.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      rule.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      rule.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      rule.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      rule.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      rule.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      rule.name = rset.columnString("REQUESTER_NAME");
+      rule.mountPolicy = rset.columnString("MOUNT_POLICY_NAME");
+      rule.comment = rset.columnString("USER_COMMENT");
+      rule.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      rule.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      rule.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      rule.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      rule.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      rule.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       rules.push_back(rule);
     }
@@ -2836,26 +2861,26 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt->executeQuery();
-    if(rset->next()) {
+    if(rset.next()) {
       auto policy = cta::make_unique<common::dataStructures::MountPolicy>();
 
-      policy->name = rset->columnString("MOUNT_POLICY_NAME");
+      policy->name = rset.columnString("MOUNT_POLICY_NAME");
 
-      policy->archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy->archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy->archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy->archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy->retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
-      policy->retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy->retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy->retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
-      policy->maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+      policy->maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
-      policy->comment = rset->columnString("USER_COMMENT");
-      policy->creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      policy->creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      policy->creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      policy->lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      policy->lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      policy->lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      policy->comment = rset.columnString("USER_COMMENT");
+      policy->creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy->creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy->creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      policy->lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy->lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy->lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       return policy.release();
     } else {
@@ -2888,24 +2913,26 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "REQUESTER_GROUP_MOUNT_RULE";
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, REQUESTER_GROUP_NAME, MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while(rset->next()) {
+    while(rset.next()) {
       common::dataStructures::RequesterGroupMountRule rule;
 
-      rule.diskInstance = rset->columnString("DISK_INSTANCE_NAME");
-      rule.name = rset->columnString("REQUESTER_GROUP_NAME");
-      rule.mountPolicy = rset->columnString("MOUNT_POLICY_NAME");
+      rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      rule.name = rset.columnString("REQUESTER_GROUP_NAME");
+      rule.mountPolicy = rset.columnString("MOUNT_POLICY_NAME");
 
-      rule.comment = rset->columnString("USER_COMMENT");
-      rule.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      rule.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      rule.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      rule.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      rule.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      rule.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      rule.comment = rset.columnString("USER_COMMENT");
+      rule.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      rule.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      rule.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      rule.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      rule.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      rule.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       rules.push_back(rule);
     }
@@ -2960,7 +2987,7 @@ bool RdbmsCatalogue::mountPolicyExists(rdbms::PooledConn &conn, const std::strin
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":MOUNT_POLICY_NAME", mountPolicyName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -2984,7 +3011,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::PooledConn &conn, const std
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3032,29 +3059,29 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterMountPolicy(
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_NAME", requesterName);
     auto rset = stmt->executeQuery();
-    if(rset->next()) {
+    if(rset.next()) {
       auto policy = cta::make_unique<common::dataStructures::MountPolicy>();
 
-      policy->name = rset->columnString("MOUNT_POLICY_NAME");
+      policy->name = rset.columnString("MOUNT_POLICY_NAME");
 
-      policy->archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy->archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy->archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy->archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy->retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
-      policy->retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy->retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy->retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
-      policy->maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+      policy->maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
-      policy->comment = rset->columnString("USER_COMMENT");
+      policy->comment = rset.columnString("USER_COMMENT");
 
-      policy->creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      policy->creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      policy->creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      policy->creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy->creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy->creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
 
       common::dataStructures::EntryLog updateLog;
-      policy->lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      policy->lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      policy->lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      policy->lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy->lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy->lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       return policy.release();
     } else {
@@ -3084,7 +3111,7 @@ bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::PooledConn &conn, cons
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt->executeQuery();
-    return rset->next();
+    return rset.next();
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3139,32 +3166,34 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "MOUNT_POLICY";
+        "MOUNT_POLICY "
+      "ORDER BY "
+        "MOUNT_POLICY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       common::dataStructures::MountPolicy policy;
 
-      policy.name = rset->columnString("MOUNT_POLICY_NAME");
+      policy.name = rset.columnString("MOUNT_POLICY_NAME");
 
-      policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
-      policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
-      policy.maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
+      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
-      policy.comment = rset->columnString("USER_COMMENT");
+      policy.comment = rset.columnString("USER_COMMENT");
 
-      policy.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      policy.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+      policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
 
-      policy.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      policy.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      policy.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       policies.push_back(policy);
     }
@@ -3443,21 +3472,6 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::PooledConn &conn, const rdbms::Stm
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFileItor
-//------------------------------------------------------------------------------
-std::unique_ptr<ArchiveFileItor> RdbmsCatalogue::getArchiveFileItor(const TapeFileSearchCriteria &searchCriteria,
-  const uint64_t nbArchiveFilesToPrefetch) const {
-
-  checkTapeFileSearchCriteria(searchCriteria);
-
-  try {
-    return cta::make_unique<ArchiveFileItorImpl>(*this, nbArchiveFilesToPrefetch, searchCriteria);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
 // checkTapeFileSearchCriteria
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const {
@@ -3544,234 +3558,15 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &s
 }
 
 //------------------------------------------------------------------------------
-// constructor
+// getArchiveFiles
 //------------------------------------------------------------------------------
-RdbmsCatalogue::ArchiveFileItorImpl::ArchiveFileItorImpl(
-  const RdbmsCatalogue &catalogue,
-  const uint64_t nbArchiveFilesToPrefetch,
-  const TapeFileSearchCriteria &searchCriteria):
-  m_catalogue(catalogue),
-  m_nbArchiveFilesToPrefetch(nbArchiveFilesToPrefetch),
-  m_searchCriteria(searchCriteria),
-  m_nextArchiveFileId(1) {
+ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const {
+
+  checkTapeFileSearchCriteria(searchCriteria);
+
   try {
-    if(1 > m_nbArchiveFilesToPrefetch) {
-      exception::Exception ex;
-      ex.getMessage() << "nbArchiveFilesToPrefetch must equal to or greater than 1: actual=" <<
-        m_nbArchiveFilesToPrefetch;
-      throw ex;
-    }
-    m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
-      m_searchCriteria);
-    if(!m_prefechedArchiveFiles.empty()) {
-      m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " +ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-RdbmsCatalogue::ArchiveFileItorImpl::~ArchiveFileItorImpl() {
-}
-
-//------------------------------------------------------------------------------
-// hasMore
-//------------------------------------------------------------------------------
-bool RdbmsCatalogue::ArchiveFileItorImpl::hasMore() const {
-  return !m_prefechedArchiveFiles.empty();
-}
-
-//------------------------------------------------------------------------------
-// next
-//------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile RdbmsCatalogue::ArchiveFileItorImpl::next() {
-  try {
-    if(m_prefechedArchiveFiles.empty()) {
-      throw exception::Exception("No more archive files to iterate over");
-    }
-
-    common::dataStructures::ArchiveFile archiveFile = m_prefechedArchiveFiles.front();
-    m_prefechedArchiveFiles.pop_front();
-
-    if(m_prefechedArchiveFiles.empty()) {
-      m_prefechedArchiveFiles = m_catalogue.getArchiveFilesForItor(m_nextArchiveFileId, m_nbArchiveFilesToPrefetch,
-        m_searchCriteria);
-      if(!m_prefechedArchiveFiles.empty()) {
-        m_nextArchiveFileId = m_prefechedArchiveFiles.back().archiveFileID + 1;
-      }
-    }
-
-    return archiveFile;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// getArchiveFilesForItor
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFilesForItor(
-  const uint64_t startingArchiveFileId,
-  const uint64_t maxNbArchiveFiles,
-  const TapeFileSearchCriteria &searchCriteria) const {
-  try {
-    std::string sql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
-        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "LEFT OUTER JOIN TAPE ON "
-        "TAPE_FILE.VID = TAPE.VID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID >= :STARTING_ARCHIVE_FILE_ID";
-    if(searchCriteria.archiveFileId) {
-      sql += " AND ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    }
-    if(searchCriteria.diskInstance) {
-      sql += " AND ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
-    }
-    if(searchCriteria.diskFileId) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
-    }
-    if(searchCriteria.diskFilePath) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_PATH = :DISK_FILE_PATH";
-    }
-    if(searchCriteria.diskFileUser) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_USER = :DISK_FILE_USER";
-    }
-    if(searchCriteria.diskFileGroup) {
-      sql += " AND ARCHIVE_FILE.DISK_FILE_GROUP = :DISK_FILE_GROUP";
-    }
-    if(searchCriteria.storageClass) {
-      sql += " AND ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    }
-    if(searchCriteria.vid) {
-      sql += " AND TAPE_FILE.VID = :VID";
-    }
-    if(searchCriteria.tapeFileCopyNb) {
-      sql += " AND TAPE_FILE.COPY_NB = :TAPE_FILE_COPY_NB";
-    }
-    if(searchCriteria.tapePool) {
-      sql += " AND TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
-    }
-    sql += " ORDER BY ARCHIVE_FILE.ARCHIVE_FILE_ID, TAPE_FILE.COPY_NB";
-
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
-    stmt->bindUint64(":STARTING_ARCHIVE_FILE_ID", startingArchiveFileId);
-    if(searchCriteria.archiveFileId) {
-      stmt->bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
-    }
-    if(searchCriteria.diskInstance) {
-      stmt->bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
-    }
-    if(searchCriteria.diskFileId) {
-      stmt->bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
-    }
-    if(searchCriteria.diskFilePath) {
-      stmt->bindString(":DISK_FILE_PATH", searchCriteria.diskFilePath.value());
-    }
-    if(searchCriteria.diskFileUser) {
-      stmt->bindString(":DISK_FILE_USER", searchCriteria.diskFileUser.value());
-    }
-    if(searchCriteria.diskFileGroup) {
-      stmt->bindString(":DISK_FILE_GROUP", searchCriteria.diskFileGroup.value());
-    }
-    if(searchCriteria.storageClass) {
-      stmt->bindString(":STORAGE_CLASS_NAME", searchCriteria.storageClass.value());
-    }
-    if(searchCriteria.vid) {
-      stmt->bindString(":VID", searchCriteria.vid.value());
-    }
-    if(searchCriteria.tapeFileCopyNb) {
-      stmt->bindUint64(":TAPE_FILE_COPY_NB", searchCriteria.tapeFileCopyNb.value());
-    }
-    if(searchCriteria.tapePool) {
-      stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
-    }
-    auto rset = stmt->executeQuery();
-    std::list<common::dataStructures::ArchiveFile> archiveFiles;
-
-    // While the prefetch limit has not been exceeded
-    while(archiveFiles.size() <= maxNbArchiveFiles) {
-
-      // Break the archive file loop if there are no more tape files
-      if(!rset->next()) {
-        break;
-      }
-
-      const uint64_t archiveFileId = rset->columnUint64("ARCHIVE_FILE_ID");
-
-      // If the current tape file is for the next archive file
-      if(archiveFiles.empty() || archiveFiles.back().archiveFileID != archiveFileId) {
-
-        // Break the archive file loop if creating the next archive file would exceed the prefetch limit
-        if(archiveFiles.size() == maxNbArchiveFiles) {
-          break;
-        }
-
-        common::dataStructures::ArchiveFile archiveFile;
-
-        archiveFile.archiveFileID = archiveFileId;
-        archiveFile.diskInstance = rset->columnString("DISK_INSTANCE_NAME");
-        archiveFile.diskFileId = rset->columnString("DISK_FILE_ID");
-        archiveFile.diskFileInfo.path = rset->columnString("DISK_FILE_PATH");
-        archiveFile.diskFileInfo.owner = rset->columnString("DISK_FILE_USER");
-        archiveFile.diskFileInfo.group = rset->columnString("DISK_FILE_GROUP");
-        archiveFile.diskFileInfo.recoveryBlob = rset->columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile.fileSize = rset->columnUint64("SIZE_IN_BYTES");
-        archiveFile.checksumType = rset->columnString("CHECKSUM_TYPE");
-        archiveFile.checksumValue = rset->columnString("CHECKSUM_VALUE");
-        archiveFile.storageClass = rset->columnString("STORAGE_CLASS_NAME");
-        archiveFile.creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile.reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
-
-        archiveFiles.push_back(archiveFile);
-      }
-
-      common::dataStructures::ArchiveFile &archiveFile = archiveFiles.back();
-
-      // If there is a tape file
-      if(!rset->columnIsNull("VID")) {
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = rset->columnString("VID");
-        tapeFile.fSeq = rset->columnUint64("FSEQ");
-        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = rset->columnUint64("COPY_NB");
-        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
-
-        archiveFile.tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
-
-    return archiveFiles;
+    auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
+    return ArchiveFileItor(impl);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3893,14 +3688,14 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       stmt->bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
     auto rset = stmt->executeQuery();
-    if(!rset->next()) {
+    if(!rset.next()) {
       throw exception::Exception("SELECT COUNT statement did not returned a row");
     }
 
     common::dataStructures::ArchiveFileSummary summary;
-    summary.totalBytes = rset->columnUint64("TOTAL_BYTES");
-    summary.totalCompressedBytes = rset->columnUint64("TOTAL_COMPRESSED_BYTES");
-    summary.totalFiles = rset->columnUint64("TOTAL_FILES");
+    summary.totalBytes = rset.columnUint64("TOTAL_BYTES");
+    summary.totalCompressedBytes = rset.columnUint64("TOTAL_COMPRESSED_BYTES");
+    summary.totalFiles = rset.columnUint64("TOTAL_FILES");
     return summary;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -4032,9 +3827,9 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      const uint64_t copyNb = rset->columnUint64("COPY_NB");
-      const std::string tapePoolName = rset->columnString("TAPE_POOL_NAME");
+    while (rset.next()) {
+      const uint64_t copyNb = rset.columnUint64("COPY_NB");
+      const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
       copyToPoolMap[copyNb] = tapePoolName;
     }
 
@@ -4062,10 +3857,10 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::PooledConn &conn, con
     stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt->bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt->executeQuery();
-    if(!rset->next()) {
+    if(!rset.next()) {
       throw exception::Exception("Result set of SELECT COUNT(*) is empty");
     }
-    return rset->columnUint64("NB_ROUTES");
+    return rset.columnUint64("NB_ROUTES");
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -4165,10 +3960,14 @@ void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
   const std::string &diskInstanceName,
   const uint64_t archiveFileId,
-  const common::dataStructures::UserIdentity &user) {
+  const common::dataStructures::UserIdentity &user,
+  log::LogContext &lc) {
   try {
+    cta::utils::Timer t;
     auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs(utils::Timer::resetCounter);
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, archiveFileId);
+    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     if(nullptr == archiveFile.get()) {
       exception::Exception ex;
       ex.getMessage() << "Archive file with ID " << archiveFileId << " does not exist";
@@ -4183,8 +3982,17 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       throw ue;
     }
 
+    t.reset();
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
       user.group);
+     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+
+    log::ScopedParamContainer spc(lc);
+    spc.add("getConnTime", getConnTime)
+       .add("getArchiveFileTime", getArchiveFileTime)
+       .add("getMountPoliciesTime", getMountPoliciesTime);
+    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
+
     // Requester mount policies overrule requester group mount policies
     common::dataStructures::MountPolicy mountPolicy;
     if(!mountPolicies.requesterMountPolicies.empty()) {
@@ -4282,24 +4090,24 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
     auto rset = stmt->executeQuery();
 
     RequesterAndGroupMountPolicies policies;
-    while(rset->next()) {
+    while(rset.next()) {
       common::dataStructures::MountPolicy policy;
 
-      policy.name = rset->columnString("MOUNT_POLICY_NAME");
-      policy.archivePriority = rset->columnUint64("ARCHIVE_PRIORITY");
-      policy.archiveMinRequestAge = rset->columnUint64("ARCHIVE_MIN_REQUEST_AGE");
-      policy.retrievePriority = rset->columnUint64("RETRIEVE_PRIORITY");
-      policy.retrieveMinRequestAge = rset->columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-      policy.maxDrivesAllowed = rset->columnUint64("MAX_DRIVES_ALLOWED");
-      policy.comment = rset->columnString("USER_COMMENT");
-      policy.creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-      policy.creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-      policy.creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
-      policy.lastModificationLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-      policy.lastModificationLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-      policy.lastModificationLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+      policy.name = rset.columnString("MOUNT_POLICY_NAME");
+      policy.archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
+      policy.comment = rset.columnString("USER_COMMENT");
+      policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      policy.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
-      if(rset->columnString("RULE_TYPE") == "REQUESTER") {
+      if(rset.columnString("RULE_TYPE") == "REQUESTER") {
         policies.requesterMountPolicies.push_back(policy);
       } else {
         policies.requesterGroupMountPolicies.push_back(policy);
@@ -4334,7 +4142,7 @@ bool RdbmsCatalogue::userIsAdmin(rdbms::PooledConn &conn, const std::string &use
   auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
   stmt->bindString(":ADMIN_USER_NAME", userName);
   auto rset = stmt->executeQuery();
-  return rset->next();
+  return rset.next();
 }
 
 //------------------------------------------------------------------------------
@@ -4351,7 +4159,7 @@ bool RdbmsCatalogue::hostIsAdmin(rdbms::PooledConn &conn, const std::string &hos
   auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
   stmt->bindString(":ADMIN_HOST_NAME", hostName);
   auto rset = stmt->executeQuery();
-  return rset->next();
+  return rset.next();
 }
 
 //------------------------------------------------------------------------------
@@ -4380,13 +4188,13 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     auto rset = stmt->executeQuery();
-    while (rset->next()) {
+    while (rset.next()) {
       TapeForWriting tape;
-      tape.vid = rset->columnString("VID");
-      tape.tapePool = rset->columnString("TAPE_POOL_NAME");
-      tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
+      tape.vid = rset.columnString("VID");
+      tape.tapePool = rset.columnString("TAPE_POOL_NAME");
+      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
 
       tapes.push_back(tape);
     }
@@ -4483,8 +4291,8 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::PooledConn &conn, const std::str
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
-    if(rset->next()) {
-      return rset->columnUint64("LAST_FSEQ");
+    if(rset.next()) {
+      return rset.columnUint64("LAST_FSEQ");
     } else {
       throw exception::Exception(std::string("No such tape with vid=") + vid);
     }
@@ -4530,39 +4338,39 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt->executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while (rset->next()) {
+    while (rset.next()) {
       if(nullptr == archiveFile.get()) {
         archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
-        archiveFile->archiveFileID = rset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = rset->columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = rset->columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = rset->columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = rset->columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = rset->columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = rset->columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = rset->columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = rset->columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = rset->columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = rset->columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = rset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = rset->columnUint64("RECONCILIATION_TIME");
+        archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+        archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
+        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
+        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
+        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
       }
 
       // If there is a tape file
-      if(!rset->columnIsNull("VID")) {
+      if(!rset.columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = rset->columnString("VID");
-        tapeFile.fSeq = rset->columnUint64("FSEQ");
-        tapeFile.blockId = rset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = rset->columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = rset->columnUint64("COPY_NB");
-        tapeFile.creationTime = rset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.vid = rset.columnString("VID");
+        tapeFile.fSeq = rset.columnUint64("FSEQ");
+        tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.copyNb = rset.columnUint64("COPY_NB");
+        tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
 
-        archiveFile->tapeFiles[rset->columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
       }
     }
 

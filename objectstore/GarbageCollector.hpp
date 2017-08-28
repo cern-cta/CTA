@@ -36,7 +36,7 @@ namespace cta { namespace objectstore {
 
 class GarbageCollector {
 public:
-  GarbageCollector(Backend & os, Agent & agent);
+  GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
   
   void runOnePass(log::LogContext & lc);
   
@@ -51,7 +51,8 @@ public:
   void reinjectOwnedObject(log::LogContext & lc);
 private:
   Backend & m_objectStore;
-  Agent & m_ourAgent;
+  catalogue::Catalogue & m_catalogue;
+  AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
   static const size_t c_maxWatchedAgentsPerGC;

@@ -55,6 +55,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
   URLcontext.add("fileId",m_retrieveJob->retrieveRequest.archiveFileID)
             .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
             .add("fSeq",m_retrieveJob->selectedTapeFile().fSeq);
+  m_stats.dstURL = m_retrieveJob->retrieveRequest.dstURL;
+  m_stats.fileId = m_retrieveJob->retrieveRequest.archiveFileID;
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -125,10 +127,6 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         currentErrorToCount = "";
       }
     } //end of while(1)
-    logWithStat(cta::log::INFO, "File successfully transfered to disk",lc);
-    watchdog.deleteParameter("stillOpenFileForThread"+
-      std::to_string((long long)threadID));
-
     m_retrieveJob->transferredSize = m_stats.dataVolume;
     m_retrieveJob->transferredChecksumType = "ADLER32";
     { 
@@ -140,6 +138,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
+    logWithStat(cta::log::INFO, "File successfully transfered to disk",lc);
+    watchdog.deleteParameter("stillOpenFileForThread"+
+      std::to_string((long long)threadID));
     
     //everything went well, return true
     return true;
@@ -270,8 +271,8 @@ void DiskWriteTask::logWithStat(int level,const std::string& msg,cta::log::LogCo
               m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
            .add("openRWCloseToTransferTimeRatio", 
               m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("fileId",m_retrieveJob->retrieveRequest.archiveFileID)
-           .add("dstURL",m_retrieveJob->retrieveRequest.dstURL);
+           .add("fileId",m_stats.fileId)
+           .add("dstURL",m_stats.dstURL);
     lc.log(level,msg);
 }
 }}}}

@@ -32,6 +32,7 @@
 
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
 
 namespace cta { namespace tape { namespace  daemon {
 
@@ -245,6 +246,9 @@ int GarbageCollectorHandler::runChild() {
   // We do not have to care for previous crashed sessions as we will garbage
   // collect them like any other crashed agent.
   
+  // Set the thread name for process ID:
+  prctl(PR_SET_NAME, "cta-taped-gc");
+  
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
   // fail likewise, so we just wait for shutdown signal (no feedback to main
@@ -263,14 +267,15 @@ int GarbageCollectorHandler::runChild() {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector"));
-    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference()));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector", m_processManager.logContext()));
+    osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
-    catalogue=cta::catalogue::CatalogueFactory::create(catalogueLogin, nbConns);
+    const uint64_t nbArchiveFileListingConns = 0;
+    catalogue=cta::catalogue::CatalogueFactory::create(m_processManager.logContext().logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
     scheduler=make_unique<cta::Scheduler>(*catalogue, *osdb, 5, 2*1000*1000); //TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
   // Before launching the transfer session, we validate that the scheduler is reachable.
-    scheduler->ping();
+    scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
     {
       log::ScopedParamContainer param(m_processManager.logContext());
@@ -292,8 +297,7 @@ int GarbageCollectorHandler::runChild() {
   agentHeartbeat.startThread();
   
   // Create the garbage collector itself
-  objectstore::Agent ag(backendPopulator->getAgentReference().getAgentAddress(), *backend);
-  objectstore::GarbageCollector gc(*backend, ag);
+  objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference(), *catalogue);
   
   // Run the gc in a loop
   try {
@@ -309,6 +313,7 @@ int GarbageCollectorHandler::runChild() {
         receivedMessage=true;
       } catch (server::SocketPair::Timeout & ex) {}
     } while (!receivedMessage);
+    gc.reinjectOwnedObject(m_processManager.logContext());
     m_processManager.logContext().log(log::INFO,
         "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");
   } catch (cta::exception::Exception & ex) {

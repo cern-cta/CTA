@@ -22,15 +22,24 @@
 #include "MountPolicySerDeser.hpp"
 #include "DiskFileInfoSerDeser.hpp"
 #include "ArchiveFileSerDeser.hpp"
+#include "RetrieveQueue.hpp"
 #include "objectstore/cta.pb.h"
-#include <json-c/json.h>
+#include "Helpers.hpp"
+#include <google/protobuf/util/json_util.h>
+#include <cmath>
 
 namespace cta { namespace objectstore {
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
 RetrieveRequest::RetrieveRequest(
   const std::string& address, Backend& os): 
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(os, address) { }
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
 RetrieveRequest::RetrieveRequest(GenericObject& go):
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
@@ -39,6 +48,9 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
   getPayloadFromHeader();
 }
 
+//------------------------------------------------------------------------------
+// initialize
+//------------------------------------------------------------------------------
 void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
@@ -46,38 +58,140 @@ void RetrieveRequest::initialize() {
   m_payloadInterpreted = true;
 }
 
-void RetrieveRequest::garbageCollect(const std::string& presumedOwner) {
-  throw cta::exception::Exception("In RetrieveRequest::garbageCollect(): not implemented.");
+//------------------------------------------------------------------------------
+// garbageCollect
+//------------------------------------------------------------------------------
+void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
+  checkPayloadWritable();
+  utils::Timer t;
+  // Check the request is indeed owned by the right owner.
+  if (getOwner() != presumedOwner) {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("presumedOwner", presumedOwner)
+          .add("owner", getOwner());
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): no garbage collection needed.");
+  }
+  // The owner is indeed the right one. We should requeue the request if possible.
+  // Find the vids for active jobs in the request (pending ones).
+  using serializers::RetrieveJobStatus;
+  std::set<RetrieveJobStatus> validStates({RetrieveJobStatus::RJS_Pending, RetrieveJobStatus::RJS_Selected});
+  std::set<std::string> candidateVids;
+  for (auto &j: m_payload.jobs()) {
+    if (validStates.count(j.status())) {
+      // Find the job details in tape file
+      for (auto &tf: m_payload.archivefile().tapefiles()) {
+        if (tf.copynb() == j.copynb()) {
+          candidateVids.insert(tf.vid());
+          goto found;
+        }
+      }
+      {
+        std::stringstream err;
+        err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
+        throw exception::Exception(err.str());
+      }
+    found:;
+    }
+  }
+  // If there is no candidate, we cancel the job
+  // TODO: in the future, we might queue it for reporting to EOS.
+  if (candidateVids.empty()) {
+    remove();
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet());
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): deleted job as no tape file is available for recall.");
+    return;
+  }
+  // If we have to fetch the status of the tapes and queued for the non-disabled vids.
+  auto bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore);
+  // Find the corresponding tape file, which will give the copynb, which will allow finding the retrieve job.
+  auto bestTapeFile=m_payload.archivefile().tapefiles().begin();
+  while (bestTapeFile != m_payload.archivefile().tapefiles().end()) {
+    if (bestTapeFile->vid() == bestVid)
+      goto tapeFileFound;
+    bestTapeFile++;
+  }
+  {
+    std::stringstream err;
+    err << "In RetrieveRequest::garbageCollect(): could not find tapefile for vid " << bestVid;
+    throw exception::Exception(err.str());
+  }
+tapeFileFound:;
+  auto tapeSelectionTime = t.secs(utils::Timer::resetCounter);
+  auto bestJob=m_payload.mutable_jobs()->begin();
+  while (bestJob!=m_payload.mutable_jobs()->end()) {
+    if (bestJob->copynb() == bestTapeFile->copynb())
+      goto jobFound;
+    bestJob++;
+  }
+  {
+    std::stringstream err;
+    err << "In RetrieveRequest::garbageCollect(): could not find job for copynb " << bestTapeFile->copynb();
+    throw exception::Exception(err.str());
+  }
+jobFound:;
+  // We now need to grab the queue a requeue the request.
+  RetrieveQueue rq(m_objectStore);
+  ScopedExclusiveLock rql;
+  Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, lc);
+  // Enqueue add the job to the queue
+  objectstore::MountPolicySerDeser mp;
+  mp.deserialize(m_payload.mountpolicy());
+  rq.addJobIfNecessary(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
+    mp, m_payload.schedulerrequest().entrylog().time());
+  auto jobsSummary=rq.getJobsSummary();
+  rq.commit();
+  auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
+  // We can now make the transition official
+  bestJob->set_status(serializers::RetrieveJobStatus::RJS_Pending);
+  m_payload.set_activecopynb(bestJob->copynb());
+  setOwner(rq.getAddressIfSet());
+  commit();
+  Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
+  rql.release();
+  auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+  timespec ts;
+  // We will sleep a bit to make sure other processes can also access the queue
+  // as we are very likely to be part of a tight loop.
+  // TODO: ideally, end of session requeueing and garbage collection should be
+  // done in parallel.
+  // We sleep half the time it took to queue to give a chance to other lockers.
+  double secSleep, fracSecSleep;
+  fracSecSleep = std::modf(queueUpdateTime / 2, &secSleep);
+  ts.tv_sec = secSleep;
+  ts.tv_nsec = std::round(fracSecSleep * 1000 * 1000 * 1000);
+  nanosleep(&ts, nullptr);
+  auto sleepTime = t.secs();
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("queueObject", rq.getAddressIfSet())
+          .add("copynb", bestTapeFile->copynb())
+          .add("vid", bestTapeFile->vid())
+          .add("tapeSelectionTime", tapeSelectionTime)
+          .add("queueUpdateTime", queueUpdateTime)
+          .add("commitUnlockQueueTime", commitUnlockQueueTime)
+          .add("sleepTime", sleepTime);
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+  }
 }
 
+//------------------------------------------------------------------------------
+// setJobSuccessful
+//------------------------------------------------------------------------------
 void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
   tf->set_copynb(copyNb);
+  tf->set_lastmountwithfailure(0);
   tf->set_maxretrieswithinmount(maxRetiesWithinMount);
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
   tf->set_totalretries(0);
   tf->set_status(serializers::RetrieveJobStatus::RJS_Pending);
 }
-
-bool RetrieveRequest::setJobSuccessful(uint16_t copyNumber) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
-  for (auto j=jl->begin(); j!=jl->end(); j++) {
-    if (j->copynb() == copyNumber) {
-      j->set_status(serializers::RetrieveJobStatus::RJS_Complete);
-      for (auto j2=jl->begin(); j2!=jl->end(); j2++) {
-        if (j2->status()!= serializers::RetrieveJobStatus::RJS_Complete &&
-            j2->status()!= serializers::RetrieveJobStatus::RJS_Failed)
-          return false;
-      }
-      return true;
-    }
-  }
-  throw NoSuchJob("In RetrieveRequest::setJobSuccessful(): job not found");
-}
-
 
 //------------------------------------------------------------------------------
 // setSchedulerRequest
@@ -91,7 +205,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->set_dsturl(retrieveRequest.dstURL);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
   dfisd.serialize(*sr->mutable_diskfileinfo());
-  objectstore::EntryLogSerDeser el(retrieveRequest.entryLog);
+  objectstore::EntryLogSerDeser el(retrieveRequest.creationLog);
   el.serialize(*sr->mutable_entrylog());
 }
 
@@ -105,7 +219,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   ret.requester.name = m_payload.schedulerrequest().requester().name();
   ret.requester.group = m_payload.schedulerrequest().requester().group();
   ret.archiveFileID = m_payload.schedulerrequest().archivefileid();
-  objectstore::EntryLogSerDeser el(ret.entryLog);
+  objectstore::EntryLogSerDeser el(ret.creationLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
   objectstore::DiskFileInfoSerDeser dfisd;
@@ -192,12 +306,133 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   return ret;
 }
 
-RetrieveRequest::FailuresCount RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t sessionId) {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
+  checkPayloadWritable();
+  auto * jl = m_payload.mutable_jobs();
+  // Find the job and update the number of failures
+  // (and return the full request status: failed (true) or to be retried (false))
+  // The request will go through a full requeueing if retried (in caller).
+  for (auto j: *jl) {
+    if (j.copynb() == copyNumber) {
+      if (j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+      } else {
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
+      }
+      j.set_totalretries(j.totalretries() + 1);
+    }
+    if (j.totalretries() >= j.maxtotalretries()) {
+      j.set_status(serializers::RJS_Failed);
+      return finishIfNecessary();
+    } else {
+      j.set_status(serializers::RJS_Pending);
+      return false;
+    }
+  }
+  throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
-void RetrieveRequest::finish() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+bool RetrieveRequest::finishIfNecessary() {
+  checkPayloadWritable();
+  // This function is typically called after changing the status of one job
+  // in memory. If the request is complete, we will just remove it.
+  // If all the jobs are either complete or failed, we can remove the request.
+  auto & jl=m_payload.jobs();
+  using serializers::RetrieveJobStatus;
+  std::set<serializers::RetrieveJobStatus> finishedStatuses(
+    {RetrieveJobStatus::RJS_Complete, RetrieveJobStatus::RJS_Failed});
+  for (auto & j: jl)
+    if (!finishedStatuses.count(j.status()))
+      return false;
+  remove();
+  return true;
+}
+
+serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto & j: m_payload.jobs())
+    if (j.copynb() == copyNumber)
+      return j.status();
+  std::stringstream err;
+  err << "In RetrieveRequest::getJobStatus(): could not find job for copynb=" << copyNumber;
+  throw exception::Exception(err.str());
+}
+
+auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
+  -> AsyncOwnerUpdater* {
+  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+  // Passing a reference to the unique pointer led to strange behaviors.
+  auto & retRef = *ret;
+  ret->m_updaterCallback=
+      [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
+        // We have a locked and fetched object, so we just need to work on its representation.
+        serializers::ObjectHeader oh;
+        if (!oh.ParseFromString(in)) {
+          // Use a the tolerant parser to assess the situation.
+          oh.ParsePartialFromString(in);
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse header: ")+
+            oh.InitializationErrorString());
+        }
+        if (oh.type() != serializers::ObjectType::RetrieveRequest_t) {
+          std::stringstream err;
+          err << "In RetrieveRequest::asyncUpdateJobOwner()::lambda(): wrong object type: " << oh.type();
+          throw cta::exception::Exception(err.str());
+        }
+        // We don't need to deserialize the payload to update owner...
+        if (oh.owner() != previousOwner)
+          throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): Request not owned.");
+        oh.set_owner(owner);
+        // ... but we still need to extract information
+        serializers::RetrieveRequest payload;
+        if (!payload.ParseFromString(oh.payload())) {
+          // Use a the tolerant parser to assess the situation.
+          payload.ParsePartialFromString(oh.payload());
+          throw cta::exception::Exception(std::string("In RetrieveRequest::asyncUpdateJobOwner(): could not parse payload: ")+
+            payload.InitializationErrorString());
+        }
+        // Find the copy number
+        auto jl=payload.jobs();
+        for (auto & j: jl) {
+          if (j.copynb() == copyNumber) {
+            // We also need to gather all the job content for the user to get in-memory
+            // representation.
+            // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
+            // We could try and refactor this.
+            retRef.m_retieveRequest.archiveFileID = payload.archivefile().archivefileid();
+            objectstore::EntryLogSerDeser el;
+            el.deserialize(payload.schedulerrequest().entrylog());
+            retRef.m_retieveRequest.creationLog = el;
+            objectstore::DiskFileInfoSerDeser dfi;
+            dfi.deserialize(payload.schedulerrequest().diskfileinfo());
+            retRef.m_retieveRequest.diskFileInfo = dfi;
+            retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
+            retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
+            objectstore::ArchiveFileSerDeser af;
+            af.deserialize(payload.archivefile());
+            retRef.m_archiveFile = af;
+            oh.set_payload(payload.SerializePartialAsString());
+            return oh.SerializeAsString();
+          }
+        }
+        // If we do not find the copy, return not owned as well...
+        throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+      };
+  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  return ret.release();
+  }
+
+void RetrieveRequest::AsyncOwnerUpdater::wait() {
+  m_backendUpdater->wait();
+}
+
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
+  return m_archiveFile;
+}
+
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
+  return m_retieveRequest;
 }
 
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
@@ -210,7 +445,15 @@ uint32_t RetrieveRequest::getActiveCopyNumber() {
 }
 
 cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  checkPayloadReadable();
+  cta::common::dataStructures::RetrieveFileQueueCriteria ret;
+  ArchiveFileSerDeser afsd;
+  afsd.deserialize(m_payload.archivefile());
+  ret.archiveFile = afsd;
+  MountPolicySerDeser mpsd;
+  mpsd.deserialize(m_payload.mountpolicy());
+  ret.mountPolicy  = mpsd;
+  return ret;
 }
 
 cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
@@ -225,59 +468,22 @@ cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
 
 std::string RetrieveRequest::dump() {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "RetrieveRequest" << std::endl;
-  struct json_object * jo = json_object_new_object();
-//  struct json_object * jaf = json_object_new_object();
-  // TODO: fill up again
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().fileid()));
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().creationtime()));
-//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumtype().c_str()));
-//  json_object_object_add(jaf, "fileid", json_object_new_string(m_payload.archivefile().checksumvalue().c_str()));
-//  json_object_object_add(jaf, "fileid", json_object_new_int64(m_payload.archivefile().size()));
-//  json_object_object_add(jo, "creationlog", jaf);
-//  json_object_object_add(jo, "dsturl", json_object_new_string(m_payload.dsturl().c_str()));
-//  // Object for creation log
-//  json_object * jcl = json_object_new_object();
-//  json_object_object_add(jcl, "host", json_object_new_string(m_payload.creationlog().host().c_str()));
-//  json_object_object_add(jcl, "time", json_object_new_int64(m_payload.creationlog().time()));
-//  json_object_object_add(jcl, "username", json_object_new_string(m_payload.creationlog().username().c_str()));
-//  json_object_object_add(jo, "creationlog", jcl);
-  // Array for jobs
-  json_object * jja = json_object_new_array();
-  auto & jl = m_payload.jobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    // Object for job
-    json_object * jj = json_object_new_object();
-    
-    // TODO: fix
-    //json_object_object_add(jj, "copynb", json_object_new_int(j->copynb()));
-    json_object_object_add(jj, "retrieswithinmount", json_object_new_int(j->retrieswithinmount()));
-    json_object_object_add(jj, "totalretries", json_object_new_int(j->totalretries()));
-    json_object_object_add(jj, "status", json_object_new_int64(j->status()));
-    //json_object_object_add(jj, "fseq", json_object_new_int64(j->fseq()));
-    //json_object_object_add(jj, "blockid", json_object_new_int64(j->blockid()));
-    //json_object_object_add(jj, "tape", json_object_new_string(j->tape().c_str()));
-    //json_object_object_add(jj, "tapeAddress", json_object_new_string(j->tapeaddress().c_str()));
-    json_object_array_add(jja, jj);
-  }
-  json_object_object_add(jo, "jobs", jja);
-  // Object for diskfileinfo
-//  json_object * jlog = json_object_new_object();
-  // TODO: fill up again
-//  json_object_object_add(jlog, "recoveryblob", json_object_new_string(m_payload.diskfileinfo().recoveryblob().c_str()));
-//  json_object_object_add(jlog, "group", json_object_new_string(m_payload.diskfileinfo().group().c_str()));
-//  json_object_object_add(jlog, "owner", json_object_new_string(m_payload.diskfileinfo().owner().c_str()));
-//  json_object_object_add(jlog, "path", json_object_new_string(m_payload.diskfileinfo().path().c_str()));
-//  json_object_object_add(jo, "diskfileinfo", jlog);
-//  // Object for requester
-//  json_object * jrf = json_object_new_object();
-//  json_object_object_add(jrf, "name", json_object_new_string(m_payload.requester().name().c_str()));
-//  json_object_object_add(jrf, "group", json_object_new_string(m_payload.requester().group().c_str()));
-//  json_object_object_add(jo, "requester", jrf);
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
+}
+
+RetrieveRequest::AsyncJobDeleter * RetrieveRequest::asyncDeleteJob() {
+  std::unique_ptr<AsyncJobDeleter> ret(new AsyncJobDeleter);
+  ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
+  return ret.release();
+}
+
+void RetrieveRequest::AsyncJobDeleter::wait() {
+ m_backendDeleter->wait();
 }
 
 }} // namespace cta::objectstore

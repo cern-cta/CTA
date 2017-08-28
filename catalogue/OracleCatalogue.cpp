@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
@@ -36,13 +37,17 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 OracleCatalogue::OracleCatalogue(
+  log::Logger &log,
   const std::string &username,
   const std::string &password,
   const std::string &database,
-  const uint64_t nbConns):
+  const uint64_t nbConns,
+  const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
+    log,
     rdbms::ConnFactoryFactory::create(rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database)),
-      nbConns) {
+    nbConns,
+    nbArchiveFileListingConns) {
 
 }
 
@@ -55,8 +60,8 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 // deleteArchiveFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
-  const std::string &diskInstanceName, const uint64_t archiveFileId) {
+void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
+  log::LogContext &lc) {
   try {
     const char *selectSql =
       "SELECT "
@@ -86,51 +91,57 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
       "FOR UPDATE";
+    utils::Timer t;
     auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs(utils::Timer::resetCounter);
     auto selectStmt = conn.createStmt(selectSql, rdbms::Stmt::AutocommitMode::OFF);
+    const auto createStmtTime = t.secs();
     selectStmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    std::unique_ptr<rdbms::Rset> selectRset(selectStmt->executeQuery());
+    t.reset();
+    rdbms::Rset selectRset = selectStmt->executeQuery();
+    const auto selectFromArchiveFileTime = t.secs();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while(selectRset->next()) {
+    while(selectRset.next()) {
       if(nullptr == archiveFile.get()) {
         archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
 
-        archiveFile->archiveFileID = selectRset->columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset->columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset->columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset->columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset->columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset->columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset->columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset->columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset->columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset->columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset->columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = selectRset->columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = selectRset->columnUint64("RECONCILIATION_TIME");
+        archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
+        archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
+        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
+        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
+        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
+        archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
       }
 
       // If there is a tape file
-      if(!selectRset->columnIsNull("VID")) {
+      if(!selectRset.columnIsNull("VID")) {
         // Add the tape file to the archive file's in-memory structure
         common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset->columnString("VID");
-        tapeFile.fSeq = selectRset->columnUint64("FSEQ");
-        tapeFile.blockId = selectRset->columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset->columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = selectRset->columnUint64("COPY_NB");
-        tapeFile.creationTime = selectRset->columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.vid = selectRset.columnString("VID");
+        tapeFile.fSeq = selectRset.columnUint64("FSEQ");
+        tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
+        tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
         tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
 
-        archiveFile->tapeFiles[selectRset->columnUint64("COPY_NB")] = tapeFile;
+        archiveFile->tapeFiles[selectRset.columnUint64("COPY_NB")] = tapeFile;
       }
     }
 
     if(nullptr == archiveFile.get()) {
-      exception::UserError ue;
-      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because it does not exist";
-      throw ue;
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("fileId", std::to_string(archiveFileId)));
+      m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+      return;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {
@@ -142,12 +153,14 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
       throw ue;
     }
 
+    t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
       auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
@@ -155,10 +168,45 @@ common::dataStructures::ArchiveFile OracleCatalogue::deleteArchiveFile(
       stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt->executeNonQuery();
     }
+    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
     conn.commit();
+    const auto commitTime = t.secs();
 
-    return *archiveFile;
+    log::ScopedParamContainer spc(lc);
+    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+       .add("diskInstance", archiveFile->diskInstance)
+       .add("diskFileId", archiveFile->diskFileId)
+       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob)
+       .add("fileSize", std::to_string(archiveFile->fileSize))
+       .add("checksumType", archiveFile->checksumType)
+       .add("checksumValue", archiveFile->checksumValue)
+       .add("creationTime", std::to_string(archiveFile->creationTime))
+       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+       .add("storageClass", archiveFile->storageClass)
+       .add("getConnTime", getConnTime)
+       .add("createStmtTime", createStmtTime)
+       .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
+       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("commitTime", commitTime);
+    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+      std::stringstream tapeCopyLogStream;
+      tapeCopyLogStream << "copy number: " << it->first
+        << " vid: " << it->second.vid
+        << " fSeq: " << it->second.fSeq
+        << " blockId: " << it->second.blockId
+        << " creationTime: " << it->second.creationTime
+        << " compressedSize: " << it->second.compressedSize
+        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      spc.add("TAPE FILE", tapeCopyLogStream.str());
+    }
+    lc.log(log::INFO, "Archive File Deleted");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -178,11 +226,11 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::PooledConn &conn) {
         "DUAL";
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
-    if (!rset->next()) {
+    if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
 
-    return rset->columnUint64("ARCHIVE_FILE_ID");
+    return rset.columnUint64("ARCHIVE_FILE_ID");
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -232,46 +280,46 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::PooledC
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindString(":VID", vid);
     auto rset = stmt->executeQuery();
-    if (!rset->next()) {
+    if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
 
     common::dataStructures::Tape tape;
 
-    tape.vid = rset->columnString("VID");
-    tape.logicalLibraryName = rset->columnString("LOGICAL_LIBRARY_NAME");
-    tape.tapePoolName = rset->columnString("TAPE_POOL_NAME");
-    tape.encryptionKey = rset->columnOptionalString("ENCRYPTION_KEY");
-    tape.capacityInBytes = rset->columnUint64("CAPACITY_IN_BYTES");
-    tape.dataOnTapeInBytes = rset->columnUint64("DATA_IN_BYTES");
-    tape.lastFSeq = rset->columnUint64("LAST_FSEQ");
-    tape.disabled = rset->columnBool("IS_DISABLED");
-    tape.full = rset->columnBool("IS_FULL");
-    tape.lbp = rset->columnOptionalBool("LBP_IS_ON");
+    tape.vid = rset.columnString("VID");
+    tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+    tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+    tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+    tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+    tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+    tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+    tape.disabled = rset.columnBool("IS_DISABLED");
+    tape.full = rset.columnBool("IS_FULL");
+    tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
 
-    tape.labelLog = getTapeLogFromRset(*rset, "LABEL_DRIVE", "LABEL_TIME");
-    tape.lastReadLog = getTapeLogFromRset(*rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-    tape.lastWriteLog = getTapeLogFromRset(*rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+    tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+    tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+    tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
 
-    tape.comment = rset->columnString("USER_COMMENT");
+    tape.comment = rset.columnString("USER_COMMENT");
 
     common::dataStructures::UserIdentity creatorUI;
-    creatorUI.name = rset->columnString("CREATION_LOG_USER_NAME");
+    creatorUI.name = rset.columnString("CREATION_LOG_USER_NAME");
 
     common::dataStructures::EntryLog creationLog;
-    creationLog.username = rset->columnString("CREATION_LOG_USER_NAME");
-    creationLog.host = rset->columnString("CREATION_LOG_HOST_NAME");
-    creationLog.time = rset->columnUint64("CREATION_LOG_TIME");
+    creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
 
     tape.creationLog = creationLog;
 
     common::dataStructures::UserIdentity updaterUI;
-    updaterUI.name = rset->columnString("LAST_UPDATE_USER_NAME");
+    updaterUI.name = rset.columnString("LAST_UPDATE_USER_NAME");
 
     common::dataStructures::EntryLog updateLog;
-    updateLog.username = rset->columnString("LAST_UPDATE_USER_NAME");
-    updateLog.host = rset->columnString("LAST_UPDATE_HOST_NAME");
-    updateLog.time = rset->columnUint64("LAST_UPDATE_TIME");
+    updateLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    updateLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    updateLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
     tape.lastModificationLog = updateLog;
 
@@ -309,7 +357,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       checkTapeFileWrittenFieldsAreSet(firstEvent);
 
       if (event.vid != firstEvent.vid) {
-        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=event.vid");
+        throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
 
       if (expectedFSeq != event.fSeq) {

@@ -1,6 +1,6 @@
-#!/bin/sh 
+#!/bin/bash 
 
-/opt/run/bin/init_pod.sh
+. /opt/run/bin/init_pod.sh
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable eos-citrine-commit
@@ -8,7 +8,21 @@ yum-config-manager --enable eos-citrine-depend
 yum-config-manager --enable eos-citrine
 
 # Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
+yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
+
+# create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
+groupadd --gid 1100 eosusers
+groupadd --gid 1200 powerusers
+groupadd --gid 1300 ctaadmins
+groupadd --gid 1400 eosadmins
+useradd --uid 11001 --gid 1100 user1
+useradd --uid 11002 --gid 1100 user2
+useradd --uid 12001 --gid 1200 poweruser1
+useradd --uid 12002 --gid 1200 poweruser2
+useradd --uid 13001 --gid 1300 ctaadmin1
+useradd --uid 13002 --gid 1300 ctaadmin2
+useradd --uid 14001 --gid 1400 eosadmin1
+useradd --uid 14002 --gid 1400 eosadmin2
 
 # copy needed template configuration files (nice to get all lines for logs)
 yes | cp -r /opt/ci/ctaeos/etc /
@@ -22,7 +36,10 @@ CTA_KT=/etc/ctafrontend_SSS_c.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
+# dir for cta tests only for eosusers and powerusers
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
+# dir for eos instance basic tests writable and readable by anyone
+EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
 
 # prepare CTA cli commands environment
 cat <<EOF > /etc/cta/cta-cli.conf
@@ -70,15 +87,57 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
   mkdir -p /fst
   chown daemon:daemon /fst/
 
+
+# Waiting for /CANSTART file before starting eos
+echo -n "Waiting for /CANSTART before going further"
+for ((i=0;i<600;i++)); do
+  test -f /CANSTART && break
+  sleep 1
+  echo -n .
+done
+test -f /CANSTART && echo OK || exit 1
+
+# setting higher OS limits for EOS processes
+maxproc=$(ulimit -u)
+echo "Setting nproc for user daemon to ${maxproc}"
+cat >> /etc/security/limits.conf <<EOF
+daemon soft nproc ${maxproc}
+daemon hard nproc ${maxproc}
+EOF
+echo "Checking limits..."
+echo -n "nproc..."
+if [ "${maxproc}" -eq "$(sudo -u daemon bash -c 'ulimit -u')" ]; then
+  echo OK
+else
+  echo FAILED
+fi
+echo
+echo "Limits summary for user daemon:"
+sudo -u daemon bash -c 'ulimit -a'
+
+# Using jemalloc as specified in
+# it-puppet-module-eos:
+#  code/templates/etc_sysconfig_mgm.erb
+#  code/templates/etc_sysconfig_mgm_env.erb
+#  code/templates/etc_sysconfig_fst.erb
+#  code/templates/etc_sysconfig_fst_env.erb
+test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
+test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
+
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 
+  eos vid enable krb5
   eos vid enable sss
   eos vid enable unix
   EOS_MGM_URL="root://${eoshost}" eosfstregister -r /fst default:1
+
+  # Add user daemon to sudoers this is to allow recalls for the moment using this command
+  #  XrdSecPROTOCOL=sss xrdfs ctaeos prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
+  eos vid set membership 2 +sudo
 
   eos node set ${eoshost} on
   eos space set default on
@@ -90,8 +149,14 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
   eos mkdir ${CTA_WF_DIR}
   eos attr set CTA_TapeFsId=${TAPE_FS_ID} ${CTA_WF_DIR}
   
+  # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
+  # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
+  # this is achieved through the ACLs.
+  # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_DIR}
-  eos chmod 777 ${CTA_TEST_DIR}
+  eos chmod 555 ${CTA_TEST_DIR}
+  eos attr set sys.acl=g:eosusers:rwx!d,g:powerusers:rwx+d /eos/ctaeos/cta
+
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     
   # hack before it is fixed in EOS
@@ -101,15 +166,24 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 
+  # Prepare the tmp dir so that we can test that the EOS instance is OK
+  eos mkdir ${EOS_TMP_DIR}
+  eos chmod 777 ${EOS_TMP_DIR}
+
 # test EOS
 # eos slow behind us and we need to give it time to be ready
 # 5 secs is not enough
   sleep 10
   eos -b node ls
-  xrdcp /etc/group root://${eoshost}:/${CTA_TEST_DIR}/testFile
+  xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
 
 # prepare EOS workflow
+  # enable eos workflow engine
   eos space config default space.wfe=on
+  # set the thread-pool size of concurrently running workflows
+  #eos space config default space.wfe.ntx=10
+  # set interval in which the WFE engine is running
+  #eos space config default space.wfe.interval=1
 
 # ATTENTION
 # for sss authorisation  unix has to be replaced by sss
@@ -121,7 +195,7 @@ eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=${CTA_Xr
 eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}
 
 # Set the worfklow rule for retrieving file from tape.
-eos attr set sys.workflow.prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} retrieve --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --id <eos::wfe::fxattr:sys.archiveFileId> --dsturl '<eos::wfe::turl>\&eos.ruid=0\&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve' --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --stderr" ${CTA_WF_DIR}
+eos attr set sys.workflow.sync::prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} retrieve --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --id <eos::wfe::fxattr:sys.archiveFileId> --dsturl '<eos::wfe::turl>\&eos.ruid=0\&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve' --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --stderr" ${CTA_WF_DIR}
 
 # Set the workflow rule for the closew event of the CTA_retrieve workflow.
 # Using the CTA_retrieve workflow will prevent the default workflow from
@@ -130,6 +204,10 @@ eos attr set sys.workflow.prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_X
 # The action of the CTA_retrieve workflow when triggered by the closew event is
 # to set the CTA_retrieved_timestamp attribute.
 eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${CTA_WF_DIR}
+
+
+# configure preprod directory separately
+/opt/run/bin/eos_configure_preprod.sh
 
 echo "### ctaeos mgm ready ###"
 

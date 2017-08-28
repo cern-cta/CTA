@@ -121,6 +121,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   for (size_t i=0; i<10; i++) {
     cta::common::dataStructures::ArchiveRequest ar;
     cta::common::dataStructures::ArchiveFileQueueCriteria afqc;
+    ar.fileSize=123*(i+1);
     afqc.copyToPoolMap[1] = "Tapepool1";
     afqc.fileId = i;
     afqc.mountPolicy.name = "policy";
@@ -131,7 +132,8 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     afqc.mountPolicy.maxDrivesAllowed = 1;
     osdbi.queueArchive("testInstance", ar, afqc, lc);
   }
-  // Delete the first job from the queue, change
+  // Delete the first job from the queue, change owner of second.
+  // They will be automatically skipped when getting jobs
   std::string aqAddr;
   {
     // Get hold of the queue
@@ -156,7 +158,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     ar.commit();
   }
   // We can now fetch all jobs.
-  auto mountInfo = osdbi.getMountInfo();
+  auto mountInfo = osdbi.getMountInfo(lc);
   cta::catalogue::TapeForWriting tape;
   tape.capacityInBytes = 1;
   tape.dataOnTapeInBytes = 0;
@@ -167,6 +169,11 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());
+  // With the first 2 jobs removed from queue, we get the 3 and next. (i=2...)
+  size_t i=2;
+  for (auto & j:jobs) {
+    ASSERT_EQ(123*(i++ + 1), j->archiveFile.fileSize);
+  }
   // Check the queue has been emptied, and hence removed.
   ASSERT_EQ(false, osdbi.getBackend().exists(aqAddr));
 }
@@ -205,7 +212,8 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       ArchiveRequest::JobDump jd;
       jd.tapePool = "tapepool";
       jd.copyNb = 1;
-      auto sharedLock = cta::ostoredb::MemArchiveQueue::sharedAddToArchiveQueue(jd, aReq, osdbi.getOstoreDB(), localLc);
+      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, jd.tapePool, aReq, 
+          osdbi.getOstoreDB(), localLc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
   }

@@ -77,7 +77,7 @@ void ValueCountMap::incCount(uint64_t value) {
       err << "In ValueCountMap::incCount: unexpected count value=" << counter->value() << " count=" << counter->count();
       throw  cta::exception::Exception(err.str());
     } else {
-      counter->set_value(counter->value()+1);
+      counter->set_count(counter->count()+1);
     }
   } else {
     // Create the new entry if necessary.
@@ -86,6 +86,11 @@ void ValueCountMap::incCount(uint64_t value) {
     newCounter->set_count(1);
   }
 }
+
+void ValueCountMap::clear() {
+  m_valueCountMap.Clear();
+}
+
 
 uint64_t ValueCountMap::maxValue() {
   if (!m_valueCountMap.size())

@@ -23,6 +23,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/optional.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "xroot_plugins/ListArchiveFilesCmd.hpp"
 
 #include "XrdSfs/XrdSfsInterface.hh"
 
@@ -41,7 +42,6 @@ class XrdCtaFile : public XrdSfsFile {
   
 public:
   
-  XrdOucErrInfo  error;
   virtual int open(const char *fileName, XrdSfsFileOpenMode openMode, mode_t createMode, const XrdSecEntity *client = 0, const char *opaque = 0);
   virtual int close();
   virtual int fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo);
@@ -83,11 +83,6 @@ protected:
   std::string m_cmdlineOutput;
   
   /**
-   * This is the return code to be passed to the client
-   */
-  cta::common::dataStructures::FrontendReturnCode m_cmdlineReturnCode;
-  
-  /**
    * The original client request represented as a vector of strings
    */
   std::vector<std::string> m_requestTokens;
@@ -123,6 +118,21 @@ protected:
   bool m_suppressOptionalOptionsWarning;
   
   /**
+   * Points to a ListArchiveFilesCmd object if the current command is to list archive files.
+   */
+  std::unique_ptr<cta::xrootPlugins::ListArchiveFilesCmd> m_listArchiveFilesCmd;
+
+  /**
+   * Reads the command result from the m_cmdlineOutput member variable.
+   *
+   * @param offset
+   * @param buffer
+   * @param size
+   * @return
+   */
+  virtual XrdSfsXferSize readFromCmdlineOutput(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size);
+
+  /**
    * Decodes a string in base 64
    * 
    * @param msg string to decode
@@ -147,12 +157,13 @@ protected:
   void replaceAll(std::string& str, const std::string& from, const std::string& to) const;
   
   /**
-   * Parses the command line and dispatches it to the relevant function
+   * Parses the command line, dispatches it to the relevant function and returns
+   * the output for the command-line.
    * 
    * @param requester  The requester identity
-   * @return           SFS_OK in case command succeeded, SFS_ERROR otherwise
+   * @return           The output for the command-line.
    */
-  void dispatchCommand();
+  std::string dispatchCommand();
   
   /**
    * Set of functions that, given the command line string vector, return the string/numerical/boolean/time value of the specified option
@@ -190,39 +201,181 @@ protected:
    * @return true if the specified option is present, false otherwise
    */
   bool hasOption(const std::string& optionShortName, const std::string& optionLongName);
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_admin();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_adminhost();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_tapepool();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archiveroute();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_logicallibrary();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_tape();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_storageclass();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_requestermountrule();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_groupmountrule();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_mountpolicy();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_repack();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_shrink();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_verify();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archivefile();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_test();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_drive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_listpendingarchives();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_listpendingretrieves();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_showqueues();
   
-  void xCom_admin();
-  void xCom_adminhost();
-  void xCom_tapepool();
-  void xCom_archiveroute();
-  void xCom_logicallibrary();
-  void xCom_tape();
-  void xCom_storageclass();
-  void xCom_requestermountrule();
-  void xCom_groupmountrule();
-  void xCom_mountpolicy();
-  void xCom_repack();
-  void xCom_shrink();
-  void xCom_verify();
-  void xCom_archivefile();
-  void xCom_test();
-  void xCom_drive();
-  void xCom_listpendingarchives();
-  void xCom_listpendingretrieves();
-  void xCom_listdrivestates();
-  void xCom_archive();
-  void xCom_retrieve();
-  void xCom_deletearchive();
-  void xCom_cancelretrieve();
-  void xCom_updatefileinfo();
-  void xCom_updatefilestorageclass();
-  void xCom_liststorageclass();
-  
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_archive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_retrieve();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_deletearchive();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_cancelretrieve();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_updatefileinfo();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_updatefilestorageclass();
+
+  /**
+   * Executes a command and returns the output for the command-line.
+   * @return The output for the command-line.
+   */
+  std::string xCom_liststorageclass();
+
   /**
    * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
    */
   void authorizeAdmin();
-  
+
+  /**
+   * Changes state for the drives by a given regex.
+   *
+   * @param regex The regex to be used to match drive name.
+   * @param lc    The log context.
+   * @param cmdlineOutput The string stream to stream output.
+   * @param isMakeUp The desired state for the drives Up or Down.
+   * @param isForceSet The boolean value for force parameter.
+   */
+  void changeStateForDrivesByRegex(const std::string &regex,
+    log::LogContext &lc, std::stringstream &cmdlineOutput, const bool isMakeUp,
+    const bool isForceSet);
+
   /**
    * Returns the response string properly formatted in a table
    * 
@@ -239,6 +392,14 @@ protected:
    */
   std::string timeToString(const time_t &time);
   
+  /**
+   * Returns a string representation for bytes in Mbytes with .00 precision
+   *
+   * @param  bytes The input number of bytes
+   * @return a string representation in Mbytes
+   */
+  std::string BytesToMbString(const uint64_t bytes);
+
   /**
    * Adds the creation log and the last modification log to the current response row
    * 
@@ -284,14 +445,13 @@ protected:
   time_t stringParameterToTime(const std::string &parameterName, const std::string &parameterValue) const;
   
   /**
-   * Sets the return code of the cmdline client and its output. Always returns SFS_OK, which is the only xroot return 
-   * code that allows the copy process to happen successfully. Logs the original request and any error in processing it.
+   * Sets the return code of the cmdline client and its output.
+   * Logs the original request and any error in processing it.
    * 
    * @param  rc The return code of the cmdline client
    * @param  returnString The output of the cmdline client
-   * @return SFS_OK
    */
-  int logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
+  void logRequestAndSetCmdlineResult(const cta::common::dataStructures::FrontendReturnCode rc, const std::string &returnString);
   
   /**
    * Checks if all needed options are present. Throws UserError otherwise.
@@ -317,4 +477,5 @@ protected:
   optional<std::string> EOS2CTAChecksumValue(const optional<std::string> &EOSChecksumValue);
 };
 
+const long double MBytes = 1000.0*1000.0;
 }}

@@ -27,7 +27,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -82,7 +82,8 @@ void RootEntry::removeIfEmpty() {
   remove();
 }
 
-void RootEntry::garbageCollect(const std::string& presumedOwner) {
+void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   // The root entry cannot be garbage collected.
   throw ForbiddenOperation("In RootEntry::garbageCollect(): RootEntry cannot be garbage collected");
 }
@@ -109,7 +110,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   } catch (serializers::NotFound &) {}
   // Insert the archive queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string archiveQueueAddress = agentRef.nextId("archiveQueue");
+  std::string archiveQueueAddress = agentRef.nextId("ArchiveQueue");
   agentRef.addToOwnership(archiveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
@@ -165,7 +166,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     }
     // Check the archive queue is empty
     if (!aq.isEmpty()) {
-      throw ArchivelQueueNotEmpty ("In RootEntry::removeArchiveQueueAndCommit(): trying to "
+      throw ArchiveQueueNotEmpty ("In RootEntry::removeArchiveQueueAndCommit(): trying to "
           "remove a non-empty archive queue");
     }
     // We can delete the queue
@@ -179,6 +180,10 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     // No such tape pool. Nothing to to.
     throw NoSuchArchiveQueue("In RootEntry::removeArchiveQueueAndCommit(): trying to remove non-existing archive queue");
   }
+}
+
+void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool) {
+  serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
 }
 
 std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool) {
@@ -224,7 +229,8 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   } catch (serializers::NotFound &) {}
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
-  std::string retrieveQueueAddress = agentRef.nextId("retriveQueue");
+  // The make of the vid in the object name will be handy.
+  std::string retrieveQueueAddress = agentRef.nextId(std::string("RetrieveQueue-")+vid);
   agentRef.addToOwnership(retrieveQueueAddress, m_objectStore);
   // Then create the tape pool queue object
   RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
@@ -248,6 +254,10 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   return retrieveQueueAddress;
 }
 
+void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid) {
+  serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
+}
+
 void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
   checkPayloadWritable();
   // find the address of the retrieve queue object
@@ -260,7 +270,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
       rql.lock(rq);
       rq.fetch();
     } catch (cta::exception::Exception & ex) {
-      // The archive queue seems to not be there. Make sure this is the case:
+      // The retrieve queue seems to not be there. Make sure this is the case:
       if (rq.exists()) {
         // We failed to access the queue, yet it is present. This is an error.
         // Let the exception pass through.
@@ -297,8 +307,14 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
 }
 
 
-std::string RootEntry::getRetrieveQueue(const std::string& vid) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::string RootEntry::getRetrieveQueueAddress(const std::string& vid) {
+  checkPayloadReadable();
+  try {
+    auto & rqp = serializers::findElement(m_payload.retrievequeuepointers(), vid);
+    return rqp.address();
+  } catch (serializers::NotFound &) {
+    throw NoSuchRetrieveQueue("In RootEntry::getRetreveQueueAddress: retrieve queue not allocated");
+  }
 }
 
 void RootEntry::removeArchiveQueueIfAddressMatchesAndCommit(const std::string& tapePool, const std::string& archiveQueueAddress) {
@@ -329,7 +345,7 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
     return getDriveRegisterAddress();
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent.
-    std::string drAddress (agentRef.nextId("driveRegister"));
+    std::string drAddress (agentRef.nextId("DriveRegister"));
     agentRef.addToOwnership(drAddress, m_objectStore);
     // Then create the drive register object
     DriveRegister dr(drAddress, m_objectStore);
@@ -417,7 +433,7 @@ std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& age
       return m_payload.agentregisterpointer().address();
     }
     // decide on the object's name
-    std::string arAddress (agentRef.nextId("agentRegister"));
+    std::string arAddress (agentRef.nextId("AgentRegister"));
     // Record the agent registry in our own intent
     addIntendedAgentRegistry(arAddress);
     commit();
@@ -536,7 +552,7 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agen
     return getSchedulerGlobalLock();
   } catch (NotAllocated &) {
     // decide on the object's name and add to agent's intent.
-    std::string sglAddress (agentRef.nextId("schedulerGlobalLock"));
+    std::string sglAddress (agentRef.nextId("SchedulerGlobalLock"));
     agentRef.addToOwnership(sglAddress, m_objectStore);
     // Then create the drive register object
     SchedulerGlobalLock sgl(sglAddress, m_objectStore);
@@ -586,66 +602,14 @@ void RootEntry::removeSchedulerGlobalLockAndCommit() {
 
 
 // Dump the root entry
-std::string RootEntry::dump () {  
+std::string RootEntry::dump () {
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "RootEntry" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "agentregisterintent", json_object_new_string(m_payload.agentregisterintent().c_str()));
-  
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.driveregisterpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.driveregisterpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.driveregisterpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "driveregisterpointer", pointer);
-  }
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.agentregisterpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.agentregisterpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.agentregisterpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "agentregisterpointer", pointer);
-  }
-  {
-    json_object * pointer = json_object_new_object();
-    json_object_object_add(pointer, "address", json_object_new_string(m_payload.schedulerlockpointer().address().c_str()));
-    json_object * jlog = json_object_new_object();
-    json_object_object_add(jlog, "host", json_object_new_string(m_payload.schedulerlockpointer().log().host().c_str()));
-    json_object_object_add(jlog, "time", json_object_new_int64(m_payload.schedulerlockpointer().log().time()));
-    json_object * id = json_object_new_object();
-    json_object_object_add(id, "name", json_object_new_string(m_payload.driveregisterpointer().log().username().c_str()));
-    json_object_object_add(jlog, "user", id);
-    json_object_object_add(pointer, "log", jlog);
-    json_object_object_add(jo, "schedulerlockpointer", pointer);
-  }
-  {
-    json_object * array = json_object_new_array();
-    for (auto & i :m_payload.archivequeuepointers()) {
-      json_object * jot = json_object_new_object();
-
-      json_object_object_add(jot, "name", json_object_new_string(i.name().c_str())); 
-      json_object_object_add(jot, "address", json_object_new_string(i.address().c_str()));  
-
-      json_object_array_add(array, jot);
-    }
-    json_object_object_add(jo, "archivequeuepointers", array);
-  }
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 }} // namespace cta::objectstore

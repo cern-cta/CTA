@@ -30,6 +30,8 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendFactory.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include <memory>
 
 namespace cta {
@@ -87,10 +89,6 @@ public:
     m_OStoreDB.deleteArchiveRequest(diskInstanceName, archiveFileId);
   }
 
-  std::unique_ptr<cta::SchedulerDatabase::ArchiveToFileRequestCancelation> markArchiveRequestForDeletion(const common::dataStructures::SecurityIdentity &cliIdentity, uint64_t fileId) override {
-    return m_OStoreDB.markArchiveRequestForDeletion(cliIdentity, fileId);
-  }
-
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
@@ -124,19 +122,26 @@ public:
   }
 
   
-  std::unique_ptr<TapeMountDecisionInfo> getMountInfo() override {
-    return m_OStoreDB.getMountInfo();
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override {
+    return m_OStoreDB.getMountInfo(logContext);
   }
   
+  void trimEmptyQueues(log::LogContext& lc) override {
+    m_OStoreDB.trimEmptyQueues(lc);
+  }
+  
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override {
+    return m_OStoreDB.getMountInfoNoLock(logContext);
+  }
+
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
           const std::set<std::string> & vidsToConsider) override {
     return m_OStoreDB.getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
-  void queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria,
-    const std::string &vid) override {
-    m_OStoreDB.queueRetrieve(rqst, criteria, vid);
+  std::string queueRetrieve(const common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, log::LogContext &logContext) override {
+    return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
   std::list<cta::common::dataStructures::DriveState> getDriveStates() const override {
@@ -156,6 +161,8 @@ public:
 
 private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
+  std::unique_ptr <cta::log::Logger> m_logger;
+  std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
   cta::OStoreDB m_OStoreDB;
   objectstore::AgentReference m_agentReference;
 };
@@ -163,10 +170,10 @@ private:
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
-m_backend(new cta::objectstore::BackendVFS()),
-m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
+m_backend(new cta::objectstore::BackendVFS()), m_logger(new cta::log::DummyLogger("")), 
+m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory") {
   // We need to populate the root entry before using.
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
@@ -189,9 +196,9 @@ m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
 template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
-m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()),
-m_OStoreDB(*m_backend), m_agentReference("OStoreDBFactory") {
-  m_agentReference.setQueueFlushTimeout(std::chrono::milliseconds(0));
+m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()), m_logger(new cta::log::DummyLogger("")), 
+m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory") {
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {

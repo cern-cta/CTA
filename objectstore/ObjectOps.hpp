@@ -21,16 +21,21 @@
 #include "Backend.hpp"
 #include "common/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
+#include "common/log/LogContext.hpp"
+#include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
 
 namespace cta { namespace objectstore {
+
+class AgentReference;
 
 class ObjectOpsBase {
   friend class ScopedLock;
   friend class ScopedSharedLock;
   friend class ScopedExclusiveLock;
   friend class GenericObject;
+  friend class Helpers;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),
@@ -47,6 +52,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
   CTA_GENERATE_EXCEPTION_CLASS(InvalidAddress);
   CTA_GENERATE_EXCEPTION_CLASS(FailedToSerialize);
+  CTA_GENERATE_EXCEPTION_CLASS(StillLocked);
 protected:
   void checkHeaderWritable() {
     if (!m_headerInterpreted) 
@@ -78,7 +84,7 @@ protected:
   }
   
   void checkReadable() {
-    if (!m_locksCount)
+    if (!m_locksCount && !m_noLock)
      throw NotLocked("In ObjectOps::checkReadable: object not locked");
   }
   
@@ -86,11 +92,22 @@ public:
   
   void setAddress(const std::string & name) {
     if (m_nameSet)
-      throw AddressAlreadySet("In ObjectOps::setName: trying to overwrite an already set name");
+      throw AddressAlreadySet("In ObjectOps::setAddress(): trying to overwrite an already set name");
     if (name.empty())
-      throw InvalidAddress("In ObjectOps::setName: empty name");
+      throw InvalidAddress("In ObjectOps::setAddress(): empty name");
     m_name = name;
     m_nameSet = true;
+  }
+  
+  void resetAddress() {
+    if (m_locksCount || m_locksForWriteCount) {
+      throw StillLocked("In ObjectOps::resetAddress: reset the address of a locked object");
+    }
+    m_nameSet = false;
+    m_name = "";
+    m_headerInterpreted = false;
+    m_payloadInterpreted = false;
+    m_existingObject = false;
   }
   
   std::string & getAddressIfSet() {
@@ -107,7 +124,13 @@ public:
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
   }
-  
+   
+  void resetValues () {
+    m_existingObject = false;
+    m_headerInterpreted = false;
+    m_payloadInterpreted = false;
+  }
+   
   void setOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_owner(owner);
@@ -138,6 +161,7 @@ protected:
   bool m_existingObject;
   int m_locksCount;
   int m_locksForWriteCount;
+  bool m_noLock = false;
 };
 
 class ScopedLock {
@@ -145,6 +169,10 @@ public:
   void release() {
     checkLocked();
     releaseIfNeeded();
+  }
+  
+  bool isLocked() {
+    return m_locked;
   }
   
   /** Move the locked object reference to a new one. This is done when the locked
@@ -259,6 +287,15 @@ public:
     // Check that the object is locked, one way or another
     if(!m_locksCount)
       throw NotLocked("In ObjectOps::fetch(): object not locked");
+    fetchBottomHalf();
+  }
+  
+  void fetchNoLock() {
+    m_noLock = true;
+    fetchBottomHalf();
+  }
+  
+  void fetchBottomHalf() {
     m_existingObject = true;
     // Get the header from the object store
     getHeaderFromObjectStore();
@@ -285,17 +322,29 @@ public:
   /**
    * This function should be overloaded in the inheriting classes
    */
-  virtual void garbageCollect(const std::string &presumedOwner) = 0;
+  virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) = 0;
   
 protected:
   
   void getPayloadFromHeader () {
-    m_payload.ParseFromString(m_header.payload());
+    if (!m_payload.ParseFromString(m_header.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(m_header.payload());
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString());
+    }
     m_payloadInterpreted = true;
   }
 
   void getHeaderFromObjectStore () {
-    m_header.ParseFromString(m_objectStore.read(getAddressIfSet()));
+    auto objData=m_objectStore.read(getAddressIfSet());
+    if (!m_header.ParseFromString(objData)) {
+      // Use a the tolerant parser to assess the situation.
+      m_header.ParsePartialFromString(objData);
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
+              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString());
+    }
     if (m_header.type() != payloadTypeId) {
       std::stringstream err;
       err << "In ObjectOps::getHeaderFromObjectStore wrong object type: "

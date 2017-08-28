@@ -193,7 +193,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   
   // Then load all archive jobs into memory
   // Create mount.
-  auto moutInfo = db.getMountInfo();
+  auto moutInfo = db.getMountInfo(lc);
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
@@ -201,11 +201,12 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   bool done = false;
   size_t count = 0;
   while (!done) {
-    auto aj = am->getNextJob(lc);
-    if (aj.get()) {
+    auto aj = am->getNextJobBatch(1,1,lc);
+    if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj->succeed();
+      aj.front()->asyncSucceed();
+      aj.front()->checkSucceed();
     }
     else
       done = true;
@@ -281,17 +282,18 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  moutInfo = db.getMountInfo();
+  moutInfo = db.getMountInfo(lc);
   am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
   done = false;
   count = 0;
 #endif
   while (!done) {
-    auto aj = am->getNextJob(lc);
-    if (aj.get()) {
+    auto aj = am->getNextJobBatch(1,1,lc);
+    if (aj.size()) {
       count++;
       //std::cout << aj->archiveFile.diskFileInfo.path << std::endl;
-      aj->succeed();
+      aj.front()->asyncSucceed();
+      aj.front()->checkSucceed();
     }
     else
       done = true;

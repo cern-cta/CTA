@@ -17,14 +17,15 @@
  */
 
 #include "GarbageCollector.hpp"
+#include "AgentReference.hpp"
 #include "RootEntry.hpp"
 #include <algorithm>
 
 namespace cta { namespace objectstore {
 const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 5;
 
-GarbageCollector::GarbageCollector(Backend & os, Agent & agent): 
-  m_objectStore(os), m_ourAgent(agent), m_agentRegister(os) {
+GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue): 
+  m_objectStore(os), m_catalogue(catalogue), m_ourAgentReference(agentReference), m_agentRegister(os) {
   RootEntry re(m_objectStore);
   ScopedSharedLock reLock(re);
   re.fetch();
@@ -49,11 +50,12 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
         = m_watchedAgents.begin();
       wa != m_watchedAgents.end();) {
     if (agentList.end() == std::find(agentList.begin(), agentList.end(), wa->first)) {
-      ScopedExclusiveLock oaLock(m_ourAgent);
-      m_ourAgent.fetch();
-      m_ourAgent.removeFromOwnership(wa->first);
+      Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
+      ScopedExclusiveLock oaLock(ourAgent);
+      ourAgent.fetch();
+      ourAgent.removeFromOwnership(wa->first);
       std::string removedAgent = wa->first;
-      m_ourAgent.commit();
+      ourAgent.commit();
       oaLock.release();
       delete wa->second;
       m_watchedAgents.erase(wa++);
@@ -77,41 +79,52 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
   for (;m_watchedAgents.size() < c_maxWatchedAgentsPerGC
          && c!=candidatesList.end(); c++) {
     // We don't monitor ourselves
-    if (*c != m_ourAgent.getAddressIfSet()) {
+    if (*c != m_ourAgentReference.getAgentAddress()) {
       // So we have a candidate we might want to monitor
       // First, check that the agent entry exists, and that ownership
       // is indeed pointing to the agent register
       Agent ag(*c, m_objectStore);
-      if (!ag.exists()) {
-        // This is a dangling pointer to a dead object:
-        // remove it in the agentRegister.
-        m_agentRegister.removeAgent(*c);
-        continue;
+      ScopedExclusiveLock agLock;
+      Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
+      ScopedExclusiveLock oaLock;
+      try {
+        if (!ag.exists()) {
+          // This is a dangling pointer to a dead object:
+          // remove it in the agentRegister.
+          m_agentRegister.removeAgent(*c);
+          continue;
+        }
+        agLock.lock(ag);
+        ag.fetch();
+        // Check that the actual owner is the agent register.
+        // otherwise, it should not be listed as an agent to monitor
+        if (ag.getOwner() != m_agentRegister.getAddressIfSet()) {
+          m_agentRegister.trackAgent(ag.getAddressIfSet());
+          agLock.release();
+          continue;
+        }
+        // We are now interested in tracking this agent. So we will transfer its
+        // ownership. We alredy have an exclusive lock on the agent.
+        // Lock ours
+        
+        oaLock.lock(ourAgent);
+        ourAgent.fetch();
+        ourAgent.addToOwnership(ag.getAddressIfSet());
+        ourAgent.commit();
+        // We now have a pointer to the agent, we can make the ownership official
+        ag.setOwner(ourAgent.getAddressIfSet());
+        ag.commit();
+      } catch (cta::exception::Exception & ex) {
+        // We received an exception. This can happen is the agent disappears under our feet.
+        // This is fine, we just let go this time, and trimGoneTargets() will just de-reference
+        // it later. But if the object is present, we have a problem.
+        if (m_objectStore.exists(*c)) throw;
       }
-      ScopedExclusiveLock agLock(ag);
-      ag.fetch();
-      // Check that the actual owner is the agent register.
-      // otherwise, it should not be listed as an agent to monitor
-      if (ag.getOwner() != m_agentRegister.getAddressIfSet()) {
-        m_agentRegister.trackAgent(ag.getAddressIfSet());
-        agLock.release();
-        continue;
-      }
-      // We are now interested in tracking this agent. So we will transfer its
-      // ownership. We alredy have an exclusive lock on the agent.
-      // Lock ours
-      ScopedExclusiveLock oaLock(m_ourAgent);
-      m_ourAgent.fetch();
-      m_ourAgent.addToOwnership(ag.getAddressIfSet());
-      m_ourAgent.commit();
-      // We now have a pointer to the agent, we can make the ownership official
-      ag.setOwner(m_ourAgent.getAddressIfSet());
-      ag.commit();
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", ag.getAddressIfSet())
-            .add("gcAgentAddress", m_ourAgent.getAddressIfSet());
+            .add("gcAgentAddress", ourAgent.getAddressIfSet());
       lc.log(log::INFO, "In GarbageCollector::aquireTargets(): started tracking an untracked agent");
-      // Agent is officially our, we can remove it from the untracked agent's
+      // Agent is officially ours, we can remove it from the untracked agent's
       // list
       m_agentRegister.trackAgent(ag.getAddressIfSet());
       m_agentRegister.commit();
@@ -136,61 +149,166 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   for (std::map<std::string, AgentWatchdog * >::iterator wa = m_watchedAgents.begin();
       wa != m_watchedAgents.end();) {
     // Get the heartbeat. Clean dead agents and remove references to them
-    if (!wa->second->checkAlive()) {
-      cleanupDeadAgent(wa->first, lc);
-      ScopedExclusiveLock oaLock(m_ourAgent);
-      m_ourAgent.fetch();
-      m_ourAgent.removeFromOwnership(wa->first);
-      m_ourAgent.commit();
-      delete wa->second;
-      m_watchedAgents.erase(wa++);
-    } else {
-      wa++;
+    try {
+      if (!wa->second->checkAlive()) {
+        cleanupDeadAgent(wa->first, lc);
+        Agent ourAgent(m_ourAgentReference.getAgentAddress(), m_objectStore);
+        ScopedExclusiveLock oaLock(ourAgent);
+        ourAgent.fetch();
+        ourAgent.removeFromOwnership(wa->first);
+        ourAgent.commit();
+        delete wa->second;
+        m_watchedAgents.erase(wa++);
+      } else {
+        wa++;
+      }
+    } catch (cta::exception::Exception & ex) {
+      if (wa->second->checkExists()) {
+        // We really have a problem: we failed to check on an agent, that is still present.
+        throw;
+      } else {
+        // The agent is simply gone on the wrong time. It will be trimmed from the list on the next pass.
+        wa++;
+      }
     }
   }
 }
 
- void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogContext & lc) {
-   // Check that we are still owners of the agent (sanity check).
-   Agent agent(address, m_objectStore);
-   ScopedExclusiveLock agLock(agent);
-   agent.fetch();
+void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogContext & lc) {
+  // Check that we are still owners of the agent (sanity check).
+  Agent agent(address, m_objectStore);
+  ScopedExclusiveLock agLock(agent);
+  agent.fetch();
+  log::ScopedParamContainer params(lc);
+  params.add("agentAddress", agent.getAddressIfSet())
+       .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
+  if (agent.getOwner() != m_ourAgentReference.getAgentAddress()) {
    log::ScopedParamContainer params(lc);
-   params.add("agentAddress", agent.getAddressIfSet())
-         .add("gcAgentAddress", m_ourAgent.getAddressIfSet());
-   if (agent.getOwner() != m_ourAgent.getAddressIfSet()) {
-     log::ScopedParamContainer params(lc);
-     lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping agent which is not owned by this garbage collector as thought.");
-     // The agent is removed from our ownership by the calling function: we're done.
-     return;
+   lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping agent which is not owned by this garbage collector as thought.");
+   // The agent is removed from our ownership by the calling function: we're done.
+   return;
+  }
+  lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
+  // Return all objects owned by the agent to their respective backup owners
+  auto ownedObjects = agent.getOwnershipList();
+  for (auto obj = ownedObjects.begin(); obj!= ownedObjects.end(); obj++) {
+   // Find the object
+   GenericObject go(*obj, m_objectStore);
+   log::ScopedParamContainer params2(lc);
+   params2.add("objectAddress", go.getAddressIfSet());
+   // If the object does not exist, we're done.
+   if (go.exists()) {
+     ScopedExclusiveLock goLock(go);
+     go.fetch();
+     // Call GenericOpbject's garbage collect method, which in turn will
+     // delegate to the object type's garbage collector.
+     go.garbageCollectDispatcher(goLock, address, m_ourAgentReference, lc, m_catalogue);
+     lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
+   } else {
+     lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
    }
-   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
-   // Return all objects owned by the agent to their respective backup owners
-   auto ownedObjects = agent.getOwnershipList();
-   for (auto obj = ownedObjects.begin(); obj!= ownedObjects.end(); obj++) {
-     // Find the object
-     GenericObject go(*obj, m_objectStore);
-     log::ScopedParamContainer params2(lc);
-     params2.add("objectAddress", go.getAddressIfSet());
-     // If the object does not exist, we're done.
-     if (go.exists()) {
-       ScopedExclusiveLock goLock(go);
-       go.fetch();
-       // Call GenericOpbject's garbage collect method, which in turn will
-       // delegate to the object type's garbage collector.
-       go.garbageCollectDispatcher(goLock, address);
-       lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
-     } else {
-       lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
-     }
-     // In all cases, relinquish ownership for this object
-     agent.removeFromOwnership(*obj);
-     agent.commit();
-   }
-   // We now processed all the owned objects. We can delete the agent's entry
-   agent.removeAndUnregisterSelf();
-   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent entry removed.");
- }
+   // In all cases, relinquish ownership for this object
+   agent.removeFromOwnership(*obj);
+   agent.commit();
+  }
+  // We now processed all the owned objects. We can delete the agent's entry
+  agent.removeAndUnregisterSelf();
+  lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent entry removed.");
+}
+
+void GarbageCollector::reinjectOwnedObject(log::LogContext& lc) {
+  // We have to release the agents we were following. PErformance is not an issue, so
+  // we go in small steps.
+  // First check the agents are indeed owned by us and still exist.
+  std::list<std::string> stillTrackedAgents;
+  std::list<std::string> goneAgents;
+  std::list<std::string> notReallyOwnedAgents;
+  std::list<std::string> inaccessibleAgents;
+  {
+    auto a = m_watchedAgents.begin();
+    while(a!=m_watchedAgents.end()) {
+      auto & agentAddress=a->first;
+      log::ScopedParamContainer params(lc);
+      params.add("agentAddress", agentAddress);
+      // Check the agent is there, and ours.
+      if (!m_objectStore.exists(agentAddress)) {
+        goneAgents.emplace_back(agentAddress);
+        lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): agent not present anymore.");
+      } else {
+        try {
+          Agent ag(agentAddress, m_objectStore);
+          ScopedSharedLock agl(ag);
+          ag.fetch();
+          if (ag.getOwner() == m_ourAgentReference.getAgentAddress()) {
+            stillTrackedAgents.emplace_back(agentAddress);
+            lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): agent still owned by us.");
+          } else {
+            params.add("currentOwner", ag.getOwner());
+            notReallyOwnedAgents.emplace_back(agentAddress);
+            lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): agent not owned by us.");
+          }
+        } catch (cta::exception::Exception & ex) {
+          params.add("ExceptionMessage", ex.getMessageValue());
+          lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): agent inaccessible.");
+          inaccessibleAgents.emplace_back(a->first);
+        }
+      }
+      a=m_watchedAgents.erase(a);
+    }
+  }
+  {
+    // We now have an overview of the situation. We can update the agent register based on that.
+    ScopedExclusiveLock arLock(m_agentRegister);
+    m_agentRegister.fetch();
+    for (auto &sta: stillTrackedAgents) {
+      m_agentRegister.untrackAgent(sta);
+      log::ScopedParamContainer params(lc);
+      params.add("agentAddress", sta);
+      lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): untracked agent in registry.");
+    }
+    for (auto &ga: goneAgents) {
+      m_agentRegister.removeAgent(ga);
+      log::ScopedParamContainer params(lc);
+      params.add("agentAddress", ga);
+      lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): removed gone agent from registry.");
+    }
+    // This is all we are going to do. Other agents cannot be acted upon.
+    m_agentRegister.commit();
+  }
+  // We can now remove ownership from the agents we still owned
+  for (auto & sta: stillTrackedAgents) {
+    log::ScopedParamContainer params(lc);
+    params.add("agentAddress", sta);
+    Agent ag (sta, m_objectStore);
+    ScopedExclusiveLock agl(ag);
+    ag.fetch();
+    if (ag.getOwner() == m_ourAgentReference.getAgentAddress()) {
+      ag.setOwner(m_agentRegister.getAddressIfSet());
+      ag.commit();
+      lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): changed agent ownership to registry.");
+    } else {
+      params.add("newOwner", ag.getOwner());
+      lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): skipping agent whose ownership we lost last minute.");
+    }
+  }
+  // We can now cleanup our own agent and remove it.
+  Agent ourAg(m_ourAgentReference.getAgentAddress(), m_objectStore);
+  ScopedExclusiveLock ourAgL(ourAg);
+  ourAg.fetch();
+  std::list<std::string> allAgents;
+  allAgents.splice(allAgents.end(), stillTrackedAgents);
+  allAgents.splice(allAgents.end(), notReallyOwnedAgents);
+  allAgents.splice(allAgents.end(), inaccessibleAgents);
+  allAgents.splice(allAgents.end(), goneAgents);
+  for (auto & a: allAgents) {
+    log::ScopedParamContainer params(lc);
+    params.add("agentAddress", a);
+    ourAg.removeFromOwnership(a);
+    lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): removed agent from our ownership.");
+  }
+  ourAg.commit();
+}
+
 
 
 

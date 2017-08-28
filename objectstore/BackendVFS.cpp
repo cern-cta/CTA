@@ -37,6 +37,7 @@
 #ifdef LOW_LEVEL_TRACING
 #include <iostream>
 #endif
+#include <valgrind/helgrind.h>
 
 namespace cta { namespace objectstore {
 
@@ -248,14 +249,17 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
   ret->set(::open(path.c_str(), O_RDONLY), path);
 
   if(0 > ret->m_fd) {
+    // We went too fast:  the fd is not really set:
+    ret->m_fdSet=false;
     // Create the lock file if missing and the main file can be stated.
     int openErrno = errno;
     struct ::stat sBuff;
     int statResult = ::stat((m_root + name).c_str(), &sBuff);
     int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
-      ret->set(::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH), path);
-      exception::Errnum::throwOnMinusOne(ret->m_fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
+      int fd=::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
+      exception::Errnum::throwOnMinusOne(fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
+      ret->set(fd, path);
     } else {
       if (statErrno == ENOENT)
         throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file");
@@ -312,28 +316,53 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
       try { // locking already throws proper exceptions for no such file.
         sl.reset(m_backend.lockExclusive(m_name));
       } catch (Backend::NoSuchObject &) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw;
       } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw Backend::CouldNotLock(ex.getMessageValue());
       }
       std::string preUpdateData;
       try {
         preUpdateData=m_backend.read(m_name);
       } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw Backend::CouldNotFetch(ex.getMessageValue());
       }
-      // Let user's exceptions go through.
-      std::string postUpdateData=m_update(preUpdateData);
-      try {
-        m_backend.atomicOverwrite(m_name, postUpdateData);
-      } catch (cta::exception::Exception & ex) {
-        throw Backend::CouldNotCommit(ex.getMessageValue());
+      
+      std::string postUpdateData;
+      bool updateWithDelete = false;
+      try {      
+        postUpdateData=m_update(preUpdateData);
+      } catch (AsyncUpdateWithDelete & ex) {
+        updateWithDelete = true;               
+      } catch (...) {
+        // Let user's exceptions go through.
+        throw; 
+      }
+      
+      if(updateWithDelete) {
+        try {
+          m_backend.remove(m_name);
+        } catch (cta::exception::Exception & ex) {
+          ANNOTATE_HAPPENS_BEFORE(&m_job);
+          throw Backend::CouldNotCommit(ex.getMessageValue());
+        }
+      } else { 
+        try {
+          m_backend.atomicOverwrite(m_name, postUpdateData);
+        } catch (cta::exception::Exception & ex) {
+          ANNOTATE_HAPPENS_BEFORE(&m_job);
+          throw Backend::CouldNotCommit(ex.getMessageValue());
+        }
       }
       try {
         sl->release();
       } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw Backend::CouldNotUnlock(ex.getMessageValue());
       }
+      ANNOTATE_HAPPENS_BEFORE(&m_job);
     })) 
 {}
 
@@ -344,8 +373,50 @@ Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string & name, std::fu
 
 void BackendVFS::AsyncUpdater::wait() {
   m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
+BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name):
+  m_backend(be), m_name(name),
+  m_job(std::async(std::launch::async, 
+    [&](){
+      std::unique_ptr<ScopedLock> sl;
+      try { // locking already throws proper exceptions for no such file.
+        sl.reset(m_backend.lockExclusive(m_name));
+      } catch (Backend::NoSuchObject &) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw;
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotLock(ex.getMessageValue());
+      }
+      try {
+        m_backend.remove(m_name);
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotDelete(ex.getMessageValue());
+      }
+      try {
+        sl->release();
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotUnlock(ex.getMessageValue());
+      }
+      ANNOTATE_HAPPENS_BEFORE(&m_job);
+    })) 
+{}
+
+Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string & name) {
+  // Create the object. Done.
+  return new AsyncDeleter(*this, name);
+}
+
+void BackendVFS::AsyncDeleter::wait() {
+  m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
 
 std::string BackendVFS::Parameters::toStr() {
   std::stringstream ret;

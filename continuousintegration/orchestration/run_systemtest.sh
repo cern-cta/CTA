@@ -12,13 +12,20 @@ execute_log_rc=0
 orchestration_dir=${PWD}
 # keep or drop namespace after systemtest_script? By default drop it.
 keepnamespace=0
+# by default use sqlite DB
+useoracle=0
+# by default use VFS objectstore
+useceph=0
 
+die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k] [-O] [-D]
 
 Options:
   -k    keep namespace after systemtest_script run if successful
+  -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
+  -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -31,7 +38,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:k" o; do
+while getopts "n:s:p:kDO" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -45,6 +52,12 @@ while getopts "n:s:p:k" o; do
             ;;
         k)
             keepnamespace=1
+            ;;
+        D)
+            useoracle=1
+            ;;
+        O)
+            useceph=1
             ;;
         *)
             usage
@@ -69,6 +82,24 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+if [ $useoracle == 1 ] ; then
+    database_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep database | head -1)
+    if [ "-${database_configmap}-" == "--" ]; then
+      die "Oracle database requested but not database configuration was found."
+    else
+      CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+    fi    
+fi
+
+if [ $useceph == 1 ] ; then
+    objectstore_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep objectstore | head -1)
+    if [ "-${objectstore_configmap}-" == "--" ]; then
+      die "Ceph objecstore requested but not objectstore configuration was found."
+    else
+      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"                                         
+    fi
+fi
+
 
 log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
 mkdir -p ${log_dir}
@@ -77,24 +108,44 @@ mkdir -p ${log_dir}
 function execute_log {
   mycmd=$1
   logfile=$2
+  timeout=$3
   echo "$(date): Launching ${mycmd}"
-  eval "${mycmd} | tee -a ${logfile}"
-  execute_log_rc=$?
+  eval "(${mycmd} | tee -a ${logfile}) &"
+  execute_log_pid=$!
+  execute_log_rc=''
+
+  for ((i=0;i<${timeout};i++)); do
+    sleep 1
+    if [ ! -d /proc/${execute_log_pid} ]; then
+      wait ${execute_log_pid}
+      execute_log_rc=$?
+      break
+    fi
+  done
+  echo $i
+
+  if [ "${execute_log_rc}" == "" ]; then
+    echo "TIMEOUTING COMMAND, setting exit status to 1"
+    kill -9 ${execute_log_pid}
+    execute_log_rc=1
+  fi
 
   if [ "${execute_log_rc}" != "0" ]; then
     echo "FAILURE: cleaning up environment"
     cd ${orchestration_dir}
-    ./delete_instance.sh -n ${namespace}
+    if [ $keepnamespace == 0 ] ; then
+      ./delete_instance.sh -n ${namespace}
+    fi
     exit 1
   fi
 }
 
-# create instance
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log"
+# create instance timeout after 10 minutes
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 600
 
-# launch system test
+# launch system test and timeout after 40 minutes (2400 seconds)
 cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log"
+execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" 2400
 cd ${orchestration_dir}
 
 # delete instance?

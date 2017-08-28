@@ -85,6 +85,11 @@ namespace cta {
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status);
+    
+    /**
+     * Report a tape session statistics
+     */
+    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
 
     /**
      * Indicates that the disk thread of the mount was completed. This
@@ -112,13 +117,19 @@ namespace cta {
     virtual bool bothSidesComplete();
     
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
+    
     /**
-     * Job factory
-     *
-     * @return A unique_ptr to the next archive job or NULL if there are no more
-     * archive jobs left for this tape mount.
+     * Batch job factory
+     * 
+     * @param filesRequested the number of files requested
+     * @param bytesRequested the number of bytes requested
+     * @param logContext
+     * @return a list of unique_ptr to the next retrieve jobs. The list is empty
+     * when no more jobs can be found. Will return jobs (if available) until one
+     * of the 2 criteria is fulfilled.
      */
-    virtual std::unique_ptr<RetrieveJob> getNextJob();
+    virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
+      uint64_t bytesRequested, log::LogContext &logContext);
     
     /**
      * Destructor.

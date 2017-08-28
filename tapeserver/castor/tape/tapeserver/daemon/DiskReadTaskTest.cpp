@@ -30,6 +30,7 @@
 #include "common/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/ArchiveMount.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 
 #include <gtest/gtest.h>
 #include <fstream>
@@ -92,10 +93,10 @@ namespace unitTests{
   class MockMigrationWatchDog: public MigrationWatchDog {
   public:
     MockMigrationWatchDog(double periodToReport,double stuckPeriod,
-    cta::tape::daemon::TapedProxy& initialProcess,
+    cta::tape::daemon::TapedProxy& initialProcess, cta::TapeMount & tapeMount,
     const std::string & driveUnitName,
     cta::log::LogContext lc, double pollPeriod = 0.1): 
-      MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, 
+      MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, tapeMount,
           driveUnitName, lc, pollPeriod) {}
   private:
 
@@ -137,7 +138,8 @@ namespace unitTests{
     DiskFileFactory fileFactory("", 0, striperPool);
 
     castor::messages::TapeserverProxyDummy tspd;
-    MockMigrationWatchDog mmwd(1.0, 1.0, tspd, "", lc);
+    cta::TapeMountDummy tmd;
+    MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
     drt.execute(lc,fileFactory,mmwd, 0);
 
     ASSERT_EQ(original_checksum,ftwt.getChecksum());

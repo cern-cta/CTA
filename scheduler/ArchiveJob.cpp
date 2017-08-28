@@ -41,28 +41,28 @@ cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   tapeFile(tapeFile) {}
 
 //------------------------------------------------------------------------------
-// complete
+// asyncSetJobSucceed
 //------------------------------------------------------------------------------
-bool cta::ArchiveJob::complete() {
-  // First check that the block Id for the file has been set.
-  if (tapeFile.blockId ==
-      std::numeric_limits<decltype(tapeFile.blockId)>::max())
-    throw BlockIdNotSet("In cta::ArchiveJob::complete(): Block ID not set");
-  // Also check the checksum has been set
-  if (archiveFile.checksumType.empty() || archiveFile.checksumValue.empty() || 
-      tapeFile.checksumType.empty() || tapeFile.checksumValue.empty())
-    throw ChecksumNotSet("In cta::ArchiveJob::complete(): checksums not set");
-  // And matches
-  if (archiveFile.checksumType != tapeFile.checksumType || 
-      archiveFile.checksumValue != tapeFile.checksumValue)
-    throw ChecksumMismatch(std::string("In cta::ArchiveJob::complete(): checksum mismatch!")
-            +" Archive file checksum type: "+archiveFile.checksumType
-            +" Archive file checksum value: "+archiveFile.checksumValue
-            +" Tape file checksum type: "+tapeFile.checksumType
-            +" Tape file checksum value: "+tapeFile.checksumValue);
-  // We are good to go to record the data in the persistent storage.
-  // Record the data in the archiveNS. The checksum will be validated if already
-  // present, of inserted if not.
+void cta::ArchiveJob::asyncSetJobSucceed() {
+  m_dbJob->asyncSucceed();
+}
+
+//------------------------------------------------------------------------------
+// checkAndReportComplete
+//------------------------------------------------------------------------------
+bool cta::ArchiveJob::checkAndAsyncReportComplete() {
+  if (m_dbJob->checkSucceed()) {
+    m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
+    m_reporter->asyncReportArchiveFullyComplete();
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::writeToCatalogue
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::writeToCatalogue() {
   catalogue::TapeFileWritten fileReport;
   fileReport.archiveFileId = archiveFile.archiveFileID;
   fileReport.blockId = tapeFile.blockId;
@@ -82,18 +82,53 @@ bool cta::ArchiveJob::complete() {
   fileReport.tapeDrive = m_mount.getDrive();
   fileReport.vid = tapeFile.vid;
   m_catalogue.filesWrittenToTape (std::set<catalogue::TapeFileWritten>{fileReport});
-  //m_ns.addTapeFile(SecurityIdentity(UserIdentity(std::numeric_limits<uint32_t>::max(), 
-  //  std::numeric_limits<uint32_t>::max()), ""), archiveFile.fileId, nameServerTapeFile);
-  // We will now report the successful archival to the EOS instance.
-  // if  TODO TODO
-  // We can now record the success for the job in the database.
-  // If this is the last job of the request, we also report the success to the client.
-  if (m_dbJob->succeed()) {
-    std::unique_ptr<eos::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL));
-    reporter->reportArchiveFullyComplete();
-    return true;
-  }
-  return false;
+}
+//------------------------------------------------------------------------------
+// ArchiveJob::validateAndGetTapeFileWritten
+//------------------------------------------------------------------------------
+cta::catalogue::TapeFileWritten cta::ArchiveJob::validateAndGetTapeFileWritten() {
+  validate();
+  catalogue::TapeFileWritten fileReport;
+  fileReport.archiveFileId = archiveFile.archiveFileID;
+  fileReport.blockId = tapeFile.blockId;
+  fileReport.checksumType = tapeFile.checksumType;
+  fileReport.checksumValue = tapeFile.checksumValue;
+  fileReport.compressedSize = tapeFile.compressedSize;
+  fileReport.copyNb = tapeFile.copyNb;
+  fileReport.diskFileId = archiveFile.diskFileId;
+  fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
+  fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
+  fileReport.diskFilePath = archiveFile.diskFileInfo.path;
+  fileReport.diskFileRecoveryBlob = archiveFile.diskFileInfo.recoveryBlob;
+  fileReport.diskInstance = archiveFile.diskInstance;
+  fileReport.fSeq = tapeFile.fSeq;
+  fileReport.size = archiveFile.fileSize;
+  fileReport.storageClassName = archiveFile.storageClass;
+  fileReport.tapeDrive = m_mount.getDrive();
+  fileReport.vid = tapeFile.vid;
+  return fileReport;
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::validate
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::validate(){
+  // First check that the block Id for the file has been set.
+  if (tapeFile.blockId ==
+      std::numeric_limits<decltype(tapeFile.blockId)>::max())
+    throw BlockIdNotSet("In cta::ArchiveJob::validate(): Block ID not set");
+  // Also check the checksum has been set
+  if (archiveFile.checksumType.empty() || archiveFile.checksumValue.empty() || 
+      tapeFile.checksumType.empty() || tapeFile.checksumValue.empty())
+    throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
+  // And matches
+  if (archiveFile.checksumType != tapeFile.checksumType || 
+      archiveFile.checksumValue != tapeFile.checksumValue)
+    throw ChecksumMismatch(std::string("In cta::ArchiveJob::validate(): checksum mismatch!")
+            +" Archive file checksum type: "+archiveFile.checksumType
+            +" Archive file checksum value: "+archiveFile.checksumValue
+            +" Tape file checksum type: "+tapeFile.checksumType
+            +" Tape file checksum value: "+tapeFile.checksumValue);
 }
 
 //------------------------------------------------------------------------------
@@ -106,6 +141,13 @@ std::string cta::ArchiveJob::reportURL() {
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed(const cta::exception::Exception &ex) {
-  m_dbJob->fail();
+void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogContext & lc) {
+  m_dbJob->fail(lc);
+}
+
+//------------------------------------------------------------------------------
+// waitForReporting
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::waitForReporting() {
+  m_reporterState.get_future().get();
 }

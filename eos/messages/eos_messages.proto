@@ -1,127 +1,130 @@
-syntax = "proto3";
+syntax  = "proto3";
 package eos.wfe;
 
-message Id {
-  fixed64 uid = 1;      //< user identity number
-  string username = 2;  //< user name 
-  fixed64 gid = 3;      //< group identity number
-  string groupname = 4; //< group name
+message Clock {
+  uint64 sec                 = 1;       //< seconds of a clock
+  uint64 nsec                = 2;       //< nanoseconds of a clock
 }
 
 message Checksum {
-  string value = 1;      //< checksum value
-  string name = 2;       //< checksum name
-}
-
-message Clock {
-  fixed64 sec = 1;       //< seconds of a clock
-  fixed64 nsec = 2;      //< nanoseconds of a clock
-}
-
-message Md {
-  fixed64 fid = 1;       //< file/container id
-  fixed64 pid = 2;       //< parent id
-  Clock ctime = 3;       //< change time
-  Clock mtime = 4;       //< modification time
-  Clock btime = 5;       //< birth time
-  Clock ttime = 6;       //< tree modification time
-  Id owner = 7;          //< ownership
-  fixed64 size = 8;      //< size 
-  Checksum cks = 9;      //< checksum information
-  sfixed32 mode = 10;    //< mode
-  string lpath = 11;     //< logical path
-  map<string, string> xattr = 12; //< xattribute map
-};
-
-message Security {
-  string host = 1;       //< client host 
-  string app = 2;        //< app string
-  string name = 3;       //< sec name
-  string prot = 4;       //< security protocol
-  string grps = 5;       //< security grps
-}
-
-message Client {
-  Id user = 1;           //< acting client
-  Security sec = 2;      //< client security information
+  string name                = 1;       //< checksum name
+  string value               = 2;       //< checksum value
 }
 
 message Service {
-  string name = 1;       //< name of the service
-  string url = 2;        //< access url of the service
+  string name                = 1;       //< name of the service
+  string url                 = 2;       //< access url of the service
 }
+
+message Id {
+  uint64 uid                 = 1;       //< user identity number
+  string username            = 2;       //< user name 
+  uint64 gid                 = 3;       //< group identity number
+  string groupname           = 4;       //< group name
+}
+
+message Security {
+  string host                = 1;       //< client host 
+  string app                 = 2;       //< app string
+  string name                = 3;       //< security name
+  string prot                = 4;       //< security protocol
+  string grps                = 5;       //< security grps
+}
+
+
+
+//
+// Alert Messages
+//
+
+message Alert {
+  enum Audience { EOSLOG = 0; ENDUSER = 1; }
+  Audience audience          = 1;       //< The intended audience of the error message
+  string message_txt         = 2;       //< An empty if success, else an error message
+}
+
+
+
+//
+// Messages sent from EOS to CTA Frontend
+//
 
 message Workflow {
   enum EventType {
-    NONE = 0;
-    OPENR = 1;
-    OPENW = 2;
-    CLOSER = 3;
-    CLOSEW = 4;
-    DELETE = 5;
-    PREPARE = 6;}
-  EventType event = 1;   //< event
-  string queue = 2;      //< queue
-  string wfname = 3;     //< workflow
-  string vpath = 4;      //< vpath
-  Service instance = 5;  //< instance information
-  fixed64 timestamp = 6; //< event timestamp
+    NONE    = 0;
+    OPENR   = 1;
+    OPENW   = 2;
+    CLOSER  = 3;
+    CLOSEW  = 4;
+    DELETE  = 5;
+    PREPARE = 6;
+  }
+  EventType event            = 1;       //< event
+  string queue               = 2;       //< queue
+  string wfname              = 3;       //< workflow
+  string vpath               = 4;       //< vpath
+  Service instance           = 5;       //< instance information
+  uint64 timestamp           = 6;       //< event timestamp
 }
+
+message Client {
+  Id user                    = 1;       //< acting client
+  Security sec               = 2;       //< client security information
+}
+
+message Transport {
+  string url                 = 1;       //< transport URL
+}
+
+message Metadata {
+  uint64 fid                 = 1;       //< file/container id
+  uint64 pid                 = 2;       //< parent id
+  Clock ctime                = 3;       //< change time
+  Clock mtime                = 4;       //< modification time
+  Clock btime                = 5;       //< birth time
+  Clock ttime                = 6;       //< tree modification time
+  Id owner                   = 7;       //< ownership
+  uint64 size                = 8;       //< size 
+  Checksum cks               = 9;       //< checksum information
+  sint32 mode                = 10;      //< mode
+  string lpath               = 11;      //< logical path
+  map<string, string> xattr  = 12;      //< xattribute map
+};
 
 message Notification {
-  Workflow wf = 1;      //< workflow
-  string turl = 2;      //< transport URL
-  Client cli = 3;       //< client information
-  Md file = 4;          //< file meta data
-  Md directory = 5;     //< directory meta data
+  Workflow wf                = 1;       //< workflow
+  Client cli                 = 2;       //< client information
+  Transport transport        = 3;       //< transport
+  Metadata file              = 4;       //< file meta data
+  Metadata directory         = 5;       //< directory meta data
 }
 
-message Xattr {
-  enum Operation { NONE = 0; GET = 1; ADD = 2; SET = 3; DELETE = 4;}
-  fixed64 fid = 1;               //< file id
-  map<string, string> xattrs = 2; //< xattribute map
-  Operation op = 3;              //< operation to execute for this xattr map
+
+
+//
+// Messages sent from CTA Frontend to EOS
+//
+
+message Response {
+  enum ResponseType {
+    RSP_SUCCESS              = 0;       //< Notification was queued successfully
+    RSP_ERR_PROTOBUF         = 1;       //< Framework error caused by Google Protocol Buffers layer
+    RSP_ERR_CTA              = 2;       //< Server error reported by CTA Frontend
+  }
+  ResponseType type          = 1;       //< Encode the type of this reply
+  string message_txt         = 2;       //< Text of the reply
 }
 
-message Tapereplica {
-   enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3;}
-   fixed64 fid = 1;   //< file  id
-   Status status = 2; //< state state for file ID
-   fixed64 size = 3;  //< File size as recorded on tape for cross check
-   Checksum cks = 4;   //< File checksum as computer while writing to tape
-}
 
-message Error {
-  enum Audience { NONE = 0; EOSLOG = 1; ENDUSER = 2;}
-  Audience audience = 1; //< The intended audience of the error message
-  fixed64 code = 2;      //< Zero means success, non-zero means error
-  string message = 3;    //< An empty if success, else an error message
-}
 
-// The following message is used to wrap all messages sent between EOS and its
-// peers.
 //
-// This wrapper message allows new message types to be added to the protocol in
-// the future.
+// Messages sent from the Tape Server to EOS
 //
-// This wrapper message also allows EOS peers to receive non-EOS messages as
-// long as the following two conditions are met:
-// 1. The peer uses a wrapper message with exactly the same (simple) structure.
-// 2. No two message types use the same numeric tag value.
-//
-// The structure of this message is based on the "Union Types" section of the
-// following Google protocol buffers web page:
-//
-//     https://developers.google.com/protocol-buffers/docs/techniques
-//
-// A protocol buffer parser cannot determine a message type based solely on its
-// contents. The type field of this wrapper message provides the required
-// metadata.
-message Wrapper {
-  enum Type {NONE = 0; ERROR = 1; NOTIFICATION = 2; XATTR = 3; TAPEREPLICA = 4;}
-  Type type = 1;
-  Error error = 2;
-  Notification notification = 3;
-  Xattr xattr = 4;
-  Tapereplica tapereplica = 5;
-}
+
+//message Tapereplica {
+//  enum Status { NONE = 0; OFFTAPE = 1; ONTAPE = 2; ONTAPESAVE = 3; }
+//  uint64 fid                 = 1;       //< file id
+//  Status status              = 2;       //< status for file id
+//  uint64 size                = 3;       //< File size as recorded on tape, for cross-check
+//  Checksum cks               = 4;       //< File checksum as computer while writing to tape
+//}

@@ -1,0 +1,5 @@
+select * from user_ts_quotas;
+SELECT * FROM RECYCLEBIN;
+SELECT * FROM USER_RECYCLEBIN;
+purge recyclebin;
+quit;

@@ -19,17 +19,19 @@ This is basically the command that is run by the `gitlab CI` in the [CI pipeline
 Only one command is run in this build:
 ```
 $ cd continuousintegration/orchestration/; \
-./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/systest.sh
+./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s tests/archive_retrieve.sh
 ```
 
 `CI_PIPELINE_ID` is not needed to run this command interactively: you can just launch:
 ```
 [root@ctadevjulien CTA]# cd continuousintegration/orchestration/
-[root@ctadevjulien orchestration]# ./run_systemtest.sh -n mynamespace -s tests/systest.sh
+[root@ctadevjulien orchestration]# ./run_systemtest.sh -n mynamespace -s tests/archive_retrieve.sh
 ```
 
 But be careful: this command instantiate a CTA test instance, runs the tests and **immediately deletes it**.
 If you want to keep it after the test script run is over, just add the `-k` flag to the command.
+
+**By default, this command uses local VFS for the objectstore and local filesystem for an `sqlite` database,** you can add `-D` and `-O` flags to respectively use the central Oracle database account and the Ceph account associated to your system.
 
 The following sections just explain what happens during the system test step and gives a few tricks and useful kubernetes commands.
 
@@ -216,7 +218,7 @@ Using this configuration for library:
 Preparing CTA for tests
 Drive VDSTK61 set UP.
 EOS server version is used:
-eos-server-4.1.11-20170118171644git24cd94a.el7.x86_64
+eos-server-4.1.24-20170616132055git722df4d.el7.x86_64
 xrdcp /etc/group root://localhost//eos/ctaeos/cta/4ff9d278-4c92-427a-b72b-a28cefddffcd
 [420B/420B][100%][==================================================][420B/s]  
 Waiting for file to be archived to tape: Seconds passed = 0
@@ -242,13 +244,18 @@ If something goes wrong, please check the logs from the various containers runni
   * The tape server SSS to be used by the EOS mgm to authenticate file transfer requests from the tape servers.
 5. `ctacli`
   * The cta command-line tool to be used by tape operators.
+  * This pod has the keytab of `ctaadmin1` who is allowed to type `cta` admin commands.
 6. `ctafrontend`
   * One CTA front-end.
   * The CTA SSS of the EOS instance that will be used by the CTA front end to authenticate the cta command-line run by the workflow engine of the EOS instance.
-7. `tpsrvXXX` *No two pods in the same namespace can have the same name, hence each tpsrv pod will be numbered differently*
+7. `tpsrvXX` *No two pods in the same namespace can have the same name, hence each tpsrv pod will be numbered differently*
   * One `cta-taped` daemon running in `taped` container of `tpsrvxxx` pod.
   * One `rmcd` daemon running in `rmcd` container of `tpsrvxxx` pod.
   * The tape server SSS to be used by cta-taped to authenticate its file transfer requests with the EOS mgm (all tape servers will use the same SSS).
+8. `client`
+  * The `cta` command-line tool to be used by `eosusers`.
+  * The `eos` command-line tool.
+  * This pod has the keytab of `user1` who is allowed to read-write file in `root://ctaeos//eos/ctaeos/cta`.
 
 
 # post-mortem analysis
@@ -295,10 +302,10 @@ driveRegister-makeMinimalVFS-init-624-20161216-14:14:17-1
 makeMinimalVFS-init-624-20161216-14:14:17
 agentRegister-makeMinimalVFS-init-624-20161216-14:14:17-0
 root
-retriveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
+RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
 
 [root@ctafrontend /]# rados get -p $OBJECTSTOREPOOL --id $OBJECTSTOREID \
- --namespace $OBJECTSTORENAMESPACE retriveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3 \
+ --namespace $OBJECTSTORENAMESPACE RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3 \
  - | protoc --decode_raw
 1: 10
 2: 0

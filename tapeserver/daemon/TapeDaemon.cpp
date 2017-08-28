@@ -26,6 +26,7 @@
 #include "GarbageCollectorHandler.hpp"
 #include <google/protobuf/service.h>
 #include <limits.h>
+#include <sys/prctl.h>
 
 namespace cta { namespace tape { namespace daemon {
 
@@ -90,6 +91,8 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // future
   setProcessCapabilities("cap_sys_rawio+p");
   
+  // Set the name of the (unique) thread for easy process identification.
+  prctl(PR_SET_NAME, "cta-taped-main");
   mainEventLoop();
 }
 

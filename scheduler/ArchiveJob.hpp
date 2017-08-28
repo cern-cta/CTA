@@ -22,9 +22,11 @@
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "eos/DiskReporter.hpp"
 
 #include <stdint.h>
 #include <string>
+#include <future>
 
 namespace cta {
 
@@ -68,11 +70,37 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(BlockIdNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
+  
   /**
-   * Indicates that the job was successful and updates the backend store
-   * @return true if the archive was also reported to client.
+   * Indicates that the job was successful and updates the backend store 
+   * asynchronously. 
    */
-  virtual bool complete();
+  virtual void asyncSetJobSucceed();
+  
+  /**
+   * Wait if the job was updated in the backend store asynchronously. 
+   * @return true if the archive was also sent to client asynchronously.
+   */
+  virtual bool checkAndAsyncReportComplete();
+  
+  /**
+   * Validate that archiveFile and tapeFile fields are set correctly for archive
+   * request.
+   * Throw appropriate exception if there is any problem.
+   */
+  virtual void validate();
+  
+  /**
+   * Update the catalog with the archive request.
+   */
+  virtual void writeToCatalogue();
+  
+  /**
+   * Validate that archiveFile and tapeFile fields are set correctly for archive
+   * request.
+   * @return The tapeFileWritten event for the catalog update.
+   */
+  virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten();
   
   /**
    * Triggers a scheduler update following the failure of the job.
@@ -84,7 +112,7 @@ public:
    * in a second thread.
    *
    */
-  virtual void failed(const cta::exception::Exception &ex);
+  virtual void failed(const cta::exception::Exception &ex, log::LogContext & lc);
   
   /**
    * Get the URL used for reporting
@@ -96,16 +124,27 @@ private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
   
   /**
+   * The reporter for the job.
+   */
+  std::unique_ptr<cta::eos::DiskReporter> m_reporter;
+  
+  /**
    * The mount that generated this job
    */
   ArchiveMount &m_mount;
-  
+
   /**
    * Reference to the name server
    */
   catalogue::Catalogue &m_catalogue;
-public:
   
+  /**
+   * State for the asynchronous report to the client. 
+   */
+  std::promise<void> m_reporterState;
+      
+public:
+    
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   
   /**
@@ -122,6 +161,11 @@ public:
    * The file archive result for the NS
    */
   common::dataStructures::TapeFile tapeFile;
+  
+  /**
+   * Wait for the reporterState is set by the reporting thread.
+   */
+  virtual void waitForReporting();
 
 }; // class ArchiveJob
 

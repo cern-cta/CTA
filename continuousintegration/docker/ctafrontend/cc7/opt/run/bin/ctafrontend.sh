@@ -1,6 +1,6 @@
-#!/bin/sh 
+#!/bin/bash 
 
-/opt/run/bin/init_pod.sh
+. /opt/run/bin/init_pod.sh
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
@@ -15,8 +15,8 @@ yes | cp -r /opt/ci/ctafrontend/etc /
 . /tmp/objectstore-rc.sh
 
 echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
-echo "Catalogue NumberOfConnections 1" >>/etc/cta/cta-frontend.conf
-echo "Log URL file:/cta-frontend.log" >>/etc/cta/cta-frontend.conf
+echo "Catalogue NumberOfConnections 10" >>/etc/cta/cta-frontend.conf
+echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 
 /opt/run/bin/init_database.sh
@@ -38,19 +38,19 @@ sed -i 's|.*sec.protocol sss.*|sec.protocol sss -s /etc/ctafrontend_SSS_s.keytab
 sed -i 's|.*sec.protocol unix.*|#sec.protocol unix|' /etc/xrootd/xrootd-cta.cfg
 
 # Hack the default xrootd-cta.cfg provided by the sources
-sed -i 's|.*sec.protocol krb5.*|sec.protocol krb5 /etc/cta-frontend.keytab cta/cta-frontend@TEST.CTA|' /etc/xrootd/xrootd-cta.cfg
+sed -i 's|.*sec.protocol krb5.*|sec.protocol krb5 /etc/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA|' /etc/xrootd/xrootd-cta.cfg
 
 # Allow only SSS and krb5 for frontend
 sed -i 's|^sec.protbind .*|sec.protbind * only sss krb5|' /etc/xrootd/xrootd-cta.cfg
 
 # Wait for the keytab file to be pushed in by the creation script.
-echo -n "Waiting for /etc/cta-frontend.keytab"
-for ((;;)); do test -e /etc/cta-frontend.keytab && break; sleep 1; echo -n .; done
+echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
+for ((;;)); do test -e /etc/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-touch /cta-frontend.log
-chmod a+w /cta-frontend.log
-tail -F /cta-frontend.log &
+touch /var/log/cta/cta-frontend.log
+chmod a+w /var/log/cta/cta-frontend.log
+tail -F /var/log/cta/cta-frontend.log &
 
 echo "Launching frontend"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta

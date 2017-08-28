@@ -57,10 +57,12 @@
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 
 #include <list>
 #include <map>
-#include <memory>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -75,6 +77,12 @@ namespace catalogue {
  */
 class Catalogue {
 public:
+  /**
+   * Constructor.
+   *
+   * @param log Object representing the API to the CTA logging system.
+   */
+  Catalogue(log::Logger &log);
 
   /**
    * Destructor.
@@ -152,13 +160,15 @@ public:
    * @param user The user for whom the file is to be retrieved.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
+   * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
     const std::string &instanceName,
     const uint64_t archiveFileId,
-    const common::dataStructures::UserIdentity &user) = 0;
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -447,23 +457,14 @@ public:
   virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
   /**
-   * Returns an iterator over the list of archive files that meet the specified
-   * search criteria.
-   *
-   * Please note that the list is ordered by archive file ID.
-   *
-   * Please note that this method will throw an exception if the
-   * nbArchiveFilesToPrefetch parameter is set to 0.  The parameter must be set
-   * to a value greater than or equal to 1.
+   * Returns the specified archive files.  Please note that the list of files
+   * is ordered by archive file ID.
    *
    * @param searchCriteria The search criteria.
-   * @param nbArchiveFilesToPrefetch The number of archive files to prefetch.
-   * This parameter must be set to a value equal to or greater than 1.
-   * @return An iterator over the list of archive files.
+   * @return The archive files.
    */
-  virtual std::unique_ptr<ArchiveFileItor> getArchiveFileItor(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria(),
-    const uint64_t nbArchiveFilesToPrefetch = 1000) const = 0;
+  virtual ArchiveFileItor getArchiveFiles(
+    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns a summary of the tape files that meet the specified search
@@ -494,14 +495,18 @@ public:
    * prevent a disk instance deleting an archive file that belongs to another
    * disk instance.
    *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
    * @param instanceName The name of the instance from where the deletion request
    * originated
    * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &instanceName, 
-    const uint64_t archiveFileId) = 0;
+  virtual void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+    log::LogContext &lc) = 0;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
@@ -533,6 +538,13 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
+
+protected:
+
+  /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
 
 }; // class Catalogue
 

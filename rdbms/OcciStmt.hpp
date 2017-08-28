@@ -38,7 +38,7 @@ class OcciConn;
  * Forward declaration to avoid a circular dependency between OcciStmt and
  * OcciRset.
  */
-class OcciRset;
+class OcciRsetImpl;
 
 class OcciColumn;
 
@@ -120,10 +120,9 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
-   *  @return The result set.  Please note that it is the responsibility of the
-   *  caller to free the memory associated with the result set.
+   *  @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  Rset executeQuery() override;
 
   /**
    * Executes the statement.

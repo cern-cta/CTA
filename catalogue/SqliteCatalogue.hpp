@@ -34,10 +34,20 @@ public:
   /**
    * Constructor.
    *
+   * @param log Object representing the API to the CTA logging system.
    * @param filename The filename to be passed to the sqlite3_open() function.
-   * @param nbConns The maximum number of concurrent connections to the underyling database.
+   * @param nbConns The maximum number of concurrent connections to the
+   * underlying relational database for all operations accept listing archive
+   * files which can be relatively long operations.
+   * @param nbArchiveFileListingConns The maximum number of concurrent
+   * connections to the underlying relational database for the sole purpose of
+   * listing archive files.
    */
-  SqliteCatalogue(const std::string &filename, const uint64_t nbConns);
+  SqliteCatalogue(
+    log::Logger &log,
+    const std::string &filename,
+    const uint64_t nbConns,
+    const uint64_t nbArchiveFileListingConns);
 
 public:
 
@@ -54,13 +64,18 @@ public:
    * prevent a disk instance deleting an archive file that belongs to another
    * disk instance.
    *
-   * @param instanceName The name of the instance from where the deletion request originated
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
    * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  common::dataStructures::ArchiveFile deleteArchiveFile(const std::string &diskInstanceName,
-    const uint64_t archiveFileId) override;
+  void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId, log::LogContext &lc)
+    override;
 
 protected:
 

@@ -1,4 +1,5 @@
-#!/bin/bash
+# This file must be sourced from another shell script
+# . /opt/run/bin/init_pod.sh
 
 LOGMOUNT=/mnt/logs
 
@@ -26,3 +27,27 @@ echo "DONE"
 #echo -n "Yum should resolve names using IPv4 DNS: "
 #echo "ip_resolve=IPv4" >> /etc/yum.conf
 #echo "DONE"
+
+# redefining yum commands if in BUILDTREE environment
+if [[ -n ${BUILDTREE_BASE} ]]; then
+  echo "Configuring BUILDTREE environment"
+  yum-config-manager() { echo "Skipping yum-config-manager $@"; }
+  yum() { echo "Skipping yum $@"; }
+  /opt/run/bin/mkSymlinks.sh
+
+  # cta:cta needed for ctafrontend and taped but adding it inconditionally in buildtree
+  echo "Adding cta user and group"
+  /usr/bin/getent group cta || /usr/sbin/groupadd cta
+  /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+  ## The following is not working as one cannot refresh groups in current shell...
+  # echo 'Adding cta in tape group (grant access to /dev/sg* /dev/st* /dev/nst* devices'
+  # /usr/sbin/usermod -a -G tape cta
+  # Chmod is the only way to go
+  chmod 666 /dev/nst* /dev/st* /dev/sg*
+  # creating /var/log/cta needed by taped
+  mkdir -p /var/log/cta
+else
+  # some yum optimisations for the standard system
+  SQUID_PROXY=squid.kube-system.svc.cluster.local
+  ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
+fi

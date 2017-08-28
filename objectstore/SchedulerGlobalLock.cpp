@@ -19,7 +19,7 @@
 #include "SchedulerGlobalLock.hpp"
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore { 
 
@@ -43,7 +43,8 @@ void SchedulerGlobalLock::initialize() {
   m_payloadInterpreted = 1;
 }
 
-void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner) {
+void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the drive register creation failed. We have nothing to do.
@@ -92,15 +93,12 @@ bool SchedulerGlobalLock::isEmpty() {
 
 std::string SchedulerGlobalLock::dump() {  
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "SchedulerGlobalLock" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "nextmountid", json_object_new_int64(m_payload.nextmountid()));
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
   
 }}

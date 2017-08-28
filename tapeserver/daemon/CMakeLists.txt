@@ -1,14 +1,15 @@
 cmake_minimum_required (VERSION 2.6)
 
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
 include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 
-PROTOBUF_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
+PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(DriveHandler.cpp PROPERTIES OBJECT_DEPENDS ${WDMsgHeaders})
 
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctatapedaemon
   ${WDMsgSources}
   CommandLineParams.cpp
@@ -48,10 +49,14 @@ add_library(ctadaemonunittests SHARED
   TapedConfigurationTests.cpp
   TpconfigTests.cpp
   SourcedParameterTests.cpp)
+set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadaemonunittests-multiprocess SHARED
   ProcessManagerTests.cpp
   SignalHandlerTests.cpp)
+set_property(TARGET ctadaemonunittests-multiprocess PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon

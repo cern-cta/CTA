@@ -22,12 +22,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
 
 find_package(json-c REQUIRED)
 find_package(librados2 REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
 set (CTAProtoFiles
   cta.proto)
 
-PROTOBUF_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
+PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
 set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/ArchiveRequest.hpp
@@ -46,7 +46,7 @@ SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants} 
   PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
-
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
   RootEntry.cpp
@@ -68,7 +68,11 @@ add_library (ctaobjectstore SHARED
   GenericObject.cpp
   GarbageCollector.cpp
   SchedulerGlobalLock.cpp
-  ValueCountMap.cpp)
+  ValueCountMap.cpp
+  Helpers.cpp)
+set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 target_link_libraries(ctaobjectstore rados json-c ctautils)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -81,25 +85,43 @@ set(ObjectStoreUnitTests
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
+set_property(TARGET ctaobjectstoreunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 target_link_libraries(ctaobjectstoreunittests
-  protobuf rados ctacommon gtest ctaobjectstore)
+  ${PROTOBUF3_LIBRARIES} rados ctacommon gtest ctaobjectstore)
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
+set_target_properties(cta-objectstore-initialize PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-initialize
-  protobuf ctaobjectstore ctacommon ctautils)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctautils)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
+set_target_properties(cta-objectstore-list PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-list
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
+set_target_properties(cta-objectstore-dump-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dump-object
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-unfollow-agent cta-objectstore-unfollow-agent.cpp)
+set_target_properties(cta-objectstore-unfollow-agent PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-unfollow-agent
-  protobuf ctaobjectstore ctacommon)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
-install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
+add_executable(cta-objectstore-dereference-removed-queues cta-objectstore-dereference-removed-queues.cpp)
+set_target_properties(cta-objectstore-dereference-removed-queues PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-objectstore-dereference-removed-queues
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+
+add_executable(cta-objectstore-collect-orphaned-object cta-objectstore-collect-orphaned-object.cpp)
+set_target_properties(cta-objectstore-collect-orphaned-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-objectstore-collect-orphaned-object
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctacatalogue)
+
+install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object cta-objectstore-unfollow-agent 
+  cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object
   DESTINATION usr/bin)

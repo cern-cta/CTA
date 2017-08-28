@@ -58,7 +58,7 @@ protected:
   /**
    * The archive file iterator used loop over catalogue results
    */
-  std::unique_ptr<cta::catalogue::ArchiveFileItor> m_itor;
+  catalogue::ArchiveFileItor m_itor;
   
   /**
    * The client identity info: username and host

@@ -20,7 +20,7 @@
 #include "GenericObject.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "ValueCountMap.hpp"
-#include <json-c/json.h>
+#include <google/protobuf/util/json_util.h>
 
 cta::objectstore::RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) { }
@@ -33,13 +33,39 @@ cta::objectstore::RetrieveQueue::RetrieveQueue(GenericObject& go):
   getPayloadFromHeader();
 }
 
+cta::objectstore::RetrieveQueue::RetrieveQueue(Backend& os):
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os) { }
+
 void cta::objectstore::RetrieveQueue::initialize(const std::string &vid) {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields
   m_payload.set_oldestjobcreationtime(0);
   m_payload.set_retrievejobstotalsize(0);
   m_payload.set_vid(vid);
+  m_payload.set_mapsrebuildcount(0);
   m_payloadInterpreted = true;
+}
+
+void cta::objectstore::RetrieveQueue::commit() {
+  // Before calling ObjectOps::commit, check that we have coherent queue summaries
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  if (maxDriveAllowedMap.total() != (uint64_t)m_payload.retrievejobs_size() ||
+      priorityMap.total() != (uint64_t)m_payload.retrievejobs_size() ||
+      minRetrieveRequestAgeMap.total() != (uint64_t)m_payload.retrievejobs_size()) {
+    // The maps counts are off: recompute them.
+    maxDriveAllowedMap.clear();
+    priorityMap.clear();
+    minRetrieveRequestAgeMap.clear();
+    for (size_t i=0; i<(size_t)m_payload.retrievejobs_size(); i++) {
+      maxDriveAllowedMap.incCount(m_payload.retrievejobs(i).maxdrivesallowed());
+      priorityMap.incCount(m_payload.retrievejobs(i).priority());
+      minRetrieveRequestAgeMap.incCount(m_payload.retrievejobs(i).minretrieverequestage());
+    }
+    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
+  }
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::commit();
 }
 
 bool cta::objectstore::RetrieveQueue::isEmpty() {
@@ -62,32 +88,15 @@ std::string cta::objectstore::RetrieveQueue::getVid() {
 
 std::string cta::objectstore::RetrieveQueue::dump() {  
   checkPayloadReadable();
-  std::stringstream ret;
-  ret << "TapePool" << std::endl;
-  struct json_object * jo = json_object_new_object();
-  
-  json_object_object_add(jo, "vid", json_object_new_string(m_payload.vid().c_str()));
-  json_object_object_add(jo, "retrievejobstotalsize", json_object_new_int64(m_payload.retrievejobstotalsize()));
-  json_object_object_add(jo, "oldestjobcreationtime", json_object_new_int64(m_payload.oldestjobcreationtime()));
-  
-  {
-    json_object * array = json_object_new_array();
-    for (auto i = m_payload.retrievejobs().begin(); i!=m_payload.retrievejobs().end(); i++) {
-      json_object * rjobs = json_object_new_object();
-      json_object_object_add(rjobs, "size", json_object_new_int64(i->size()));
-      json_object_object_add(rjobs, "address", json_object_new_string(i->address().c_str()));
-      json_object_object_add(rjobs, "copynb", json_object_new_int(i->copynb()));
-      json_object_array_add(array, rjobs);
-    }
-    json_object_object_add(jo, "retrievejobs", array);
-  }
-  
-  ret << json_object_to_json_string_ext(jo, JSON_C_TO_STRING_PRETTY) << std::endl;
-  json_object_put(jo);
-  return ret.str();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
-void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,
+void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb, uint64_t fSeq,
   const std::string & retrieveRequestAddress, uint64_t size, 
   const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
   checkPayloadWritable();
@@ -111,6 +120,60 @@ void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb,
   j->set_address(retrieveRequestAddress);
   j->set_size(size);
   j->set_copynb(copyNb);
+  j->set_fseq(fSeq);
+  j->set_priority(policy.retrievePriority);
+  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  // move the the new job in the right spot on the queue.
+  // i points to the newly added job all the time.
+  size_t i=m_payload.retrievejobs_size() - 1;
+  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+    i--;
+  }
+}
+
+bool cta::objectstore::RetrieveQueue::addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
+  const std::string & retrieveRequestAddress, uint64_t size, 
+  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+  checkPayloadWritable();
+  // Check if the job is present and skip insertion if so
+  for (auto &j: m_payload.retrievejobs()) {
+    if (j.address() == retrieveRequestAddress)
+      return false;
+  }
+  // Keep track of the mounting criteria
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.incCount(policy.retrievePriority);
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
+  if (m_payload.retrievejobs_size()) {
+    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
+      m_payload.set_oldestjobcreationtime(startTime);
+    }
+    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
+  } else {
+    m_payload.set_oldestjobcreationtime(startTime);
+    m_payload.set_retrievejobstotalsize(size);
+  }
+  auto * j = m_payload.add_retrievejobs();
+  j->set_address(retrieveRequestAddress);
+  j->set_size(size);
+  j->set_copynb(copyNb);
+  j->set_fseq(fSeq);
+  j->set_priority(policy.retrievePriority);
+  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
+  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
+  // move the the new job in the right spot on the queue.
+  // i points to the newly added job all the time.
+  size_t i=m_payload.retrievejobs_size() - 1;
+  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+    i--;
+  }
+  return true;
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
@@ -168,17 +231,23 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFileAddress) {
+void cta::objectstore::RetrieveQueue::removeJob(const std::string& retrieveToFileAddress) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_retrievejobs();
   bool found=false;
   do {
     found=false;
-    found = false;
     // Push the found entry all the way to the end.
     for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == retriveToFileAddress) {
+      if (jl->Get(i).address() == retrieveToFileAddress) {
         found = true;
+        // Keep track of the mounting criteria
+        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
+        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+        priorityMap.decCount(jl->Get(i).priority());
+        ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+        minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
         while (i+1 < (size_t)jl->size()) {
           jl->SwapElements(i, i+1);
           i++;
@@ -192,6 +261,7 @@ void cta::objectstore::RetrieveQueue::removeJob(const std::string& retriveToFile
   } while (found);
 }
 
-void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner) {
+void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) {
   throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
 }

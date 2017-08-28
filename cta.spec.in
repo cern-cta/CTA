@@ -12,9 +12,13 @@
 %define mydist %{?dist}
 %endif
 
-# Skipping unit tests (for developpers)
-#--------------------------------------
+# Skipping unit tests (for developers)
+#-------------------------------------
 %define skip_unit_tests @SKIP_UNIT_TESTS@
+
+# Build with XRootD SSI extensions (for developers)
+#--------------------------------------------------
+%define build_xroot_ssi 0@BUILD_XROOT_SSI@
 
 # General settings
 #-----------------
@@ -37,12 +41,19 @@ BuildRequires: xrootd-client-devel = 1:4.2.3
 BuildRequires: xrootd-devel        = 1:4.2.3
 BuildRequires: cryptopp-devel >= 5.6.2
 %else
+%if "%{?build_xroot_ssi}" == "0"
 BuildRequires: xrootd-client-devel  = 1:4.4.1
 BuildRequires: xrootd-devel         = 1:4.4.1
 BuildRequires: xrootd-server-devel  = 1:4.4.1
 BuildRequires: xrootd-private-devel = 1:4.4.1
+%else
+BuildRequires: xrootd-client-devel  = 1:4.7.0
+BuildRequires: xrootd-devel         = 1:4.7.0
+BuildRequires: xrootd-server-devel  = 1:4.7.0
+BuildRequires: xrootd-private-devel = 1:4.7.0
+%endif
 BuildRequires: librados-devel >= 11.0, libradosstriper-devel >= 11.0, 
-BuildRequires: protobuf3-compiler >= 3.2.0 protobuf3-devel >= 3.2.0
+BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
 BuildRequires: sqlite-devel >= 3.6
 BuildRequires: libcap-devel >= 2.16
@@ -154,10 +165,10 @@ The xroot plugin
 /usr/bin/getent group cta || /usr/sbin/groupadd cta
 /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
 %files -n cta-frontend
-%defattr(-,root,root)
+%defattr(0755,root,root)
+%{_libdir}/libXrdCtaOfs.so*
 %attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
-%attr(0755,root,root) %{_libdir}/libXrdCtaOfs.so
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
 
@@ -184,17 +195,17 @@ Requires: oracle-instantclient12.1-basic
 CERN Tape Archive:
 The shared libraries
 %files -n cta-lib
-%defattr(-,root,root)
-%attr(0755,root,root) %{_libdir}/libctacatalogue.so
-%attr(0755,root,root) %{_libdir}/libctacommon.so
+%defattr(0755,root,root,-)
+%{_libdir}/libctacatalogue.so*
+%{_libdir}/libctacommon.so*
 #TODO: merge util and common
-%attr(0755,root,root) %{_libdir}/libctautils.so
-%attr(0755,root,root) %{_libdir}/libctascheduler.so
-%attr(0755,root,root) %{_libdir}/libctaobjectstore.so
-%attr(0755,root,root) %{_libdir}/libctamediachanger.so
-%attr(0755,root,root) %{_libdir}/libctamessages.so
-%attr(0755,root,root) %{_libdir}/libctamessagesutils.so
-%attr(0755,root,root) %{_libdir}/libctardbms.so
+%{_libdir}/libctautils.so*
+%{_libdir}/libctascheduler.so*
+%{_libdir}/libctaobjectstore.so*
+%{_libdir}/libctamediachanger.so*
+%{_libdir}/libctamessages.so*
+%{_libdir}/libctamessagesutils.so*
+%{_libdir}/libctardbms.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
@@ -210,29 +221,30 @@ Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
 %files -n cta-systemtests
-%attr(0755,root,root) %{_libdir}/libsystemTestHelperTests.so
-%attr(0755,root,root) %{_libdir}/libcta-tapedSystemTests.so
-%attr(0755,root,root) %{_bindir}/cta-catalogueUnitTests
-%attr(0755,root,root) %{_bindir}/cta-unitTests
-%attr(0755,root,root) %{_bindir}/cta-unitTests-multiProcess
-%attr(0755,root,root) %{_bindir}/cta-valgrindUnitTests.sh
-%attr(0755,root,root) %{_bindir}/cta-unitPlusSystemTests.sh
-%attr(0755,root,root) %{_libdir}/libctacatalogueunittests.so
-%attr(0755,root,root) %{_libdir}/libctacataloguecmdlineunittests.so
-%attr(0755,root,root) %{_libdir}/libctacommonunittests.so
-%attr(0755,root,root) %{_libdir}/libctaexceptionunittests.so
-%attr(0755,root,root) %{_libdir}/libctainmemorycatalogueunittests.so
-%attr(0755,root,root) %{_libdir}/libctaobjectstoreunittests.so
-%attr(0755,root,root) %{_libdir}/libctardbmsunittests.so
-%attr(0755,root,root) %{_libdir}/libctaschedulerunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverdaemonunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverdriveunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverfileunittests.so
-%attr(0755,root,root) %{_libdir}/libctatapeserverscsiunittests.so
-%attr(0755,root,root) %{_libdir}/libctadaemonunittests.so
-%attr(0755,root,root) %{_libdir}/libctamediachangerunittests.so
-%attr(0755,root,root) %{_bindir}/cta-systemTests
-%attr(0755,root,root) %{_libdir}/libctadaemonunittests-multiprocess.so
+%defattr(0755,root,root,-)
+%{_libdir}/libsystemTestHelperTests.so*
+%{_libdir}/libcta-tapedSystemTests.so*
+%{_bindir}/cta-catalogueUnitTests
+%{_bindir}/cta-unitTests
+%{_bindir}/cta-unitTests-multiProcess
+%{_bindir}/cta-valgrindUnitTests.sh
+%{_bindir}/cta-unitPlusSystemTests.sh
+%{_libdir}/libctacatalogueunittests.so*
+%{_libdir}/libctacataloguecmdlineunittests.so*
+%{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctaexceptionunittests.so*
+%{_libdir}/libctainmemorycatalogueunittests.so*
+%{_libdir}/libctaobjectstoreunittests.so*
+%{_libdir}/libctardbmsunittests.so*
+%{_libdir}/libctaschedulerunittests.so*
+%{_libdir}/libctatapeserverdaemonunittests.so*
+%{_libdir}/libctatapeserverdriveunittests.so*
+%{_libdir}/libctatapeserverfileunittests.so*
+%{_libdir}/libctatapeserverscsiunittests.so*
+%{_libdir}/libctadaemonunittests.so*
+%{_libdir}/libctamediachangerunittests.so*
+%{_bindir}/cta-systemTests
+%{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 
 %package -n cta-objectstore-tools
@@ -245,6 +257,9 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
 %attr(0755,root,root) %{_bindir}/cta-objectstore-list
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
+%attr(0755,root,root) %{_bindir}/cta-objectstore-unfollow-agent
+%attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
+%attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 
 #cta-systemtests installs libraries so we need ldconfig.
 %post -n cta-systemtests -p /sbin/ldconfig

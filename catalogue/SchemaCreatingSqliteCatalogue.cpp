@@ -27,8 +27,12 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(const std::string &filename, const uint64_t nbConns):
-  SqliteCatalogue(filename, nbConns) {
+SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
+  log::Logger &log,
+  const std::string &filename,
+  const uint64_t nbConns,
+  const uint64_t nbArchiveFileListingConns):
+  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
   try {
     createCatalogueSchema();
   } catch(exception::Exception &ex) {

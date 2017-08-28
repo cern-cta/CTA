@@ -17,15 +17,73 @@
  */
 
 #include "catalogue/ArchiveFileItor.hpp"
+#include "catalogue/ArchiveFileItorImpl.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace catalogue {
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+ArchiveFileItor::ArchiveFileItor():
+  m_impl(nullptr) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+ArchiveFileItor::ArchiveFileItor(ArchiveFileItorImpl *const impl):
+  m_impl(impl) {
+  if(nullptr == impl) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
+  }
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+ArchiveFileItor::ArchiveFileItor(ArchiveFileItor &&other):
+  m_impl(other.m_impl) {
+  other.m_impl = nullptr;
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 ArchiveFileItor::~ArchiveFileItor() {
+  delete m_impl;
+}
+
+//------------------------------------------------------------------------------
+// operator=
+//------------------------------------------------------------------------------
+ArchiveFileItor &ArchiveFileItor::operator=(ArchiveFileItor &&rhs) {
+  m_impl = rhs.m_impl;
+  rhs.m_impl = nullptr;
+  return *this;
+}
+
+//------------------------------------------------------------------------------
+// hasMore
+//------------------------------------------------------------------------------
+bool ArchiveFileItor::hasMore() {
+  if(nullptr == m_impl) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: "
+      "This iterator is invalid");
+  }
+  return m_impl->hasMore();
+}
+
+//------------------------------------------------------------------------------
+// next
+//------------------------------------------------------------------------------
+common::dataStructures::ArchiveFile ArchiveFileItor::next() {
+  if(nullptr == m_impl) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: "
+      "This iterator is invalid");
+  }
+  return m_impl->next();
 }
 
 } // namespace catalogue

@@ -20,6 +20,7 @@
 #include "catalogue/CreateAdminUserCmd.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "rdbms/ConnFactoryFactory.hpp"
 
 namespace cta {
@@ -54,7 +55,9 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
 
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t nbDbConns = 1;
-  auto catalogue = CatalogueFactory::create(dbLogin, nbDbConns);
+  const uint64_t nbArchiveFileListingDbConns = 1;
+  log::DummyLogger dummyLog("dummy");
+  auto catalogue = CatalogueFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
 
   catalogue->createAdminUser(adminRunningCommand, cmdLineArgs.adminUsername, cmdLineArgs.comment);

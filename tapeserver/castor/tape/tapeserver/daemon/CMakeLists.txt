@@ -26,7 +26,7 @@ include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
-find_package(Protobuf REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package( ZLIB REQUIRED )
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
@@ -76,9 +76,10 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 add_library(ctaTapeServerDaemon 
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctamessages ctacommon protobuf ctascheduler ctalegacymsg ctacatalogue TapeDrive)
+target_link_libraries(ctaTapeServerDaemon ctamessages ctacommon ${PROTOBUF3_LIBRARIES} ctascheduler ctalegacymsg ctacatalogue TapeDrive)
 add_dependencies(ctaTapeServerDaemon ctamessagesprotobuf)
 
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctatapeserverdaemonunittests SHARED
   DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
@@ -89,6 +90,8 @@ add_library(ctatapeserverdaemonunittests SHARED
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
 )
+set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeserverdaemonunittests
   ctamessagesutils)

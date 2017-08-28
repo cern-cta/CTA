@@ -29,15 +29,17 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{
   
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
-    virtual const MountInfo & getMountInfo() { throw std::runtime_error("Not implemented"); }
-    virtual std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> getNextJob() { throw std::runtime_error("Not implemented");}
-    virtual void complete(time_t completionTime) { throw std::runtime_error("Not implemented"); }
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) { throw std::runtime_error("Not implemented"); }
+    const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
+    void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
   };
   
   class TestingRetrieveMount: public cta::RetrieveMount {
@@ -103,7 +105,8 @@ namespace unitTests{
     RecallMemoryManager mm(10,100,lc);
     
     castor::messages::TapeserverProxyDummy tspd;
-    RecallWatchDog rwd(1,1,tspd,"", lc);
+    cta::TapeMountDummy tmd;
+    RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
     
     DiskWriteThreadPool dwtp(2,report,rwd,lc,"/dev/null", 0);
     dwtp.startThreads();

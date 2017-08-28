@@ -32,7 +32,7 @@ public:
    * 
    * @param be The objectstore backend
    */
-  BackendPopulator(cta::objectstore::Backend & be, const std::string &agentType="OStoreDBFactoryAgent");
+  BackendPopulator(cta::objectstore::Backend & be, const std::string &agentType, const cta::log::LogContext & lc);
   
   /**
    * Destructor
@@ -56,6 +56,11 @@ private:
    * The agent
    */
   cta::objectstore::AgentReference m_agentReference;
+  
+  /**
+   * A log context (copied) in order to be able to log in destructor.
+   */
+  cta::log::LogContext m_lc;
 };
 
 }}

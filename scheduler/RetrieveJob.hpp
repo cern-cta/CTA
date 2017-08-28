@@ -72,21 +72,27 @@ public:
    * Destructor.
    */
   virtual ~RetrieveJob() throw();
-
+  
   /**
-   * Indicates that the job was successful. The checksum and the size of the 
-   * transfer should already stored in the object beforehand. Result setting
-   * and calling complete are done in 2 different threads (disk write and 
-   * reporter thread, respectively).
+   * Asynchronously indicates to the backend that the job was successful. 
+   * The checksum and the size of the transfer should already stored in the 
+   * object beforehand. Result setting and calling complete are done in 2 
+   * different threads (disk write and reporter thread, respectively).
    */
-  virtual void complete();
+  virtual void asyncComplete();
+  
+  /**
+   * Check that asynchronous complete is finished and cleanup the job structures
+   * 
+   */
+  virtual void checkComplete();
   
   /**
    * Indicates that the job failed. Like for complete(), reason for failure
    * should already be recorded in the object beforehand. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed();
+  virtual void failed(cta::log::LogContext &);
   
   /**
    * Helper function returning a reference to the currently selected tape file.

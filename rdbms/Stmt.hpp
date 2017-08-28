@@ -162,10 +162,9 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
-   *  @return The result set.  Please note that it is the responsibility of the
-   *  caller to free the memory associated with the result set.
+   *  @return The result set.
    */
-  virtual std::unique_ptr<Rset> executeQuery() = 0;
+  virtual Rset executeQuery() = 0;
 
   /**
    * Executes the statement.

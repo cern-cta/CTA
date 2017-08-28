@@ -1,6 +1,6 @@
-#!/bin/sh 
+#!/bin/bash 
 
-/opt/run/bin/init_pod.sh
+. /opt/run/bin/init_pod.sh
 
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
@@ -16,9 +16,7 @@ cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
 # to get rmcd logs to stdout
-mkfifo /var/log/castor/rmcd_legacy.log
-for ((;;)); do cat </var/log/castor/rmcd_legacy.log; done &
-disown
+tail -F /var/log/castor/rmcd_legacy.log &
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 /usr/bin/rmcd -f /dev/smc

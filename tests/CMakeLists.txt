@@ -16,7 +16,9 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package(gmock REQUIRED)
+find_package(Protobuf3 REQUIRED)
 
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-unitTests
   unit_tests.cpp
   ${GMOCK_SRC})
@@ -41,6 +43,8 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
+set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+
 add_executable(cta-catalogueUnitTests
   CatalogueUnitTestsCmdLineArgs.cpp
   catalogueUnitTests.cpp
@@ -62,14 +66,18 @@ target_link_libraries(cta-unitTests-multiProcess
   ${GMOCK_LIB}
   gtest
   pthread
-  protobuf
+  ${PROTOBUF3_LIBRAIRES}
   sqlite3)
+
+set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_library(unitTestHelper
   TempFile.cpp)
 
 add_library(systemTestHelperTests SHARED
   SubprocessSystemTests.cpp)
+set_property(TARGET systemTestHelperTests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET systemTestHelperTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(systemTestHelperTests
   ctacommon)

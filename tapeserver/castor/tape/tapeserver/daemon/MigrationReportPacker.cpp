@@ -24,6 +24,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "catalogue/TapeFileWritten.hpp"
 
 #include <memory>
 #include <numeric>
@@ -59,8 +60,11 @@ MigrationReportPacker::~MigrationReportPacker(){
 //reportCompletedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
-std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
+std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportSuccessful");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportCompletedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -68,36 +72,51 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) {
 //reportFailedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
-        const cta::exception::Exception &ex){
+        const cta::exception::Exception &ex, cta::log::LogContext & lc){
   std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),ex));
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportError");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
 //reportFlush
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportFlush(drive::compressionStats compressStats){
+void MigrationReportPacker::reportFlush(drive::compressionStats compressStats, cta::log::LogContext & lc){
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportFlush");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFlush(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportFlush(compressStats));
 }
 //------------------------------------------------------------------------------
 //reportTapeFull
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportTapeFull(){
+void MigrationReportPacker::reportTapeFull(cta::log::LogContext & lc){
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportTapeFull");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTapeFull(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTapeFull());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportEndOfSession() {
+void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportEndofSession");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode){
+void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode, cta::log::LogContext & lc){
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportEndofSessionWithErrors");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,errorCode));
 }
@@ -105,7 +124,10 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
 //------------------------------------------------------------------------------
 //reportTestGoingToEnd
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportTestGoingToEnd(){
+void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext & lc){
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportTestGoingToEnd");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTestGoingToEnd(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTestGoingToEnd());
 }
@@ -113,11 +135,34 @@ void MigrationReportPacker::reportTestGoingToEnd(){
 //------------------------------------------------------------------------------
 //synchronousReportEndWithErrors
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode){
-  // We create the report task here and excute it immediately instead of posting
-  // it to a queue.
-  ReportEndofSessionWithErrors rep(msg,errorCode);
-  rep.execute(*this);
+void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode, cta::log::LogContext & lc){
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportEndofSessionWithErrors");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::synchronousReportEndWithErrors(), reporting asynchronously session complete.");
+  m_continue=false;
+  m_archiveMount->complete();
+  if(m_errorHappened) {
+    cta::log::ScopedParamContainer sp(lc);
+    sp.add("errorMessage", msg)
+      .add("errorCode", errorCode);
+    lc.log(cta::log::INFO,"Reported end of session with error to client after sending file errors");
+  } else{
+    const std::string& msg ="Reported end of session with error to client";
+    // As a measure of safety we censor any session error which is not ENOSPC into
+    // Meaningless 666 (used to be SEINTERNAL in CASTOR). ENOSPC is the only one interpreted by the tape gateway.
+    if (ENOSPC != errorCode) {
+      errorCode = 666;
+    }
+    lc.log(cta::log::INFO,msg);
+  }
+  if(m_watchdog) {
+    m_watchdog->addParameter(cta::log::Param("status",
+      ENOSPC == errorCode?"success":"failure"));
+    // We have a race condition here between the processing of this message by
+    // the initial process and the printing of the end-of-session log, triggered
+    // by the end our process. To delay the latter, we sleep half a second here.
+    usleep(500*1000);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +175,11 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status) {
+void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::log::LogContext & lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportDriveStatus")
+        .add("Status", cta::common::dataStructures::toString(status));
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportDriveStatus(status));
 }
@@ -139,6 +188,9 @@ void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::Drive
 //ReportDriveStatus::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent){
+  cta::log::ScopedParamContainer params(parent.m_lc);
+  params.add("status", cta::common::dataStructures::toString(m_status));
+  parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
   parent.m_archiveMount->setDriveStatus(m_status);
 }
 
@@ -154,57 +206,129 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    std::unique_ptr<cta::ArchiveJob> job;
-    try{
-      while(!reportPacker.m_successfulArchiveJobs.empty()) {
-        // Get the next job to report and make sure we will not attempt to process it twice.
-        job = std::move(reportPacker.m_successfulArchiveJobs.front());
-        reportPacker.m_successfulArchiveJobs.pop();
-        if (!job.get()) continue;
-        cta::log::ScopedParamContainer params(reportPacker.m_lc);
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
-        if (job->complete()) {
-          params.add("reportURL", job->reportURL());
-          reportPacker.m_lc.log(cta::log::INFO,"Reported to the client a full file archival");
-        } else {
-          reportPacker.m_lc.log(cta::log::INFO, "Recorded the partial migration of a file");
-        }
-        job.reset(nullptr);
-      }
-      reportPacker.m_lc.log(cta::log::INFO,"Reported to the client that a batch of files was written on tape");
-    } catch(const cta::exception::Exception& e){
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("exceptionMessageValue", e.getMessageValue());
-      if (job.get()) {
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-              .add("reportURL", job->reportURL());
-      }
-      const std::string msg_error="An exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(cta::log::ERR, msg_error);
-      throw failedMigrationRecallResult(msg_error);
-    } catch(const std::exception& e){
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("exceptionWhat", e.what());
-      if (job.get()) {
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
-      }
-      const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
-      reportPacker.m_lc.log(cta::log::ERR, msg_error);
-      throw failedMigrationRecallResult(msg_error);
-    }
+    proceedJobsBatch(reportPacker,std::move(reportPacker.m_successfulArchiveJobs), reportPacker.m_lc);    
   } else {
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT,"Received a flush after an error: sending file errors to client");
   }
+}
+
+//------------------------------------------------------------------------------
+//ReportFlush::proceedJobsBatch
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportFlush::proceedJobsBatch(const MigrationReportPacker& reportPacker, std::queue<std::unique_ptr<cta::ArchiveJob> > successfulArchiveJobs, cta::log::LogContext &logContext){  
+  std::set<cta::catalogue::TapeFileWritten> tapeFilesWritten;
+  std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;  
+  std::unique_ptr<cta::ArchiveJob> job;
+  try{
+    while(!successfulArchiveJobs.empty()) {
+      // Get the next job to report and make sure we will not attempt to process it twice.
+      job = std::move(successfulArchiveJobs.front());
+      successfulArchiveJobs.pop();
+      if (!job.get()) continue;        
+      tapeFilesWritten.insert(job->validateAndGetTapeFileWritten());
+      validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
+      job.reset(nullptr);
+    }
+    
+    updateCatalogueWithTapeFilesWritten(reportPacker, tapeFilesWritten, logContext);
+    asyncUpdateBackendWithJobsSucceeded(validatedSuccessfulArchiveJobs);
+    checkAndAsyncReportCompletedJobs(validatedSuccessfulArchiveJobs, logContext);   
+           
+    logContext.log(cta::log::INFO,"Reported to the client that a batch of files was written on tape");    
+  } catch(const cta::exception::Exception& e){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionMessageValue", e.getMessageValue());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+            .add("reportURL", job->reportURL());
+    }
+    const std::string msg_error="An exception was caught trying to call reportMigrationResults";
+    logContext.log(cta::log::ERR, msg_error);
+    throw failedMigrationRecallResult(msg_error);
+  } catch(const std::exception& e){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionWhat", e.what());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+    }
+    const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
+    logContext.log(cta::log::ERR, msg_error);
+    throw failedMigrationRecallResult(msg_error);
+  }
+}
+
+//------------------------------------------------------------------------------
+//ReportFlush::asyncUpdateBackendWithJobsSucceeded
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportFlush::asyncUpdateBackendWithJobsSucceeded(
+  const std::list<std::unique_ptr<cta::ArchiveJob> > &validatedSuccessfulArchiveJobs) {
+  for (const auto &job: validatedSuccessfulArchiveJobs){
+    job->asyncSetJobSucceed();
+  }
+}
+
+//------------------------------------------------------------------------------
+//ReportFlush::checkAndAsyncReportCompletedJobs
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs(
+   std::list<std::unique_ptr<cta::ArchiveJob> > &validatedSuccessfulArchiveJobs,
+  cta::log::LogContext &logContext) {
+  std::list<std::unique_ptr <cta::ArchiveJob> > reportedArchiveJobs;
+  
+  for (auto &job: validatedSuccessfulArchiveJobs){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("fileId", job->archiveFile.archiveFileID)
+          .add("diskInstance", job->archiveFile.diskInstance)
+          .add("diskFileId", job->archiveFile.diskFileId)
+          .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+    logContext.log(cta::log::DEBUG,
+      "In MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs()"
+      " check for async backend update finished");
+    if(job->checkAndAsyncReportComplete()) { 
+      params.add("reportURL", job->reportURL());    
+      reportedArchiveJobs.emplace_back(std::move(job));
+      logContext.log(cta::log::INFO,"Sent to the client a full file archival");
+    } else {
+      logContext.log(cta::log::INFO, "Recorded the partial migration of a file");
+    }
+  }
+  
+  for (const auto &job: reportedArchiveJobs){
+    try {
+      job->waitForReporting(); // should not be a deadWait as soon as we have a timeout on the xroot query
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("reportURL", job->reportURL())
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+      logContext.log(cta::log::INFO,"Reported to the client a full file archival");
+    } catch(cta::exception::Exception &ex) {
+      cta::log::ScopedParamContainer params(logContext);
+        params.add("reportURL", job->reportURL());
+        params.add("errorMessage", ex.getMessage().str());
+        logContext.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
+    } catch(...) {
+      throw;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+//ReportFlush::updateCatalogueWithTapeFilesWritten
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportFlush::updateCatalogueWithTapeFilesWritten(
+        const MigrationReportPacker &reportPacker,
+        const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten,
+        cta::log::LogContext &logContext) {
+  reportPacker.m_archiveMount->updateCatalogueWithTapeFilesWritten(tapeFilesWritten);
+  cta::log::ScopedParamContainer params(logContext);
+  params.add("tapeFilesWritten", tapeFilesWritten.size());
+  logContext.log(cta::log::INFO,"Catalog updated for batch of jobs");    
 }
 
 //------------------------------------------------------------------------------
@@ -219,6 +343,7 @@ void MigrationReportPacker::ReportTapeFull::execute(MigrationReportPacker& repor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_continue=false;
+  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if(!reportPacker.m_errorHappened){
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -251,6 +376,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_continue=false;
+  reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
   if(reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -280,8 +406,20 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_errorHappened=true;
-  reportPacker.m_lc.log(cta::log::ERR,m_ex.getMessageValue());
-  m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()));
+  {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", m_ex.getMessageValue())
+          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
+  }
+  try {
+    m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()), reportPacker.m_lc);
+  } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -294,17 +432,31 @@ m_parent(parent) {
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void MigrationReportPacker::WorkerThread::run(){
-  m_parent.m_lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
+  // Create our own log context for the new thread.
+  cta::log::LogContext lc = m_parent.m_lc;
+  lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
   try{
     while(m_parent.m_continue) {
       std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
+      {
+        cta::log::ScopedParamContainer params(lc);
+        int demangleStatus;
+        char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+        if (!demangleStatus) {
+          params.add("typeId", demangledReportType);
+        } else {
+          params.add("typeId", typeid(*rep.get()).name());
+        }
+        free(demangledReportType);
+        lc.log(cta::log::DEBUG,"In MigrationReportPacker::WorkerThread::run(): Got a new report.");
+      }
       try{
         rep->execute(m_parent);
       }
       catch(const failedMigrationRecallResult& e){
         //here we catch a failed report MigrationResult. We try to close and if that fails too
         //we end up in the catch below
-        m_parent.m_lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
+        lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
         if (m_parent.m_watchdog) {
           m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
           m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -315,9 +467,9 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(const cta::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more. The exception is the following: " << e.getMessageValue();
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMSG", e.getMessageValue());
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -325,9 +477,16 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(const std::exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more. The exception is the following: " << e.what();
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMSG", e.what());
+    int demangleStatus;
+    char * demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
+    if (!demangleStatus) {
+      params.add("exceptionType", demangleExceptionType);
+    } else {
+      params.add("exceptionType", typeid(e).name());
+    }
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -335,9 +494,7 @@ void MigrationReportPacker::WorkerThread::run(){
   } catch(...){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    std::stringstream ssEx;
-    ssEx << "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.";
-    m_parent.m_lc.log(cta::log::ERR, ssEx.str());
+    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
@@ -348,6 +505,16 @@ void MigrationReportPacker::WorkerThread::run(){
   // TODO devise a more generic mechanism
   while(m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep (m_parent.m_fifo.pop());
+    cta::log::ScopedParamContainer params(lc);
+    int demangleStatus;
+    char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+    if (!demangleStatus) {
+      params.add("typeId", demangledReportType);
+    } else {
+      params.add("typeId", typeid(*rep.get()).name());
+    }
+    free(demangledReportType);
+    lc.log(cta::log::DEBUG,"In MigrationReportPacker::WorkerThread::run(): Draining leftover.");
   }
 }
 

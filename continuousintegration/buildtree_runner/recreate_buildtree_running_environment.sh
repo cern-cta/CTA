@@ -8,9 +8,11 @@ echo Wiping mhvtl and kubernetes library info...
 systemctl stop mhvtl || true
 sleep 2
 rm -rf /etc/mhvtl
+umount /opt/mhvtl || true
 rm -rf /opt/mhvtl
 rm -rf /opt/kubernetes/CTA/library
 mkdir -p /opt/mhvtl
+mount -t tmpfs -o size=512m tmpfs /opt/mhvtl
 
 ################################################################################
 ### puppet:///modules/hg_cta/00-cta-tape.rules
@@ -64,3 +66,10 @@ mkdir -pv /shared/logs
 sudo kubectl delete pv log || true
 sudo kubectl create -f ./log_PV.yaml
 sudo kubectl get persistentvolumes -l type=logs
+
+echo Generating the stg persistent volume
+rm -rf /shared/stg
+mkdir -pv /shared/stg
+sudo kubectl delete pv stg || true
+sudo kubectl create -f ./stg_PV.yaml
+sudo kubectl get persistentvolumes -l type=stg

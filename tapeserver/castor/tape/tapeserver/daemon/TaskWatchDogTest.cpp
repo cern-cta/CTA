@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "common/log/StringLogger.hpp"
+#include "scheduler/TapeMountDummy.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -43,9 +44,10 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
+  cta::TapeMountDummy dummyTapeMount;
 
   tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
-    stuckPeriod,dummyInitialProcess,"testTapeDrive",lc,pollPeriod);
+    stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
   
   watchdog.startThread();
   usleep(100000);
@@ -64,10 +66,11 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
+  cta::TapeMountDummy dummyTapeMount;
   
   // We will poll for a 
   tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod,stuckPeriod,
-    dummyInitialProcess,"testTapeDrive",  lc, pollPeriod);
+    dummyInitialProcess, dummyTapeMount, "testTapeDrive",  lc, pollPeriod);
   
   watchdog.startThread();
   watchdog.notifyBeginNewJob(64, 64);

@@ -34,7 +34,8 @@ public:
   AgentRegister(const std::string & name, Backend & os);
   void initialize();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
-  void garbageCollect(const std::string &presumedOwner) override;
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   void addAgent (std::string name);
   void removeAgent (const std::string  & name);

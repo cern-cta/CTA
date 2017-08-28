@@ -145,10 +145,10 @@ size_t Logger::determineMaxMsgLen() {
   // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
 
   // Check that the size of messages falls within acceptable limits
-  if((msgSize >= DEFAULT_SYSLOG_MSGLEN) && (msgSize <= LOG_MAX_LINELEN)) {
+  if((msgSize >= LOG_MIN_MSGLEN) && (msgSize <= LOG_MAX_LINELEN)) {
     return msgSize;
   } else {
-    return DEFAULT_SYSLOG_MSGLEN;
+    return LOG_MIN_MSGLEN;
   }
 }
 
