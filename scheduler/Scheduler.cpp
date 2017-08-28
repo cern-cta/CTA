@@ -567,8 +567,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool)
-            .add("mountType", common::dataStructures::toString(m->type))
+      params.add("tapepool", m->tapePool);
+      if ( m->type == common::dataStructures::MountType::Retrieve) {
+        params.add("VID", m->vid);
+      }
+      params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
             .add("bytesQueued", m->bytesQueued)
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
@@ -584,8 +587,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool)
-            .add("mountType", common::dataStructures::toString(m->type))
+      params.add("tapepool", m->tapePool);
+      if ( m->type == common::dataStructures::MountType::Retrieve) {
+        params.add("VID", m->vid);
+      }
+      params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
             .add("bytesQueued", m->bytesQueued)
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
