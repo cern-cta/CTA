@@ -454,9 +454,9 @@ namespace drive {
     
     /**
      * Query the drive for the maximum number and size of User Data Segments (UDS)
-     * @return udsLimitsPage_t class. A pair of the above mentioned parameters
+     * @return udsLimits class. A pair of the above mentioned parameters
      */
-    virtual SCSI::Structures::RAO::udsLimitsPage_t getLimitUDS();
+    virtual SCSI::Structures::RAO::udsLimits getLimitUDS();
 
     /**
      * Query the drive for the Recommended Access Order (RAO)

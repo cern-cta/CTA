@@ -754,11 +754,12 @@ bool drive::DriveMHVTL::isEncryptionCapEnabled() {
   return false;
 }
 
-SCSI::Structures::RAO::udsLimitsPage_t drive::DriveGeneric::getLimitUDS() {
+SCSI::Structures::RAO::udsLimits drive::DriveGeneric::getLimitUDS() {
     SCSI::Structures::LinuxSGIO_t sgh;
     SCSI::Structures::RAO::recieveRAO_t cdb;
     SCSI::Structures::senseData_t<127> senseBuff;
-    unsigned char dataBuff[sizeof(SCSI::Structures::RAO::udsLimitsPage_t)];
+    SCSI::Structures::RAO::udsLimitsPage_t limitsSCSI;
+    SCSI::Structures::RAO::udsLimits lims;
 
     cdb.serviceAction = 0x1d;
     cdb.udsLimits = 1;
@@ -766,7 +767,7 @@ SCSI::Structures::RAO::udsLimitsPage_t drive::DriveGeneric::getLimitUDS() {
     
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
-    sgh.setDataBuffer(&dataBuff);
+    sgh.setDataBuffer(&limitsSCSI);
     sgh.dxfer_direction = SG_DXFER_FROM_DEV;
 
     /* Manage both system error and SCSI errors. */
@@ -775,10 +776,10 @@ SCSI::Structures::RAO::udsLimitsPage_t drive::DriveGeneric::getLimitUDS() {
             "Failed SG_IO ioctl in DriveGeneric::getLimitUDS");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::getLimitUDS");
 
-    SCSI::Structures::RAO::udsLimitsPage_t & limits =
-            *(SCSI::Structures::RAO::udsLimitsPage_t *) dataBuff;        
-   
-    return limits;
+    lims.maxSupported = SCSI::Structures::toU16(limitsSCSI.maxSupported);
+    lims.maxSize = SCSI::Structures::toU16(limitsSCSI.maxSize);
+
+    return lims;
 }
 
 void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
