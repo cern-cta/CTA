@@ -52,6 +52,9 @@ touch /var/log/cta/cta-frontend.log
 chmod a+w /var/log/cta/cta-frontend.log
 tail -F /var/log/cta/cta-frontend.log &
 
+echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
+echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
+
 echo "Launching frontend"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta
 
