@@ -514,8 +514,7 @@ namespace drive {
      * @param offset 
      * @param allocationLength
      */
-    virtual void receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                            int offset, int allocationLength);
+    virtual void receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files);
   };
 
   class DriveT10000 : public DriveGeneric {

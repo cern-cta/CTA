@@ -763,7 +763,7 @@ SCSI::Structures::RAO::udsLimits drive::DriveGeneric::getLimitUDS() {
 
     cdb.serviceAction = 0x1d;
     cdb.udsLimits = 1;
-    SCSI::Structures::setU32(cdb.allocationLength, SCSI::modeRAO::DEFAULT_RRAO_ALLOCATION);
+    SCSI::Structures::setU32(cdb.allocationLength, sizeof(SCSI::Structures::RAO::udsLimitsPage_t));
     
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
@@ -814,7 +814,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
-    sgh.setDataBuffer(dataBuff.get());
+    sgh.setDataBuffer(dataBuff.get(), real_params_len);
     sgh.dxfer_direction = SG_DXFER_TO_DEV;
 
     /* Manage both system error and SCSI errors. */
@@ -824,8 +824,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::requestRAO");
 }
 
-void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
-                                     int offset, int allocationLength) {
+void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims> &files) {
     SCSI::Structures::LinuxSGIO_t sgh;
     SCSI::Structures::RAO::recieveRAO_t cdb;
     SCSI::Structures::senseData_t<255> senseBuff;
@@ -840,12 +839,11 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
     cdb.udsLimits = 0;
     cdb.serviceAction = 0x1d;
 
-    SCSI::Structures::setU32(cdb.allocationLength, allocationLength);
-    SCSI::Structures::setU32(cdb.raoListOffset, offset);
+    SCSI::Structures::setU32(cdb.allocationLength, real_params_len);
 
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
-    sgh.setDataBuffer(dataBuff.get());
+    sgh.setDataBuffer(dataBuff.get(), real_params_len);
     sgh.dxfer_direction = SG_DXFER_FROM_DEV;
 
     /* Manage both system error and SCSI errors. */
@@ -874,7 +872,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
 void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
                                    int maxSupported) {
     generateRAO(files, maxSupported);
-    receiveRAO(files, 0, SCSI::modeRAO::DEFAULT_RRAO_ALLOCATION);
+    receiveRAO(files);
 }
 
 /**

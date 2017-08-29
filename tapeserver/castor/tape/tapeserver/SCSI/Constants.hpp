@@ -740,10 +740,6 @@ namespace SCSI {
    */
   const unsigned char controlDataProtectionModePageLengthAddition = 4; 
   
-  class modeRAO {
-  public:
-      static const uint16_t DEFAULT_RRAO_ALLOCATION = 64000;
-  };
 } // namespace SCSI
 } // namespace tape
 } // namespace castor

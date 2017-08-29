@@ -85,7 +85,16 @@ namespace SCSI {
       
       template <typename T>
       void setDataBuffer(T * dataBuff) { dxferp = dataBuff; dxfer_len = sizeof (T); }
-      
+
+      // If dataBuff is a pointer to a variable length array, sizeof will return
+      // the size of one element. This function allows to manually set the buffer size
+      template <typename T>
+      void setDataBuffer(T * dataBuff, unsigned int dataBuffSize)
+      {
+        dxferp = dataBuff;
+        dxfer_len = dataBuffSize;
+      }
+
       sg_io_hdr_t * operator & () { return (sg_io_hdr_t *) this; }
     };
     
