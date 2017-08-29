@@ -255,8 +255,7 @@ int XrdCtaFile::fctl(const int cmd, const char *args, XrdOucErrInfo &eInfo) {
 // FName
 //------------------------------------------------------------------------------
 const char* XrdCtaFile::FName() {
-  error.setErrInfo(ENOTSUP, "Not supported.");
-  return nullptr;
+  return "";
 }
 
 //------------------------------------------------------------------------------
