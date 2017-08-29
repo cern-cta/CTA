@@ -1258,9 +1258,9 @@ namespace SCSI {
 
        };
 
-       class udsDescriptor {
+       class udsDescriptor_t {
        public:
-         udsDescriptor() {
+         udsDescriptor_t() {
            zeroStruct(this);
            setU16(descriptorLength, 0x1e);
          }
@@ -1275,9 +1275,9 @@ namespace SCSI {
        /**
         * RAO list struct
         */
-       class raoList {
+       class raoList_t {
        public:
-         raoList() {
+         raoList_t() {
            zeroStruct(this);
          }
          unsigned char raoProcess      :3;
@@ -1290,7 +1290,7 @@ namespace SCSI {
 
          unsigned char raoDescriptorListLength[4];
 
-         udsDescriptor udsDescriptors[2000];
+         udsDescriptor_t udsDescriptors[1];
 
        };
 
@@ -1303,8 +1303,8 @@ namespace SCSI {
            zeroStruct(this);
          }
          unsigned char res[4];
-         unsigned char additionalData[4];
-         udsDescriptor userDataSegmentDescriptors[2000];
+         unsigned char udsListLength[4];
+         udsDescriptor_t udsDescriptors[1];
        };
        
        /**

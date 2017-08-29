@@ -790,7 +790,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
 
     int udSize = std::min((int) files.size(), maxSupported);
     
-    std::unique_ptr<SCSI::Structures::RAO::udsDescriptor[]>  ud (new SCSI::Structures::RAO::udsDescriptor[udSize]());
+    std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]>  ud (new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
     
     auto it = files.begin();
     for (int i = 0; i < udSize; ++i) {
@@ -801,18 +801,20 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     }
 
     SCSI::Structures::RAO::generateRAOParams_t params;
-    int real_params_len = sizeof(params) - (2000 - udSize) *
-                          sizeof(SCSI::Structures::RAO::udsDescriptor);
+    int real_params_len = sizeof(params) - (udSize - 1) *
+                          sizeof(SCSI::Structures::RAO::udsDescriptor_t);
+    std::unique_ptr<unsigned char[]>  dataBuff (new unsigned char[real_params_len]());
 
     cdb.serviceAction = 0x1d;
 
     SCSI::Structures::setU32(cdb.paramsListLength, real_params_len);
-    SCSI::Structures::setU32(params.additionalData, udSize * sizeof(*(ud.get())));
-    memcpy(&params.userDataSegmentDescriptors, ud.get(), udSize * sizeof(*(ud.get())));
+    SCSI::Structures::setU32(params.udsListLength, udSize * sizeof(SCSI::Structures::RAO::udsDescriptor_t));
+    memcpy(dataBuff.get(), &params, 8); // copy first 2 fields
+    memcpy(dataBuff.get() + 8, ud.get(), udSize * sizeof(SCSI::Structures::RAO::udsDescriptor_t));
     
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
-    sgh.setDataBuffer(&params);
+    sgh.setDataBuffer(dataBuff.get());
     sgh.dxfer_direction = SG_DXFER_TO_DEV;
 
     /* Manage both system error and SCSI errors. */
@@ -827,7 +829,13 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
     SCSI::Structures::LinuxSGIO_t sgh;
     SCSI::Structures::RAO::recieveRAO_t cdb;
     SCSI::Structures::senseData_t<255> senseBuff;
-    unsigned char dataBuff[sizeof(SCSI::Structures::RAO::raoList)];
+    SCSI::Structures::RAO::raoList_t *params;
+
+    int udSize = files.size();
+    int real_params_len = sizeof(SCSI::Structures::RAO::raoList_t) + (udSize - 1) *
+                          sizeof(SCSI::Structures::RAO::udsDescriptor_t);
+    std::unique_ptr<unsigned char[]>  dataBuff (new unsigned char[real_params_len]());
+    memset(dataBuff.get(), 0, real_params_len);
 
     cdb.udsLimits = 0;
     cdb.serviceAction = 0x1d;
@@ -837,7 +845,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
 
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
-    sgh.setDataBuffer(&dataBuff);
+    sgh.setDataBuffer(dataBuff.get());
     sgh.dxfer_direction = SG_DXFER_FROM_DEV;
 
     /* Manage both system error and SCSI errors. */
@@ -846,23 +854,26 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
             "Failed SG_IO ioctl in DriveGeneric::getRAO");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::getRAO");
 
-    SCSI::Structures::RAO::raoList & params =
-            *(SCSI::Structures::RAO::raoList *) dataBuff;
+    params = (SCSI::Structures::RAO::raoList_t *) dataBuff.get();
 
-    uint32_t desc_list_len = SCSI::Structures::toU32(params.raoDescriptorListLength);
-    for (uint32_t i = 0;i < desc_list_len / sizeof(SCSI::Structures::RAO::udsDescriptor);++i) {
+    files.clear();
+    uint32_t desc_list_len = SCSI::Structures::toU32(params->raoDescriptorListLength);
+    int files_no = desc_list_len / sizeof(SCSI::Structures::RAO::udsDescriptor_t);
+    SCSI::Structures::RAO::udsDescriptor_t *ud = params->udsDescriptors;
+    while (files_no > 0) {
         SCSI::Structures::RAO::blockLims bl;
-        strncpy((char*)bl.fseq, (char*)params.udsDescriptors[i].udsName, 10);
-        bl.begin = SCSI::Structures::toU64(params.udsDescriptors[i].beginLogicalObjID);
-        bl.end = SCSI::Structures::toU64(params.udsDescriptors[i].endLogicalObjID);
+        strncpy((char*)bl.fseq, (char*)ud->udsName, 10);
+        bl.begin = SCSI::Structures::toU64(ud->beginLogicalObjID);
+        bl.end = SCSI::Structures::toU64(ud->endLogicalObjID);
         files.emplace_back(bl);
+        ud++;
+        files_no--;
     }
 }
 
 void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files,
                                    int maxSupported) {
     generateRAO(files, maxSupported);
-    files.clear();
     receiveRAO(files, 0, SCSI::modeRAO::DEFAULT_RRAO_ALLOCATION);
 }
 
