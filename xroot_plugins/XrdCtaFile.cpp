@@ -686,6 +686,9 @@ std::string XrdCtaFile::xCom_admin() {
        << "\tch  --username/-u <user_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --username/-u <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -740,6 +743,9 @@ std::string XrdCtaFile::xCom_adminhost() {
        << "\tch  --name/-n <host_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <host_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -794,6 +800,9 @@ std::string XrdCtaFile::xCom_tapepool() {
        << "\tch  --name/-n <tapepool_name> [--partialtapesnumber/-p <number_of_partial_tapes>] [--encrypted/-e <\"true\" or \"false\">] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <tapepool_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -861,6 +870,9 @@ std::string XrdCtaFile::xCom_archiveroute() {
        << "\tch  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number> [--tapepool/-t <tapepool_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --instance/-i <instance_name> --storageclass/-s <storage_class_name> --copynb/-c <copy_number>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -926,6 +938,9 @@ std::string XrdCtaFile::xCom_logicallibrary() {
        << "\tch  --name/-n <logical_library_name> --comment/-m <\"comment\">" << std::endl
        << "\trm  --name/-n <logical_library_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -987,6 +1002,9 @@ std::string XrdCtaFile::xCom_tape() {
        << "\tlabel   --vid/-v <vid> [--force/-f <\"true\" or \"false\">] [--lbp/-l <\"true\" or \"false\">] [--tag/-t <tag_name>]" << std::endl
        << "Where" << std::endl
        << "\tencryption_key Is the name of the encryption key used to encrypt the tape" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1131,6 +1149,9 @@ std::string XrdCtaFile::xCom_storageclass() {
        << "\tch  --instance/-i <instance_name> --name/-n <storage_class_name> [--copynb/-c <number_of_tape_copies>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --instance/-i <instance_name> --name/-n <storage_class_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1199,6 +1220,9 @@ std::string XrdCtaFile::xCom_requestermountrule() {
        << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1263,6 +1287,9 @@ std::string XrdCtaFile::xCom_groupmountrule() {
        << "\tch  --instance/-i <instance_name> --name/-n <user_name> [--mountpolicy/-u <policy_name>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --instance/-i <instance_name> --name/-n <user_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1329,6 +1356,9 @@ std::string XrdCtaFile::xCom_mountpolicy() {
        << "\t   [--minretrieverequestage/--ra <minRequestAge>] [--maxdrivesallowed/-d <maxDrivesAllowed>] [--comment/-m <\"comment\">]" << std::endl
        << "\trm  --name/-n <mountpolicy_name>" << std::endl
        << "\tls  [--header/-h]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1415,6 +1445,9 @@ std::string XrdCtaFile::xCom_repack() {
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1518,6 +1551,9 @@ std::string XrdCtaFile::xCom_shrink() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sh/shrink --tapepool/-t <tapepool_name>" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
   checkOptions(help.str());
   m_scheduler->shrink(m_cliIdentity, tapepool.value());
@@ -1535,6 +1571,9 @@ std::string XrdCtaFile::xCom_verify() {
        << "\trm  --vid/-v <vid>" << std::endl
        << "\tls  [--header/-h] [--vid/-v <vid>]" << std::endl
        << "\terr --vid/-v <vid>" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1612,6 +1651,9 @@ std::string XrdCtaFile::xCom_archivefile() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " af/archivefile ls [--header/-h] [--id/-I <archive_file_id>] [--diskid/-d <disk_id>] [--copynb/-c <copy_no>] [--vid/-v <vid>] [--tapepool/-t <tapepool>] "
           "[--owner/-o <owner>] [--group/-g <group>] [--storageclass/-s <class>] [--path/-p <fullpath>] [--instance/-i <instance>] [--summary/-S] [--all/-a] (default gives error)" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1695,6 +1737,9 @@ std::string XrdCtaFile::xCom_test() {
        << "\tread  --drive/-d <drive_name> --vid/-v <vid> --firstfseq/-f <first_fseq> --lastfseq/-l <last_fseq> --checkchecksum/-c --output/-o <\"null\" or output_dir> [--tag/-t <tag_name>]" << std::endl
        << "\twrite --drive/-d <drive_name> --vid/-v <vid> --file/-f <filename> [--tag/-t <tag_name>]" << std::endl
        << "\twrite_auto --drive/-d <drive_name> --vid/-v <vid> --number/-n <number_of_files> --size/-s <file_size> --input/-i <\"zero\" or \"urandom\"> [--tag/-t <tag_name>]" << std::endl;  
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   if(m_requestTokens.size() < 3) {
     throw cta::exception::UserError(help.str());
   }
@@ -1799,6 +1844,9 @@ std::string XrdCtaFile::xCom_drive() {
        << "List the states for one or all drives"                                           << std::endl
        << "\tls [<drive_name>]"                                                             << std::endl;
        
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   // We should have at least one sub command. {"cta", "dr/drive", "up/down/ls"}.
   if (m_requestTokens.size() < 3)
     throw cta::exception::UserError(help.str());
@@ -1950,6 +1998,9 @@ std::string XrdCtaFile::xCom_listpendingarchives() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " lpa/listpendingarchives [--header/-h] [--tapepool/-t <tapepool_name>] [--extended/-x]" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
@@ -2005,6 +2056,7 @@ std::string XrdCtaFile::xCom_listpendingarchives() {
       cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
     }
   }
+  m_suppressOptionalOptionsWarning = true;
   return cmdlineOutput.str();
 }
 
@@ -2016,6 +2068,9 @@ std::string XrdCtaFile::xCom_listpendingretrieves() {
   std::stringstream help;
   log::LogContext lc(m_log);
   help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
@@ -2070,6 +2125,7 @@ std::string XrdCtaFile::xCom_listpendingretrieves() {
       cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
     }
   }
+  m_suppressOptionalOptionsWarning = true;
   return cmdlineOutput.str();
 }
 
@@ -2080,6 +2136,9 @@ std::string XrdCtaFile::xCom_showqueues() {
   std::stringstream cmdlineOutput;
   std::stringstream help;
   help << m_requestTokens.at(0) << " sq/showqueues [--header/-h]" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   log::LogContext lc(m_log);
   auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
@@ -2139,6 +2198,9 @@ std::string XrdCtaFile::xCom_archive() {
        << "\t--checksumvalue <checksum_value> --storageclass <storage_class> --diskfilepath <disk_filepath> --diskfileowner <disk_fileowner>" << std::endl
        << "\t--diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob> --reportURL <reportURL>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   optional<std::string> diskid = getOptionStringValue("", "--diskid", true, false);
@@ -2189,6 +2251,9 @@ std::string XrdCtaFile::xCom_retrieve() {
   help << m_requestTokens.at(0) << " r/retrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
@@ -2226,6 +2291,9 @@ std::string XrdCtaFile::xCom_deletearchive() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " da/deletearchive --user <user> --group <group> --id <CTA_ArchiveFileID>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
@@ -2253,6 +2321,9 @@ std::string XrdCtaFile::xCom_cancelretrieve() {
   help << m_requestTokens.at(0) << " cr/cancelretrieve --user <user> --group <group> --id <CTA_ArchiveFileID> --dsturl <dst_URL> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
@@ -2288,6 +2359,9 @@ std::string XrdCtaFile::xCom_updatefilestorageclass() {
   help << m_requestTokens.at(0) << " ufsc/updatefilestorageclass --user <user> --group <group> --id <CTA_ArchiveFileID> --storageclass <storage_class> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
@@ -2323,6 +2397,9 @@ std::string XrdCtaFile::xCom_updatefileinfo() {
   help << m_requestTokens.at(0) << " ufi/updatefileinfo --id <CTA_ArchiveFileID> --diskfilepath <disk_filepath>" << std::endl
        << "\t--diskfileowner <disk_fileowner> --diskfilegroup <disk_filegroup> --recoveryblob <recovery_blob>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<uint64_t> id = getOptionUint64Value("", "--id", true, false);
   optional<std::string> diskfilepath = getOptionStringValue("", "--diskfilepath", true, false);
   optional<std::string> diskfileowner = getOptionStringValue("", "--diskfileowner", true, false);
@@ -2349,6 +2426,9 @@ std::string XrdCtaFile::xCom_liststorageclass() {
   std::stringstream help;
   help << m_requestTokens.at(0) << " lsc/liststorageclass --user <user> --group <group>" << std::endl
        << "\tNote: apply the postfix \":base64\" to long option names whose values are base64 encoded" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
   optional<std::string> user = getOptionStringValue("", "--user", true, false);
   optional<std::string> group = getOptionStringValue("", "--group", true, false);
   checkOptions(help.str());
@@ -2400,6 +2480,8 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " retrieve/r"                                          << std::endl;
   help << programName << " updatefileinfo/ufi"                                  << std::endl;
   help << programName << " updatefilestorageclass/ufsc"                         << std::endl;
+  help << "" << std::endl;
+  help << "Option for printing command usage: " << programName << " command -?/--help" << std::endl;
   help << "" << std::endl;
   help << "Special option for running " << programName << " within the EOS worflow engine:" << std::endl;
   help << "" << std::endl;

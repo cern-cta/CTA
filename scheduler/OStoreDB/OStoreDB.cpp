@@ -776,6 +776,8 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
       ret.back().request.creationLog = osar.getEntryLog();
       ret.back().request.diskFileID = osar.getArchiveFile().diskFileId;
+      ret.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
+      ret.back().request.fileSize = osar.getArchiveFile().fileSize;
       ret.back().instanceName = osar.getArchiveFile().diskInstance;
       ret.back().request.requester = osar.getRequester();
       ret.back().request.srcURL = osar.getSrcURL();
