@@ -349,7 +349,8 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
     if (d.driveName == driveName) {
       auto schedulerDbTime = t.secs();
       log::ScopedParamContainer spc(lc);
-      spc.add("schedulerDbTime", schedulerDbTime);
+      spc.add("drive", driveName)
+         .add("schedulerDbTime", schedulerDbTime);
       lc.log(log::INFO, "In Scheduler::getDesiredDriveState(): success.");
       return d.desiredDriveState;
     }
@@ -360,15 +361,16 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &unitName, const bool up, const bool force, log::LogContext & lc) {
+void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const bool up, const bool force, log::LogContext & lc) {
   utils::Timer t;
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = up;
   desiredDriveState.forceDown = force;
-  m_db.setDesiredDriveState(unitName, desiredDriveState);
+  m_db.setDesiredDriveState(driveName, desiredDriveState);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("up", up?"up":"down")
+  spc.add("drive", driveName)
+     .add("up", up?"up":"down")
      .add("force", force?"yes":"no")
      .add("schedulerDbTime", schedulerDbTime);
    lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");   
@@ -383,7 +385,8 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   m_db.reportDriveStatus(driveInfo, type, status, time(NULL));
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("schedulerDbTime", schedulerDbTime);
+  spc.add("drive", driveInfo.driveName)
+     .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::reportDriveStatus(): success.");
 }
 
