@@ -14,6 +14,13 @@ priority=3
 gpgcheck=0
 enabled=1
 
+[cta-ci-ceph-luminous]
+name=CTA CI repo ceph-luminous cache to prevent automatic upgrade of branches with no ceph versionlock
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/ceph-luminous
+priority=3
+gpgcheck=0
+enabled=1
+
 [cta-ci-eos]
 name=CTA CI repo eos cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/eos/
