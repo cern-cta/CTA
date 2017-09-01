@@ -86,6 +86,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
+  lc.pushOrReplace(cta::log::Param("unitName", m_driveConfig.unitName));
   
   // 2a) Determine if we want to mount at all (for now)
   // This variable will allow us to see if we switched from down to up and start a
