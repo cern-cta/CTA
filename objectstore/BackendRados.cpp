@@ -109,7 +109,7 @@ bool BackendRados::exists(std::string name) {
 std::list<std::string> BackendRados::list() {
   std::list<std::string> ret;
   for (auto o=m_radosCtx.nobjects_begin(); o!=m_radosCtx.nobjects_end(); o++) {
-    ret.push_back(o->first);
+    ret.push_back(o->get_oid());
   }
   return ret;
 }
