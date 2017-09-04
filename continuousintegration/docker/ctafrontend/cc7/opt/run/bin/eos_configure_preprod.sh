@@ -1,7 +1,6 @@
 #!/bin/bash
 PREPROD_DIR=/eos/ctaeos/preprod
-#CTA_BIN=/usr/bin/cta
-CTA_BIN=/usr/bin/eoscta_stub
+CTA_BIN=/usr/bin/cta
 
 mkdir -p /var/eos/wfe/bash
 cp /opt/ci/ctaeos/var/eos/wfe/bash/* /var/eos/wfe/bash/

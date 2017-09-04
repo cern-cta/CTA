@@ -16,8 +16,7 @@ if test $# -ne 5; then
   exit ${EINVAL}
 fi
 
-#CTA_BIN=/usr/bin/cta
-CTA_BIN=/usr/bin/eoscta_stub
+CTA_BIN=/usr/bin/cta
 
 WF_TAG="$1"
 RUSERNAME="$2"
