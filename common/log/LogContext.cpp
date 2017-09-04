@@ -41,6 +41,17 @@ void LogContext::pushOrReplace(const Param& param) throw() {
   }
 }
 
+void LogContext::moveToTheEndIfPresent(const std::string& paramName) throw() {
+  ParamNameMatcher match(paramName);
+  std::list<Param>::iterator i = 
+      std::find_if(m_params.begin(), m_params.end(), match);
+  if (i != m_params.end()) {    
+    const Param param(paramName,i->getValue());
+    m_params.erase(i);
+    m_params.push_back(param);
+  }
+}
+
 void LogContext::erase(const std::string& paramName) throw() {
   ParamNameMatcher match(paramName);
   m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());

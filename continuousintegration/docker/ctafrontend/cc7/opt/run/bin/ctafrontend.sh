@@ -15,7 +15,7 @@ yes | cp -r /opt/ci/ctafrontend/etc /
 . /tmp/objectstore-rc.sh
 
 echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
-echo "Catalogue NumberOfConnections 1" >>/etc/cta/cta-frontend.conf
+echo "Catalogue NumberOfConnections 10" >>/etc/cta/cta-frontend.conf
 echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 
 
@@ -51,6 +51,9 @@ echo OK
 touch /var/log/cta/cta-frontend.log
 chmod a+w /var/log/cta/cta-frontend.log
 tail -F /var/log/cta/cta-frontend.log &
+
+echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
+echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
 
 echo "Launching frontend"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta

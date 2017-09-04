@@ -3,6 +3,7 @@
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
+DATA_SOURCE=/dev/urandom
 
 NB_PROCS=1
 NB_FILES=1
@@ -18,12 +19,12 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>]
 EOF
 exit 1
 }
 
-while getopts "d:e:n:s:p:v" o; do
+while getopts "d:e:n:s:p:vS:" o; do
     case "${o}" in
         e)
             EOSINSTANCE=${OPTARG}
@@ -42,6 +43,9 @@ while getopts "d:e:n:s:p:v" o; do
             ;;
         v)
             VERBOSE=1
+            ;;
+        S)
+            DATA_SOURCE=${OPTARG}
             ;;
         *)
             usage
@@ -82,7 +86,7 @@ eos root://${EOSINSTANCE} ls ${EOS_DIR} | egrep "${TEST_FILE_NAME_BASE}[0-9]+" |
 
 echo "Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
   echo "Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -135,7 +139,7 @@ grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --m
 
 # Wait for the copy to appear on disk
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
   echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1

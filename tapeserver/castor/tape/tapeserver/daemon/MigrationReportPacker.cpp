@@ -304,7 +304,8 @@ void MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs(
     try {
       job->waitForReporting(); // should not be a deadWait as soon as we have a timeout on the xroot query
       cta::log::ScopedParamContainer params(logContext);
-      params.add("reportURL", job->reportURL());
+      params.add("reportURL", job->reportURL())
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
       logContext.log(cta::log::INFO,"Reported to the client a full file archival");
     } catch(cta::exception::Exception &ex) {
       cta::log::ScopedParamContainer params(logContext);

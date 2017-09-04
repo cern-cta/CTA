@@ -8,7 +8,7 @@ yum-config-manager --enable eos-citrine-depend
 yum-config-manager --enable eos-citrine
 
 # Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo
+yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
@@ -98,6 +98,33 @@ for ((i=0;i<600;i++)); do
 done
 test -f /CANSTART && echo OK || exit 1
 
+# setting higher OS limits for EOS processes
+maxproc=$(ulimit -u)
+echo "Setting nproc for user daemon to ${maxproc}"
+cat >> /etc/security/limits.conf <<EOF
+daemon soft nproc ${maxproc}
+daemon hard nproc ${maxproc}
+EOF
+echo "Checking limits..."
+echo -n "nproc..."
+if [ "${maxproc}" -eq "$(sudo -u daemon bash -c 'ulimit -u')" ]; then
+  echo OK
+else
+  echo FAILED
+fi
+echo
+echo "Limits summary for user daemon:"
+sudo -u daemon bash -c 'ulimit -a'
+
+# Using jemalloc as specified in
+# it-puppet-module-eos:
+#  code/templates/etc_sysconfig_mgm.erb
+#  code/templates/etc_sysconfig_mgm_env.erb
+#  code/templates/etc_sysconfig_fst.erb
+#  code/templates/etc_sysconfig_fst_env.erb
+test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
+test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
+
 # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
@@ -155,7 +182,9 @@ test -f /CANSTART && echo OK || exit 1
   # enable eos workflow engine
   eos space config default space.wfe=on
   # set the thread-pool size of concurrently running workflows
-  eos space config default space.wfe.ntx=3
+  #eos space config default space.wfe.ntx=10
+  # set interval in which the WFE engine is running
+  #eos space config default space.wfe.interval=1
 
 # ATTENTION
 # for sss authorisation  unix has to be replaced by sss

@@ -189,10 +189,10 @@ public:
     const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const;
 
 
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs() const;
-  std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName) const;
-  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs() const;
-  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid) const;
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
+  std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
+  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid, log::LogContext &lc) const;
   
   /*============== Drive state management ====================================*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
@@ -227,7 +227,7 @@ public:
    * error encountered by the drive.
    */
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, 
-    cta::common::dataStructures::DriveStatus status);
+    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
 
   /**
    * Dumps the states of all drives for display

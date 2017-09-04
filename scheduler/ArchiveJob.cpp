@@ -52,8 +52,8 @@ void cta::ArchiveJob::asyncSetJobSucceed() {
 //------------------------------------------------------------------------------
 bool cta::ArchiveJob::checkAndAsyncReportComplete() {
   if (m_dbJob->checkSucceed()) {
-    std::unique_ptr<eos::DiskReporter> reporter(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
-    reporter->asyncReportArchiveFullyComplete();
+    m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
+    m_reporter->asyncReportArchiveFullyComplete();
     return true;
   }
   return false;

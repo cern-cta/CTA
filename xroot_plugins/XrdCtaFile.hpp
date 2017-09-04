@@ -362,7 +362,20 @@ protected:
    * Checks whether the user that issued the admin command is an authorized admin (throws an exception if it's not).
    */
   void authorizeAdmin();
-  
+
+  /**
+   * Changes state for the drives by a given regex.
+   *
+   * @param regex The regex to be used to match drive name.
+   * @param lc    The log context.
+   * @param cmdlineOutput The string stream to stream output.
+   * @param isMakeUp The desired state for the drives Up or Down.
+   * @param isForceSet The boolean value for force parameter.
+   */
+  void changeStateForDrivesByRegex(const std::string &regex,
+    log::LogContext &lc, std::stringstream &cmdlineOutput, const bool isMakeUp,
+    const bool isForceSet);
+
   /**
    * Returns the response string properly formatted in a table
    * 

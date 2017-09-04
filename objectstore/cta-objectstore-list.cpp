@@ -22,6 +22,7 @@
  * the path the backend store and exit
  */
 
+#include "common/Configuration.hpp"
 #include "BackendVFS.hpp"
 #include "BackendFactory.hpp"
 #include "RootEntry.hpp"
@@ -33,12 +34,12 @@ int main(int argc, char ** argv) {
   try {
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
-      be.reset(new cta::objectstore::BackendVFS);
-      
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));      
     } else if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
     } else {
-      throw std::runtime_error("Wrong number of arguments: expected 0 or 1");
+      throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
@@ -51,7 +52,7 @@ int main(int argc, char ** argv) {
       std::cout << *o << std::endl;
     }
   } catch (std::exception & e) {
-    std::cerr << "Failed to initialise the root entry in a new VFS backend store"
+    std::cerr << "Failed to list backend store: "
         << std::endl << e.what() << std::endl;
   }
 }

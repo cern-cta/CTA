@@ -24,6 +24,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/Timer.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include <list>
@@ -66,12 +67,20 @@ public:
     const common::dataStructures::ArchiveFile & getArchiveFile();
     const std::string & getSrcURL();
     const std::string & getArchiveReportURL();
+    struct TimingsReport {
+      double lockFetchTime = 0;
+      double processTime = 0;
+      double commitUnlockTime = 0;
+    };
+    TimingsReport getTimeingsReport();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     common::dataStructures::ArchiveFile m_archiveFile;
     std::string m_srcURL;
     std::string m_archiveReportURL;
+    utils::Timer m_timer;
+    TimingsReport m_timingReport;
   };
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);

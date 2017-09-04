@@ -433,7 +433,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // 7) Create the data transfer session
@@ -626,7 +626,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // 7) Create the data transfer session
@@ -829,7 +829,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // 7) Create the data transfer session
@@ -1003,7 +1003,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // 8) Create the data transfer session
@@ -1147,7 +1147,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // 8) Create the data transfer session
@@ -1274,7 +1274,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // Create the data transfer session
@@ -1416,7 +1416,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // Create the data transfer session
@@ -1552,7 +1552,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // Create the data transfer session
@@ -1702,7 +1702,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
   driveInfo.host=="host";
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down);
+  scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, true, false, logContext);
 
   // Create the data transfer session

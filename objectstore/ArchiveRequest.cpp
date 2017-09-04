@@ -408,6 +408,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
   ret->m_updaterCallback=
       [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
+        retRef.m_timingReport.lockFetchTime = retRef.m_timer.secs(utils::Timer::resetCounter);
         serializers::ObjectHeader oh;
         if (!oh.ParseFromString(in)) {
           // Use a the tolerant parser to assess the situation.
@@ -455,6 +456,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
             retRef.m_archiveReportURL = payload.archivereporturl();
             retRef.m_srcURL = payload.srcurl();
             oh.set_payload(payload.SerializePartialAsString());
+            retRef.m_timingReport.processTime = retRef.m_timer.secs(utils::Timer::resetCounter);
             return oh.SerializeAsString();
           }
         }
@@ -467,7 +469,13 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
 
 void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
   m_backendUpdater->wait();
+  m_timingReport.commitUnlockTime = m_timer.secs();
 }
+
+ArchiveRequest::AsyncJobOwnerUpdater::TimingsReport ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport() {
+  return m_timingReport;
+}
+
 
 const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
