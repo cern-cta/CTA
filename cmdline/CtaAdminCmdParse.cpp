@@ -22,7 +22,39 @@
 namespace cta {
 namespace admin {
 
-std::string CmdHelp::short_help() const {
+void Option::validateCmd(const AdminCmd &admincmd) const
+{
+   if(m_is_optional) return;
+
+   switch(m_type)
+   {
+      case Option::OPT_CMD:
+      case Option::OPT_STR:
+         for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
+            if(opt_it->key() == strOptions.at(m_lookup_key)) return;
+         }
+         break;
+
+      case Option::OPT_FLAG:
+      case Option::OPT_BOOL: 
+         for(auto opt_it = admincmd.option_bool().begin(); opt_it != admincmd.option_bool().end(); ++opt_it) {
+            if(opt_it->key() == boolOptions.at(m_lookup_key)) return;
+         }
+         break;
+
+      case Option::OPT_UINT:
+         for(auto opt_it = admincmd.option_uint64().begin(); opt_it != admincmd.option_uint64().end(); ++opt_it) {
+            if(opt_it->key() == uint64Options.at(m_lookup_key)) return;
+         }
+   }
+
+   throw std::runtime_error((m_type == Option::OPT_CMD ? m_help_txt : m_long_opt) + " is obligatory.");
+}
+
+
+
+std::string CmdHelp::short_help() const
+{
    std::string help = m_cmd_long + '/' + m_cmd_short;
    help.resize(25, ' ');
 
@@ -34,7 +66,8 @@ std::string CmdHelp::short_help() const {
 
 
 
-std::string CmdHelp::help() const {
+std::string CmdHelp::help() const
+{
    const int INDENT      = 4;
    const int WRAP_MARGIN = 80;
 
@@ -96,24 +129,6 @@ void validateCmd(const cta::admin::AdminCmd &admincmd)
       option_it->validateCmd(admincmd);
    }
 }
-#if 0
-      if(!option_it->is_optional())
-      {
-         switch(option_it->get_type())
-         {
-            case Option::OPT_CMD:
-            case Option::OPT_STR:
-               admincmd.option_str()
-
-            case Option::OPT_FLAG:
-            case Option::OPT_BOOL: 
-               admincmd.option_bool()
-
-            case Option::OPT_UINT:
-               admincmd.option_uint64()
-         }
-      }
-#endif
 
 }} // namespace cta::admin
 
