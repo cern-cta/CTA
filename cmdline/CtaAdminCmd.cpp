@@ -79,6 +79,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 void CtaAdminCmd::send() const
 {
    // Validate the Protocol Buffer
+   validateOptions(m_request.admincmd());
 
    // Send the Protocol Buffer
    XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());

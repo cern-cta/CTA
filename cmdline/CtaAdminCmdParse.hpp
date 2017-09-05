@@ -493,4 +493,11 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_VERIFY,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},
 };
 
+
+
+/*!
+ * Validate that all required command line options are present
+ */
+void validateOptions(const cta::admin::AdminCmd &admin_cmd);
+
 }} // namespace cta::admin
