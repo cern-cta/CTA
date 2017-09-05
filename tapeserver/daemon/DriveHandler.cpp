@@ -1105,6 +1105,38 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   params.add("unitName", m_configLine.unitName);
   m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
+
+  std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
+    SessionState::Running, SessionState::Unmounting };
+  if ( statesRequiringCleaner.count(m_sessionState)) {
+    if (!m_sessionVid.size()) {
+      m_processManager.logContext().log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do not nothing.");
+    } else {
+      log::ScopedParamContainer params(m_processManager.logContext());
+      params.add("VID", m_sessionVid)
+            .add("unitName", m_configLine.unitName)
+            .add("sessionState", session::toString(m_sessionState))
+            .add("sessionType", session::toString(m_sessionType));
+      m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
+      // Capabilities management.
+      cta::server::ProcessCap capUtils;
+      // Mounting management.
+      cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
+      castor::tape::System::realWrapper sWrapper;
+      castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
+        capUtils,
+        mediaChangerFacade,
+        m_processManager.logContext().logger(),
+        m_configLine,
+        sWrapper,
+        m_sessionVid,
+        true,
+        60,
+        "");
+      cleanerSession.execute();
+    }
+  }
+
   m_sessionState = SessionState::Shutdown;
   m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
   m_processingStatus.forkRequested = false;
