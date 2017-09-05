@@ -30,18 +30,10 @@ echo "Configuring database"
 
 echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
 
-# cta-tapserverd setup 
-# to be drop later
-  echo "${tpconfig}" > /etc/castor/TPCONFIG
-  echo "TapeServer ObjectStoreBackendPath $OBJECTSTOREURL" >/etc/castor/castor.conf
-  echo "TapeServer BufSize 5242880" >>/etc/castor/castor.conf
-  echo "TapeServer NbBufs 10" >>/etc/castor/castor.conf
-  echo "TapeServer EOSRemoteHostAndPort ${eoshost}" >>/etc/castor/castor.conf
-
 # cta-taped setup
   echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
   echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta-taped.conf 
-  echo "general ObjectStoreURL $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
+  echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 
 

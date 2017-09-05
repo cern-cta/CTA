@@ -53,7 +53,7 @@ TEST(cta_taped, InvocationTests) {
     unitTests::TempFile ctaConf, tpConfig;
     ctaConf.stringAppend(
       "#A good enough configuration file for taped\n"
-      "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
+      "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
       "general FileCatalogURL sqliteFileCatalog:///tmp/dir2\n"
       "taped BufferCount 1\n"
       "taped TpConfigPath ");

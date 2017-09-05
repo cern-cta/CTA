@@ -57,7 +57,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   // The central storage access configuration
-  ret.objectStoreURL.setFromConfigurationFile(cf, generalConfigPath);
+  ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
@@ -82,7 +82,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdNoBlockMoveMaxSecs.log(log);
   ret.wdScheduleMaxSecs.log(log);
   
-  ret.objectStoreURL.log(log);
+  ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
   
   for (auto & i:ret.driveConfigs) {

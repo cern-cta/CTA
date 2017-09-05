@@ -105,8 +105,8 @@ struct TapedConfiguration {
   // The central storage access configuration
   //---------------------------------------------------------------------------- 
   /// URL of the object store.
-  SourcedParameter<std::string> objectStoreURL{
-    "general", "ObjectStoreURL"};
+  SourcedParameter<std::string> backendPath{
+    "ObjectStore", "BackendPath"};
   /// Path to the file catalog config file
   SourcedParameter<std::string> fileCatalogConfigFile{
     "general", "FileCatalogConfigFile", "/etc/cta/cta_catalogue_db.conf", "Compile time default"};

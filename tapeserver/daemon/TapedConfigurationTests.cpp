@@ -32,7 +32,7 @@ TEST(cta_Daemon, TapedConfiguration) {
   );
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
-  "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
+  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
   "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
   "taped BufferCount 1\n"
   "taped TpConfigPath ");
@@ -42,8 +42,8 @@ TEST(cta_Daemon, TapedConfiguration) {
       cta::tape::daemon::SourcedParameter<uint64_t>::MandatoryParameterNotDefined);
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
-  ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
+  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+  ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
 }
@@ -53,7 +53,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   TempFile completeConfFile;
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
-  "general ObjectStoreURL vfsObjectStore:///tmp/dir\n"
+  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
   "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
   "taped ArchiveFetchBytesFiles 1,2\n"
   "taped ArchiveFlushBytesFiles              3 , 4 \n"
@@ -68,8 +68,8 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.objectStoreURL.source());
-  ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.objectStoreURL.value());
+  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+  ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);

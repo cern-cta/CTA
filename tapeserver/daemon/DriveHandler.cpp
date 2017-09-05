@@ -868,12 +868,12 @@ int DriveHandler::runChild() {
   auto &lc=m_processManager.logContext();
   {
     log::ScopedParamContainer params(lc);
-    params.add("objectStoreURL", m_tapedConfig.objectStoreURL.value());
+    params.add("backendPath", m_tapedConfig.backendPath.value());
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
   }
   // Before anything, we need to check we have access to the scheduler's central storages.
   std::unique_ptr<cta::objectstore::Backend> backend(
-    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.objectStoreURL.value()).release());
+    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value()).release());
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
   try {
