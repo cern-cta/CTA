@@ -79,5 +79,38 @@ std::string CmdHelp::help() const {
    return help;
 }
 
+
+
+void validateCommand(const cta::admin::AdminCmd &admincmd)
+{
+   // Get the option list for this command
+   auto option_list_it = cmdOptions.find(cmd_key_t{ admincmd.cmd(), admincmd.subcmd() });
+
+   if(option_list_it == cmdOptions.end()) {
+      throw std::runtime_error("Invalid command/subcommand");
+   }
+
+   // Verify that the compulsory options exist
+   for(auto option_it = option_list_it->second.begin(); option_it != option_list_it->second.end(); ++option_it)
+   {
+      if(!option_it->is_optional())
+      {
+         switch(option_it->get_type())
+         {
+            case Option::OPT_CMD:
+            case Option::OPT_STR:
+               admincmd.option_str()
+
+            case Option::OPT_FLAG:
+            case Option::OPT_BOOL: 
+               admincmd.option_bool()
+
+            case Option::OPT_UINT:
+               admincmd.option_uint64()
+         }
+      }
+   }
+}
+
 }} // namespace cta::admin
 

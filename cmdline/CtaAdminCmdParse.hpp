@@ -71,14 +71,19 @@ public:
    option_t get_type() const { return m_type; }
 
    /*!
+    * Return the number of parameters expected after this option
+    */
+   int num_params() const { return m_type == OPT_CMD || m_type == OPT_FLAG ? 0 : 1; }
+
+   /*!
     * Return the key for this option
     */
    const std::string &get_key() const { return m_lookup_key; }
 
    /*!
-    * Return the number of parameters expected after this option
+    * Return whether the option is optional
     */
-   int num_params() const { return m_type == OPT_CMD || m_type == OPT_FLAG ? 0 : 1; }
+   bool is_optional() const { return m_is_optional; }
 
    /*!
     * Return per-option help string
@@ -497,7 +502,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
 
 /*!
  * Validate that all required command line options are present
+ *
+ * Throws a std::runtime_error if the command is invalid
  */
-void validateOptions(const cta::admin::AdminCmd &admin_cmd);
+void validateCommand(const cta::admin::AdminCmd &admincmd);
 
 }} // namespace cta::admin
