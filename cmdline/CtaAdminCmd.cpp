@@ -81,7 +81,7 @@ void CtaAdminCmd::send() const
    // Validate the Protocol Buffer
 
    try {
-      validateCommand(m_request.admincmd());
+      validateCmd(m_request.admincmd());
    } catch(std::runtime_error &ex) {
       throwUsage(ex.what());
    }

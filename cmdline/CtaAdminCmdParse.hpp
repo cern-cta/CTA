@@ -86,6 +86,13 @@ public:
    bool is_optional() const { return m_is_optional; }
 
    /*!
+    * Validate the command protocol buffer against this option
+    *
+    * If the option is compulsory and is not present, throws an exception
+    */
+   void validateCmd(const cta::admin::AdminCmd &admincmd) const;
+
+   /*!
     * Return per-option help string
     */
    std::string help() const {
@@ -505,6 +512,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  *
  * Throws a std::runtime_error if the command is invalid
  */
-void validateCommand(const cta::admin::AdminCmd &admincmd);
+void validateCmd(const cta::admin::AdminCmd &admincmd);
 
 }} // namespace cta::admin

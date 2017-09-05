@@ -81,7 +81,7 @@ std::string CmdHelp::help() const {
 
 
 
-void validateCommand(const cta::admin::AdminCmd &admincmd)
+void validateCmd(const cta::admin::AdminCmd &admincmd)
 {
    // Get the option list for this command
    auto option_list_it = cmdOptions.find(cmd_key_t{ admincmd.cmd(), admincmd.subcmd() });
@@ -90,9 +90,13 @@ void validateCommand(const cta::admin::AdminCmd &admincmd)
       throw std::runtime_error("Invalid command/subcommand");
    }
 
-   // Verify that the compulsory options exist
+   // Iterate through the options and verify that they exist in the protocol buffer
    for(auto option_it = option_list_it->second.begin(); option_it != option_list_it->second.end(); ++option_it)
    {
+      option_it->validateCmd(admincmd);
+   }
+}
+#if 0
       if(!option_it->is_optional())
       {
          switch(option_it->get_type())
@@ -109,8 +113,7 @@ void validateCommand(const cta::admin::AdminCmd &admincmd)
                admincmd.option_uint64()
          }
       }
-   }
-}
+#endif
 
 }} // namespace cta::admin
 
