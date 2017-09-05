@@ -208,6 +208,8 @@ eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
+# configure ssi directory separately
+/opt/run/bin/eos_configure_ssi.sh
 
 echo "### ctaeos mgm ready ###"
 
