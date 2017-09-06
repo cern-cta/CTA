@@ -28,7 +28,6 @@
 /*!
  * XrdSsiProviderClient is instantiated and managed by the SSI library
  */
-
 extern XrdSsiProvider *XrdSsiProviderClient;
 
 
@@ -45,14 +44,11 @@ const unsigned int DefaultServerTimeout      = 15;         //!< Maximum XRootD r
 /*!
  * Convenience object to manage the XRootD SSI service on the client side
  */
-
 template <typename RequestType, typename MetadataType, typename AlertType>
 class ServiceClientSide
 {
 public:
-   ServiceClientSide() = delete;
-
-   ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
+   ServiceClientSide(const std::string &endpoint, const std::string &resource,
                      unsigned int response_bufsize = DefaultResponseBufferSize,
                      unsigned int server_tmo       = DefaultServerTimeout);
 
@@ -76,12 +72,10 @@ private:
 /*!
  * Client-side Service Constructor
  */
-
 template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::
-ServiceClientSide(const std::string &hostname, unsigned int port, const std::string &resource,
-                          unsigned int response_bufsize,
-                          unsigned int server_tmo) :
+ServiceClientSide(const std::string &endpoint, const std::string &resource,
+                  unsigned int response_bufsize, unsigned int server_tmo) :
    m_resource(resource),
    m_response_bufsize(response_bufsize),
    m_server_tmo(server_tmo)
@@ -112,7 +106,7 @@ ServiceClientSide(const std::string &hostname, unsigned int port, const std::str
 
    // Get the Service pointer
 
-   if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, hostname + ":" + std::to_string(port))))
+   if(!(m_server_ptr = XrdSsiProviderClient->GetService(eInfo, endpoint)))
    {
       throw XrdSsiException(eInfo);
    }
@@ -123,7 +117,6 @@ ServiceClientSide(const std::string &hostname, unsigned int port, const std::str
 /*!
  * Client-side Service Destructor
  */
-
 template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 {
@@ -146,7 +139,6 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 /*!
  * Send a Request to the Service
  */
-
 template <typename RequestType, typename MetadataType, typename AlertType>
 MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
 {
