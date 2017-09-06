@@ -33,7 +33,7 @@ include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
 #
 
 # Get some extra debug messages on stdout
-#add_definitions(-DXRDSSI_DEBUG)
+add_definitions(-DXRDSSI_DEBUG)
 
 find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
@@ -48,7 +48,7 @@ install(TARGETS eoscta_stub DESTINATION usr/bin)
 # cta_admin is a drop-in replacement for "cta <admin_command>"
 #
 
-add_executable(cta_admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp)
+add_executable(cta_admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp Configuration.cpp)
 target_link_libraries(cta_admin XrdCtaMessages XrdSsi-4 XrdSsiLib)
 install(TARGETS cta_admin DESTINATION usr/bin)
 

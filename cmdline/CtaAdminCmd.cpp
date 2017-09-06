@@ -20,8 +20,28 @@
 #include <sstream>
 #include <iostream>
 
+#include "cmdline/Configuration.hpp"
 #include "CtaAdminCmd.hpp"
 #include "XrdSsiPbDebug.hpp"
+
+
+
+// Define XRootD SSI Alert message callback
+namespace XrdSsiPb {
+
+/*!
+ * Alert callback.
+ *
+ * Defines how Alert messages should be logged
+ */
+template<>
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
+{
+   std::cout << "AlertCallback():" << std::endl;
+   OutputJsonString(std::cout, &alert);
+}
+
+} // namespace XrdSsiPb
 
 
 
@@ -94,8 +114,36 @@ void CtaAdminCmd::send() const
       throwUsage(ex.what());
    }
 
-   // Send the Protocol Buffer
+#ifdef XRDSSI_DEBUG
    XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());
+#endif
+
+   // Get socket address of CTA Frontend endpoint
+
+   cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
+   std::string endpoint = cliConf.getFrontendHostAndPort();
+
+   // Obtain a Service Provider
+
+   std::string resource("/ctafrontend");
+
+   XrdSsiPbServiceType cta_service(endpoint, resource);
+
+   // Send the Request to the Service and get a Response
+
+   cta::xrd::Response response = cta_service.Send(m_request);
+
+   // Handle responses
+
+   switch(response.type())
+   {
+      using namespace cta::xrd;
+
+      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl; break;
+      case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
+      case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
+      default:                            throw XrdSsiPb::PbException("Invalid response type.");
+   }
 }
 
 
@@ -227,6 +275,9 @@ int main(int argc, const char **argv)
 
       // Send the protocol buffer
       cmd.send();
+
+      // Delete all global objects allocated by libprotobuf
+      google::protobuf::ShutdownProtobufLibrary();
 
       return 0;
    } catch (XrdSsiPb::PbException &ex) {

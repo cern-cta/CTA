@@ -18,6 +18,10 @@
 
 #pragma once
 
+#ifdef XRDSSI_DEBUG
+#include <iostream>
+#endif
+
 #include <XrdSsi/XrdSsiProvider.hh>
 #include <XrdSsi/XrdSsiService.hh>
 #include "XrdSsiPbException.hpp"
