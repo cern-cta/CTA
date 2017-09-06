@@ -114,6 +114,16 @@ private:
 
 
 
+/*
+ * Type aliases
+ */
+using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
+using subcmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
+using cmd_key_t      = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
+using cmd_val_t      = std::vector<Option>;
+
+
+
 /*!
  * Command/subcommand help class
  */
@@ -128,7 +138,7 @@ public:
       m_cmd_long(cmd_long),
       m_cmd_short(cmd_short),
       m_sub_cmd(sub_cmd),
-      m_help_txt(help_txt) {}
+      m_help_extra(help_txt) {}
 
    /*!
     * Can we parse subcommands for this command?
@@ -146,22 +156,22 @@ public:
    std::string help() const;
 
 private:
+   /*!
+    * Called by help() to add command line options to the full help text
+    */
+   void add_options(std::string &cmd_line, cmd_key_t &key, unsigned int indent) const;
+
+   const unsigned int INDENT      = 4;      //!< Number of spaces to indent when listing subcommands
+   const unsigned int WRAP_MARGIN = 80;     //!< Number of characters per line before word wrapping
+
    std::string              m_cmd_long;     //!< Command string (long version)
    std::string              m_cmd_short;    //!< Command string (short version)
    std::vector<std::string> m_sub_cmd;      //!< Subcommands which are valid for this command, in the
                                             //!< same order that they should be displayed in the help
-   std::string              m_help_txt;     //!< Optional extra help text above the options
+   std::string              m_help_extra;   //!< Optional extra help text above the options
+   mutable std::string      m_help_full;    //!< The full text of the detailed help for this command.
+                                            //!< Mutable because it is lazy evaluated when we call help()
 };
-
-
-
-/*
- * Type aliases
- */
-using cmdLookup_t    = std::map<std::string, AdminCmd::Cmd>;
-using subcmdLookup_t = std::map<std::string, AdminCmd::SubCmd>;
-using cmd_key_t      = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
-using cmd_val_t      = std::vector<Option>;
 
 
 

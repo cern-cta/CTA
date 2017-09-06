@@ -48,6 +48,12 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
       admincmd.set_cmd(cmd_it->second);
    }
 
+   // Help is a special subcommand which suppresses errors and prints usage
+   
+   if(argc > 2 && std::string(argv[2]) == "help") {
+      throwUsage();
+   }
+
    // Parse the subcommand
 
    bool has_subcommand = cmdHelp.at(admincmd.cmd()).has_subcommand();
@@ -56,8 +62,10 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    {
       subcmdLookup_t::const_iterator subcmd_it;
 
-      if(argc < 3 || (subcmd_it = subcmdLookup.find(argv[2])) == subcmdLookup.end()) {
-         throwUsage();
+      if(argc < 3) {
+         throwUsage("Missing subcommand");
+      } else if((subcmd_it = subcmdLookup.find(argv[2])) == subcmdLookup.end()) {
+         throwUsage(std::string("Invalid subcommand: ") + argv[2]);
       } else {
          admincmd.set_subcmd(subcmd_it->second);
       }
@@ -68,7 +76,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    auto option_list_it = cmdOptions.find(cmd_key_t{ admincmd.cmd(), admincmd.subcmd() });
 
    if(option_list_it == cmdOptions.end()) {
-      throwUsage();
+      throwUsage(std::string("Invalid subcommand: ") + argv[2]);
    }
 
    parseOptions(has_subcommand ? 3 : 2, argc, argv, option_list_it->second);
@@ -178,9 +186,10 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    {
       // Command has not been set: show generic help
 
-      help << "CTA Admin commands:"                                         << std::endl << std::endl
-           << "For each command there is a short version and a long one. "
-           << "Subcommands (add/ch/ls/rm/etc.) do not have short versions." << std::endl << std::endl;
+      help << "CTA Admin commands:"                                                          << std::endl << std::endl
+           << "For each command there is a short version and a long one. Subcommands (add/ch/ls/rm/etc.)" << std::endl
+           << "do not have short versions. For detailed help on the options of each subcommand, type:"    << std::endl
+           << "  " << m_execname << " <command> help"                                        << std::endl << std::endl;
 
       for(auto cmd_it = cmdHelp.begin(); cmd_it != cmdHelp.end(); ++cmd_it)
       {

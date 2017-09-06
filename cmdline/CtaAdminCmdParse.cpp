@@ -68,24 +68,28 @@ std::string CmdHelp::short_help() const
 
 std::string CmdHelp::help() const
 {
-   const int INDENT      = 4;
-   const int WRAP_MARGIN = 80;
+   // As we lazy evaluate the full help text, normally the help text will not be set when we call this method
+   if(m_help_full != "") return m_help_full;
 
-   std::string help = m_cmd_short + '/' + m_cmd_long;
+   std::string cmd_line = m_cmd_short + '/' + m_cmd_long;
 
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
-      help += (sc_it == m_sub_cmd.begin() ? ' ' : '/') + *sc_it;
+      cmd_line += (sc_it == m_sub_cmd.begin() ? ' ' : '/') + *sc_it;
    }
+
+   // Print main command options if there are any
+   auto key = cmd_key_t{ cmdLookup.at(m_cmd_short), AdminCmd::SUBCMD_NONE };
+   add_options(cmd_line, key, INDENT);
 
    // Find the length of the longest subcommand (if there is one)
    auto max_sub_cmd = std::max_element(m_sub_cmd.begin(), m_sub_cmd.end(),
                       [](std::string const& lhs, std::string const& rhs) { return lhs.size() < rhs.size(); });
 
    // Terminate with a colon if there are subcommands to follow
-   help += (max_sub_cmd != m_sub_cmd.end()) ? ":\n" : "\n";
+   m_help_full += (max_sub_cmd != m_sub_cmd.end()) ? ":\n" : "\n";
 
-   // Optional additional help
-   help += m_help_txt;
+   // Add optional additional help
+   m_help_full += m_help_extra;
 
    // Per-subcommand help
    for(auto sc_it = m_sub_cmd.begin(); sc_it != m_sub_cmd.end(); ++sc_it) {
@@ -94,22 +98,32 @@ std::string CmdHelp::help() const
       cmd_line.resize(INDENT + max_sub_cmd->size(), ' ');
 
       auto key = cmd_key_t{ cmdLookup.at(m_cmd_short), subcmdLookup.at(*sc_it) };
-      auto options = cmdOptions.at(key);
-
-      for(auto op_it = options.begin(); op_it != options.end(); ++op_it)
-      {
-         if(cmd_line.size() + op_it->help().size() > WRAP_MARGIN)
-         {
-             help += cmd_line + '\n';
-             cmd_line = std::string(INDENT + max_sub_cmd->size(), ' ');
-         }
-
-         cmd_line += op_it->help();
-      }
-      help += cmd_line + '\n';
+      add_options(cmd_line, key, INDENT + max_sub_cmd->size());
+      m_help_full += '\n';
    }
 
-   return help;
+   return m_help_full;
+}
+
+
+
+void CmdHelp::add_options(std::string &cmd_line, cmd_key_t &key, unsigned int indent) const
+{
+   auto options = cmdOptions.find(key);
+
+   if(options == cmdOptions.end()) return;
+
+   for(auto op_it = options->second.begin(); op_it != options->second.end(); ++op_it)
+   {
+      if(cmd_line.size() + op_it->help().size() > WRAP_MARGIN)
+      {
+         m_help_full += cmd_line + '\n';
+         cmd_line = std::string(indent, ' ');
+      }
+
+      cmd_line += op_it->help();
+   }
+   m_help_full += cmd_line;
 }
 
 
