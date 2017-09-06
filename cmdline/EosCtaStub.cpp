@@ -23,6 +23,7 @@
 #include <cryptopp/base64.h>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "cmdline/Configuration.hpp"
 #include "xroot_plugins/messages/CtaFrontendApi.hpp"
 
 #include "XrdSsiPbDebug.hpp"
@@ -277,9 +278,13 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
       XrdSsiPb::OutputJsonString(myout, &notification);
    }
 
+   // Get socket address of CTA Frontend endpoint
+
+   cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
+   std::string endpoint = cliConf.getFrontendHostAndPort();
+
    // Obtain a Service Provider
 
-   std::string endpoint("localhost:10956");
    std::string resource("/ctafrontend");
 
    XrdSsiPbServiceType cta_service(endpoint, resource);
