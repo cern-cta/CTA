@@ -53,7 +53,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 
 //! Usage exception
 
-const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|delete [options] [--stderr]");
+const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|deletearchive [options] [--stderr]");
 
 
 
@@ -198,7 +198,7 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
    {
       notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
    }
-   else if(wf_command == "delete")
+   else if(wf_command == "deletearchive")
    {
       notification.mutable_wf()->set_event(cta::eos::Workflow::DELETE);
    }
