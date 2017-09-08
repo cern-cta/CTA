@@ -62,7 +62,8 @@ cta_tagged_rpm:
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc-c++ cmake make rpm-build
-    - yum -y install yum-plugin-priorities
+    - yum -y install yum-plugin-priorities yum-plugin-versionlock
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_tagged_rpm
     - cd build_tagged_rpm
