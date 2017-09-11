@@ -16,9 +16,10 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "XrdSsiPbException.hpp"
+#include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
+#include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdSsiCtaRequestMessage.hpp"
 
 
@@ -45,6 +46,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 void RequestMessage::processAdminCmd(const cta::admin::AdminCmd &admin_cmd, cta::xrd::Response &response)
 {
+    // Validate the Protocol Buffer
+    validateCmd(admin_cmd);
 }
 
 
