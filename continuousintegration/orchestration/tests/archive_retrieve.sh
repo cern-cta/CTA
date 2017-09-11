@@ -37,13 +37,16 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/client_ar.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
 
+NB_FILES=1000
+FILE_SIZE_KB=150
+
 echo
 echo "Launching client_ar.sh on client pod"
-echo " Archiving 100 file of 1kB each"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
+echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
+echo " Archiving files: xrdcp as user1"
+echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n 1000 -s 150 -p 10 -v || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 10 -d /eos/ctaeos/preprod -v || exit 1
 
 exit 0
