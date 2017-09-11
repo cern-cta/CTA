@@ -22,7 +22,7 @@
 #include <algorithm>
 
 namespace cta { namespace objectstore {
-const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 5;
+const size_t GarbageCollector::c_maxWatchedAgentsPerGC = 25;
 
 GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue): 
   m_objectStore(os), m_catalogue(catalogue), m_ourAgentReference(agentReference), m_agentRegister(os) {
