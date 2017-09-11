@@ -165,19 +165,13 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    ReleaseRequestBuffer();
 
-   // Serialize the Metadata
+   // Serialize and send the Metadata
 
    if(!m_metadata.SerializeToString(&m_metadata_str))
    {
       throw PbException("m_metadata.SerializeToString() failed");
    }
-
-   // Send the Metadata
-
-   if(m_metadata_str.size() > 0)
-   {
-      SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
-   }
+   SetMetadata(m_metadata_str.c_str(), m_metadata_str.size());
 
    // Send the Response
 

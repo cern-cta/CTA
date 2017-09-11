@@ -21,6 +21,10 @@
 #include <future>
 #include <XrdSsi/XrdSsiRequest.hh>
 
+#ifdef XRDSSI_DEBUG
+#include <XrdSsiPbDebug.hpp>
+#endif
+
 namespace XrdSsiPb {
 
 /*!
@@ -226,21 +230,21 @@ void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
 {
    int metadata_len;
    const char *metadata_buffer = GetMetadata(metadata_len);
+#ifdef XRDSSI_DEBUG
+   std::cout << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes of data" << std::endl;
+#endif
 
-   if(metadata_len > 0)
+   // Deserialize the metadata
+
+   MetadataType metadata;
+
+   if(metadata.ParseFromArray(metadata_buffer, metadata_len))
    {
-      // Deserialize the metadata
-
-      MetadataType metadata;
-
-      if(metadata.ParseFromArray(metadata_buffer, metadata_len))
-      {
-         m_promise.set_value(metadata);
-      }
-      else
-      {
-         throw PbException("metadata.ParseFromArray() failed");
-      }
+      m_promise.set_value(metadata);
+   }
+   else
+   {
+      throw PbException("metadata.ParseFromArray() failed");
    }
 }
 

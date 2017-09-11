@@ -37,7 +37,7 @@ set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_subdirectory(messages)
 
-add_definitions(-DXRDSSI_DEBUG)
+#add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp)
