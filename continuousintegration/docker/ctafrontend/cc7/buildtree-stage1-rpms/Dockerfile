@@ -67,6 +67,7 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       xrootd-server \
       oracle-instantclient12.1-basic \
       oracle-instantclient12.1-meta \
+      oracle-instantclient12.1-sqlplus \
       cgdb \
       less \
       psmisc \
