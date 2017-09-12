@@ -9,22 +9,26 @@ NB_PROCS=1
 NB_FILES=1
 FILE_KB_SIZE=1
 VERBOSE=0
+REMOVE=0
 TAILPID=''
 
 
 die() {
   echo "$@" 1>&2
+  test -z $TAILPID || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>]
+Usage: $0 [-n <nb_files>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
+  -v		Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
+  -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
 EOF
 exit 1
 }
 
-while getopts "d:e:n:s:p:vS:" o; do
+while getopts "d:e:n:s:p:vS:r" o; do
     case "${o}" in
         e)
             EOSINSTANCE=${OPTARG}
@@ -46,6 +50,9 @@ while getopts "d:e:n:s:p:vS:" o; do
             ;;
         S)
             DATA_SOURCE=${OPTARG}
+            ;;
+        r)
+            REMOVE=1
             ;;
         *)
             usage
@@ -146,7 +153,7 @@ while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
-    echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
+    echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
     break
   fi
 
@@ -170,15 +177,83 @@ done
 RETRIEVED=$(grep -c retrieved$ ${STATUS_FILE})
 
 echo "###"
+echo "${RETRIEVED}/${TAPEONLY} retrieved files"
+echo "###"
+
+LASTCOUNT=${RETRIEVED}
+
+DELETED=0
+if [[ $REMOVE == 1 ]]; then
+  echo "Waiting for files to be removed from EOS and tapes"
+  . /root/client_helper.sh 
+  admin_kdestroy &>/dev/null
+  admin_kinit &>/dev/null
+  if $(admin_cta admin ls &>/dev/null); then
+    echo "Got cta admin privileges, can proceed with the workflow"
+  else
+    # displays what failed and fail
+    admin_cta admin ls
+    die "Could not launch cta command."
+  fi
+  # recount the files on tape as the workflows may have gone further...
+  INITIALFILESONTAPE=$(admin_cta archivefile ls  --all | grep ${EOS_DIR} | wc -l)
+  echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
+  eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  EOSRMPID=$!
+  # wait a bit in case eos prematurely fails...
+  sleep 1
+  if test ! -d /proc/${EOSRMPID}; then
+    # eos rm process died, get its status
+    wait ${EOSRMPID}
+    test $? -ne 0 && die "Could not launch eos rm"
+  fi
+  # Now we can start to do something...
+  # deleted files are the ones that made it on tape minus the ones that are still on tapes...
+  echo "Waiting for files to be deleted:"
+  SECONDS_PASSED=0
+  WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/10))
+  FILESONTAPE=${INITIALFILESONTAPE}
+  while test 0 != ${FILESONTAPE}; do
+    echo "Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
+    sleep 1
+    let SECONDS_PASSED=SECONDS_PASSED+1
+
+    if test ${SECONDS_PASSED} == ${WAIT_FOR_DELETED_FILE_TIMEOUT}; then
+      echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
+      break
+    fi
+    FILESONTAPE=$(admin_cta archivefile ls --all | grep ${EOS_DIR} | wc -l)
+    DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
+    echo "${DELETED}/${INITIALFILESONTAPE} deleted"
+  done
+
+  # kill eos rm command that may run in the background
+  kill ${EOSRMPID} &> /dev/null
+
+  # As we deleted the directory we may have deleted more files than the ones we retrieved
+  # therefore we need to take the smallest of the 2 values to decide if the system test was
+  # successful or not
+  if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
+    LASTCOUNT=${DELETED}
+    echo "Some files have not been deleted:"
+    admin_cta archivefile ls --all | grep ${EOS_DIR}
+  else
+    echo "All files have been deleted"
+    LASTCOUNT=${RETRIEVED}
+  fi
+fi
+
+
+echo "###"
 echo Results:
-echo "RETRIEVED/TAPEONLY/ARCHIVED/NB_FILES"
-echo "${RETRIEVED}/${TAPEONLY}/${ARCHIVED}/${NB_FILES}"
+echo "REMOVED/RETRIEVED/TAPEONLY/ARCHIVED/NB_FILES"
+echo "${DELETED}/${RETRIEVED}/${TAPEONLY}/${ARCHIVED}/${NB_FILES}"
 echo "###"
 
 # stop tail
-test -z $TAILPID || kill ${TAILPID}
+test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-test ${RETRIEVED} = ${NB_FILES} && exit 0
+test ${LASTCOUNT} -eq ${NB_FILES} && exit 0
 
 echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
 grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
