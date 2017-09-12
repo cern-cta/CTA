@@ -211,7 +211,7 @@ if [[ $REMOVE == 1 ]]; then
   # deleted files are the ones that made it on tape minus the ones that are still on tapes...
   echo "Waiting for files to be deleted:"
   SECONDS_PASSED=0
-  WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/10))
+  WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))
   FILESONTAPE=${INITIALFILESONTAPE}
   while test 0 != ${FILESONTAPE}; do
     echo "Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
@@ -222,7 +222,13 @@ if [[ $REMOVE == 1 ]]; then
       echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
       break
     fi
-    FILESONTAPE=$(admin_cta archivefile ls --all | grep ${EOS_DIR} | wc -l)
+    FILESONTAPE=$(admin_cta archivefile ls --all > >(grep ${EOS_DIR} | wc -l) 2> >(cat > /tmp/ctaerr))
+    if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
+      echo "cta COMMAND FAILED!!"
+      echo "ERROR CTA ERROR MESSAGE:"
+      cat /tmp/ctaerr
+      break
+    fi
     DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
     echo "${DELETED}/${INITIALFILESONTAPE} deleted"
   done

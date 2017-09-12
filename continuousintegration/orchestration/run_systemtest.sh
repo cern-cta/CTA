@@ -16,11 +16,13 @@ keepnamespace=0
 useoracle=0
 # by default use VFS objectstore
 useceph=0
+# default systemtest timeout is 1 hour
+SYSTEMTEST_TIMEOUT=3600
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-k] [-O] [-D]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-t <systemtest timeout in seconds>] [-k] [-O] [-D]
 
 Options:
   -k    keep namespace after systemtest_script run if successful
@@ -38,7 +40,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:kDO" o; do
+while getopts "n:s:p:t:kDO" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -49,6 +51,9 @@ while getopts "n:s:p:kDO" o; do
             ;;
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
+            ;;
+        t)
+            SYSTEMTEST_TIMEOUT=${OPTARG}
             ;;
         k)
             keepnamespace=1
@@ -143,9 +148,9 @@ function execute_log {
 # create instance timeout after 10 minutes
 execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 600
 
-# launch system test and timeout after 40 minutes (2400 seconds)
+# launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds
 cd $(dirname ${systemtest_script})
-execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" 2400
+execute_log "./$(basename ${systemtest_script}) -n ${namespace} 2>&1" "${log_dir}/systests.sh.log" ${SYSTEMTEST_TIMEOUT}
 cd ${orchestration_dir}
 
 # delete instance?
