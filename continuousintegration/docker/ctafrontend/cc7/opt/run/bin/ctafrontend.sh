@@ -58,5 +58,7 @@ echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
 echo "Launching frontend"
 runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta
 
-echo "frontend died"
+echo "ctafrontend died"
+echo "analysing core file if any"
+/opt/run/bin/ctafrontend_bt.sh
 sleep infinity
