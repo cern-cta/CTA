@@ -31,10 +31,10 @@ fi
 # Display all backtraces if any
 ###
 
-for backtracefile in $(kubectl -n ssi exec ctacli -- bash -c 'find /mnt/logs | grep core | grep bt$'); do
+for backtracefile in $(kubectl --namespace ${instance} exec ctacli -- bash -c 'find /mnt/logs | grep core | grep bt$'); do
   pod=$(echo ${backtracefile} | cut -d/ -f4)
   echo "Found backtrace in pod ${pod}:"
-  kubectl -n ssi exec ctacli -- cat ${backtracefile}
+  kubectl --namespace ${instance} exec ctacli -- cat ${backtracefile}
 done
 
 ###
