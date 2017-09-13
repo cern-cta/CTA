@@ -26,16 +26,6 @@ using XrdSsiPb::PbException;
 
 namespace cta { namespace xrd {
 
-// Static const member to map workflow events to methods
-
-const std::map<cta::eos::Workflow_EventType, RequestMessage::notification_event_ptr_t> RequestMessage::notificationEvent = {
-   { cta::eos::Workflow::CLOSEW,  &RequestMessage::processCLOSEW  },
-   { cta::eos::Workflow::PREPARE, &RequestMessage::processPREPARE },
-   { cta::eos::Workflow::DELETE,  &RequestMessage::processDELETE  },
-};
-
-
-
 void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response)
 {
    // Branch on the Request payload type
@@ -51,11 +41,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 //cmd_key_t cmd{ admin_cmd.cmd(), admin_cmd.subcmd() };
          break;
 
-      case Request::kNotification: {
-         auto notificationFunctionPtr = notificationEvent.at(request.notification().wf().event());
-         (this->*notificationFunctionPtr)(request.notification(), response);
-         break;
-      }
+      case Request::kNotification:
+         switch(request.notification().wf().event()) {
+            using namespace cta::eos;
+
+            case Workflow::CLOSEW:  processCLOSEW (request.notification(), response); break;
+            case Workflow::PREPARE: processPREPARE(request.notification(), response); break;
+            case Workflow::DELETE:  processDELETE (request.notification(), response); break;
+            default:
+               throw PbException("Workflow event " +
+                     Workflow_EventType_Name(request.notification().wf().event()) +
+                     " is not implemented.");
+         }
 
       case Request::REQUEST_NOT_SET:
          throw PbException("Request message has not been set.");

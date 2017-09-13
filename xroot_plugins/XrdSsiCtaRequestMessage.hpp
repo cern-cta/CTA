@@ -52,14 +52,10 @@ private:
     * @param[out]    response        Response message to return to EOS
     */
    typedef void notification_event_t(const cta::eos::Notification &notification, cta::xrd::Response &response);
-   typedef void (RequestMessage::*notification_event_ptr_t)(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
-   // Map Workflow Events to methods
-   static const std::map<cta::eos::Workflow_EventType, notification_event_ptr_t> notificationEvent;
-
-   notification_event_t processCLOSEW;      //!< Archive file event
-   notification_event_t processPREPARE;     //!< Retrieve file event
-   notification_event_t processDELETE;      //!< Delete file event
+   notification_event_t processCLOSEW;       //!< Archive file event
+   notification_event_t processPREPARE;      //!< Retrieve file event
+   notification_event_t processDELETE;       //!< Delete file event
 
    // Member variables
 
