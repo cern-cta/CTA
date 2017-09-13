@@ -46,50 +46,26 @@ public:
 
 private:
    /*!
-    * Process the Admin Command message type
-    *
-    * @param[in]     admincmd        Admin command from the cta admin cli
-    * @param[out]    response        Response message
-    */
-   void processAdminCmd(const cta::admin::AdminCmd &admin_cmd, cta::xrd::Response &response);
-
-   /*!
-    * Process the EOS WFE Notification message type
-    *
-    * @param[in]     notification    Notification request message from EOS WFE
-    * @param[out]    response        Response message
-    */
-   void processNotification(const cta::eos::Notification &notification, cta::xrd::Response &response);
-
-   /*!
-    * Process the CLOSEW workflow event
+    * Process Notification events
     *
     * @param[in]     notification    Notification request message from EOS WFE
     * @param[out]    response        Response message to return to EOS
     */
-   void processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   typedef void notification_event_t(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   typedef void (RequestMessage::*notification_event_ptr_t)(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
-   /*!
-    * Process the PREPARE workflow event
-    *
-    * @param[in]     notification    Notification request message from EOS WFE
-    * @param[out]    response        Response message to return to EOS
-    */
-   void processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   // Map Workflow Events to methods
+   static const std::map<cta::eos::Workflow_EventType, notification_event_ptr_t> notificationEvent;
 
-   /*!
-    * Process the DELETE workflow event
-    *
-    * @param[in]     notification    Notification request message from EOS WFE
-    * @param[out]    response        Response message to return to EOS
-    */
-   void processDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response);
+   notification_event_t processCLOSEW;      //!< Archive file event
+   notification_event_t processPREPARE;     //!< Retrieve file event
+   notification_event_t processDELETE;      //!< Delete file event
 
    // Member variables
 
-   cta::Scheduler       &m_scheduler;        //< Reference to CTA Scheduler
-   cta::log::LogContext  m_lc;               //< CTA Log Context
-   const char * const    m_instance_name;    //< Instance name = XRootD client name
+   cta::Scheduler       &m_scheduler;        //!< Reference to CTA Scheduler
+   cta::log::LogContext  m_lc;               //!< CTA Log Context
+   const char * const    m_instance_name;    //!< Instance name = XRootD client name
 };
 
 }} // namespace cta::xrd

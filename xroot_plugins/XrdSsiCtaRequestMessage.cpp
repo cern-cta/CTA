@@ -26,6 +26,16 @@ using XrdSsiPb::PbException;
 
 namespace cta { namespace xrd {
 
+// Static const member to map workflow events to methods
+
+const std::map<cta::eos::Workflow_EventType, RequestMessage::notification_event_ptr_t> RequestMessage::notificationEvent = {
+   { cta::eos::Workflow::CLOSEW,  &RequestMessage::processCLOSEW  },
+   { cta::eos::Workflow::PREPARE, &RequestMessage::processPREPARE },
+   { cta::eos::Workflow::DELETE,  &RequestMessage::processDELETE  },
+};
+
+
+
 void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response)
 {
    // Branch on the Request payload type
@@ -34,36 +44,25 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
    {
       using namespace cta::xrd;
 
-      case Request::kAdmincmd:       processAdminCmd(request.admincmd(), response); break;
-      case Request::kNotification:   processNotification(request.notification(), response); break;
-      case Request::REQUEST_NOT_SET: throw PbException("Request message has not been set.");
-      default:                       throw PbException("Unrecognized Request message. "
-                                           "Possible Protocol Buffer version mismatch between client and server.");
-   }
-}
+      case Request::kAdmincmd:
+         // Validate the Protocol Buffer
+         validateCmd(request.admincmd());
+// Map the <Cmd, SubCmd> to a method
+//cmd_key_t cmd{ admin_cmd.cmd(), admin_cmd.subcmd() };
+         break;
 
+      case Request::kNotification: {
+         auto notificationFunctionPtr = notificationEvent.at(request.notification().wf().event());
+         (this->*notificationFunctionPtr)(request.notification(), response);
+         break;
+      }
 
-
-void RequestMessage::processAdminCmd(const cta::admin::AdminCmd &admin_cmd, cta::xrd::Response &response)
-{
-    // Validate the Protocol Buffer
-    validateCmd(admin_cmd);
-}
-
-
-
-void RequestMessage::processNotification(const cta::eos::Notification &notification, cta::xrd::Response &response)
-{
-   switch(notification.wf().event())
-   {
-      using namespace cta::eos;
-
-      case Workflow::CLOSEW:  processCLOSEW (notification, response); break;
-      case Workflow::PREPARE: processPREPARE(notification, response); break;
-      case Workflow::DELETE:  processDELETE (notification, response); break;
+      case Request::REQUEST_NOT_SET:
+         throw PbException("Request message has not been set.");
 
       default:
-         throw PbException("Workflow Event type " + std::to_string(notification.wf().event()) + " is not supported.");
+         throw PbException("Unrecognized Request message. "
+                           "Possible Protocol Buffer version mismatch between client and server.");
    }
 }
 
