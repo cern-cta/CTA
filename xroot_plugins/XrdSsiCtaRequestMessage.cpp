@@ -26,6 +26,13 @@ using XrdSsiPb::PbException;
 
 namespace cta { namespace xrd {
 
+// Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
+constexpr inline unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
+   return (cmd << 16) + subcmd;
+}
+
+
+
 void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response)
 {
    // Branch on the Request payload type
@@ -37,8 +44,79 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       case Request::kAdmincmd:
          // Validate the Protocol Buffer
          validateCmd(request.admincmd());
-// Map the <Cmd, SubCmd> to a method
-//cmd_key_t cmd{ admin_cmd.cmd(), admin_cmd.subcmd() };
+
+         // Map the <Cmd, SubCmd> to a method
+         switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
+            using namespace cta::admin;
+
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP): 
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN): 
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE): 
+            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE): 
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR): 
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_SHRINK, AdminCmd::SUBCMD_NONE): 
+            case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE): 
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL): 
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH): 
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_READ): 
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE): 
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE_AUTO): 
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ADD): 
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ERR): 
+
+            default:
+               throw PbException("Admin command pair <" +
+                     AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
+                     AdminCmd_SubCmd_Name(request.admincmd().subcmd()) +
+                     "> is not implemented.");
+         }
          break;
 
       case Request::kNotification:
@@ -48,11 +126,13 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case Workflow::CLOSEW:  processCLOSEW (request.notification(), response); break;
             case Workflow::PREPARE: processPREPARE(request.notification(), response); break;
             case Workflow::DELETE:  processDELETE (request.notification(), response); break;
+
             default:
                throw PbException("Workflow event " +
                      Workflow_EventType_Name(request.notification().wf().event()) +
                      " is not implemented.");
          }
+         break;
 
       case Request::REQUEST_NOT_SET:
          throw PbException("Request message has not been set.");
