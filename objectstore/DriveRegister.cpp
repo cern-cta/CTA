@@ -124,9 +124,11 @@ std::list<cta::common::dataStructures::DriveState> DriveRegister::getAllDrivesSt
     ret.back().unmountStartTime            = d.unmountstarttime();
     ret.back().drainingStartTime           = d.drainingstarttime();
     ret.back().downOrUpStartTime           = d.downorupstarttime();
+    ret.back().probeStartTime              = d.probestarttime();
     ret.back().cleanupStartTime            = d.cleanupstarttime();
     ret.back().lastUpdateTime              = d.lastupdatetime();
     ret.back().startStartTime              = d.startstarttime();
+    ret.back().shutdownTime                = d.shutdowntime();
     ret.back().mountType                   = (common::dataStructures::MountType) d.mounttype();
     ret.back().driveStatus                 = (common::dataStructures::DriveStatus) d.drivestatus();
     ret.back().desiredDriveState.up        = d.desiredup();
@@ -164,9 +166,11 @@ cta::common::dataStructures::DriveState DriveRegister::getDriveState(const std::
       ret.unmountStartTime            = d.unmountstarttime();
       ret.drainingStartTime           = d.drainingstarttime();
       ret.downOrUpStartTime           = d.downorupstarttime();
+      ret.probeStartTime              = d.probestarttime();
       ret.cleanupStartTime            = d.cleanupstarttime();
       ret.lastUpdateTime              = d.lastupdatetime();
       ret.startStartTime              = d.startstarttime();
+      ret.shutdownTime                = d.shutdowntime();
       ret.mountType                   = (common::dataStructures::MountType) d.mounttype();
       ret.driveStatus                 = (common::dataStructures::DriveStatus) d.drivestatus();
       ret.desiredDriveState.up        = d.desiredup();
@@ -210,9 +214,11 @@ update:
   ds->set_unmountstarttime(driveState.unmountStartTime);
   ds->set_drainingstarttime(driveState.drainingStartTime);
   ds->set_downorupstarttime(driveState.downOrUpStartTime);
+  ds->set_probestarttime(driveState.probeStartTime);
   ds->set_cleanupstarttime(driveState.cleanupStartTime);
   ds->set_lastupdatetime(driveState.lastUpdateTime);
   ds->set_startstarttime(driveState.startStartTime);
+  ds->set_shutdowntime(driveState.shutdownTime);
   ds->set_mounttype((uint32_t)driveState.mountType);
   ds->set_drivestatus((uint32_t)driveState.driveStatus);
   ds->set_desiredup(driveState.desiredDriveState.up);

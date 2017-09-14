@@ -115,6 +115,7 @@ schedule:
   // down to up. In such a case, we will run an empty 
   if (downUpTransition) {
     downUpTransition = false;
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Probing, lc);
     castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
     lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
     if (!emptyDriveProbe.driveIsEmpty()) {

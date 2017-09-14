@@ -1897,6 +1897,8 @@ std::string XrdCtaFile::xCom_drive() {
           currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
           // print the time spent in the current state
           switch(ds.driveStatus) {
+          case cta::common::dataStructures::DriveStatus::Probing:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.probeStartTime)));
           case cta::common::dataStructures::DriveStatus::Up:
           case cta::common::dataStructures::DriveStatus::Down:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.downOrUpStartTime)));
@@ -1922,6 +1924,8 @@ std::string XrdCtaFile::xCom_drive() {
           case cta::common::dataStructures::DriveStatus::DrainingToDisk:
             currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.drainingStartTime)));
             break;
+          case cta::common::dataStructures::DriveStatus::Shutdown:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.shutdownTime)));
           case cta::common::dataStructures::DriveStatus::Unknown:
             currentRow.push_back("-");
             break;

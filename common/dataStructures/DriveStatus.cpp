@@ -26,6 +26,8 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
       return "Down";
     case cta::common::dataStructures::DriveStatus::Up:
       return "Free";
+    case cta::common::dataStructures::DriveStatus::Probing:
+      return "Probe";
     case cta::common::dataStructures::DriveStatus::Starting:
       return "Start";
     case cta::common::dataStructures::DriveStatus::Mounting:
@@ -40,6 +42,8 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
       return "DrainToDisk";
     case cta::common::dataStructures::DriveStatus::CleaningUp:
       return "CleanUp";
+    case cta::common::dataStructures::DriveStatus::Shutdown:
+      return "Shutdown";
     case cta::common::dataStructures::DriveStatus::Unknown:
       return "Unknown";
     default:

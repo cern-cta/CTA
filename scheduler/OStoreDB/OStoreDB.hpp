@@ -329,6 +329,9 @@ private:
   /** Helper for setting a drive state in a specific case. Going UP means drive is ready. It will be instead marked as
    * down if this is the requested state */
   static void setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+ 
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveProbing(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveStarting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
@@ -351,6 +354,8 @@ private:
   /** Helper for setting a drive state in a specific case */
   static void setDriveCleaningUp(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
   
+  /** Helper for setting a drive state in a specific case */
+  static void setDriveShutdown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs); 
 private:
   objectstore::Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;

@@ -266,9 +266,11 @@ message DriveState {
   optional uint64 unmountstarttime = 5011;
   optional uint64 drainingstarttime = 5012;
   optional uint64 downorupstarttime = 5013;
+  optional uint64 probestarttime = 5026;
   optional uint64 cleanupstarttime = 5014;
   optional uint64 lastupdatetime = 5015;
   optional uint64 startstarttime = 5016;
+  optional uint64 shutdowntime = 5027;
   required uint32 mounttype = 5017;
   required uint32 drivestatus = 5018;
   required bool desiredUp = 5019;

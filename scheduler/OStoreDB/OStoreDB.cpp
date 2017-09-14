@@ -1116,9 +1116,11 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
     driveState.unmountStartTime = 0;
     driveState.drainingStartTime = 0;
     driveState.downOrUpStartTime = 0;
+    driveState.probeStartTime = 0;
     driveState.cleanupStartTime = 0;
     driveState.lastUpdateTime = 0;
     driveState.startStartTime = 0;
+    driveState.shutdownTime=0;
     driveState.desiredDriveState.up = (inputs.status==DriveStatus::Down?false:true);
     driveState.desiredDriveState.forceDown = false;
     driveState.currentTapePool = "";
@@ -1134,6 +1136,9 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
       break;
     case DriveStatus::Up:
       setDriveUpOrMaybeDown(driveState, inputs);
+      break;
+    case DriveStatus::Probing:
+      setDriveProbing(driveState, inputs);
       break;
     case DriveStatus::Starting:
       setDriveStarting(driveState, inputs);
@@ -1155,6 +1160,9 @@ void OStoreDB::updateDriveStatusInRegitry(objectstore::DriveRegister& dr,
       break;
     case DriveStatus::CleaningUp:
       setDriveCleaningUp(driveState, inputs);
+      break;
+    case DriveStatus::Shutdown:
+      setDriveShutdown(driveState, inputs);
       break;
     default:
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
@@ -1219,7 +1227,9 @@ void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=inputs.reportTime;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=common::dataStructures::MountType::NoMount;
   driveState.driveStatus=common::dataStructures::DriveStatus::Down;
@@ -1257,10 +1267,45 @@ void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveS
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=inputs.reportTime;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=common::dataStructures::MountType::NoMount;
   driveState.driveStatus=targetStatus;
+  driveState.currentVid="";
+  driveState.currentTapePool="";
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveUp()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveProbing(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  using common::dataStructures::DriveStatus;
+  // If we were already up (or down), then we only update the last update time.
+  if (driveState.driveStatus == inputs.status) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset.
+  driveState.sessionId=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=inputs.reportTime;
+  driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=common::dataStructures::MountType::NoMount;
+  driveState.driveStatus=inputs.status;
   driveState.currentVid="";
   driveState.currentTapePool="";
 }
@@ -1288,7 +1333,9 @@ void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.startStartTime=inputs.reportTime;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
@@ -1320,7 +1367,9 @@ void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::Mounting;
@@ -1352,7 +1401,9 @@ void OStoreDB::setDriveTransferring(common::dataStructures::DriveState & driveSt
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::Transferring;
@@ -1382,7 +1433,9 @@ void OStoreDB::setDriveUnloading(common::dataStructures::DriveState & driveState
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::Unloading;
@@ -1412,7 +1465,9 @@ void OStoreDB::setDriveUnmounting(common::dataStructures::DriveState & driveStat
   driveState.unmountStartTime=inputs.reportTime;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::Unmounting;
@@ -1442,7 +1497,9 @@ void OStoreDB::setDriveDrainingToDisk(common::dataStructures::DriveState & drive
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=inputs.reportTime;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=0;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::DrainingToDisk;
@@ -1472,7 +1529,9 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   driveState.unmountStartTime=0;
   driveState.drainingStartTime=0;
   driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
   driveState.cleanupStartTime=inputs.reportTime;
+  driveState.shutdownTime=0;
   driveState.lastUpdateTime=inputs.reportTime;
   driveState.mountType=inputs.mountType;
   driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
@@ -1480,6 +1539,37 @@ void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveStat
   driveState.currentTapePool=inputs.tapepool;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::setDriveShutdown()
+//------------------------------------------------------------------------------
+void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
+  const ReportDriveStatusInputs & inputs) {
+  if (driveState.driveStatus == common::dataStructures::DriveStatus::Shutdown) {
+    driveState.lastUpdateTime=inputs.reportTime;
+    return;
+  }
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  driveState.sessionId=0;
+  driveState.bytesTransferredInSession=0;
+  driveState.filesTransferredInSession=0;
+  driveState.latestBandwidth=0;
+  driveState.sessionStartTime=0;
+  driveState.mountStartTime=0;
+  driveState.transferStartTime=0;
+  driveState.unloadStartTime=0;
+  driveState.unmountStartTime=0;
+  driveState.drainingStartTime=0;
+  driveState.downOrUpStartTime=0;
+  driveState.probeStartTime=0;
+  driveState.cleanupStartTime=0;
+  driveState.shutdownTime=inputs.reportTime;
+  driveState.lastUpdateTime=inputs.reportTime;
+  driveState.mountType=inputs.mountType;
+  driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
+  driveState.currentVid=inputs.vid;
+  driveState.currentTapePool=inputs.tapepool;
+}
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------

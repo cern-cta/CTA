@@ -39,9 +39,11 @@ DriveState::DriveState():
   unmountStartTime(0),
   drainingStartTime(0),
   downOrUpStartTime(0),
+  probeStartTime(0),
   cleanupStartTime(0),
   lastUpdateTime(0),
   startStartTime(0),
+  shutdownTime(0),
   mountType(dataStructures::MountType::NoMount),
   driveStatus(dataStructures::DriveStatus::Down),
   desiredDriveState({false, false}),
@@ -65,9 +67,11 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && unmountStartTime==rhs.unmountStartTime
       && drainingStartTime==rhs.drainingStartTime
       && downOrUpStartTime==rhs.downOrUpStartTime
+      && probeStartTime==rhs.probeStartTime
       && cleanupStartTime==rhs.cleanupStartTime
       && lastUpdateTime==rhs.lastUpdateTime
       && startStartTime==rhs.startStartTime
+      && shutdownTime==rhs.shutdownTime
       && mountType==rhs.mountType
       && driveStatus==rhs.driveStatus
       && desiredDriveState==rhs.desiredDriveState
@@ -104,9 +108,11 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " unmountStartTime="  << obj.unmountStartTime
      << " drainingStartTime="  << obj.drainingStartTime
      << " downOrUpStartTime="  << obj.downOrUpStartTime
+     << " probeStartTime=" << obj.probeStartTime
      << " cleanupStartTime="  << obj.cleanupStartTime
      << " lastUpdateTime="  << obj.lastUpdateTime
      << " startStartTime="  << obj.startStartTime
+     << " shutdownTime=" << obj.shutdownTime
      << " mountType=" << obj.mountType
      << " status=" << obj.driveStatus
      << " desiredState=" << obj.desiredDriveState

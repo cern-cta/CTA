@@ -26,6 +26,7 @@ namespace dataStructures {
 enum DriveStatus {
   Down,
   Up,
+  Probing,
   Starting,
   Mounting,
   Transferring,
@@ -33,6 +34,7 @@ enum DriveStatus {
   Unmounting,
   DrainingToDisk,
   CleaningUp,
+  Shutdown,
   Unknown
 };
 

@@ -55,9 +55,11 @@ struct DriveState {
   time_t unmountStartTime;
   time_t drainingStartTime;
   time_t downOrUpStartTime;
+  time_t probeStartTime;
   time_t cleanupStartTime;
   time_t lastUpdateTime;
   time_t startStartTime;
+  time_t shutdownTime;
   MountType mountType;
   DriveStatus driveStatus;
   DesiredDriveState desiredDriveState;
