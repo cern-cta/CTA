@@ -190,8 +190,15 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   }
   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
   // Return all objects owned by the agent to their respective backup owners
-  auto ownedObjects = agent.getOwnershipList();
-  for (auto obj = ownedObjects.begin(); obj!= ownedObjects.end(); obj++) {
+  auto ownedObjectAddresses = agent.getOwnershipList();
+  // Parallel fetch (lock free) all the objects to assess their status (check ownership,
+  // type and decide to which queue they will go.
+  std::list<std::shared_ptr<GenericObject>> ownedObjects;
+  for (auto & obj : ownedObjectAddresses) {
+    // Create the generic objects and fetch them
+    ownedObjects.emplace_back(new GenericObject(obj, m_objectStore));
+    ownedObjects.back()->
+    
    // Find the object
    GenericObject go(*obj, m_objectStore);
    log::ScopedParamContainer params2(lc);

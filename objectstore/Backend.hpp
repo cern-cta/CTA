@@ -146,7 +146,7 @@ public:
    * (success or exception) will be returned via the wait() function call. 
    */
   class AsyncDeleter { 
- public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -166,6 +166,21 @@ public:
    * @return pointer to a newly created AsyncDeleter
    */
   virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
+  
+  class AsyncLockfreeFetcher {
+  public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     */
+    virtual void wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncLockfreeFetcher() {}
+  };
+  
+  virtual AsyncLockfreeFetcher * asyncLockfreeFetch (const std::string & name) = 0;
   
   /**
    * Base class for the representation of the parameters of the BackendStore.

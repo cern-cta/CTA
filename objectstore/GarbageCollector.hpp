@@ -23,6 +23,8 @@
 #include "AgentWatchdog.hpp"
 #include "AgentRegister.hpp"
 #include "common/log/LogContext.hpp"
+#include "ArchiveRequest.hpp"
+#include "RetrieveRequest.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.
@@ -49,6 +51,14 @@ public:
   void cleanupDeadAgent(const std::string & name, log::LogContext & lc);
   
   void reinjectOwnedObject(log::LogContext & lc);
+  
+  /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
+    * one batch per queue. */
+  struct OwnedObjectSorter {
+    std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    std::list<std::shared_ptr <Agent>> agents;
+  };
 private:
   Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;
