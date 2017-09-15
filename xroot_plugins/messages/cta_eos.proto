@@ -77,7 +77,8 @@ message Client {
 }
 
 message Transport {
-  string url                 = 1;       //< transport URL
+  string dst_url             = 1;       //< transport destination URL
+  string report_url          = 2;       //< URL to report successful archiving
 }
 
 message Metadata {

@@ -223,7 +223,8 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       else if(argstr == "--user")                notification.mutable_cli()->mutable_user()->set_username(argval);
       else if(argstr == "--group")               notification.mutable_cli()->mutable_user()->set_groupname(argval);
 
-      else if(argstr == "--dsturl")              notification.mutable_transport()->set_url(argval); // for retrieve WF
+      else if(argstr == "--reportURL")           notification.mutable_transport()->set_report_url(argval); // for archive WF
+      else if(argstr == "--dsturl")              notification.mutable_transport()->set_dst_url(argval); // for retrieve WF
 
       else if(argstr == "--diskid")              notification.mutable_file()->set_fid(std::stoi(argval));
       else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_username(argval);

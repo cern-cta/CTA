@@ -27,7 +27,7 @@ using XrdSsiPb::PbException;
 namespace cta { namespace xrd {
 
 // Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
-constexpr inline unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
+constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
    return (cmd << 16) + subcmd;
 }
 
@@ -167,7 +167,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.requester        = originator;
    request.srcURL           = notification.wf().instance().url();
    request.storageClass     = notification.file().xattr().at("CTA_StorageClass");
-   request.archiveReportURL = "null:";
+   request.archiveReportURL = notification.transport().report_url();
 
    // Queue the request
 
@@ -203,7 +203,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
    cta::common::dataStructures::RetrieveRequest request;
    request.requester        = originator;
-   request.dstURL           = notification.transport().url();
+   request.dstURL           = notification.transport().dst_url();
    request.diskFileInfo     = diskFileInfo;
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
