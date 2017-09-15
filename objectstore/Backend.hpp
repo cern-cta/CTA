@@ -173,6 +173,11 @@ public:
      * Waits for completion (success) of throws exception (failure).
      */
     virtual void wait() = 0;
+    /**
+     * Returns the result of the async operation.
+     * Only could be call once and will throw an exception for second call.
+     */
+    virtual std::string get() = 0;
     
     /**
      * Destructor

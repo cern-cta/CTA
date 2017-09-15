@@ -190,7 +190,8 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   }
   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
   // Return all objects owned by the agent to their respective backup owners
-  auto ownedObjectAddresses = agent.getOwnershipList();
+    
+  const auto ownedObjectAddresses = agent.getOwnershipList();
   // Parallel fetch (lock free) all the objects to assess their status (check ownership,
   // type and decide to which queue they will go.
   std::list<std::shared_ptr<GenericObject>> ownedObjects;
@@ -206,7 +207,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
    // If the object does not exist, we're done.
    if (go.exists()) {
      ScopedExclusiveLock goLock(go);
-     go.fetch();
+     go.lockfreeFetch();
      // Call GenericOpbject's garbage collect method, which in turn will
      // delegate to the object type's garbage collector.
      go.garbageCollectDispatcher(goLock, address, m_ourAgentReference, lc, m_catalogue);

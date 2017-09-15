@@ -171,6 +171,37 @@ public:
   
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
   
+  /**
+   * A class following up the check existence-lock-delete. TOBECHECK
+   * Constructor implicitly starts the lock step.
+   */
+  class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
+  public:
+    AsyncLockfreeFetcher(BackendRados & be, const std::string & name);
+    void wait() override;
+    std::string get() override;
+  private:
+    /** A reference to the backend */
+    BackendRados &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** Storage for stat operation (size) */
+    uint64_t m_size;
+    /** Storage for stat operation (date) */
+    time_t date;
+    /** The rados bufferlist used to hold the object data (read+write) */
+    ::librados::bufferlist m_radosBufferList;
+    /** The promise that will both do the job and allow synchronization with the caller. */
+    std::promise<std::string> m_job;
+    /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
+    std::future<std::string> m_jobFuture;
+    /** The first callback operation (after checking existence) */
+    static void statCallback(librados::completion_t completion, void *pThis);
+    /** The second callback operation (after reading) */
+    static void fetchCallback(librados::completion_t completion, void *pThis);
+  };
+  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string & name) override;
+  
   class Parameters: public Backend::Parameters {
     friend class BackendRados;
   public:

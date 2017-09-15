@@ -430,4 +430,35 @@ std::string BackendVFS::Parameters::toURL() {
   return ret.str();
 }
 
+
+BackendVFS::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendVFS & be, const std::string& name):
+  m_backend(be), m_name(name),
+  m_job(std::async(std::launch::async, 
+    [&](){
+      try {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        return (m_backend.read(m_name));
+      } catch (cta::exception::Exception & ex) {
+        ANNOTATE_HAPPENS_BEFORE(&m_job);
+        throw Backend::CouldNotFetch(ex.getMessageValue());
+      }
+    }))
+{}
+    
+Backend::AsyncLockfreeFetcher* BackendVFS::asyncLockfreeFetch(const std::string & name) {
+  return new AsyncLockfreeFetcher(*this, name);
+}
+
+void BackendVFS::AsyncLockfreeFetcher::wait() {
+  m_job.wait();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
+std::string BackendVFS::AsyncLockfreeFetcher::get() {
+  return m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
 }} // end of cta::objectstore

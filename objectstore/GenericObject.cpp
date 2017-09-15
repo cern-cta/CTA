@@ -47,6 +47,22 @@ void GenericObject::fetch() {
   m_headerInterpreted = true;
 }
 
+void GenericObject::lockfreeFetch() {
+  // Get the header from the object store. We don't care for the type
+  std::unique_ptr <Backend::AsyncLockfreeFetcher> asyncLockfreeFetch(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+  asyncLockfreeFetch->wait();
+  const auto objData = asyncLockfreeFetch->get();
+  
+  m_existingObject = true;
+  if (!m_header.ParseFromString(objData)) {
+    // Use a the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
+      m_header.InitializationErrorString());
+  }
+  m_headerInterpreted = true;
+}
+
 serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
   return m_header.type();

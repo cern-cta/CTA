@@ -33,6 +33,11 @@ public:
   /** Overload of ObjectOps's implementation: this special object tolerates all
    * types of objects */
   void fetch();
+  /**
+   * Performs async fetch, wait, get
+   * TODO - temporary implementation to test the asyncLockfreeFetch
+   */
+  void lockfreeFetch();
   
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */

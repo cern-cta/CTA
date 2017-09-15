@@ -653,6 +653,96 @@ void BackendRados::AsyncDeleter::wait() {
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 } 
 
+Backend::AsyncLockfreeFetcher* BackendRados::asyncLockfreeFetch(const std::string & name)
+{
+  return new AsyncLockfreeFetcher(*this, name);
+}
+
+BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendRados& be, const std::string& name):
+  m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
+  try {
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
+    const int rc = m_backend.m_radosCtx.aio_stat(m_name, aioc, &m_size, &date);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, std::string("In "
+        "BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher::lock_lambda():"
+        " failed to launch aio_stat(): ")+m_name);
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&m_job);
+    m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncLockfreeFetcher::statCallback(librados::completion_t completion, void* pThis) {
+  AsyncLockfreeFetcher & au = *((AsyncLockfreeFetcher *) pThis);
+  try {
+    // Get the object size
+    if (rados_aio_get_return_value(completion)) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncUpdater::statCallback(): could not stat object: ") + au.m_name);
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+    // Check the size.
+    if (!au.m_size) {
+      throw Backend::NoSuchObject(std::string("In BackendRados::AsyncLockfreeFetcher::statCallback(): empty object: ") + au.m_name);
+    }
+    // Stat is done, we can launch the read operation (async).
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, fetchCallback, nullptr);
+    const auto rc = au.m_backend.m_radosCtx.aio_read(au.m_name, aioc, &au.m_radosBufferList, au.m_size, 0);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+au.m_name);
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t completion, void* pThis) {
+  AsyncLockfreeFetcher & au = *((AsyncLockfreeFetcher *) pThis);
+  try {
+    // Check that the object could be read.
+    if (rados_aio_get_return_value(completion)<0) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncLockfreeFetcher::fetchCallback(): could not read object: ") + au.m_name);
+      throw Backend::CouldNotFetch(errnum.getMessageValue());
+    }
+    // The data is in the buffer list.
+    std::string value;
+    try {
+      au.m_radosBufferList.copy(0, au.m_size, value);
+    } catch (std::exception & ex) {
+      throw CouldNotFetch(
+        std::string("In BackendRados::AsyncLockfreeFetcher::fetchCallback::update_lambda():"
+        " failed to read buffer: ") +
+        au.m_name + ": "+ ex.what());
+    }
+    // Done!
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_value(value);
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  }
+}
+
+void BackendRados::AsyncLockfreeFetcher::wait() {
+  m_jobFuture.wait();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
+std::string BackendRados::AsyncLockfreeFetcher::get() {
+  return m_jobFuture.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+}
+
 std::string BackendRados::Parameters::toStr() {
   std::stringstream ret;
   ret << "userId=" << m_userId << " pool=" << m_pool;
