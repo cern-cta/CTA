@@ -57,11 +57,31 @@ private:
    notification_event_t processPREPARE;      //!< Retrieve file event
    notification_event_t processDELETE;       //!< Delete file event
 
+   /*!
+    * Process AdminCmd events
+    *
+    * @param[in]     admincmd        CTA Admin command request message
+    * @param[out]    response        CTA Admin command response message
+    */
+   typedef void admincmd_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
+
+   admincmd_t processListPendingRetrieves;
+
+   /*!
+    * Import Google Protobuf option fields into maps
+    *
+    * @param[in]     admincmd        CTA Admin command request message
+    */
+   void importOptions(const cta::admin::AdminCmd &admincmd);
+
    // Member variables
 
-   cta::Scheduler       &m_scheduler;        //!< Reference to CTA Scheduler
-   cta::log::LogContext  m_lc;               //!< CTA Log Context
-   const char * const    m_instance_name;    //!< Instance name = XRootD client name
+   cta::Scheduler                                       &m_scheduler;        //!< Reference to CTA Scheduler
+   cta::log::LogContext                                  m_lc;               //!< CTA Log Context
+   const char * const                                    m_instance_name;    //!< Instance name = XRootD client name
+   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;      //!< Boolean options
+   std::map<cta::admin::OptionUInt64::Key,  uint64_t>    m_option_uint64;    //!< UInt64 options
+   std::map<cta::admin::OptionString::Key,  std::string> m_option_str;       //!< String options
 };
 
 }} // namespace cta::xrd

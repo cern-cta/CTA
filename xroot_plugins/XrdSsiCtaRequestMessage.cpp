@@ -42,8 +42,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       using namespace cta::xrd;
 
       case Request::kAdmincmd:
-         // Validate the Protocol Buffer
-         validateCmd(request.admincmd());
+         // Validate the Protocol Buffer and import options into maps
+         importOptions(request.admincmd());
 
          // Map the <Cmd, SubCmd> to a method
          switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
@@ -68,9 +68,10 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD): 
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH): 
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS): 
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
             case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE): 
-            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE): 
+goto the_end;
+            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE): processListPendingRetrieves(request.admincmd(), response); break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD): 
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH): 
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM): 
@@ -111,6 +112,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_LS): 
             case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ERR): 
 
+            the_end:
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -265,6 +267,106 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Set response type
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+#if 0
+  std::stringstream cmdlineOutput;
+  std::stringstream help;
+  log::LogContext lc(m_log);
+  help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
+  if (hasOption("-?", "--help")) {
+    return help.str();
+  }
+#endif
+   using namespace cta::admin;
+
+   auto vid      = m_option_str.find(OptionString::VID);
+   //bool extended = m_option_bool.find(OptionBoolean::EXTENDED) != m_option_bool.end();
+
+   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
+
+   if(vid == m_option_str.end()) {
+      result = m_scheduler.getPendingRetrieveJobs(m_lc);
+   } else {
+      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid->second, m_lc);
+
+      if(list.size() > 0) {
+         result[vid->second] = list;
+      }
+   }
+
+#if 0
+  if(result.size()>0)
+  {
+    std::vector<std::vector<std::string>> responseTable;
+
+    if(extended) {
+      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(it->first);
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
+          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
+          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
+          currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
+          currentRow.push_back(jt->request.requester.name);
+          currentRow.push_back(jt->request.requester.group);
+          currentRow.push_back(jt->request.diskFileInfo.path);
+          responseTable.push_back(currentRow);
+        }
+      }
+    } else {
+      std::vector<std::string> header = {"vid","total files","total size"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->first);
+        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+        uint64_t size=0;
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
+          size += file.fileSize;
+        }
+        currentRow.push_back(std::to_string((unsigned long long)size));
+        responseTable.push_back(currentRow);
+      }
+    }
+    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+  }
+
+  //return cmdlineOutput.str();
+#endif
+}
+
+
+
+void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
+{
+   // Validate the Protocol Buffer
+   validateCmd(admincmd);
+
+   // Import Boolean options
+   for(auto opt_it = admincmd.option_bool().begin(); opt_it != admincmd.option_bool().end(); ++opt_it) {
+      m_option_bool.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
+
+   // Import UInt64 options
+   for(auto opt_it = admincmd.option_uint64().begin(); opt_it != admincmd.option_uint64().end(); ++opt_it) {
+      m_option_uint64.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
+
+   // Import String options
+   for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
+      m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
 }
 
 }} // namespace cta::xrd
