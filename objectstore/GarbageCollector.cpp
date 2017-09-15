@@ -198,16 +198,45 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   for (auto & obj : ownedObjectAddresses) {
     // Create the generic objects and fetch them
     ownedObjects.emplace_back(new GenericObject(obj, m_objectStore));
-    ownedObjects.back()->
+    if (ownedObjects.back()->exists()) {
+      ownedObjects.back()->asyncLockfreeFetch();
+    } else {
+      agent.removeFromOwnership(ownedObjects.back()->getAddressIfSet());
+      agent.commit();
+      ownedObjects.pop_back();
+      lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
+    }
+  }
     
+  for (auto & obj : ownedObjects) {
+    params.add("objectAddress", obj->getAddressIfSet());
+    obj->waitAndGetAsyncLockfreeFetch();
+    if (obj->getOwnerWithNoLock() != agent.getAddressIfSet()) {
+      lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping object which is not owned by this agent");
+    } else {
+      switch (obj->getTypeWithNoLock()) {
+        case serializers::ArchiveRequest_t:
+          break;
+        case serializers::RetrieveRequest_t:
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  
+  /**
+   * old code to compile and unit tests
+   */
+  for (auto & obj : ownedObjects) { 
    // Find the object
-   GenericObject go(*obj, m_objectStore);
+   GenericObject go(obj->getAddressIfSet(), m_objectStore);
    log::ScopedParamContainer params2(lc);
    params2.add("objectAddress", go.getAddressIfSet());
    // If the object does not exist, we're done.
    if (go.exists()) {
      ScopedExclusiveLock goLock(go);
-     go.lockfreeFetch();
+     go.fetch();
      // Call GenericOpbject's garbage collect method, which in turn will
      // delegate to the object type's garbage collector.
      go.garbageCollectDispatcher(goLock, address, m_ourAgentReference, lc, m_catalogue);
@@ -216,7 +245,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
      lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
    }
    // In all cases, relinquish ownership for this object
-   agent.removeFromOwnership(*obj);
+   agent.removeFromOwnership(obj->getAddressIfSet());
    agent.commit();
   }
   // We now processed all the owned objects. We can delete the agent's entry

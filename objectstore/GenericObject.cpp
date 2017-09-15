@@ -47,11 +47,14 @@ void GenericObject::fetch() {
   m_headerInterpreted = true;
 }
 
-void GenericObject::lockfreeFetch() {
+void GenericObject::asyncLockfreeFetch() {
   // Get the header from the object store. We don't care for the type
-  std::unique_ptr <Backend::AsyncLockfreeFetcher> asyncLockfreeFetch(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
-  asyncLockfreeFetch->wait();
-  const auto objData = asyncLockfreeFetch->get();
+  m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+}
+
+void GenericObject::waitAndGetAsyncLockfreeFetch() {
+  m_asyncLockfreeFetcher->wait();
+  const auto objData = m_asyncLockfreeFetcher->get();
   
   m_existingObject = true;
   if (!m_header.ParseFromString(objData)) {
@@ -65,6 +68,11 @@ void GenericObject::lockfreeFetch() {
 
 serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
+  return m_header.type();
+}
+serializers::ObjectType GenericObject::getTypeWithNoLock() {
+  if (!m_headerInterpreted) 
+    throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
   return m_header.type();
 }
 
