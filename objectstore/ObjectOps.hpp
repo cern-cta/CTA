@@ -141,6 +141,12 @@ public:
     return m_header.owner();
   }
   
+  std::string getOwnerWithNoLock() {
+    if (!m_headerInterpreted) 
+      throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
+    return m_header.owner();
+  }
+  
   void setBackupOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_backupowner(owner);

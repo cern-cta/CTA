@@ -24,6 +24,7 @@
 namespace cta {  namespace objectstore {
 
 class GenericObject: public ObjectOps<serializers::GenericObject, serializers::GenericObject_t> {
+    std::unique_ptr <Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
 public:
   GenericObject(const std::string & name, Backend & os):
     ObjectOps<serializers::GenericObject, serializers::GenericObject_t>(os, name) {};
@@ -33,11 +34,16 @@ public:
   /** Overload of ObjectOps's implementation: this special object tolerates all
    * types of objects */
   void fetch();
+  
   /**
-   * Performs async fetch, wait, get
-   * TODO - temporary implementation to test the asyncLockfreeFetch
+   * Asynchronously fetch object without lock.
    */
-  void lockfreeFetch();
+  void asyncLockfreeFetch();
+  
+  /**
+   * wait for async object fetch and get the result.
+   */
+  void waitAndGetAsyncLockfreeFetch();
   
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */
@@ -45,6 +51,7 @@ public:
   
   /** Get the object's type (type is forced implicitly in other classes) */
   serializers::ObjectType type();
+  serializers::ObjectType getTypeWithNoLock();
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */
