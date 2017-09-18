@@ -16,6 +16,10 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+
+#include <iomanip> // for setw
+
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
@@ -273,77 +277,77 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
 void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
-#if 0
-  std::stringstream cmdlineOutput;
-  std::stringstream help;
-  log::LogContext lc(m_log);
-  help << m_requestTokens.at(0) << " lpr/listpendingretrieves [--header/-h] [--vid/-v <vid>] [--extended/-x]" << std::endl;
-  if (hasOption("-?", "--help")) {
-    return help.str();
-  }
-#endif
    using namespace cta::admin;
 
-   auto vid      = m_option_str.find(OptionString::VID);
-   //bool extended = m_option_bool.find(OptionBoolean::EXTENDED) != m_option_bool.end();
+   std::stringstream cmdlineOutput;
+
+   auto vid_it       = m_option_str.find(OptionString::VID);
+   bool has_extended = m_option_bool.find(OptionBoolean::EXTENDED) != m_option_bool.end();
+   bool has_header   = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
 
    std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
 
-   if(vid == m_option_str.end()) {
+   if(vid_it == m_option_str.end()) {
       result = m_scheduler.getPendingRetrieveJobs(m_lc);
    } else {
-      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid->second, m_lc);
+      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid_it->second, m_lc);
 
       if(list.size() > 0) {
-         result[vid->second] = list;
+         result[vid_it->second] = list;
       }
    }
 
-#if 0
-  if(result.size()>0)
-  {
-    std::vector<std::vector<std::string>> responseTable;
+   if(result.size() > 0)
+   {
+      std::vector<std::vector<std::string>> responseTable;
 
-    if(extended) {
-      std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
-      for(auto it = result.cbegin(); it != result.cend(); it++) {
-        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          std::vector<std::string> currentRow;
-          currentRow.push_back(it->first);
-          currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
-          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
-          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
-          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
-          currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
-          currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
-          currentRow.push_back(jt->request.requester.name);
-          currentRow.push_back(jt->request.requester.group);
-          currentRow.push_back(jt->request.diskFileInfo.path);
-          responseTable.push_back(currentRow);
-        }
+      if(has_extended)
+      {
+         std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
+         if(has_header) responseTable.push_back(header);    
+         for(auto it = result.cbegin(); it != result.cend(); it++)
+         {
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+               std::vector<std::string> currentRow;
+               currentRow.push_back(it->first);
+               currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
+               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
+               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
+               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
+               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
+               currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
+               currentRow.push_back(jt->request.requester.name);
+               currentRow.push_back(jt->request.requester.group);
+               currentRow.push_back(jt->request.diskFileInfo.path);
+               responseTable.push_back(currentRow);
+            }
+         }
       }
-    } else {
-      std::vector<std::string> header = {"vid","total files","total size"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
-      for(auto it = result.cbegin(); it != result.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->first);
-        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
-        uint64_t size=0;
-        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          cta::common::dataStructures::ArchiveFile file = m_catalogue->getArchiveFileById(jt->request.archiveFileID);
-          size += file.fileSize;
-        }
-        currentRow.push_back(std::to_string((unsigned long long)size));
-        responseTable.push_back(currentRow);
+      else
+      {
+         std::vector<std::string> header = {"vid","total files","total size"};
+         if(has_header) responseTable.push_back(header);    
+         for(auto it = result.cbegin(); it != result.cend(); it++)
+         {
+            std::vector<std::string> currentRow;
+            currentRow.push_back(it->first);
+            currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+            uint64_t size=0;
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
+               size += file.fileSize;
+            }
+            currentRow.push_back(std::to_string((unsigned long long)size));
+            responseTable.push_back(currentRow);
+         }
       }
-    }
-    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
-  }
+      cmdlineOutput << formatResponse(responseTable, has_header);
+   }
 
-  //return cmdlineOutput.str();
-#endif
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -367,6 +371,35 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
    for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
       m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
    }
+}
+
+
+
+std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable, const bool has_header)
+{
+   if(responseTable.empty() || responseTable.at(0).empty()) return "";
+
+   std::vector<int> columnSizes;
+
+   for(uint j = 0; j < responseTable.at(0).size(); j++) { //for each column j
+      uint columnSize = 0;
+      for(uint i = 0; i<responseTable.size(); i++) { //for each row i
+         if(responseTable.at(i).at(j).size()>columnSize) {
+            columnSize = responseTable.at(i).at(j).size();
+         }
+      }
+      columnSizes.push_back(columnSize);//loops here
+   }
+   std::stringstream responseSS;
+   for(auto row = responseTable.cbegin(); row != responseTable.cend(); row++) {
+      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[31;1m";
+      for(uint i = 0; i<row->size(); i++) {
+         responseSS << std::string(i ? "  " : "") << std::setw(columnSizes.at(i)) << row->at(i);
+      }
+      if(has_header && row == responseTable.cbegin()) responseSS << "\x1b[0m" << std::endl;
+      else responseSS << std::endl;
+   }
+   return responseSS.str();
 }
 
 }} // namespace cta::xrd

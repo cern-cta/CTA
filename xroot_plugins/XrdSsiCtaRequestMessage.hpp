@@ -32,6 +32,7 @@ class RequestMessage
 {
 public:
    RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
+      m_catalogue(service->getCatalogue()),
       m_scheduler(service->getScheduler()),
       m_lc(service->getLogContext()),
       m_instance_name(client.name) {}
@@ -74,8 +75,18 @@ private:
     */
    void importOptions(const cta::admin::AdminCmd &admincmd);
 
+   /*!
+    * Returns the response string for admin commands in a tabular format
+    * 
+    * @param[in]     responseTable   The response 2D matrix
+    *
+    * @returns       the response string properly formatted in a table
+    */
+   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable, bool has_header);
+
    // Member variables
 
+   cta::catalogue::Catalogue                            &m_catalogue;        //!< Reference to CTA Catalogue
    cta::Scheduler                                       &m_scheduler;        //!< Reference to CTA Scheduler
    cta::log::LogContext                                  m_lc;               //!< CTA Log Context
    const char * const                                    m_instance_name;    //!< Instance name = XRootD client name
