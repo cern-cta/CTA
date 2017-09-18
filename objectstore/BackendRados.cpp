@@ -682,7 +682,7 @@ void BackendRados::AsyncLockfreeFetcher::statCallback(librados::completion_t com
     // Get the object size
     if (rados_aio_get_return_value(completion)) {
       cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
-          std::string("In BackendRados::AsyncUpdater::statCallback(): could not stat object: ") + au.m_name);
+          std::string("In BackendRados::AsyncLockfreeFetcher::statCallback(): could not stat object: ") + au.m_name);
       throw Backend::NoSuchObject(errnum.getMessageValue());
     }
     // Check the size.
@@ -694,7 +694,7 @@ void BackendRados::AsyncLockfreeFetcher::statCallback(librados::completion_t com
     const auto rc = au.m_backend.m_radosCtx.aio_read(au.m_name, aioc, &au.m_radosBufferList, au.m_size, 0);
     aioc->release();
     if (rc) {
-      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+au.m_name);
+      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncLockfreeFetcher::statCallback(): failed to launch aio_read(): ")+au.m_name);
       throw Backend::NoSuchObject(errnum.getMessageValue());
     }
   } catch (...) {
@@ -731,16 +731,11 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
   }
 }
 
-void BackendRados::AsyncLockfreeFetcher::wait() {
-  m_jobFuture.wait();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
-}
-
 std::string BackendRados::AsyncLockfreeFetcher::get() {
-  return m_jobFuture.get();
+  auto ret=m_jobFuture.get();
   ANNOTATE_HAPPENS_AFTER(&m_job);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+  return ret;
 }
 
 std::string BackendRados::Parameters::toStr() {

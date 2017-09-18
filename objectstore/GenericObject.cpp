@@ -38,28 +38,29 @@ void GenericObject::fetch() {
   m_existingObject = true;
   // Get the header from the object store. We don't care for the type
   auto objData=m_objectStore.read(getAddressIfSet());
-  if (!m_header.ParseFromString(objData)) {
-    // Use a the tolerant parser to assess the situation.
-    m_header.ParsePartialFromString(objData);
-    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
-      m_header.InitializationErrorString());
-  }
-  m_headerInterpreted = true;
+  fetchBottomHalf(objData);
 }
 
-void GenericObject::asyncLockfreeFetch() {
-  // Get the header from the object store. We don't care for the type
-  m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+GenericObject::AsyncLockfreeFetcher::AsyncLockfreeFetcher(GenericObject& obj):
+m_object(obj) {}
+
+
+auto GenericObject::asyncLockfreeFetch() -> AsyncLockfreeFetcher * {
+  std::unique_ptr<AsyncLockfreeFetcher> ret (new AsyncLockfreeFetcher(*this));
+  ret->m_backendFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+  return ret.release();
 }
 
-void GenericObject::waitAndGetAsyncLockfreeFetch() {
-  m_asyncLockfreeFetcher->wait();
-  const auto objData = m_asyncLockfreeFetcher->get();
-  
-  m_existingObject = true;
-  if (!m_header.ParseFromString(objData)) {
+void GenericObject::AsyncLockfreeFetcher::wait() {
+  auto objData=m_backendFetcher->get();
+  m_object.m_noLock=true;
+  m_object.fetchBottomHalf(objData);
+}
+
+void GenericObject::fetchBottomHalf(const std::string& rawFetchedObject) {
+  if (!m_header.ParseFromString(rawFetchedObject)) {
     // Use a the tolerant parser to assess the situation.
-    m_header.ParsePartialFromString(objData);
+    m_header.ParsePartialFromString(rawFetchedObject);
     throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
       m_header.InitializationErrorString());
   }

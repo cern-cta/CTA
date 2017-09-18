@@ -195,11 +195,12 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   // Parallel fetch (lock free) all the objects to assess their status (check ownership,
   // type and decide to which queue they will go.
   std::list<std::shared_ptr<GenericObject>> ownedObjects;
+  std::map<GenericObject *, std::unique_ptr<GenericObject::AsyncLockfreeFetcher>> ownedObjectsFetchers;
   for (auto & obj : ownedObjectAddresses) {
     // Create the generic objects and fetch them
     ownedObjects.emplace_back(new GenericObject(obj, m_objectStore));
     if (ownedObjects.back()->exists()) {
-      ownedObjects.back()->asyncLockfreeFetch();
+      ownedObjectsFetchers[ownedObjects.back().get()].reset(ownedObjects.back()->asyncLockfreeFetch());
     } else {
       agent.removeFromOwnership(ownedObjects.back()->getAddressIfSet());
       agent.commit();
@@ -210,8 +211,9 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     
   for (auto & obj : ownedObjects) {
     params.add("objectAddress", obj->getAddressIfSet());
-    obj->waitAndGetAsyncLockfreeFetch();
-    if (obj->getOwnerWithNoLock() != agent.getAddressIfSet()) {
+    ownedObjectsFetchers.at(obj.get())->wait();
+    ownedObjectsFetchers.erase(obj.get());
+    if (obj->getOwner() != agent.getAddressIfSet()) {
       lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping object which is not owned by this agent");
     } else {
       switch (obj->getTypeWithNoLock()) {

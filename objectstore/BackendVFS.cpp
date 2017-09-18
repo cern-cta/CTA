@@ -449,16 +449,11 @@ Backend::AsyncLockfreeFetcher* BackendVFS::asyncLockfreeFetch(const std::string 
   return new AsyncLockfreeFetcher(*this, name);
 }
 
-void BackendVFS::AsyncLockfreeFetcher::wait() {
-  m_job.wait();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
-}
-
 std::string BackendVFS::AsyncLockfreeFetcher::get() {
-  return m_job.get();
+  auto ret=m_job.get();
   ANNOTATE_HAPPENS_AFTER(&m_job);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+  return ret;
 }
 
 }} // end of cta::objectstore

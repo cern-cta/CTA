@@ -130,7 +130,6 @@ public:
   class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
   public:
     AsyncLockfreeFetcher(BackendVFS & be, const std::string & name);
-    void wait() override;
     std::string get() override;
   private:
     /** A reference to the backend */

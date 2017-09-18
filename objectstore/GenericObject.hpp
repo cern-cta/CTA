@@ -35,16 +35,25 @@ public:
    * types of objects */
   void fetch();
   
-  /**
-   * Asynchronously fetch object without lock.
-   */
-  void asyncLockfreeFetch();
+  /** An asynchronous lockfree fetcher class */
+  class AsyncLockfreeFetcher {
+    friend class GenericObject;
+  public:
+    void wait();
+  private:
+    AsyncLockfreeFetcher(GenericObject & obj);
+    std::unique_ptr<Backend::AsyncLockfreeFetcher> m_backendFetcher;
+    GenericObject & m_object;
+  };
+  friend AsyncLockfreeFetcher;
   
-  /**
-   * wait for async object fetch and get the result.
-   */
-  void waitAndGetAsyncLockfreeFetch();
+  /** A lockfree fetcher factory */
+  AsyncLockfreeFetcher * asyncLockfreeFetch();
   
+private:
+  void fetchBottomHalf(const std::string & rawFetchedObject);
+  
+public:
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */
   void commit();
