@@ -304,7 +304,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
    // Queue the request
 
-   uint64_t archiveFileId = m_scheduler.queueArchive(m_instance_name, request, m_lc);
+   uint64_t archiveFileId = m_scheduler.queueArchive(m_cliIdentity.username, request, m_lc);
 
    // Set archiveFileId in response (deprecated)
 
@@ -350,7 +350,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
    // Queue the request
 
-   m_scheduler.queueRetrieve(m_instance_name, request, m_lc);
+   m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
 
    // Set response type
 
@@ -387,7 +387,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Queue the request
 
    cta::utils::Timer t;
-   m_scheduler.deleteArchive(m_instance_name, request, m_lc);
+   m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
 
@@ -406,9 +406,11 @@ void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   std::string &username = m_option_str.at(OptionString::USERNAME);
+   std::string &comment  = m_option_str.at(OptionString::COMMENT);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.createAdminUser(m_cliIdentity, username, comment);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -418,9 +420,11 @@ void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   std::string &username = m_option_str.at(OptionString::USERNAME);
+   std::string &comment  = m_option_str.at(OptionString::COMMENT);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.modifyAdminUserComment(m_cliIdentity, username, comment);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -430,9 +434,10 @@ void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   std::string &username = m_option_str.at(OptionString::USERNAME);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteAdminUser(username);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -444,17 +449,71 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::AdminUser> list= m_catalogue.getAdminUsers();
+
+   if(list.size() > 0) {
+      bool has_header = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
+
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(has_header) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->name);
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, has_header);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> hostname = getOptionStringValue("-n", "--name", true, false);
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      if("add" == m_requestTokens.at(2)) { //add
+        checkOptions(help.str());
+        m_catalogue.createAdminHost(m_cliIdentity, hostname.value(), comment.value());
+      }
+      else { //ch
+        checkOptions(help.str());
+        m_catalogue.modifyAdminHostComment(m_cliIdentity, hostname.value(), comment.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteAdminHost(hostname.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::AdminHost> list= m_catalogue.getAdminHosts();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->name);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -516,6 +575,52 @@ void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincm
 
    std::stringstream cmdlineOutput;
 
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> scn = getOptionStringValue("-s", "--storageclass", true, false);
+    optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      checkOptions(help.str());
+      m_catalogue.createArchiveRoute(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value(), comment.value());
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      checkOptions(help.str());
+      if(comment) {
+        m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in.value(), scn.value(), cn.value(), comment.value());
+      }
+      if(tapepool) {
+        m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteArchiveRoute(in.value(), scn.value(), cn.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstanceName);
+        currentRow.push_back(it->storageClassName);
+        currentRow.push_back(std::to_string((unsigned long long)it->copyNb));
+        currentRow.push_back(it->tapePoolName);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -564,6 +669,118 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
 
    std::stringstream cmdlineOutput;
 
+  // We should have at least one sub command. {"cta", "dr/drive", "up/down/ls"}.
+  if ("up" == m_requestTokens.at(2)) {
+    // Here the drive name is required in addition
+    if (m_requestTokens.size() != 4)
+      throw cta::exception::UserError(help.str());
+    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, true, false);
+  } else if ("down" == m_requestTokens.at(2)) {
+    // Parse the command line for option and drive name.
+    cta::utils::GetOpThreadSafe::Request req;
+    for (size_t i=2; i<m_requestTokens.size(); i++)
+      req.argv.push_back(m_requestTokens.at(i));
+    req.optstring = { "f" };
+    struct ::option longOptions[] = { { "force", no_argument, 0 , 'f' }, { 0, 0, 0, 0 } };
+    req.longopts = longOptions;
+    auto reply = cta::utils::GetOpThreadSafe::getOpt(req);
+    // We should have one and only one no-option argument, the drive name.
+    if (reply.remainder.size() != 1) {
+      throw cta::exception::UserError(help.str());
+    }
+    // Check if the force option was present.
+    bool force=reply.options.size() && (reply.options.at(0).option == "f");
+    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, false, force);
+  } else if ("ls" == m_requestTokens.at(2)) {
+    if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
+      // We will dump all the drives, and select the one asked for if needed.
+      bool singleDrive = (m_requestTokens.size() == 4);
+      bool driveFound = false;
+      auto driveStates = m_scheduler->getDriveStates(m_cliIdentity, lc);
+      if (driveStates.size()) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> headers = {"library", "drive", "host", "desired", "request",
+          "status", "since", "vid", "tapepool", "files", "MBytes",
+          "MB/s", "session", "age"};
+        responseTable.push_back(headers);
+        typedef decltype(*driveStates.begin()) dStateVal;
+        driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
+        for (auto ds: driveStates) {
+          if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
+          driveFound = true;
+          std::vector<std::string> currentRow;
+          currentRow.push_back(ds.logicalLibrary);
+          currentRow.push_back(ds.driveName);
+          currentRow.push_back(ds.host);
+          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
+          currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
+          currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
+          // print the time spent in the current state
+          switch(ds.driveStatus) {
+          case cta::common::dataStructures::DriveStatus::Probing:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.probeStartTime)));
+          case cta::common::dataStructures::DriveStatus::Up:
+          case cta::common::dataStructures::DriveStatus::Down:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.downOrUpStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Starting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.startStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Mounting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.mountStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Transferring:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.transferStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::CleaningUp:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.cleanupStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Unloading:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unloadStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Unmounting:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unmountStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::DrainingToDisk:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.drainingStartTime)));
+            break;
+          case cta::common::dataStructures::DriveStatus::Shutdown:
+            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.shutdownTime)));
+          case cta::common::dataStructures::DriveStatus::Unknown:
+            currentRow.push_back("-");
+            break;
+          }
+          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
+          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
+          switch (ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Transferring:
+              currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
+              currentRow.push_back(BytesToMbString(ds.bytesTransferredInSession));
+              currentRow.push_back(BytesToMbString(ds.latestBandwidth));
+              break;
+            default:
+              currentRow.push_back("-");
+              currentRow.push_back("-");
+              currentRow.push_back("-");
+          }
+          switch(ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Up:
+            case cta::common::dataStructures::DriveStatus::Down:
+            case cta::common::dataStructures::DriveStatus::Unknown:
+              currentRow.push_back("-");
+              break;
+            default:
+              currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+          }
+          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
+          responseTable.push_back(currentRow);
+        }
+        if (singleDrive && !driveFound) {
+          throw cta::exception::UserError(std::string("No such drive: ") + m_requestTokens.at(3));
+        }
+        cmdlineOutput<< formatResponse(responseTable, true);
+      }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -599,6 +816,51 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      checkOptions(help.str());
+      m_catalogue.createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
+        comment.value());
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      checkOptions(help.str());
+      if(comment) {
+        m_catalogue.modifyRequesterGroupMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
+      }
+      if(mountpolicy) {
+        m_catalogue.modifyRequesterGroupMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteRequesterGroupMountRule(in.value(), name.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::RequesterGroupMountRule> list= m_catalogue.getRequesterGroupMountRules();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
+        currentRow.push_back(it->name);
+        currentRow.push_back(it->mountPolicy);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -647,6 +909,63 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
+  bool extended = hasOption("-x", "--extended");
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
+  if(!tapepool) {
+    result = m_scheduler->getPendingArchiveJobs(lc);
+  }
+  else {
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool.value(), lc);
+    if(list.size()>0) {
+      result[tapepool.value()] = list;
+    }
+  }
+  if(result.size()>0) {
+    if(extended) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(it->first);
+          currentRow.push_back(std::to_string((unsigned long long)jt->archiveFileID));
+          currentRow.push_back(jt->request.storageClass);
+          currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
+          currentRow.push_back(jt->request.diskFileID);
+          currentRow.push_back(jt->instanceName);
+          currentRow.push_back(jt->request.checksumType);
+          currentRow.push_back(jt->request.checksumValue);         
+          currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
+          currentRow.push_back(jt->request.requester.name);
+          currentRow.push_back(jt->request.requester.group);
+          currentRow.push_back(jt->request.diskFileInfo.path);
+          responseTable.push_back(currentRow);
+        }
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+    else {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"tapepool","total files","total size"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = result.cbegin(); it != result.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->first);
+        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+        uint64_t size=0;
+        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+          size += jt->request.fileSize;
+        }
+        currentRow.push_back(std::to_string((unsigned long long)size));
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
+  m_suppressOptionalOptionsWarning = true;
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -737,6 +1056,41 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 
    std::stringstream cmdlineOutput;
 
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      if("add" == m_requestTokens.at(2)) { //add
+        checkOptions(help.str());
+        m_catalogue.createLogicalLibrary(m_cliIdentity, name.value(), comment.value());
+      }
+      else { //ch
+        checkOptions(help.str());
+        m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name.value(), comment.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteLogicalLibrary(name.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue.getLogicalLibraries();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"name","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->name);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -784,6 +1138,73 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> group = getOptionStringValue("-n", "--name", true, false);
+    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) { 
+      if("add" == m_requestTokens.at(2)) { //add     
+        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", true, false);
+        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", true, false);
+        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", true, false);
+        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", true, false);
+        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", true, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+        checkOptions(help.str());
+        m_catalogue.createMountPolicy(m_cliIdentity, group.value(), archivepriority.value(), minarchiverequestage.value(), retrievepriority.value(), minretrieverequestage.value(), maxdrivesallowed.value(), comment.value());
+      }
+      else if("ch" == m_requestTokens.at(2)) { //ch      
+        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false, false);
+        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false, false);
+        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false, false);
+        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, false);
+        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, false);
+        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+        checkOptions(help.str());
+        if(archivepriority) {
+          m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group.value(), archivepriority.value());
+        }
+        if(minarchiverequestage) {
+          m_catalogue.modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group.value(), minarchiverequestage.value());
+        }
+        if(retrievepriority) {
+          m_catalogue.modifyMountPolicyRetrievePriority(m_cliIdentity, group.value(), retrievepriority.value());
+        }
+        if(minretrieverequestage) {
+          m_catalogue.modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group.value(), minretrieverequestage.value());
+        }
+        if(maxdrivesallowed) {
+          m_catalogue.modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group.value(), maxdrivesallowed.value());
+        }
+        if(comment) {
+          m_catalogue.modifyMountPolicyComment(m_cliIdentity, group.value(), comment.value());
+        }
+      }
+    }
+    else { //rm
+      m_catalogue.deleteMountPolicy(group.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue.getMountPolicies();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->archivePriority));
+        currentRow.push_back(std::to_string((unsigned long long)it->archiveMinRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrievePriority));
+        currentRow.push_back(std::to_string((unsigned long long)it->retrieveMinRequestAge));
+        currentRow.push_back(std::to_string((unsigned long long)it->maxDrivesAllowed));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -833,6 +1254,94 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
+    if(!vid) {
+      throw cta::exception::UserError(help.str());
+    }  
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+      bool justexpand = hasOption("-e", "--justexpand");
+      bool justrepack = hasOption("-r", "--justrepack");
+      cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
+      if(justexpand) {
+        type=cta::common::dataStructures::RepackType::justexpand;
+      }
+      if(justrepack) {
+        type=cta::common::dataStructures::RepackType::justrepack;
+      }
+      if(justexpand&&justrepack) {
+        throw cta::exception::UserError(help.str());
+      }
+      checkOptions(help.str());
+      m_scheduler->queueRepack(m_cliIdentity, vid.value(), tag, type);
+    }
+    else if("err" == m_requestTokens.at(2)) { //err
+      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid.value());
+      if(info.errors.size()>0) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"fseq","error message"};
+        if(hasOption("-h", "--header")) responseTable.push_back(header);    
+        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(it->second);
+          responseTable.push_back(currentRow);
+        }
+        cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_scheduler->cancelRepack(m_cliIdentity, vid.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::RepackInfo> list;
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
+    if(!vid) {      
+      list = m_scheduler->getRepacks(m_cliIdentity);
+    }
+    else {
+      list.push_back(m_scheduler->getRepack(m_cliIdentity, vid.value()));
+    }
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::string type_s;
+        switch(it->repackType) {
+          case cta::common::dataStructures::RepackType::expandandrepack:
+            type_s = "expandandrepack";
+            break;
+          case cta::common::dataStructures::RepackType::justexpand:
+            type_s = "justexpand";
+            break;
+          case cta::common::dataStructures::RepackType::justrepack:
+            type_s = "justrepack";
+            break;
+        }
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->vid);
+        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
+        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
+        currentRow.push_back(type_s);
+        currentRow.push_back(it->tag);
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToRetrieve));//change names
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToArchive));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesArchived));
+        currentRow.push_back(it->repackStatus);
+        currentRow.push_back(it->creationLog.username);
+        currentRow.push_back(it->creationLog.host);        
+        currentRow.push_back(timeToString(it->creationLog.time));
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -880,6 +1389,51 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      checkOptions(help.str());
+      m_catalogue.createRequesterMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
+        comment.value());
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      checkOptions(help.str());
+      if(comment) {
+        m_catalogue.modifyRequesteMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
+      }
+      if(mountpolicy) {
+        m_catalogue.modifyRequesterMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteRequesterMountRule(in.value(), name.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue.getRequesterMountRules();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
+        currentRow.push_back(it->name);
+        currentRow.push_back(it->mountPolicy);
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -929,6 +1483,10 @@ void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xr
 
    std::stringstream cmdlineOutput;
 
+  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
+  checkOptions(help.str());
+  m_scheduler->shrink(m_cliIdentity, tapepool.value());
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -941,6 +1499,51 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+  auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
+  if (queuesAndMounts.size()) {
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age","max drives",
+      "cur. mounts", "cur. files", "cur. MBytes", "MB/s", "next mounts", "tapes capacity", "files on tapes", "MBytes on tapes", "full tapes", "empty tapes",
+      "disabled tapes", "writables tapes"};
+    if(hasOption("-h", "--header")) responseTable.push_back(header);
+    for (auto & q: queuesAndMounts) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(common::dataStructures::toString(q.mountType));
+      currentRow.push_back(q.tapePool);
+      currentRow.push_back(q.vid);
+      currentRow.push_back(std::to_string(q.filesQueued));
+      currentRow.push_back(BytesToMbString(q.bytesQueued));
+      currentRow.push_back(std::to_string(q.oldestJobAge));
+      if (common::dataStructures::MountType::Archive == q.mountType) {
+        currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
+        currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
+        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+      } else if (common::dataStructures::MountType::Retrieve == q.mountType) {
+        currentRow.push_back(std::to_string(q.mountPolicy.retrievePriority));
+        currentRow.push_back(std::to_string(q.mountPolicy.retrieveMinRequestAge));
+        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+      } else {
+        currentRow.push_back("-");
+        currentRow.push_back("-");
+        currentRow.push_back("-");
+      }
+      currentRow.push_back(std::to_string(q.currentMounts));
+      currentRow.push_back(std::to_string(q.currentFiles));
+      currentRow.push_back(BytesToMbString(q.currentBytes));
+      currentRow.push_back(BytesToMbString(q.latestBandwidth));
+      currentRow.push_back(std::to_string(q.nextMounts));
+      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)MBytes));
+      currentRow.push_back(std::to_string(q.filesOnTapes));
+      currentRow.push_back(BytesToMbString(q.dataOnTapes));
+      currentRow.push_back(std::to_string(q.fullTapes));
+      currentRow.push_back(std::to_string(q.emptyTapes));
+      currentRow.push_back(std::to_string(q.disabledTapes));
+      currentRow.push_back(std::to_string(q.writableTapes));
+      responseTable.push_back(currentRow);
+    }
+    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -952,6 +1555,55 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> scn = getOptionStringValue("-n", "--name", true, false);
+    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      checkOptions(help.str());
+      common::dataStructures::StorageClass storageClass;
+      storageClass.diskInstance = in.value();
+      storageClass.name = scn.value();
+      storageClass.nbCopies = cn.value();
+      storageClass.comment = comment.value();
+      m_catalogue.createStorageClass(m_cliIdentity, storageClass);
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      checkOptions(help.str());
+      if(comment) {
+        m_catalogue.modifyStorageClassComment(m_cliIdentity, in.value(), scn.value(), comment.value());
+      }
+      if(cn) {
+        m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, in.value(), scn.value(), cn.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteStorageClass(in.value(), scn.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::StorageClass> list= m_catalogue.getStorageClasses();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->diskInstance);
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->nbCopies));
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1000,6 +1652,131 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", true, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, true, "-");
+      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", true, false);
+      optional<bool> full = getOptionBoolValue("-f", "--full", true, false);
+      checkOptions(help.str());
+      m_catalogue.createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), capacity.value(), disabled.value(), full.value(), comment.value());
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
+      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
+      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, false);
+      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false);
+      optional<bool> full = getOptionBoolValue("-f", "--full", false, false);
+      checkOptions(help.str());
+      if(logicallibrary) {
+        m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid.value(), logicallibrary.value());
+      }
+      if(tapepool) {
+        m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid.value(), tapepool.value());
+      }
+      if(capacity) {
+        m_catalogue.modifyTapeCapacityInBytes(m_cliIdentity, vid.value(), capacity.value());
+      }
+      if(comment) {
+        m_catalogue.modifyTapeComment(m_cliIdentity, vid.value(), comment.value());
+      }
+      if(encryptionkey) {
+        m_catalogue.modifyTapeEncryptionKey(m_cliIdentity, vid.value(), encryptionkey.value());
+      }
+      if(disabled) {
+        m_catalogue.setTapeDisabled(m_cliIdentity, vid.value(), disabled.value());
+      }
+      if(full) {
+        m_catalogue.setTapeFull(m_cliIdentity, vid.value(), full.value());
+      }
+    }
+    else if("reclaim" == m_requestTokens.at(2)) { //reclaim
+      checkOptions(help.str());
+      m_catalogue.reclaimTape(m_cliIdentity, vid.value());
+    }
+    else if("label" == m_requestTokens.at(2)) { //label
+      //the tag will be set to "-" in case it's missing from the cmdline; which means no tagging
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false); 
+      optional<bool> force = getOptionBoolValue("-f", "--force", false, true, "false");
+      optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, true, "true");
+      checkOptions(help.str());
+      m_scheduler->queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteTape(vid.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    if(!hasOption("-a","--all")) {
+      searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false);
+      searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false);
+      searchCriteria.full = getOptionBoolValue("-f", "--full", false, false);
+      searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false);
+      searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
+      searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false);
+      searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false);
+    }
+    else {
+      m_suppressOptionalOptionsWarning=true;
+    }
+    checkOptions(help.str());
+    std::list<cta::common::dataStructures::Tape> list= m_catalogue.getTapes(searchCriteria);
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","full","disabled","lpb","label drive","label time",
+                                         "last w drive","last w time","last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->vid);
+        currentRow.push_back(it->logicalLibraryName);
+        currentRow.push_back(it->tapePoolName);
+        currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
+        currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
+        currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
+        currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));
+        if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
+        if(it->labelLog) {
+          currentRow.push_back(it->labelLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->labelLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
+        if(it->lastWriteLog) {
+          currentRow.push_back(it->lastWriteLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->lastWriteLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
+        if(it->lastReadLog) {
+          currentRow.push_back(it->lastReadLog.value().drive);
+          currentRow.push_back(std::to_string((unsigned long long)it->lastReadLog.value().time));
+        }
+        else {
+          currentRow.push_back("-");
+          currentRow.push_back("-");
+        }
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1073,6 +1850,54 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
 
    std::stringstream cmdlineOutput;
 
+  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", true, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
+      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", true, false);
+      checkOptions(help.str());
+      m_catalogue.createTapePool(m_cliIdentity, name.value(), ptn.value(), encrypted.value(), comment.value());
+    }
+    else if("ch" == m_requestTokens.at(2)) { //ch
+      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false);
+      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
+      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, false);
+      checkOptions(help.str());
+      if(comment) {
+        m_catalogue.modifyTapePoolComment(m_cliIdentity, name.value(), comment.value());
+      }
+      if(ptn) {
+        m_catalogue.modifyTapePoolNbPartialTapes(m_cliIdentity, name.value(), ptn.value());
+      }
+      if(encrypted) {
+        m_catalogue.setTapePoolEncryption(m_cliIdentity, name.value(), encrypted.value());
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_catalogue.deleteTapePool(name.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string((unsigned long long)it->nbPartialTapes));
+        if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1121,6 +1946,86 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
 
    std::stringstream cmdlineOutput;
 
+  optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
+  optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
+  if("read" == m_requestTokens.at(2)) {
+    optional<uint64_t> firstfseq = getOptionUint64Value("-f", "--firstfseq", true, false);
+    optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", true, false);
+    optional<std::string> output = getOptionStringValue("-o", "--output", true, false);        
+    bool checkchecksum = hasOption("-c", "--checkchecksum");
+    checkOptions(help.str());
+    optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+    std::string tag_value = tag? tag.value():"-";
+    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    responseTable.push_back(header);
+    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.errors.find(it->first) != res.errors.cend()) {
+        currentRow.push_back(res.errors.at(it->first));
+      }
+      else {
+        currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+    }
+    cmdlineOutput << formatResponse(responseTable, true)
+           << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesRead << " #Bytes: " << res.totalBytesRead 
+           << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesRead/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
+  }
+  else if("write" == m_requestTokens.at(2) || "write_auto" == m_requestTokens.at(2)) {
+    cta::common::dataStructures::WriteTestResult res;
+    if("write" == m_requestTokens.at(2)) { //write
+      optional<std::string> file = getOptionStringValue("-f", "--file", true, false);
+      checkOptions(help.str());
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+      std::string tag_value = tag? tag.value():"-";
+      res = m_scheduler->writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
+    }
+    else { //write_auto
+      optional<uint64_t> number = getOptionUint64Value("-n", "--number", true, false);
+      optional<uint64_t> size = getOptionUint64Value("-s", "--size", true, false);
+      optional<std::string> input = getOptionStringValue("-i", "--input", true, false);
+      if(input.value()!="zero"&&input.value()!="urandom") {
+        m_missingRequiredOptions.push_back("--input value must be either \"zero\" or \"urandom\"");
+      }
+      checkOptions(help.str());
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+      std::string tag_value = tag? tag.value():"-";
+      cta::common::dataStructures::TestSourceType type;
+      if(input.value()=="zero") { //zero
+        type = cta::common::dataStructures::TestSourceType::devzero;
+      }
+      else { //urandom
+        type = cta::common::dataStructures::TestSourceType::devurandom;
+      }
+      res = m_scheduler->write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag_value);
+    }
+    std::vector<std::vector<std::string>> responseTable;
+    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    responseTable.push_back(header);
+    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.errors.find(it->first) != res.errors.cend()) {
+        currentRow.push_back(res.errors.at(it->first));
+      }
+      else {
+        currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+    }
+    cmdlineOutput << formatResponse(responseTable, true)
+           << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesWritten << " #Bytes: " << res.totalBytesWritten 
+           << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesWritten/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
+  }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1156,6 +2061,67 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
+    if("add" == m_requestTokens.at(2)) { //add
+      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
+      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
+      checkOptions(help.str());
+      m_scheduler->queueVerify(m_cliIdentity, vid.value(), tag, numberOfFiles);
+    }
+    else if("err" == m_requestTokens.at(2)) { //err
+      checkOptions(help.str());
+      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid.value());
+      if(info.errors.size()>0) {
+        std::vector<std::vector<std::string>> responseTable;
+        std::vector<std::string> header = {"fseq","error message"};
+        if(hasOption("-h", "--header")) responseTable.push_back(header);    
+        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
+          std::vector<std::string> currentRow;
+          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(it->second);
+          responseTable.push_back(currentRow);
+        }
+        cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      }
+    }
+    else { //rm
+      checkOptions(help.str());
+      m_scheduler->cancelVerify(m_cliIdentity, vid.value());
+    }
+  }
+  else if("ls" == m_requestTokens.at(2)) { //ls
+    std::list<cta::common::dataStructures::VerifyInfo> list;
+    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
+    if(!vid) {      
+      list = m_scheduler->getVerifys(m_cliIdentity);
+    }
+    else {
+      list.push_back(m_scheduler->getVerify(m_cliIdentity, vid.value()));
+    }
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","host","time"};
+      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->vid);
+        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
+        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
+        currentRow.push_back(it->tag);
+        currentRow.push_back(std::to_string((unsigned long long)it->filesToVerify));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
+        currentRow.push_back(std::to_string((unsigned long long)it->filesVerified));
+        currentRow.push_back(it->verifyStatus);
+        currentRow.push_back(it->creationLog.username);
+        currentRow.push_back(it->creationLog.host);       
+        currentRow.push_back(timeToString(it->creationLog.time));
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    }
+  }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1196,6 +2162,7 @@ void RequestMessage::processVerify_Err(const cta::admin::AdminCmd &admincmd, cta
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
+#endif
 
 
 
@@ -1247,6 +2214,20 @@ std::string RequestMessage::formatResponse(const std::vector<std::vector<std::st
       else responseSS << std::endl;
    }
    return responseSS.str();
+}
+
+
+
+void RequestMessage::addLogInfoToResponseRow(std::vector<std::string> &responseRow,
+                                             const cta::common::dataStructures::EntryLog &creationLog,
+                                             const cta::common::dataStructures::EntryLog &lastModificationLog)
+{
+   responseRow.push_back(creationLog.username);
+   responseRow.push_back(creationLog.host);
+   responseRow.push_back(timeToString(creationLog.time));
+   responseRow.push_back(lastModificationLog.username);
+   responseRow.push_back(lastModificationLog.host);
+   responseRow.push_back(timeToString(lastModificationLog.time));
 }
 
 }} // namespace cta::xrd

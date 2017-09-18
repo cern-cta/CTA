@@ -34,8 +34,10 @@ public:
    RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
       m_catalogue(service->getCatalogue()),
       m_scheduler(service->getScheduler()),
-      m_lc(service->getLogContext()),
-      m_instance_name(client.name) {}
+      m_lc       (service->getLogContext()) {
+         m_cliIdentity.username = client.name;
+         m_cliIdentity.host     = client.host;
+      }
 
    /*!
     * Process the Notification request
@@ -129,6 +131,15 @@ private:
    admincmd_t processVerify_Err;
 
    /*!
+    * Convert time to string
+    */
+   std::string timeToString(const time_t &time) {
+      std::string timeString(ctime(&time));
+      timeString.resize(timeString.size()-1); //remove newline
+      return timeString;
+   }
+
+   /*!
     * Import Google Protobuf option fields into maps
     *
     * @param[in]     admincmd        CTA Admin command request message
@@ -144,12 +155,23 @@ private:
     */
    std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable, bool has_header);
 
+   /*!
+    * Adds the creation log and the last modification log to the current response row
+    * 
+    * @param[in,out] responseRow            The current response row to modify
+    * @param[in]     creationLog            the creation log
+    * @param[in]     lastModificationLog    the last modification log
+    */
+   void addLogInfoToResponseRow(std::vector<std::string> &responseRow,
+                                const cta::common::dataStructures::EntryLog &creationLog,
+                                const cta::common::dataStructures::EntryLog &lastModificationLog);
+
    // Member variables
 
    cta::catalogue::Catalogue                            &m_catalogue;        //!< Reference to CTA Catalogue
    cta::Scheduler                                       &m_scheduler;        //!< Reference to CTA Scheduler
    cta::log::LogContext                                  m_lc;               //!< CTA Log Context
-   const char * const                                    m_instance_name;    //!< Instance name = XRootD client name
+   cta::common::dataStructures::SecurityIdentity         m_cliIdentity;      //!< The client identity info: username and host
    std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;      //!< Boolean options
    std::map<cta::admin::OptionUInt64::Key,  uint64_t>    m_option_uint64;    //!< UInt64 options
    std::map<cta::admin::OptionString::Key,  std::string> m_option_str;       //!< String options
