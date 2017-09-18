@@ -66,7 +66,67 @@ private:
     */
    typedef void admincmd_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response);
 
+   admincmd_t processAdmin_Add;
+   admincmd_t processAdmin_Ch;
+   admincmd_t processAdmin_Rm;
+   admincmd_t processAdmin_Ls;
+   admincmd_t processAdminHost_Add;
+   admincmd_t processAdminHost_Ch;
+   admincmd_t processAdminHost_Rm;
+   admincmd_t processAdminHost_Ls;
+   admincmd_t processArchiveFile_Ls;
+   admincmd_t processArchiveRoute_Add;
+   admincmd_t processArchiveRoute_Ch;
+   admincmd_t processArchiveRoute_Rm;
+   admincmd_t processArchiveRoute_Ls;
+   admincmd_t processDrive_Up;
+   admincmd_t processDrive_Down;
+   admincmd_t processDrive_Ls;
+   admincmd_t processGroupMountRule_Add;
+   admincmd_t processGroupMountRule_Ch;
+   admincmd_t processGroupMountRule_Rm;
+   admincmd_t processGroupMountRule_Ls;
+   admincmd_t processListPendingArchives;
    admincmd_t processListPendingRetrieves;
+   admincmd_t processLogicalLibrary_Add;
+   admincmd_t processLogicalLibrary_Ch;
+   admincmd_t processLogicalLibrary_Rm;
+   admincmd_t processLogicalLibrary_Ls;
+   admincmd_t processMountPolicy_Add;
+   admincmd_t processMountPolicy_Ch;
+   admincmd_t processMountPolicy_Rm;
+   admincmd_t processMountPolicy_Ls;
+   admincmd_t processRepack_Add;
+   admincmd_t processRepack_Rm;
+   admincmd_t processRepack_Ls;
+   admincmd_t processRepack_Err;
+   admincmd_t processRequesterMountRule_Add;
+   admincmd_t processRequesterMountRule_Ch;
+   admincmd_t processRequesterMountRule_Rm;
+   admincmd_t processRequesterMountRule_Ls;
+   admincmd_t processShrink;
+   admincmd_t processShowQueues;
+   admincmd_t processStorageClass_Add;
+   admincmd_t processStorageClass_Ch;
+   admincmd_t processStorageClass_Rm;
+   admincmd_t processStorageClass_Ls;
+   admincmd_t processTape_Add;
+   admincmd_t processTape_Ch;
+   admincmd_t processTape_Rm;
+   admincmd_t processTape_Reclaim;
+   admincmd_t processTape_Ls;
+   admincmd_t processTape_Label;
+   admincmd_t processTapePool_Add;
+   admincmd_t processTapePool_Ch;
+   admincmd_t processTapePool_Rm;
+   admincmd_t processTapePool_Ls;
+   admincmd_t processTest_Read;
+   admincmd_t processTest_Write;
+   admincmd_t processTest_WriteAuto;
+   admincmd_t processVerify_Add;
+   admincmd_t processVerify_Rm;
+   admincmd_t processVerify_Ls;
+   admincmd_t processVerify_Err;
 
    /*!
     * Import Google Protobuf option fields into maps

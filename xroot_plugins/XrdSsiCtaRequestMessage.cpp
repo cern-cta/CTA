@@ -53,70 +53,190 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
             using namespace cta::admin;
 
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP): 
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN): 
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM): 
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD):
+               processAdmin_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH):
+               processAdmin_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM):
+               processAdmin_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
+               processAdmin_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD):
+               processAdminHost_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH):
+               processAdminHost_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM):
+               processAdminHost_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS):
+               processAdminHost_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
+               processArchiveFile_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
+               processArchiveRoute_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH):
+               processArchiveRoute_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM):
+               processArchiveRoute_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS):
+               processArchiveRoute_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP):
+               processDrive_Up(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
+               processDrive_Down(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
+               processDrive_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
+               processGroupMountRule_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH):
+               processGroupMountRule_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM):
+               processGroupMountRule_Rm(request.admincmd(), response);
+               break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
-            case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE): 
-goto the_end;
-            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE): processListPendingRetrieves(request.admincmd(), response); break;
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR): 
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_SHRINK, AdminCmd::SUBCMD_NONE): 
-            case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE): 
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL): 
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH): 
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_READ): 
-            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE): 
-            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE_AUTO): 
-            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ADD): 
-            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_RM): 
-            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_LS): 
-            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ERR): 
+               processGroupMountRule_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
+               processListPendingArchives(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE):
+               processListPendingRetrieves(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
+               processLogicalLibrary_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH):
+               processLogicalLibrary_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM):
+               processLogicalLibrary_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
+               processLogicalLibrary_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
+               processMountPolicy_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH):
+               processMountPolicy_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM):
+               processMountPolicy_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS):
+               processMountPolicy_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD):
+               processRepack_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM):
+               processRepack_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS):
+               processRepack_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR):
+               processRepack_Err(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD):
+               processRequesterMountRule_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH):
+               processRequesterMountRule_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM):
+               processRequesterMountRule_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
+               processRequesterMountRule_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_SHRINK, AdminCmd::SUBCMD_NONE):
+               processShrink(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
+               processShowQueues(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD):
+               processStorageClass_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH):
+               processStorageClass_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM):
+               processStorageClass_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS):
+               processStorageClass_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD):
+               processTape_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH):
+               processTape_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM):
+               processTape_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM):
+               processTape_Reclaim(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
+               processTape_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
+               processTape_Label(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
+               processTapePool_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH):
+               processTapePool_Ch(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM):
+               processTapePool_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
+               processTapePool_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_READ):
+               processTest_Read(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE):
+               processTest_Write(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_WRITE_AUTO):
+               processTest_WriteAuto(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ADD):
+               processVerify_Add(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_RM):
+               processVerify_Rm(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_LS):
+               processVerify_Ls(request.admincmd(), response);
+               break;
+            case cmd_pair(AdminCmd::CMD_VERIFY, AdminCmd::SUBCMD_ERR):
+               processVerify_Err(request.admincmd(), response);
+               break;
 
-            the_end:
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -126,12 +246,19 @@ goto the_end;
          break;
 
       case Request::kNotification:
+         // Map the Workflow Event to a method
          switch(request.notification().wf().event()) {
             using namespace cta::eos;
 
-            case Workflow::CLOSEW:  processCLOSEW (request.notification(), response); break;
-            case Workflow::PREPARE: processPREPARE(request.notification(), response); break;
-            case Workflow::DELETE:  processDELETE (request.notification(), response); break;
+            case Workflow::CLOSEW:
+               processCLOSEW (request.notification(), response);
+               break;
+            case Workflow::PREPARE:
+               processPREPARE(request.notification(), response);
+               break;
+            case Workflow::DELETE:
+               processDELETE (request.notification(), response);
+               break;
 
             default:
                throw PbException("Workflow event " +
@@ -275,6 +402,258 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
 
 
+void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdminHost_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdminHost_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processArchiveRoute_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processGroupMountRule_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
 void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -345,6 +724,474 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
       }
       cmdlineOutput << formatResponse(responseTable, has_header);
    }
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processLogicalLibrary_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMountPolicy_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processMountPolicy_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRequesterMountRule_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processRequesterMountRule_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processStorageClass_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processStorageClass_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTest_Write(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processVerify_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processVerify_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processVerify_Err(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
