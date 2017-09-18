@@ -319,6 +319,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 
 
+// EOS Workflow commands
+
 void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
@@ -443,12 +445,14 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
 
 
+// Admin commands
+
 void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::string &username = m_option_str.at(OptionString::USERNAME);
-   std::string &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &username = m_option_str.at(OptionString::USERNAME);
+   auto &comment  = m_option_str.at(OptionString::COMMENT);
 
    m_catalogue.createAdminUser(m_cliIdentity, username, comment);
 
@@ -461,8 +465,8 @@ void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::string &username = m_option_str.at(OptionString::USERNAME);
-   std::string &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &username = m_option_str.at(OptionString::USERNAME);
+   auto &comment  = m_option_str.at(OptionString::COMMENT);
 
    m_catalogue.modifyAdminUserComment(m_cliIdentity, username, comment);
 
@@ -475,7 +479,7 @@ void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::string &username = m_option_str.at(OptionString::USERNAME);
+   auto &username = m_option_str.at(OptionString::USERNAME);
 
    m_catalogue.deleteAdminUser(username);
 
@@ -518,8 +522,8 @@ void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, 
 {
    using namespace cta::admin;
 
-   std::string &hostname = m_option_str.at(OptionString::HOSTNAME);
-   std::string &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
+   auto &comment  = m_option_str.at(OptionString::COMMENT);
 
    m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
 
@@ -532,8 +536,8 @@ void RequestMessage::processAdminHost_Ch(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   std::string &hostname = m_option_str.at(OptionString::HOSTNAME);
-   std::string &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
+   auto &comment  = m_option_str.at(OptionString::COMMENT);
 
    m_catalogue.modifyAdminHostComment(m_cliIdentity, hostname, comment);
 
@@ -546,7 +550,7 @@ void RequestMessage::processAdminHost_Rm(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   std::string &hostname = m_option_str.at(OptionString::HOSTNAME);
+   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
 
    m_catalogue.deleteAdminHost(hostname);
 
@@ -642,60 +646,18 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
 
 
-#if 0
 void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in       = m_option_str.at(OptionString::INSTANCE);
+   auto &scn      = m_option_str.at(OptionString::STORAGE_CLASS);
+   auto &cn       = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
+   auto &tapepool = m_option_str.at(OptionString::TAPE_POOL);
+   auto &comment  = m_option_str.at(OptionString::COMMENT);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> scn = getOptionStringValue("-s", "--storageclass", true, false);
-    optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      checkOptions(help.str());
-      m_catalogue.createArchiveRoute(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value(), comment.value());
-    }
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      checkOptions(help.str());
-      if(comment) {
-        m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in.value(), scn.value(), cn.value(), comment.value());
-      }
-      if(tapepool) {
-        m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in.value(), scn.value(), cn.value(), tapepool.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteArchiveRoute(in.value(), scn.value(), cn.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->diskInstanceName);
-        currentRow.push_back(it->storageClassName);
-        currentRow.push_back(std::to_string((unsigned long long)it->copyNb));
-        currentRow.push_back(it->tapePoolName);
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable, has_header);
-    }
-  }
+   m_catalogue.createArchiveRoute(m_cliIdentity, in, scn, cn, tapepool, comment);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -705,9 +667,21 @@ void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in  = m_option_str.at(OptionString::INSTANCE);
+   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
+   auto &cn  = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
 
-   response.set_message_txt(cmdlineOutput.str());
+   auto tapepool_it = m_option_str.find(OptionString::TAPE_POOL);
+   auto comment_it  = m_option_str.find(OptionString::COMMENT);
+
+   if(comment_it != m_option_str.end()) {
+      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment_it->second);
+   }
+
+   if(tapepool_it != m_option_str.end()) {
+      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in, scn, cn, tapepool_it->second);
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -717,9 +691,12 @@ void RequestMessage::processArchiveRoute_Rm(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in  = m_option_str.at(OptionString::INSTANCE);
+   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
+   auto &cn  = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteArchiveRoute(in, scn, cn);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -731,12 +708,34 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
+
+   if(list.size() > 0) {
+      bool has_header = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
+
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(has_header) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->diskInstanceName);
+         currentRow.push_back(it->storageClassName);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->copyNb)));
+         currentRow.push_back(it->tapePoolName);
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, has_header);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -792,34 +791,34 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
           // print the time spent in the current state
           switch(ds.driveStatus) {
           case cta::common::dataStructures::DriveStatus::Probing:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.probeStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.probeStartTime)));
           case cta::common::dataStructures::DriveStatus::Up:
           case cta::common::dataStructures::DriveStatus::Down:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.downOrUpStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.downOrUpStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Starting:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.startStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.startStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Mounting:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.mountStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.mountStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Transferring:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.transferStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.transferStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::CleaningUp:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.cleanupStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.cleanupStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Unloading:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unloadStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unloadStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Unmounting:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.unmountStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unmountStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::DrainingToDisk:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.drainingStartTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.drainingStartTime)));
             break;
           case cta::common::dataStructures::DriveStatus::Shutdown:
-            currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.shutdownTime)));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.shutdownTime)));
           case cta::common::dataStructures::DriveStatus::Unknown:
             currentRow.push_back("-");
             break;
@@ -828,7 +827,7 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
           currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
           switch (ds.driveStatus) {
             case cta::common::dataStructures::DriveStatus::Transferring:
-              currentRow.push_back(std::to_string((unsigned long long)ds.filesTransferredInSession));
+              currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.filesTransferredInSession));
               currentRow.push_back(BytesToMbString(ds.bytesTransferredInSession));
               currentRow.push_back(BytesToMbString(ds.latestBandwidth));
               break;
@@ -844,9 +843,9 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
               currentRow.push_back("-");
               break;
             default:
-              currentRow.push_back(std::to_string((unsigned long long)ds.sessionId));
+              currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId));
           }
-          currentRow.push_back(std::to_string((unsigned long long)(time(nullptr)-ds.lastUpdateTime)));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.lastUpdateTime)));
           responseTable.push_back(currentRow);
         }
         if (singleDrive && !driveFound) {
@@ -1005,14 +1004,14 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(it->first);
-          currentRow.push_back(std::to_string((unsigned long long)jt->archiveFileID));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID));
           currentRow.push_back(jt->request.storageClass);
-          currentRow.push_back(std::to_string((unsigned long long)jt->copyNumber));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber));
           currentRow.push_back(jt->request.diskFileID);
           currentRow.push_back(jt->instanceName);
           currentRow.push_back(jt->request.checksumType);
           currentRow.push_back(jt->request.checksumValue);         
-          currentRow.push_back(std::to_string((unsigned long long)jt->request.fileSize));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize));
           currentRow.push_back(jt->request.requester.name);
           currentRow.push_back(jt->request.requester.group);
           currentRow.push_back(jt->request.diskFileInfo.path);
@@ -1028,12 +1027,12 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->first);
-        currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size()));
         uint64_t size=0;
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           size += jt->request.fileSize;
         }
-        currentRow.push_back(std::to_string((unsigned long long)size));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(size));
         responseTable.push_back(currentRow);
       }
       cmdlineOutput << formatResponse(responseTable, has_header);
@@ -1083,12 +1082,12 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
             {
                std::vector<std::string> currentRow;
                currentRow.push_back(it->first);
-               currentRow.push_back(std::to_string((unsigned long long)jt->request.archiveFileID));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.archiveFileID));
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).first)));
-               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.fSeq)));
-               currentRow.push_back(std::to_string((unsigned long long)(jt->tapeCopies.at(it->first).second.blockId)));
-               currentRow.push_back(std::to_string((unsigned long long)file.fileSize));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first)));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq)));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId)));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize));
                currentRow.push_back(jt->request.requester.name);
                currentRow.push_back(jt->request.requester.group);
                currentRow.push_back(jt->request.diskFileInfo.path);
@@ -1104,14 +1103,14 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
          {
             std::vector<std::string> currentRow;
             currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string((unsigned long long)it->second.size()));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size()));
             uint64_t size=0;
             for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
             {
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
                size += file.fileSize;
             }
-            currentRow.push_back(std::to_string((unsigned long long)size));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size));
             responseTable.push_back(currentRow);
          }
       }
@@ -1267,11 +1266,11 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->archivePriority));
-        currentRow.push_back(std::to_string((unsigned long long)it->archiveMinRequestAge));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrievePriority));
-        currentRow.push_back(std::to_string((unsigned long long)it->retrieveMinRequestAge));
-        currentRow.push_back(std::to_string((unsigned long long)it->maxDrivesAllowed));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1358,7 +1357,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
@@ -1398,14 +1397,14 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         }
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
-        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize));
         currentRow.push_back(type_s);
         currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string((unsigned long long)it->filesToRetrieve));//change names
-        currentRow.push_back(std::to_string((unsigned long long)it->filesToArchive));
-        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
-        currentRow.push_back(std::to_string((unsigned long long)it->filesArchived));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve));//change names
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived));
         currentRow.push_back(it->repackStatus);
         currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);        
@@ -1670,7 +1669,7 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->nbCopies));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1814,15 +1813,15 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         currentRow.push_back(it->logicalLibraryName);
         currentRow.push_back(it->tapePoolName);
         currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
-        currentRow.push_back(std::to_string((unsigned long long)it->capacityInBytes));
-        currentRow.push_back(std::to_string((unsigned long long)it->dataOnTapeInBytes));
-        currentRow.push_back(std::to_string((unsigned long long)it->lastFSeq));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq));
         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->labelLog) {
           currentRow.push_back(it->labelLog.value().drive);
-          currentRow.push_back(std::to_string((unsigned long long)it->labelLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->labelLog.value().time));
         }
         else {
           currentRow.push_back("-");
@@ -1830,7 +1829,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         }
         if(it->lastWriteLog) {
           currentRow.push_back(it->lastWriteLog.value().drive);
-          currentRow.push_back(std::to_string((unsigned long long)it->lastWriteLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastWriteLog.value().time));
         }
         else {
           currentRow.push_back("-");
@@ -1838,7 +1837,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         }
         if(it->lastReadLog) {
           currentRow.push_back(it->lastReadLog.value().drive);
-          currentRow.push_back(std::to_string((unsigned long long)it->lastReadLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastReadLog.value().time));
         }
         else {
           currentRow.push_back("-");
@@ -1922,17 +1921,22 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
       optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", true, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
       optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", true, false);
       checkOptions(help.str());
       m_catalogue.createTapePool(m_cliIdentity, name.value(), ptn.value(), encrypted.value(), comment.value());
-    }
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
     else if("ch" == m_requestTokens.at(2)) { //ch
       optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false);
       optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
@@ -1947,44 +1951,7 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
       if(encrypted) {
         m_catalogue.setTapePoolEncryption(m_cliIdentity, name.value(), encrypted.value());
       }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteTapePool(name.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string((unsigned long long)it->nbPartialTapes));
-        if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable, has_header);
-    }
-  }
 
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   std::stringstream cmdlineOutput;
-
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1994,9 +1961,9 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
 
-   response.set_message_txt(cmdlineOutput.str());
+      m_catalogue.deleteTapePool(name.value());
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2007,6 +1974,22 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+    std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
+    if(list.size()>0) {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      if(has_header) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+        std::vector<std::string> currentRow;
+        currentRow.push_back(it->name);
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes));
+        if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
+        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+        currentRow.push_back(it->comment);
+        responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable, has_header);
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2036,7 +2019,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
-      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
       if(res.errors.find(it->first) != res.errors.cend()) {
@@ -2084,7 +2067,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
-      currentRow.push_back(std::to_string((unsigned long long)it->first));
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
       if(res.errors.find(it->first) != res.errors.cend()) {
@@ -2153,7 +2136,7 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
         if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string((unsigned long long)it->first));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
@@ -2181,12 +2164,12 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string((unsigned long long)it->totalFiles));
-        currentRow.push_back(std::to_string((unsigned long long)it->totalSize));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize));
         currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string((unsigned long long)it->filesToVerify));
-        currentRow.push_back(std::to_string((unsigned long long)it->filesFailed));
-        currentRow.push_back(std::to_string((unsigned long long)it->filesVerified));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified));
         currentRow.push_back(it->verifyStatus);
         currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);       
