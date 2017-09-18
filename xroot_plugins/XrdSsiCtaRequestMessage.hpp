@@ -23,6 +23,8 @@
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "xroot_plugins/messages/cta_frontend.pb.h"
 
+
+
 namespace cta { namespace xrd {
 
 /*!
@@ -129,15 +131,6 @@ private:
    admincmd_t processVerify_Rm;
    admincmd_t processVerify_Ls;
    admincmd_t processVerify_Err;
-
-   /*!
-    * Convert time to string
-    */
-   std::string timeToString(const time_t &time) {
-      std::string timeString(ctime(&time));
-      timeString.resize(timeString.size()-1); //remove newline
-      return timeString;
-   }
 
    /*!
     * Import Google Protobuf option fields into maps

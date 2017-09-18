@@ -30,9 +30,50 @@ using XrdSsiPb::PbException;
 
 namespace cta { namespace xrd {
 
-// Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
+/*
+ * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
+ */
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
    return (cmd << 16) + subcmd;
+}
+
+
+
+/*
+ * Helper function to convert time to string
+ */
+static std::string timeToString(const time_t &time)
+{
+   std::string timeString(ctime(&time));
+   timeString.resize(timeString.size()-1); //remove newline
+   return timeString;
+}
+
+
+
+/*
+ * Helper function to handle optional options
+ *
+ * The has_option parameter can be used to detect if at least one of a set of optional
+ * options was set after several calls to this function.
+ *
+ * @param[out]    has_option    Set to true if the option exists, unmodified if it does not
+ * @param[in]     options       std::map of options to option values
+ * @param[in]     key           option key to look up in options
+ *
+ * @returns       value of the option if it exists, an object of type nullopt_t if it does not
+ */
+template<typename K, typename V>
+optional<V> getOptional(bool &has_option, const std::map<K,V> &options, K key)
+{
+   auto it = options.find(key);
+
+   if(it != options.end()) {
+      has_option = true;
+      return it->second;
+   } else {
+      return cta::nullopt;
+   }
 }
 
 
@@ -545,12 +586,55 @@ void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, c
 
 
 
-#if 0
 void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+   cta::catalogue::TapeFileSearchCriteria searchCriteria;
+
+   bool has_header  = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
+   bool has_summary = m_option_bool.find(OptionBoolean::SUMMARY) != m_option_bool.end();
+   bool has_all     = m_option_bool.find(OptionBoolean::ALL) != m_option_bool.end();
+
+   if(!has_all)
+   {
+      bool has_any = false;
+
+      // Get the search criteria from the optional options
+
+      searchCriteria.archiveFileId  = getOptional(has_any, m_option_uint64, OptionUInt64::ARCHIVE_FILE_ID);
+      searchCriteria.tapeFileCopyNb = getOptional(has_any, m_option_uint64, OptionUInt64::COPY_NUMBER);
+      searchCriteria.diskFileId     = getOptional(has_any, m_option_str,    OptionString::DISKID);
+      searchCriteria.vid            = getOptional(has_any, m_option_str,    OptionString::VID);
+      searchCriteria.tapePool       = getOptional(has_any, m_option_str,    OptionString::TAPE_POOL);
+      searchCriteria.diskFileUser   = getOptional(has_any, m_option_str,    OptionString::OWNER);
+      searchCriteria.diskFileGroup  = getOptional(has_any, m_option_str,    OptionString::GROUP);
+      searchCriteria.storageClass   = getOptional(has_any, m_option_str,    OptionString::STORAGE_CLASS);
+      searchCriteria.diskFilePath   = getOptional(has_any, m_option_str,    OptionString::PATH);
+      searchCriteria.diskInstance   = getOptional(has_any, m_option_str,    OptionString::INSTANCE);
+
+      if(!has_any) {
+         throw cta::exception::UserError("Must specify at least one search option, or --all");
+      }
+   }
+
+   if(has_summary) {
+      cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {"total number of files","total size"};
+      std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
+                                      std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
+      if(has_header) responseTable.push_back(header);
+      responseTable.push_back(row);
+      cmdlineOutput << formatResponse(responseTable, has_header);
+   } else {
+      auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
+#if 0
+      // TO DO: Implement list archive files
+      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(m_log, error, has_header, std::move(archiveFileItor)));
+#endif
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -558,6 +642,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
 
 
+#if 0
 void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -595,7 +680,7 @@ void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincm
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstanceName);
@@ -606,7 +691,7 @@ void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincm
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -837,7 +922,7 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
@@ -847,7 +932,7 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -915,7 +1000,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
           std::vector<std::string> currentRow;
@@ -934,12 +1019,12 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
           responseTable.push_back(currentRow);
         }
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
     else {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"tapepool","total files","total size"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->first);
@@ -951,7 +1036,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
         currentRow.push_back(std::to_string((unsigned long long)size));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
   m_suppressOptionalOptionsWarning = true;
@@ -1068,7 +1153,7 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
@@ -1076,7 +1161,7 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1178,7 +1263,7 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
@@ -1191,7 +1276,7 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1270,14 +1355,14 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
-        if(hasOption("-h", "--header")) responseTable.push_back(header);    
+        if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+        cmdlineOutput << formatResponse(responseTable, has_header);
       }
     }
     else { //rm
@@ -1297,7 +1382,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
         switch(it->repackType) {
@@ -1327,7 +1412,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1410,7 +1495,7 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
@@ -1420,7 +1505,7 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1494,7 +1579,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
     std::vector<std::string> header = {"type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age","max drives",
       "cur. mounts", "cur. files", "cur. MBytes", "MB/s", "next mounts", "tapes capacity", "files on tapes", "MBytes on tapes", "full tapes", "empty tapes",
       "disabled tapes", "writables tapes"};
-    if(hasOption("-h", "--header")) responseTable.push_back(header);
+    if(has_header) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
       std::vector<std::string> currentRow;
       currentRow.push_back(common::dataStructures::toString(q.mountType));
@@ -1530,7 +1615,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
       currentRow.push_back(std::to_string(q.writableTapes));
       responseTable.push_back(currentRow);
     }
-    cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+    cmdlineOutput << formatResponse(responseTable, has_header);
   }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -1580,7 +1665,7 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
@@ -1590,7 +1675,7 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1722,7 +1807,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","full","disabled","lpb","label drive","label time",
                                          "last w drive","last w time","last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
@@ -1763,7 +1848,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -1873,7 +1958,7 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
@@ -1883,7 +1968,7 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
@@ -2065,14 +2150,14 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
-        if(hasOption("-h", "--header")) responseTable.push_back(header);    
+        if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
           currentRow.push_back(std::to_string((unsigned long long)it->first));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+        cmdlineOutput << formatResponse(responseTable, has_header);
       }
     }
     else { //rm
@@ -2092,7 +2177,7 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","host","time"};
-      if(hasOption("-h", "--header")) responseTable.push_back(header);    
+      if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
@@ -2108,7 +2193,7 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, hasOption("-h", "--header"));
+      cmdlineOutput << formatResponse(responseTable, has_header);
     }
   }
 
