@@ -33,7 +33,7 @@ include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
 #
 
 # Get some extra debug messages on stdout
-#add_definitions(-DXRDSSI_DEBUG)
+add_definitions(-DXRDSSI_DEBUG)
 
 find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
