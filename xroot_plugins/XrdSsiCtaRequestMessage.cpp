@@ -1274,102 +1274,28 @@ void RequestMessage::processMountPolicy_Ls(const cta::admin::AdminCmd &admincmd,
 
 
 
-#if 0
 void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
 
-  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
-    if(!vid) {
-      throw cta::exception::UserError(help.str());
-    }  
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-      bool justexpand = hasOption("-e", "--justexpand");
-      bool justrepack = hasOption("-r", "--justrepack");
-      cta::common::dataStructures::RepackType type=cta::common::dataStructures::RepackType::expandandrepack;
-      if(justexpand) {
-        type=cta::common::dataStructures::RepackType::justexpand;
-      }
-      if(justrepack) {
-        type=cta::common::dataStructures::RepackType::justrepack;
-      }
-      if(justexpand&&justrepack) {
-        throw cta::exception::UserError(help.str());
-      }
-      checkOptions(help.str());
-      m_scheduler.queueRepack(m_cliIdentity, vid.value(), tag, type);
-    }
-    else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid.value());
-      if(info.errors.size()>0) {
-        std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = { "fseq","error message" };
-        if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
-          std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
-          currentRow.push_back(it->second);
-          responseTable.push_back(currentRow);
-        }
-        cmdlineOutput << formatResponse(responseTable);
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_scheduler.cancelRepack(m_cliIdentity, vid.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::RepackInfo> list;
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
-    if(!vid) {      
-      list = m_scheduler.getRepacks(m_cliIdentity);
-    }
-    else {
-      list.push_back(m_scheduler.getRepack(m_cliIdentity, vid.value()));
-    }
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::string type_s;
-        switch(it->repackType) {
-          case cta::common::dataStructures::RepackType::expandandrepack:
-            type_s = "expandandrepack";
-            break;
-          case cta::common::dataStructures::RepackType::justexpand:
-            type_s = "justexpand";
-            break;
-          case cta::common::dataStructures::RepackType::justrepack:
-            type_s = "justrepack";
-            break;
-        }
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
-        currentRow.push_back(type_s);
-        currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived)));
-        currentRow.push_back(it->repackStatus);
-        currentRow.push_back(it->creationLog.username);
-        currentRow.push_back(it->creationLog.host);        
-        currentRow.push_back(timeToString(it->creationLog.time));
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   auto &vid = m_option_str.at(OptionString::VID);
+   auto  tag = getOptional(OptionString::TAG, m_option_str);
+
+   cta::common::dataStructures::RepackType type;
+
+   if(has_flag(OptionBoolean::JUSTEXPAND) && has_flag(OptionBoolean::JUSTREPACK)) {
+      throw cta::exception::UserError("--justexpand and --justrepack are mutually exclusive");
+   } else if(has_flag(OptionBoolean::JUSTEXPAND)) {
+      type = cta::common::dataStructures::RepackType::justexpand;
+   } else if(has_flag(OptionBoolean::JUSTREPACK)) {
+      type = cta::common::dataStructures::RepackType::justrepack;
+   } else {
+      type = cta::common::dataStructures::RepackType::expandandrepack;
+   }
+
+   m_scheduler.queueRepack(m_cliIdentity, vid, tag, type);
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1381,9 +1307,10 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid = m_option_str.at(OptionString::VID);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_scheduler.cancelRepack(m_cliIdentity, vid);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1394,6 +1321,50 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+   std::list<cta::common::dataStructures::RepackInfo> list;
+
+   auto vid = getOptional(OptionString::VID, m_option_str);
+
+   if(!vid) {      
+      list = m_scheduler.getRepacks(m_cliIdentity);
+   } else {
+      list.push_back(m_scheduler.getRepack(m_cliIdentity, vid.value()));
+   }
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++)
+      {
+         const std::map<common::dataStructures::RepackType, std::string> type_s = {
+            { common::dataStructures::RepackType::expandandrepack, "expandandrepack" },
+            { common::dataStructures::RepackType::justexpand,      "justexpand" },
+            { common::dataStructures::RepackType::justrepack,      "justrepack" }
+         };
+
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->vid);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
+         currentRow.push_back(type_s.at(it->repackType));
+         currentRow.push_back(it->tag);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived)));
+         currentRow.push_back(it->repackStatus);
+         currentRow.push_back(it->creationLog.username);
+         currentRow.push_back(it->creationLog.host);        
+         currentRow.push_back(timeToString(it->creationLog.time));
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1407,12 +1378,31 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+   auto &vid = m_option_str.at(OptionString::VID);
+
+   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid);
+
+   if(!info.errors.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = { "fseq","error message" };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
+         currentRow.push_back(it->second);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
