@@ -484,7 +484,9 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
    if(!list.empty())
    {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "user","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
@@ -554,7 +556,9 @@ void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, c
    if(!list.empty())
    {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
@@ -606,7 +610,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
    if(has_flag(OptionBoolean::SUMMARY)) {
       cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"total number of files","total size"};
+      std::vector<std::string> header = { "total number of files","total size" };
       std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
                                       std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
       if(has_header) responseTable.push_back(header);
@@ -692,7 +696,9 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
 
    if(list.size() > 0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
@@ -766,8 +772,8 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> headers = {
-         "library", "drive", "host", "desired", "request", "status", "since", "vid", "tapepool",
-         "files", "MBytes", "MB/s", "session", "age"
+         "library","drive","host","desired","request","status","since","vid","tapepool","files",
+         "MBytes","MB/s","session","age"
       };
       responseTable.push_back(headers);
       m_option_bool[OptionBoolean::SHOW_HEADER] = true;
@@ -864,59 +870,17 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
 
 
-#if 0
 void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &mountpolicy = m_option_str.at(OptionString::MOUNT_POLICY);
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto &comment     = m_option_str.at(OptionString::COMMENT);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      checkOptions(help.str());
-      m_catalogue.createRequesterGroupMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
-        comment.value());
-    }
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      checkOptions(help.str());
-      if(comment) {
-        m_catalogue.modifyRequesterGroupMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
-      }
-      if(mountpolicy) {
-        m_catalogue.modifyRequesterGroupMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteRequesterGroupMountRule(in.value(), name.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::RequesterGroupMountRule> list= m_catalogue.getRequesterGroupMountRules();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->diskInstance);
-        currentRow.push_back(it->name);
-        currentRow.push_back(it->mountPolicy);
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_catalogue.createRequesterGroupMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -926,9 +890,18 @@ void RequestMessage::processGroupMountRule_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY, m_option_str);
+   auto  comment     = getOptional(OptionString::COMMENT, m_option_str);
 
-   response.set_message_txt(cmdlineOutput.str());
+   if(comment) {
+      m_catalogue.modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
+   }
+   if(mountpolicy) {
+      m_catalogue.modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -938,9 +911,11 @@ void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteRequesterGroupMountRule(in, name);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -952,12 +927,35 @@ void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &adminc
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::RequesterGroupMountRule> list = m_catalogue.getRequesterGroupMountRules();
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "instance","group","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++)
+      {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->diskInstance);
+         currentRow.push_back(it->name);
+         currentRow.push_back(it->mountPolicy);
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -979,7 +977,9 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
   if(result.size()>0) {
     if(extended) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"};
+      std::vector<std::string> header = {
+         "tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
@@ -1003,7 +1003,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
     }
     else {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"tapepool","total files","total size"};
+      std::vector<std::string> header = { "tapepool","total files","total size" };
       if(has_header) responseTable.push_back(header);    
       for(auto it = result.cbegin(); it != result.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1132,7 +1132,9 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
     std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue.getLogicalLibraries();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1242,7 +1244,9 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
     std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue.getMountPolicies();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1334,7 +1338,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = {"fseq","error message"};
+        std::vector<std::string> header = { "fseq","error message" };
         if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
@@ -1361,7 +1365,9 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"};
+      std::vector<std::string> header = {
+         "vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
@@ -1474,7 +1480,9 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
     std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue.getRequesterMountRules();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1556,9 +1564,12 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
   auto queuesAndMounts=m_scheduler.getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age","max drives",
-      "cur. mounts", "cur. files", "cur. MBytes", "MB/s", "next mounts", "tapes capacity", "files on tapes", "MBytes on tapes", "full tapes", "empty tapes",
-      "disabled tapes", "writables tapes"};
+    std::vector<std::string> header = {
+       "type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age",
+       "max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
+       "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes",
+       "writables tapes"
+    };
     if(has_header) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
       std::vector<std::string> currentRow;
@@ -1644,7 +1655,9 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
     std::list<cta::common::dataStructures::StorageClass> list= m_catalogue.getStorageClasses();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1785,8 +1798,11 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
     std::list<cta::common::dataStructures::Tape> list= m_catalogue.getTapes(searchCriteria);
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","logical library","tapepool","encription key","capacity","occupancy","last fseq","full","disabled","lpb","label drive","label time",
-                                         "last w drive","last w time","last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "vid","logical library","tapepool","encription key","capacity","occupancy","last fseq",
+         "full","disabled","lpb","label drive","label time","last w drive","last w time",
+         "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1959,7 +1975,9 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
     std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
+      std::vector<std::string> header = {
+         "name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
@@ -1996,7 +2014,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     std::string tag_value = tag? tag.value():"-";
     cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
@@ -2044,7 +2062,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
       res = m_scheduler.write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag_value);
     }
     std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
+    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
@@ -2113,7 +2131,7 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       cta::common::dataStructures::VerifyInfo info = m_scheduler.getVerify(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = {"fseq","error message"};
+        std::vector<std::string> header = { "fseq","error message" };
         if(has_header) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
@@ -2140,7 +2158,9 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {"vid","files","size","tag","to verify","failed","verified","status","name","host","time"};
+      std::vector<std::string> header = {
+         "vid","files","size","tag","to verify","failed","verified","status","name","host","time"
+      };
       if(has_header) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
