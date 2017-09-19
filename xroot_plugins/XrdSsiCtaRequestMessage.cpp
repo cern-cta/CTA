@@ -1167,83 +1167,21 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
 
 
 
-#if 0
 void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &group                 = m_option_str.at   (OptionString::MOUNT_POLICY);
+   auto &archivepriority       = m_option_uint64.at(OptionUInt64::ARCHIVE_PRIORITY);
+   auto &minarchiverequestage  = m_option_uint64.at(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+   auto &retrievepriority      = m_option_uint64.at(OptionUInt64::RETRIEVE_PRIORITY);
+   auto &minretrieverequestage = m_option_uint64.at(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
+   auto &maxdrivesallowed      = m_option_uint64.at(OptionUInt64::MAX_DRIVES_ALLOWED);
+   auto &comment               = m_option_str.at   (OptionString::COMMENT);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> group = getOptionStringValue("-n", "--name", true, false);
-    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) { 
-      if("add" == m_requestTokens.at(2)) { //add     
-        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", true, false);
-        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", true, false);
-        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", true, false);
-        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", true, false);
-        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", true, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-        checkOptions(help.str());
-        m_catalogue.createMountPolicy(m_cliIdentity, group.value(), archivepriority.value(), minarchiverequestage.value(), retrievepriority.value(), minretrieverequestage.value(), maxdrivesallowed.value(), comment.value());
-      }
-      else if("ch" == m_requestTokens.at(2)) { //ch      
-        optional<uint64_t> archivepriority = getOptionUint64Value("--ap", "--archivepriority", false, false);
-        optional<uint64_t> minarchiverequestage = getOptionUint64Value("--aa", "--minarchiverequestage", false, false);
-        optional<uint64_t> retrievepriority = getOptionUint64Value("--rp", "--retrievepriority", false, false);
-        optional<uint64_t> minretrieverequestage = getOptionUint64Value("--ra", "--minretrieverequestage", false, false);
-        optional<uint64_t> maxdrivesallowed = getOptionUint64Value("-d", "--maxdrivesallowed", false, false);
-        optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-        checkOptions(help.str());
-        if(archivepriority) {
-          m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group.value(), archivepriority.value());
-        }
-        if(minarchiverequestage) {
-          m_catalogue.modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group.value(), minarchiverequestage.value());
-        }
-        if(retrievepriority) {
-          m_catalogue.modifyMountPolicyRetrievePriority(m_cliIdentity, group.value(), retrievepriority.value());
-        }
-        if(minretrieverequestage) {
-          m_catalogue.modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group.value(), minretrieverequestage.value());
-        }
-        if(maxdrivesallowed) {
-          m_catalogue.modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group.value(), maxdrivesallowed.value());
-        }
-        if(comment) {
-          m_catalogue.modifyMountPolicyComment(m_cliIdentity, group.value(), comment.value());
-        }
-      }
-    }
-    else { //rm
-      m_catalogue.deleteMountPolicy(group.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue.getMountPolicies();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed)));
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_catalogue.createMountPolicy(m_cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority,
+                                 minretrieverequestage, maxdrivesallowed, comment);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1253,9 +1191,34 @@ void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &group = m_option_str.at(OptionString::MOUNT_POLICY);
 
-   response.set_message_txt(cmdlineOutput.str());
+   auto archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY, m_option_uint64);
+   auto minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE, m_option_uint64);
+   auto retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY, m_option_uint64);
+   auto minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE, m_option_uint64);
+   auto maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED, m_option_uint64);
+   auto comment               = getOptional(OptionString::COMMENT, m_option_str);
+
+   if(archivepriority) {
+      m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
+   }
+   if(minarchiverequestage) {
+      m_catalogue.modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage.value());
+   }
+   if(retrievepriority) {
+      m_catalogue.modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority.value());
+   }
+   if(minretrieverequestage) {
+      m_catalogue.modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
+   }
+   if(maxdrivesallowed) {
+      m_catalogue.modifyMountPolicyMaxDrivesAllowed(m_cliIdentity, group, maxdrivesallowed.value());
+   }
+   if(comment) {
+      m_catalogue.modifyMountPolicyComment(m_cliIdentity, group, comment.value());
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1265,9 +1228,10 @@ void RequestMessage::processMountPolicy_Rm(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &group = m_option_str.at(OptionString::MOUNT_POLICY);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteMountPolicy(group);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1279,12 +1243,38 @@ void RequestMessage::processMountPolicy_Ls(const cta::admin::AdminCmd &admincmd,
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::MountPolicy> list= m_catalogue.getMountPolicies();
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++)
+      {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->name);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed)));
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
