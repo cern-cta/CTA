@@ -139,6 +139,40 @@ private:
     */
    void importOptions(const cta::admin::AdminCmd &admincmd);
 
+
+   /*!
+    * Get an optional option
+    *
+    * The has_option parameter is set if the option exists and left unmodified if the option does not
+    * exist. This is provided as a convenience to monitor whether at least one option was set from a
+    * list of optional options.
+    *
+    * @param[in]     key           option key to look up in options
+    * @param[out]    has_option    Set to true if the option exists, unmodified if it does not
+    *
+    * @returns       value of the option if it exists, an object of type nullopt_t if it does not
+    */
+   template<typename K, typename V>
+   optional<V> getOptional(K key, const std::map<K,V> &options, bool *has_option = nullptr)
+   {
+      auto it = options.find(key);
+
+      if(it != options.end()) {
+         if(has_option != nullptr) *has_option = true;
+         return it->second;
+      } else {
+         return cta::nullopt;
+      }
+   }
+
+   /*!
+    * Check if an optional flag has been set
+    */
+   bool has_flag(cta::admin::OptionBoolean::Key option) {
+      auto opt_it = m_option_bool.find(option);
+      return opt_it != m_option_bool.end() && opt_it->second;
+   }
+
    /*!
     * Returns the response string for admin commands in a tabular format
     * 
@@ -146,7 +180,7 @@ private:
     *
     * @returns       the response string properly formatted in a table
     */
-   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable, bool has_header);
+   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable);
 
    /*!
     * Adds the creation log and the last modification log to the current response row

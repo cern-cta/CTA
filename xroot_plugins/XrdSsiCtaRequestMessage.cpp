@@ -49,31 +49,16 @@ static std::string timeToString(const time_t &time)
    return timeString;
 }
 
-
-
 /*
- * Helper function to handle optional options
- *
- * The has_option parameter can be used to detect if at least one of a set of optional
- * options was set after several calls to this function.
- *
- * @param[out]    has_option    Set to true if the option exists, unmodified if it does not
- * @param[in]     options       std::map of options to option values
- * @param[in]     key           option key to look up in options
- *
- * @returns       value of the option if it exists, an object of type nullopt_t if it does not
+ * Helper function to convert bytes to Mb and output as a string
  */
-template<typename K, typename V>
-optional<V> getOptional(bool &has_option, const std::map<K,V> &options, K key)
+static std::string bytesToMbString(uint64_t bytes)
 {
-   auto it = options.find(key);
+   long double mBytes = static_cast<long double>(bytes)/(1000.0*1000.0);
 
-   if(it != options.end()) {
-      has_option = true;
-      return it->second;
-   } else {
-      return cta::nullopt;
-   }
+   std::ostringstream oss;
+   oss << std::setprecision(2) << std::fixed << mBytes;
+   return oss.str();
 }
 
 
@@ -496,12 +481,11 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
    std::list<cta::common::dataStructures::AdminUser> list= m_catalogue.getAdminUsers();
 
-   if(list.size() > 0) {
-      bool has_header = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
-
+   if(!list.empty())
+   {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"user","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->name);
@@ -509,7 +493,7 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
          currentRow.push_back(it->comment);
          responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
    }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -567,13 +551,11 @@ void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, c
 
    std::list<cta::common::dataStructures::AdminHost> list= m_catalogue.getAdminHosts();
 
-   if(list.size() > 0)
+   if(!list.empty())
    {
-      bool has_header = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
-
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->name);
@@ -581,7 +563,7 @@ void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, c
          currentRow.push_back(it->comment);
          responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
    }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -597,33 +579,31 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
    std::stringstream cmdlineOutput;
    cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
-   bool has_header  = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
-   bool has_summary = m_option_bool.find(OptionBoolean::SUMMARY) != m_option_bool.end();
-   bool has_all     = m_option_bool.find(OptionBoolean::ALL) != m_option_bool.end();
-
-   if(!has_all)
+   if(!has_flag(OptionBoolean::ALL))
    {
-      bool has_any = false;
+      bool has_any = false; // set to true if at least one optional option is set
 
       // Get the search criteria from the optional options
 
-      searchCriteria.archiveFileId  = getOptional(has_any, m_option_uint64, OptionUInt64::ARCHIVE_FILE_ID);
-      searchCriteria.tapeFileCopyNb = getOptional(has_any, m_option_uint64, OptionUInt64::COPY_NUMBER);
-      searchCriteria.diskFileId     = getOptional(has_any, m_option_str,    OptionString::DISKID);
-      searchCriteria.vid            = getOptional(has_any, m_option_str,    OptionString::VID);
-      searchCriteria.tapePool       = getOptional(has_any, m_option_str,    OptionString::TAPE_POOL);
-      searchCriteria.diskFileUser   = getOptional(has_any, m_option_str,    OptionString::OWNER);
-      searchCriteria.diskFileGroup  = getOptional(has_any, m_option_str,    OptionString::GROUP);
-      searchCriteria.storageClass   = getOptional(has_any, m_option_str,    OptionString::STORAGE_CLASS);
-      searchCriteria.diskFilePath   = getOptional(has_any, m_option_str,    OptionString::PATH);
-      searchCriteria.diskInstance   = getOptional(has_any, m_option_str,    OptionString::INSTANCE);
+      searchCriteria.archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID, m_option_uint64, &has_any);
+      searchCriteria.tapeFileCopyNb = getOptional(OptionUInt64::COPY_NUMBER,     m_option_uint64, &has_any);
+      searchCriteria.diskFileId     = getOptional(OptionString::DISKID,          m_option_str,    &has_any);
+      searchCriteria.vid            = getOptional(OptionString::VID,             m_option_str,    &has_any);
+      searchCriteria.tapePool       = getOptional(OptionString::TAPE_POOL,       m_option_str,    &has_any);
+      searchCriteria.diskFileUser   = getOptional(OptionString::OWNER,           m_option_str,    &has_any);
+      searchCriteria.diskFileGroup  = getOptional(OptionString::GROUP,           m_option_str,    &has_any);
+      searchCriteria.storageClass   = getOptional(OptionString::STORAGE_CLASS,   m_option_str,    &has_any);
+      searchCriteria.diskFilePath   = getOptional(OptionString::PATH,            m_option_str,    &has_any);
+      searchCriteria.diskInstance   = getOptional(OptionString::INSTANCE,        m_option_str,    &has_any);
 
       if(!has_any) {
          throw cta::exception::UserError("Must specify at least one search option, or --all");
       }
    }
 
-   if(has_summary) {
+   bool has_header = has_flag(OptionBoolean::SHOW_HEADER);
+
+   if(has_flag(OptionBoolean::SUMMARY)) {
       cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"total number of files","total size"};
@@ -631,7 +611,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
                                       std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
       if(has_header) responseTable.push_back(header);
       responseTable.push_back(row);
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
    } else {
       auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
 #if 0
@@ -711,11 +691,9 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
    std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
 
    if(list.size() > 0) {
-      bool has_header = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
-
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"};
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->diskInstanceName);
@@ -726,7 +704,7 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
          currentRow.push_back(it->comment);
          responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
    }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -735,124 +713,17 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
 
 
 
-#if 0
 void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
 
-  // We should have at least one sub command. {"cta", "dr/drive", "up/down/ls"}.
-  if ("up" == m_requestTokens.at(2)) {
-    // Here the drive name is required in addition
-    if (m_requestTokens.size() != 4)
-      throw cta::exception::UserError(help.str());
-    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, true, false);
-  } else if ("down" == m_requestTokens.at(2)) {
-    // Parse the command line for option and drive name.
-    cta::utils::GetOpThreadSafe::Request req;
-    for (size_t i=2; i<m_requestTokens.size(); i++)
-      req.argv.push_back(m_requestTokens.at(i));
-    req.optstring = { "f" };
-    struct ::option longOptions[] = { { "force", no_argument, 0 , 'f' }, { 0, 0, 0, 0 } };
-    req.longopts = longOptions;
-    auto reply = cta::utils::GetOpThreadSafe::getOpt(req);
-    // We should have one and only one no-option argument, the drive name.
-    if (reply.remainder.size() != 1) {
-      throw cta::exception::UserError(help.str());
-    }
-    // Check if the force option was present.
-    bool force=reply.options.size() && (reply.options.at(0).option == "f");
-    changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, false, force);
-  } else if ("ls" == m_requestTokens.at(2)) {
-    if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
-      // We will dump all the drives, and select the one asked for if needed.
-      bool singleDrive = (m_requestTokens.size() == 4);
-      bool driveFound = false;
-      auto driveStates = m_scheduler->getDriveStates(m_cliIdentity, lc);
-      if (driveStates.size()) {
-        std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> headers = {"library", "drive", "host", "desired", "request",
-          "status", "since", "vid", "tapepool", "files", "MBytes",
-          "MB/s", "session", "age"};
-        responseTable.push_back(headers);
-        typedef decltype(*driveStates.begin()) dStateVal;
-        driveStates.sort([](const dStateVal & a, const dStateVal & b){ return a.driveName < b.driveName; });
-        for (auto ds: driveStates) {
-          if (singleDrive && m_requestTokens.at(3) != ds.driveName) continue;
-          driveFound = true;
-          std::vector<std::string> currentRow;
-          currentRow.push_back(ds.logicalLibrary);
-          currentRow.push_back(ds.driveName);
-          currentRow.push_back(ds.host);
-          currentRow.push_back(ds.desiredDriveState.up?"Up":"Down");
-          currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
-          currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
-          // print the time spent in the current state
-          switch(ds.driveStatus) {
-          case cta::common::dataStructures::DriveStatus::Probing:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.probeStartTime)));
-          case cta::common::dataStructures::DriveStatus::Up:
-          case cta::common::dataStructures::DriveStatus::Down:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.downOrUpStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Starting:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.startStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Mounting:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.mountStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Transferring:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.transferStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::CleaningUp:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.cleanupStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Unloading:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unloadStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Unmounting:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unmountStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::DrainingToDisk:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.drainingStartTime)));
-            break;
-          case cta::common::dataStructures::DriveStatus::Shutdown:
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.shutdownTime)));
-          case cta::common::dataStructures::DriveStatus::Unknown:
-            currentRow.push_back("-");
-            break;
-          }
-          currentRow.push_back(ds.currentVid==""?"-":ds.currentVid);
-          currentRow.push_back(ds.currentTapePool==""?"-":ds.currentTapePool);
-          switch (ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Transferring:
-              currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.filesTransferredInSession));
-              currentRow.push_back(BytesToMbString(ds.bytesTransferredInSession));
-              currentRow.push_back(BytesToMbString(ds.latestBandwidth));
-              break;
-            default:
-              currentRow.push_back("-");
-              currentRow.push_back("-");
-              currentRow.push_back("-");
-          }
-          switch(ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Up:
-            case cta::common::dataStructures::DriveStatus::Down:
-            case cta::common::dataStructures::DriveStatus::Unknown:
-              currentRow.push_back("-");
-              break;
-            default:
-              currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId));
-          }
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.lastUpdateTime)));
-          responseTable.push_back(currentRow);
-        }
-        if (singleDrive && !driveFound) {
-          throw cta::exception::UserError(std::string("No such drive: ") + m_requestTokens.at(3));
-        }
-        cmdlineOutput<< formatResponse(responseTable, true);
-      }
+#if 0
+   auto &drive = m_option_str.at(OptionString::DRIVE);
+
+   changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, true, false);
+#endif
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -866,6 +737,12 @@ void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+#if 0
+   auto &drive = m_option_str.at(OptionString::DRIVE);
+
+   changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, false, has_flag(OptionBoolean::FORCE));
+#endif
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -878,12 +755,116 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
    std::stringstream cmdlineOutput;
 
+   // Dump all drives unless we specified a drive
+   bool singleDrive = false;
+   bool driveFound = false;
+
+   auto drive = getOptional(OptionString::DRIVE, m_option_str, &singleDrive);
+   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
+
+   if (!driveStates.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> headers = {
+         "library", "drive", "host", "desired", "request", "status", "since", "vid", "tapepool",
+         "files", "MBytes", "MB/s", "session", "age"
+      };
+      responseTable.push_back(headers);
+      m_option_bool[OptionBoolean::SHOW_HEADER] = true;
+
+      typedef decltype(*driveStates.begin()) dStateVal_t;
+      driveStates.sort([](const dStateVal_t &a, const dStateVal_t &b){ return a.driveName < b.driveName; });
+
+      for (auto ds: driveStates)
+      {
+         if(singleDrive && drive.value() != ds.driveName) continue;
+         driveFound = true;
+
+         std::vector<std::string> currentRow;
+         currentRow.push_back(ds.logicalLibrary);
+         currentRow.push_back(ds.driveName);
+         currentRow.push_back(ds.host);
+         currentRow.push_back(ds.desiredDriveState.up ? "Up" : "Down");
+         currentRow.push_back(cta::common::dataStructures::toString(ds.mountType));
+         currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
+
+         // print the time spent in the current state
+         switch(ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Probing:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.probeStartTime))));
+            case cta::common::dataStructures::DriveStatus::Up:
+            case cta::common::dataStructures::DriveStatus::Down:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.downOrUpStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Starting:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.startStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Mounting:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.mountStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Transferring:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.transferStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::CleaningUp:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.cleanupStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Unloading:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unloadStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Unmounting:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unmountStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::DrainingToDisk:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.drainingStartTime))));
+               break;
+            case cta::common::dataStructures::DriveStatus::Shutdown:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.shutdownTime))));
+            case cta::common::dataStructures::DriveStatus::Unknown:
+               currentRow.push_back("-");
+               break;
+         }
+
+         currentRow.push_back(ds.currentVid == "" ? "-" : ds.currentVid);
+         currentRow.push_back(ds.currentTapePool == "" ? "-" : ds.currentTapePool);
+
+         switch (ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Transferring:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.filesTransferredInSession)));
+               currentRow.push_back(bytesToMbString(ds.bytesTransferredInSession));
+               currentRow.push_back(bytesToMbString(ds.latestBandwidth));
+               break;
+            default:
+               currentRow.push_back("-");
+               currentRow.push_back("-");
+               currentRow.push_back("-");
+         }
+         switch(ds.driveStatus) {
+            case cta::common::dataStructures::DriveStatus::Up:
+            case cta::common::dataStructures::DriveStatus::Down:
+            case cta::common::dataStructures::DriveStatus::Unknown:
+               currentRow.push_back("-");
+               break;
+            default:
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
+         }
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.lastUpdateTime))));
+         responseTable.push_back(currentRow);
+      }
+
+      if (singleDrive && !driveFound) {
+         throw cta::exception::UserError(std::string("No such drive: ") + drive.value());
+      }
+
+      cmdlineOutput<< formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -931,7 +912,7 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -987,10 +968,10 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
   bool extended = hasOption("-x", "--extended");
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
   if(!tapepool) {
-    result = m_scheduler->getPendingArchiveJobs(lc);
+    result = m_scheduler.getPendingArchiveJobs(lc);
   }
   else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler->getPendingArchiveJobs(tapepool.value(), lc);
+    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
     if(list.size()>0) {
       result[tapepool.value()] = list;
     }
@@ -1018,7 +999,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
           responseTable.push_back(currentRow);
         }
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
     else {
       std::vector<std::vector<std::string>> responseTable;
@@ -1035,7 +1016,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
         currentRow.push_back(std::to_string(static_cast<unsigned long long>(size));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
   m_suppressOptionalOptionsWarning = true;
@@ -1114,7 +1095,7 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
             responseTable.push_back(currentRow);
          }
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
    }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -1160,7 +1141,7 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1275,7 +1256,7 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1347,10 +1328,10 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         throw cta::exception::UserError(help.str());
       }
       checkOptions(help.str());
-      m_scheduler->queueRepack(m_cliIdentity, vid.value(), tag, type);
+      m_scheduler.queueRepack(m_cliIdentity, vid.value(), tag, type);
     }
     else if("err" == m_requestTokens.at(2)) { //err
-      cta::common::dataStructures::RepackInfo info = m_scheduler->getRepack(m_cliIdentity, vid.value());
+      cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -1361,22 +1342,22 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        cmdlineOutput << formatResponse(responseTable, has_header);
+        cmdlineOutput << formatResponse(responseTable);
       }
     }
     else { //rm
       checkOptions(help.str());
-      m_scheduler->cancelRepack(m_cliIdentity, vid.value());
+      m_scheduler.cancelRepack(m_cliIdentity, vid.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::RepackInfo> list;
     optional<std::string> vid = getOptionStringValue("-v", "--vid", false, false);
     if(!vid) {      
-      list = m_scheduler->getRepacks(m_cliIdentity);
+      list = m_scheduler.getRepacks(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getRepack(m_cliIdentity, vid.value()));
+      list.push_back(m_scheduler.getRepack(m_cliIdentity, vid.value()));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -1411,7 +1392,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1504,7 +1485,7 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1558,7 +1539,7 @@ void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xr
 
   optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
   checkOptions(help.str());
-  m_scheduler->shrink(m_cliIdentity, tapepool.value());
+  m_scheduler.shrink(m_cliIdentity, tapepool.value());
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1572,7 +1553,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-  auto queuesAndMounts=m_scheduler->getQueuesAndMountSummaries(lc);
+  auto queuesAndMounts=m_scheduler.getQueuesAndMountSummaries(lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age","max drives",
@@ -1585,7 +1566,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
       currentRow.push_back(q.tapePool);
       currentRow.push_back(q.vid);
       currentRow.push_back(std::to_string(q.filesQueued));
-      currentRow.push_back(BytesToMbString(q.bytesQueued));
+      currentRow.push_back(bytesToMbString(q.bytesQueued));
       currentRow.push_back(std::to_string(q.oldestJobAge));
       if (common::dataStructures::MountType::Archive == q.mountType) {
         currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
@@ -1602,19 +1583,19 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
       }
       currentRow.push_back(std::to_string(q.currentMounts));
       currentRow.push_back(std::to_string(q.currentFiles));
-      currentRow.push_back(BytesToMbString(q.currentBytes));
-      currentRow.push_back(BytesToMbString(q.latestBandwidth));
+      currentRow.push_back(bytesToMbString(q.currentBytes));
+      currentRow.push_back(bytesToMbString(q.latestBandwidth));
       currentRow.push_back(std::to_string(q.nextMounts));
       currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)MBytes));
       currentRow.push_back(std::to_string(q.filesOnTapes));
-      currentRow.push_back(BytesToMbString(q.dataOnTapes));
+      currentRow.push_back(bytesToMbString(q.dataOnTapes));
       currentRow.push_back(std::to_string(q.fullTapes));
       currentRow.push_back(std::to_string(q.emptyTapes));
       currentRow.push_back(std::to_string(q.disabledTapes));
       currentRow.push_back(std::to_string(q.writableTapes));
       responseTable.push_back(currentRow);
     }
-    cmdlineOutput << formatResponse(responseTable, has_header);
+    cmdlineOutput << formatResponse(responseTable);
   }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -1674,7 +1655,7 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1779,7 +1760,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
       optional<bool> force = getOptionBoolValue("-f", "--force", false, true, "false");
       optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, true, "true");
       checkOptions(help.str());
-      m_scheduler->queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
+      m_scheduler.queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
     }
     else { //rm
       checkOptions(help.str());
@@ -1847,7 +1828,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -1989,7 +1970,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2013,7 +1994,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     checkOptions(help.str());
     optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
     std::string tag_value = tag? tag.value():"-";
-    cta::common::dataStructures::ReadTestResult res = m_scheduler->readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
+    cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
     responseTable.push_back(header);
@@ -2041,7 +2022,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
       checkOptions(help.str());
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       std::string tag_value = tag? tag.value():"-";
-      res = m_scheduler->writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
+      res = m_scheduler.writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
     }
     else { //write_auto
       optional<uint64_t> number = getOptionUint64Value("-n", "--number", true, false);
@@ -2060,7 +2041,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
       else { //urandom
         type = cta::common::dataStructures::TestSourceType::devurandom;
       }
-      res = m_scheduler->write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag_value);
+      res = m_scheduler.write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag_value);
     }
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {"fseq","checksum type","checksum value","error"};
@@ -2125,11 +2106,11 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
       optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
       checkOptions(help.str());
-      m_scheduler->queueVerify(m_cliIdentity, vid.value(), tag, numberOfFiles);
+      m_scheduler.queueVerify(m_cliIdentity, vid.value(), tag, numberOfFiles);
     }
     else if("err" == m_requestTokens.at(2)) { //err
       checkOptions(help.str());
-      cta::common::dataStructures::VerifyInfo info = m_scheduler->getVerify(m_cliIdentity, vid.value());
+      cta::common::dataStructures::VerifyInfo info = m_scheduler.getVerify(m_cliIdentity, vid.value());
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = {"fseq","error message"};
@@ -2140,22 +2121,22 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
-        cmdlineOutput << formatResponse(responseTable, has_header);
+        cmdlineOutput << formatResponse(responseTable);
       }
     }
     else { //rm
       checkOptions(help.str());
-      m_scheduler->cancelVerify(m_cliIdentity, vid.value());
+      m_scheduler.cancelVerify(m_cliIdentity, vid.value());
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
     std::list<cta::common::dataStructures::VerifyInfo> list;
     optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
     if(!vid) {      
-      list = m_scheduler->getVerifys(m_cliIdentity);
+      list = m_scheduler.getVerifys(m_cliIdentity);
     }
     else {
-      list.push_back(m_scheduler->getVerify(m_cliIdentity, vid.value()));
+      list.push_back(m_scheduler.getVerify(m_cliIdentity, vid.value()));
     }
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
@@ -2176,7 +2157,7 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
         currentRow.push_back(timeToString(it->creationLog.time));
         responseTable.push_back(currentRow);
       }
-      cmdlineOutput << formatResponse(responseTable, has_header);
+      cmdlineOutput << formatResponse(responseTable);
     }
   }
 
@@ -2246,8 +2227,10 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
 
 
 
-std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable, const bool has_header)
+std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable)
 {
+   bool has_header = has_flag(cta::admin::OptionBoolean::SHOW_HEADER);
+
    if(responseTable.empty() || responseTable.at(0).empty()) return "";
 
    std::vector<int> columnSizes;
