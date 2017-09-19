@@ -1402,61 +1402,17 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-#if 0
 void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &mountpolicy = m_option_str.at(OptionString::MOUNT_POLICY);
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto &comment     = m_option_str.at(OptionString::COMMENT);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      checkOptions(help.str());
-      m_catalogue.createRequesterMountRule(m_cliIdentity, mountpolicy.value(), in.value(), name.value(),
-        comment.value());
-    }
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> mountpolicy = getOptionStringValue("-u", "--mountpolicy", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      checkOptions(help.str());
-      if(comment) {
-        m_catalogue.modifyRequesteMountRuleComment(m_cliIdentity, in.value(), name.value(), comment.value());
-      }
-      if(mountpolicy) {
-        m_catalogue.modifyRequesterMountRulePolicy(m_cliIdentity, in.value(), name.value(), mountpolicy.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteRequesterMountRule(in.value(), name.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::RequesterMountRule> list= m_catalogue.getRequesterMountRules();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->diskInstance);
-        currentRow.push_back(it->name);
-        currentRow.push_back(it->mountPolicy);
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_catalogue.createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1466,9 +1422,18 @@ void RequestMessage::processRequesterMountRule_Ch(const cta::admin::AdminCmd &ad
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto  comment     = getOptional(OptionString::COMMENT, m_option_str);
+   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY, m_option_str);
 
-   response.set_message_txt(cmdlineOutput.str());
+   if(comment) {
+      m_catalogue.modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
+   }
+   if(mountpolicy) {
+      m_catalogue.modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1478,9 +1443,11 @@ void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &ad
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in          = m_option_str.at(OptionString::INSTANCE);
+   auto &name        = m_option_str.at(OptionString::USERNAME);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteRequesterMountRule(in, name);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1492,12 +1459,34 @@ void RequestMessage::processRequesterMountRule_Ls(const cta::admin::AdminCmd &ad
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::RequesterMountRule> list = m_catalogue.getRequesterMountRules();
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->diskInstance);
+         currentRow.push_back(it->name);
+         currentRow.push_back(it->mountPolicy);
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
