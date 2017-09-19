@@ -655,15 +655,15 @@ void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd
    auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
    auto &cn  = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
 
-   auto tapepool_it = m_option_str.find(OptionString::TAPE_POOL);
-   auto comment_it  = m_option_str.find(OptionString::COMMENT);
+   auto tapepool = getOptional(OptionString::TAPE_POOL, m_option_str);
+   auto comment  = getOptional(OptionString::COMMENT, m_option_str);
 
-   if(comment_it != m_option_str.end()) {
-      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment_it->second);
+   if(comment) {
+      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment.value());
    }
 
-   if(tapepool_it != m_option_str.end()) {
-      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in, scn, cn, tapepool_it->second);
+   if(tapepool) {
+      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in, scn, cn, tapepool.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -955,71 +955,70 @@ void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &adminc
 
 
 
-#if 0
 void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
 
-  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
-  bool extended = hasOption("-x", "--extended");
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
-  if(!tapepool) {
-    result = m_scheduler.getPendingArchiveJobs(lc);
-  }
-  else {
-    std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
-    if(list.size()>0) {
-      result[tapepool.value()] = list;
-    }
-  }
-  if(result.size()>0) {
-    if(extended) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "tapepool","id","storage class","copy no.","disk id","instance","checksum type","checksum value","size","user","group","path"
-      };
-      if(has_header) responseTable.push_back(header);    
-      for(auto it = result.cbegin(); it != result.cend(); it++) {
-        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          std::vector<std::string> currentRow;
-          currentRow.push_back(it->first);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID));
-          currentRow.push_back(jt->request.storageClass);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber));
-          currentRow.push_back(jt->request.diskFileID);
-          currentRow.push_back(jt->instanceName);
-          currentRow.push_back(jt->request.checksumType);
-          currentRow.push_back(jt->request.checksumValue);         
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize));
-          currentRow.push_back(jt->request.requester.name);
-          currentRow.push_back(jt->request.requester.group);
-          currentRow.push_back(jt->request.diskFileInfo.path);
-          responseTable.push_back(currentRow);
-        }
+   auto tapepool = getOptional(OptionString::TAPE_POOL, m_option_str);
+
+   if(tapepool) {
+      std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
+      if(!list.empty()) result[tapepool.value()] = list;
+   } else {
+     result = m_scheduler.getPendingArchiveJobs(m_lc);
+   }
+
+   if(!result.empty())
+   {
+      if(has_flag(OptionBoolean::EXTENDED))
+      {
+         std::vector<std::vector<std::string>> responseTable;
+         std::vector<std::string> header = {
+            "tapepool","id","storage class","copy no.","disk id","instance","checksum type",
+            "checksum value","size","user","group","path"
+         };
+         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+         for(auto it = result.cbegin(); it != result.cend(); it++) {
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+               std::vector<std::string> currentRow;
+               currentRow.push_back(it->first);
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID)));
+               currentRow.push_back(jt->request.storageClass);
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber)));
+               currentRow.push_back(jt->request.diskFileID);
+               currentRow.push_back(jt->instanceName);
+               currentRow.push_back(jt->request.checksumType);
+               currentRow.push_back(jt->request.checksumValue);         
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize)));
+               currentRow.push_back(jt->request.requester.name);
+               currentRow.push_back(jt->request.requester.group);
+               currentRow.push_back(jt->request.diskFileInfo.path);
+               responseTable.push_back(currentRow);
+            }
+         }
+         cmdlineOutput << formatResponse(responseTable);
+      } else {
+         std::vector<std::vector<std::string>> responseTable;
+         std::vector<std::string> header = { "tapepool","total files","total size" };
+         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
+         for(auto it = result.cbegin(); it != result.cend(); it++) {
+            std::vector<std::string> currentRow;
+            currentRow.push_back(it->first);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
+            uint64_t size = 0;
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+               size += jt->request.fileSize;
+            }
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
+            responseTable.push_back(currentRow);
+         }
+         cmdlineOutput << formatResponse(responseTable);
       }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-    else {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = { "tapepool","total files","total size" };
-      if(has_header) responseTable.push_back(header);    
-      for(auto it = result.cbegin(); it != result.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->first);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size()));
-        uint64_t size=0;
-        for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-          size += jt->request.fileSize;
-        }
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(size));
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
-  m_suppressOptionalOptionsWarning = true;
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1027,6 +1026,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
 
 
+#if 0
 void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -1561,7 +1561,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-  auto queuesAndMounts=m_scheduler.getQueuesAndMountSummaries(lc);
+  auto queuesAndMounts=m_scheduler.getQueuesAndMountSummaries(m_lc);
   if (queuesAndMounts.size()) {
     std::vector<std::vector<std::string>> responseTable;
     std::vector<std::string> header = {
