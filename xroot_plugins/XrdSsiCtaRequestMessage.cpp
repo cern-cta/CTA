@@ -1486,18 +1486,14 @@ void RequestMessage::processRequesterMountRule_Ls(const cta::admin::AdminCmd &ad
 
 
 
-#if 0
 void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &tapepool = m_option_str.at(OptionString::TAPE_POOL);
 
-  optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
-  checkOptions(help.str());
-  m_scheduler.shrink(m_cliIdentity, tapepool.value());
+   m_scheduler.shrink(m_cliIdentity, tapepool);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1509,53 +1505,58 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-  auto queuesAndMounts=m_scheduler.getQueuesAndMountSummaries(m_lc);
-  if (queuesAndMounts.size()) {
-    std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = {
-       "type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age",
-       "max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
-       "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes",
-       "writables tapes"
-    };
-    if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-    for (auto & q: queuesAndMounts) {
-      std::vector<std::string> currentRow;
-      currentRow.push_back(common::dataStructures::toString(q.mountType));
-      currentRow.push_back(q.tapePool);
-      currentRow.push_back(q.vid);
-      currentRow.push_back(std::to_string(q.filesQueued));
-      currentRow.push_back(bytesToMbString(q.bytesQueued));
-      currentRow.push_back(std::to_string(q.oldestJobAge));
-      if (common::dataStructures::MountType::Archive == q.mountType) {
-        currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
-        currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
-        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
-      } else if (common::dataStructures::MountType::Retrieve == q.mountType) {
-        currentRow.push_back(std::to_string(q.mountPolicy.retrievePriority));
-        currentRow.push_back(std::to_string(q.mountPolicy.retrieveMinRequestAge));
-        currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
-      } else {
-        currentRow.push_back("-");
-        currentRow.push_back("-");
-        currentRow.push_back("-");
+   auto queuesAndMounts = m_scheduler.getQueuesAndMountSummaries(m_lc);
+
+   if(!queuesAndMounts.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age",
+         "max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
+         "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes",
+         "writables tapes"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
+      for (auto & q: queuesAndMounts)
+      {
+         const uint64_t MBytes = 1000 * 1000;
+
+         std::vector<std::string> currentRow;
+         currentRow.push_back(common::dataStructures::toString(q.mountType));
+         currentRow.push_back(q.tapePool);
+         currentRow.push_back(q.vid);
+         currentRow.push_back(std::to_string(q.filesQueued));
+         currentRow.push_back(bytesToMbString(q.bytesQueued));
+         currentRow.push_back(std::to_string(q.oldestJobAge));
+         if (common::dataStructures::MountType::Archive == q.mountType) {
+            currentRow.push_back(std::to_string(q.mountPolicy.archivePriority));
+            currentRow.push_back(std::to_string(q.mountPolicy.archiveMinRequestAge));
+            currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+         } else if (common::dataStructures::MountType::Retrieve == q.mountType) {
+            currentRow.push_back(std::to_string(q.mountPolicy.retrievePriority));
+            currentRow.push_back(std::to_string(q.mountPolicy.retrieveMinRequestAge));
+            currentRow.push_back(std::to_string(q.mountPolicy.maxDrivesAllowed));
+         } else {
+            currentRow.push_back("-");
+            currentRow.push_back("-");
+            currentRow.push_back("-");
+         }
+         currentRow.push_back(std::to_string(q.currentMounts));
+         currentRow.push_back(std::to_string(q.currentFiles));
+         currentRow.push_back(bytesToMbString(q.currentBytes));
+         currentRow.push_back(bytesToMbString(q.latestBandwidth));
+         currentRow.push_back(std::to_string(q.nextMounts));
+         currentRow.push_back(std::to_string(q.tapesCapacity/MBytes));
+         currentRow.push_back(std::to_string(q.filesOnTapes));
+         currentRow.push_back(bytesToMbString(q.dataOnTapes));
+         currentRow.push_back(std::to_string(q.fullTapes));
+         currentRow.push_back(std::to_string(q.emptyTapes));
+         currentRow.push_back(std::to_string(q.disabledTapes));
+         currentRow.push_back(std::to_string(q.writableTapes));
+         responseTable.push_back(currentRow);
       }
-      currentRow.push_back(std::to_string(q.currentMounts));
-      currentRow.push_back(std::to_string(q.currentFiles));
-      currentRow.push_back(bytesToMbString(q.currentBytes));
-      currentRow.push_back(bytesToMbString(q.latestBandwidth));
-      currentRow.push_back(std::to_string(q.nextMounts));
-      currentRow.push_back(std::to_string(q.tapesCapacity/(uint64_t)MBytes));
-      currentRow.push_back(std::to_string(q.filesOnTapes));
-      currentRow.push_back(bytesToMbString(q.dataOnTapes));
-      currentRow.push_back(std::to_string(q.fullTapes));
-      currentRow.push_back(std::to_string(q.emptyTapes));
-      currentRow.push_back(std::to_string(q.disabledTapes));
-      currentRow.push_back(std::to_string(q.writableTapes));
-      responseTable.push_back(currentRow);
-    }
-    cmdlineOutput << formatResponse(responseTable);
-  }
+      cmdlineOutput << formatResponse(responseTable);
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1563,6 +1564,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
 
 
+#if 0
 void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
