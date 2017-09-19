@@ -1026,72 +1026,63 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
 
 
-#if 0
 void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
 
-   auto vid_it       = m_option_str.find(OptionString::VID);
-   bool has_extended = m_option_bool.find(OptionBoolean::EXTENDED) != m_option_bool.end();
-   bool has_header   = m_option_bool.find(OptionBoolean::SHOW_HEADER) != m_option_bool.end();
-
    std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
 
-   if(vid_it == m_option_str.end()) {
-      result = m_scheduler.getPendingRetrieveJobs(m_lc);
-   } else {
-      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid_it->second, m_lc);
+   auto vid = getOptional(OptionString::VID, m_option_str);
 
-      if(list.size() > 0) {
-         result[vid_it->second] = list;
-      }
+   if(vid) {
+      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
+      if(!list.empty()) result[vid.value()] = list;
+   } else {
+      result = m_scheduler.getPendingRetrieveJobs(m_lc);
    }
 
-   if(result.size() > 0)
+   if(!result.empty())
    {
       std::vector<std::vector<std::string>> responseTable;
 
-      if(has_extended)
-      {
+      if(has_flag(OptionBoolean::EXTENDED)) {
          std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
-         if(has_header) responseTable.push_back(header);    
+         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
          for(auto it = result.cbegin(); it != result.cend(); it++)
          {
             for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
             {
                std::vector<std::string> currentRow;
                currentRow.push_back(it->first);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.archiveFileID));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.archiveFileID)));
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first)));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq)));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId)));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize)));
                currentRow.push_back(jt->request.requester.name);
                currentRow.push_back(jt->request.requester.group);
                currentRow.push_back(jt->request.diskFileInfo.path);
                responseTable.push_back(currentRow);
             }
          }
-      }
-      else
-      {
+      } else {
          std::vector<std::string> header = {"vid","total files","total size"};
-         if(has_header) responseTable.push_back(header);    
+         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
          for(auto it = result.cbegin(); it != result.cend(); it++)
          {
             std::vector<std::string> currentRow;
             currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size()));
-            uint64_t size=0;
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
+            uint64_t size = 0;
             for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
             {
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
                size += file.fileSize;
             }
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size));
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
             responseTable.push_back(currentRow);
          }
       }
@@ -1104,6 +1095,7 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
 
 
 
+#if 0
 void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
@@ -1135,7 +1127,7 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
       std::vector<std::string> header = {
          "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
@@ -1247,15 +1239,15 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
       std::vector<std::string> header = {
          "mount policy","a.priority","a.minAge","r.priority","r.minAge","max drives","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archivePriority)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->archiveMinRequestAge)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrievePriority)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->retrieveMinRequestAge)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->maxDrivesAllowed)));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1339,10 +1331,10 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = { "fseq","error message" };
-        if(has_header) responseTable.push_back(header);    
+        if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
@@ -1368,7 +1360,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       std::vector<std::string> header = {
          "vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::string type_s;
         switch(it->repackType) {
@@ -1384,14 +1376,14 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
         }
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
         currentRow.push_back(type_s);
         currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve));//change names
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesArchived)));
         currentRow.push_back(it->repackStatus);
         currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);        
@@ -1483,7 +1475,7 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
       std::vector<std::string> header = {
          "instance","username","policy","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
@@ -1570,7 +1562,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
        "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes",
        "writables tapes"
     };
-    if(has_header) responseTable.push_back(header);
+    if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
     for (auto & q: queuesAndMounts) {
       std::vector<std::string> currentRow;
       currentRow.push_back(common::dataStructures::toString(q.mountType));
@@ -1658,12 +1650,12 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
       std::vector<std::string> header = {
          "instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->diskInstance);
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies)));
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
         responseTable.push_back(currentRow);
@@ -1803,22 +1795,22 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
          "full","disabled","lpb","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
         currentRow.push_back(it->logicalLibraryName);
         currentRow.push_back(it->tapePoolName);
         currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq)));
         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
         if(it->labelLog) {
           currentRow.push_back(it->labelLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->labelLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->labelLog.value().time)));
         }
         else {
           currentRow.push_back("-");
@@ -1826,7 +1818,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         }
         if(it->lastWriteLog) {
           currentRow.push_back(it->lastWriteLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastWriteLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastWriteLog.value().time)));
         }
         else {
           currentRow.push_back("-");
@@ -1834,7 +1826,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
         }
         if(it->lastReadLog) {
           currentRow.push_back(it->lastReadLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastReadLog.value().time));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastReadLog.value().time)));
         }
         else {
           currentRow.push_back("-");
@@ -1978,11 +1970,11 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
       std::vector<std::string> header = {
          "name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes)));
         if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
         currentRow.push_back(it->comment);
@@ -2018,7 +2010,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
-      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
       if(res.errors.find(it->first) != res.errors.cend()) {
@@ -2066,7 +2058,7 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
     responseTable.push_back(header);
     for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
       std::vector<std::string> currentRow;
-      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
       if(res.errors.find(it->first) != res.errors.cend()) {
@@ -2132,10 +2124,10 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       if(info.errors.size()>0) {
         std::vector<std::vector<std::string>> responseTable;
         std::vector<std::string> header = { "fseq","error message" };
-        if(has_header) responseTable.push_back(header);    
+        if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
         for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
           std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first));
+          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
           currentRow.push_back(it->second);
           responseTable.push_back(currentRow);
         }
@@ -2161,16 +2153,16 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
       std::vector<std::string> header = {
          "vid","files","size","tag","to verify","failed","verified","status","name","host","time"
       };
-      if(has_header) responseTable.push_back(header);    
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
         std::vector<std::string> currentRow;
         currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
         currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
+        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified)));
         currentRow.push_back(it->verifyStatus);
         currentRow.push_back(it->creationLog.username);
         currentRow.push_back(it->creationLog.host);       
