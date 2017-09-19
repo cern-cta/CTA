@@ -1564,65 +1564,19 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-#if 0
 void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   common::dataStructures::StorageClass storageClass;
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> scn = getOptionStringValue("-n", "--name", true, false);
-    optional<std::string> in = getOptionStringValue("-i", "--instance", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      checkOptions(help.str());
-      common::dataStructures::StorageClass storageClass;
-      storageClass.diskInstance = in.value();
-      storageClass.name = scn.value();
-      storageClass.nbCopies = cn.value();
-      storageClass.comment = comment.value();
-      m_catalogue.createStorageClass(m_cliIdentity, storageClass);
-    }
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<uint64_t> cn = getOptionUint64Value("-c", "--copynb", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      checkOptions(help.str());
-      if(comment) {
-        m_catalogue.modifyStorageClassComment(m_cliIdentity, in.value(), scn.value(), comment.value());
-      }
-      if(cn) {
-        m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, in.value(), scn.value(), cn.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteStorageClass(in.value(), scn.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::StorageClass> list= m_catalogue.getStorageClasses();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->diskInstance);
-        currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies)));
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   storageClass.diskInstance = m_option_str.at   (OptionString::INSTANCE);
+   storageClass.name         = m_option_str.at   (OptionString::STORAGE_CLASS);
+   storageClass.nbCopies     = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
+   storageClass.comment      = m_option_str.at   (OptionString::COMMENT);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.createStorageClass(m_cliIdentity, storageClass);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1632,9 +1586,19 @@ void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in  = m_option_str.at(OptionString::INSTANCE);
+   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
 
-   response.set_message_txt(cmdlineOutput.str());
+   auto comment = getOptional(OptionString::COMMENT, m_option_str);
+   auto cn      = getOptional(OptionUInt64::COPY_NUMBER, m_option_uint64);
+
+   if(comment) {
+      m_catalogue.modifyStorageClassComment(m_cliIdentity, in, scn, comment.value());
+   }
+   if(cn) {
+      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, in, scn, cn.value());
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1644,9 +1608,11 @@ void RequestMessage::processStorageClass_Rm(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &in  = m_option_str.at(OptionString::INSTANCE);
+   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteStorageClass(in, scn);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1658,12 +1624,34 @@ void RequestMessage::processStorageClass_Ls(const cta::admin::AdminCmd &admincmd
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::StorageClass> list = m_catalogue.getStorageClasses();
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "instance","storage class","number of copies","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->diskInstance);
+         currentRow.push_back(it->name);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbCopies)));
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
