@@ -605,22 +605,20 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       }
    }
 
-   bool has_header = has_flag(OptionBoolean::SHOW_HEADER);
-
    if(has_flag(OptionBoolean::SUMMARY)) {
       cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = { "total number of files","total size" };
       std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
                                       std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
-      if(has_header) responseTable.push_back(header);
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       responseTable.push_back(row);
       cmdlineOutput << formatResponse(responseTable);
    } else {
       auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
 #if 0
       // TO DO: Implement list archive files
-      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(m_log, error, has_header, std::move(archiveFileItor)));
+      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(m_log, error, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
 #endif
    }
 
@@ -1845,18 +1843,17 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-#if 0
 void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
+   auto &name      = m_option_str.at(OptionString::TAPE_POOL);
+   auto &ptn       = m_option_uint64.at(OptionUInt64::PARTIAL_TAPES_NUMBER);
+   auto &comment   = m_option_str.at(OptionString::COMMENT);
+   auto &encrypted = m_option_bool.at(OptionBoolean::ENCRYPTED);
 
-      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", true, false);
-      checkOptions(help.str());
-      m_catalogue.createTapePool(m_cliIdentity, name.value(), ptn.value(), encrypted.value(), comment.value());
+   m_catalogue.createTapePool(m_cliIdentity, name, ptn, encrypted, comment);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1866,20 +1863,20 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
 {
    using namespace cta::admin;
 
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<uint64_t> ptn = getOptionUint64Value("-p", "--partialtapesnumber", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      optional<bool> encrypted = getOptionBoolValue("-e", "--encrypted", false, false);
-      checkOptions(help.str());
-      if(comment) {
-        m_catalogue.modifyTapePoolComment(m_cliIdentity, name.value(), comment.value());
-      }
-      if(ptn) {
-        m_catalogue.modifyTapePoolNbPartialTapes(m_cliIdentity, name.value(), ptn.value());
-      }
-      if(encrypted) {
-        m_catalogue.setTapePoolEncryption(m_cliIdentity, name.value(), encrypted.value());
-      }
+   auto &name      = m_option_str.at(OptionString::TAPE_POOL);
+   auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER, m_option_uint64);
+   auto  comment   = getOptional(OptionString::COMMENT, m_option_str);
+   auto  encrypted = getOptional(OptionBoolean::ENCRYPTED, m_option_bool);
+
+   if(comment) {
+      m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
+   }
+   if(ptn) {
+      m_catalogue.modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
+   }
+   if(encrypted) {
+      m_catalogue.setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
+   }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1890,8 +1887,9 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 {
    using namespace cta::admin;
 
+   auto &name = m_option_str.at(OptionString::TAPE_POOL);
 
-      m_catalogue.deleteTapePool(name.value());
+   m_catalogue.deleteTapePool(name);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1904,23 +1902,26 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
 
    std::stringstream cmdlineOutput;
 
-    std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
-    if(list.size()>0) {
+   std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
+
+   if(!list.empty())
+   {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
          "name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->name);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes)));
-        if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->name);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes)));
+         if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
       }
       cmdlineOutput << formatResponse(responseTable);
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1928,6 +1929,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
 
 
 
+#if 0
 void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
