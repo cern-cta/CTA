@@ -1651,142 +1651,20 @@ void RequestMessage::processStorageClass_Ls(const cta::admin::AdminCmd &admincmd
 
 
 
-#if 0
 void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid            = m_option_str.at(OptionString::VID);
+   auto &logicallibrary = m_option_str.at(OptionString::LOGICAL_LIBRARY);
+   auto &tapepool       = m_option_str.at(OptionString::TAPE_POOL);
+   auto &capacity       = m_option_uint64.at(OptionUInt64::CAPACITY);
+   auto &disabled       = m_option_bool.at(OptionBoolean::DISABLED);
+   auto &full           = m_option_bool.at(OptionBoolean::FULL);
+   auto  comment        = getOptional(OptionString::COMMENT, m_option_str);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2) || "reclaim" == m_requestTokens.at(2) || "label" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", true, false);
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", true, false);
-      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", true, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, true, "-");
-      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", true, false);
-      optional<bool> full = getOptionBoolValue("-f", "--full", true, false);
-      checkOptions(help.str());
-      m_catalogue.createTape(m_cliIdentity, vid.value(), logicallibrary.value(), tapepool.value(), capacity.value(), disabled.value(), full.value(), comment.value());
-    }
-    else if("ch" == m_requestTokens.at(2)) { //ch
-      optional<std::string> logicallibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
-      optional<std::string> tapepool = getOptionStringValue("-t", "--tapepool", false, false);
-      optional<uint64_t> capacity = getOptionUint64Value("-c", "--capacity", false, false);
-      optional<std::string> encryptionkey = getOptionStringValue("-k", "--encryptionkey", false, false);
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", false, false);
-      optional<bool> disabled = getOptionBoolValue("-d", "--disabled", false, false);
-      optional<bool> full = getOptionBoolValue("-f", "--full", false, false);
-      checkOptions(help.str());
-      if(logicallibrary) {
-        m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid.value(), logicallibrary.value());
-      }
-      if(tapepool) {
-        m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid.value(), tapepool.value());
-      }
-      if(capacity) {
-        m_catalogue.modifyTapeCapacityInBytes(m_cliIdentity, vid.value(), capacity.value());
-      }
-      if(comment) {
-        m_catalogue.modifyTapeComment(m_cliIdentity, vid.value(), comment.value());
-      }
-      if(encryptionkey) {
-        m_catalogue.modifyTapeEncryptionKey(m_cliIdentity, vid.value(), encryptionkey.value());
-      }
-      if(disabled) {
-        m_catalogue.setTapeDisabled(m_cliIdentity, vid.value(), disabled.value());
-      }
-      if(full) {
-        m_catalogue.setTapeFull(m_cliIdentity, vid.value(), full.value());
-      }
-    }
-    else if("reclaim" == m_requestTokens.at(2)) { //reclaim
-      checkOptions(help.str());
-      m_catalogue.reclaimTape(m_cliIdentity, vid.value());
-    }
-    else if("label" == m_requestTokens.at(2)) { //label
-      //the tag will be set to "-" in case it's missing from the cmdline; which means no tagging
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false); 
-      optional<bool> force = getOptionBoolValue("-f", "--force", false, true, "false");
-      optional<bool> lbp = getOptionBoolValue("-l", "--lbp", false, true, "true");
-      checkOptions(help.str());
-      m_scheduler.queueLabel(m_cliIdentity, vid.value(), force.value(), lbp.value(), tag);
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteTape(vid.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    cta::catalogue::TapeSearchCriteria searchCriteria;
-    if(!hasOption("-a","--all")) {
-      searchCriteria.capacityInBytes = getOptionUint64Value("-c", "--capacity", false, false);
-      searchCriteria.disabled = getOptionBoolValue("-d", "--disabled", false, false);
-      searchCriteria.full = getOptionBoolValue("-f", "--full", false, false);
-      searchCriteria.lbp = getOptionBoolValue("-p", "--lbp", false, false);
-      searchCriteria.logicalLibrary = getOptionStringValue("-l", "--logicallibrary", false, false);
-      searchCriteria.tapePool = getOptionStringValue("-t", "--tapepool", false, false);
-      searchCriteria.vid = getOptionStringValue("-v", "--vid", false, false);
-    }
-    else {
-      m_suppressOptionalOptionsWarning=true;
-    }
-    checkOptions(help.str());
-    std::list<cta::common::dataStructures::Tape> list= m_catalogue.getTapes(searchCriteria);
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "vid","logical library","tapepool","encription key","capacity","occupancy","last fseq",
-         "full","disabled","lpb","label drive","label time","last w drive","last w time",
-         "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->vid);
-        currentRow.push_back(it->logicalLibraryName);
-        currentRow.push_back(it->tapePoolName);
-        currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq)));
-        if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
-        if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
-        if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
-        if(it->labelLog) {
-          currentRow.push_back(it->labelLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->labelLog.value().time)));
-        }
-        else {
-          currentRow.push_back("-");
-          currentRow.push_back("-");
-        }
-        if(it->lastWriteLog) {
-          currentRow.push_back(it->lastWriteLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastWriteLog.value().time)));
-        }
-        else {
-          currentRow.push_back("-");
-          currentRow.push_back("-");
-        }
-        if(it->lastReadLog) {
-          currentRow.push_back(it->lastReadLog.value().drive);
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastReadLog.value().time)));
-        }
-        else {
-          currentRow.push_back("-");
-          currentRow.push_back("-");
-        }
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_catalogue.createTape(m_cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1796,9 +1674,38 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid = m_option_str.at(OptionString::VID);
 
-   response.set_message_txt(cmdlineOutput.str());
+   auto logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY, m_option_str);
+   auto tapepool       = getOptional(OptionString::TAPE_POOL, m_option_str);
+   auto capacity       = getOptional(OptionUInt64::CAPACITY, m_option_uint64);
+   auto comment        = getOptional(OptionString::COMMENT, m_option_str);
+   auto encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY, m_option_str);
+   auto disabled       = getOptional(OptionBoolean::DISABLED, m_option_bool);
+   auto full           = getOptional(OptionBoolean::FULL, m_option_bool);
+
+   if(logicallibrary) {
+      m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
+   }
+   if(tapepool) {
+      m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
+   }
+   if(capacity) {
+      m_catalogue.modifyTapeCapacityInBytes(m_cliIdentity, vid, capacity.value());
+   }
+   if(comment) {
+      m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment.value());
+   }
+   if(encryptionkey) {
+      m_catalogue.modifyTapeEncryptionKey(m_cliIdentity, vid, encryptionkey.value());
+   }
+   if(disabled) {
+      m_catalogue.setTapeDisabled(m_cliIdentity, vid, disabled.value());
+   }
+   if(full) {
+      m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
+   }
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1808,9 +1715,10 @@ void RequestMessage::processTape_Rm(const cta::admin::AdminCmd &admincmd, cta::x
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid = m_option_str.at(OptionString::VID);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteTape(vid);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1820,9 +1728,10 @@ void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid = m_option_str.at(OptionString::VID);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.reclaimTape(m_cliIdentity, vid);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1834,6 +1743,82 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 
    std::stringstream cmdlineOutput;
 
+   cta::catalogue::TapeSearchCriteria searchCriteria;
+
+   if(!has_flag(OptionBoolean::ALL))
+   {
+      bool has_any = false; // set to true if at least one optional option is set
+
+      // Get the search criteria from the optional options
+
+      searchCriteria.disabled        = getOptional(OptionBoolean::DISABLED,       m_option_bool,   &has_any);
+      searchCriteria.full            = getOptional(OptionBoolean::FULL,           m_option_bool,   &has_any);
+      searchCriteria.lbp             = getOptional(OptionBoolean::LBP,            m_option_bool,   &has_any);
+      searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        m_option_uint64, &has_any);
+      searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, m_option_str,    &has_any);
+      searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       m_option_str,    &has_any);
+      searchCriteria.vid             = getOptional(OptionString::VID,             m_option_str,    &has_any);
+
+      if(!has_any) {
+         throw cta::exception::UserError("Must specify at least one search option, or --all");
+      }
+   }
+
+   std::list<cta::common::dataStructures::Tape> list= m_catalogue.getTapes(searchCriteria);
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "vid","logical library","tapepool","encription key","capacity","occupancy","last fseq",
+         "full","disabled","lpb","label drive","label time","last w drive","last w time",
+         "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->vid);
+         currentRow.push_back(it->logicalLibraryName);
+         currentRow.push_back(it->tapePoolName);
+         currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq)));
+         if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
+         if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
+         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
+
+         if(it->labelLog) {
+            currentRow.push_back(it->labelLog.value().drive);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->labelLog.value().time)));
+         } else {
+            currentRow.push_back("-");
+            currentRow.push_back("-");
+         }
+
+         if(it->lastWriteLog) {
+            currentRow.push_back(it->lastWriteLog.value().drive);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastWriteLog.value().time)));
+         } else {
+            currentRow.push_back("-");
+            currentRow.push_back("-");
+         }
+
+         if(it->lastReadLog) {
+            currentRow.push_back(it->lastReadLog.value().drive);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastReadLog.value().time)));
+         } else {
+            currentRow.push_back("-");
+            currentRow.push_back("-");
+         }
+
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1844,14 +1829,23 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid   = m_option_str.at(OptionString::VID);
+   auto  force = getOptional(OptionBoolean::FORCE, m_option_bool);
+   auto  lbp   = getOptional(OptionBoolean::LBP, m_option_bool);
+   // If the tag option is not specified, the tag will be set to "-", which means no tagging
+   auto  tag   = getOptional(OptionString::TAG, m_option_str);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_scheduler.queueLabel(m_cliIdentity, vid,
+                          force ? force.value() : false,
+                          lbp ? lbp.value() : true,
+                          tag);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
