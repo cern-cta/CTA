@@ -1095,51 +1095,15 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
 
 
 
-#if 0
 void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &name    = m_option_str.at(OptionString::LOGICAL_LIBRARY);
+   auto &comment = m_option_str.at(OptionString::COMMENT);
 
-  if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> name = getOptionStringValue("-n", "--name", true, false);
-    if("add" == m_requestTokens.at(2) || "ch" == m_requestTokens.at(2)) {
-      optional<std::string> comment = getOptionStringValue("-m", "--comment", true, false);
-      if("add" == m_requestTokens.at(2)) { //add
-        checkOptions(help.str());
-        m_catalogue.createLogicalLibrary(m_cliIdentity, name.value(), comment.value());
-      }
-      else { //ch
-        checkOptions(help.str());
-        m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name.value(), comment.value());
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_catalogue.deleteLogicalLibrary(name.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue.getLogicalLibraries();
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->name);
-        addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-        currentRow.push_back(it->comment);
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_catalogue.createLogicalLibrary(m_cliIdentity, name, comment);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1149,9 +1113,11 @@ void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &name    = m_option_str.at(OptionString::LOGICAL_LIBRARY);
+   auto &comment = m_option_str.at(OptionString::COMMENT);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1161,9 +1127,10 @@ void RequestMessage::processLogicalLibrary_Rm(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &name = m_option_str.at(OptionString::LOGICAL_LIBRARY);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_catalogue.deleteLogicalLibrary(name);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1175,12 +1142,32 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
 
    std::stringstream cmdlineOutput;
 
+   std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue.getLogicalLibraries();
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "name","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->name);
+         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
+         currentRow.push_back(it->comment);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
