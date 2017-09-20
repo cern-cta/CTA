@@ -774,7 +774,6 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
          "MBytes","MB/s","session","age"
       };
       responseTable.push_back(headers);
-      m_option_bool[OptionBoolean::SHOW_HEADER] = true;
 
       typedef decltype(*driveStates.begin()) dStateVal_t;
       driveStates.sort([](const dStateVal_t &a, const dStateVal_t &b){ return a.driveName < b.driveName; });
@@ -859,6 +858,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
          throw cta::exception::UserError(std::string("No such drive: ") + drive.value());
       }
 
+      m_option_bool[OptionBoolean::SHOW_HEADER] = true;
       cmdlineOutput<< formatResponse(responseTable);
    }
 
@@ -1929,92 +1929,54 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
 
 
 
-#if 0
 void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
 
-  optional<std::string> drive = getOptionStringValue("-d", "--drive", true, false);
-  optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
-  if("read" == m_requestTokens.at(2)) {
-    optional<uint64_t> firstfseq = getOptionUint64Value("-f", "--firstfseq", true, false);
-    optional<uint64_t> lastfseq = getOptionUint64Value("-l", "--lastfseq", true, false);
-    optional<std::string> output = getOptionStringValue("-o", "--output", true, false);        
-    bool checkchecksum = hasOption("-c", "--checkchecksum");
-    checkOptions(help.str());
-    optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-    std::string tag_value = tag? tag.value():"-";
-    cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(m_cliIdentity, drive.value(), vid.value(), firstfseq.value(), lastfseq.value(), checkchecksum, output.value(), tag_value);   
-    std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
-    responseTable.push_back(header);
-    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
+   auto &drive  = m_option_str.at(OptionString::DRIVE);
+   auto &vid    = m_option_str.at(OptionString::VID);
+   auto &output = m_option_str.at(OptionString::OUTPUT);
+
+   auto &firstfseq = m_option_uint64.at(OptionUInt64::FIRST_FSEQ);
+   auto &lastfseq  = m_option_uint64.at(OptionUInt64::LAST_FSEQ);
+
+   bool checkchecksum = has_flag(OptionBoolean::CHECK_CHECKSUM);
+   auto tag = getOptional(OptionString::TAG, m_option_str);
+
+   cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(
+      m_cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag ? tag.value() : "-"
+   );
+
+   std::vector<std::vector<std::string>> responseTable;
+   std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
+   responseTable.push_back(header);
+
+   for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++)
+   {
       std::vector<std::string> currentRow;
       currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
       currentRow.push_back(it->second.first);
       currentRow.push_back(it->second.second);
       if(res.errors.find(it->first) != res.errors.cend()) {
         currentRow.push_back(res.errors.at(it->first));
-      }
-      else {
+      } else {
         currentRow.push_back("-");
       }
       responseTable.push_back(currentRow);
-    }
-    cmdlineOutput << formatResponse(responseTable, true)
-           << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesRead << " #Bytes: " << res.totalBytesRead 
-           << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesRead/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
-  }
-  else if("write" == m_requestTokens.at(2) || "write_auto" == m_requestTokens.at(2)) {
-    cta::common::dataStructures::WriteTestResult res;
-    if("write" == m_requestTokens.at(2)) { //write
-      optional<std::string> file = getOptionStringValue("-f", "--file", true, false);
-      checkOptions(help.str());
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-      std::string tag_value = tag? tag.value():"-";
-      res = m_scheduler.writeTest(m_cliIdentity, drive.value(), vid.value(), file.value(), tag_value);
-    }
-    else { //write_auto
-      optional<uint64_t> number = getOptionUint64Value("-n", "--number", true, false);
-      optional<uint64_t> size = getOptionUint64Value("-s", "--size", true, false);
-      optional<std::string> input = getOptionStringValue("-i", "--input", true, false);
-      if(input.value()!="zero"&&input.value()!="urandom") {
-        m_missingRequiredOptions.push_back("--input value must be either \"zero\" or \"urandom\"");
-      }
-      checkOptions(help.str());
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-      std::string tag_value = tag? tag.value():"-";
-      cta::common::dataStructures::TestSourceType type;
-      if(input.value()=="zero") { //zero
-        type = cta::common::dataStructures::TestSourceType::devzero;
-      }
-      else { //urandom
-        type = cta::common::dataStructures::TestSourceType::devurandom;
-      }
-      res = m_scheduler.write_autoTest(m_cliIdentity, drive.value(), vid.value(), number.value(), size.value(), type, tag_value);
-    }
-    std::vector<std::vector<std::string>> responseTable;
-    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
-    responseTable.push_back(header);
-    for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++) {
-      std::vector<std::string> currentRow;
-      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
-      currentRow.push_back(it->second.first);
-      currentRow.push_back(it->second.second);
-      if(res.errors.find(it->first) != res.errors.cend()) {
-        currentRow.push_back(res.errors.at(it->first));
-      }
-      else {
-        currentRow.push_back("-");
-      }
-      responseTable.push_back(currentRow);
-    }
-    cmdlineOutput << formatResponse(responseTable, true)
-           << std::endl << "Drive: " << res.driveName << " Vid: " << res.vid << " #Files: " << res.totalFilesWritten << " #Bytes: " << res.totalBytesWritten 
-           << " Time: " << res.totalTimeInSeconds << " s Speed(avg): " << (long double)res.totalBytesWritten/(long double)res.totalTimeInSeconds << " B/s" <<std::endl;
-  }
+   }
+
+   m_option_bool[OptionBoolean::SHOW_HEADER] = true;
+   cmdlineOutput << formatResponse(responseTable) << std::endl
+                 <<  "Drive: "      << res.driveName
+                 << " Vid: "        << res.vid
+                 << " #Files: "     << res.totalFilesRead
+                 << " #Bytes: "     << res.totalBytesRead
+                 << " Time: "       << res.totalTimeInSeconds << " s"
+                 << " Speed(avg): " << static_cast<long double>(res.totalBytesRead) /
+                                       static_cast<long double>(res.totalTimeInSeconds) << " B/s"
+                 << std::endl;
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2028,6 +1990,47 @@ void RequestMessage::processTest_Write(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+   auto &drive = m_option_str.at(OptionString::DRIVE);
+   auto &vid   = m_option_str.at(OptionString::VID);
+   auto &file  = m_option_str.at(OptionString::FILENAME);
+
+   auto tag = getOptional(OptionString::TAG, m_option_str);
+
+   cta::common::dataStructures::WriteTestResult res = m_scheduler.writeTest(
+      m_cliIdentity, drive, vid, file, tag ? tag.value() : "-"
+   );
+
+   std::vector<std::vector<std::string>> responseTable;
+   std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
+   responseTable.push_back(header);
+
+   for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++)
+   {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.errors.find(it->first) != res.errors.cend()) {
+        currentRow.push_back(res.errors.at(it->first));
+      } else {
+        currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+   }
+
+   m_option_bool[OptionBoolean::SHOW_HEADER] = true;
+   cmdlineOutput << formatResponse(responseTable) << std::endl
+                 <<  "Drive: "      << res.driveName
+                 << " Vid: "        << res.vid
+                 << " #Files: "     << res.totalFilesWritten
+                 << " #Bytes: "     << res.totalBytesWritten
+                 << " Time: "       << res.totalTimeInSeconds << " s"
+                 << " Speed(avg): " << static_cast<long double>(res.totalBytesWritten) /
+                                       static_cast<long double>(res.totalTimeInSeconds) << " B/s"
+                 << std::endl;
+
+   response.set_message_txt(cmdlineOutput.str());
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2040,12 +2043,62 @@ void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd,
 
    std::stringstream cmdlineOutput;
 
+   auto &drive  = m_option_str.at(OptionString::DRIVE);
+   auto &vid    = m_option_str.at(OptionString::VID);
+   auto &number = m_option_uint64.at(OptionUInt64::NUMBER_OF_FILES);
+   auto &size   = m_option_uint64.at(OptionUInt64::FILE_SIZE);
+   auto &input  = m_option_str.at(OptionString::INPUT);
+   auto  tag    = getOptional(OptionString::TAG, m_option_str);
+
+   cta::common::dataStructures::TestSourceType type;
+
+   if(input == "zero") {
+      type = cta::common::dataStructures::TestSourceType::devzero;
+   } else if(input == "urandom") {
+      type = cta::common::dataStructures::TestSourceType::devurandom;
+   } else {
+      throw cta::exception::UserError("--input value must be either \"zero\" or \"urandom\"");
+   }
+
+   cta::common::dataStructures::WriteTestResult res = m_scheduler.write_autoTest(
+      m_cliIdentity, drive, vid, number, size, type, tag ? tag.value() : "-"
+   );
+
+   std::vector<std::vector<std::string>> responseTable;
+   std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
+   responseTable.push_back(header);
+   for(auto it = res.checksums.cbegin(); it != res.checksums.cend(); it++)
+   {
+      std::vector<std::string> currentRow;
+      currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
+      currentRow.push_back(it->second.first);
+      currentRow.push_back(it->second.second);
+      if(res.errors.find(it->first) != res.errors.cend()) {
+         currentRow.push_back(res.errors.at(it->first));
+      } else {
+         currentRow.push_back("-");
+      }
+      responseTable.push_back(currentRow);
+   }
+
+   m_option_bool[OptionBoolean::SHOW_HEADER] = true;
+   cmdlineOutput << formatResponse(responseTable) << std::endl
+                 <<  "Drive: "      << res.driveName
+                 << " Vid: "        << res.vid
+                 << " #Files: "     << res.totalFilesWritten
+                 << " #Bytes: "     << res.totalBytesWritten
+                 << " Time: "       << res.totalTimeInSeconds << " s"
+                 << " Speed(avg): " << static_cast<long double>(res.totalBytesWritten) /
+                                       static_cast<long double>(res.totalTimeInSeconds) << " B/s"
+                 << std::endl;
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
 
+#if 0
 void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
