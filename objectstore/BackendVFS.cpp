@@ -20,7 +20,9 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 #include "common/utils/Regex.hpp"
+#include "common/Timer.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
+#include "common/exception/Exception.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -243,7 +245,7 @@ void BackendVFS::ScopedLock::release() {
 #endif
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
+BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint64_t timeout_us) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
   ret->set(::open(path.c_str(), O_RDONLY), path);
@@ -273,12 +275,28 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
     }
   }
 
-  if(::flock(ret->m_fd, LOCK_EX)) {
-    const std::string errnoStr = utils::errnoToString(errno);
-    exception::Exception ex;
-    ex.getMessage() << "In BackendVFS::lockHelper(): Failed to flock file " << path <<
-      ": " << errnoStr;
-    throw ex;
+  if(timeout_us) {
+    utils::Timer t;
+    while (::flock(ret->m_fd, type | LOCK_NB)) {
+      if (errno != EWOULDBLOCK) {
+        const std::string errnoStr = utils::errnoToString(errno);
+        exception::Exception ex;
+        ex.getMessage() << "In BackendVFS::lockHelper(): Failed to flock file " << path <<
+          ": " << errnoStr;
+        throw ex;
+      }
+      if (t.usecs() > (int64_t)timeout_us) {
+        throw exception::Exception("In BackendVFS::lockHelper(): timeout while locking");
+      }
+    }
+  } else {
+    if(::flock(ret->m_fd, type)) {
+      const std::string errnoStr = utils::errnoToString(errno);
+      exception::Exception ex;
+      ex.getMessage() << "In BackendVFS::lockHelper(): Failed to flock file " << path <<
+        ": " << errnoStr;
+      throw ex;
+    }
   }
   
   #ifdef LOW_LEVEL_TRACING
@@ -290,8 +308,8 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type) {
   return ret.release();
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name) {
-  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX));
+BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name, uint64_t timeout_us) {
+  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX, timeout_us));
   #ifdef LOW_LEVEL_TRACING
     ::printf ("In BackendVFS::lockExclusive(): LockedExclusive %s with fd=%d path=%s tid=%ld\n", 
         name.c_str(), ret->m_fd, ret->m_path.c_str(), syscall(SYS_gettid));
@@ -299,8 +317,8 @@ BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name) {
   return ret.release();
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name) {
-  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_SH));
+BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name, uint64_t timeout_us) {
+  std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_SH, timeout_us));
   #ifdef LOW_LEVEL_TRACING
     ::printf ("In BackendVFS::lockShared(): LockedShared %s with fd=%d path=%s tid=%ld\n",
         name.c_str(), ret->m_fd, ret->m_path.c_str(), syscall(SYS_gettid));

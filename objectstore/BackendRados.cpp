@@ -154,7 +154,7 @@ std::string BackendRados::createUniqueClientId() {
   return client.str();
 }
 
-BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
+BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t timeout_us) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
   // (while we own the lock).
@@ -168,10 +168,13 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   // by the number of tries (and capped by a maximum). Then the value will be randomized 
   // (betweend and 50-150%)
   size_t backoff=1;
-  utils::Timer t;
+  utils::Timer t, timeoutTimer;
   while (true) {
     rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
     if (-EBUSY != rc) break;
+    if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
+      throw exception::Exception("In BackendRados::lockExclusive(): timeout.");
+    }
     timespec ts;
     auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
     wait = std::min(wait, c_maxWait);
@@ -207,7 +210,7 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name) {
   return ret.release();
 }
 
-BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
+BackendRados::ScopedLock* BackendRados::lockShared(std::string name, uint64_t timeout_us) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
   // (while we own the lock).
@@ -221,10 +224,13 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name) {
   // by the number of tries (and capped by a maximum). Then the value will be randomized 
   // (betweend and 50-150%)
   size_t backoff=1;
-  utils::Timer t;
+  utils::Timer t, timeoutTimer;
   while (true) {
     rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
     if (-EBUSY != rc) break;
+    if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
+      throw exception::Exception("In BackendRados::lockShared(): timeout.");
+    }
     timespec ts;
     auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
     wait = std::min(wait, c_maxWait);

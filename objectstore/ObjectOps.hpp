@@ -251,14 +251,14 @@ public:
 class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() {}
-  ScopedExclusiveLock(ObjectOpsBase & oo) {
-    lock(oo);
+  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
+    lock(oo, timeout_us);
   }
-  void lock(ObjectOpsBase & oo) {
+  void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     checkNotLocked();
     m_objectOps = &oo;
     checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet()));
+    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
     m_objectOps->m_locksCount++;
     m_objectOps->m_locksForWriteCount++;
     m_locked = true;

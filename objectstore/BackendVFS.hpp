@@ -86,9 +86,9 @@ public:
     int m_fd;
   };
   
-  ScopedLock * lockExclusive(std::string name) override;
+  ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
-  ScopedLock * lockShared(std::string name) override;
+  ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
   
   /**
    * A class mimicking AIO using C++ async tasks
@@ -163,7 +163,7 @@ public:
 private:
   std::string m_root;
   bool m_deleteOnExit;
-  ScopedLock * lockHelper(std::string name, int type);
+  ScopedLock * lockHelper(std::string name, int type, uint64_t timeout_us);
 };
 
 

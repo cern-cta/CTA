@@ -93,14 +93,14 @@ public:
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockShared(std::string name) = 0;
+  virtual ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) = 0;
   
   /**
    * Locks the object exclusively
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockExclusive(std::string name) = 0;
+  virtual ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) = 0;
   
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchObject);

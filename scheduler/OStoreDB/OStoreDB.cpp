@@ -2500,10 +2500,10 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   // We just report tthe tape session statistics as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
+  // If we don't  get the lock in 5 seconds, quit on the session update.
+  objectstore::ScopedExclusiveLock drl(dr, 5*1000*1000);
   dr.fetch();
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -2560,10 +2560,10 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   // We just report the tape session statistics as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
+  // If we don't  get the lock in 5 seconds, quit on the session update.
+  objectstore::ScopedExclusiveLock drl(dr, 5*1000*1000);
   dr.fetch();
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
