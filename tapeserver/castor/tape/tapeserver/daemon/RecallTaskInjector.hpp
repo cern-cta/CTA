@@ -223,7 +223,7 @@ private:
   bool m_useRAO;
 
   /** Drive-specific RAO parameters */
-  SCSI::Structures::RAO::udsLimitsPage_t m_raoLimits;
+  SCSI::Structures::RAO::udsLimits m_raoLimits;
 
   /**
    * The promise for reordering the read tasks according to RAO by the

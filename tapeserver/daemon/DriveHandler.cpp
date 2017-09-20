@@ -1051,6 +1051,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
     dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
     dataTransferConfig.useLbp = true;
+    dataTransferConfig.useRAO = m_tapedConfig.useRAO.value() == "yes" ? true : false;
     dataTransferConfig.xrootPrivateKey = "";
     
     // Before launching, and if this is the first session since daemon start, we will

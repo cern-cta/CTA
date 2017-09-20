@@ -259,7 +259,7 @@ int main (int argc, char *argv[])
                     else {
                       throw -1;
                     }
-                    castor::tape::SCSI::Structures::RAO::udsLimitsPage_t limits = drive->getLimitUDS();
+                    castor::tape::SCSI::Structures::RAO::udsLimits limits = drive->getLimitUDS();
                     drive->queryRAO(files, limits.maxSupported);
                 }
             }
