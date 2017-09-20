@@ -204,17 +204,12 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
 //  // then it is an error.
 //  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID);
 //}
-  // We did delete the file from the queue. It hence might be absent from the catalogue.
-  // Errors are not fatal here (so we filter them out).
-  
-  try {
-    utils::Timer t;
-    m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
-    auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
-    log::ScopedParamContainer spc(lc);
-    spc.add("catalogueTime", catalogueTime);
-    lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
-  } catch (exception::UserError &) {}
+  utils::Timer t;
+  m_catalogue.deleteArchiveFile(instanceName, request.archiveFileID, lc);
+  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+  log::ScopedParamContainer spc(lc);
+  spc.add("catalogueTime", catalogueTime);
+  lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
 }
 
 //------------------------------------------------------------------------------
