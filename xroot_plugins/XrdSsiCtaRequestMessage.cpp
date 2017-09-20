@@ -16,8 +16,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #include <iomanip> // for setw
 
 #include <XrdSsiPbException.hpp>
@@ -49,8 +47,10 @@ static std::string timeToString(const time_t &time)
    return timeString;
 }
 
+
+
 /*
- * Helper function to convert bytes to Mb and output as a string
+ * Helper function to convert bytes to Mb and return the result as a string
  */
 static std::string bytesToMbString(uint64_t bytes)
 {
@@ -649,17 +649,15 @@ void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = getRequired(OptionString::INSTANCE);
-   auto &scn = getRequired(OptionString::STORAGE_CLASS);
-   auto &cn  = getRequired(OptionUInt64::COPY_NUMBER);
-
-   auto tapepool = getOptional(OptionString::TAPE_POOL);
-   auto comment  = getOptional(OptionString::COMMENT);
+   auto &in       = getRequired(OptionString::INSTANCE);
+   auto &scn      = getRequired(OptionString::STORAGE_CLASS);
+   auto &cn       = getRequired(OptionUInt64::COPY_NUMBER);
+   auto  tapepool = getOptional(OptionString::TAPE_POOL);
+   auto  comment  = getOptional(OptionString::COMMENT);
 
    if(comment) {
       m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment.value());
    }
-
    if(tapepool) {
       m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, in, scn, cn, tapepool.value());
    }
@@ -692,7 +690,7 @@ void RequestMessage::processArchiveRoute_Ls(const cta::admin::AdminCmd &admincmd
 
    std::list<cta::common::dataStructures::ArchiveRoute> list= m_catalogue.getArchiveRoutes();
 
-   if(list.size() > 0) {
+   if(!list.empty()) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
          "instance","storage class","copy number","tapepool","c.user","c.host","c.time","m.user","m.host","m.time","comment"
@@ -792,40 +790,26 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
          currentRow.push_back(cta::common::dataStructures::toString(ds.driveStatus));
 
          // print the time spent in the current state
+         unsigned long long drive_time = time(nullptr);
+
          switch(ds.driveStatus) {
-            case cta::common::dataStructures::DriveStatus::Probing:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.probeStartTime))));
-            case cta::common::dataStructures::DriveStatus::Up:
-            case cta::common::dataStructures::DriveStatus::Down:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.downOrUpStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Starting:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.startStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Mounting:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.mountStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Transferring:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.transferStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::CleaningUp:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.cleanupStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Unloading:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unloadStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Unmounting:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.unmountStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::DrainingToDisk:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.drainingStartTime))));
-               break;
-            case cta::common::dataStructures::DriveStatus::Shutdown:
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.shutdownTime))));
-            case cta::common::dataStructures::DriveStatus::Unknown:
-               currentRow.push_back("-");
-               break;
+            using namespace cta::common::dataStructures;
+
+            case DriveStatus::Probing:           drive_time -= ds.probeStartTime;    break;
+            case DriveStatus::Up:
+            case DriveStatus::Down:              drive_time -= ds.downOrUpStartTime; break;
+            case DriveStatus::Starting:          drive_time -= ds.startStartTime;    break;
+            case DriveStatus::Mounting:          drive_time -= ds.mountStartTime;    break;
+            case DriveStatus::Transferring:      drive_time -= ds.transferStartTime; break;
+            case DriveStatus::CleaningUp:        drive_time -= ds.cleanupStartTime;  break;
+            case DriveStatus::Unloading:         drive_time -= ds.unloadStartTime;   break;
+            case DriveStatus::Unmounting:        drive_time -= ds.unmountStartTime;  break;
+            case DriveStatus::DrainingToDisk:    drive_time -= ds.drainingStartTime; break;
+            case DriveStatus::Shutdown:          drive_time -= ds.shutdownTime;      break;
+            case DriveStatus::Unknown:           break;
          }
+         currentRow.push_back(ds.driveStatus == cta::common::dataStructures::DriveStatus::Unknown ? "-" :
+            std::to_string(drive_time));
 
          currentRow.push_back(ds.currentVid == "" ? "-" : ds.currentVid);
          currentRow.push_back(ds.currentTapePool == "" ? "-" : ds.currentTapePool);
@@ -909,8 +893,8 @@ void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &in          = getRequired(OptionString::INSTANCE);
-   auto &name        = getRequired(OptionString::USERNAME);
+   auto &in   = getRequired(OptionString::INSTANCE);
+   auto &name = getRequired(OptionString::USERNAME);
 
    m_catalogue.deleteRequesterGroupMountRule(in, name);
 
@@ -1140,7 +1124,7 @@ void RequestMessage::processLogicalLibrary_Ls(const cta::admin::AdminCmd &adminc
 
    std::stringstream cmdlineOutput;
 
-   std::list<cta::common::dataStructures::LogicalLibrary> list= m_catalogue.getLogicalLibraries();
+   std::list<cta::common::dataStructures::LogicalLibrary> list = m_catalogue.getLogicalLibraries();
 
    if(!list.empty())
    {
@@ -1189,14 +1173,13 @@ void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   auto &group = getRequired(OptionString::MOUNT_POLICY);
-
-   auto archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY);
-   auto minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
-   auto retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
-   auto minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-   auto maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED);
-   auto comment               = getOptional(OptionString::COMMENT);
+   auto &group                 = getRequired(OptionString::MOUNT_POLICY);
+   auto  archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY);
+   auto  minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+   auto  retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
+   auto  minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
+   auto  maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED);
+   auto  comment               = getOptional(OptionString::COMMENT);
 
    if(archivepriority) {
       m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
@@ -1317,9 +1300,9 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
 
    std::stringstream cmdlineOutput;
 
-   std::list<cta::common::dataStructures::RepackInfo> list;
-
    auto vid = getOptional(OptionString::VID);
+
+   std::list<cta::common::dataStructures::RepackInfo> list;
 
    if(!vid) {      
       list = m_scheduler.getRepacks(m_cliIdentity);
@@ -1438,8 +1421,8 @@ void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &ad
 {
    using namespace cta::admin;
 
-   auto &in          = getRequired(OptionString::INSTANCE);
-   auto &name        = getRequired(OptionString::USERNAME);
+   auto &in   = getRequired(OptionString::INSTANCE);
+   auto &name = getRequired(OptionString::USERNAME);
 
    m_catalogue.deleteRequesterMountRule(in, name);
 
@@ -1581,11 +1564,10 @@ void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = getRequired(OptionString::INSTANCE);
-   auto &scn = getRequired(OptionString::STORAGE_CLASS);
-
-   auto comment = getOptional(OptionString::COMMENT);
-   auto cn      = getOptional(OptionUInt64::COPY_NUMBER);
+   auto &in      = getRequired(OptionString::INSTANCE);
+   auto &scn     = getRequired(OptionString::STORAGE_CLASS);
+   auto  comment = getOptional(OptionString::COMMENT);
+   auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
 
    if(comment) {
       m_catalogue.modifyStorageClassComment(m_cliIdentity, in, scn, comment.value());
@@ -1669,15 +1651,14 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
 {
    using namespace cta::admin;
 
-   auto &vid = getRequired(OptionString::VID);
-
-   auto logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
-   auto tapepool       = getOptional(OptionString::TAPE_POOL);
-   auto capacity       = getOptional(OptionUInt64::CAPACITY);
-   auto comment        = getOptional(OptionString::COMMENT);
-   auto encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
-   auto disabled       = getOptional(OptionBoolean::DISABLED);
-   auto full           = getOptional(OptionBoolean::FULL);
+   auto &vid            = getRequired(OptionString::VID);
+   auto  logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
+   auto  tapepool       = getOptional(OptionString::TAPE_POOL);
+   auto  capacity       = getOptional(OptionUInt64::CAPACITY);
+   auto  comment        = getOptional(OptionString::COMMENT);
+   auto  encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
+   auto  disabled       = getOptional(OptionBoolean::DISABLED);
+   auto  full           = getOptional(OptionBoolean::FULL);
 
    if(logicallibrary) {
       m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
@@ -1827,9 +1808,9 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
    auto &vid   = getRequired(OptionString::VID);
    auto  force = getOptional(OptionBoolean::FORCE);
    auto  lbp   = getOptional(OptionBoolean::LBP);
-   // If the tag option is not specified, the tag will be set to "-", which means no tagging
    auto  tag   = getOptional(OptionString::TAG);
 
+   // If the tag option is not specified, the tag will be set to "-", which means no tagging
    m_scheduler.queueLabel(m_cliIdentity, vid,
                           force ? force.value() : false,
                           lbp ? lbp.value() : true,
@@ -1932,15 +1913,14 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
 
    std::stringstream cmdlineOutput;
 
-   auto &drive  = getRequired(OptionString::DRIVE);
-   auto &vid    = getRequired(OptionString::VID);
-   auto &output = getRequired(OptionString::OUTPUT);
-
+   auto &drive     = getRequired(OptionString::DRIVE);
+   auto &vid       = getRequired(OptionString::VID);
+   auto &output    = getRequired(OptionString::OUTPUT);
    auto &firstfseq = getRequired(OptionUInt64::FIRST_FSEQ);
    auto &lastfseq  = getRequired(OptionUInt64::LAST_FSEQ);
+   auto  tag       = getOptional(OptionString::TAG);
 
    bool checkchecksum = has_flag(OptionBoolean::CHECK_CHECKSUM);
-   auto tag = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(
       m_cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag ? tag.value() : "-"
@@ -1990,8 +1970,7 @@ void RequestMessage::processTest_Write(const cta::admin::AdminCmd &admincmd, cta
    auto &drive = getRequired(OptionString::DRIVE);
    auto &vid   = getRequired(OptionString::VID);
    auto &file  = getRequired(OptionString::FILENAME);
-
-   auto tag = getOptional(OptionString::TAG);
+   auto  tag   = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::WriteTestResult res = m_scheduler.writeTest(
       m_cliIdentity, drive, vid, file, tag ? tag.value() : "-"
@@ -2234,7 +2213,7 @@ std::string RequestMessage::formatResponse(const std::vector<std::vector<std::st
    for(uint j = 0; j < responseTable.at(0).size(); j++) { //for each column j
       uint columnSize = 0;
       for(uint i = 0; i<responseTable.size(); i++) { //for each row i
-         if(responseTable.at(i).at(j).size()>columnSize) {
+         if(responseTable.at(i).at(j).size() > columnSize) {
             columnSize = responseTable.at(i).at(j).size();
          }
       }
