@@ -2098,77 +2098,16 @@ void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd,
 
 
 
-#if 0
 void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid    = m_option_str.at(OptionString::VID);
+   auto  number = getOptional(OptionUInt64::NUMBER_OF_FILES, m_option_uint64);
+   auto  tag    = getOptional(OptionString::TAG, m_option_str);
 
-  if("add" == m_requestTokens.at(2) || "err" == m_requestTokens.at(2) || "rm" == m_requestTokens.at(2)) {
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
-    if("add" == m_requestTokens.at(2)) { //add
-      optional<std::string> tag = getOptionStringValue("-t", "--tag", false, false);
-      optional<uint64_t> numberOfFiles = getOptionUint64Value("-p", "--partial", false, false); //nullopt means do a complete verification      
-      checkOptions(help.str());
-      m_scheduler.queueVerify(m_cliIdentity, vid.value(), tag, numberOfFiles);
-    }
-    else if("err" == m_requestTokens.at(2)) { //err
-      checkOptions(help.str());
-      cta::common::dataStructures::VerifyInfo info = m_scheduler.getVerify(m_cliIdentity, vid.value());
-      if(info.errors.size()>0) {
-        std::vector<std::vector<std::string>> responseTable;
-        std::vector<std::string> header = { "fseq","error message" };
-        if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-        for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
-          std::vector<std::string> currentRow;
-          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
-          currentRow.push_back(it->second);
-          responseTable.push_back(currentRow);
-        }
-        cmdlineOutput << formatResponse(responseTable);
-      }
-    }
-    else { //rm
-      checkOptions(help.str());
-      m_scheduler.cancelVerify(m_cliIdentity, vid.value());
-    }
-  }
-  else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::VerifyInfo> list;
-    optional<std::string> vid = getOptionStringValue("-v", "--vid", true, false);
-    if(!vid) {      
-      list = m_scheduler.getVerifys(m_cliIdentity);
-    }
-    else {
-      list.push_back(m_scheduler.getVerify(m_cliIdentity, vid.value()));
-    }
-    if(list.size()>0) {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "vid","files","size","tag","to verify","failed","verified","status","name","host","time"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-        std::vector<std::string> currentRow;
-        currentRow.push_back(it->vid);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
-        currentRow.push_back(it->tag);
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
-        currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified)));
-        currentRow.push_back(it->verifyStatus);
-        currentRow.push_back(it->creationLog.username);
-        currentRow.push_back(it->creationLog.host);       
-        currentRow.push_back(timeToString(it->creationLog.time));
-        responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-    }
-  }
+   m_scheduler.queueVerify(m_cliIdentity, vid, tag, number);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2178,9 +2117,10 @@ void RequestMessage::processVerify_Rm(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   auto &vid = m_option_str.at(OptionString::VID);
 
-   response.set_message_txt(cmdlineOutput.str());
+   m_scheduler.cancelVerify(m_cliIdentity, vid);
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2191,6 +2131,41 @@ void RequestMessage::processVerify_Ls(const cta::admin::AdminCmd &admincmd, cta:
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
+
+   auto vid = getOptional(OptionString::VID, m_option_str);
+
+   std::list<cta::common::dataStructures::VerifyInfo> list;
+
+   if(vid) {
+      list.push_back(m_scheduler.getVerify(m_cliIdentity, vid.value()));
+   } else {
+      list = m_scheduler.getVerifys(m_cliIdentity);
+   }
+
+   if(!list.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = {
+         "vid","files","size","tag","to verify","failed","verified","status","name","host","time"
+      };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = list.cbegin(); it != list.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(it->vid);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
+         currentRow.push_back(it->tag);
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified)));
+         currentRow.push_back(it->verifyStatus);
+         currentRow.push_back(it->creationLog.username);
+         currentRow.push_back(it->creationLog.host);       
+         currentRow.push_back(timeToString(it->creationLog.time));
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2204,10 +2179,27 @@ void RequestMessage::processVerify_Err(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
+   auto &vid = m_option_str.at(OptionString::VID);
+
+   cta::common::dataStructures::VerifyInfo info = m_scheduler.getVerify(m_cliIdentity, vid);
+
+   if(!info.errors.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = { "fseq","error message" };
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
+      for(auto it = info.errors.cbegin(); it != info.errors.cend(); it++) {
+         std::vector<std::string> currentRow;
+         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->first)));
+         currentRow.push_back(it->second);
+         responseTable.push_back(currentRow);
+      }
+      cmdlineOutput << formatResponse(responseTable);
+   }
+
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
-#endif
 
 
 
