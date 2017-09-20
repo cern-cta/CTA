@@ -268,14 +268,21 @@ void RecallTaskInjector::WorkerThread::run()
      * to perform the RAO query;
      */
     m_parent.waitForPromise();
-    m_parent.m_raoLimits = m_parent.m_drive->getLimitUDS();
-    m_parent.m_hasUDS = true;
-    if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
-      /* Fetching until we reach maxSupported for the tape drive RAO */
-      m_parent.synchronousFetch();
+    try {
+      m_parent.m_raoLimits = m_parent.m_drive->getLimitUDS();
+      m_parent.m_hasUDS = true;
+      if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
+        /* Fetching until we reach maxSupported for the tape drive RAO */
+        m_parent.synchronousFetch();
+      }
+      m_parent.injectBulkRecalls();
+      m_parent.m_useRAO = false;
     }
-    m_parent.injectBulkRecalls();
-    m_parent.m_useRAO = false;
+    catch (castor::tape::SCSI::Exception& e) {
+      m_parent.m_lc.log(cta::log::WARNING, "The drive does not support RAO: disabled");
+      m_parent.m_useRAO = false;
+      m_parent.injectBulkRecalls();
+    }
   }
   try{
     while (1) {
