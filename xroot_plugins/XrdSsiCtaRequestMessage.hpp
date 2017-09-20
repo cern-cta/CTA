@@ -133,6 +133,41 @@ private:
    admincmd_t processVerify_Err;
 
    /*!
+    * Drive state enum
+    */
+   enum DriveState { Up, Down };
+
+   /*!
+    * Changes state for the drives by a given regex.
+    *
+    * @param[in]     regex          The regex to match drive name(s) to change
+    * @param[in]     drive_state    The desired state for the drives (Up or Down)
+    *
+    * @returns       The result of the operation, to return to the client
+    */
+   std::string setDriveState(const std::string &regex, DriveState drive_state);
+
+   /*!
+    * Returns the response string for admin commands in a tabular format
+    * 
+    * @param[in]     responseTable   The response 2D matrix
+    *
+    * @returns       the response string properly formatted in a table
+    */
+   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable) const;
+
+   /*!
+    * Adds the creation log and the last modification log to the current response row
+    * 
+    * @param[in,out] responseRow            The current response row to modify
+    * @param[in]     creationLog            the creation log
+    * @param[in]     lastModificationLog    the last modification log
+    */
+   void addLogInfoToResponseRow(std::vector<std::string> &responseRow,
+                                const cta::common::dataStructures::EntryLog &creationLog,
+                                const cta::common::dataStructures::EntryLog &lastModificationLog) const;
+
+   /*!
     * Import Google Protobuf option fields into maps
     *
     * @param[in]     admincmd        CTA Admin command request message
@@ -209,26 +244,6 @@ private:
       return opt_it != m_option_bool.end() && opt_it->second;
    }
 
-   /*!
-    * Returns the response string for admin commands in a tabular format
-    * 
-    * @param[in]     responseTable   The response 2D matrix
-    *
-    * @returns       the response string properly formatted in a table
-    */
-   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable) const;
-
-   /*!
-    * Adds the creation log and the last modification log to the current response row
-    * 
-    * @param[in,out] responseRow            The current response row to modify
-    * @param[in]     creationLog            the creation log
-    * @param[in]     lastModificationLog    the last modification log
-    */
-   void addLogInfoToResponseRow(std::vector<std::string> &responseRow,
-                                const cta::common::dataStructures::EntryLog &creationLog,
-                                const cta::common::dataStructures::EntryLog &lastModificationLog) const;
-
    // Member variables
 
    cta::catalogue::Catalogue                            &m_catalogue;        //!< Reference to CTA Catalogue
@@ -241,3 +256,4 @@ private:
 };
 
 }} // namespace cta::xrd
+

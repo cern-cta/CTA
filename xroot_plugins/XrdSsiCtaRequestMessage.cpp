@@ -18,6 +18,8 @@
 
 #include <iomanip> // for setw
 
+#include <common/utils/Regex.hpp>
+
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
@@ -719,15 +721,9 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   std::string cmdlineOutput = setDriveState(getRequired(OptionString::DRIVE), Up);
 
-#if 0
-   auto &drive = getRequired(OptionString::DRIVE);
-
-   changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, true, false);
-#endif
-
-   response.set_message_txt(cmdlineOutput.str());
+   response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -737,15 +733,9 @@ void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   std::string cmdlineOutput = setDriveState(getRequired(OptionString::DRIVE), Down);
 
-#if 0
-   auto &drive = getRequired(OptionString::DRIVE);
-
-   changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, false, has_flag(OptionBoolean::FORCE));
-#endif
-
-   response.set_message_txt(cmdlineOutput.str());
+   response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2179,25 +2169,38 @@ void RequestMessage::processVerify_Err(const cta::admin::AdminCmd &admincmd, cta
 
 
 
-void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
+std::string RequestMessage::setDriveState(const std::string &regex, DriveState drive_state)
 {
-   // Validate the Protocol Buffer
-   validateCmd(admincmd);
+   using namespace cta::admin;
 
-   // Import Boolean options
-   for(auto opt_it = admincmd.option_bool().begin(); opt_it != admincmd.option_bool().end(); ++opt_it) {
-      m_option_bool.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   std::stringstream cmdlineOutput;
+
+   cta::utils::Regex driveNameRegex(regex.c_str());
+
+   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
+   bool is_found = false;
+
+   for(auto driveState: driveStates)
+   {
+      const auto regexResult = driveNameRegex.exec(driveState.driveName);
+      if(!regexResult.empty())
+      {
+         is_found = true;
+
+         m_scheduler.setDesiredDriveState(m_cliIdentity, driveState.driveName, drive_state == Up,
+                                          has_flag(OptionBoolean::FORCE), m_lc);
+
+         cmdlineOutput << "Drive " << driveState.driveName << " set "
+                       << (drive_state == Up ? "Up" : "Down")
+                       << (has_flag(OptionBoolean::FORCE) ? " (forced)" : "")
+                       << "." << std::endl;
+      }
+   }
+   if (!is_found) {
+      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
    }
 
-   // Import UInt64 options
-   for(auto opt_it = admincmd.option_uint64().begin(); opt_it != admincmd.option_uint64().end(); ++opt_it) {
-      m_option_uint64.insert(std::make_pair(opt_it->key(), opt_it->value()));
-   }
-
-   // Import String options
-   for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
-      m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
-   }
+   return cmdlineOutput.str();
 }
 
 
@@ -2243,6 +2246,29 @@ void RequestMessage::addLogInfoToResponseRow(std::vector<std::string> &responseR
    responseRow.push_back(lastModificationLog.username);
    responseRow.push_back(lastModificationLog.host);
    responseRow.push_back(timeToString(lastModificationLog.time));
+}
+
+
+
+void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
+{
+   // Validate the Protocol Buffer
+   validateCmd(admincmd);
+
+   // Import Boolean options
+   for(auto opt_it = admincmd.option_bool().begin(); opt_it != admincmd.option_bool().end(); ++opt_it) {
+      m_option_bool.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
+
+   // Import UInt64 options
+   for(auto opt_it = admincmd.option_uint64().begin(); opt_it != admincmd.option_uint64().end(); ++opt_it) {
+      m_option_uint64.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
+
+   // Import String options
+   for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
+      m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
 }
 
 }} // namespace cta::xrd
