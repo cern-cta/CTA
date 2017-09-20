@@ -139,6 +139,18 @@ private:
     */
    void importOptions(const cta::admin::AdminCmd &admincmd);
 
+   /*!
+    * Get a required option
+    */
+   const std::string &getRequired(cta::admin::OptionString::Key key) const {
+      return m_option_str.at(key);
+   }
+   const uint64_t &getRequired(cta::admin::OptionUInt64::Key key) const {
+      return m_option_uint64.at(key);
+   }
+   const bool &getRequired(cta::admin::OptionBoolean::Key key) const {
+      return m_option_bool.at(key);
+   }
 
    /*!
     * Get an optional option
@@ -153,7 +165,7 @@ private:
     * @returns       value of the option if it exists, an object of type nullopt_t if it does not
     */
    template<typename K, typename V>
-   optional<V> getOptional(K key, const std::map<K,V> &options, bool *has_option = nullptr)
+   optional<V> getOptional(K key, const std::map<K,V> &options, bool *has_option) const
    {
       auto it = options.find(key);
 
@@ -166,9 +178,33 @@ private:
    }
 
    /*!
-    * Check if an optional flag has been set
+    * Overloaded versions of getOptional
+    *
+    * These map the key type to the template specialization of <key,value> pairs
     */
-   bool has_flag(cta::admin::OptionBoolean::Key option) {
+   optional<std::string> getOptional(cta::admin::OptionString::Key key, bool *has_option = nullptr) const {
+      return getOptional(key, m_option_str, has_option);
+   }
+   optional<uint64_t> getOptional(cta::admin::OptionUInt64::Key key, bool *has_option = nullptr) const {
+      return getOptional(key, m_option_uint64, has_option);
+   }
+   optional<bool> getOptional(cta::admin::OptionBoolean::Key key, bool *has_option = nullptr) const {
+      return getOptional(key, m_option_bool, has_option);
+   }
+
+   /*!
+    * Check if an optional flag has been set
+    *
+    * This is a simpler version of getOptional for checking flags which are either present
+    * or not. In the case of flags, they should always have the value true if the flag is
+    * present, but we do a redundant check anyway.
+    *
+    * @param[in] option    Optional command line option
+    *
+    * @retval    true      The flag is present in the options map, and its value is true
+    * @retval    false     The flag is either not present or is present and set to false
+    */
+   bool has_flag(cta::admin::OptionBoolean::Key option) const {
       auto opt_it = m_option_bool.find(option);
       return opt_it != m_option_bool.end() && opt_it->second;
    }
@@ -180,7 +216,7 @@ private:
     *
     * @returns       the response string properly formatted in a table
     */
-   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable);
+   std::string formatResponse(const std::vector<std::vector<std::string>> &responseTable) const;
 
    /*!
     * Adds the creation log and the last modification log to the current response row
@@ -191,7 +227,7 @@ private:
     */
    void addLogInfoToResponseRow(std::vector<std::string> &responseRow,
                                 const cta::common::dataStructures::EntryLog &creationLog,
-                                const cta::common::dataStructures::EntryLog &lastModificationLog);
+                                const cta::common::dataStructures::EntryLog &lastModificationLog) const;
 
    // Member variables
 

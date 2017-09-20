@@ -436,8 +436,8 @@ void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   auto &username = m_option_str.at(OptionString::USERNAME);
-   auto &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &username = getRequired(OptionString::USERNAME);
+   auto &comment  = getRequired(OptionString::COMMENT);
 
    m_catalogue.createAdminUser(m_cliIdentity, username, comment);
 
@@ -450,8 +450,8 @@ void RequestMessage::processAdmin_Ch(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   auto &username = m_option_str.at(OptionString::USERNAME);
-   auto &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &username = getRequired(OptionString::USERNAME);
+   auto &comment  = getRequired(OptionString::COMMENT);
 
    m_catalogue.modifyAdminUserComment(m_cliIdentity, username, comment);
 
@@ -464,7 +464,7 @@ void RequestMessage::processAdmin_Rm(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   auto &username = m_option_str.at(OptionString::USERNAME);
+   auto &username = getRequired(OptionString::USERNAME);
 
    m_catalogue.deleteAdminUser(username);
 
@@ -508,8 +508,8 @@ void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, 
 {
    using namespace cta::admin;
 
-   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
-   auto &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &hostname = getRequired(OptionString::HOSTNAME);
+   auto &comment  = getRequired(OptionString::COMMENT);
 
    m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
 
@@ -522,8 +522,8 @@ void RequestMessage::processAdminHost_Ch(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
-   auto &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &hostname = getRequired(OptionString::HOSTNAME);
+   auto &comment  = getRequired(OptionString::COMMENT);
 
    m_catalogue.modifyAdminHostComment(m_cliIdentity, hostname, comment);
 
@@ -536,7 +536,7 @@ void RequestMessage::processAdminHost_Rm(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   auto &hostname = m_option_str.at(OptionString::HOSTNAME);
+   auto &hostname = getRequired(OptionString::HOSTNAME);
 
    m_catalogue.deleteAdminHost(hostname);
 
@@ -589,16 +589,16 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
       // Get the search criteria from the optional options
 
-      searchCriteria.archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID, m_option_uint64, &has_any);
-      searchCriteria.tapeFileCopyNb = getOptional(OptionUInt64::COPY_NUMBER,     m_option_uint64, &has_any);
-      searchCriteria.diskFileId     = getOptional(OptionString::DISKID,          m_option_str,    &has_any);
-      searchCriteria.vid            = getOptional(OptionString::VID,             m_option_str,    &has_any);
-      searchCriteria.tapePool       = getOptional(OptionString::TAPE_POOL,       m_option_str,    &has_any);
-      searchCriteria.diskFileUser   = getOptional(OptionString::OWNER,           m_option_str,    &has_any);
-      searchCriteria.diskFileGroup  = getOptional(OptionString::GROUP,           m_option_str,    &has_any);
-      searchCriteria.storageClass   = getOptional(OptionString::STORAGE_CLASS,   m_option_str,    &has_any);
-      searchCriteria.diskFilePath   = getOptional(OptionString::PATH,            m_option_str,    &has_any);
-      searchCriteria.diskInstance   = getOptional(OptionString::INSTANCE,        m_option_str,    &has_any);
+      searchCriteria.archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+      searchCriteria.tapeFileCopyNb = getOptional(OptionUInt64::COPY_NUMBER,     &has_any);
+      searchCriteria.diskFileId     = getOptional(OptionString::DISKID,          &has_any);
+      searchCriteria.vid            = getOptional(OptionString::VID,             &has_any);
+      searchCriteria.tapePool       = getOptional(OptionString::TAPE_POOL,       &has_any);
+      searchCriteria.diskFileUser   = getOptional(OptionString::OWNER,           &has_any);
+      searchCriteria.diskFileGroup  = getOptional(OptionString::GROUP,           &has_any);
+      searchCriteria.storageClass   = getOptional(OptionString::STORAGE_CLASS,   &has_any);
+      searchCriteria.diskFilePath   = getOptional(OptionString::PATH,            &has_any);
+      searchCriteria.diskInstance   = getOptional(OptionString::INSTANCE,        &has_any);
 
       if(!has_any) {
          throw cta::exception::UserError("Must specify at least one search option, or --all");
@@ -632,11 +632,11 @@ void RequestMessage::processArchiveRoute_Add(const cta::admin::AdminCmd &admincm
 {
    using namespace cta::admin;
 
-   auto &in       = m_option_str.at(OptionString::INSTANCE);
-   auto &scn      = m_option_str.at(OptionString::STORAGE_CLASS);
-   auto &cn       = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
-   auto &tapepool = m_option_str.at(OptionString::TAPE_POOL);
-   auto &comment  = m_option_str.at(OptionString::COMMENT);
+   auto &in       = getRequired(OptionString::INSTANCE);
+   auto &scn      = getRequired(OptionString::STORAGE_CLASS);
+   auto &cn       = getRequired(OptionUInt64::COPY_NUMBER);
+   auto &tapepool = getRequired(OptionString::TAPE_POOL);
+   auto &comment  = getRequired(OptionString::COMMENT);
 
    m_catalogue.createArchiveRoute(m_cliIdentity, in, scn, cn, tapepool, comment);
 
@@ -649,12 +649,12 @@ void RequestMessage::processArchiveRoute_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = m_option_str.at(OptionString::INSTANCE);
-   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
-   auto &cn  = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
+   auto &in  = getRequired(OptionString::INSTANCE);
+   auto &scn = getRequired(OptionString::STORAGE_CLASS);
+   auto &cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
-   auto tapepool = getOptional(OptionString::TAPE_POOL, m_option_str);
-   auto comment  = getOptional(OptionString::COMMENT, m_option_str);
+   auto tapepool = getOptional(OptionString::TAPE_POOL);
+   auto comment  = getOptional(OptionString::COMMENT);
 
    if(comment) {
       m_catalogue.modifyArchiveRouteComment(m_cliIdentity, in, scn, cn, comment.value());
@@ -673,9 +673,9 @@ void RequestMessage::processArchiveRoute_Rm(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = m_option_str.at(OptionString::INSTANCE);
-   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
-   auto &cn  = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
+   auto &in  = getRequired(OptionString::INSTANCE);
+   auto &scn = getRequired(OptionString::STORAGE_CLASS);
+   auto &cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
    m_catalogue.deleteArchiveRoute(in, scn, cn);
 
@@ -724,7 +724,7 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
    std::stringstream cmdlineOutput;
 
 #if 0
-   auto &drive = m_option_str.at(OptionString::DRIVE);
+   auto &drive = getRequired(OptionString::DRIVE);
 
    changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, true, false);
 #endif
@@ -742,7 +742,7 @@ void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta
    std::stringstream cmdlineOutput;
 
 #if 0
-   auto &drive = m_option_str.at(OptionString::DRIVE);
+   auto &drive = getRequired(OptionString::DRIVE);
 
    changeStateForDrivesByRegex(drive, m_lc, cmdlineOutput, false, has_flag(OptionBoolean::FORCE));
 #endif
@@ -763,7 +763,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
    bool singleDrive = false;
    bool driveFound = false;
 
-   auto drive = getOptional(OptionString::DRIVE, m_option_str, &singleDrive);
+   auto drive = getOptional(OptionString::DRIVE, &singleDrive);
    auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
 
    if (!driveStates.empty())
@@ -872,10 +872,10 @@ void RequestMessage::processGroupMountRule_Add(const cta::admin::AdminCmd &admin
 {
    using namespace cta::admin;
 
-   auto &mountpolicy = m_option_str.at(OptionString::MOUNT_POLICY);
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
-   auto &comment     = m_option_str.at(OptionString::COMMENT);
+   auto &mountpolicy = getRequired(OptionString::MOUNT_POLICY);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
+   auto &comment     = getRequired(OptionString::COMMENT);
 
    m_catalogue.createRequesterGroupMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
@@ -888,10 +888,10 @@ void RequestMessage::processGroupMountRule_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
-   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY, m_option_str);
-   auto  comment     = getOptional(OptionString::COMMENT, m_option_str);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
+   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
+   auto  comment     = getOptional(OptionString::COMMENT);
 
    if(comment) {
       m_catalogue.modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
@@ -909,8 +909,8 @@ void RequestMessage::processGroupMountRule_Rm(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
 
    m_catalogue.deleteRequesterGroupMountRule(in, name);
 
@@ -960,7 +960,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    std::stringstream cmdlineOutput;
    std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
 
-   auto tapepool = getOptional(OptionString::TAPE_POOL, m_option_str);
+   auto tapepool = getOptional(OptionString::TAPE_POOL);
 
    if(tapepool) {
       std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
@@ -1032,7 +1032,7 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
 
    std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
 
-   auto vid = getOptional(OptionString::VID, m_option_str);
+   auto vid = getOptional(OptionString::VID);
 
    if(vid) {
       std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
@@ -1097,8 +1097,8 @@ void RequestMessage::processLogicalLibrary_Add(const cta::admin::AdminCmd &admin
 {
    using namespace cta::admin;
 
-   auto &name    = m_option_str.at(OptionString::LOGICAL_LIBRARY);
-   auto &comment = m_option_str.at(OptionString::COMMENT);
+   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto &comment = getRequired(OptionString::COMMENT);
 
    m_catalogue.createLogicalLibrary(m_cliIdentity, name, comment);
 
@@ -1111,8 +1111,8 @@ void RequestMessage::processLogicalLibrary_Ch(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &name    = m_option_str.at(OptionString::LOGICAL_LIBRARY);
-   auto &comment = m_option_str.at(OptionString::COMMENT);
+   auto &name    = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto &comment = getRequired(OptionString::COMMENT);
 
    m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment);
 
@@ -1125,7 +1125,7 @@ void RequestMessage::processLogicalLibrary_Rm(const cta::admin::AdminCmd &adminc
 {
    using namespace cta::admin;
 
-   auto &name = m_option_str.at(OptionString::LOGICAL_LIBRARY);
+   auto &name = getRequired(OptionString::LOGICAL_LIBRARY);
 
    m_catalogue.deleteLogicalLibrary(name);
 
@@ -1169,13 +1169,13 @@ void RequestMessage::processMountPolicy_Add(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &group                 = m_option_str.at   (OptionString::MOUNT_POLICY);
-   auto &archivepriority       = m_option_uint64.at(OptionUInt64::ARCHIVE_PRIORITY);
-   auto &minarchiverequestage  = m_option_uint64.at(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
-   auto &retrievepriority      = m_option_uint64.at(OptionUInt64::RETRIEVE_PRIORITY);
-   auto &minretrieverequestage = m_option_uint64.at(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-   auto &maxdrivesallowed      = m_option_uint64.at(OptionUInt64::MAX_DRIVES_ALLOWED);
-   auto &comment               = m_option_str.at   (OptionString::COMMENT);
+   auto &group                 = getRequired(OptionString::MOUNT_POLICY);
+   auto &archivepriority       = getRequired(OptionUInt64::ARCHIVE_PRIORITY);
+   auto &minarchiverequestage  = getRequired(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+   auto &retrievepriority      = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
+   auto &minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
+   auto &maxdrivesallowed      = getRequired(OptionUInt64::MAX_DRIVES_ALLOWED);
+   auto &comment               = getRequired(OptionString::COMMENT);
 
    m_catalogue.createMountPolicy(m_cliIdentity, group, archivepriority, minarchiverequestage, retrievepriority,
                                  minretrieverequestage, maxdrivesallowed, comment);
@@ -1189,14 +1189,14 @@ void RequestMessage::processMountPolicy_Ch(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   auto &group = m_option_str.at(OptionString::MOUNT_POLICY);
+   auto &group = getRequired(OptionString::MOUNT_POLICY);
 
-   auto archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY, m_option_uint64);
-   auto minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE, m_option_uint64);
-   auto retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY, m_option_uint64);
-   auto minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE, m_option_uint64);
-   auto maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED, m_option_uint64);
-   auto comment               = getOptional(OptionString::COMMENT, m_option_str);
+   auto archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY);
+   auto minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+   auto retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
+   auto minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
+   auto maxdrivesallowed      = getOptional(OptionUInt64::MAX_DRIVES_ALLOWED);
+   auto comment               = getOptional(OptionString::COMMENT);
 
    if(archivepriority) {
       m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
@@ -1226,7 +1226,7 @@ void RequestMessage::processMountPolicy_Rm(const cta::admin::AdminCmd &admincmd,
 {
    using namespace cta::admin;
 
-   auto &group = m_option_str.at(OptionString::MOUNT_POLICY);
+   auto &group = getRequired(OptionString::MOUNT_POLICY);
 
    m_catalogue.deleteMountPolicy(group);
 
@@ -1276,10 +1276,8 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
-
-   auto &vid = m_option_str.at(OptionString::VID);
-   auto  tag = getOptional(OptionString::TAG, m_option_str);
+   auto &vid = getRequired(OptionString::VID);
+   auto  tag = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::RepackType type;
 
@@ -1295,7 +1293,6 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
    m_scheduler.queueRepack(m_cliIdentity, vid, tag, type);
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1305,7 +1302,7 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    m_scheduler.cancelRepack(m_cliIdentity, vid);
 
@@ -1322,7 +1319,7 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
 
    std::list<cta::common::dataStructures::RepackInfo> list;
 
-   auto vid = getOptional(OptionString::VID, m_option_str);
+   auto vid = getOptional(OptionString::VID);
 
    if(!vid) {      
       list = m_scheduler.getRepacks(m_cliIdentity);
@@ -1376,7 +1373,7 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid);
 
@@ -1404,10 +1401,10 @@ void RequestMessage::processRequesterMountRule_Add(const cta::admin::AdminCmd &a
 {
    using namespace cta::admin;
 
-   auto &mountpolicy = m_option_str.at(OptionString::MOUNT_POLICY);
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
-   auto &comment     = m_option_str.at(OptionString::COMMENT);
+   auto &mountpolicy = getRequired(OptionString::MOUNT_POLICY);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
+   auto &comment     = getRequired(OptionString::COMMENT);
 
    m_catalogue.createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
@@ -1420,10 +1417,10 @@ void RequestMessage::processRequesterMountRule_Ch(const cta::admin::AdminCmd &ad
 {
    using namespace cta::admin;
 
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
-   auto  comment     = getOptional(OptionString::COMMENT, m_option_str);
-   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY, m_option_str);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
+   auto  comment     = getOptional(OptionString::COMMENT);
+   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
    if(comment) {
       m_catalogue.modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
@@ -1441,8 +1438,8 @@ void RequestMessage::processRequesterMountRule_Rm(const cta::admin::AdminCmd &ad
 {
    using namespace cta::admin;
 
-   auto &in          = m_option_str.at(OptionString::INSTANCE);
-   auto &name        = m_option_str.at(OptionString::USERNAME);
+   auto &in          = getRequired(OptionString::INSTANCE);
+   auto &name        = getRequired(OptionString::USERNAME);
 
    m_catalogue.deleteRequesterMountRule(in, name);
 
@@ -1488,7 +1485,7 @@ void RequestMessage::processShrink(const cta::admin::AdminCmd &admincmd, cta::xr
 {
    using namespace cta::admin;
 
-   auto &tapepool = m_option_str.at(OptionString::TAPE_POOL);
+   auto &tapepool = getRequired(OptionString::TAPE_POOL);
 
    m_scheduler.shrink(m_cliIdentity, tapepool);
 
@@ -1568,10 +1565,10 @@ void RequestMessage::processStorageClass_Add(const cta::admin::AdminCmd &admincm
 
    common::dataStructures::StorageClass storageClass;
 
-   storageClass.diskInstance = m_option_str.at   (OptionString::INSTANCE);
-   storageClass.name         = m_option_str.at   (OptionString::STORAGE_CLASS);
-   storageClass.nbCopies     = m_option_uint64.at(OptionUInt64::COPY_NUMBER);
-   storageClass.comment      = m_option_str.at   (OptionString::COMMENT);
+   storageClass.diskInstance = getRequired(OptionString::INSTANCE);
+   storageClass.name         = getRequired(OptionString::STORAGE_CLASS);
+   storageClass.nbCopies     = getRequired(OptionUInt64::COPY_NUMBER);
+   storageClass.comment      = getRequired(OptionString::COMMENT);
 
    m_catalogue.createStorageClass(m_cliIdentity, storageClass);
 
@@ -1584,11 +1581,11 @@ void RequestMessage::processStorageClass_Ch(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = m_option_str.at(OptionString::INSTANCE);
-   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
+   auto &in  = getRequired(OptionString::INSTANCE);
+   auto &scn = getRequired(OptionString::STORAGE_CLASS);
 
-   auto comment = getOptional(OptionString::COMMENT, m_option_str);
-   auto cn      = getOptional(OptionUInt64::COPY_NUMBER, m_option_uint64);
+   auto comment = getOptional(OptionString::COMMENT);
+   auto cn      = getOptional(OptionUInt64::COPY_NUMBER);
 
    if(comment) {
       m_catalogue.modifyStorageClassComment(m_cliIdentity, in, scn, comment.value());
@@ -1606,8 +1603,8 @@ void RequestMessage::processStorageClass_Rm(const cta::admin::AdminCmd &admincmd
 {
    using namespace cta::admin;
 
-   auto &in  = m_option_str.at(OptionString::INSTANCE);
-   auto &scn = m_option_str.at(OptionString::STORAGE_CLASS);
+   auto &in  = getRequired(OptionString::INSTANCE);
+   auto &scn = getRequired(OptionString::STORAGE_CLASS);
 
    m_catalogue.deleteStorageClass(in, scn);
 
@@ -1653,13 +1650,13 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   auto &vid            = m_option_str.at(OptionString::VID);
-   auto &logicallibrary = m_option_str.at(OptionString::LOGICAL_LIBRARY);
-   auto &tapepool       = m_option_str.at(OptionString::TAPE_POOL);
-   auto &capacity       = m_option_uint64.at(OptionUInt64::CAPACITY);
-   auto &disabled       = m_option_bool.at(OptionBoolean::DISABLED);
-   auto &full           = m_option_bool.at(OptionBoolean::FULL);
-   auto  comment        = getOptional(OptionString::COMMENT, m_option_str);
+   auto &vid            = getRequired(OptionString::VID);
+   auto &logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto &tapepool       = getRequired(OptionString::TAPE_POOL);
+   auto &capacity       = getRequired(OptionUInt64::CAPACITY);
+   auto &disabled       = getRequired(OptionBoolean::DISABLED);
+   auto &full           = getRequired(OptionBoolean::FULL);
+   auto  comment        = getOptional(OptionString::COMMENT);
 
    m_catalogue.createTape(m_cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
 
@@ -1672,15 +1669,15 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
 {
    using namespace cta::admin;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
-   auto logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY, m_option_str);
-   auto tapepool       = getOptional(OptionString::TAPE_POOL, m_option_str);
-   auto capacity       = getOptional(OptionUInt64::CAPACITY, m_option_uint64);
-   auto comment        = getOptional(OptionString::COMMENT, m_option_str);
-   auto encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY, m_option_str);
-   auto disabled       = getOptional(OptionBoolean::DISABLED, m_option_bool);
-   auto full           = getOptional(OptionBoolean::FULL, m_option_bool);
+   auto logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
+   auto tapepool       = getOptional(OptionString::TAPE_POOL);
+   auto capacity       = getOptional(OptionUInt64::CAPACITY);
+   auto comment        = getOptional(OptionString::COMMENT);
+   auto encryptionkey  = getOptional(OptionString::ENCRYPTION_KEY);
+   auto disabled       = getOptional(OptionBoolean::DISABLED);
+   auto full           = getOptional(OptionBoolean::FULL);
 
    if(logicallibrary) {
       m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
@@ -1713,7 +1710,7 @@ void RequestMessage::processTape_Rm(const cta::admin::AdminCmd &admincmd, cta::x
 {
    using namespace cta::admin;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    m_catalogue.deleteTape(vid);
 
@@ -1726,7 +1723,7 @@ void RequestMessage::processTape_Reclaim(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    m_catalogue.reclaimTape(m_cliIdentity, vid);
 
@@ -1749,13 +1746,13 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
 
       // Get the search criteria from the optional options
 
-      searchCriteria.disabled        = getOptional(OptionBoolean::DISABLED,       m_option_bool,   &has_any);
-      searchCriteria.full            = getOptional(OptionBoolean::FULL,           m_option_bool,   &has_any);
-      searchCriteria.lbp             = getOptional(OptionBoolean::LBP,            m_option_bool,   &has_any);
-      searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        m_option_uint64, &has_any);
-      searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, m_option_str,    &has_any);
-      searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       m_option_str,    &has_any);
-      searchCriteria.vid             = getOptional(OptionString::VID,             m_option_str,    &has_any);
+      searchCriteria.disabled        = getOptional(OptionBoolean::DISABLED,       &has_any);
+      searchCriteria.full            = getOptional(OptionBoolean::FULL,           &has_any);
+      searchCriteria.lbp             = getOptional(OptionBoolean::LBP,            &has_any);
+      searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        &has_any);
+      searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
+      searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
+      searchCriteria.vid             = getOptional(OptionString::VID,             &has_any);
 
       if(!has_any) {
          throw cta::exception::UserError("Must specify at least one search option, or --all");
@@ -1827,11 +1824,11 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   auto &vid   = m_option_str.at(OptionString::VID);
-   auto  force = getOptional(OptionBoolean::FORCE, m_option_bool);
-   auto  lbp   = getOptional(OptionBoolean::LBP, m_option_bool);
+   auto &vid   = getRequired(OptionString::VID);
+   auto  force = getOptional(OptionBoolean::FORCE);
+   auto  lbp   = getOptional(OptionBoolean::LBP);
    // If the tag option is not specified, the tag will be set to "-", which means no tagging
-   auto  tag   = getOptional(OptionString::TAG, m_option_str);
+   auto  tag   = getOptional(OptionString::TAG);
 
    m_scheduler.queueLabel(m_cliIdentity, vid,
                           force ? force.value() : false,
@@ -1847,10 +1844,10 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
 {
    using namespace cta::admin;
 
-   auto &name      = m_option_str.at(OptionString::TAPE_POOL);
-   auto &ptn       = m_option_uint64.at(OptionUInt64::PARTIAL_TAPES_NUMBER);
-   auto &comment   = m_option_str.at(OptionString::COMMENT);
-   auto &encrypted = m_option_bool.at(OptionBoolean::ENCRYPTED);
+   auto &name      = getRequired(OptionString::TAPE_POOL);
+   auto &ptn       = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
+   auto &comment   = getRequired(OptionString::COMMENT);
+   auto &encrypted = getRequired(OptionBoolean::ENCRYPTED);
 
    m_catalogue.createTapePool(m_cliIdentity, name, ptn, encrypted, comment);
 
@@ -1863,10 +1860,10 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
 {
    using namespace cta::admin;
 
-   auto &name      = m_option_str.at(OptionString::TAPE_POOL);
-   auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER, m_option_uint64);
-   auto  comment   = getOptional(OptionString::COMMENT, m_option_str);
-   auto  encrypted = getOptional(OptionBoolean::ENCRYPTED, m_option_bool);
+   auto &name      = getRequired(OptionString::TAPE_POOL);
+   auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
+   auto  comment   = getOptional(OptionString::COMMENT);
+   auto  encrypted = getOptional(OptionBoolean::ENCRYPTED);
 
    if(comment) {
       m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
@@ -1887,7 +1884,7 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 {
    using namespace cta::admin;
 
-   auto &name = m_option_str.at(OptionString::TAPE_POOL);
+   auto &name = getRequired(OptionString::TAPE_POOL);
 
    m_catalogue.deleteTapePool(name);
 
@@ -1935,15 +1932,15 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
 
    std::stringstream cmdlineOutput;
 
-   auto &drive  = m_option_str.at(OptionString::DRIVE);
-   auto &vid    = m_option_str.at(OptionString::VID);
-   auto &output = m_option_str.at(OptionString::OUTPUT);
+   auto &drive  = getRequired(OptionString::DRIVE);
+   auto &vid    = getRequired(OptionString::VID);
+   auto &output = getRequired(OptionString::OUTPUT);
 
-   auto &firstfseq = m_option_uint64.at(OptionUInt64::FIRST_FSEQ);
-   auto &lastfseq  = m_option_uint64.at(OptionUInt64::LAST_FSEQ);
+   auto &firstfseq = getRequired(OptionUInt64::FIRST_FSEQ);
+   auto &lastfseq  = getRequired(OptionUInt64::LAST_FSEQ);
 
    bool checkchecksum = has_flag(OptionBoolean::CHECK_CHECKSUM);
-   auto tag = getOptional(OptionString::TAG, m_option_str);
+   auto tag = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(
       m_cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag ? tag.value() : "-"
@@ -1990,11 +1987,11 @@ void RequestMessage::processTest_Write(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-   auto &drive = m_option_str.at(OptionString::DRIVE);
-   auto &vid   = m_option_str.at(OptionString::VID);
-   auto &file  = m_option_str.at(OptionString::FILENAME);
+   auto &drive = getRequired(OptionString::DRIVE);
+   auto &vid   = getRequired(OptionString::VID);
+   auto &file  = getRequired(OptionString::FILENAME);
 
-   auto tag = getOptional(OptionString::TAG, m_option_str);
+   auto tag = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::WriteTestResult res = m_scheduler.writeTest(
       m_cliIdentity, drive, vid, file, tag ? tag.value() : "-"
@@ -2043,12 +2040,12 @@ void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd,
 
    std::stringstream cmdlineOutput;
 
-   auto &drive  = m_option_str.at(OptionString::DRIVE);
-   auto &vid    = m_option_str.at(OptionString::VID);
-   auto &number = m_option_uint64.at(OptionUInt64::NUMBER_OF_FILES);
-   auto &size   = m_option_uint64.at(OptionUInt64::FILE_SIZE);
-   auto &input  = m_option_str.at(OptionString::INPUT);
-   auto  tag    = getOptional(OptionString::TAG, m_option_str);
+   auto &drive  = getRequired(OptionString::DRIVE);
+   auto &vid    = getRequired(OptionString::VID);
+   auto &number = getRequired(OptionUInt64::NUMBER_OF_FILES);
+   auto &size   = getRequired(OptionUInt64::FILE_SIZE);
+   auto &input  = getRequired(OptionString::INPUT);
+   auto  tag    = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::TestSourceType type;
 
@@ -2102,9 +2099,9 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   auto &vid    = m_option_str.at(OptionString::VID);
-   auto  number = getOptional(OptionUInt64::NUMBER_OF_FILES, m_option_uint64);
-   auto  tag    = getOptional(OptionString::TAG, m_option_str);
+   auto &vid    = getRequired(OptionString::VID);
+   auto  number = getOptional(OptionUInt64::NUMBER_OF_FILES);
+   auto  tag    = getOptional(OptionString::TAG);
 
    m_scheduler.queueVerify(m_cliIdentity, vid, tag, number);
 
@@ -2117,7 +2114,7 @@ void RequestMessage::processVerify_Rm(const cta::admin::AdminCmd &admincmd, cta:
 {
    using namespace cta::admin;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    m_scheduler.cancelVerify(m_cliIdentity, vid);
 
@@ -2132,7 +2129,7 @@ void RequestMessage::processVerify_Ls(const cta::admin::AdminCmd &admincmd, cta:
 
    std::stringstream cmdlineOutput;
 
-   auto vid = getOptional(OptionString::VID, m_option_str);
+   auto vid = getOptional(OptionString::VID);
 
    std::list<cta::common::dataStructures::VerifyInfo> list;
 
@@ -2179,7 +2176,7 @@ void RequestMessage::processVerify_Err(const cta::admin::AdminCmd &admincmd, cta
 
    std::stringstream cmdlineOutput;
 
-   auto &vid = m_option_str.at(OptionString::VID);
+   auto &vid = getRequired(OptionString::VID);
 
    cta::common::dataStructures::VerifyInfo info = m_scheduler.getVerify(m_cliIdentity, vid);
 
@@ -2226,7 +2223,7 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
 
 
 
-std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable)
+std::string RequestMessage::formatResponse(const std::vector<std::vector<std::string>> &responseTable) const
 {
    bool has_header = has_flag(cta::admin::OptionBoolean::SHOW_HEADER);
 
@@ -2259,7 +2256,7 @@ std::string RequestMessage::formatResponse(const std::vector<std::vector<std::st
 
 void RequestMessage::addLogInfoToResponseRow(std::vector<std::string> &responseRow,
                                              const cta::common::dataStructures::EntryLog &creationLog,
-                                             const cta::common::dataStructures::EntryLog &lastModificationLog)
+                                             const cta::common::dataStructures::EntryLog &lastModificationLog) const
 {
    responseRow.push_back(creationLog.username);
    responseRow.push_back(creationLog.host);
