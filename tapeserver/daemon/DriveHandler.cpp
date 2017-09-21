@@ -69,7 +69,7 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeT
   // Scheduling is expected to take little time, so 5 minutes is plenty. When the scheduling
   // determines there is nothing to do, it will transition to the same state (resetting the timeout).
   {SessionState::Scheduling, std::chrono::duration_cast<Timeout>(std::chrono::minutes(5))},
-  // We expect mounting the take no more than 10 minutes.
+  // We expect mounting (mount+load, in fact) the take no more than 10 minutes.
   {SessionState::Mounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
   // Like mounting, unmounting is expected to take less than 10 minutes.
   {SessionState::Unmounting, std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
