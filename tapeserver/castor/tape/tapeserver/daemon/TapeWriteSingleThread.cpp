@@ -118,7 +118,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, m_this.m_logContext);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exception_message", ex.getMessageValue());
-    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
+    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeWriteSingleThread-TapeCleaning. Putting the drive down.");
     // As we do not throw exceptions from here, the watchdog signalling has
     // to occur from here.
     try {
@@ -130,7 +130,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
      // Notify something failed during the cleaning 
      m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, m_this.m_logContext);
-     m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
+     m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
      try {
        if (currentErrorToCount.size()) {
          m_this.m_watchdog.addToErrorCount(currentErrorToCount);
