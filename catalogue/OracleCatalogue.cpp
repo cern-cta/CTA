@@ -139,7 +139,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
     if(nullptr == archiveFile.get()) {
       log::ScopedParamContainer spc(lc);
-      spc.add("fileId", std::to_string(archiveFile->archiveFileID));
+      spc.add("fileId", archiveFileId);
       lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
       return;
     }
