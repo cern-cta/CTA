@@ -87,9 +87,6 @@ public:
                 << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
                 << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
                 << std::endl;
-
-      // for debugging. delete me.
-      resource.client->name = "NO_KEYFILE";
 #endif
       if(resource.client == nullptr || resource.client->name == nullptr)
       {
