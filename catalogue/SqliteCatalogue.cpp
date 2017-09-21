@@ -67,13 +67,45 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     const auto getArchiveFileTime = t.secs();
 
     if(nullptr == archiveFile.get()) {
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("fileId", std::to_string(archiveFileId)));
-      m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+      log::ScopedParamContainer spc(lc);
+      spc.add("fileId", std::to_string(archiveFile->archiveFileID));
+      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
       return;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {
+      log::ScopedParamContainer spc(lc);
+      spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+         .add("diskInstance", archiveFile->diskInstance)
+         .add("requestDiskInstance", diskInstanceName)
+         .add("diskFileId", archiveFile->diskFileId)
+         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("fileSize", std::to_string(archiveFile->fileSize))
+         .add("checksumType", archiveFile->checksumType)
+         .add("checksumValue", archiveFile->checksumValue)
+         .add("creationTime", std::to_string(archiveFile->creationTime))
+         .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+         .add("storageClass", archiveFile->storageClass)
+         .add("getConnTime", getConnTime)
+         .add("getArchiveFileTime", getArchiveFileTime);
+      for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+        std::stringstream tapeCopyLogStream;
+        tapeCopyLogStream << "copy number: " << it->first
+          << " vid: " << it->second.vid
+          << " fSeq: " << it->second.fSeq
+          << " blockId: " << it->second.blockId
+          << " creationTime: " << it->second.creationTime
+          << " compressedSize: " << it->second.compressedSize
+          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+        spc.add("TAPE FILE", tapeCopyLogStream.str());
+      }
+      lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
+        "of the archived file");
+
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
         "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
@@ -109,7 +141,6 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
        .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-       .add("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob)
        .add("fileSize", std::to_string(archiveFile->fileSize))
        .add("checksumType", archiveFile->checksumType)
        .add("checksumValue", archiveFile->checksumValue)
@@ -134,7 +165,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
-    lc.log(log::INFO, "Archive File Deleted");
+    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
