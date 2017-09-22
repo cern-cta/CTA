@@ -263,10 +263,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   for (auto & j: m_payload.jobs()) {
     ret.push_back(JobDump());
     ret.back().copyNb=j.copynb();
-    ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
-    ret.back().maxTotalRetries=j.maxtotalretries();
-    ret.back().retriesWithinMount=j.retrieswithinmount();
-    ret.back().totalRetries=j.totalretries();
+    ret.back().status=j.status();
     // TODO: status
   }
   return ret;
@@ -282,10 +279,7 @@ auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
     if (j.copynb()==copyNb) {
       JobDump ret;
       ret.copyNb=copyNb;
-      ret.maxRetriesWithinMount=j.maxretrieswithinmount();
-      ret.maxTotalRetries=j.maxtotalretries();
-      ret.retriesWithinMount=j.retrieswithinmount();
-      ret.totalRetries=j.totalretries();
+      ret.status=j.status();
       return ret;
     }
   }
@@ -298,10 +292,7 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   for (auto & j: m_payload.jobs()) {
     ret.push_back(JobDump());
     ret.back().copyNb=j.copynb();
-    ret.back().maxRetriesWithinMount=j.maxretrieswithinmount();
-    ret.back().maxTotalRetries=j.maxtotalretries();
-    ret.back().retriesWithinMount=j.retrieswithinmount();
-    ret.back().totalRetries=j.totalretries();
+    ret.back().status=j.status();
   }
   return ret;
 }

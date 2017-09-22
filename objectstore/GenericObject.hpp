@@ -60,7 +60,6 @@ public:
   
   /** Get the object's type (type is forced implicitly in other classes) */
   serializers::ObjectType type();
-  serializers::ObjectType getTypeWithNoLock();
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */

@@ -128,6 +128,7 @@ public:
     uint16_t copyNb;
     std::string tapePool;
     std::string owner;
+    serializers::ArchiveJobStatus status;
   };
   
   std::list<JobDump> dumpJobs();

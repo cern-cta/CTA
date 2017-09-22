@@ -57,7 +57,7 @@ public:
     const std::string & tapePoolOrVid, log::LogContext & lc);
   
   /**
-   * Find the most appropriate queue (bid) to add the retrieve request to. The potential
+   * Find the most appropriate queue (vid) to add the retrieve request to. The potential
    * VIDs (VIDs for non-failed copies) is provided by the caller. The status of the
    * the tapes (disabled or not, and available queue size) are all cached to avoid 
    * frequent access to the object store. The caching create a small inefficiency 

@@ -51,11 +51,7 @@ public:
   class JobDump {
   public:
     uint64_t copyNb;
-    uint32_t maxTotalRetries;
-    uint32_t maxRetriesWithinMount;
-    uint32_t retriesWithinMount;
-    uint32_t totalRetries;
-    // TODO: status
+    serializers::RetrieveJobStatus status;
   };
   // An asynchronous job ownership updating class.
   class AsyncJobDeleter {

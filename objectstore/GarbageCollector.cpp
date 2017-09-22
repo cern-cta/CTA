@@ -19,6 +19,7 @@
 #include "GarbageCollector.hpp"
 #include "AgentReference.hpp"
 #include "RootEntry.hpp"
+#include "Helpers.hpp"
 #include <algorithm>
 
 namespace cta { namespace objectstore {
@@ -181,7 +182,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   agent.fetch();
   log::ScopedParamContainer params(lc);
   params.add("agentAddress", agent.getAddressIfSet())
-       .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
+        .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
   if (agent.getOwner() != m_ourAgentReference.getAgentAddress()) {
    log::ScopedParamContainer params(lc);
    lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping agent which is not owned by this garbage collector as thought.");
@@ -208,24 +209,107 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
       lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
     }
   }
-    
+  
+  // We will now sort the objects this agent really owns
+  OwnedObjectSorter ownedObjectSorter;
+  using serializers::ArchiveJobStatus;
+  std::set<ArchiveJobStatus> inactiveArchiveJobStatuses({ArchiveJobStatus::AJS_Complete, ArchiveJobStatus::AJS_Failed});
+  using serializers::RetrieveJobStatus;
+  std::set<RetrieveJobStatus> inactiveRetrieveJobStatuses({RetrieveJobStatus::RJS_Complete, RetrieveJobStatus::RJS_Failed});
   for (auto & obj : ownedObjects) {
-    params.add("objectAddress", obj->getAddressIfSet());
+    log::ScopedParamContainer params2(lc);
+    params2.add("objectAddress", obj->getAddressIfSet());
     ownedObjectsFetchers.at(obj.get())->wait();
     ownedObjectsFetchers.erase(obj.get());
     if (obj->getOwner() != agent.getAddressIfSet()) {
-      lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping object which is not owned by this agent");
-    } else {
-      switch (obj->getTypeWithNoLock()) {
-        case serializers::ArchiveRequest_t:
-          break;
-        case serializers::RetrieveRequest_t:
-          break;
-        default:
-          break;
+      // For all object types except ArchiveRequests, this means we do
+      // no need to deal with this object.
+      if (obj->type() == serializers::ArchiveRequest_t) {
+        ArchiveRequest ar(*obj);
+        for (auto & j:ar.dumpJobs()) if (j.owner == agent.getAddressIfSet()) goto doGCObject;
       }
+      lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping object which is not owned by this agent");
+      continue;
     }
+  doGCObject:
+    switch (obj->type()) {
+      case serializers::ArchiveRequest_t:
+      {
+        // We need to find out in which queue or queues the owned job(s)
+        // Decision is simple: if the job is owned and active, it needs to be requeued
+        // in its destination archive queue.
+        // Get hold of an (unlocked) archive request:
+        std::shared_ptr<ArchiveRequest> ar(new ArchiveRequest(*obj));
+        bool jobRequeued=false;
+        for (auto &j: ar->dumpJobs()) {
+          if ((j.owner == agent.getAddressIfSet() || ar->getOwner() == agent.getAddressIfSet())
+              && !inactiveArchiveJobStatuses.count(j.status)) {
+            ownedObjectSorter.archiveQueuesAndRequests[j.tapePool].emplace_back(ar);
+            log::ScopedParamContainer params3(lc);
+            params3.add("tapepool", j.tapePool)
+                   .add("copynb", j.copyNb)
+                   .add("fileId", ar->getArchiveFile().archiveFileID);
+            lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
+          }
+        }
+        if (!jobRequeued) {
+          log::ScopedParamContainer params3(lc);
+          params3.add("fileId", ar->getArchiveFile().archiveFileID);
+          lc.log(log::INFO, "No active archive job to requeue found. Request will remain as-is.");
+        }
+        break;
+      }
+      case serializers::RetrieveRequest_t:
+      {
+        // We need here to re-determine the best tape (and queue) for the retrieve request.
+        std::shared_ptr<RetrieveRequest> rr(new RetrieveRequest(*obj));
+        // Get the list of vids for non failed tape files.
+        std::set<std::string> candidateVids;
+        for (auto & j: rr->dumpJobs()) {
+          if (!inactiveRetrieveJobStatuses.count(j.status)) {
+            candidateVids.insert(rr->getArchiveFile().tapeFiles.at(j.copyNb).vid);
+          }
+        }
+        if (candidateVids.empty()) {
+          log::ScopedParamContainer params3(lc);
+          params3.add("fileId", rr->getArchiveFile().archiveFileID);
+          lc.log(log::INFO, "No active retrieve job to requeue found. Marking request for deletion.");
+          ownedObjectSorter.retrieveRequestsToDelete.emplace_back(rr);
+        } else {
+          auto vid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
+          ownedObjectSorter.retrieveQueuesAndRequests[vid].emplace_back(rr);
+          log::ScopedParamContainer params3(lc);
+          // Find copyNb for logging
+          size_t copyNb = std::numeric_limits<size_t>::max();
+          uint64_t fSeq = std::numeric_limits<uint64_t>::max();
+          for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.second.vid==vid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
+          params3.add("fileId", rr->getArchiveFile().archiveFileID)
+                 .add("copyNb", copyNb)
+                 .add("vid", vid)
+                 .add("fSeq", fSeq);
+          lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
+        }
+        break;
+      }
+      case serializers::Agent_t:
+      {
+        // Check agent ownership and add to list.
+        std::shared_ptr<Agent> ag(new Agent (*obj));
+        ownedObjectSorter.agents.emplace_back(ag);
+        lc.log(log::INFO, "Will mark agent as not owned.");
+        break;
+      }
+      default:
+        ownedObjectSorter.otherObjects.emplace_back(obj);
+        break;
+    }
+    // We can now get rid of the generic object (data was transferred in a (typed) object in the sorter).
+    // Not yet as we still run the old garbage collection.
+    //obj.reset();
   }
+  
+  // We can now start updating the objects efficiently.
+  
   
   /**
    * old code to compile and unit tests

@@ -271,6 +271,7 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
     ret.back().owner = j->owner();
+    ret.back().status = j->status();
   }
   return ret;
 }
@@ -313,6 +314,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
         jd.owner = j->owner();
+        jd.status = j->status();
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();

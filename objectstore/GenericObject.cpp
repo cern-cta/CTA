@@ -71,11 +71,6 @@ serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
   return m_header.type();
 }
-serializers::ObjectType GenericObject::getTypeWithNoLock() {
-  if (!m_headerInterpreted) 
-    throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
-  return m_header.type();
-}
 
 void GenericObject::commit() {
   checkHeaderWritable();
@@ -96,6 +91,9 @@ void GenericObject::transplantHeader(ObjectOpsBase& destination) {
   destination.m_headerInterpreted = m_headerInterpreted;
   destination.m_name = m_name;
   destination.m_nameSet = m_nameSet;
+  destination.m_noLock = m_noLock;
+  destination.m_locksCount = m_locksCount;
+  destination.m_locksForWriteCount = m_locksForWriteCount;
   destination.m_payloadInterpreted = false;
 }
 

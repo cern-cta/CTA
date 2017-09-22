@@ -57,7 +57,10 @@ public:
   struct OwnedObjectSorter {
     std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
     std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    /// Some retrieve requests might not be requeueable (disabled tapes) so GC might delete them.
+    std::list<std::shared_ptr<RetrieveRequest>> retrieveRequestsToDelete;
     std::list<std::shared_ptr <Agent>> agents;
+    std::list<std::shared_ptr<GenericObject>> otherObjects;
   };
 private:
   Backend & m_objectStore;
