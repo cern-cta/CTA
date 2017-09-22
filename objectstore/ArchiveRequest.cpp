@@ -322,6 +322,16 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         commit();
         aql.release();
         auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+        {
+          log::ScopedParamContainer params(lc);
+          params.add("jobObject", getAddressIfSet())
+                .add("queueObject", queueObject)
+                .add("presumedOwner", presumedOwner)
+                .add("copyNb", j->copynb())
+                .add("queueUpdateTime", queueUpdateTime)
+                .add("commitUnlockQueueTime", commitUnlockQueueTime);
+          lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): requeued job.");
+        }
         timespec ts;
         // We will sleep a bit to make sure other processes can also access the queue
         // as we are very likely to be part of a tight loop.
@@ -338,11 +348,8 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         params.add("jobObject", getAddressIfSet())
               .add("queueObject", queueObject)
               .add("presumedOwner", presumedOwner)
-              .add("copyNb", j->copynb())
-              .add("queueUpdateTime", queueUpdateTime)
-              .add("commitUnlockQueueTime", commitUnlockQueueTime)
               .add("sleepTime", sleepTime);
-        lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): requeued job.");
+        lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
       } catch (...) {
         // We could not requeue the job: fail it.
         j->set_status(serializers::AJS_Failed);

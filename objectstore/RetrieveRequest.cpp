@@ -152,6 +152,17 @@ jobFound:;
   Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
   rql.release();
   auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("queueObject", rq.getAddressIfSet())
+          .add("copynb", bestTapeFile->copynb())
+          .add("vid", bestTapeFile->vid())
+          .add("tapeSelectionTime", tapeSelectionTime)
+          .add("queueUpdateTime", queueUpdateTime)
+          .add("commitUnlockQueueTime", commitUnlockQueueTime);
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+  }
   timespec ts;
   // We will sleep a bit to make sure other processes can also access the queue
   // as we are very likely to be part of a tight loop.
@@ -170,11 +181,8 @@ jobFound:;
           .add("queueObject", rq.getAddressIfSet())
           .add("copynb", bestTapeFile->copynb())
           .add("vid", bestTapeFile->vid())
-          .add("tapeSelectionTime", tapeSelectionTime)
-          .add("queueUpdateTime", queueUpdateTime)
-          .add("commitUnlockQueueTime", commitUnlockQueueTime)
           .add("sleepTime", sleepTime);
-    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
   }
 }
 
