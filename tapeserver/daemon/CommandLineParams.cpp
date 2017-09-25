@@ -25,7 +25,7 @@ namespace cta { namespace daemon {
 
 CommandLineParams::CommandLineParams(int argc, char** argv):
   foreground(false), logToStdout(false), logToFile(false),
-  configFileLocation("/etc/cta/cta.conf"),
+  configFileLocation("/etc/cta/cta-taped.conf"),
   helpRequested(false){
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))

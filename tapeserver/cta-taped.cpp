@@ -108,7 +108,7 @@ static int exceptionThrowingMain(
 
   logStartOfDaemon(log, commandLine);
 
-  // Parse /etc/cta/cta.conf and /etc/cta/TPCONFIG for global parameters
+  // Parse /etc/cta/cta-taped.conf and /etc/cta/TPCONFIG for global parameters
   const TapedConfiguration globalConfig =
     TapedConfiguration::createFromCtaConf(commandLine.configFileLocation, log);
 

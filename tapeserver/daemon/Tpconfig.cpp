@@ -107,7 +107,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
         throw ex;
       }
     }
-    // This is a re-use of the container for the cta.conf representation.
+    // This is a re-use of the container for the cta-taped.conf representation.
     // There is no category nor key here.
     std::stringstream linestr;
     linestr << filename << ":" << lineNumber;

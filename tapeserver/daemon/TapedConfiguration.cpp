@@ -25,7 +25,7 @@ namespace cta { namespace tape { namespace daemon {
 // GlobalConfiguration::createFromCtaConf w/o path
 //------------------------------------------------------------------------------
 TapedConfiguration TapedConfiguration::createFromCtaConf(cta::log::Logger& log) {
-  return createFromCtaConf("/etc/cta/cta.conf", log);
+  return createFromCtaConf("/etc/cta/cta-taped.conf", log);
 }
 
 //------------------------------------------------------------------------------
