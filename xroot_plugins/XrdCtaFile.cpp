@@ -2513,7 +2513,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl;
   help << programName << " archivefile/af           ls"                         << std::endl;
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
-  help << programName << " drive/dr                 up/down/ls"                 << std::endl;
+  help << programName << " drive/dr                 up/down/ls/rm"              << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
   help << programName << " listpendingarchives/lpa"                             << std::endl;
   help << programName << " listpendingretrieves/lpr"                            << std::endl;
