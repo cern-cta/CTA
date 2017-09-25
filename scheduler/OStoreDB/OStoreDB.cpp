@@ -2635,7 +2635,11 @@ void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::asyncSucceed()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::asyncSucceed() {  
+void OStoreDB::ArchiveJob::asyncSucceed() {
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("requestObject", m_archiveRequest.getAddressIfSet());
+  lc.log(log::DEBUG, "Will start async update archiveRequest for success");
   m_jobUpdate.reset(m_archiveRequest.asyncUpdateJobSuccessful(tapeFile.copyNb));
 }
 
@@ -2644,6 +2648,10 @@ void OStoreDB::ArchiveJob::asyncSucceed() {
 //------------------------------------------------------------------------------
 bool OStoreDB::ArchiveJob::checkSucceed() {  
   m_jobUpdate->wait();
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("requestObject", m_archiveRequest.getAddressIfSet());
+  lc.log(log::DEBUG, "Async update of archiveRequest for success complete");
   if (m_jobUpdate->m_isLastJob) {
     m_archiveRequest.resetValues();
   }
@@ -2651,7 +2659,9 @@ bool OStoreDB::ArchiveJob::checkSucceed() {
   m_jobOwned = false;
   // Remove ownership from agent
   const std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);  
+  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);
+  params.add("agentObject", m_agentReference.getAgentAddress());
+  lc.log(log::DEBUG, "Removed job from ownership");
   return m_jobUpdate->m_isLastJob;
 }
 

@@ -425,9 +425,12 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
             if(updateWithDelete) {
               try {
                 au.m_backend.remove(au.m_name);
+                if (au.m_backend.exists(au.m_name)) {
+                  throw exception::Exception("Object exists after remove");
+                }
               } catch (cta::exception::Exception &ex) {
                 throw CouldNotUpdateValue(
-                    std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to remove value: ") +
+                    std::string("In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to remove value: ") +
                     au.m_name + ex.what());
               }
               // Done!
