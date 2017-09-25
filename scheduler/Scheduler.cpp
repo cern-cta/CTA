@@ -372,6 +372,20 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
 }
 
 //------------------------------------------------------------------------------
+// removeDrive
+//------------------------------------------------------------------------------
+void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliIdentity, 
+  const std::string &driveName, log::LogContext & lc) {
+  utils::Timer t;
+  m_db.removeDrive(driveName);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveName)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::removeDrive(): success.");   
+}
+
+//------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {

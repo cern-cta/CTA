@@ -1057,6 +1057,20 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::removeDrive()
+//------------------------------------------------------------------------------
+void OStoreDB::removeDrive(const std::string& drive) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  dr.removeDrive(drive);
+  dr.commit();
+}
+ 
+//------------------------------------------------------------------------------
 // OStoreDB::reportDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
