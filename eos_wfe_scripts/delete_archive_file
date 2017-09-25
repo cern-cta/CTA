@@ -33,8 +33,9 @@ if test UNDEF = ${ARCHIVE_FILE_ID}; then
   exit 0
 fi
 
-if RESULT=`2>&1 LD_LIBRARY_PATH=/usr/lib64/protobuf3 ${CTA_BIN} deletearchive --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --json`; then
+if RESULT=`2>&1 LD_LIBRARY_PATH=/usr/lib64/protobuf3 XRDDEBUG=1 ${CTA_BIN} deletearchive --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --json`; then
   echo "$LOG_DATE $LOG_SCRIPT_NAME deleted tape archive file: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
+  echo ${RESULT}
   exit 0
 else
   echo "$LOG_DATE $LOG_SCRIPT_NAME failed to delete tape archive file: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} path=${FILE_PATH}" >> ${LOG_FILE}
