@@ -62,12 +62,12 @@ class RequestProc : public XrdSsiResponder
 public:
    RequestProc(XrdSsiResource &resource) : m_resource(resource) {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] RequestProc() constructor" << std::endl;
+      std::cerr << "[DEBUG] RequestProc() constructor" << std::endl;
 #endif
    }
    virtual ~RequestProc() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] ~RequestProc() destructor" << std::endl;
+      std::cerr << "[DEBUG] ~RequestProc() destructor" << std::endl;
 #endif
    }
 
@@ -103,7 +103,7 @@ private:
 
    void ExecuteAction() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Called default RequestProc::ExecuteAction()" << std::endl;
+      std::cerr << "[DEBUG] Called default RequestProc::ExecuteAction()" << std::endl;
 #endif
    }
 
@@ -140,7 +140,7 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
                                       //< In any case it should be <= timeout on the client side?
 
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] RequestProc::Execute()" << std::endl;
+   std::cerr << "[DEBUG] RequestProc::Execute()" << std::endl;
 #endif
 
    // Deserialize the Request
@@ -216,7 +216,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo, bool cancel)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] RequestProc::Finished()" << std::endl;
+   std::cerr << "[DEBUG] RequestProc::Finished()" << std::endl;
 #endif
 
    if(cancel)

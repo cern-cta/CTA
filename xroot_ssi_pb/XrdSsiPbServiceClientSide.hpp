@@ -85,7 +85,7 @@ ServiceClientSide(const std::string &endpoint, const std::string &resource,
    m_server_tmo(server_tmo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] ServiceClientSide() constructor" << std::endl;
+   std::cerr << "[DEBUG] ServiceClientSide() constructor" << std::endl;
 #endif
    XrdSsiErrInfo eInfo;
 
@@ -125,7 +125,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] ServiceClientSide() destructor" << std::endl;
+   std::cerr << "[DEBUG] ServiceClientSide() destructor" << std::endl;
 
    if(!m_server_ptr->Stop())
    {
