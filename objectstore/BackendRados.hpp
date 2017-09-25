@@ -81,9 +81,9 @@ private:
   static std::string createUniqueClientId();
   
 public:  
-  ScopedLock * lockExclusive(std::string name) override;
+  ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
-  ScopedLock * lockShared(std::string name) override;
+  ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
   
   /**
    * A class following up the check existence-lock-fetch-update-write-unlock. Constructor implicitly

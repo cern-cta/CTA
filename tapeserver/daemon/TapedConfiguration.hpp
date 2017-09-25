@@ -87,6 +87,12 @@ struct TapedConfiguration {
   SourcedParameter<uint64_t> nbDiskThreads{
     "taped", "NbDiskThreads", 10, "Compile time default"};
   //----------------------------------------------------------------------------
+  // Recommended Access Order usage
+  //----------------------------------------------------------------------------
+  /// Usage of Recommended Access Order for file recall
+  SourcedParameter<std::string> useRAO{
+    "taped", "UseRAO", "no", "Compile time default"};
+  //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------
   /// Maximum time allowed to complete a single mount scheduling.

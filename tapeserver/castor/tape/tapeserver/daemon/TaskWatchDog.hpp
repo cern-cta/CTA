@@ -261,7 +261,14 @@ protected:
         m_reportTimer.reset();
         m_initialProcess.reportHeartbeat(m_TapeBytesMovedMoved, 0);
         reportStats(); 
-        m_mount.setTapeSessionStats(m_stats);
+        try {
+          m_mount.setTapeSessionStats(m_stats);
+        } catch (cta::exception::Exception & ex) {
+          cta::log::ScopedParamContainer params (m_lc);
+          params.add("exceptionMessage", ex.getMessageValue());
+          m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
+        }
+
       } 
       else{
         usleep(m_pollPeriod*1000*1000);
@@ -272,7 +279,13 @@ protected:
     {
       cta::threading::MutexLocker locker(m_mutex);
       reportStats();
-      m_mount.setTapeSessionStats(m_stats);
+      try {
+        m_mount.setTapeSessionStats(m_stats);
+      } catch (cta::exception::Exception & ex) {
+        cta::log::ScopedParamContainer params (m_lc);
+        params.add("exceptionMessage", ex.getMessageValue());
+        m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
+      }
       // Flush the one-of parameters one last time.
       std::list<Param> params;
       while (m_toAddParamsQueue.size())

@@ -479,6 +479,14 @@ public:
   virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state) = 0;
   
   /**
+   * Remove drive from the drive register.
+   * Will throw an exception is the drive does not exist.
+   * 
+   * @param drive The drive name.
+   */
+  virtual void removeDrive(const std::string & drive) = 0;
+  
+  /**
    * Sets the drive status in the object store. The drive status will be recorded in all cases,
    * although some historical information is needed to provide an accurate view of the
    * current session state. This allows the system to gracefully handle drive entry

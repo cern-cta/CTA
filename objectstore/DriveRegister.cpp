@@ -266,6 +266,24 @@ update:
 }
 
 //------------------------------------------------------------------------------
+// DriveRegister::removeDrive())
+//------------------------------------------------------------------------------
+void DriveRegister::removeDrive(const std::string  & driveName) {
+  checkPayloadWritable();
+  auto driveToRemove = m_payload.mutable_drives()->begin();
+  while (driveToRemove != m_payload.mutable_drives()->end()) {
+    if ( driveToRemove->drivename() == driveName) {
+      m_payload.mutable_drives()->erase(driveToRemove);
+      return;
+    }
+    driveToRemove++;
+  }
+  std::stringstream err;
+  err << "In DriveRegister::removeDrive(): drive not found: " << driveName;
+  throw cta::exception::Exception(err.str()); 
+}
+
+//------------------------------------------------------------------------------
 // DriveRegister::isEmpty())
 //------------------------------------------------------------------------------
 bool DriveRegister::isEmpty() {

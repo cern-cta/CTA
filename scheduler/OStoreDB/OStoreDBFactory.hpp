@@ -152,6 +152,10 @@ public:
     return m_OStoreDB.setDesiredDriveState(drive, desiredState);
   }
   
+  void removeDrive(const std::string & drive) override {
+    return m_OStoreDB.removeDrive(drive);
+  }
+  
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
     common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 
     uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override {

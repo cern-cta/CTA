@@ -1057,6 +1057,20 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::removeDrive()
+//------------------------------------------------------------------------------
+void OStoreDB::removeDrive(const std::string& drive) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  auto driveRegisterAddress = re.getDriveRegisterAddress();
+  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
+  objectstore::ScopedExclusiveLock drl(dr);
+  dr.fetch();
+  dr.removeDrive(drive);
+  dr.commit();
+}
+ 
+//------------------------------------------------------------------------------
 // OStoreDB::reportDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
@@ -2500,10 +2514,10 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   // We just report tthe tape session statistics as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
+  // If we don't  get the lock in 5 seconds, quit on the session update.
+  objectstore::ScopedExclusiveLock drl(dr, 5*1000*1000);
   dr.fetch();
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -2560,10 +2574,10 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   // We just report the tape session statistics as instructed by the tape thread.
   // Get the drive register
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
+  // If we don't  get the lock in 5 seconds, quit on the session update.
+  objectstore::ScopedExclusiveLock drl(dr, 5*1000*1000);
   dr.fetch();
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -2635,7 +2649,11 @@ void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::asyncSucceed()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::asyncSucceed() {  
+void OStoreDB::ArchiveJob::asyncSucceed() {
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("requestObject", m_archiveRequest.getAddressIfSet());
+  lc.log(log::DEBUG, "Will start async update archiveRequest for success");
   m_jobUpdate.reset(m_archiveRequest.asyncUpdateJobSuccessful(tapeFile.copyNb));
 }
 
@@ -2644,6 +2662,10 @@ void OStoreDB::ArchiveJob::asyncSucceed() {
 //------------------------------------------------------------------------------
 bool OStoreDB::ArchiveJob::checkSucceed() {  
   m_jobUpdate->wait();
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("requestObject", m_archiveRequest.getAddressIfSet());
+  lc.log(log::DEBUG, "Async update of archiveRequest for success complete");
   if (m_jobUpdate->m_isLastJob) {
     m_archiveRequest.resetValues();
   }
@@ -2651,7 +2673,9 @@ bool OStoreDB::ArchiveJob::checkSucceed() {
   m_jobOwned = false;
   // Remove ownership from agent
   const std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);  
+  m_agentReference.removeFromOwnership(atfrAddress, m_objectStore);
+  params.add("agentObject", m_agentReference.getAgentAddress());
+  lc.log(log::DEBUG, "Removed job from ownership");
   return m_jobUpdate->m_isLastJob;
 }
 

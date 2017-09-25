@@ -85,7 +85,16 @@ namespace SCSI {
       
       template <typename T>
       void setDataBuffer(T * dataBuff) { dxferp = dataBuff; dxfer_len = sizeof (T); }
-      
+
+      // If dataBuff is a pointer to a variable length array, sizeof will return
+      // the size of one element. This function allows to manually set the buffer size
+      template <typename T>
+      void setDataBuffer(T * dataBuff, unsigned int dataBuffSize)
+      {
+        dxferp = dataBuff;
+        dxfer_len = dataBuffSize;
+      }
+
       sg_io_hdr_t * operator & () { return (sg_io_hdr_t *) this; }
     };
     
@@ -1217,8 +1226,14 @@ namespace SCSI {
          udsLimitsPage_t() {
            zeroStruct(this);
          }
-         unsigned int maxSupported;
-         unsigned int maxSize;
+         unsigned char maxSupported[2];
+         unsigned char maxSize[2];
+       };
+
+       class udsLimits {
+       public:
+         uint16_t maxSupported;
+         uint16_t maxSize;
        };
 
        /**
@@ -1252,9 +1267,9 @@ namespace SCSI {
 
        };
 
-       class udsDescriptor {
+       class udsDescriptor_t {
        public:
-         udsDescriptor() {
+         udsDescriptor_t() {
            zeroStruct(this);
            setU16(descriptorLength, 0x1e);
          }
@@ -1269,9 +1284,9 @@ namespace SCSI {
        /**
         * RAO list struct
         */
-       class raoList {
+       class raoList_t {
        public:
-         raoList() {
+         raoList_t() {
            zeroStruct(this);
          }
          unsigned char raoProcess      :3;
@@ -1284,7 +1299,7 @@ namespace SCSI {
 
          unsigned char raoDescriptorListLength[4];
 
-         udsDescriptor udsDescriptors[2000];
+         udsDescriptor_t udsDescriptors[1];
 
        };
 
@@ -1297,8 +1312,8 @@ namespace SCSI {
            zeroStruct(this);
          }
          unsigned char res[4];
-         unsigned char additionalData[4];
-         udsDescriptor userDataSegmentDescriptors[2000];
+         unsigned char udsListLength[4];
+         udsDescriptor_t udsDescriptors[1];
        };
        
        /**

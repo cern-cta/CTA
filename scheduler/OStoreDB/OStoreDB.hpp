@@ -270,6 +270,8 @@ public:
   std::list<cta::common::dataStructures::DriveState> getDriveStates() const override;
   
   void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) override;
+    
+  void removeDrive(const std::string & drive) override;
   
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
     common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 

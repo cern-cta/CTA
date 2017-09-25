@@ -160,6 +160,20 @@ TEST_P(BackendAbstractTest, AsyncIOInterface) {
   m_os->remove(testObjectName);
 }
 
+TEST_P(BackendAbstractTest, AsyncIOInterfaceRemove) {
+  // Create object to delete in async update.
+  const std::string testValue = "1234";
+  const std::string testObjectName = "testObject";
+  try {m_os->remove(testObjectName);} catch(...){}
+  m_os->create(testObjectName, testValue);
+  // Launch update of object via asynchronous IO
+  std::function<std::string(const std::string &)> updaterCallback=
+      [&](const std::string &s)->std::string{throw cta::objectstore::Backend::AsyncUpdateWithDelete();};
+  std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
+  ASSERT_NO_THROW(updater->wait());
+  ASSERT_FALSE(m_os->exists(testObjectName));
+}
+
 TEST_P(BackendAbstractTest, AsyncIOInterfaceMultithread) {
   // Create object to update.
   const std::string testValue = "1234";

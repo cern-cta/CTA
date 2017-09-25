@@ -166,8 +166,8 @@ protected:
   void waitForDrive(){
     try{
       cta::utils::Timer timer;
-      // wait 600 drive is ready
-      m_drive.waitUntilReady(600);
+      // wait 60s for drive to be ready (the mount call is synchronous, so this just the load operation.
+      m_drive.waitUntilReady(60);
       cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
       cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exception_message", e.getMessageValue()));

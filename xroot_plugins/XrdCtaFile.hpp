@@ -375,6 +375,20 @@ protected:
   void changeStateForDrivesByRegex(const std::string &regex,
     log::LogContext &lc, std::stringstream &cmdlineOutput, const bool isMakeUp,
     const bool isForceSet);
+  
+  /**
+   * Remove drives from the drive register by a given regex. By default drive
+   * should be in state Down to be removed. If a force flag is set then drive
+   * will be removed with any state.
+   *
+   * @param regex The regex to be used to match drive name.
+   * @param lc    The log context.
+   * @param cmdlineOutput The string stream to stream output.
+   * @param isForceSet The boolean value for force parameter.
+   */
+  void removeDrivesByRegex(const std::string &regex,
+    log::LogContext &lc, std::stringstream &cmdlineOutput,
+    const bool isForceSet);
 
   /**
    * Returns the response string properly formatted in a table
