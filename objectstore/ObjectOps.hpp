@@ -25,6 +25,7 @@
 #include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
+#include <cryptopp/base64.h>
 
 namespace cta { namespace objectstore {
 
@@ -329,10 +330,18 @@ protected:
   
   void getPayloadFromHeader () {
     if (!m_payload.ParseFromString(m_header.payload())) {
-      // Use a the tolerant parser to assess the situation.
+      // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(m_header.payload());
+      // Base64 encode the payload for diagnostics.
+      const bool noNewLineInBase64Output = false;
+      std::string payloadBase64;
+      CryptoPP::StringSource ss1(m_header.payload(), true,
+        new CryptoPP::Base64Encoder(
+           new CryptoPP::StringSink(payloadBase64), noNewLineInBase64Output));
       throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString());
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString() + 
+              " size=" + std::to_string(m_header.payload().size()) + " data(b64)=\"" + 
+              payloadBase64 + "\"");
     }
     m_payloadInterpreted = true;
   }
@@ -340,10 +349,18 @@ protected:
   void getHeaderFromObjectStore () {
     auto objData=m_objectStore.read(getAddressIfSet());
     if (!m_header.ParseFromString(objData)) {
-      // Use a the tolerant parser to assess the situation.
+      // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(objData);
+      // Base64 encode the header for diagnostics.
+      const bool noNewLineInBase64Output = false;
+      std::string objDataBase64;
+      CryptoPP::StringSource ss1(objData, true,
+        new CryptoPP::Base64Encoder(
+           new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
       throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString());
+              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString() + 
+              " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+              objDataBase64 + "\"");
     }
     if (m_header.type() != payloadTypeId) {
       std::stringstream err;
