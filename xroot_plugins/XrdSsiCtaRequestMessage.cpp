@@ -423,7 +423,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processDELETE(): deleted archive file.");
+   m_lc.log(cta::log::INFO, "In processDELETE(): queued archive file for deletion.");
 
    // Set response type
 
