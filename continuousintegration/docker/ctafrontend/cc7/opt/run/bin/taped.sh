@@ -2,12 +2,14 @@
 
 . /opt/run/bin/init_pod.sh
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-yum-config-manager --enable castor
+if [ ! -e /etc/buildtreeRunner ]; then
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable ceph
+  yum-config-manager --enable castor
 
-# Install missing RPMs
-yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server ceph-common
+  # Install missing RPMs
+  yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server ceph-common
+fi
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh

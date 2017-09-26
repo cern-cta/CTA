@@ -93,6 +93,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     mkdir -pv /etc/cta
 
+# Mark the image as a buildtree image
+RUN touch /etc/buildtreeRunner
+
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
 

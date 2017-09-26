@@ -5,13 +5,15 @@
 # oracle sqlplus client binary path
 ORACLE_SQLPLUS="/usr/bin/sqlplus64"
 
-# enable cta repository from previously built artifacts
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
+if [ ! -e /etc/buildtreeRunner ]; then
+  # enable cta repository from previously built artifacts
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable ceph
 
-# install needed packages
-yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
-yum clean packages
+  # install needed packages
+  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
+  yum clean packages
+fi
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
