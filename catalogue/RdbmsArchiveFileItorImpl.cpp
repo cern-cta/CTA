@@ -178,7 +178,11 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
       sql += "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
 
-    sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+    if(searchCriteria.vid) {
+      sql += " ORDER BY FSEQ";
+    } else {
+      sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+    }
 
     auto conn = connPool.getConn();
     m_stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
