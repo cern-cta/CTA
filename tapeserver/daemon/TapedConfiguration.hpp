@@ -36,8 +36,6 @@ namespace daemon {
  */
 struct TapedConfiguration {
   static TapedConfiguration createFromCtaConf(
-          cta::log::Logger &log = gDummyLogger);
-  static TapedConfiguration createFromCtaConf(
           const std::string & generalConfigPath,
           cta::log::Logger & log = gDummyLogger);
   
