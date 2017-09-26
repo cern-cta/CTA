@@ -232,6 +232,12 @@ void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
    const char *metadata_buffer = GetMetadata(metadata_len);
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseMetadata(): ";
+   for(int i = 0; i < metadata_len; ++i)
+   {
+      std::cerr << "<" << static_cast<int>(*(metadata_buffer+i)) << ">";
+   }
+   std::cerr << std::endl;
 #endif
 
    // Deserialize the metadata
