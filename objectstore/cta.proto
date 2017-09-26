@@ -179,7 +179,7 @@ message TapeFile {
 }
 
 message DiskFileInfo {
-  required string recoveryBlob = 8900;
+  required bytes recoveryblob = 8900;
   required string group = 8910;
   required string owner = 8930;
   required string path = 8940;
