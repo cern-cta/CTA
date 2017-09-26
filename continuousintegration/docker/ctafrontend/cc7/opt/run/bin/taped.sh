@@ -48,7 +48,7 @@ chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-export CTA_TAPED_OPTIONS="--foreground --config /etc/cta/cta-taped.conf -l /var/log/cta/cta-taped.log"
+export CTA_TAPED_OPTIONS="--foreground -l /var/log/cta/cta-taped.log"
 
 export XrdSecPROTOCOL=sss
 
