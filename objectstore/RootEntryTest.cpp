@@ -25,6 +25,7 @@
 #include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/log/DummyLogger.hpp"
 
 namespace unitTests {
 
@@ -50,7 +51,8 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock (re);
     // Create an agent
-    cta::objectstore::AgentReference agentRef("unitTest");
+    cta::log::DummyLogger dl("dummyLogger");
+    cta::objectstore::AgentReference agentRef("unitTest", dl);
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
@@ -71,9 +73,10 @@ TEST(ObjectStore, RootEntryBasicAccess) {
 
 TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests");
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -137,9 +140,10 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -191,9 +195,10 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   std::string arAddr;
@@ -239,9 +244,10 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests");
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 

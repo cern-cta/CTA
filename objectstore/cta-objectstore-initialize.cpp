@@ -27,6 +27,7 @@
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 #include "AgentReference.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -51,7 +52,8 @@ int main(int argc, char ** argv) {
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    cta::objectstore::AgentReference agr("cta-objectstore-initialize");
+    cta::log::StdoutLogger logger("cta-objectstore-initialize");
+    cta::objectstore::AgentReference agr("cta-objectstore-initialize", logger);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
     cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));

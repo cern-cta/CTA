@@ -28,7 +28,8 @@
 
 namespace cta { namespace objectstore {
 
-AgentReference::AgentReference(const std::string & clientType) {
+AgentReference::AgentReference(const std::string & clientType, log::Logger &logger):
+m_logger(logger) {
   m_nextId=0;
   std::stringstream aid;
   // Get time
@@ -75,9 +76,17 @@ void AgentReference::addToOwnership(const std::string& objectAddress, objectstor
 
 void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
   objectstore::Agent ag(m_agentAddress, backend);
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("agentObject", m_agentAddress);
   objectstore::ScopedExclusiveLock agl(ag);
   ag.fetch();
-  for (const auto & oa: objectAdresses) ag.addToOwnership(oa);
+  for (const auto & oa: objectAdresses) {
+    ag.addToOwnership(oa);
+    log::ScopedParamContainer params(lc);
+    params.add("ownedOdject", oa);
+    lc.log(log::DEBUG, "In AgentReference::addBatchToOwnership(): added object to ownership.");
+  }
   ag.commit();
 }
 
@@ -88,9 +97,17 @@ void AgentReference::removeFromOwnership(const std::string& objectAddress, objec
 
 void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
   objectstore::Agent ag(m_agentAddress, backend);
+  log::LogContext lc(m_logger);
+  log::ScopedParamContainer params(lc);
+  params.add("agentObject", m_agentAddress);
   objectstore::ScopedExclusiveLock agl(ag);
   ag.fetch();
-  for (const auto & oa: objectAdresses) ag.removeFromOwnership(oa);
+  for (const auto & oa: objectAdresses) {
+    ag.removeFromOwnership(oa);
+    log::ScopedParamContainer params(lc);
+    params.add("ownedOdject", oa);
+    lc.log(log::DEBUG, "In AgentReference::removeBatchFromOwnership(): removed object from ownership.");
+  }
   ag.commit();
 }
 
@@ -153,17 +170,21 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // Off we go! Add the actions to the queue
     try {
       objectstore::Agent ag(m_agentAddress, backend);
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params(lc);
+      params.add("agentObject", m_agentAddress);
       objectstore::ScopedExclusiveLock agl(ag);
       ag.fetch();
       // First we apply our own modification
-      appyAction(*action, ag);
+      appyAction(*action, ag, lc);
       // Then those of other threads
       for (auto a: q->queue) {
         threading::MutexLocker ml(a->mutex);
-        appyAction(*a, ag);
+        appyAction(*a, ag, lc);
       }
       // and commit
       ag.commit();
+      // We avoid global log (with a count) as we would get one for each heartbeat.
     } catch (...) {
       // Something wend wrong: , we release the next batch of changes
       ANNOTATE_HAPPENS_BEFORE(promiseForNextQueue.get());
@@ -189,14 +210,24 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
   }
 }
 
-void AgentReference::appyAction(Action& action, objectstore::Agent& agent) {
+void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::LogContext &lc) {
   switch (action.op) {
   case AgentOperation::Add:
+  {
     agent.addToOwnership(action.objectAddress);
+    log::ScopedParamContainer params(lc);
+    params.add("ownedOdject", action.objectAddress);
+    lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
     break;
+  }
   case AgentOperation::Remove:
+  {
     agent.removeFromOwnership(action.objectAddress);
+    log::ScopedParamContainer params(lc);
+    params.add("ownedOdject", action.objectAddress);
+    lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
     break;
+  }
   case AgentOperation::Heartbeat:
     agent.bumpHeartbeat();
     break;

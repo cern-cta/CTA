@@ -26,7 +26,7 @@ namespace cta { namespace objectstore {
 // Constructor
 //------------------------------------------------------------------------------
 BackendPopulator::BackendPopulator(cta::objectstore::Backend & be, 
-    const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType),
+    const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType, lc.logger()),
     m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
   cta::objectstore::ScopedExclusiveLock rel(re);

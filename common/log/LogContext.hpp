@@ -51,7 +51,7 @@ public:
    * Access to the logger object.
    * @return  reference to this context's logger
    */
-  Logger & logger() throw() { return m_log; }
+  Logger & logger() const throw() { return m_log; }
 
   /**
    * Add a parameter to the container. Replaces any parameter going by the same

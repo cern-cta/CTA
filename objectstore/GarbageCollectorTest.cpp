@@ -49,7 +49,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -64,7 +64,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Create 2 agents, A and B and register them
   // The agents are set with a timeout of 0, so they will be delclared
   // dead immediately.
-  cta::objectstore::AgentReference agrA("unitTestAgentA"), agrB("unitTestAgentB");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl), agrB("unitTestAgentB", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be), agB(agrB.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -73,7 +73,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   agB.setTimeout_us(0);
   agB.insertAndRegisterSelf();
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -101,7 +101,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -114,7 +114,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -131,7 +131,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     ar.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -161,7 +161,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -174,7 +174,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -191,7 +191,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     aq.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -221,7 +221,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -234,7 +234,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
   // Create an agent and add the drive register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -251,7 +251,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     dr.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -294,7 +294,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
   // Finish root creation.
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
@@ -304,7 +304,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf();
   // Create an agent to garbage collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -415,7 +415,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     break;
   }
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
@@ -489,7 +489,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
   // Finish root creation.
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
   rel.release();
@@ -499,7 +499,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf();
   // Create an agent to garbage be collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
@@ -601,7 +601,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // Mark the other tape as disabled
   catalogue.addDisabledTape("Tape1");
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);

@@ -22,6 +22,8 @@
 #include "objectstore/Backend.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 #include <atomic>
 #include <string>
 #include <future>
@@ -44,7 +46,7 @@ public:
    * Constructor will implicitly generate the address of the Agent object.
    * @param clientType is an indicative string used to generate the agent object's name.
    */
-  AgentReference(const std::string &clientType);
+  AgentReference(const std::string &clientType, log::Logger &logger);
   
   /**
    * Generates a unique address for a newly created child object. This function is thread
@@ -142,7 +144,7 @@ private:
    * @param action
    * @param agent
    */
-  void appyAction(Action &action, objectstore::Agent & agent);
+  void appyAction(Action &action, objectstore::Agent & agent, log::LogContext &lc);
   
   /**
    * The global function actually doing the job: creates a queue if needed, add
@@ -168,6 +170,11 @@ private:
    * This future will be immediately extracted from the m_nextQueueExecutionPromise before any other thread touches it.
    */
   std::future<void> m_nextQueueExecutionFuture;
+  
+  /**
+   * The logger allows printing debug information
+   */
+  log::Logger &m_logger;
 };
 
 }} 
