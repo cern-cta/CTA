@@ -321,11 +321,11 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls" },
-                        "\n  This is a synchronous command that sets the requested state of the drive\n"
-                          "  (\"up\" or \"down\") or lists the state of one or all drives (\"ls\"). The\n"
-                          "  drive will complete any running mount unless it is preempted with the\n"
-                          "  --force option.\n\n"
+   { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "rm" },
+                        "\n  This is a synchronous command that sets and reads back the state of one or\n"
+                          "  more drives. The <drive_name> option accepts a regular expression. If the\n"
+                          "  --force option is not set, the drives will complete any running mount and\n"
+                          "  drives must be in the down state before deleting.\n\n"
                                          }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_LISTPENDINGARCHIVES,  { "listpendingarchives",  "lpa", { } }},
@@ -442,6 +442,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_force_flag.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename_cmd.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_ADD   },
       { opt_instance, opt_username_alias, opt_mountpolicy, opt_comment }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_CH    },
