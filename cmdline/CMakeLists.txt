@@ -32,9 +32,6 @@ include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)
 # eosctastub is a drop-in replacement for "cta archive|retrieve|delete"
 #
 
-# Get some extra debug messages on stdout
-#add_definitions(-DXRDSSI_DEBUG)
-
 find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
 find_package(cryptopp REQUIRED)
@@ -43,6 +40,8 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS} ${XROOTD_INCLUDE_DIR} ${XROOTD_INC
 add_executable(eoscta_stub EosCtaStub.cpp Configuration.cpp)
 target_link_libraries(eoscta_stub cryptopp XrdCtaMessages XrdSsi-4 XrdSsiLib)
 set_target_properties(eoscta_stub PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Get some extra debug messages on stdout
+target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
 install(TARGETS eoscta_stub DESTINATION usr/bin)
 
 #

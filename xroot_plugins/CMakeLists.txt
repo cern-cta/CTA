@@ -37,12 +37,13 @@ set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_subdirectory(messages)
 
-#add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Get some extra debug messages on stdout
+target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
 INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 INSTALL (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
