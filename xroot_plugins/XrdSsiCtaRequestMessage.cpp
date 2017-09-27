@@ -129,6 +129,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
                processDrive_Ls(request.admincmd(), response);
                break;
+            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
+               processDrive_Rm(request.admincmd(), response);
+               break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
                processGroupMountRule_Add(request.admincmd(), response);
                break;
@@ -834,6 +837,48 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
       m_option_bool[OptionBoolean::SHOW_HEADER] = true;
       cmdlineOutput<< formatResponse(responseTable);
+   }
+
+   response.set_message_txt(cmdlineOutput.str());
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   std::stringstream cmdlineOutput;
+
+   auto regex = getRequired(OptionString::DRIVE);
+   cta::utils::Regex driveNameRegex(regex.c_str());
+   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
+   bool drivesFound = false;
+   for(auto driveState: driveStates)
+   {
+      const auto regexResult = driveNameRegex.exec(driveState.driveName);
+      if(!regexResult.empty())
+      {
+         if(driveState.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
+            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
+            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Unknown  ||
+            has_flag(OptionBoolean::FORCE))
+         {
+            m_scheduler.removeDrive(m_cliIdentity, driveState.driveName, m_lc);
+            cmdlineOutput << "Drive " << driveState.driveName << " removed"
+                          << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;            
+         } else {
+            cmdlineOutput << "Drive " << driveState.driveName << " in state "
+                          << cta::common::dataStructures::toString(driveState.driveStatus)
+                          << " and force is not set (skipped)." << std::endl;
+         }
+         drivesFound = true;
+      }
+   }
+
+   if(!drivesFound) {
+      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
    }
 
    response.set_message_txt(cmdlineOutput.str());
