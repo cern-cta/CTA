@@ -41,7 +41,7 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 ####
 # configuring taped
-CTATAPEDSSS="cta_tape_server.keytab"
+CTATAPEDSSS="cta-taped.sss.keytab"
 
 # key generated with 'echo y | xrdsssadmin -k taped+ -u stage -g tape  add /tmp/taped.keytab'
 #echo '0 u:stage g:tape n:taped+ N:6361736405290319874 c:1481207182 e:0 f:0 k:8e2335f24cf8c7d043b65b3b47758860cbad6691f5775ebd211b5807e1a6ec84' >> /etc/cta/${CTATAPEDSSS}

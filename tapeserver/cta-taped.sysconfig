@@ -10,4 +10,4 @@
 # These two variables set the authentication mechanism to Simple Shared Secret
 # (SSS) and set the SSS key to be that of the tape server
 export XrdSecPROTOCOL=sss
-export XrdSecSSSKT=/etc/cta/cta_tape_server.keytab
+export XrdSecSSSKT=/etc/cta/cta-taped.sss.keytab
