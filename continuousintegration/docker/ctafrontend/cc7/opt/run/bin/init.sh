@@ -48,22 +48,22 @@ fi
 echo "Configuring database:"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
-echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
+echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
-  echo yes | cta-catalogue-schema-drop /etc/cta/cta_catalogue_db.conf
+  echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
-    cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
   else
     # Oracle DB
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
-    cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
   fi
 else
   echo "Reusing database (no check)"

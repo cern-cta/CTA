@@ -200,7 +200,7 @@ The shared libraries
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
 %{_libdir}/libctardbms.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
 %post -n cta-lib -p /sbin/ldconfig

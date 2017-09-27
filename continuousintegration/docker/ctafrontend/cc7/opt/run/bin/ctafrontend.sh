@@ -24,7 +24,7 @@ echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
-echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
+echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 # EOS INSTANCE NAME used as username for SSS key
 EOSINSTANCE=ctaeos

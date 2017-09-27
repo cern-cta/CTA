@@ -30,7 +30,7 @@ echo "Configuring database"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
-echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
+echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 # cta-taped setup
   echo "taped BufferCount 10" > /etc/cta/cta-taped.conf

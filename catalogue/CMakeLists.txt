@@ -118,7 +118,7 @@ target_link_libraries (ctacatalogueunittests
 
 install (TARGETS ctacatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-install (FILES cta_catalogue_db.conf.example
+install (FILES cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 

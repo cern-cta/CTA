@@ -113,7 +113,7 @@ struct TapedConfiguration {
     "ObjectStore", "BackendPath"};
   /// Path to the file catalog config file
   SourcedParameter<std::string> fileCatalogConfigFile{
-    "general", "FileCatalogConfigFile", "/etc/cta/cta_catalogue_db.conf", "Compile time default"};
+    "general", "FileCatalogConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
   
 private:
   /** A private dummy logger which will simplify the implementation of the 
