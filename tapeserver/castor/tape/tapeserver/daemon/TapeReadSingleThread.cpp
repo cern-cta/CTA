@@ -205,12 +205,8 @@ const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   m_logContext.pushOrReplace(cta::log::Param("thread", "TapeRead"));
   cta::utils::Timer timer, totalTimer;
-  std::string currentErrorToCount = "Error_setCapabilities";
+  std::string currentErrorToCount = "Error_tapeMountForRead";
   try{
-    // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
-    // through the st driver file descriptor.
-    setCapabilities();
-    
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
@@ -227,7 +223,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
-      currentErrorToCount = "Error_tapeMountForRead";
       m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting);
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";

@@ -272,13 +272,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "Error_setCapabilities";
+  std::string currentErrorToCount = "Error_tapeMountForWrite";
   try
   {
-    // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
-    // through the st driver file descriptor.
-    setCapabilities();
-    
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
@@ -298,7 +294,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // will also take care of the TapeServerReporter
       // 
       TapeCleaning cleaner(*this, timer);
-      currentErrorToCount = "Error_tapeMountForWrite";
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, m_logContext);
       // Before anything, the tape should be mounted
       // This call does the logging of the mount
