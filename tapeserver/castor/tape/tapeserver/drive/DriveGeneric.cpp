@@ -801,7 +801,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     }
 
     SCSI::Structures::RAO::generateRAOParams_t params;
-    int real_params_len = sizeof(params) - (udSize - 1) *
+    int real_params_len = sizeof(params) + (udSize - 1) *
                           sizeof(SCSI::Structures::RAO::udsDescriptor_t);
     std::unique_ptr<unsigned char[]>  dataBuff (new unsigned char[real_params_len]());
 
