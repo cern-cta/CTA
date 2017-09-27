@@ -95,17 +95,12 @@ void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::Driv
 void RecallTaskInjector::initRAO() {
   m_useRAO = true;
   m_raoFuture = m_raoPromise.get_future();
-  m_raoLimits = m_drive->getLimitUDS();
 }
 //------------------------------------------------------------------------------
 //waitForPromise
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::waitForPromise() {
-  std::chrono::milliseconds duration (1000);
-   std::future_status status = m_raoFuture.wait_for(duration);
-   if (status == std::future_status::ready)
-     return true;
-   return false;
+void RecallTaskInjector::waitForPromise() {
+  m_raoFuture.wait();
 }
 //------------------------------------------------------------------------------
 //setPromise
@@ -204,10 +199,17 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch()
 {
+  uint64_t reqFiles = (m_useRAO && m_hasUDS) ? m_raoLimits.maxSupported - m_fetched : m_maxFiles;
+  /* If RAO is enabled, we must ask for files up to 1PB.
+   * We are limiting to 1PB because the size will be passed as
+   * oracle::occi::Number which is limited to ~56 bits precision
+   */
+  uint64_t reqSize = (m_useRAO && m_hasUDS) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBytes;
   try {
-    auto jobsList = m_retrieveMount.getNextJobBatch(m_maxFiles, m_maxBytes, m_lc);
+    auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
     for (auto & j: jobsList)
       m_jobs.emplace_back(j.release());
+    m_fetched = jobsList.size();
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
@@ -227,6 +229,11 @@ bool RecallTaskInjector::synchronousFetch()
   else {
     if (! m_useRAO)
       injectBulkRecalls();
+    else {
+      cta::log::ScopedParamContainer scoped(m_lc);
+      scoped.add("fetchedFiles", m_fetched);
+      m_lc.log(cta::log::INFO,"Fetched files to recall");
+    }
     return true;
   }
 }
@@ -257,21 +264,25 @@ void RecallTaskInjector::WorkerThread::run()
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
   if (m_parent.m_useRAO) {
-    bool moreJobs = true;
     /* RecallTaskInjector is waiting to have access to the drive in order
-     * to perform the RAO query; while waiting, it is fetching more jobs
+     * to perform the RAO query;
      */
-    while (true) {
-      if (m_parent.waitForPromise()) break;
-      if (moreJobs) {
-        /* Fetching while there are still jobs to fetch
-         * Otherwise, we are just waiting for the promise
-         */
-        moreJobs =  m_parent.synchronousFetch();
+    m_parent.waitForPromise();
+    try {
+      m_parent.m_raoLimits = m_parent.m_drive->getLimitUDS();
+      m_parent.m_hasUDS = true;
+      if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
+        /* Fetching until we reach maxSupported for the tape drive RAO */
+        m_parent.synchronousFetch();
       }
+      m_parent.injectBulkRecalls();
+      m_parent.m_useRAO = false;
     }
-    m_parent.injectBulkRecalls();
-    m_parent.m_useRAO = false;
+    catch (castor::tape::SCSI::Exception& e) {
+      m_parent.m_lc.log(cta::log::WARNING, "The drive does not support RAO: disabled");
+      m_parent.m_useRAO = false;
+      m_parent.injectBulkRecalls();
+    }
   }
   try{
     while (1) {
