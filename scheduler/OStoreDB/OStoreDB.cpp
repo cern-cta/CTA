@@ -278,7 +278,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
   auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);;
-  fetchMountInfo(tmdi, re, logContext);
+  fetchMountInfo(tmdi, re, logContext, FetchFlavour::noLock);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   {
