@@ -1828,6 +1828,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
                 .add("queueObject", aq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+        } catch (RootEntry::NoSuchArchiveQueue & ex) {
+          // Somebody removed the queue in the mean time. Barely worth mentioning.
+          log::ScopedParamContainer params(logContext);
+          params.add("tapepool", mountInfo.tapePool)
+                .add("queueObject", aq.getAddressIfSet());
+          logContext.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
         }
         emptyQueueCleanupTime += t.secs(utils::Timer::resetCounter);
         continue;
