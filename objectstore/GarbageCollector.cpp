@@ -304,7 +304,7 @@ void GarbageCollector::reinjectOwnedObject(log::LogContext& lc) {
     log::ScopedParamContainer params(lc);
     params.add("agentAddress", a);
     ourAg.removeFromOwnership(a);
-    lc.log(log::ERR, "In GarbageCollector::reinjectOwnedObject(): removed agent from our ownership.");
+    lc.log(log::INFO, "In GarbageCollector::reinjectOwnedObject(): removed agent from our ownership.");
   }
   ourAg.commit();
 }
