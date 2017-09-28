@@ -45,9 +45,9 @@ set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
 target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
-INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-INSTALL (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
-INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
+install (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
-
+install (FILES cta-frontend.service DESTINATION /etc/systemd/system)
