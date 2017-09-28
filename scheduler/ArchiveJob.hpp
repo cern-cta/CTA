@@ -20,6 +20,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "common/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "eos/DiskReporter.hpp"
@@ -84,6 +85,11 @@ public:
   virtual bool checkAndAsyncReportComplete();
   
   /**
+   * Get the report time (in seconds).
+   */
+  double reportTime();
+  
+  /**
    * Validate that archiveFile and tapeFile fields are set correctly for archive
    * request.
    * Throw appropriate exception if there is any problem.
@@ -124,9 +130,14 @@ private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
   
   /**
-   * The reporter for the job.
+   * The reporter for the job. TODO: this should be generic and fed with a factory.
    */
   std::unique_ptr<cta::eos::DiskReporter> m_reporter;
+  
+  /**
+   * Report time measurement.
+   */
+  utils::Timer m_reporterTimer;
   
   /**
    * The mount that generated this job

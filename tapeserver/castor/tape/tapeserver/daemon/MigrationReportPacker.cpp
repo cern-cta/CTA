@@ -292,7 +292,8 @@ void MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs(
       "In MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs()"
       " check for async backend update finished");
     if(job->checkAndAsyncReportComplete()) { 
-      params.add("reportURL", job->reportURL());    
+      params.add("reportURL", job->reportURL())
+            .add("reportTime", job->reportTime());
       reportedArchiveJobs.emplace_back(std::move(job));
       logContext.log(cta::log::INFO,"Sent to the client a full file archival");
     } else {
