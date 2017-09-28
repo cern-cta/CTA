@@ -213,15 +213,15 @@ bool RecallTaskInjector::synchronousFetch()
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
-          .add("byteSizeThreshold",m_maxBytes)
-          .add("maxFiles", m_maxFiles)
+          .add("byteSizeThreshold",reqSize)
+          .add("requestedFiles", reqFiles)
           .add("message", ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
     return false;
   }
   cta::log::ScopedParamContainer scoped(m_lc); 
-  scoped.add("byteSizeThreshold",m_maxBytes)
-        .add("maxFiles", m_maxFiles);
+  scoped.add("byteSizeThreshold",reqSize)
+        .add("requestedFiles", reqFiles);
   if(m_jobs.empty()) {
     m_lc.log(cta::log::ERR, "No files to recall: empty mount");
     return false;
