@@ -163,6 +163,7 @@ The xroot plugin
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
+%attr(0644,cta,cta) /etc/systemd/system/cta-frontend.service
 
 #Frontend installs libraries so we need ldconfig.
 %post -n cta-frontend -p /sbin/ldconfig

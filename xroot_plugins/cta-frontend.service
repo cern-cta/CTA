@@ -1,0 +1,15 @@
+[Unit]
+Description=CTA frontend plugin for the XRoot deamon 
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/xrootd -l /var/log/cta-frontend-xrootd.log -c /etc/cta/cta-frontend-xrootd.conf -k fifo -n cta
+User=cta
+Group=cta
+Type=simple
+Restart=no
+LimitCORE=infinity
+LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target
