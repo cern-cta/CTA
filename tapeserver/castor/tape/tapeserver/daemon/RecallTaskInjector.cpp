@@ -271,6 +271,8 @@ void RecallTaskInjector::WorkerThread::run()
     try {
       m_parent.m_raoLimits = m_parent.m_drive->getLimitUDS();
       m_parent.m_hasUDS = true;
+      LogContext::ScopedParam sp(m_parent.m_lc, Param("maxSupportedUDS", m_parent.m_raoLimits.maxSupported));
+      m_parent.m_lc.log(cta::log::INFO,"Query getLimitUDS for RAO completed");
       if (m_parent.m_fetched < m_parent.m_raoLimits.maxSupported) {
         /* Fetching until we reach maxSupported for the tape drive RAO */
         m_parent.synchronousFetch();
