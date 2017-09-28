@@ -123,6 +123,7 @@ void RecallTaskInjector::injectBulkRecalls() {
 
   if (m_useRAO) {
     std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
+    m_lc.log(cta::log::INFO, "Performing RAO reordering");
 
     for (uint32_t i = 0; i < njobs; i++) {
       cta::RetrieveJob *job = m_jobs.at(i).get();
