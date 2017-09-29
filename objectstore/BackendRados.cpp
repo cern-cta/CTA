@@ -79,16 +79,11 @@ void BackendRados::atomicOverwrite(std::string name, std::string content) {
 
 std::string BackendRados::read(std::string name) {
   std::string ret;
-  uint64_t size;
-  time_t time;
-  cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.stat(name, &size, &time),
-      std::string("In ObjectStoreRados::read,  failed to stat: ")
-      + name);
   librados::bufferlist bl;
-  cta::exception::Errnum::throwOnNegative(m_radosCtx.read(name, bl, size, 0),
+  cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
       std::string("In ObjectStoreRados::read,  failed to read: ")
       + name);
-  bl.copy(0, size, ret);
+  bl.copy(0, bl.length(), ret);
   return ret;
 }
 

@@ -35,6 +35,7 @@ namespace exception {
     static void throwOnNull(const void *const f, const std::string &context = "");
     static void throwOnNegative(const int ret, const std::string &context = "");
     static void throwOnMinusOne(const int ret, const std::string &context = "");
+    static void throwOnNegativeErrnoIfNegative(const int ret, const std::string &context = "");
   protected:
     void ErrnumConstructorBottomHalf(const std::string & what);
     int m_errnum;
