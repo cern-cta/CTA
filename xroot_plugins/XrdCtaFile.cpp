@@ -1678,7 +1678,7 @@ std::string XrdCtaFile::xCom_archivefile() {
     if(!summary) {
       const bool displayHeader = hasOption("-h", "--header");
       auto archiveFileItor = m_catalogue->getArchiveFiles(searchCriteria);
-      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(m_log, error, displayHeader, std::move(archiveFileItor)));
+      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(error, displayHeader, std::move(archiveFileItor)));
       /*
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {

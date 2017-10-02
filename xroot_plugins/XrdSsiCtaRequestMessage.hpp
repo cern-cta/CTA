@@ -20,6 +20,7 @@
 
 #include <XrdSsi/XrdSsiEntity.hh>
 
+#include "ListArchiveFilesCmd.hpp"
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "xroot_plugins/messages/cta_frontend.pb.h"
 
@@ -247,13 +248,14 @@ private:
 
    // Member variables
 
-   cta::catalogue::Catalogue                            &m_catalogue;        //!< Reference to CTA Catalogue
-   cta::Scheduler                                       &m_scheduler;        //!< Reference to CTA Scheduler
-   cta::log::LogContext                                  m_lc;               //!< CTA Log Context
-   cta::common::dataStructures::SecurityIdentity         m_cliIdentity;      //!< The client identity info: username and host
-   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;      //!< Boolean options
-   std::map<cta::admin::OptionUInt64::Key,  uint64_t>    m_option_uint64;    //!< UInt64 options
-   std::map<cta::admin::OptionString::Key,  std::string> m_option_str;       //!< String options
+   cta::catalogue::Catalogue                              &m_catalogue;              //!< Reference to CTA Catalogue
+   cta::Scheduler                                         &m_scheduler;              //!< Reference to CTA Scheduler
+   cta::log::LogContext                                    m_lc;                     //!< CTA Log Context
+   cta::common::dataStructures::SecurityIdentity           m_cliIdentity;            //!< The client identity info: username and host
+   std::map<cta::admin::OptionBoolean::Key, bool>          m_option_bool;            //!< Boolean options
+   std::map<cta::admin::OptionUInt64::Key,  uint64_t>      m_option_uint64;          //!< UInt64 options
+   std::map<cta::admin::OptionString::Key,  std::string>   m_option_str;             //!< String options
+   std::unique_ptr<cta::xrootPlugins::ListArchiveFilesCmd> m_listArchiveFilesCmd;    //!< List archive files command
 };
 
 }} // namespace cta::xrd

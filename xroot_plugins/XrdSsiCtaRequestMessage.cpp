@@ -621,10 +621,10 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       cmdlineOutput << formatResponse(responseTable);
    } else {
       auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
-#if 0
-      // TO DO: Implement list archive files
-      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(m_log, error, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
-#endif
+
+      XrdOucErrInfo xrdSfsFileError;
+
+      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
    }
 
    response.set_message_txt(cmdlineOutput.str());
