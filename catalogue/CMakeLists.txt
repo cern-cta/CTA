@@ -132,6 +132,10 @@ add_executable(cta-catalogue-schema-create
 target_link_libraries (cta-catalogue-schema-create
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_target_properties (cta-catalogue-schema-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OOCI_SUPPORT)
+
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
 
@@ -142,6 +146,10 @@ add_executable(cta-catalogue-schema-drop
 
 target_link_libraries (cta-catalogue-schema-drop
   ctacatalogue)
+
+if (OCCI_SUPPORT)
+  set_target_properties (cta-catalogue-schema-drop PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -154,6 +162,10 @@ add_executable(cta-database-poll
 target_link_libraries (cta-database-poll
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_target_properties (cta-database-poll PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OOCI_SUPPORT)
+
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
 
@@ -165,6 +177,10 @@ add_executable(cta-catalogue-admin-user-create
 target_link_libraries (cta-catalogue-admin-user-create
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_target_properties (cta-catalogue-admin-user-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OOCI_SUPPORT)
+
 install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
@@ -175,6 +191,10 @@ add_executable(cta-catalogue-admin-host-create
 
 target_link_libraries (cta-catalogue-admin-host-create
   ctacatalogue)
+
+if (OCCI_SUPPORT)
+  set_target_properties (cta-catalogue-admin-host-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta DESTINATION /usr/share/man/man1)
