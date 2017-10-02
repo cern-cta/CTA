@@ -65,6 +65,10 @@ add_library (ctacatalogue SHARED
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+if (OCCI_SUPPORT)
+  set_target_properties(ctacatalogue PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
