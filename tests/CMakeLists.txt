@@ -44,6 +44,9 @@ target_link_libraries(cta-unitTests
   pthread)
 
 set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 add_executable(cta-catalogueUnitTests
   CatalogueUnitTestsCmdLineArgs.cpp
@@ -55,6 +58,10 @@ target_link_libraries(cta-catalogueUnitTests
   ${GMOCK_LIB}
   gtest
   pthread)
+
+if (OCCI_SUPPORT)
+  set_target_properties(cta-catalogueUnitTests PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 add_executable(cta-unitTests-multiProcess
   unit_tests.cpp
@@ -70,6 +77,9 @@ target_link_libraries(cta-unitTests-multiProcess
   sqlite3)
 
 set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 add_library(unitTestHelper
   TempFile.cpp)
