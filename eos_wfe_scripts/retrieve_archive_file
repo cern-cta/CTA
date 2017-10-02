@@ -28,7 +28,7 @@ DISK_GROUPNAME="$7"
 METADATA_BASE64="$8"
 FILE_PATH="$9"
 
-DST_URL=${TURL}'\&eos.ruid=0&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve'
+DST_URL=${TURL}'&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=CTA_retrieve'
 
 LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
 LOG_SCRIPT_NAME=`/usr/bin/basename $0`
