@@ -43,9 +43,10 @@ target_link_libraries(cta-unitTests
   gtest
   pthread)
 
-set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
-  set_target_properties(cta-unitTests PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_target_properties (cta-unitTests PROPERTIES INSTALL_RPATH "${ORACLE-INSTANTCLIENT_RPATH};${PROTOBUF3_RPATH}")
+else (OCCI_SUPPORT)
+  set_target_properties (cta-unitTests PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 endif (OCCI_SUPPORT)
 
 add_executable(cta-catalogueUnitTests
@@ -76,9 +77,10 @@ target_link_libraries(cta-unitTests-multiProcess
   ${PROTOBUF3_LIBRAIRES}
   sqlite3)
 
-set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
-  set_target_properties(cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_target_properties (cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH "${ORACLE-INSTANTCLIENT_RPATH};${PROTOBUF3_RPATH}")
+else (OOCI_SUPPORT)
+  set_target_properties (cta-unitTests-multiProcess PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
 endif (OCCI_SUPPORT)
 
 add_library(unitTestHelper
