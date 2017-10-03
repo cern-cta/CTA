@@ -31,7 +31,11 @@ add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCt
 set_property(TARGET XrdCtaOfs PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET XrdCtaOfs PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaobjectstore cryptopp)
-set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_target_properties (XrdCtaOfs PROPERTIES INSTALL_RPATH "${ORACLE-INSTANTCLIENT_RPATH};${PROTOBUF3_RPATH}")
+else (OCCI_SUPPORT)
+  set_target_properties (XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+endif (OCCI_SUPPORT)
 
 # XRootD SSI plugin for CTA Frontend
 
@@ -41,7 +45,11 @@ include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp ListArchiveFilesCmd.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
-set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_target_properties (XrdSsiCta PROPERTIES INSTALL_RPATH "${ORACLE-INSTANTCLIENT_RPATH};${PROTOBUF3_RPATH}")
+else (OCCI_SUPPORT)
+  set_target_properties (XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+endif (OCCI_SUPPORT)
 # Get some extra debug messages on stdout
 target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
