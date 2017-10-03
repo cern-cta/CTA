@@ -93,32 +93,32 @@ target_link_libraries(ctaobjectstoreunittests
 install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
-set_target_properties(cta-objectstore-initialize PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-initialize APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-initialize
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctautils)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
-set_target_properties(cta-objectstore-list PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-list APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-list
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
-set_target_properties(cta-objectstore-dump-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-dump-object APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dump-object
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-unfollow-agent cta-objectstore-unfollow-agent.cpp)
-set_target_properties(cta-objectstore-unfollow-agent PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-unfollow-agent APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-unfollow-agent
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dereference-removed-queues cta-objectstore-dereference-removed-queues.cpp)
-set_target_properties(cta-objectstore-dereference-removed-queues PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-dereference-removed-queues APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dereference-removed-queues
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-collect-orphaned-object cta-objectstore-collect-orphaned-object.cpp)
-set_target_properties(cta-objectstore-collect-orphaned-object PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-objectstore-collect-orphaned-object APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-collect-orphaned-object
   ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctacatalogue)
 

@@ -54,7 +54,7 @@ set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 if (OCCI_SUPPORT)
-  set_target_properties(ctacatalogue PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET ctacatalogue APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -133,7 +133,7 @@ target_link_libraries (cta-catalogue-schema-create
   ctacatalogue)
 
 if (OCCI_SUPPORT)
-  set_target_properties (cta-catalogue-schema-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
@@ -148,7 +148,7 @@ target_link_libraries (cta-catalogue-schema-drop
   ctacatalogue)
 
 if (OCCI_SUPPORT)
-  set_target_properties (cta-catalogue-schema-drop PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
@@ -163,7 +163,7 @@ target_link_libraries (cta-database-poll
   ctacatalogue)
 
 if (OCCI_SUPPORT)
-  set_target_properties (cta-database-poll PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OOCI_SUPPORT)
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
@@ -178,7 +178,7 @@ target_link_libraries (cta-catalogue-admin-user-create
   ctacatalogue)
 
 if (OCCI_SUPPORT)
-  set_target_properties (cta-catalogue-admin-user-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
@@ -193,7 +193,7 @@ target_link_libraries (cta-catalogue-admin-host-create
   ctacatalogue)
 
 if (OCCI_SUPPORT)
-  set_target_properties (cta-catalogue-admin-host-create PROPERTIES INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+  set_property (TARGET cta-catalogue-admin-host-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OOCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
