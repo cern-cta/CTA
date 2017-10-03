@@ -2693,17 +2693,24 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     utils::Timer t;
     log::LogContext lc(m_logger);
     // Return the job to the pot if we failed to handle it.
-    objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
-    m_archiveRequest.fetch();
-    m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
-    atfrl.release();
-    // Remove ownership from agent
-    log::ScopedParamContainer params(lc);
-    params.add("agentObject", m_agentReference.getAgentAddress())
-          .add("jobObject", m_archiveRequest.getAddressIfSet());
-    m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
-    params.add("schedulerDbTime", t.secs());
-    lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): removed job from ownership after garbage collection.");
+    try {
+      objectstore::ScopedExclusiveLock atfrl(m_archiveRequest);
+      m_archiveRequest.fetch();
+      m_archiveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
+      atfrl.release();
+      // Remove ownership from agent
+      log::ScopedParamContainer params(lc);
+      params.add("agentObject", m_agentReference.getAgentAddress())
+            .add("jobObject", m_archiveRequest.getAddressIfSet());
+      m_agentReference.removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_objectStore);
+      params.add("schedulerDbTime", t.secs());
+      lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): removed job from ownership after garbage collection.");
+    } catch (std::exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("exceptionWhat", ex.what());
+      lc.log(log::ERR, "In OStoreDB::ArchiveJob::~ArchiveJob(): got an exception. Leaving things as-is.");
+    }
   }
 }
 
@@ -2794,17 +2801,24 @@ OStoreDB::RetrieveJob::~RetrieveJob() {
     utils::Timer t;
     log::LogContext lc(m_logger);
     // Return the job to the pot if we failed to handle it.
-    objectstore::ScopedExclusiveLock rr(m_retrieveRequest);
-    m_retrieveRequest.fetch();
-    m_retrieveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
-    rr.release();
-    // Remove ownership from agent
-    log::ScopedParamContainer params(lc);
-    params.add("agentObject", m_agentReference.getAgentAddress())
-          .add("jobObject", m_retrieveRequest.getAddressIfSet());
-    m_agentReference.removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_objectStore);
-    params.add("schdulerDbTime", t.secs());
-    lc.log(log::INFO, "In OStoreDB::RetrieveJob::~RetrieveJob(): removed job from ownership after garbage collection.");
+    try {
+      objectstore::ScopedExclusiveLock rr(m_retrieveRequest);
+      m_retrieveRequest.fetch();
+      m_retrieveRequest.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
+      rr.release();
+      // Remove ownership from agent
+      log::ScopedParamContainer params(lc);
+      params.add("agentObject", m_agentReference.getAgentAddress())
+            .add("jobObject", m_retrieveRequest.getAddressIfSet());
+      m_agentReference.removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_objectStore);
+      params.add("schdulerDbTime", t.secs());
+      lc.log(log::INFO, "In OStoreDB::RetrieveJob::~RetrieveJob(): removed job from ownership after garbage collection.");
+    } catch (std::exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("requestObject", m_retrieveRequest.getAddressIfSet())
+            .add("exceptionWhat", ex.what());
+      lc.log(log::ERR, "In OStoreDB::RetrieveJob::~RetrieveJob(): got an exception. Leaving things as-is.");
+    }
   }
 }
 
