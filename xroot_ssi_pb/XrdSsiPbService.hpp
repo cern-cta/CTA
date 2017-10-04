@@ -87,6 +87,8 @@ public:
                 << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
                 << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
                 << std::endl;
+
+      resource.client->name = "ctadev";
 #endif
       if(resource.client == nullptr || resource.client->name == nullptr)
       {

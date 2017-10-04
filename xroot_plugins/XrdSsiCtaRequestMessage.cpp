@@ -24,6 +24,7 @@
 using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
+#include "XrdCtaArchiveFileLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
 
@@ -620,11 +621,14 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       responseTable.push_back(row);
       cmdlineOutput << formatResponse(responseTable);
    } else {
+#if 0
       auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
 
       XrdOucErrInfo xrdSfsFileError;
 
       m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
+#endif
+      cmdlineOutput << "Some output" << std::endl;
    }
 
    response.set_message_txt(cmdlineOutput.str());
