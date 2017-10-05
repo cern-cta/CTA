@@ -243,7 +243,11 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       }
       else if(argstr == "--diskpool")            {} // = default?
       else if(argstr == "--throughput")          {} // = 10000?
-      else if(argstr == "--recoveryblob:base64") base64Decode(notification, argval);
+      else if(argstr == "--recoveryblob:base64") try {
+         base64Decode(notification, argval);
+      } catch(...) {
+         throw std::runtime_error("Invalid recovery blob: " + argval);
+      }
       else throw std::runtime_error("Unrecognised key " + argstr);
    }
 }
