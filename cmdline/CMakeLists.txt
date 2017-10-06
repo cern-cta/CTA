@@ -38,7 +38,7 @@ find_package(cryptopp REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS} ${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private ../xroot_ssi_pb)
 add_executable(eoscta_stub EosCtaStub.cpp Configuration.cpp)
-target_link_libraries(eoscta_stub cryptopp XrdCtaMessages XrdSsi-4 XrdSsiLib)
+target_link_libraries(eoscta_stub cryptopp ctacommon XrdCtaMessages XrdSsi-4 XrdSsiLib)
 set_property (TARGET eoscta_stub APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
 target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)

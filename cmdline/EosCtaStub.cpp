@@ -23,6 +23,7 @@
 #include <cryptopp/base64.h>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
+#include "common/utils/utils.hpp"
 #include "cmdline/Configuration.hpp"
 #include "xroot_plugins/messages/CtaFrontendApi.hpp"
 
@@ -231,7 +232,11 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_groupname(argval);
       else if(argstr == "--size")                notification.mutable_file()->set_size(std::stoi(argval));
       else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_name(argval);
-      else if(argstr == "--checksumvalue")       notification.mutable_file()->mutable_cks()->set_value(argval);
+      else if(argstr == "--checksumvalue") {
+         std::string checksumvalue("0X" + argval);
+         cta::utils::toUpper(checksumvalue);
+         notification.mutable_file()->mutable_cks()->set_value(checksumvalue);
+      }
       else if(argstr == "--diskfilepath")        notification.mutable_file()->set_lpath(argval);
       else if(argstr == "--storageclass")        {
          google::protobuf::MapPair<std::string,std::string> sc("CTA_StorageClass", argval);
