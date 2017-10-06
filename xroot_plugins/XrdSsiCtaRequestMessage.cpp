@@ -18,6 +18,7 @@
 
 #include <iomanip> // for setw
 
+#include "common/utils/utils.hpp"
 #include <common/utils/Regex.hpp>
 
 #include <XrdSsiPbException.hpp>
@@ -325,7 +326,9 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    diskFileInfo.path        = notification.file().lpath();
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType     = notification.file().cks().name();
+   std::string checksumvalue("0X" + notification.file().cks().value());
+   cta::utils::toUpper(checksumvalue);
+   request.checksumType     = checksumvalue;
    request.checksumValue    = notification.file().cks().value();
    request.diskFileInfo     = diskFileInfo;
    request.diskFileID       = notification.file().fid();
