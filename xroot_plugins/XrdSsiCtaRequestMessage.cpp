@@ -328,8 +328,8 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    cta::common::dataStructures::ArchiveRequest request;
    std::string checksumvalue("0X" + notification.file().cks().value());
    cta::utils::toUpper(checksumvalue);
-   request.checksumType     = checksumvalue;
-   request.checksumValue    = notification.file().cks().value();
+   request.checksumType     = notification.file().cks().name();
+   request.checksumValue    = checksumvalue;
    request.diskFileInfo     = diskFileInfo;
    request.diskFileID       = notification.file().fid();
    request.fileSize         = notification.file().size();
