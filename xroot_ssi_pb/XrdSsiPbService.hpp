@@ -87,6 +87,8 @@ public:
                 << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
                 << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
                 << std::endl;
+
+      if(resource.client->name == nullptr) resource.client->name = "dummy_client";
 #endif
       if(resource.client == nullptr || resource.client->name == nullptr)
       {
