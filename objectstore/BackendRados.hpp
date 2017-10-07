@@ -84,7 +84,34 @@ public:
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
   ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
+private:
+  /**
+   * A class handling the watch part when waiting for a lock.
+   */
+  class LockWatcher: public librados::WatchCtx2 {
+  public:
+    LockWatcher(librados::IoCtx & context, const std::string & name);
+    void handle_error(uint64_t cookie, int err) override;
+    void handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) override;
+    virtual ~LockWatcher();
+    typedef std::chrono::microseconds durationUs;
+    void wait(const durationUs & timeout);
+  private:
+    std::promise<void> m_promise;
+    std::future<void> m_future;
+    librados::IoCtx & m_context;
+    std::string m_name;
+    uint64_t m_watchHandle;
+//    std::promise<void> m_watchHandlePromise;
+//    std::future<void> m_watchHandleFuture;
+//    static void watchCallback(librados::completion_t cb, void* arg);
+  };
   
+//  // A very simple callback for rados::aio_notify() so we basically
+//  // notify in a fire and forget fashion.
+//  static void notifyCallback(librados::completion_t cb, void *pBp);
+  
+public:
   /**
    * A class following up the check existence-lock-fetch-update-write-unlock. Constructor implicitly
    * starts the lock step.

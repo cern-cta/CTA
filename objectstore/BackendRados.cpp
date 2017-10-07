@@ -26,6 +26,55 @@
 #include <valgrind/helgrind.h>
 #include <random>
 
+// This macro should be defined to get printouts to understand timings of locking.
+// Usually while running BackendTestRados/BackendAbstractTest.MultithreadLockingInterface
+// Also define  TEST_RADOS in objectstore/BackendRadosTestSwitch.hpp.
+// Nunber of threads/passes should be reduced in the test for any usefullness.
+#undef DEBUG_RADOS_LOCK_TIMINGS
+#ifdef DEBUG_RADOS_LOCK_TIMINGS
+
+namespace {
+  std::atomic<double> previousSec;
+  std::atomic<bool> everReleased{false};
+  std::atomic<double> lastReleased;
+
+void timestampedPrint (const char * f, const char *s) {
+  struct ::timeval tv;
+  ::gettimeofday(&tv, nullptr);
+  double localPreviousSec=previousSec;
+  double secs=previousSec=tv.tv_sec % 1000 + tv.tv_usec / 1000.0 / 1000;
+  uint8_t tid = syscall(__NR_gettid) % 100;
+  ::printf ("%03.06f %02.06f %02d %s %s\n", secs, secs - localPreviousSec, tid, f, s);
+  ::fflush(::stdout);
+}
+
+void notifyReleased() {
+  struct ::timeval tv;
+  ::gettimeofday(&tv, nullptr);
+  lastReleased=tv.tv_sec + tv.tv_usec / 1000.0 / 1000;
+  everReleased=true;
+}
+
+void notifyLocked() {
+  if (everReleased) {
+    struct ::timeval tv;
+    ::gettimeofday(&tv, nullptr);
+    ::printf ("Relocked after %02.06f\n", (tv.tv_sec + tv.tv_usec / 1000.0 / 1000) - lastReleased);
+    ::fflush(::stdout);
+  }
+}
+
+}
+
+#define TIMESTAMPEDPRINT(A) timestampedPrint(__PRETTY_FUNCTION__, (A))
+#define NOTIFYLOCKED() notifyLocked()
+#define NOTIFYRELEASED() notifyReleased()
+#else
+#define TIMESTAMPEDPRINT(A)
+#define NOTIFYLOCKED()
+#define NOTIFYRELEASED()
+#endif
+
 namespace cta { namespace objectstore {
 
 BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
@@ -115,6 +164,7 @@ void BackendRados::ScopedLock::release() {
   // We should be tolerant with unlocking a deleted object, which is part
   // of the lock-remove-(implicit unlock) cycle when we delete an object
   // we hence overlook the ENOENT errors.
+  TIMESTAMPEDPRINT("Pre-release");
   int rc=m_context.unlock(m_oid, "lock", m_clientId);
   switch (-rc) {
     case ENOENT:
@@ -125,7 +175,21 @@ void BackendRados::ScopedLock::release() {
         m_oid);
       break;
   }
+  NOTIFYRELEASED();
+  TIMESTAMPEDPRINT("Post-release/pre-notify");
+  // Notify potential waiters to take their chances now on the lock.
+  utils::Timer t;
+  librados::bufferlist bl;
+  //librados::bufferlist * pBl = new librados::bufferlist;
+  //librados::AioCompletion * completion = librados::Rados::aio_create_completion((void *)pBl, notifyCallback, nullptr);
+  librados::AioCompletion * completion = librados::Rados::aio_create_completion(nullptr, nullptr, nullptr);
+  cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_notify(m_oid, completion, bl, 10000, nullptr), 
+      "In BackendRados::ScopedLock::release(): failed to aio_notify()");
+  completion->release();
+  //printf(" %0.06f", t.secs()); fflush(stdout);
+  //printf("N"); fflush(stdout);
   m_lockSet = false;
+  TIMESTAMPEDPRINT("Post-notify");
 }
 
 void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId) {
@@ -137,6 +201,60 @@ void BackendRados::ScopedLock::set(const std::string& oid, const std::string cli
 BackendRados::ScopedLock::~ScopedLock() {
   release();
 }
+
+//void BackendRados::notifyCallback(librados::completion_t cb, void* pBp) {
+//  delete (librados::bufferlist *)pBp;
+//}
+
+
+BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
+  m_context(context), m_name(name) {
+  m_future = m_promise.get_future();
+//  m_watchHandleFuture = m_watchHandlePromise.get_future();
+//  TIMESTAMPEDPRINT("Pre-aio-watch2"); 
+//  librados::AioCompletion * completion = librados::Rados::aio_create_completion(this, watchCallback, nullptr);
+//  cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_watch2(name, completion, &m_watchHandle, this, 10000));
+//  completion->release();
+//  TIMESTAMPEDPRINT("Post-aio-watch2");
+  TIMESTAMPEDPRINT("Pre-watch2");
+  cta::exception::Errnum::throwOnReturnedErrno(-m_context.watch2(name, &m_watchHandle, this));
+  TIMESTAMPEDPRINT("Post-watch2");
+}
+
+void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
+  //printf("rne %s ",m_name.c_str()); fflush(stdout);
+  //printf("rne "); fflush(stdout);
+  m_promise.set_value();
+  TIMESTAMPEDPRINT("");
+}
+
+void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
+  //printf("rnn %s ",m_name.c_str()); fflush(stdout);
+  // printf("n"); fflush(stdout);
+  m_promise.set_value();
+  TIMESTAMPEDPRINT(""); 
+}
+
+void BackendRados::LockWatcher::wait(const durationUs& timeout) {
+  TIMESTAMPEDPRINT("Pre-wait"); 
+  m_future.wait_for(timeout);
+  TIMESTAMPEDPRINT("Post-wait");
+}
+
+BackendRados::LockWatcher::~LockWatcher() {
+//  TIMESTAMPEDPRINT("Pre-wait");
+//  m_watchHandleFuture.wait();
+//  TIMESTAMPEDPRINT("Post-wait/pre-unwatch2");
+  TIMESTAMPEDPRINT("Pre-unwatch2");
+  m_context.unwatch2(m_watchHandle);
+  TIMESTAMPEDPRINT("Post-unwatch2");
+}
+
+//void BackendRados::LockWatcher::watchCallback(librados::completion_t cb, void* arg) {
+//  ((LockWatcher *)arg)->m_watchHandlePromise.set_value();
+//  TIMESTAMPEDPRINT("");
+//}
+
 
 std::string BackendRados::createUniqueClientId() {
   // Build a unique client name: host:thread
@@ -159,29 +277,44 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
   tv.tv_sec = 240;
   int rc;
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
-  // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
-  // by the number of tries (and capped by a maximum). Then the value will be randomized 
-  // (betweend and 50-150%)
-  size_t backoff=1;
   utils::Timer t, timeoutTimer;
   while (true) {
+    TIMESTAMPEDPRINT("Pre-lock");
     rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+    if (!rc) {
+      TIMESTAMPEDPRINT("Post-lock (got it)");
+      NOTIFYLOCKED();
+    } else {
+      TIMESTAMPEDPRINT("Post-lock");
+    }
     if (-EBUSY != rc) break;
+    // The lock is taken. Start a watch on it immediately. Inspired from the algorithm listed her:
+    // https://zookeeper.apache.org/doc/r3.1.2/recipes.html#sc_recipes_Locks
+    TIMESTAMPEDPRINT("Pre-watch-setup");
+    LockWatcher watcher(m_radosCtx, name);
+    TIMESTAMPEDPRINT("Post-watch-setup/Pre-relock");
+    // We need to retry the lock after establishing the watch: it could have been released during that time.
+    rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+    if (!rc) {
+      TIMESTAMPEDPRINT("Post-relock (got it)");
+      NOTIFYLOCKED();
+    } else {
+      TIMESTAMPEDPRINT("Post-relock");
+    }
+    if (-EBUSY != rc) break;
+    LockWatcher::durationUs watchTimeout = LockWatcher::durationUs(5L * 1000 * 1000); // We will poll at least every 5 second.
+    // If we are dealing with a user-defined timeout, take it into account.
+    if (timeout_us) {
+      watchTimeout = std::min(watchTimeout, 
+          LockWatcher::durationUs(timeout_us) - LockWatcher::durationUs(timeoutTimer.usecs()));
+      // Make sure the value makes sense if we just crossed the deadline.
+      watchTimeout = std::max(watchTimeout, LockWatcher::durationUs(1));
+    }
+    watcher.wait(watchTimeout);
+    TIMESTAMPEDPRINT("Post-wait");
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
       throw exception::Exception("In BackendRados::lockExclusive(): timeout.");
     }
-    timespec ts;
-    auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
-    wait = std::min(wait, c_maxWait);
-    if (backoff>c_maxBackoff) backoff=1;
-    // We need to get a random number [50, 150]
-    std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<size_t> distribution(50, 150);
-    decltype(wait) randFactor=distribution(dre);
-    wait=(wait * randFactor)/100;
-    ts.tv_sec = wait/(1000*1000);
-    ts.tv_nsec = (wait % (1000*1000)) * 1000;
-    nanosleep(&ts, nullptr);
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ") +
