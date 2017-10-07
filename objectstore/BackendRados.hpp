@@ -58,6 +58,11 @@ public:
   bool exists(std::string name) override;
   
   std::list<std::string> list() override;
+      
+  enum class LockType {
+    Shared,
+    Exclusive
+  };
   
   class ScopedLock: public Backend::ScopedLock {
     friend class BackendRados;
@@ -66,11 +71,12 @@ public:
     ~ScopedLock() override;
   private:
     ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
-    void set(const std::string & oid, const std::string clientId);
+    void set(const std::string & oid, const std::string clientId, LockType lockType);
     bool m_lockSet;
     librados::IoCtx & m_context;
     std::string m_clientId;
     std::string m_oid;
+    LockType m_lockType;
   };
   
   static const size_t c_maxBackoff;
@@ -79,6 +85,8 @@ public:
   
 private:
   static std::string createUniqueClientId();
+  /** This function will lock or die (actually throw, that is) */
+  void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
   
 public:  
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
@@ -102,14 +110,7 @@ private:
     librados::IoCtx & m_context;
     std::string m_name;
     uint64_t m_watchHandle;
-//    std::promise<void> m_watchHandlePromise;
-//    std::future<void> m_watchHandleFuture;
-//    static void watchCallback(librados::completion_t cb, void* arg);
   };
-  
-//  // A very simple callback for rados::aio_notify() so we basically
-//  // notify in a fire and forget fashion.
-//  static void notifyCallback(librados::completion_t cb, void *pBp);
   
 public:
   /**
@@ -127,8 +128,6 @@ public:
     const std::string m_name;
     /** The operation on the object */
     std::function <std::string(const std::string &)> & m_update;
-    /** Storage for stat operation (size) */
-    uint64_t m_size;
     /** Storage for stat operation (date) */
     time_t date;
     /** The promise that will both do the job and allow synchronization with the caller. */
@@ -145,8 +144,6 @@ public:
     /** A future the hole the the structure of the update operation. It will be either empty of complete at 
      destruction time */
     std::unique_ptr<std::future<void>> m_updateAsync;
-    /** The first callback operation (after checking existence) */
-    static void statCallback(librados::completion_t completion, void *pThis);
     /** Async delete in case of zero sized object */
     static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
     /** The second callback operation (after reading) */
@@ -172,8 +169,6 @@ public:
     BackendRados &m_backend;
     /** The object name */
     const std::string m_name;
-    /** Storage for stat operation (size) */
-    uint64_t m_size;
     /** Storage for stat operation (date) */
     time_t date;
     /** The promise that will both do the job and allow synchronization with the caller. */
@@ -188,8 +183,6 @@ public:
     /** A future the hole the the structure of the update operation. It will be either empty of complete at 
      destruction time */
     std::unique_ptr<std::future<void>> m_updateAsync;
-    /** The first callback operation (after checking existence) */
-    static void statCallback(librados::completion_t completion, void *pThis);
     /** The second callback operation (after deleting) */
     static void deleteCallback(librados::completion_t completion, void *pThis);
     /** Async delete in case of zero sized object */

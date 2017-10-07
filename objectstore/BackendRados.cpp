@@ -180,21 +180,20 @@ void BackendRados::ScopedLock::release() {
   // Notify potential waiters to take their chances now on the lock.
   utils::Timer t;
   librados::bufferlist bl;
-  //librados::bufferlist * pBl = new librados::bufferlist;
-  //librados::AioCompletion * completion = librados::Rados::aio_create_completion((void *)pBl, notifyCallback, nullptr);
+  // We use a fire aand forget aio call.
   librados::AioCompletion * completion = librados::Rados::aio_create_completion(nullptr, nullptr, nullptr);
   cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_notify(m_oid, completion, bl, 10000, nullptr), 
       "In BackendRados::ScopedLock::release(): failed to aio_notify()");
   completion->release();
-  //printf(" %0.06f", t.secs()); fflush(stdout);
-  //printf("N"); fflush(stdout);
   m_lockSet = false;
   TIMESTAMPEDPRINT("Post-notify");
 }
 
-void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId) {
+void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId, 
+    LockType lockType) {
   m_oid = oid;
-  m_clientId = clientId;\
+  m_clientId = clientId;
+  m_lockType = lockType;
   m_lockSet = true;
 }
 
@@ -202,35 +201,20 @@ BackendRados::ScopedLock::~ScopedLock() {
   release();
 }
 
-//void BackendRados::notifyCallback(librados::completion_t cb, void* pBp) {
-//  delete (librados::bufferlist *)pBp;
-//}
-
-
 BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
   m_context(context), m_name(name) {
   m_future = m_promise.get_future();
-//  m_watchHandleFuture = m_watchHandlePromise.get_future();
-//  TIMESTAMPEDPRINT("Pre-aio-watch2"); 
-//  librados::AioCompletion * completion = librados::Rados::aio_create_completion(this, watchCallback, nullptr);
-//  cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_watch2(name, completion, &m_watchHandle, this, 10000));
-//  completion->release();
-//  TIMESTAMPEDPRINT("Post-aio-watch2");
   TIMESTAMPEDPRINT("Pre-watch2");
   cta::exception::Errnum::throwOnReturnedErrno(-m_context.watch2(name, &m_watchHandle, this));
   TIMESTAMPEDPRINT("Post-watch2");
 }
 
 void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
-  //printf("rne %s ",m_name.c_str()); fflush(stdout);
-  //printf("rne "); fflush(stdout);
   m_promise.set_value();
   TIMESTAMPEDPRINT("");
 }
 
 void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
-  //printf("rnn %s ",m_name.c_str()); fflush(stdout);
-  // printf("n"); fflush(stdout);
   m_promise.set_value();
   TIMESTAMPEDPRINT(""); 
 }
@@ -242,19 +226,10 @@ void BackendRados::LockWatcher::wait(const durationUs& timeout) {
 }
 
 BackendRados::LockWatcher::~LockWatcher() {
-//  TIMESTAMPEDPRINT("Pre-wait");
-//  m_watchHandleFuture.wait();
-//  TIMESTAMPEDPRINT("Post-wait/pre-unwatch2");
   TIMESTAMPEDPRINT("Pre-unwatch2");
   m_context.unwatch2(m_watchHandle);
   TIMESTAMPEDPRINT("Post-unwatch2");
 }
-
-//void BackendRados::LockWatcher::watchCallback(librados::completion_t cb, void* arg) {
-//  ((LockWatcher *)arg)->m_watchHandlePromise.set_value();
-//  TIMESTAMPEDPRINT("");
-//}
-
 
 std::string BackendRados::createUniqueClientId() {
   // Build a unique client name: host:thread
@@ -267,7 +242,8 @@ std::string BackendRados::createUniqueClientId() {
   return client.str();
 }
 
-BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t timeout_us) {
+void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType, 
+  const std::string & clientId) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
   // (while we own the lock).
@@ -276,13 +252,15 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
   tv.tv_usec = 0;
   tv.tv_sec = 240;
   int rc;
-  std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
-  utils::Timer t, timeoutTimer;
+  utils::Timer timeoutTimer;
   while (true) {
-    TIMESTAMPEDPRINT("Pre-lock");
-    rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+    TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
+    if (lockType==LockType::Shared)
+      rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
+    else
+      rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
     if (!rc) {
-      TIMESTAMPEDPRINT("Post-lock (got it)");
+      TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-lock (shared) (got it)":"Post-lock (exclusive) (got it)");
       NOTIFYLOCKED();
     } else {
       TIMESTAMPEDPRINT("Post-lock");
@@ -290,16 +268,19 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
     if (-EBUSY != rc) break;
     // The lock is taken. Start a watch on it immediately. Inspired from the algorithm listed her:
     // https://zookeeper.apache.org/doc/r3.1.2/recipes.html#sc_recipes_Locks
-    TIMESTAMPEDPRINT("Pre-watch-setup");
+    TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-watch-setup (shared)":"Pre-watch-setup (exclusive)");
     LockWatcher watcher(m_radosCtx, name);
-    TIMESTAMPEDPRINT("Post-watch-setup/Pre-relock");
+    TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-watch-setup/Pre-relock (shared)":"Post-watch-setup/Pre-relock (exclusive)");
     // We need to retry the lock after establishing the watch: it could have been released during that time.
-    rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+    if (lockType==LockType::Shared)
+      rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
+    else
+      rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
     if (!rc) {
-      TIMESTAMPEDPRINT("Post-relock (got it)");
+      TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-relock (shared) (got it)":"Post-relock (exclusive) (got it)");
       NOTIFYLOCKED();
     } else {
-      TIMESTAMPEDPRINT("Post-relock");
+      TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-relock (shared)":"Post-relock (exclusive)");
     }
     if (-EBUSY != rc) break;
     LockWatcher::durationUs watchTimeout = LockWatcher::durationUs(5L * 1000 * 1000); // We will poll at least every 5 second.
@@ -311,13 +292,14 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
       watchTimeout = std::max(watchTimeout, LockWatcher::durationUs(1));
     }
     watcher.wait(watchTimeout);
-    TIMESTAMPEDPRINT("Post-wait");
+    TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-wait (shared)":"Post-wait (exclusive)");
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lockExclusive(): timeout.");
+      throw exception::Exception("In BackendRados::lock(): timeout.");
     }
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
-      std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::lock_exclusive: ") +
+      std::string("In ObjectStoreRados::lock(), failed to librados::IoCtx::") + 
+      (lockType==LockType::Shared?"lock_shared: ":"lock_exclusive: ") +
       name + "/" + "lock" + "/" + client + "//");
   // We could have created an empty object by trying to lock it. We can find this out: if the object is
   // empty, we should delete it and throw an exception.
@@ -325,72 +307,31 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
   uint64_t size;
   time_t date;
   cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
-      std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::stat: ") +
+      std::string("In ObjectStoreRados::lock, failed to librados::IoCtx::stat: ") +
       name + "/" + "lock" + "/" + client + "//");
   if (!size) {
     // The object has a zero size: we probably created it by attempting the locking.
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
-        std::string("In ObjectStoreRados::lockExclusive, failed to librados::IoCtx::remove: ") +
+        std::string("In ObjectStoreRados::lock, failed to librados::IoCtx::remove: ") +
         name + "//");
-    throw cta::exception::Errnum(ENOENT, std::string("In BackendRados::lockExclusive(): trying to lock a non-existing object: ") + name);
+    throw Backend::NoSuchObject(std::string("In BackendRados::lock(): "
+        "trying to lock a non-existing object: ") + name);
   }
-  ret->set(name, client);
+}
+
+BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t timeout_us) {
+  std::string client = createUniqueClientId();
+  lock(name, timeout_us, LockType::Exclusive, client);
+  std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
+  ret->set(name, client, LockType::Exclusive);
   return ret.release();
 }
 
 BackendRados::ScopedLock* BackendRados::lockShared(std::string name, uint64_t timeout_us) {
-  // In Rados, locking a non-existing object will create it. This is not our intended
-  // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
-  // (while we own the lock).
-  std::string client = createUniqueClientId();
-  struct timeval tv;
-  tv.tv_usec = 0;
-  tv.tv_sec = 240;
-  int rc;
+   std::string client = createUniqueClientId();
+  lock(name, timeout_us, LockType::Shared, client);
   std::unique_ptr<ScopedLock> ret(new ScopedLock(m_radosCtx));
-  // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
-  // by the number of tries (and capped by a maximum). Then the value will be randomized 
-  // (betweend and 50-150%)
-  size_t backoff=1;
-  utils::Timer t, timeoutTimer;
-  while (true) {
-    rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
-    if (-EBUSY != rc) break;
-    if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lockShared(): timeout.");
-    }
-    timespec ts;
-    auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
-    wait = std::min(wait, c_maxWait);
-    if (backoff>c_maxBackoff) backoff=1;
-    // We need to get a random number [50, 150]
-    std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-    std::uniform_int_distribution<size_t> distribution(50, 150);
-    decltype(wait) randFactor=distribution(dre);
-    wait=(wait * randFactor)/100;
-    ts.tv_sec = wait/(1000*1000);
-    ts.tv_nsec = (wait % (1000*1000)) * 1000;
-    nanosleep(&ts, nullptr);
-  }
-  cta::exception::Errnum::throwOnReturnedErrno(-rc,
-      std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::lock_shared: ") +
-      name + "/" + "lock" + "/" + client + "//");
-  // We could have created an empty object by trying to lock it. We can find this out: if the object is
-  // empty, we should delete it and throw an exception.
-  // Get the size:
-  uint64_t size;
-  time_t date;
-  cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
-      std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::stat: ") +
-      name + "/" + "lock" + "/" + client + "//");
-  if (!size) {
-    // The object has a zero size: we probably created it by attempting the locking.
-    cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
-        std::string("In ObjectStoreRados::lockShared, failed to librados::IoCtx::remove: ") +
-        name + "//");
-    throw cta::exception::Errnum(ENOENT, std::string ("In BackendRados::lockShared(): trying to lock a non-existing object: ") + name);
-  }
-  ret->set(name, client);
+  ret->set(name, client, LockType::Shared);
   return ret.release();
 }
 
@@ -410,45 +351,13 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            struct timeval tv;
-            tv.tv_usec = 0;
-            tv.tv_sec = 240;
-            int rc;
-            // TODO: could be improved (but need aio_lock in rados, not available at the time
-            // of writing).
-            // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
-            // by the number of tries (and capped by a maximum). Then the value will be randomized 
-            // (betweend and 50-150%)
-            size_t backoff=1;
-            utils::Timer t;
-            while (true) {
-              rc = m_backend.m_radosCtx.lock_exclusive(m_name, "lock", m_lockClient, "", &tv, 0);
-              if (-EBUSY != rc) break;
-              timespec ts;
-              auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
-              wait = std::min(wait, c_maxWait);
-              if (backoff>c_maxBackoff) backoff=1;
-              // We need to get a random number [50, 150]
-              std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-              std::uniform_int_distribution<size_t> distribution(50, 150);
-              decltype(wait) randFactor=distribution(dre);
-              wait=(wait * randFactor)/100;
-              ts.tv_sec = wait/(1000*1000);
-              ts.tv_nsec = (wait % (1000*1000)) * 1000;
-              nanosleep(&ts, nullptr);
-            }
-            if (rc) {
-              cta::exception::Errnum errnum(-rc,
-                std::string("In BackendRados::AsyncUpdater::statCallback::lock_lambda(): failed to librados::IoCtx::lock_exclusive: ") +
-                m_name + "/" + "lock" + "/" + m_lockClient + "//");
-              throw CouldNotLock(errnum.getMessageValue());
-            }
-            // Locking is done, we can launch the stat operation (async).
-            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
-            rc=m_backend.m_radosCtx.aio_stat(m_name, aioc, &m_size, &date);
+            m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            // Locking is done, we can launch the read operation (async).
+            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
+            auto rc=m_backend.m_radosCtx.aio_read(m_name, aioc, &m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
             aioc->release();
             if (rc) {
-              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::AsyncUpdater::lock_lambda(): failed to launch aio_stat(): ")+m_name);
+              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+m_name);
               throw Backend::NoSuchObject(errnum.getMessageValue());
             }
           } catch (...) {
@@ -460,41 +369,6 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
   } catch (...) {
     ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
-  }
-}
-
-void BackendRados::AsyncUpdater::statCallback(librados::completion_t completion, void* pThis) {
-  AsyncUpdater & au = *((AsyncUpdater *) pThis);
-  try {
-    // Get the object size (it's already locked).
-    if (rados_aio_get_return_value(completion)) {
-      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
-          std::string("In BackendRados::AsyncUpdater::statCallback(): could not stat object: ") + au.m_name);
-      throw Backend::NoSuchObject(errnum.getMessageValue());
-    }
-    // Check the size. If zero, we locked an empty object: delete and throw an exception in the deleteCallback
-    if (!au.m_size) {
-      // launch the delete operation (async).
-      librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteEmptyCallback, nullptr);
-      auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
-      aioc->release();
-      if (rc) {
-        cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+au.m_name);
-        throw Backend::CouldNotDelete(errnum.getMessageValue());
-      }
-      return;
-    }
-    // Stat is done, we can launch the read operation (async).
-    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, fetchCallback, nullptr);
-    auto rc=au.m_backend.m_radosCtx.aio_read(au.m_name, aioc, &au.m_radosBufferList, au.m_size, 0);
-    aioc->release();
-    if (rc) {
-      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+au.m_name);
-      throw Backend::NoSuchObject(errnum.getMessageValue());
-    }
-  } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
-    au.m_job.set_exception(std::current_exception());
   }
 }
 
@@ -532,7 +406,7 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
             // The data is in the buffer list.
             std::string value;
             try {
-              au.m_radosBufferList.copy(0, au.m_size, value);
+              au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
             } catch (std::exception & ex) {
               throw CouldNotUpdateValue(
                   std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ") +
@@ -660,46 +534,14 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            struct timeval tv;
-            tv.tv_usec = 0;
-            tv.tv_sec = 60;
-            int rc;
-            // TODO: could be improved (but need aio_lock in rados, not available at the time
-            // of writing).
-            // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
-            // by the number of tries (and capped by a maximum). Then the value will be randomized 
-            // (betweend and 50-150%)
-            size_t backoff=1;
-            utils::Timer t;
-            while (true) {
-              rc = m_backend.m_radosCtx.lock_exclusive(m_name, "lock", m_lockClient, "", &tv, 0);
-              if (-EBUSY != rc) break;
-              timespec ts;
-              auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
-              wait = std::min(wait, c_maxWait);
-              if (backoff>c_maxBackoff) backoff=1;
-              // We need to get a random number [50, 150]
-              std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-              std::uniform_int_distribution<size_t> distribution(50, 150);
-              decltype(wait) randFactor=distribution(dre);
-              wait=(wait * randFactor)/100;
-              ts.tv_sec = wait/(1000*1000);
-              ts.tv_nsec = (wait % (1000*1000)) * 1000;
-              nanosleep(&ts, nullptr);
-            }
-            if (rc) {
-              cta::exception::Errnum errnum(-rc,
-                std::string("In BackendRados::AsyncDeleter::statCallback::lock_lambda(): failed to librados::IoCtx::lock_exclusive: ") +
-                m_name + "/" + "lock" + "/" + m_lockClient + "//");
-              throw CouldNotLock(errnum.getMessageValue());
-            }
-            // Locking is done, we can launch the stat operation (async).
-            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, statCallback, nullptr);
-            rc=m_backend.m_radosCtx.aio_stat(m_name, aioc, &m_size, &date);
+            m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            // Locking is done, we can launch the remove operation (async).
+            librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, deleteCallback, nullptr);
+            auto rc=m_backend.m_radosCtx.aio_remove(m_name, aioc);
             aioc->release();
             if (rc) {
-              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::AsyncDeleter::lock_lambda(): failed to launch aio_stat(): ")+m_name);
-              throw Backend::NoSuchObject(errnum.getMessageValue());
+              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+m_name);
+              throw Backend::CouldNotDelete(errnum.getMessageValue());
             }
           } catch (...) {
             ANNOTATE_HAPPENS_BEFORE(&m_job);
@@ -710,42 +552,6 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
   } catch (...) {
     ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
-  }
-}
-
-void BackendRados::AsyncDeleter::statCallback(librados::completion_t completion, void* pThis) {
-  AsyncDeleter & au = *((AsyncDeleter *) pThis);
-  try {
-    // Get the object size (it's already locked).
-    if (rados_aio_get_return_value(completion)) {
-      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
-          std::string("In BackendRados::AsyncDeleter::statCallback(): could not stat object: ") + au.m_name);
-      throw Backend::NoSuchObject(errnum.getMessageValue());
-    }
-    // Check the size. If zero, we locked an empty object: delete and throw an exception.
-    if (!au.m_size) {
-      // launch the delete operation (async).
-      librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteEmptyCallback, nullptr);
-      auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
-      aioc->release();
-      if (rc) {
-        cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncDeleter::statCallback():"
-          " failed to launch aio_remove() for zero size object: ")+au.m_name);
-        throw Backend::CouldNotDelete(errnum.getMessageValue());
-      }
-      return;
-    }
-    // Stat is done, we can launch the delete operation (async).
-    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(&au, deleteCallback, nullptr);
-    auto rc=au.m_backend.m_radosCtx.aio_remove(au.m_name, aioc);
-    aioc->release();
-    if (rc) {
-      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+au.m_name);
-      throw Backend::CouldNotDelete(errnum.getMessageValue());
-    }
-  } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
-    au.m_job.set_exception(std::current_exception());
   }
 }
 
