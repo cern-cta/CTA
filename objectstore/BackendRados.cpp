@@ -19,6 +19,7 @@
 #include "BackendRados.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/Timer.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include <rados/librados.hpp>
 #include <sys/syscall.h>
 #include <errno.h>
@@ -210,13 +211,17 @@ BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::stri
 }
 
 void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
+  threading::MutexLocker ml(m_promiseMutex);
   m_promise.set_value();
-  TIMESTAMPEDPRINT("");
+  TIMESTAMPEDPRINT("Handled notify");
+  m_promiseSet = true;
 }
 
 void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
+  threading::MutexLocker ml(m_promiseMutex);
   m_promise.set_value();
-  TIMESTAMPEDPRINT(""); 
+  TIMESTAMPEDPRINT("Handled notify");
+  m_promiseSet = true;
 }
 
 void BackendRados::LockWatcher::wait(const durationUs& timeout) {

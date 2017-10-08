@@ -20,6 +20,7 @@
 
 #include "Backend.hpp"
 #include "rados/librados.hpp"
+#include "common/threading/Mutex.hpp"
 #include <future>
 
 
@@ -105,6 +106,10 @@ private:
     typedef std::chrono::microseconds durationUs;
     void wait(const durationUs & timeout);
   private:
+    // We could receive several notifications. The promise should be set only
+    // on the first occurrence.
+    threading::Mutex m_promiseMutex;
+    bool m_promiseSet = false;
     std::promise<void> m_promise;
     std::future<void> m_future;
     librados::IoCtx & m_context;
