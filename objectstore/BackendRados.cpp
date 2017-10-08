@@ -212,6 +212,7 @@ BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::stri
 
 void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
   threading::MutexLocker ml(m_promiseMutex);
+  if (m_promiseSet) return;
   m_promise.set_value();
   TIMESTAMPEDPRINT("Handled notify");
   m_promiseSet = true;
@@ -219,6 +220,7 @@ void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
 
 void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
   threading::MutexLocker ml(m_promiseMutex);
+  if (m_promiseSet) return;
   m_promise.set_value();
   TIMESTAMPEDPRINT("Handled notify");
   m_promiseSet = true;
