@@ -45,10 +45,13 @@ if ! RESULT=`unset XrdSecPROTOCOL XrdSecSSSKT ; /usr/bin/eos ls -y ${FILE_PATH} 
 fi
 
 #if RESULT=`2>&1 ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl ${DST_URL} --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} --recoveryblob:base64 ${METADATA_BASE64}`; then
-if RESULT=`2>&1 ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl ${DST_URL} --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} ; then
+if RESULT=`2>&1 ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl "${DST_URL}" --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} ; then
   echo "$LOG_DATE $LOG_SCRIPT_NAME queued retrieve request: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 else
+  echo "TURL=${TURL}" >> ${LOG_FILE}
+  echo "DST_URL=${DST_URL}" >> ${LOG_FILE}
+  echo ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl "${DST_URL}" --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} >> ${LOG_FILE}
   echo "$LOG_DATE $LOG_SCRIPT_NAME failed to queue retrieve request: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit ${ECANCELED}
 fi
