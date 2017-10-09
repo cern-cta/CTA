@@ -91,6 +91,8 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     yum clean all \
   && \
+    rm -rf /var/cache/yum \
+  && \
     mkdir -pv /etc/cta
 
 # Mark the image as a buildtree image

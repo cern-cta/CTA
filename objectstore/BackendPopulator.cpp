@@ -29,18 +29,29 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
     const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType, lc.logger()),
     m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
+  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
+  // We might have to create the agent register (but this is unlikely)
+  try {
+    re.getAgentRegisterAddress();
+  } catch (...) {
+    RootEntry re2(m_backend);
+    ScopedExclusiveLock rel(re2);
+    re2.fetch();
+    re2.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+  }
   Agent agent(m_agentReference.getAgentAddress(), m_backend);
   agent.initialize();
-  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
-  rel.release();
   agent.insertAndRegisterSelf();
-  rel.lock(re);
-  re.fetch();
-  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
-  rel.release();
+  // Likewise, make sure the drive register is around.
+  try {
+    re.getDriveRegisterAddress();
+  } catch (...) {
+    RootEntry re2(m_backend);
+    ScopedExclusiveLock rel(re2);
+    re2.fetch();
+    re2.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
+  }
 }
 
 //------------------------------------------------------------------------------
