@@ -325,10 +325,14 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    diskFileInfo.group       = notification.file().owner().groupname();
    diskFileInfo.path        = notification.file().lpath();
 
-   cta::common::dataStructures::ArchiveRequest request;
+   std::string checksumtype(notification.file().cks().name());
+   if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
+
    std::string checksumvalue("0X" + notification.file().cks().value());
-   cta::utils::toUpper(checksumvalue);
-   request.checksumType     = notification.file().cks().name();
+   cta::utils::toUpper(checksumvalue);    // replace this with a number!
+
+   cta::common::dataStructures::ArchiveRequest request;
+   request.checksumType     = checksumtype;
    request.checksumValue    = checksumvalue;
    request.diskFileInfo     = diskFileInfo;
    request.diskFileID       = notification.file().fid();
