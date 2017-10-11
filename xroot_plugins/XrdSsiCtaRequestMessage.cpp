@@ -332,15 +332,18 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    cta::utils::toUpper(checksumvalue);    // replace this with a number!
 
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType     = checksumtype;
-   request.checksumValue    = checksumvalue;
-   request.diskFileInfo     = diskFileInfo;
-   request.diskFileID       = std::to_string(notification.file().fid());
-   request.fileSize         = notification.file().size();
-   request.requester        = originator;
-   request.srcURL           = notification.wf().instance().url();
-   request.storageClass     = notification.file().xattr().at("CTA_StorageClass");
-   request.archiveReportURL = notification.transport().report_url();
+   request.checksumType         = checksumtype;
+   request.checksumValue        = checksumvalue;
+   request.diskFileInfo         = diskFileInfo;
+   request.diskFileID           = std::to_string(notification.file().fid());
+   request.fileSize             = notification.file().size();
+   request.requester            = originator;
+   request.srcURL               = notification.wf().instance().url();
+   request.storageClass         = notification.file().xattr().at("CTA_StorageClass");
+   request.archiveReportURL     = notification.transport().report_url();
+   request.creationLog.host     = m_cliIdentity.host;
+   request.creationLog.username = m_cliIdentity.username;
+   request.creationLog.time     = time(nullptr);
 
    // Queue the request
 
