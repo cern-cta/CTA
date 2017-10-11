@@ -279,11 +279,9 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    fillNotification(notification, isStderr, isJson, argc, argv);
 
-   std::ostream &myout = isStderr ? std::cerr : std::cout;
-
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(myout, &notification);
+      XrdSsiPb::OutputJsonString(std::cout, &notification);
    }
 
    // Get socket address of CTA Frontend endpoint
@@ -303,7 +301,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(myout, &response);
+      XrdSsiPb::OutputJsonString(std::cout, &response);
    }
 
    // Handle responses
@@ -312,7 +310,10 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    {
       using namespace cta::xrd;
 
-      case Response::RSP_SUCCESS:         myout << response.message_txt() << std::endl; break;
+      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl; break;
+                                          if(isStderr) {
+                                             std::cerr << response.message_txt() << std::endl; break;
+                                          }
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       // ... define other response types in the protocol buffer (e.g. user error)

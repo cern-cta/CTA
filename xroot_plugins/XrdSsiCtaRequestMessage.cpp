@@ -381,6 +381,10 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    diskFileInfo.group           = notification.file().owner().groupname();
    diskFileInfo.path            = notification.file().lpath();
 
+   // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
+   // and we need to decide what will be stored in the database.
+   diskFileInfo.recoveryBlob = "deprecated";
+
    cta::common::dataStructures::RetrieveRequest request;
    request.requester            = originator;
    request.dstURL               = notification.transport().dst_url();
