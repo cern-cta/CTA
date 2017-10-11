@@ -373,18 +373,21 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Unpack message
 
    cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
+   originator.name              = notification.cli().user().username();
+   originator.group             = notification.cli().user().groupname();
 
    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner       = notification.file().owner().username();
-   diskFileInfo.group       = notification.file().owner().groupname();
-   diskFileInfo.path        = notification.file().lpath();
+   diskFileInfo.owner           = notification.file().owner().username();
+   diskFileInfo.group           = notification.file().owner().groupname();
+   diskFileInfo.path            = notification.file().lpath();
 
    cta::common::dataStructures::RetrieveRequest request;
-   request.requester        = originator;
-   request.dstURL           = notification.transport().dst_url();
-   request.diskFileInfo     = diskFileInfo;
+   request.requester            = originator;
+   request.dstURL               = notification.transport().dst_url();
+   request.diskFileInfo         = diskFileInfo;
+   request.creationLog.host     = m_cliIdentity.host;
+   request.creationLog.username = m_cliIdentity.username;
+   request.creationLog.time     = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
