@@ -310,10 +310,11 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    {
       using namespace cta::xrd;
 
-      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl; break;
+      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl;
                                           if(isStderr) {
-                                             std::cerr << response.message_txt() << std::endl; break;
+                                             std::cerr << response.message_txt() << std::endl;
                                           }
+                                          break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       // ... define other response types in the protocol buffer (e.g. user error)
