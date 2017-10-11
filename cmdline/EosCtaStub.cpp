@@ -68,6 +68,9 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
 {
    using namespace std;
 
+   // Recovery blob is deprecated, no need to unpack it
+   return;
+
    string base64str(argval.substr(7)); // delete "base64:" from start of string
 
    // Decode Base64 blob
