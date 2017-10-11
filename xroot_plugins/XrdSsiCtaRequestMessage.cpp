@@ -335,7 +335,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.checksumType     = checksumtype;
    request.checksumValue    = checksumvalue;
    request.diskFileInfo     = diskFileInfo;
-   request.diskFileID       = notification.file().fid();
+   request.diskFileID       = std::to_string(notification.file().fid());
    request.fileSize         = notification.file().size();
    request.requester        = originator;
    request.srcURL           = notification.wf().instance().url();
