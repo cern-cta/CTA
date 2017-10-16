@@ -180,7 +180,7 @@ Frontend Interface
 %defattr(0755,root,root)
 %{_libdir}/libXrdCtaMessages.a
 %{_includedir}/cta
-%{_includedir}/cta/messages
+%{_includedir}/cta/xroot_plugins/messages
 
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface

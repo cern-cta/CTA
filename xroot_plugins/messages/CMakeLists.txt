@@ -33,7 +33,7 @@ install (TARGETS XrdCtaMessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (
   FILES ${ProtoHeaders}
-  DESTINATION usr/${CMAKE_INSTALL_INCLUDEDIR}/cta/messages
+  DESTINATION usr/${CMAKE_INSTALL_INCLUDEDIR}/cta/xroot_plugins/messages
 )
 
 install (
