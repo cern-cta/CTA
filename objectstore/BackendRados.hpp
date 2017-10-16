@@ -97,21 +97,29 @@ private:
   /**
    * A class handling the watch part when waiting for a lock.
    */
-  class LockWatcher: public librados::WatchCtx2 {
+  class LockWatcher {
   public:
     LockWatcher(librados::IoCtx & context, const std::string & name);
-    void handle_error(uint64_t cookie, int err) override;
-    void handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) override;
     virtual ~LockWatcher();
     typedef std::chrono::microseconds durationUs;
     void wait(const durationUs & timeout);
   private:
-    // We could receive several notifications. The promise should be set only
-    // on the first occurrence.
-    threading::Mutex m_promiseMutex;
-    bool m_promiseSet = false;
-    std::promise<void> m_promise;
-    std::future<void> m_future;
+    /** An internal class containing the internals exposed to the callback of Rados.
+     * The internals are kept separated so we can used asynchronous unwatch and forget
+     * about the structure. The callback of aio_unwatch will take care of releasing the
+     * object */
+    struct Internal: public librados::WatchCtx2 {
+      void handle_error(uint64_t cookie, int err) override;
+      void handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) override;
+      static void deleter(librados::completion_t cb, void * i);
+      // We could receive several notifications. The promise should be set only
+      // on the first occurrence.
+      threading::Mutex m_promiseMutex;
+      bool m_promiseSet = false;
+      std::promise<void> m_promise;
+      std::future<void> m_future;
+    };
+    std::unique_ptr<Internal> m_internal;
     librados::IoCtx & m_context;
     std::string m_name;
     uint64_t m_watchHandle;

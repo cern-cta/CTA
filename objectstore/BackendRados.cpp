@@ -204,13 +204,14 @@ BackendRados::ScopedLock::~ScopedLock() {
 
 BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
   m_context(context), m_name(name) {
-  m_future = m_promise.get_future();
+  m_internal.reset(new Internal);
+  m_internal->m_future = m_internal->m_promise.get_future();
   TIMESTAMPEDPRINT("Pre-watch2");
-  cta::exception::Errnum::throwOnReturnedErrno(-m_context.watch2(name, &m_watchHandle, this));
+  cta::exception::Errnum::throwOnReturnedErrno(-m_context.watch2(name, &m_watchHandle, m_internal.get()));
   TIMESTAMPEDPRINT("Post-watch2");
 }
 
-void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
+void BackendRados::LockWatcher::Internal::handle_error(uint64_t cookie, int err) {
   threading::MutexLocker ml(m_promiseMutex);
   if (m_promiseSet) return;
   m_promise.set_value();
@@ -218,7 +219,7 @@ void BackendRados::LockWatcher::handle_error(uint64_t cookie, int err) {
   m_promiseSet = true;
 }
 
-void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
+void BackendRados::LockWatcher::Internal::handle_notify(uint64_t notify_id, uint64_t cookie, uint64_t notifier_id, librados::bufferlist& bl) {
   threading::MutexLocker ml(m_promiseMutex);
   if (m_promiseSet) return;
   m_promise.set_value();
@@ -228,14 +229,18 @@ void BackendRados::LockWatcher::handle_notify(uint64_t notify_id, uint64_t cooki
 
 void BackendRados::LockWatcher::wait(const durationUs& timeout) {
   TIMESTAMPEDPRINT("Pre-wait"); 
-  m_future.wait_for(timeout);
+  m_internal->m_future.wait_for(timeout);
   TIMESTAMPEDPRINT("Post-wait");
 }
 
 BackendRados::LockWatcher::~LockWatcher() {
   TIMESTAMPEDPRINT("Pre-unwatch2");
-  m_context.unwatch2(m_watchHandle);
+  librados::Rados::aio_create_completion(m_internal.release(), nullptr, Internal::deleter);
   TIMESTAMPEDPRINT("Post-unwatch2");
+}
+
+void BackendRados::LockWatcher::Internal::deleter(librados::completion_t cb, void* i) {
+  delete (Internal *) i;
 }
 
 std::string BackendRados::createUniqueClientId() {
@@ -290,7 +295,7 @@ void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-relock (shared)":"Post-relock (exclusive)");
     }
     if (-EBUSY != rc) break;
-    LockWatcher::durationUs watchTimeout = LockWatcher::durationUs(5L * 1000 * 1000); // We will poll at least every 5 second.
+    LockWatcher::durationUs watchTimeout = LockWatcher::durationUs(15L * 1000 * 1000); // We will poll at least every 15 second.
     // If we are dealing with a user-defined timeout, take it into account.
     if (timeout_us) {
       watchTimeout = std::min(watchTimeout, 
