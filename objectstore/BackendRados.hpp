@@ -23,6 +23,22 @@
 #include "common/threading/Mutex.hpp"
 #include <future>
 
+// RADOS_LOCKING can be NOTIFY or BACKOFF
+#define RADOS_LOCKING_STRATEGY NOTIFY
+
+// Define this to get long response times logging.
+#define RADOS_SLOW_CALLS_LOGGING
+#define RADOS_SLOW_CALLS_LOGGING_FILE "/var/tmp/cta-rados-slow-calls.log"
+#define RADOS_SLOW_CALL_TIMEOUT 1
+
+#ifdef RADOS_SLOW_CALLS_LOGGING
+#include "common/Timer.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include <fstream>
+#include <iomanip>
+#include <algorithm>
+#endif //RADOS_SLOW_CALLS_LOGGING
 
 namespace cta { namespace objectstore {
 /**
@@ -69,6 +85,10 @@ public:
     friend class BackendRados;
   public:
     void release() override;
+  private:
+    inline void releaseBackoff();
+    inline void releaseNotify();
+  public:
     ~ScopedLock() override;
   private:
     ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
@@ -88,12 +108,45 @@ private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */
   void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
+  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
+  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
   
 public:  
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
   ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
 private:
+  /** 
+   * A class for logging the calls to rados taking too long.
+   * If RADOS_SLOW_CALLS_LOGGING is not defined, this is just an empty shell.
+   */
+  class RadosTimeoutLogger {
+  public:
+    void logIfNeeded(const std::string & radosCall, const std::string & objectName) {
+      #ifdef RADOS_SLOW_CALLS_LOGGING
+      if (m_timer.secs() >= RADOS_SLOW_CALL_TIMEOUT) {
+        cta::threading::MutexLocker ml(g_mutex);
+        std::ofstream logFile(RADOS_SLOW_CALLS_LOGGING_FILE, std::ofstream::app);
+        std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::string date=std::ctime(&end_time);
+        // Chomp newline in the end
+        date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
+        logFile << date << " op=" << radosCall << " obj=" << objectName << " duration=" << m_timer.secs() <<  std::endl;
+      }
+      #endif //RADOS_SLOW_CALLS_LOGGING
+    }
+    void reset() {
+      #ifdef RADOS_SLOW_CALLS_LOGGING
+      m_timer.reset();
+      #endif //RADOS_SLOW_CALLS_LOGGING
+    }
+  private:
+    #ifdef RADOS_SLOW_CALLS_LOGGING
+    cta::utils::Timer m_timer;
+    static cta::threading::Mutex g_mutex;
+    #endif //RADOS_SLOW_CALLS_LOGGING
+  };
+
   /**
    * A class handling the watch part when waiting for a lock.
    */
@@ -118,10 +171,11 @@ private:
       bool m_promiseSet = false;
       std::promise<void> m_promise;
       std::future<void> m_future;
+      RadosTimeoutLogger m_radosTimeoutLogger;
+      std::string m_name;
     };
     std::unique_ptr<Internal> m_internal;
     librados::IoCtx & m_context;
-    std::string m_name;
     uint64_t m_watchHandle;
   };
   
@@ -165,6 +219,8 @@ public:
     static void commitCallback(librados::completion_t completion, void *pThis);
     /** The fourth callback operation (after unlocking) */
     static void unlockCallback(librados::completion_t completion, void *pThis);
+    /** Instrumentation for rados calls timing */
+    RadosTimeoutLogger m_radosTimeoutLogger;
   };
   
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
@@ -200,6 +256,8 @@ public:
     static void deleteCallback(librados::completion_t completion, void *pThis);
     /** Async delete in case of zero sized object */
     static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
+    /** Instrumentation for rados calls timing */
+    RadosTimeoutLogger m_radosTimeoutLogger;
   };
   
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;

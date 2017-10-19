@@ -78,6 +78,8 @@ void notifyLocked() {
 
 namespace cta { namespace objectstore {
 
+cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
+
 BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
 m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtx() {
   cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.init(userId.c_str()),
@@ -100,8 +102,12 @@ m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosC
 }
 
 BackendRados::~BackendRados() {
+  RadosTimeoutLogger rtl1;
   m_radosCtx.close();
+  rtl1.logIfNeeded("In BackendRados::~BackendRados(): m_radosCtx.close()", "no object");
+  RadosTimeoutLogger rtl2;
   m_cluster.shutdown();
+  rtl2.logIfNeeded("In BackendRados::~BackendRados(): m_cluster.shutdown()", "no object");
 }
 
 void BackendRados::create(std::string name, std::string content) {
@@ -111,9 +117,11 @@ void BackendRados::create(std::string name, std::string content) {
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
+  RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.operate(name, &wop),
       std::string("In ObjectStoreRados::create, failed to create exclusively or write: ")
       + name);
+  rtl.logIfNeeded("In BackendRados::create(): m_radosCtx.operate(create+write_full)", name);
 }
 
 void BackendRados::atomicOverwrite(std::string name, std::string content) {
@@ -122,29 +130,38 @@ void BackendRados::atomicOverwrite(std::string name, std::string content) {
   ceph::bufferlist bl;
   bl.append(content.c_str(), content.size());
   wop.write_full(bl);
+  RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.operate(name, &wop),
       std::string("In ObjectStoreRados::atomicOverwrite, failed to assert existence or write: ")
       + name);
+  rtl.logIfNeeded("In BackendRados::atomicOverwrite(): m_radosCtx.operate(assert_exists+write_full)", name);
 }
 
 std::string BackendRados::read(std::string name) {
   std::string ret;
   librados::bufferlist bl;
+  RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
       std::string("In ObjectStoreRados::read,  failed to read: ")
       + name);
+  rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
   bl.copy(0, bl.length(), ret);
   return ret;
 }
 
 void BackendRados::remove(std::string name) {
+  RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnReturnedErrno(-m_radosCtx.remove(name));
+  rtl.logIfNeeded("In BackendRados::remove(): m_radosCtx.remove()", name);
 }
 
 bool BackendRados::exists(std::string name) {
   uint64_t size;
   time_t date;
-  if (m_radosCtx.stat(name, &size, &date)) {
+  RadosTimeoutLogger rtl;
+  auto statRet=m_radosCtx.stat(name, &size, &date);
+  rtl.logIfNeeded("In BackendRados::exists(): m_radosCtx.stat()", name);
+  if (statRet) {
     return false;
   } else {
     return true;
@@ -159,14 +176,25 @@ std::list<std::string> BackendRados::list() {
   return ret;
 }
 
-
 void BackendRados::ScopedLock::release() {
+#if RADOS_LOCKING_STRATEGY == NOTIFY
+  releaseNotify();
+#elif RADOS_LOCKING_STRATEGY == BACKOFF
+  releaseBackoff();
+#else
+#error Wrong value for "RADOS_LOCKING_STRATEGY"
+#endif
+}
+
+void BackendRados::ScopedLock::releaseNotify() {
   if (!m_lockSet) return;
   // We should be tolerant with unlocking a deleted object, which is part
   // of the lock-remove-(implicit unlock) cycle when we delete an object
   // we hence overlook the ENOENT errors.
   TIMESTAMPEDPRINT("Pre-release");
+  RadosTimeoutLogger rtl1;
   int rc=m_context.unlock(m_oid, "lock", m_clientId);
+  rtl1.logIfNeeded("In BackendRados::ScopedLock::releaseNotify(): m_context.unlock()", m_oid);
   switch (-rc) {
     case ENOENT:
       break;
@@ -181,10 +209,12 @@ void BackendRados::ScopedLock::release() {
   // Notify potential waiters to take their chances now on the lock.
   utils::Timer t;
   librados::bufferlist bl;
-  // We use a fire aand forget aio call.
+  // We use a fire and forget aio call.
   librados::AioCompletion * completion = librados::Rados::aio_create_completion(nullptr, nullptr, nullptr);
+  RadosTimeoutLogger rtl2;
   cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_notify(m_oid, completion, bl, 10000, nullptr), 
       "In BackendRados::ScopedLock::release(): failed to aio_notify()");
+  rtl2.logIfNeeded("In BackendRados::ScopedLock::releaseNotify(): m_context.aio_notify()", m_oid);
   completion->release();
   m_lockSet = false;
   TIMESTAMPEDPRINT("Post-notify");
@@ -203,11 +233,14 @@ BackendRados::ScopedLock::~ScopedLock() {
 }
 
 BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
-  m_context(context), m_name(name) {
+  m_context(context) {
   m_internal.reset(new Internal);
+  m_internal->m_name = name;
   m_internal->m_future = m_internal->m_promise.get_future();
   TIMESTAMPEDPRINT("Pre-watch2");
+  RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnReturnedErrno(-m_context.watch2(name, &m_watchHandle, m_internal.get()));
+  rtl.logIfNeeded("In BackendRados::LockWatcher::LockWatcher(): m_context.watch2()", name);
   TIMESTAMPEDPRINT("Post-watch2");
 }
 
@@ -234,13 +267,21 @@ void BackendRados::LockWatcher::wait(const durationUs& timeout) {
 }
 
 BackendRados::LockWatcher::~LockWatcher() {
-  TIMESTAMPEDPRINT("Pre-unwatch2");
-  librados::Rados::aio_create_completion(m_internal.release(), nullptr, Internal::deleter);
-  TIMESTAMPEDPRINT("Post-unwatch2");
+  TIMESTAMPEDPRINT("Pre-aio_unwatch2");
+  m_internal->m_radosTimeoutLogger.reset();
+  auto name=m_internal->m_name;
+  librados::AioCompletion *completion = librados::Rados::aio_create_completion(m_internal.release(), nullptr, Internal::deleter);
+  RadosTimeoutLogger rtl;
+  m_context.aio_unwatch(m_watchHandle, completion);
+  completion->release();
+  rtl.logIfNeeded("In BackendRados::LockWatcher::~LockWatcher(): m_context.aio_unwatch() call", name);
+  TIMESTAMPEDPRINT("Post-aio_unwatch2");
 }
 
 void BackendRados::LockWatcher::Internal::deleter(librados::completion_t cb, void* i) {
-  delete (Internal *) i;
+  TIMESTAMPEDPRINT("Unwatch2 completion");
+  std::unique_ptr<Internal> internal((Internal *) i);
+  internal->m_radosTimeoutLogger.logIfNeeded("BackendRados::LockWatcher::Internal::deleter(): aio_unwatch callback", internal->m_name);
 }
 
 std::string BackendRados::createUniqueClientId() {
@@ -254,7 +295,17 @@ std::string BackendRados::createUniqueClientId() {
   return client.str();
 }
 
-void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType, 
+void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId) {
+#if RADOS_LOCKING_STRATEGY == NOTIFY
+  lockNotify(name, timeout_us, lockType, clientId);
+#elif RADOS_LOCKING_STRATEGY == BACKOFF
+  lockBackoff(name, timeout_us, lockType, clientId);
+#else
+#error Wrong value for "RADOS_LOCKING_STRATEGY"
+#endif
+}
+
+void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 
   const std::string & clientId) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
@@ -267,10 +318,14 @@ void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType
   utils::Timer timeoutTimer;
   while (true) {
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
-    if (lockType==LockType::Shared)
+    RadosTimeoutLogger rtl;
+    if (lockType==LockType::Shared) {
       rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
-    else
+      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
+    } else {
       rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
+    }
     if (!rc) {
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-lock (shared) (got it)":"Post-lock (exclusive) (got it)");
       NOTIFYLOCKED();
@@ -284,10 +339,14 @@ void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType
     LockWatcher watcher(m_radosCtx, name);
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-watch-setup/Pre-relock (shared)":"Post-watch-setup/Pre-relock (exclusive)");
     // We need to retry the lock after establishing the watch: it could have been released during that time.
-    if (lockType==LockType::Shared)
+    rtl.reset();
+    if (lockType==LockType::Shared) {
       rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
-    else
+      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
+    } else {
       rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+      rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
+    }
     if (!rc) {
       TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-relock (shared) (got it)":"Post-relock (exclusive) (got it)");
       NOTIFYLOCKED();
@@ -366,10 +425,13 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
             m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the read operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
+            RadosTimeoutLogger rtl;
+            m_radosTimeoutLogger.reset();
             auto rc=m_backend.m_radosCtx.aio_read(m_name, aioc, &m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
+            rtl.logIfNeeded("BackendRados::AsyncUpdater::AsyncUpdater::lock_lambda(): m_radosCtx.aio_read()", m_name);
             aioc->release();
             if (rc) {
-              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_read(): ")+m_name);
+              cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::AsyncUpdater::lock_lambda(): failed to launch aio_read(): ")+m_name);
               throw Backend::NoSuchObject(errnum.getMessageValue());
             }
           } catch (...) {
@@ -403,6 +465,7 @@ void BackendRados::AsyncUpdater::deleteEmptyCallback(librados::completion_t comp
 
 void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion, void* pThis) {
   AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  au.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncUpdater::fetchCallback(): aio_read callback", au.m_name);
   try {
     // Check that the object could be read.
     if (rados_aio_get_return_value(completion)<0) {
@@ -462,7 +525,10 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
               }
               // Launch the write
               librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, commitCallback, nullptr);
+              RadosTimeoutLogger rtl;
+              au.m_radosTimeoutLogger.reset();
               auto rc=au.m_backend.m_radosCtx.aio_write_full(au.m_name, aioc, au.m_radosBufferList);
+              rtl.logIfNeeded("In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): m_radosCtx.aio_write_full() call", au.m_name);
               aioc->release();
               if (rc) {
                 cta::exception::Errnum errnum (-rc, 
@@ -484,6 +550,7 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
 
 void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completion, void* pThis) {
   AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  au.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncUpdater::commitCallback(): aio_write_full() callback", au.m_name);
   try {
     // Check that the object could be written.
     if (rados_aio_get_return_value(completion)) {
@@ -493,7 +560,10 @@ void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completio
     }
     // Launch the async unlock.
     librados::AioCompletion * aioc = librados::Rados::aio_create_completion(pThis, unlockCallback, nullptr);
+    au.m_radosTimeoutLogger.reset();
+    RadosTimeoutLogger rtl;
     auto rc=au.m_backend.m_radosCtx.aio_unlock(au.m_name, "lock", au.m_lockClient, aioc);
+    rtl.logIfNeeded("In BackendRados::AsyncUpdater::commitCallback(): m_radosCtx.aio_unlock", au.m_name);
     aioc->release();
     if (rc) {
       cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::commitCallback(): failed to launch aio_unlock()")+au.m_name);
@@ -507,6 +577,7 @@ void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completio
 
 void BackendRados::AsyncUpdater::unlockCallback(librados::completion_t completion, void* pThis) {
   AsyncUpdater & au = *((AsyncUpdater *) pThis);
+  au.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncUpdater::unlockCallback(): aio_unlock() callback", au.m_name);
   try {
     // Check that the object could be unlocked.
     if (rados_aio_get_return_value(completion)) {
@@ -549,7 +620,10 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
             m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the remove operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, deleteCallback, nullptr);
+            m_radosTimeoutLogger.reset();
+            RadosTimeoutLogger rtl;
             auto rc=m_backend.m_radosCtx.aio_remove(m_name, aioc);
+            rtl.logIfNeeded("In BackendRados::AsyncDeleter::AsyncDeleter(): m_radosCtx.aio_remove() call", m_name);
             aioc->release();
             if (rc) {
               cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncUpdater::statCallback(): failed to launch aio_remove(): ")+m_name);
@@ -569,6 +643,7 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
 
 void BackendRados::AsyncDeleter::deleteCallback(librados::completion_t completion, void* pThis) {
   AsyncDeleter & au = *((AsyncDeleter *) pThis);
+  au.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncDeleter::deleteCallback(): aio_remove() callback", au.m_name);
   try {
     // Check that the object could be deleted.
     if (rados_aio_get_return_value(completion)) {
