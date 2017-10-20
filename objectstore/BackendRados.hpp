@@ -38,6 +38,7 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
+#include <syscall.h>
 #endif //RADOS_SLOW_CALLS_LOGGING
 
 namespace cta { namespace objectstore {
@@ -131,7 +132,8 @@ private:
         std::string date=std::ctime(&end_time);
         // Chomp newline in the end
         date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-        logFile << date << " op=" << radosCall << " obj=" << objectName << " duration=" << m_timer.secs() <<  std::endl;
+        logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " op=" 
+                << radosCall << " obj=" << objectName << " duration=" << m_timer.secs() <<  std::endl;
       }
       #endif //RADOS_SLOW_CALLS_LOGGING
     }
