@@ -77,8 +77,7 @@ void OStoreDB::assertAgentAddressSet() {
 void OStoreDB::ping() {
   // Validate we can lock and fetch the root entry.
   objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
+  re.fetchNoLock();
 }
 
 //------------------------------------------------------------------------------
