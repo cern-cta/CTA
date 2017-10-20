@@ -406,7 +406,7 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
         std::string("In ObjectStoreRados::lock, failed to librados::IoCtx::remove: ") +
         name + "//");
-    throw Backend::NoSuchObject(std::string("In BackendRados::lock(): "
+    throw Backend::NoSuchObject(std::string("In BackendRados::lockWatch(): "
         "trying to lock a non-existing object: ") + name);
   }
 }
@@ -474,7 +474,8 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
         std::string("In ObjectStoreRados::lockBackoff, failed to librados::IoCtx::remove: ") +
         name + "//");
-    throw cta::exception::Errnum(ENOENT, std::string("In BackendRados::lockBackoff(): trying to lock a non-existing object: ") + name);
+    throw Backend::NoSuchObject(std::string("In BackendRados::lockBackoff(): "
+        "trying to lock a non-existing object: ") + name);
   }
 }
 
