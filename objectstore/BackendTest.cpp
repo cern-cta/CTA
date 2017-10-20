@@ -111,8 +111,8 @@ TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
   std::atomic<uint64_t> counter(0);
   std::list<std::future<void>> insertCompletions;
   std::list<std::function<void()>> lambdas;
-  const size_t threadCount=20;
-  const size_t passCount=20;
+  const size_t threadCount=100;
+  const size_t passCount=100;
   for (size_t i=0; i<threadCount; i++) {
     lambdas.emplace_back([&testObjectName,os,&passCount,&counter,i](){
       for (size_t pass=0; pass<passCount; pass++) {
