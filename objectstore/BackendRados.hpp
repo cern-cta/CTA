@@ -24,7 +24,9 @@
 #include <future>
 
 // RADOS_LOCKING can be NOTIFY or BACKOFF
-#define RADOS_LOCKING_STRATEGY NOTIFY
+#define BACKOFF (1)
+#define NOTIFY (2)
+#define RADOS_LOCKING_STRATEGY BACKOFF
 
 // Define this to get long response times logging.
 #define RADOS_SLOW_CALLS_LOGGING

@@ -207,18 +207,40 @@ void BackendRados::ScopedLock::releaseNotify() {
   NOTIFYRELEASED();
   TIMESTAMPEDPRINT("Post-release/pre-notify");
   // Notify potential waiters to take their chances now on the lock.
-  utils::Timer t;
   librados::bufferlist bl;
   // We use a fire and forget aio call.
   librados::AioCompletion * completion = librados::Rados::aio_create_completion(nullptr, nullptr, nullptr);
   RadosTimeoutLogger rtl2;
   cta::exception::Errnum::throwOnReturnedErrno(-m_context.aio_notify(m_oid, completion, bl, 10000, nullptr), 
-      "In BackendRados::ScopedLock::release(): failed to aio_notify()");
+      "In BackendRados::ScopedLock::releaseNotify(): failed to aio_notify()");
   rtl2.logIfNeeded("In BackendRados::ScopedLock::releaseNotify(): m_context.aio_notify()", m_oid);
   completion->release();
   m_lockSet = false;
   TIMESTAMPEDPRINT("Post-notify");
 }
+
+void BackendRados::ScopedLock::releaseBackoff() {
+  if (!m_lockSet) return;
+  // We should be tolerant with unlocking a deleted object, which is part
+  // of the lock-remove-(implicit unlock) cycle when we delete an object
+  // we hence overlook the ENOENT errors.
+  TIMESTAMPEDPRINT("Pre-release");
+  RadosTimeoutLogger rtl1;
+  int rc=m_context.unlock(m_oid, "lock", m_clientId);
+  rtl1.logIfNeeded("In BackendRados::ScopedLock::releaseBackoff(): m_context.unlock()", m_oid);
+  switch (-rc) {
+    case ENOENT:
+      break;
+    default:
+      cta::exception::Errnum::throwOnReturnedErrno(-rc,
+        std::string("In cta::objectstore::ScopedLock::releaseBackoff, failed unlock: ") +
+        m_oid);
+      break;
+  }
+  NOTIFYRELEASED();
+  TIMESTAMPEDPRINT("Post-release");
+}
+
 
 void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId, 
     LockType lockType) {
@@ -310,7 +332,6 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
   // (while we own the lock).
-  std::string client = createUniqueClientId();
   struct timeval tv;
   tv.tv_usec = 0;
   tv.tv_sec = 240;
@@ -320,10 +341,10 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
     RadosTimeoutLogger rtl;
     if (lockType==LockType::Shared) {
-      rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
+      rc = m_radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
       rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
     } else {
-      rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+      rc = m_radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
       rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
     }
     if (!rc) {
@@ -341,10 +362,10 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
     // We need to retry the lock after establishing the watch: it could have been released during that time.
     rtl.reset();
     if (lockType==LockType::Shared) {
-      rc = m_radosCtx.lock_shared(name, "lock", client, "", "", &tv, 0);
+      rc = m_radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
       rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_shared()", name);
     } else {
-      rc = m_radosCtx.lock_exclusive(name, "lock", client, "", &tv, 0);
+      rc = m_radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
       rtl.logIfNeeded("In BackendRados::lockNotify(): m_radosCtx.lock_exclusive()", name);
     }
     if (!rc) {
@@ -365,13 +386,13 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
     watcher.wait(watchTimeout);
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-wait (shared)":"Post-wait (exclusive)");
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lock(): timeout.");
+      throw exception::Exception("In BackendRados::lockNotify(): timeout.");
     }
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lock(), failed to librados::IoCtx::") + 
       (lockType==LockType::Shared?"lock_shared: ":"lock_exclusive: ") +
-      name + "/" + "lock" + "/" + client + "//");
+      name + "/" + "lock" + "/" + clientId + "//");
   // We could have created an empty object by trying to lock it. We can find this out: if the object is
   // empty, we should delete it and throw an exception.
   // Get the size:
@@ -379,7 +400,7 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
   time_t date;
   cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
       std::string("In ObjectStoreRados::lock, failed to librados::IoCtx::stat: ") +
-      name + "/" + "lock" + "/" + client + "//");
+      name + "/" + "lock" + "/" + clientId + "//");
   if (!size) {
     // The object has a zero size: we probably created it by attempting the locking.
     cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
@@ -389,6 +410,74 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
         "trying to lock a non-existing object: ") + name);
   }
 }
+
+void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId) {
+  // In Rados, locking a non-existing object will create it. This is not our intended
+  // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0 
+  // (while we own the lock).
+  struct timeval tv;
+  tv.tv_usec = 0;
+  tv.tv_sec = 240;
+  int rc;
+  // Crude backoff: we will measure the RTT of the call and backoff a faction of this amount multiplied
+  // by the number of tries (and capped by a maximum). Then the value will be randomized 
+  // (betweend and 50-150%)
+  size_t backoff=1;
+  utils::Timer t, timeoutTimer;
+  while (true) {
+    TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
+    RadosTimeoutLogger rtl;
+    if (lockType==LockType::Shared) {
+      rc = m_radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
+      rtl.logIfNeeded("In BackendRados::lockBackoff(): m_radosCtx.lock_shared()", name);
+    } else {
+      rc = m_radosCtx.lock_exclusive(name, "lock", clientId, "", &tv, 0);
+      rtl.logIfNeeded("In BackendRados::lockBackoff(): m_radosCtx.lock_exclusive()", name);
+    }
+    if (!rc) {
+      TIMESTAMPEDPRINT(lockType==LockType::Shared?"Post-lock (shared) (got it)":"Post-lock (exclusive) (got it)");
+      NOTIFYLOCKED();
+    } else {
+      TIMESTAMPEDPRINT("Post-lock");
+    }
+    if (-EBUSY != rc) break;
+    if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
+      throw exception::Exception("In BackendRados::lockBackoff(): timeout.");
+    }
+    timespec ts;
+    auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
+    wait = std::min(wait, c_maxWait);
+    if (backoff>c_maxBackoff) backoff=1;
+    // We need to get a random number [50, 150]
+    std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<size_t> distribution(50, 150);
+    decltype(wait) randFactor=distribution(dre);
+    wait=(wait * randFactor)/100;
+    ts.tv_sec = wait/(1000*1000);
+    ts.tv_nsec = (wait % (1000*1000)) * 1000;
+    nanosleep(&ts, nullptr);
+  }
+  cta::exception::Errnum::throwOnReturnedErrno(-rc,
+      std::string("In ObjectStoreRados::lock(), failed to librados::IoCtx::") + 
+      (lockType==LockType::Shared?"lock_shared: ":"lock_exclusive: ") +
+      name + "/" + "lock" + "/" + clientId + "//");
+  // We could have created an empty object by trying to lock it. We can find this out: if the object is
+  // empty, we should delete it and throw an exception.
+  // Get the size:
+  uint64_t size;
+  time_t date;
+  cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.stat(name, &size, &date),
+      std::string("In ObjectStoreRados::lockBackoff, failed to librados::IoCtx::stat: ") +
+      name + "/" + "lock" + "/" + clientId + "//");
+  if (!size) {
+    // The object has a zero size: we probably created it by attempting the locking.
+    cta::exception::Errnum::throwOnReturnedErrno (-m_radosCtx.remove(name),
+        std::string("In ObjectStoreRados::lockBackoff, failed to librados::IoCtx::remove: ") +
+        name + "//");
+    throw cta::exception::Errnum(ENOENT, std::string("In BackendRados::lockBackoff(): trying to lock a non-existing object: ") + name);
+  }
+}
+
 
 BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t timeout_us) {
   std::string client = createUniqueClientId();
