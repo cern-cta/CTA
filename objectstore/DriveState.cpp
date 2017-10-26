@@ -53,7 +53,8 @@ void DriveState::initialize(const std::string & driveName) {
   m_payload.set_unloadstarttime(0);
   m_payload.set_unmountstarttime(0);
   m_payload.set_drainingstarttime(0);
-  m_payload.set_downorupstarttime(0);
+  // In the absence of info, we sent down now.
+  m_payload.set_downorupstarttime(::time(nullptr));
   m_payload.set_probestarttime(0);
   m_payload.set_cleanupstarttime(0);
   m_payload.set_lastupdatetime(0);
