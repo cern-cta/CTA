@@ -440,8 +440,9 @@ BackendVFS::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendVFS& be, const std
   m_backend(be), m_name(name), 
   m_job(std::async(std::launch::async,
     [&](){ 
+      auto ret = m_backend.read(name);
       ANNOTATE_HAPPENS_BEFORE(&m_job);
-      return m_backend.read(name);
+      return ret;
     })) 
 { }
 
