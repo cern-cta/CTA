@@ -162,6 +162,9 @@ TEST_P(BackendAbstractTest, AsyncIOInterface) {
   std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
   updater->wait();
   ASSERT_EQ(testSecondValue, m_os->read(testObjectName));
+  // Async re-read
+  std::unique_ptr<cta::objectstore::Backend::AsyncLockfreeFetcher> reader(m_os->asyncLockfreeFetch(testObjectName));
+  ASSERT_EQ(testSecondValue, reader->wait());
   m_os->remove(testObjectName);
 }
 

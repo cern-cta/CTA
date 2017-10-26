@@ -750,28 +750,65 @@ void BackendRados::AsyncDeleter::deleteCallback(librados::completion_t completio
   }
 }
 
-void BackendRados::AsyncDeleter::deleteEmptyCallback(librados::completion_t completion, void* pThis) {
-  AsyncDeleter & au = *((AsyncDeleter *) pThis);
-  try {
-    // Check that the object could be deleted.
-    if (rados_aio_get_return_value(completion)) {
-      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
-          std::string("In BackendRados::AsyncDeleter::deleteEmptyCallback(): could not delete object: ") + au.m_name);
-      throw Backend::CouldNotDelete(errnum.getMessageValue());
-    }
-    // object deleted then throw an exception
-    throw Backend::NoSuchObject(std::string("In BackendRados::AsyncDeleter::deleteEmptyCallback(): no such object: ") + au.m_name);
-  } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
-    au.m_job.set_exception(std::current_exception());
-  }
+Backend::AsyncLockfreeFetcher* BackendRados::asyncLockfreeFetch(const std::string& name) {
+  return new AsyncLockfreeFetcher(*this, name);
 }
 
 void BackendRados::AsyncDeleter::wait() {
   m_jobFuture.get();
   ANNOTATE_HAPPENS_AFTER(&m_job);
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
-} 
+}
+
+BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendRados& be, const std::string& name):
+  m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
+  // At construction time, we just start the read.
+  librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
+  RadosTimeoutLogger rtl;
+  m_radosTimeoutLogger.reset();
+  auto rc=m_backend.m_radosCtx.aio_read(m_name, aioc, &m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
+  rtl.logIfNeeded("BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): m_radosCtx.aio_read()", m_name);
+  aioc->release();
+  if (rc) {
+    cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): failed to launch aio_read(): ")+m_name);
+    throw Backend::NoSuchObject(errnum.getMessageValue());
+  }
+}
+
+void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t completion, void* pThis) {
+  AsyncLockfreeFetcher & au = *((AsyncLockfreeFetcher *) pThis);
+  au.m_radosTimeoutLogger.logIfNeeded("In BackendRados::AsyncLockfreeFetcher::fetchCallback(): aio_read callback", au.m_name);
+  try {
+    // Check that the object could be read.
+    if (rados_aio_get_return_value(completion)<0) {
+      cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
+          std::string("In BackendRados::AsyncLockfreeFetcher::fetchCallback(): could not read object: ") + au.m_name);
+      throw Backend::CouldNotFetch(errnum.getMessageValue());
+    }
+    // The data is in the buffer list.
+    std::string value;
+    try {
+      au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
+    } catch (std::exception & ex) {
+      throw CouldNotUpdateValue(
+          std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ") +
+          au.m_name + ": "+ ex.what());
+    }
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_value(value);
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
+  } 
+}
+
+std::string BackendRados::AsyncLockfreeFetcher::wait() {
+  auto ret=m_jobFuture.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+  return ret;
+}
+
 
 std::string BackendRados::Parameters::toStr() {
   std::stringstream ret;

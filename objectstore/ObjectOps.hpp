@@ -304,6 +304,33 @@ public:
     getPayloadFromHeader();
   }
   
+  class AsyncLockfreeFetcher {
+    friend class ObjectOps;
+    AsyncLockfreeFetcher(ObjectOps & obj): m_obj(obj) {}
+  public:
+    void wait() {
+      // Current simplification: the parsing of the header/payload is synchronous.
+      // This could be delegated to the backend.
+      auto objData = m_asyncLockfreeFetcher->wait();
+      m_obj.m_noLock = true;
+      m_obj.m_existingObject = true;
+      m_obj.getHeaderFromObjectData(objData);
+      m_obj.getPayloadFromHeader();
+    }
+  private:
+    ObjectOps & m_obj;
+    std::unique_ptr<Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
+    
+  };
+  friend AsyncLockfreeFetcher;
+  
+  AsyncLockfreeFetcher * asyncLockfreeFetch () {
+    std::unique_ptr<AsyncLockfreeFetcher> ret;
+    ret.reset(new AsyncLockfreeFetcher(*this));
+    ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+    return ret.release();
+  }
+  
   void commit() {
     checkPayloadWritable();
     if (!m_existingObject) 
@@ -345,9 +372,8 @@ protected:
     }
     m_payloadInterpreted = true;
   }
-
-  void getHeaderFromObjectStore () {
-    auto objData=m_objectStore.read(getAddressIfSet());
+  
+  void getHeaderFromObjectData(const std::string & objData) {
     if (!m_header.ParseFromString(objData)) {
       // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(objData);
@@ -369,6 +395,11 @@ protected:
       throw ObjectOpsBase::WrongType(err.str());
     }
     m_headerInterpreted = true;
+  }
+
+  void getHeaderFromObjectStore () {
+    auto objData=m_objectStore.read(getAddressIfSet());
+    getHeaderFromObjectData(objData);
   }
   
 public:

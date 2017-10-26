@@ -21,6 +21,7 @@
 #include "Agent.hpp"
 #include "ArchiveRequest.hpp"
 #include "DriveRegister.hpp"
+#include "DriveState.hpp"
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "ArchiveQueue.hpp"
@@ -112,6 +113,9 @@ void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
       break;
     case serializers::DriveRegister_t:
       garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
+      break;
+    case serializers::DriveState_t:
+      garbageCollectWithType<DriveState>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::SchedulerGlobalLock_t:
       garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference, lc, catalogue);

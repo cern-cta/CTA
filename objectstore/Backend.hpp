@@ -159,6 +159,34 @@ public:
   };
   
   /**
+   * A base class handling asynchronous fetch (lockfree).
+   * The operation will be asynchronous, and the result
+   * (success or exception) will be returned via the wait() function call. 
+   */
+  class AsyncLockfreeFetcher { 
+ public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     * The return value is the content of the object.
+     */
+    virtual std::string wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncLockfreeFetcher() {}
+  };
+
+  /**
+   * Triggers the asynchronous object fetch, as described in 
+   * AsyncLockfreeFetcher class description.
+   * 
+   * @param name The name of the object to be deleted.
+   * @return pointer to a newly created AsyncDeleter
+   */
+  virtual AsyncLockfreeFetcher * asyncLockfreeFetch(const std::string & name) = 0;
+  
+  /**
    * Triggers the asynchronous object delete sequence, as described in 
    * AsyncDeleter class description.
    * 

@@ -253,18 +253,40 @@ public:
     std::unique_ptr<std::future<void>> m_lockAsync;
     /** A string used to identify the locker */
     std::string m_lockClient;
-    /** A future the hole the the structure of the update operation. It will be either empty of complete at 
-     destruction time */
-    std::unique_ptr<std::future<void>> m_updateAsync;
     /** The second callback operation (after deleting) */
     static void deleteCallback(librados::completion_t completion, void *pThis);
-    /** Async delete in case of zero sized object */
-    static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
     /** Instrumentation for rados calls timing */
     RadosTimeoutLogger m_radosTimeoutLogger;
   };
   
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
+  
+  /**
+   * A class following up the async lockfree fetch. 
+   * Constructor implicitly starts the fetch step.
+   */
+  class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
+  public:
+    AsyncLockfreeFetcher(BackendRados & be, const std::string & name);
+    std::string wait() override;
+  private:
+    /** A reference to the backend */
+    BackendRados &m_backend;
+    /** The object name */
+    const std::string m_name;
+    /** The promise that will both do the job and allow synchronization with the caller. */
+    std::promise<std::string> m_job;
+    /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
+    std::future<std::string> m_jobFuture;
+    /** The rados bufferlist used to hold the object data (read+write) */
+    ::librados::bufferlist m_radosBufferList;
+    /** The callback for the fetch operation */
+    static void fetchCallback(librados::completion_t completion, void *pThis);
+    /** Instrumentation for rados calls timing */
+    RadosTimeoutLogger m_radosTimeoutLogger;
+  };
+  
+  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
   
   class Parameters: public Backend::Parameters {
     friend class BackendRados;

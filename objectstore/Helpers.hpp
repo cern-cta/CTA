@@ -37,6 +37,7 @@ class ArchiveQueue;
 class RetrieveQueue;
 class ScopedExclusiveLock;
 class AgentReference;
+class DriveState;
 
 /**
  * A class with static functions allowing multi-object operations
@@ -98,6 +99,27 @@ private:
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
   static const time_t c_retrieveQueueCacheMaxAge = 10;
+  
+public:
+  
+  enum class CreateIfNeeded: bool {
+    create=true,
+    doNotCreate=false
+  };
+  
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
+  /**
+   * Helper to create a drive status object if needed, and return
+   * it locked exclusively and fetched.
+   * If the state is created, it will be populated with default values.
+   */
+  static void getLockedAndFetchedDriveState(DriveState & driveState, ScopedExclusiveLock & driveStateLock,
+    AgentReference & agentReference, const std::string & driveName, log::LogContext & lc, CreateIfNeeded doCreate=CreateIfNeeded::create);
+  
+  /**
+   * Helper to fetch in parallel all the drive statuses.
+   */
+  static std::list<cta::common::dataStructures::DriveState> getAllDriveStates(Backend & backend, log::LogContext & lc);
 };
 
 }} // namespace cta::objectstore

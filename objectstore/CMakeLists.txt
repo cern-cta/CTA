@@ -32,6 +32,8 @@ PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 set (CTAProtoDependants objectstore/Agent.hpp
   objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
+  objectstore/DriveRegister.hpp
+  objectstore/DriveState.hpp
   objectstore/GenericObject.hpp
   objectstore/ObjectOps.hpp
   objectstore/RetrieveRequest.hpp
@@ -60,6 +62,7 @@ add_library (ctaobjectstore SHARED
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
+  DriveState.cpp
   BackendVFS.cpp
   BackendRados.cpp
   BackendPopulator.cpp
