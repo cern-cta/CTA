@@ -313,7 +313,6 @@ int GarbageCollectorHandler::runChild() {
         receivedMessage=true;
       } catch (server::SocketPair::Timeout & ex) {}
     } while (!receivedMessage);
-    gc.reinjectOwnedObject(m_processManager.logContext());
     m_processManager.logContext().log(log::INFO,
         "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");
   } catch (cta::exception::Exception & ex) {

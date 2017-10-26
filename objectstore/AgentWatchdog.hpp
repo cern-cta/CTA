@@ -26,8 +26,7 @@ class AgentWatchdog {
 public:
   AgentWatchdog(const std::string & name, Backend & os): m_agent(name, os), 
     m_heartbeatCounter(readHeartbeat()) {
-    ScopedSharedLock lock(m_agent);
-    m_agent.fetch();
+    m_agent.fetchNoLock();
     m_timeout = m_agent.getTimeout();
   }
   
@@ -58,8 +57,7 @@ private:
   double m_timeout;
   
   uint64_t readHeartbeat() {
-    ScopedSharedLock lock(m_agent);
-    m_agent.fetch();
+    m_agent.fetchNoLock();
     return m_agent.getHeartbeatCount();
   }
 };
