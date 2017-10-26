@@ -31,8 +31,12 @@ set (RMCD_SRC_FILES
 add_executable(rmcd ${RMCD_SRC_FILES}) 
 target_link_libraries(rmcd ctarmccommon)
 
+#install (FILES rmcd.conf.example
+ # DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+ # PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 install (TARGETS rmcd DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/rmcd.1cta DESTINATION /usr/share/man/man1)
 
 set (SMC_SRC_FILES
   rmc_dismount.c
@@ -48,3 +52,4 @@ set (SMC_SRC_FILES
 add_executable(smc ${SMC_SRC_FILES}) 
 target_link_libraries(smc ctarmccommon)
 install (TARGETS smc DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/smc.1cta DESTINATION /usr/share/man/man1)

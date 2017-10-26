@@ -299,6 +299,9 @@ Tools to faciliate working with rmc and smc in cta
 %files -n cta-rmc
 %attr(0755,root,root) %{_bindir}/rmcd
 %attr(0755,root,root) %{_bindir}/smc
+%attr(0644,root,root) %doc /usr/share/man/man1/rmcd.1cta.gz
+%attr(0644,root,root) %doc /usr/share/man/man1/smc.1cta.gz
+#%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/rmcd.conf.example
 
 #%package -n cta-smc
 #Summary: Tools to faciliate working with smc in cta
