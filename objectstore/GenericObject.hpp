@@ -30,9 +30,13 @@ public:
     
   CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
   
-  /** Overload of ObjectOps's implementation: this special object tolerates all
-   * types of objects */
-  void fetch();
+  /** This object has a special, relaxed version of header parsing as all types
+   * of objects are accepted here. */
+  void getHeaderFromObjectData(const std::string& objData) override;
+
+  /** Overload of ObjectOps's implementation: this special object does not really 
+   parse its payload */
+  void getPayloadFromHeader() override {}
   
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */

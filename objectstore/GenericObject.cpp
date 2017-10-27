@@ -32,25 +32,27 @@
 
 namespace cta {  namespace objectstore {
 
-void GenericObject::fetch() {
-  // Check that the object is locked, one way or another
-  if(!m_locksCount)
-    throw NotLocked("In ObjectOps::fetch(): object not locked");
-  m_existingObject = true;
-  // Get the header from the object store. We don't care for the type
-  auto objData=m_objectStore.read(getAddressIfSet());
-  if (!m_header.ParseFromString(objData)) {
-    // Use a the tolerant parser to assess the situation.
-    m_header.ParsePartialFromString(objData);
-    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
-      m_header.InitializationErrorString());
-  }
-  m_headerInterpreted = true;
-}
-
 serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
   return m_header.type();
+}
+
+void GenericObject::getHeaderFromObjectData(const std::string& objData) {
+  if (!m_header.ParseFromString(objData)) {
+    // Use the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    // Base64 encode the header for diagnostics.
+    const bool noNewLineInBase64Output = false;
+    std::string objDataBase64;
+    CryptoPP::StringSource ss1(objData, true,
+      new CryptoPP::Base64Encoder(
+         new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
+    throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") + 
+            m_header.InitializationErrorString() + 
+            " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+            objDataBase64 + "\"");
+  }
+  m_headerInterpreted = true;
 }
 
 void GenericObject::commit() {
@@ -72,6 +74,7 @@ void GenericObject::transplantHeader(ObjectOpsBase& destination) {
   destination.m_headerInterpreted = m_headerInterpreted;
   destination.m_name = m_name;
   destination.m_nameSet = m_nameSet;
+  destination.m_noLock = m_noLock;
   destination.m_payloadInterpreted = false;
 }
 

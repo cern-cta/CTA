@@ -355,7 +355,7 @@ public:
   
 protected:
   
-  void getPayloadFromHeader () {
+  virtual void getPayloadFromHeader () {
     if (!m_payload.ParseFromString(m_header.payload())) {
       // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(m_header.payload());
@@ -373,7 +373,7 @@ protected:
     m_payloadInterpreted = true;
   }
   
-  void getHeaderFromObjectData(const std::string & objData) {
+  virtual void getHeaderFromObjectData(const std::string & objData) {
     if (!m_header.ParseFromString(objData)) {
       // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(objData);
@@ -383,8 +383,8 @@ protected:
       CryptoPP::StringSource ss1(objData, true,
         new CryptoPP::Base64Encoder(
            new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
-      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString() + 
+      throw cta::exception::Exception(std::string("In ObjectOps<") + typeid(PayloadType).name() + 
+              ">::getHeaderFromObjectData(): could not parse header: " + m_header.InitializationErrorString() + 
               " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
               objDataBase64 + "\"");
     }
