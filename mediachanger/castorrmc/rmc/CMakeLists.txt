@@ -30,10 +30,8 @@ set (RMCD_SRC_FILES
 )
 add_executable(rmcd ${RMCD_SRC_FILES}) 
 target_link_libraries(rmcd ctarmccommon)
-
-#install (FILES rmcd.conf.example
- # DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
- # PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+install (FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (FILES cta-smc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 install (TARGETS rmcd DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/rmcd.1cta DESTINATION /usr/share/man/man1)
