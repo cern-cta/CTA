@@ -436,6 +436,27 @@ void BackendVFS::AsyncDeleter::wait() {
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
+BackendVFS::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendVFS& be, const std::string& name):
+  m_backend(be), m_name(name), 
+  m_job(std::async(std::launch::async,
+    [&](){ 
+      auto ret = m_backend.read(name);
+      ANNOTATE_HAPPENS_BEFORE(&m_job);
+      return ret;
+    })) 
+{ }
+
+Backend::AsyncLockfreeFetcher* BackendVFS::asyncLockfreeFetch(const std::string& name) {
+  return new AsyncLockfreeFetcher(*this, name);
+}
+
+std::string BackendVFS::AsyncLockfreeFetcher::wait() {
+  auto ret = m_job.get();
+  ANNOTATE_HAPPENS_AFTER(&m_job);
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
+  return ret;
+}
+
 std::string BackendVFS::Parameters::toStr() {
   std::stringstream ret;
   ret << "path=" << m_path;

@@ -134,7 +134,7 @@ target_link_libraries (cta-catalogue-schema-create
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OOCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
@@ -149,7 +149,7 @@ target_link_libraries (cta-catalogue-schema-drop
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OOCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -164,7 +164,7 @@ target_link_libraries (cta-database-poll
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OOCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
@@ -179,7 +179,7 @@ target_link_libraries (cta-catalogue-admin-user-create
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OOCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
@@ -194,7 +194,7 @@ target_link_libraries (cta-catalogue-admin-host-create
 
 if (OCCI_SUPPORT)
   set_property (TARGET cta-catalogue-admin-host-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OOCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta DESTINATION /usr/share/man/man1)

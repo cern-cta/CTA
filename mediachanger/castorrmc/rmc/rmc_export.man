@@ -1,0 +1,55 @@
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_EXPORT "3castor" "$Date: 2002/12/06 15:58:32 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_export \- send a request to the Remote Media Changer daemon to have a volume exported/ejected from the robot
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rmc_api.h"\fR
+.sp
+.BI "int rmc_export (char *" server ,
+.BI "char *" smc_ldr ,
+.BI "char *" vid );
+.SH DESCRIPTION
+.B rmc_export
+asks the Remote Media Changer server running on
+.I server
+and connected to the picker
+.I smc_ldr
+to export the volume
+.IR vid .
+.TP
+.I server
+specifies the Remote Media Changer to be contacted.
+.TP
+.I smc_ldr
+is the picker device as defined in /dev.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B SECOMERR
+Communication error.
+.TP
+.B ERMCUNREC
+Unknown host or invalid loader or vid too long.
+.TP
+.B ERMCFASTR
+Unit attention.
+.TP
+.B ERMCOMSGR
+Hardware error or Medium Removal Prevented.
+.SH SEE ALSO
+.BR rmc_get_geometry(3) ,
+.B smc(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

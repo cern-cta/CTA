@@ -1,0 +1,206 @@
+.\" $Id: Castor_limits.man,v 1.15 2004/02/12 15:40:32 obarring Exp $
+.\"
+.\" Man page for the CASTOR's limits header file Castor_limits.h
+.\"
+.TH CASTOR_LIMITS "4" "$Date: 2004/02/12 15:40:32 $" "CASTOR" "File Formats"
+.SH NAME
+\fBCastor_limits\fP \- CASTOR internal limits
+
+.SH SYNOPSIS
+.BI "#include <" Castor_limits.h ">"
+
+.SH DESCRIPTION
+The \fBCastor_limits.h\fP header file contains all the common limits that all CASTOR subpackages have to respect.
+.br
+These are:
+.br
+.TP
+.B CA_MAXCKSUMNAMELEN
+maximum lenght for a checksum algorithm name
+.br
+Default value: 15
+.TP
+.B CA_MAXCLASNAMELEN
+maximum length for a fileclass name
+.br
+Default value: 15
+.TP
+.B CA_MAXCOMMENTLEN
+maximum length for user comments in metadata
+.br
+Default value: 255
+.TP
+.B CA_MAXDENFIELDS
+maximum number of density values in devinfo
+.br
+Default value: 8
+.TP
+.B CA_MAXDENLEN
+maximum length for a alphanumeric density
+.br
+Default value: 8
+.TP
+.B CA_MAXDGNLEN
+maximum length for a device group name
+.br
+Default value: 6
+.TP
+.B CA_MAXDVNLEN
+maximum length for a device name
+.br
+Default value: 63
+.TP
+.B CA_MAXDVTLEN
+maximum length for a device type
+.br
+Default value: 8
+.TP
+.B CA_MAXFIDLEN
+maximum length for a fid (DSN)
+.br
+Default value: 17
+.TP
+.B CA_MAXFSEQLEN
+maximum length for a fseq string
+.br
+Default value: 14
+.TP
+.B CA_MAXGID
+maximum value for gid
+.br
+Default value: 0x7FFFFFFF
+.TP
+.B CA_MAXGRPNAMELEN
+maximum length for a group name
+.br
+Default value: 2
+.TP
+.B CA_MAXHOSTNAMELEN
+maximum length for a hostname
+.br
+Default value: 63
+.TP
+.B CA_MAXLBLTYPLEN
+maximum length for a label type
+.br
+Default value: 3
+.TP
+.B CA_MAXLINELEN
+maximum length for a line in a log
+.br
+Default value: 1023
+.TP
+.B CA_MAXMANUFLEN
+maximum length for a cartridge manufacturer
+.br
+Default value: 12
+.TP
+.B CA_MAXMLLEN
+maximum length for a cartridge media_letter
+.br
+Default value: 1
+.TP
+.B CA_MAXMODELLEN
+maximum length for a cartridge model
+.br
+Default value: 6
+.TP
+.B CA_MAXNAMELEN
+maximum length for a pathname component
+.br
+Default value: 231
+.TP
+.B CA_MAXNBDRIVES
+maximum number of tape drives per server
+.br
+Default value: 32
+.TP
+.B CA_MAXPATHLEN
+maximum length for a pathname
+.br
+Default value: 1023
+.TP
+.B CA_MAXPOOLNAMELEN
+maximum length for a pool name
+.br
+Default value: 15
+.TP
+.B CA_MAXRBTNAMELEN 
+maximum length for a robot name
+.br
+Default value: 17
+.TP
+.B CA_MAXRECFMLEN
+maximum length for a record format
+.br
+Default value: 3
+.TP
+.B CA_MAXREGEXPLEN
+maximum length for a regular expression
+.br
+Default value: 63
+.TP
+.B CA_MAXSHORTHOSTLEN
+maximum length for a hostname without domain
+.br
+Default value: 10
+.TP
+.B CA_MAXSNLEN
+maximum length for a cartridge serial nb
+.br
+Default value: 24
+.TP
+.B CA_MAXSTGRIDLEN
+maximum length for a stager full request id
+.br
+(must be >= nb digits in
+.br
+.B CA_MAXSTGREQID
++
+.B CA_MAXHOSTNAMELEN
++ 8)
+.br
+Default value: 77
+.TP
+.B CA_MAXSTGREQID
+maximum value for a stager request id
+.br
+Default value: 999999
+.TP
+.B CA_MAXUID
+maximum value for uid
+.br
+Default value: 0x7FFFFFFF
+.TP
+.B CA_MAXTAGLEN
+maximum length for a volume tag
+.br
+Default value: 255
+.TP
+.B CA_MAXTAPELIBLEN
+maximum length for a tape library name
+.br
+Default value: 8
+.TP
+.B CA_MAXUNMLEN
+maximum length for a drive name
+.br
+Default value: 8
+.TP
+.B CA_MAXUSRNAMELEN
+maximum length for a login name
+.br
+Default value: 14
+.TP
+.B CA_MAXVIDLEN
+maximum length for a VID
+.br
+Default value: 6
+.TP
+.B CA_MAXVSNLEN
+maximum length for a VSN
+.br
+Default value: 6
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

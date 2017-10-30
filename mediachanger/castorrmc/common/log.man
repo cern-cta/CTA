@@ -1,0 +1,128 @@
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
+.\" All rights reserved
+.\"
+.TH LOG "3castor" "$Date: 2001/09/26 10:03:15 $" CASTOR "Common Library Functions"
+.SH NAME
+log, initlog  \- log messages
+.SH SYNOPSIS
+.nf
+.B #include <log.h>
+.LP
+.B initlog(ident, level, output)
+.B char \(**ident;
+.B int \(*level;
+.B char \(**output;
+.LP
+.B log(level, format, message, parameters, \&.\|.\|. )
+.B int \(*level;
+.B char \(**format;
+.B char \(**message;
+.fi
+.IX  "openlog function"  ""  "\fLinitlog\fP \(em initialize log file"
+.IX  "log function"  ""  "\fLlog\fP \(em write message to log file"
+.SH DESCRIPTION
+.LP
+.B log(\|)
+logs
+.I message
+to
+an appropriate log file, opened by
+.BR initlog (l).
+on another host over the network.
+The message is tagged with a priority of
+.IR level .
+The message looks like a
+.BR printf (3S)
+string.
+Priorities are encoded as a
+.IR level .
+The level is selected from an ordered list:
+.RS
+.TP 20
+.SB LOG_EMERG
+A panic condition.  This is normally broadcast to all users.
+.TP
+.SB LOG_ALERT
+A condition that should be corrected immediately,
+such as a corrupted system database.
+.TP
+.SB LOG_CRIT
+Critical conditions, such as hard device errors.
+.TP
+.SB LOG_ERR
+Errors.
+.TP
+.SB LOG_WARNING
+Warning messages.
+.TP
+.SB LOG_NOTICE
+Conditions that are not error conditions,
+but that may require special handling.
+.TP
+.SB LOG_INFO
+Informational messages.
+.TP
+.SB LOG_DEBUG
+Messages that contain information
+normally of use only when debugging a program.
+.RE
+.LP
+If special processing is needed,
+.B initlog(\|)
+can be called to initialize the log file.
+The parameter
+.I ident
+is a string that is prepended to every message.
+.I level
+is a indicating the level logging.
+.RE
+.SH COMMENT
+The total line length printed should not exceed \fBBUFSIZ\fP-1 characters. When you provide a format string and arguments to
+.B log(\|)
+function, you have to be aware that 
+.B log(\|)
+function prepend each line with a string that have the format
+.ft CW
+.nf
+.sp
+"%s %s[%d]: "
+.ft
+.LP
+.fi
+where first string is a timestamp with the format
+.ft CW
+.nf
+.sp
+"%b %d %H:%M:%S" or "%b %e %H:%M:%S"
+.ft
+.LP
+.fi
+ on Windows or Unix, respectively, the second string is a generic logname, defined previously using
+.B initlog(\|)
+function, then the decimal number is the process id of the caller.
+.br
+In case of multi-threaded programs, the string will be prepended with "%s %s[%d,%d]: ", where the second number is an internal thread id specific to CASTOR applications, or -1 if not found.
+.P
+This is why you should know in advance the order of magnitude of the length of your message.
+.SH EXAMPLE
+In case of non-multithreaded program you would see:
+.ft CW
+.nf
+.sp
+Nov  1 17:34:27 progname[1234]: This is your message with possible arguments, your pid is 1234
+.ft
+.LP
+.fi
+.P
+In case of a multi-threaded application you would see:
+.ft CW
+.nf
+.sp
+Sep 26 11:40:24 progname[1234,4]: This is another message with other possible arguments, your pid is 1234, CASTOR's Thread Id is 4
+.ft
+.LP
+.fi
+.SH "SEE ALSO"
+syslog(3), Cthread(3), stdio(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

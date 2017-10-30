@@ -55,7 +55,6 @@ private:
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
-  static const size_t c_maxWatchedAgentsPerGC;
 };
   
 }}

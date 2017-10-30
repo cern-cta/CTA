@@ -22,6 +22,8 @@
 #include "AgentReference.hpp"
 #include "RetrieveQueue.hpp"
 #include "RootEntry.hpp"
+#include "DriveRegister.hpp"
+#include "DriveState.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include <random>
@@ -379,6 +381,116 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     ret.back().currentPriority=rq.getJobsSummary().priority;
     ret.back().bytesQueued=rq.getJobsSummary().bytes;
     ret.back().filesQueued=rq.getJobsSummary().files;
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// Helpers::getLockedAndFetchedDriveState()
+//------------------------------------------------------------------------------
+void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclusiveLock& driveStateLock, 
+  AgentReference& agentReference, const std::string& driveName, log::LogContext& lc, CreateIfNeeded doCreate) {
+  Backend & be = driveState.m_objectStore;
+  // Try and get the location of the derive state lockfree (this should be most of the cases).
+  try {
+    RootEntry re(be);
+    re.fetchNoLock();
+    DriveRegister dr(re.getDriveRegisterAddress(), be);
+    dr.fetch();
+    driveState.setAddress(dr.getDriveAddress(driveName));
+    driveStateLock.lock(driveState);
+    driveState.fetch();
+    if (driveState.getOwner() != dr.getAddressIfSet()) {
+      // We have a special case: the drive state is not owned by the
+      // drive register.
+      // As we are lock free, we will re-lock in proper order.
+      if (driveStateLock.isLocked()) driveStateLock.release();
+      ScopedExclusiveLock drl(dr);
+      dr.fetch();
+      // Re-get the state (could have changed).
+      driveState.setAddress(dr.getDriveAddress(driveName));
+      driveStateLock.lock(driveState);
+      // We have an exclusive lock on everything. We can now
+      // safely switch the owner of the drive status to the drive register
+      // (there is no other steady state ownership).
+      // return all as we are done.
+      if (driveState.getOwner() != dr.getAddressIfSet()) {
+        driveState.setOwner(dr.getAddressIfSet());
+        driveState.commit();
+      }
+      // The drive register lock will be released automatically
+    }
+    // We're done with good day scenarios.
+    return;
+  } catch (...) {
+    // If anything goes wrong, we will suppose we have to create the drive state and do every step,
+    // one at time. Of course, this is far more costly (lock-wise).
+    // ... except if we were not supposed to create it.
+    if (doCreate == CreateIfNeeded::doNotCreate) {
+      throw NoSuchDrive("In Helpers::getLockedAndFetchedDriveState(): no such drive. Will not create it as instructed.");
+    }
+    RootEntry re(be);
+    re.fetchNoLock();
+    DriveRegister dr(re.getDriveRegisterAddress(), be);
+    ScopedExclusiveLock drl(dr);
+    dr.fetch();
+  checkDriveKnown:
+    try {
+      std::string dsAddress=dr.getDriveAddress(driveName);
+      // The drive is known. Check it does exist.
+      // We work in this order here because we are in one-off mode, so
+      // efficiency is not problematic.
+      if (be.exists(dsAddress)) {
+        driveState.setAddress(dsAddress);
+        driveStateLock.lock(driveState);
+        driveState.fetch();
+        if (driveState.getOwner() != dr.getAddressIfSet()) {
+          driveState.setOwner(dr.getAddressIfSet());
+          driveState.commit();
+        }
+      } else {
+        dr.removeDrive(driveName);
+        goto checkDriveKnown;
+      }
+    } catch (DriveRegister::NoSuchDrive &) {
+      // OK, we do need to create the drive status.
+      driveState.setAddress(agentReference.nextId(std::string ("DriveStatus-")+driveName));
+      driveState.initialize(driveName);
+      agentReference.addToOwnership(driveState.getAddressIfSet(), be);
+      driveState.insert();
+      dr.setDriveAddress(driveName, driveState.getAddressIfSet());
+      dr.commit();
+      agentReference.removeFromOwnership(driveState.getAddressIfSet(), be);
+      driveStateLock.lock(driveState);
+      driveState.fetch();
+      return;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// Helpers::getAllDriveStates()
+//------------------------------------------------------------------------------
+std::list<cta::common::dataStructures::DriveState> Helpers::getAllDriveStates(Backend& backend, log::LogContext &lc) {
+  std::list<cta::common::dataStructures::DriveState> ret;
+  // Get the register. Parallel get the states. Report... BUT if there are discrepancies, we 
+  // will need to do some cleanup.
+  RootEntry re(backend);
+  re.fetchNoLock();
+  DriveRegister dr(re.getDriveRegisterAddress(), backend);
+  dr.fetchNoLock();
+  std::list<DriveState> driveStates;
+  std::list<std::unique_ptr<DriveState::AsyncLockfreeFetcher>> driveStateFetchers;
+  for (auto & d: dr.getDriveAddresses()) {
+    driveStates.emplace_back(DriveState(d.driveStateAddress, backend));
+    driveStateFetchers.emplace_back(driveStates.back().asyncLockfreeFetch());
+  }
+  for (auto & df: driveStateFetchers) {
+    df->wait();
+  }
+  for (auto &d: driveStates) {
+    ret.emplace_back(d.getState());
   }
   return ret;
 }
