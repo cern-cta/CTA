@@ -50,9 +50,9 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
       wa != m_watchedAgents.end();) {
     if (agentList.end() == std::find(agentList.begin(), agentList.end(), wa->first)) {
       delete wa->second;
-      m_watchedAgents.erase(wa++);
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", wa->first);
+      m_watchedAgents.erase(wa++);
       lc.log(log::INFO, "In GarbageCollector::trimGoneTargets(): removed now gone agent.");
     } else {
       wa++;
