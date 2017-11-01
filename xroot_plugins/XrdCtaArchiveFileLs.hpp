@@ -20,26 +20,64 @@
 
 #include <XrdSsi/XrdSsiStream.hh>
 
+/*!
+ * The Buffer object is returned by active streams as they supply the buffer holding the requested
+ * data. Once the buffer is no longer needed it must be recycled by calling Recycle().
+ */
+class ArchiveFileBuffer : public XrdSsiStream::Buffer
+{
+public:
+   ArchiveFileBuffer(char *dp = nullptr) : Buffer(dp) {}
+
+   virtual void Recycle() {}
+};
+#if 0
+virtual void    Recycle() = 0;     //!> Call to recycle the buffer when finished
+
+char           *data;              //!> -> Buffer containing the data
+Buffer         *next;              //!> For chaining by buffer receiver
+
+                Buffer(char *dp=0) : data(dp), next(0) {}
+virtual        ~Buffer() {}
+#endif
+
+
+
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-            ArchiveFileLsStream() :
-               XrdSsiStream(XrdSsiStream::isActive),
-               m_archiveFileLsBuffer(test_buf)
-            {}
+   ArchiveFileLsStream() :
+      XrdSsiStream(XrdSsiStream::isActive),
+      m_archiveFileLsBuffer(test_buf) {}
+
    virtual ~ArchiveFileLsStream() {}
 
-   Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
-
-      dlen = strlen(test_buff);
+   /*!
+    * Synchronously obtain data from an active stream (server-side only).
+    *
+    * @param[out]       eRef    The object to receive any error description.
+    * @param[in,out]    dlen    input:  the optimal amount of data wanted (this is a hint)
+    *                           output: the actual amount of data returned in the buffer.
+    * @param[in,out]    last    input:  should be set to false.
+    *                           output: if true it indicates that no more data remains to be returned
+    *                                   either for this call or on the next call.
+    *
+    * @return    Pointer to the Buffer object that contains a pointer to the the data (see below). The
+    *            buffer must be returned to the stream using Buffer::Recycle(). The next member is usable.
+    * @retval    0    No more data remains or an error occurred:
+    *                 last = true:  No more data remains.
+    *                 last = false: A fatal error occurred, eRef has the reason.
+    */
+   virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
+      dlen = strlen(m_archiveFileLsBuffer.data);
       last = false;
 
-      return m_archiveFileLsBuffer;
+      return &m_archiveFileLsBuffer;
    }
 
 private:
-   const char* const test_buf = "Hello, world!\n";
+   char* test_buf = const_cast<char*>("Hello, world!\n");
 
-   Buffer m_archiveFileLsBuffer;
+   ArchiveFileBuffer m_archiveFileLsBuffer;
 };
 
