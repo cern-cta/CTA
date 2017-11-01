@@ -1,0 +1,296 @@
+.\"
+.\" $Id: Cglobals.man,v 1.6 2001/10/26 11:56:31 jdurand Exp $
+.\"
+.TH CGLOBALS "3castor" "$Date: 2001/10/26 11:56:31 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCglobals\fP \- \fBC\fPASTOR thread-specific \fBglobal\fP variable\fBs\fP interface
+.SH SYNOPSIS
+.B #include <Cglobals.h>
+.P
+.BI "void Cglobals_init("
+.RS
+.BI "int (*" getspec ") (int *" key ", void **" addr "),"
+.br
+.BI "int (*" setspec ") (int *" key ", void *" addr "),"
+.br
+.BI "int (*" getTid ") (void)"
+.RE
+.BI ");"
+.P
+.BI "int Cglobals_get(int *" key ", void **" addr ", size_t " size ");"
+.P
+.BI "void Cglobals_getTid(int *" Tid ");"
+.P
+.BI "int C__serrno();"
+.P
+.BI "int C__rfio_errno();"
+.P
+.BI "int C__Copterr();"
+.P
+.BI "int C__Coptind();"
+.P
+.BI "int C__Coptopt();"
+.P
+.BI "int C__Coptreset();"
+.P
+.BI "char *C__Coptarg();"
+.P
+.BI "int C__h_errno();"
+
+.SH DESCRIPTION
+
+\fBCglobals\fP is the interface where are defined all necessary functions that always return a thread-specific value of global variables. Each package of \fBCASTOR\fP that needs to externalize thread-specific global variables contains in its header, if compiled with threads turned on (e.g. the default), a set of:
+.RS
+an \fBextern\fP definition to a function contained in Cglobals
+.br
+a \fB#define\fP macro that replaces all occurences of any global variable that needs to be thread-specific to this Cglobal's function.
+.RE
+In order to satisfy packages not compiled with threads turned on, or that do not initialize \fBCASTOR\fP Thread Interface's \fBCthread\fP, any such global variable is also explicitely defined in \fBCglobals\fP.
+.P
+For example, taking the global error variable \fBserrno\fP, \fBCglobals\fP source code contains:
+.RS
+an explicit definition of this variable \fBserrno\fP
+.br
+an explicit definition, with source code, of a function \fBC_serrno()\fP that does only the following:
+.RS
+if \fBCglobals_init\fP was not (successfully) called, return the address of the global variable \fBserrno\fP
+.br
+else return the adress of a thread-safe specific memory, instanciated at the first call to this function, that holds the content of the current instance of the thread-specific value of \fBserrno\fP
+.RE
+.RE
+.P
+The following description of \fBCglobals_init\fP function is explaining internals of \fBCglobals\fP and \fBCthread\fP. In theory no CASTOR application need to call \fBCglobals_init\fP, you can skip if you want the following paragraphs, and concentrate only on the other functions descriptions.
+.P
+\fBCglobals_init\fP is bundled to work with the \fBCASTOR\fP Thread Interface's \fBCthread\fP. That is, any implicit or explicit call to \fBCthread\fP always makes sure that \fBCglobals_init\fP is called, with three arguments that are:
+.RS
+a
+.I getspec
+function address that, given a static 
+.I key
+adress, returns the adress of a Thread-Specific memory into
+.I addr
+content. This uses an internal structure inside \fBCthread\fP, allocated on the heap, that is associated bijectively to
+.I key
+address. \fBCthread\fP always explicitely allocates such internal structure to any 
+.I key
+address if it is unknown at the moment of the call to
+.I getspec.
+.br
+In such a case it will return a NULL value into 
+.I addr
+, and it will be the responsability of \fBCglobals\fP to allocate memory on the heap and to say to \fBCthread\fP that this newly allocated memory is the one to associate with 
+.I key
+address, using 
+.I setspec.
+.br
+If the internal structure in \fBCthread\fP associated bijectively to
+.I key
+yet exists, 
+.I getspec
+only returns what it knows about the thread-specific memory associated with it, which is a \fBvoid *\fP member inside the same internal structure mentionned above.
+.P
+a 
+.I setspec
+function address that, given the
+.I key
+address and the
+.I addr
+value, previously instanciated with a
+.I getspec
+call, and possibly allocated on the heap by \fBCglobals\fP if necessary, will internally explicitely call the Operating System Thread-Specific functions that will put the value of
+.I address
+as something thread-specific, bijectively associated to another member of the internal structure of \fBCthread\fP, itself bijective to
+.I key.
+.P
+a
+.I getTid
+function address that returns an unique integer identifier associated with any thread.
+.RE
+.P
+\fBCglobals_get\fP returns in
+.I addr
+content the address of a thread-specific memory, e.g. thread-safe, that is bijectively associated with the address of a *static*, e.g. constant, address 
+.I key
+, that is automatically created and filled with zeros if necessary, up to
+.I size
+bytes.
+.br
+If the 
+.I addr
+content, at return of \fBCglobals_get\fP, is not NULL, you can safely fill this memory with any value, provided you does not exceed the 
+.I size
+bytes length speficied in your previous call to \fBCglobals_get\fP. Because of applications that are \fBnot\fP multi-threaded, the initial value of 
+.I key
+has then an importance, that's why it is necessary to always declare it with an initial value of -1.
+.P
+Return code is -1 on error, 0 on success and \fBnot\fP the first call for this
+.I
+key
+, 1 on success and \fBit is\fP the first call for this
+.I key.
+This allows to distinguish when Cglobals_get() initialize the memory with zeros (return code 1) and not (return code 0).
+.P
+\fBCglobals_getTid\fP uses the third function address, 
+.I getTid
+, given as an argument to \fBCglobals_init\fP, and will return in
+.I Tid
+content the value returned by 
+.I getTid.
+.P
+\fBC__serrno\fP, \fBC__rfio_errno\fP, \fBC__Copterr\fP, \fBC__Coptind\fP, \fBC__Coptopt\fP, \fBC__Coptreset\fP, \fBC__Coptarg\fP and \fBC__h_errno\fP are all the internal functions that return the address of the thread-specific memory hosting the value of the 'global' variables serrno, rfio_errno, Copterr, Coptind, Coptopt, Coptreset, Coptarg and h_errno, respectively.
+.SH EXAMPLE
+Any application can create its own instance of thread-specific global variable using \fBCglobals\fP. You need only to use \fBCglobals_get\fP. Here is how to proceed.
+.ft CW
+.nf
+.sp
+/*
+ * The following shows how to define and use a thread-specific
+ * integer, my_var, inside your package
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <Cglobals.h>   /* Get \fBCglobals_get\fP prototype */
+static int my_key = -1; /* Our static key, integer, init value -1 */
+#define my_var (*C__my_var())
+
+static int my_var_static; /* If Cglobals_get error in order not to crash */
+
+
+int *C__my_var()
+{
+        int *var;
+        /* Call Cglobals_get */
+        Cglobals_get(&my_key,
+                     (void **) &var,
+                     sizeof(int)
+                    );
+        /* If error, var will be NULL */
+        if (var == NULL)
+        {
+                fprintf(stderr,"Cglobals_get error\n");
+                return(&my_var_static);
+        }
+        return(var);
+}
+
+int main()
+{
+        fprintf(stdout, "Current my_var value is: %d\n", my_var);
+        fprintf(stdout, "Set my_var value to: %d\n", 12);
+        my_var = 12;
+        fprintf(stdout, "Current my_var value is: %d\n", my_var);
+        return(0);
+}
+.ft
+.LP
+The following example is the source of the test suite for Cglobals_get():
+.ft CW
+.nf
+.sp
+#include <Cthread_api.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <Cglobals.h>   /* Get Cglobals_get prototype */
+#include <serrno.h>
+
+static int my_key = -1; /* Our static key, integer, init value -1 */
+#define my_var (*C__my_var())
+
+static int my_var_static; /* If Cglobals_get error in order not to crash */
+void *doit _PROTO((void *));
+
+int doit_v = 0;
+#define NTHREAD 100
+
+int *C__my_var()
+{
+  int *var;
+  /* Call Cglobals_get */
+  switch (Cglobals_get(&my_key,
+                       (void **) &var,
+                       sizeof(int)
+                       )) {
+  case -1:
+    fprintf(stderr,"[%d] Cglobals_get error\n", Cthread_self());
+    break;
+  case 0:
+    fprintf(stderr,"[%d] Cglobals_get OK\n", Cthread_self());
+    break;
+  case 1:
+    fprintf(stderr,"[%d] Cglobals_get OK and first call\n", Cthread_self());
+    break;
+  default:
+    fprintf(stderr,"[%d] Cglobals_get unknown return code\n", Cthread_self());
+    break;
+  }
+  /* If error, var will be NULL */
+  if (var == NULL) {
+    fprintf(stderr,"[%d] Cglobals_get error : RETURN static ADDRESS!!!!!!!!!!!!\n", Cthread_self());
+    return(&my_var_static);
+  }
+  return(var);
+}
+
+int main()
+{
+  int i;
+
+  fprintf(stdout, "[%d] ---> Before any Cthread call\n", -1);
+  fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
+  fprintf(stdout, "[%d] Set my_var value to: %d\n", -1, 12);
+  my_var = 12;
+  fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
+  fprintf(stdout, "[%d] Testing consistency\n", -1);
+  if (my_var != 12) {
+    fprintf(stdout, "[%d] Cglobals_get worked ok\n", -1);
+    exit(1);
+  }
+  sleep(1);
+  for (i = 0; i < NTHREAD; i++) {
+    Cthread_create(&doit, &doit_v);
+    doit_v++;
+  }
+  fprintf(stdout, "[%d] ---> After all Cthread_create calls\n", -1);
+  fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
+  fprintf(stdout, "[%d] Set my_var value to: %d\n", -1, NTHREAD * 10000 + 12);
+  my_var = NTHREAD * 10000 + 12;
+  fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
+  fprintf(stdout, "[%d] Testing consistency\n", -1);
+  if (my_var != (NTHREAD * 10000 + 12)) {
+    fprintf(stdout, "[%d] Cglobals_get worked ok\n", -1);
+    exit(1);
+  }
+  sleep(1);
+  exit(0);
+}
+
+void *doit(arg)
+     void *arg;
+{
+  int Tid;
+  int doit = * (int *) arg;
+  Cglobals_getTid(&Tid);
+  my_var = (Tid + 1) * 100 + 12;
+  fprintf(stdout, "[%d] my_var value is: %d (should be %d)\n", Cthread_self(), my_var, (Tid + 1) * 100 + 12);
+  fprintf(stdout, "[%d] second call -- my_var value is: %d (should be %d)\n", Cthread_self(), my_var, (Tid + 1) * 100 + 12);
+  fprintf(stdout, "[%d] Testing consistency\n", Cthread_self());
+  if (my_var != ((Tid + 1) * 100 + 12)) {
+    fprintf(stdout, "[%d] !!!!!!!!! ERROR !!!!!!!!!\n", Cthread_self());
+    exit(1);
+  } else {
+    fprintf(stdout, "[%d] Cglobals_get worked ok\n", Cthread_self());
+  }
+  return(0);
+}
+
+
+  
+.ft
+.LP
+.SH SEE ALSO
+\fBCthread\fP(3), \fBserrno\fP(3), \fBCgetopt\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

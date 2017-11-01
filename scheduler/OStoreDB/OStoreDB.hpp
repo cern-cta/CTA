@@ -79,15 +79,13 @@ public:
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
-    TapeMountDecisionInfo (objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &l);
+    TapeMountDecisionInfo (OStoreDB & oStoreDB);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference & m_agentReference;
+    OStoreDB & m_oStoreDB;
   };
+  friend class TapeMountDecisionInfo;
   
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
   public:
@@ -109,12 +107,8 @@ private:
    * @param tmdi The TapeMountDecisionInfo where to store the data.
    * @param re A RootEntry object that should be locked and fetched.
    */
-   enum class FetchFlavour: bool {
-    lock,
-    noLock
-  };
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, 
-    log::LogContext & logContext, FetchFlavour fetchFlavour=FetchFlavour::lock);
+    log::LogContext & logContext);
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(log::LogContext& logContext) override;
@@ -124,11 +118,8 @@ public:
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference & m_agentReference;
+    ArchiveMount(OStoreDB & oStoreDB);
+    OStoreDB & m_oStoreDB;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
@@ -138,6 +129,7 @@ public:
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
+  friend class ArchiveMount;
   
   /* === Archive Job Handling =============================================== */
   class ArchiveJob: public SchedulerDatabase::ArchiveJob {
@@ -151,29 +143,23 @@ public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
-    ArchiveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
-      log::Logger &, objectstore::AgentReference &, ArchiveMount &);
+    ArchiveJob(const std::string &, OStoreDB &, ArchiveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     std::string m_tapePool;
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference & m_agentReference;
+    OStoreDB & m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
     ArchiveMount & m_archiveMount;
     std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
   };
+  friend class ArchiveJob;
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
   private:
-    RetrieveMount(objectstore::Backend &, objectstore::AgentReference &, catalogue::Catalogue &, log::Logger &);
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference & m_agentReference;
+    RetrieveMount(OStoreDB &oStoreDB);
+    OStoreDB & m_oStoreDB;
   public:
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
@@ -181,6 +167,7 @@ public:
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   };
+  friend class RetrieveMount;
   
   /* === Retrieve Job handling ============================================== */
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
@@ -193,14 +180,10 @@ public:
     virtual void fail(log::LogContext &) override;
     virtual ~RetrieveJob() override;
   private:
-    RetrieveJob(const std::string &, objectstore::Backend &, catalogue::Catalogue &,
-      log::Logger &, objectstore::AgentReference &, RetrieveMount &);
+    RetrieveJob(const std::string &, OStoreDB &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference & m_agentReference;
+    OStoreDB & m_oStoreDB;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount & m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
@@ -267,14 +250,15 @@ public:
    * Get states of all drives.
    * @return list of all known drive states
    */
-  std::list<cta::common::dataStructures::DriveState> getDriveStates() const override;
+  std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override;
   
-  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) override;
+  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState, 
+    log::LogContext & lc) override;
     
-  void removeDrive(const std::string & drive) override;
+  void removeDrive(const std::string & drive, log::LogContext & logContext) override;
   
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
-    common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 
+    common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransfered, 
     uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override;
   
   /* --- Private helper part implementing state transition logic -------------*/
@@ -304,15 +288,11 @@ private:
     uint64_t filesTransferred;
   };
   /**
-   * Utility implementing the operation get drive state or create, update, set on an
-   * already locked and fetched DriveRegistry. It in used in reportDriveStatus as well
-   * as implicitly in scheduling and other places.
-   * Those function are static as they will be used by sub classes as well (like 
-   * @param dr
-   * @param inputs
+   * Utility implementing the operation of finding/creating the drive state object and 
+   * updating it.
    */
-  static void updateDriveStatusInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
-    const ReportDriveStatusInputs & inputs);
+  void updateDriveStatus(const common::dataStructures::DriveInfo & driveInfo, 
+    const ReportDriveStatusInputs & inputs, log::LogContext & lc);
   
   /**
    * Utility implementing the operation get drive state and update stats in it if present, set on an
@@ -322,8 +302,8 @@ private:
    * @param driveInfo
    * @param inputs
    */
-  static void updateDriveStatsInRegitry(objectstore::DriveRegister & dr, const common::dataStructures::DriveInfo & driveInfo, 
-    const ReportDriveStatsInputs & inputs);
+  void updateDriveStatistics(const common::dataStructures::DriveInfo & driveInfo, 
+    const ReportDriveStatsInputs & inputs, log::LogContext & lc);
   
   /** Helper for setting a drive state in a specific case */
   static void setDriveDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);

@@ -18,6 +18,7 @@
 
 #include <iomanip> // for setw
 
+#include "common/utils/utils.hpp"
 #include <common/utils/Regex.hpp>
 
 #include <XrdSsiPbException.hpp>
@@ -325,16 +326,29 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    diskFileInfo.group       = notification.file().owner().groupname();
    diskFileInfo.path        = notification.file().lpath();
 
+   // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
+   // and we need to decide what will be stored in the database.
+   diskFileInfo.recoveryBlob = "deprecated";
+
+   std::string checksumtype(notification.file().cks().name());
+   if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
+
+   std::string checksumvalue("0X" + notification.file().cks().value());
+   cta::utils::toUpper(checksumvalue);    // replace this with a number!
+
    cta::common::dataStructures::ArchiveRequest request;
-   request.checksumType     = notification.file().cks().name();
-   request.checksumValue    = notification.file().cks().value();
-   request.diskFileInfo     = diskFileInfo;
-   request.diskFileID       = notification.file().fid();
-   request.fileSize         = notification.file().size();
-   request.requester        = originator;
-   request.srcURL           = notification.wf().instance().url();
-   request.storageClass     = notification.file().xattr().at("CTA_StorageClass");
-   request.archiveReportURL = notification.transport().report_url();
+   request.checksumType         = checksumtype;
+   request.checksumValue        = checksumvalue;
+   request.diskFileInfo         = diskFileInfo;
+   request.diskFileID           = std::to_string(notification.file().fid());
+   request.fileSize             = notification.file().size();
+   request.requester            = originator;
+   request.srcURL               = notification.wf().instance().url();
+   request.storageClass         = notification.file().xattr().at("CTA_StorageClass");
+   request.archiveReportURL     = notification.transport().report_url();
+   request.creationLog.host     = m_cliIdentity.host;
+   request.creationLog.username = m_cliIdentity.username;
+   request.creationLog.time     = time(nullptr);
 
    // Queue the request
 
@@ -360,18 +374,25 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Unpack message
 
    cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
+   originator.name              = notification.cli().user().username();
+   originator.group             = notification.cli().user().groupname();
 
    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner       = notification.file().owner().username();
-   diskFileInfo.group       = notification.file().owner().groupname();
-   diskFileInfo.path        = notification.file().lpath();
+   diskFileInfo.owner           = notification.file().owner().username();
+   diskFileInfo.group           = notification.file().owner().groupname();
+   diskFileInfo.path            = notification.file().lpath();
+
+   // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
+   // and we need to decide what will be stored in the database.
+   diskFileInfo.recoveryBlob = "deprecated";
 
    cta::common::dataStructures::RetrieveRequest request;
-   request.requester        = originator;
-   request.dstURL           = notification.transport().dst_url();
-   request.diskFileInfo     = diskFileInfo;
+   request.requester            = originator;
+   request.dstURL               = notification.transport().dst_url();
+   request.diskFileInfo         = diskFileInfo;
+   request.creationLog.host     = m_cliIdentity.host;
+   request.creationLog.username = m_cliIdentity.username;
+   request.creationLog.time     = time(nullptr);
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t

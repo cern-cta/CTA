@@ -339,7 +339,7 @@ common::dataStructures::WriteTestResult Scheduler::write_autoTest(const common::
 //------------------------------------------------------------------------------
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName, log::LogContext & lc) {
   utils::Timer t;
-  auto driveStates = m_db.getDriveStates();
+  auto driveStates = m_db.getDriveStates(lc);
   for (auto & d: driveStates) {
     if (d.driveName == driveName) {
       auto schedulerDbTime = t.secs();
@@ -361,7 +361,7 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = up;
   desiredDriveState.forceDown = force;
-  m_db.setDesiredDriveState(driveName, desiredDriveState);
+  m_db.setDesiredDriveState(driveName, desiredDriveState, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName)
@@ -377,7 +377,7 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
 void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliIdentity, 
   const std::string &driveName, log::LogContext & lc) {
   utils::Timer t;
-  m_db.removeDrive(driveName);
+  m_db.removeDrive(driveName, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName)
@@ -391,7 +391,7 @@ void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliI
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
   // TODO: mount type should be transmitted too.
   utils::Timer t;
-  m_db.reportDriveStatus(driveInfo, type, status, time(NULL));
+  m_db.reportDriveStatus(driveInfo, type, status, time(NULL), lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName)
@@ -455,7 +455,7 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
   utils::Timer t;
-  auto ret = m_db.getDriveStates();
+  auto ret = m_db.getDriveStates(lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);

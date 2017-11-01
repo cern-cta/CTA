@@ -815,8 +815,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       }
       if (add_expected) {
         std::stringstream expectedLogLine;
-        std::copy(expectedOrder.begin(), expectedOrder.end(),
-                std::ostream_iterator<int>(expectedLogLine, " "));
+        for(const auto &fseq: expectedOrder) {
+          expectedLogLine << " " << fseq;
+        }
         expectedFseqOrderLog.push_back(expectedLogLine.str());
         expectedOrder.clear();
       }

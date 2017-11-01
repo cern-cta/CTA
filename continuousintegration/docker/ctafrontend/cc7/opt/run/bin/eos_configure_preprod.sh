@@ -1,6 +1,6 @@
 #!/bin/bash
 PREPROD_DIR=/eos/ctaeos/preprod
-CTA_BIN=/usr/bin/cta
+CTA_BIN=/usr/bin/eoscta_stub
 
 mkdir -p /var/eos/wfe/bash
 cp /opt/ci/ctaeos/var/eos/wfe/bash/* /var/eos/wfe/bash/
@@ -18,7 +18,6 @@ eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=sss XrdS
 
 #eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${PREPROD_DIR}
 eos attr set sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>" ${PREPROD_DIR}
-
 
 eos attr set sys.workflow.sync::prepare.default="bash:retrieve_archive_file:cta <eos::wfe::rusername> <eos::wfe::rgroupname> <eos::wfe::fxattr:sys.archiveFileId> <eos::wfe::turl> <eos::wfe::username> <eos::wfe::groupname> cmVjb3ZlcnkK <eos::wfe::path>" ${PREPROD_DIR}
 

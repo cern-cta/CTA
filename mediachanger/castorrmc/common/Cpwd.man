@@ -1,0 +1,37 @@
+.\"   $Id: Cpwd.man,v 1.4 2001/09/26 09:13:48 jdurand Exp $
+.\"
+.TH CPWD "3castor" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCpwd\fP \- \fBCASTOR\fP \fBP\fPass\fBw\fPor\fBd\fP file Thread-Safe inferface
+.SH SYNOPSIS
+.B #include <Cpwd.h>
+.P
+.BI "struct passwd *Cgetpwnam(char *" name ");"
+.P
+.BI "struct passwd *Cgetpwuid(uid_t " uid ");"
+
+.SH DESCRIPTION
+
+\fBCpwd\fP is a common Thread-Safe API interface to get entries in the password file by
+.BI name
+or
+.BI uid.
+
+.SH RETURN VALUE
+These routines return a passwd struct for the given name/uid.
+In case of error, 0 is returned and the \fBserrno\fP variable is set.
+
+.SH ERRORS
+possible values for serrno and their meaning :
+.TP 1.2i
+.B SEUSERUNKN
+the requested user/uid was not found
+.TP
+.B SEINTERNAL
+an error occured while attempting to retrieve the passwd structure. More details are given in the errno variable.
+
+.SH SEE ALSO
+\fBserrno\fP, \fBgetpwnam\fP, \fBgetpwuid\fP
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

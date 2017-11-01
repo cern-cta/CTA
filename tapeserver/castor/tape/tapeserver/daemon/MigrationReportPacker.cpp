@@ -292,8 +292,7 @@ void MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs(
       "In MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs()"
       " check for async backend update finished");
     if(job->checkAndAsyncReportComplete()) { 
-      params.add("reportURL", job->reportURL())
-            .add("reportTime", job->reportTime());
+      params.add("reportURL", job->reportURL());
       reportedArchiveJobs.emplace_back(std::move(job));
       logContext.log(cta::log::INFO,"Sent to the client a full file archival");
     } else {
@@ -305,13 +304,21 @@ void MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs(
     try {
       job->waitForReporting(); // should not be a deadWait as soon as we have a timeout on the xroot query
       cta::log::ScopedParamContainer params(logContext);
-      params.add("reportURL", job->reportURL())
-            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+            .add("reportURL", job->reportURL())
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+            .add("reportTime", job->reportTime());
       logContext.log(cta::log::INFO,"Reported to the client a full file archival");
     } catch(cta::exception::Exception &ex) {
       cta::log::ScopedParamContainer params(logContext);
-        params.add("reportURL", job->reportURL());
-        params.add("errorMessage", ex.getMessage().str());
+        params.add("fileId", job->archiveFile.archiveFileID)
+              .add("diskInstance", job->archiveFile.diskInstance)
+              .add("diskFileId", job->archiveFile.diskFileId)
+              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path).add("reportURL", job->reportURL())
+              .add("errorMessage", ex.getMessage().str());
         logContext.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
     } catch(...) {
       throw;

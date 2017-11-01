@@ -20,6 +20,7 @@
 #include "BackendVFS.hpp"
 #include "BackendRados.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/Timer.hpp"
 #include "BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include <atomic>
@@ -32,6 +33,8 @@ TEST_P(BackendAbstractTest, BasicReadWrite) {
   const std::string testValue = "1234";
   const std::string testSecondValue = "12345";
   const std::string testObjectName = "testObject";
+  // Make sure there is no leftover from previous runs
+  try { m_os->remove(testObjectName); } catch (...) {}
   // Check we can verify the absence of an object
   ASSERT_FALSE(m_os->exists(testObjectName));
   // Check that an update attempt fails on a non-existing object
@@ -59,6 +62,8 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   //std::cout << "Type=" << m_os->typeName() << std::endl;
   const std::string testObjectName = "testObject";
   const std::string nonExistingObject = "thisObjectShouldNotExist";
+  // Make sure we will recreate the object (no leftover from previous runs)
+  try { m_os->remove(testObjectName); } catch (...) {}
   m_os->create(testObjectName, "X");
   {
     // If we don't scope the object, the release will blow up after
@@ -100,6 +105,7 @@ TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
   uint64_t val=0;
   std::string valStr;
   valStr.append((char*)&val, sizeof(val));
+  try { m_os->remove(testObjectName); } catch (...) {}
   m_os->create(testObjectName, valStr);
   auto os=m_os;
   std::atomic<uint64_t> counter(0);
@@ -118,11 +124,10 @@ TEST_P(BackendAbstractTest, MultithreadLockingInterface) {
         valStr.append((char*)&val, sizeof(val));
         os->atomicOverwrite(testObjectName, valStr);
         counter++;
-//        printf("%03ld ",(uint64_t)i);
-//        fflush(stdout);
+        //printf("%03ld ",(uint64_t)i); fflush(stdout);.
       }
-//      printf("--- ");
-//      fflush(stdout);
+      //printf("--- ");
+      //fflush(stdout);
     });
     insertCompletions.emplace_back(std::async(std::launch::async, lambdas.back()));
   }
@@ -157,6 +162,9 @@ TEST_P(BackendAbstractTest, AsyncIOInterface) {
   std::unique_ptr<cta::objectstore::Backend::AsyncUpdater> updater(m_os->asyncUpdate(testObjectName,updaterCallback));
   updater->wait();
   ASSERT_EQ(testSecondValue, m_os->read(testObjectName));
+  // Async re-read
+  std::unique_ptr<cta::objectstore::Backend::AsyncLockfreeFetcher> reader(m_os->asyncLockfreeFetch(testObjectName));
+  ASSERT_EQ(testSecondValue, reader->wait());
   m_os->remove(testObjectName);
 }
 

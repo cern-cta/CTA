@@ -68,6 +68,9 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
 {
    using namespace std;
 
+   // Recovery blob is deprecated, no need to unpack it
+   return;
+
    string base64str(argval.substr(7)); // delete "base64:" from start of string
 
    // Decode Base64 blob
@@ -243,7 +246,11 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       }
       else if(argstr == "--diskpool")            {} // = default?
       else if(argstr == "--throughput")          {} // = 10000?
-      else if(argstr == "--recoveryblob:base64") base64Decode(notification, argval);
+      else if(argstr == "--recoveryblob:base64") try {
+         base64Decode(notification, argval);
+      } catch(...) {
+         throw std::runtime_error("Invalid recovery blob: " + argval);
+      }
       else throw std::runtime_error("Unrecognised key " + argstr);
    }
 }
@@ -272,11 +279,9 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    fillNotification(notification, isStderr, isJson, argc, argv);
 
-   std::ostream &myout = isStderr ? std::cerr : std::cout;
-
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(myout, &notification);
+      XrdSsiPb::OutputJsonString(std::cout, &notification);
    }
 
    // Get socket address of CTA Frontend endpoint
@@ -296,7 +301,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(myout, &response);
+      XrdSsiPb::OutputJsonString(std::cout, &response);
    }
 
    // Handle responses
@@ -305,7 +310,11 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    {
       using namespace cta::xrd;
 
-      case Response::RSP_SUCCESS:         myout << response.message_txt() << std::endl; break;
+      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl;
+                                          if(isStderr) {
+                                             std::cerr << response.message_txt() << std::endl;
+                                          }
+                                          break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       // ... define other response types in the protocol buffer (e.g. user error)

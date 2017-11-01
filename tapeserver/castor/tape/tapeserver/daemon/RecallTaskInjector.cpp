@@ -164,12 +164,18 @@ void RecallTaskInjector::injectBulkRecalls() {
     files.clear();
   }
 
-  std::string queryOrderLog = "Query fseq order:";
+  std::ostringstream recallOrderLog;
+  if(m_useRAO) {
+    recallOrderLog << "Recall order of FSEQs using RAO:";
+  } else {
+    recallOrderLog << "Recall order of FSEQs:";
+  }
+
   for (uint32_t i = 0; i < njobs; i++) {
     uint32_t index = m_useRAO ? raoOrder.at(i) : i;
 
     cta::RetrieveJob *job = m_jobs.at(index).release();
-    queryOrderLog += std::to_string(job->selectedTapeFile().fSeq) + " ";
+    recallOrderLog << " " << job->selectedTapeFile().fSeq;
 
     job->positioningMethod=cta::PositioningMethod::ByBlock;
 
@@ -190,7 +196,7 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_tapeReader.push(trt);
     m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
-  m_lc.log(cta::log::INFO, queryOrderLog);
+  m_lc.log(cta::log::INFO, recallOrderLog.str());
   m_jobs.clear();
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", m_jobs.size()));
   m_lc.log(cta::log::INFO, "Finished processing batch of recall tasks from client");

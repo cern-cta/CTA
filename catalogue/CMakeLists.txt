@@ -15,21 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-# OCCI support is on by default
-set (OCCI_SUPPORT ON)
-
-# Switch OCCI support off if using gcc 5.1 or higher
-if (CMAKE_COMPILER_IS_GNUCC)
-  if (GCC_VERSION VERSION_GREATER 5.0)
-    message(STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
-    set (OCCI_SUPPORT OFF)
-  endif (GCC_VERSION VERSION_GREATER 5.0)
-endif (CMAKE_COMPILER_IS_GNUCC)
-
-if(OCCI_SUPPORT)
-  find_package (oracle-instantclient REQUIRED)
+if (OCCI_SUPPORT)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-endif(OCCI_SUPPORT)
+endif (OCCI_SUPPORT)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
@@ -64,6 +52,10 @@ add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+if (OCCI_SUPPORT)
+  set_property (TARGET ctacatalogue APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -140,6 +132,10 @@ add_executable(cta-catalogue-schema-create
 target_link_libraries (cta-catalogue-schema-create
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_property (TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
 
@@ -150,6 +146,10 @@ add_executable(cta-catalogue-schema-drop
 
 target_link_libraries (cta-catalogue-schema-drop
   ctacatalogue)
+
+if (OCCI_SUPPORT)
+  set_property (TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -162,6 +162,10 @@ add_executable(cta-database-poll
 target_link_libraries (cta-database-poll
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_property (TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
 
@@ -173,6 +177,10 @@ add_executable(cta-catalogue-admin-user-create
 target_link_libraries (cta-catalogue-admin-user-create
   ctacatalogue)
 
+if (OCCI_SUPPORT)
+  set_property (TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+
 install (TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
 
@@ -183,6 +191,10 @@ add_executable(cta-catalogue-admin-host-create
 
 target_link_libraries (cta-catalogue-admin-host-create
   ctacatalogue)
+
+if (OCCI_SUPPORT)
+  set_property (TARGET cta-catalogue-admin-host-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 install (TARGETS cta-catalogue-admin-host-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-host-create.1cta DESTINATION /usr/share/man/man1)

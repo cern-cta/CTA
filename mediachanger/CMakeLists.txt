@@ -94,8 +94,8 @@ set (MEDIA_CHANGER_MOUNT_SRC_FILES
 add_executable (cta-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
 set_target_properties (cta-mediachanger-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
-  COMPILE_DEFINITIONS LINUX
-  INSTALL_RPATH ${PROTOBUF3_RPATH})
+  COMPILE_DEFINITIONS LINUX)
+set_property (TARGET cta-mediachanger-mount APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries (cta-mediachanger-mount
   ctacommon
   ctamediachanger)
@@ -110,8 +110,8 @@ add_executable (cta-mediachanger-dismount
   ${MEDIA_CHANGER_DISMOUNT_SRC_FILES})
 set_target_properties (cta-mediachanger-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
-  COMPILE_DEFINITIONS LINUX
-  INSTALL_RPATH ${PROTOBUF3_RPATH})
+  COMPILE_DEFINITIONS LINUX)
+set_property (TARGET cta-mediachanger-dismount APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries (cta-mediachanger-dismount
   ctacommon
   ctamediachanger)

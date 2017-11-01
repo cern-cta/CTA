@@ -28,3 +28,15 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library (XrdCtaMessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
 
 target_link_libraries (XrdCtaMessages ${PROTOBUF3_LIBRARIES})
+
+install (TARGETS XrdCtaMessages DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+install (
+  FILES ${ProtoHeaders}
+  DESTINATION usr/${CMAKE_INSTALL_INCLUDEDIR}/cta/xroot_plugins/messages
+)
+
+install (
+  FILES CtaFrontendApi.hpp
+  DESTINATION usr/${CMAKE_INSTALL_INCLUDEDIR}/cta
+)

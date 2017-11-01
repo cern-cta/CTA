@@ -16,7 +16,7 @@ if test $# -ne 9; then
   exit ${EINVAL}
 fi
 
-CTA_BIN=/usr/bin/cta
+CTA_BIN=/usr/bin/eoscta_stub
 
 WF_TAG="$1"
 RUSERNAME="$2"
@@ -28,7 +28,7 @@ DISK_GROUPNAME="$7"
 METADATA_BASE64="$8"
 FILE_PATH="$9"
 
-DST_URL=${TURL}'\&eos.ruid=0&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve'
+DST_URL=${TURL}'&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=CTA_retrieve'
 
 LOG_DATE=`/usr/bin/date +%s | /usr/bin/tr '\n' ' ' ; /usr/bin/date`
 LOG_SCRIPT_NAME=`/usr/bin/basename $0`
@@ -48,6 +48,9 @@ if RESULT=`2>&1 ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --
   echo "$LOG_DATE $LOG_SCRIPT_NAME queued retrieve request: rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit 0
 else
+  echo "TURL=${TURL}" >> ${LOG_FILE}
+  echo "DST_URL=${DST_URL}" >> ${LOG_FILE}
+  echo ${CTA_BIN} retrieve --user ${RUSERNAME} --group ${RGROUPNAME} --id ${ARCHIVE_FILE_ID} --dsturl "${DST_URL}" --diskfilepath ${FILE_PATH} --diskfileowner ${DISK_USERNAME} --diskfilegroup ${DISK_GROUPNAME} >> ${LOG_FILE}
   echo "$LOG_DATE $LOG_SCRIPT_NAME failed to queue retrieve request: error=${RESULT} rusername=${RUSERNAME} rgroupname=${RGROUPNAME} archiveFileId=${ARCHIVE_FILE_ID} dsturl=${DST_URL} disk_username=${DISK_USERNAME} disk_groupname=${DISK_GROUPNAME} path=${FILE_PATH}" >> ${LOG_FILE}
   exit ${ECANCELED}
 fi

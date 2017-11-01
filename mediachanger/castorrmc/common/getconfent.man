@@ -1,0 +1,126 @@
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.9 $ $Date: 2009/07/23 12:22:02 $ CERN IT-PDP/DC Frederic Hemmer
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
+.\" All rights reserved
+.\"
+.TH GETCONFENT 3 "$Date: 2009/07/23 12:22:02 $" CASTOR "Common Library Functions"
+.SH NAME
+getconfent, getconfent_r \- Get configuration entry
+.SH SYNOPSIS
+.nf
+.LP
+.BI "char * getconfent ("
+.br
+.BI "               const char *" category , 
+.br
+.BI "               const char *" name , 
+.br
+.BI "               int " flags );
+.PP
+.BI "int getconfent_multi ("
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags , 
+.br
+.BI "			char ***" result ,
+.br
+.BI "			int *" count );
+.PP
+.BI "char * getconfent_fromfile ("
+.br
+.BI "			const char *" filename ,
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags );
+.PP
+.BI "int getconfent_multi_fromfile ("
+.br
+.BI "			const char *" filename ,
+.br
+.BI "			const char *" category ,
+.br
+.BI "			const char *" name ,
+.br
+.BI "			int " flags ,
+.br
+.BI "			char ***" result ,
+.br
+.BI "			int *" count );
+.PP
+
+.fi
+.IX  "getconfent function"  ""  "\fLget\fP \(em configuration entry"
+.SH DESCRIPTION
+.LP
+.B getconfent(\|)
+gets the
+.I name
+entry from the  configuration file.
+Every entry in the configuration file is categorized. The
+.I category
+parameter is its specifier.
+.PP
+.B getconfent(\|)
+is thread-safe if threads are created using the
+.B Cthread_create(\|)
+interface. In this case
+.B getconfent(\|)
+calls the re-entrant version
+.B getconfent_r(\|)
+internally using a buffer allocated in thread local storage.
+.PP
+.B getconfent_multi(\|)
+returns the
+.I result
+in the form of an array associated with a 
+.I count
+of the number of results.
+.PP
+.B getconfent_fromfile(\|)
+and
+.B getconfent_multi_fromfile(\|)
+preform the same operation as
+.B getconfent(\|)
+and
+.B getconfent_multi(\|)
+but reading the information from a file.
+.PP
+
+.SH "RETURN VALUE"
+.B getconfent(\|)
+,
+.B getconfent_r(\|)
+and
+.B getconfent_fromfile(|\)
+return NULL if the entry is not found. Otherwise,
+it returns the matched entry.
+If
+.B flags
+is not null, the return value is a pointer to the full string matched
+in the configuration file. Otherwise, only the pointer to the first
+blank separated token is returned.
+.PP
+.B getconfent_multi(\|)
+and
+.B getconfent_multi_fromfile(\|)
+return 0 if successful, -1 if failed.
+
+.SH "ERRORS"
+.PP
+If the
+.B getconfent(\|), getconfent_r(\|)
+function fail, 
+.B serrno
+may be set to one of the following values:
+.TP
+.B SENOCONFIG
+can't open configuration file.
+.SH "SEE ALSO"
+.BR Cthread_create(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
