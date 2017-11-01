@@ -67,7 +67,7 @@ static std::string bytesToMbString(uint64_t bytes)
 
 
 
-void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response)
+void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream *stream)
 {
    // Branch on the Request payload type
 
@@ -108,7 +108,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processAdminHost_Ls(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
-               processArchiveFile_Ls(request.admincmd(), response);
+               processArchiveFile_Ls(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
                processArchiveRoute_Add(request.admincmd(), response);
@@ -603,7 +603,7 @@ void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, c
 
 
 
-void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream *stream)
 {
    using namespace cta::admin;
 

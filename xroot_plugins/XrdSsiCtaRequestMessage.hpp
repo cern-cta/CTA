@@ -42,12 +42,13 @@ public:
       }
 
    /*!
-    * Process the Notification request
+    * Process a Notification request or an Admin command request
     *
     * @param[in]     request
-    * @param[out]    response        Response message to return to EOS
+    * @param[out]    response        Response protocol buffer
+    * @param[out]    stream          Response stream
     */
-   void process(const cta::xrd::Request &request, cta::xrd::Response &response);
+   void process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream *stream);
 
 private:
    /*!
@@ -78,7 +79,6 @@ private:
    admincmd_t processAdminHost_Ch;
    admincmd_t processAdminHost_Rm;
    admincmd_t processAdminHost_Ls;
-   admincmd_t processArchiveFile_Ls;
    admincmd_t processArchiveRoute_Add;
    admincmd_t processArchiveRoute_Ch;
    admincmd_t processArchiveRoute_Rm;
@@ -132,6 +132,18 @@ private:
    admincmd_t processVerify_Rm;
    admincmd_t processVerify_Ls;
    admincmd_t processVerify_Err;
+
+   /*!
+    * "af ls" command
+    *
+    * This is a special case as it can return a protocol buffer (for the summary) or a stream (for
+    * the full listing)
+    *
+    * @param[in]     admincmd        CTA Admin command request message
+    * @param[out]    response        Response protocol buffer message
+    * @param[out]    stream          Response stream message
+    */
+   void processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream *stream);
 
    /*!
     * Drive state enum

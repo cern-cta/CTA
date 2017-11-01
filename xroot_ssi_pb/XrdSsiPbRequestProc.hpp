@@ -60,7 +60,9 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class RequestProc : public XrdSsiResponder
 {
 public:
-   RequestProc(XrdSsiResource &resource) : m_resource(resource) {
+   RequestProc(XrdSsiResource &resource) :
+      m_resource(resource),
+      m_response_stream_ptr(nullptr) {
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] RequestProc() constructor" << std::endl;
 #endif
@@ -124,10 +126,11 @@ private:
     * constant member.
     */
 
-   RequestType  m_request;             //!< Request object
-   MetadataType m_metadata;            //!< Metadata Response object
-   std::string  m_metadata_str;        //!< Serialized Metadata Response buffer
-   std::string  m_response_str;        //!< Response buffer
+   RequestType   m_request;                //!< Request object
+   MetadataType  m_metadata;               //!< Metadata Response object
+   std::string   m_metadata_str;           //!< Serialized Metadata Response buffer
+   std::string   m_response_str;           //!< Serialized Data Response buffer
+   XrdSsiStream *m_response_stream_ptr;    //!< Stream Response pointer
 };
 
 
@@ -181,6 +184,10 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
       // otherwise Finished() will not be called on the Request.
 
       SetNilResponse();
+   }
+   else if(m_response_stream_ptr != nullptr)
+   {
+      SetResponse(m_response_stream_ptr);
    }
    else
    {

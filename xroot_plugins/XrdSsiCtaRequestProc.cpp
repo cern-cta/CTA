@@ -68,7 +68,7 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 #endif
 
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
-      request_msg.process(m_request, m_metadata);
+      request_msg.process(m_request, m_metadata, m_response_stream_ptr);
    }
    catch(PbException &ex)
    {
