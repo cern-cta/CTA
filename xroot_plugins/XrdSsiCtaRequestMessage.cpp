@@ -641,7 +641,9 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       responseTable.push_back(row);
       cmdlineOutput << formatResponse(responseTable);
+      response.set_message_txt(cmdlineOutput.str());
    } else {
+      stream = new ArchiveFileLsStream;
 #if 0
       auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
 
@@ -649,10 +651,8 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
       m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
 #endif
-      cmdlineOutput << "Some output" << std::endl;
    }
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
