@@ -169,19 +169,6 @@ The xroot plugin
 %post -n cta-frontend -p /sbin/ldconfig
 %postun -n cta-frontend -p /sbin/ldconfig
 
-%package -n cta-frontend-interface
-Summary: CERN Tape Archive Frontend Interface
-Group: Application/CTA
-Requires: xrootd-server-libs, xrootd-private-devel
-%description -n cta-frontend-interface
-CERN Tape Archive:
-Frontend Interface
-%files -n cta-frontend-interface
-%defattr(0755,root,root)
-%{_libdir}/libXrdCtaMessages.a
-%{_includedir}/cta
-%{_includedir}/cta/xroot_plugins/messages
-
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA

@@ -142,7 +142,6 @@ ELSE(DEFINED PackageOnly)
     add_subdirectory(tapeserver)
     add_subdirectory(tests)
     add_subdirectory(xroot_plugins)
-    add_subdirectory(xroot_ssi_pb)
   endif(BUILD_CMDLINE_ONLY)
   
   #Generate version information
