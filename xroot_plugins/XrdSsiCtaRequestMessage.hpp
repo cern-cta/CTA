@@ -46,9 +46,9 @@ public:
     *
     * @param[in]     request
     * @param[out]    response        Response protocol buffer
-    * @param[out]    stream          Response stream
+    * @param[out]    stream          Reference to Response stream pointer
     */
-   void process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream *stream);
+   void process(const cta::xrd::Request &request, cta::xrd::Response &response, XrdSsiStream* &stream);
 
 private:
    /*!
@@ -141,9 +141,9 @@ private:
     *
     * @param[in]     admincmd        CTA Admin command request message
     * @param[out]    response        Response protocol buffer message
-    * @param[out]    stream          Response stream message
+    * @param[out]    stream          Reference to Response stream message pointer
     */
-   void processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream *stream);
+   void processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
 
    /*!
     * Drive state enum
