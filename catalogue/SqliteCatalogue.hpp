@@ -77,6 +77,27 @@ public:
   void deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId, log::LogContext &lc)
     override;
 
+  /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param diskInstanceName The name of the instance from where the deletion
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId, log::LogContext &lc)
+    override;
+
 protected:
 
   /**
