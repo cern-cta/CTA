@@ -62,7 +62,7 @@ BackendPopulator::~BackendPopulator() throw() {
     Agent agent(m_agentReference.getAgentAddress(), m_backend);
     cta::objectstore::ScopedExclusiveLock agl(agent);
     agent.fetch();
-    agent.removeAndUnregisterSelf();
+    agent.removeAndUnregisterSelf(m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("errorMessage", ex.getMessageValue());

@@ -176,7 +176,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
    agent.commit();
   }
   // We now processed all the owned objects. We can delete the agent's entry
-  agent.removeAndUnregisterSelf();
+  agent.removeAndUnregisterSelf(lc);
   lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent entry removed.");
   // We can remove the agent from our own ownership.
   m_ourAgentReference.removeFromOwnership(address, m_objectStore);

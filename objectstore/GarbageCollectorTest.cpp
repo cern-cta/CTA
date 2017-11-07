@@ -86,7 +86,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -145,7 +145,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -205,7 +205,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -265,7 +265,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -443,7 +443,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -624,7 +624,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();

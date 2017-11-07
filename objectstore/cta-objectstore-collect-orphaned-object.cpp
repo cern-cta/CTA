@@ -129,7 +129,7 @@ int main(int argc, char ** argv) {
       break;
     }
     cta::objectstore::ScopedExclusiveLock agl(ag);
-    ag.removeAndUnregisterSelf();
+    ag.removeAndUnregisterSelf(lc);
   } catch (std::exception & e) {
     std::cerr << "Failed to garbage collect object: "
         << std::endl << e.what() << std::endl;

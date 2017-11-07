@@ -52,7 +52,7 @@ public:
 
   void insertAndRegisterSelf();
   
-  void removeAndUnregisterSelf();
+  void removeAndUnregisterSelf(log::LogContext & lc);
   
   bool isEmpty();
   

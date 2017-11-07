@@ -76,6 +76,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
   cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
@@ -120,7 +121,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
@@ -143,6 +144,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
   cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
@@ -177,7 +179,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
@@ -247,6 +249,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
   cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
@@ -281,7 +284,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
