@@ -1970,7 +1970,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       for (const auto &j: jobsToDequeue) aq.removeJob(j);
       queueProcessTime += t.secs(utils::Timer::resetCounter);
       if (jobsToForget.size()) {
-        m_oStoreDB.m_agentReference->removeBatchFromOwnership(addedJobs, m_oStoreDB.m_objectStore);
+        m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
         ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
       }
       // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
@@ -2335,7 +2335,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
       for (const auto &j: jobsToDequeue) rq.removeJob(j);
-      if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(addedJobs, m_oStoreDB.m_objectStore);
+      if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
       // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
       rq.commit();
       // We can now add the validated jobs to the return value.
