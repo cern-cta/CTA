@@ -84,7 +84,7 @@ void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdr
   for (const auto & oa: objectAdresses) {
     ag.addToOwnership(oa);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", oa);
+    params.add("ownedObject", oa);
     lc.log(log::DEBUG, "In AgentReference::addBatchToOwnership(): added object to ownership.");
   }
   ag.commit();
@@ -105,7 +105,7 @@ void AgentReference::removeBatchFromOwnership(const std::list<std::string>& obje
   for (const auto & oa: objectAdresses) {
     ag.removeFromOwnership(oa);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", oa);
+    params.add("ownedObject", oa);
     lc.log(log::DEBUG, "In AgentReference::removeBatchFromOwnership(): removed object from ownership.");
   }
   ag.commit();
@@ -216,7 +216,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::
   {
     agent.addToOwnership(action.objectAddress);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", action.objectAddress);
+    params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
     break;
   }
@@ -224,7 +224,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::
   {
     agent.removeFromOwnership(action.objectAddress);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", action.objectAddress);
+    params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
     break;
   }
