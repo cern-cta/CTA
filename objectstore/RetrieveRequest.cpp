@@ -314,7 +314,7 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   return ret;
 }
 
-bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
+bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures
@@ -332,7 +332,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RJS_Failed);
-      return finishIfNecessary();
+      return finishIfNecessary(lc);
     } else {
       j.set_status(serializers::RJS_Pending);
       return false;
@@ -341,7 +341,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
   throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
-bool RetrieveRequest::finishIfNecessary() {
+bool RetrieveRequest::finishIfNecessary(log::LogContext & lc) {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
   // in memory. If the request is complete, we will just remove it.
@@ -354,6 +354,9 @@ bool RetrieveRequest::finishIfNecessary() {
     if (!finishedStatuses.count(j.status()))
       return false;
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("retrieveRequestObject", getAddressIfSet());
+  lc.log(log::INFO, "In RetrieveRequest::finishIfNecessary(): removed finished retrieve request.");
   return true;
 }
 

@@ -131,7 +131,7 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReferen
   remove();
   log::ScopedParamContainer params(lc);
   params.add("archiveQueueObject", getAddressIfSet());
-  lc.log(log::INFO, "In ArchiveQueue::garbageCollect(): Garbage collected and moved archive queue object.");
+  lc.log(log::INFO, "In ArchiveQueue::garbageCollect(): Garbage collected and removed archive queue object.");
 }
 
 void ArchiveQueue::setTapePool(const std::string& name) {

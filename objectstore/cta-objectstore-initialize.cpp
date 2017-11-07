@@ -57,9 +57,10 @@ int main(int argc, char ** argv) {
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
     cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));
-    re.addOrGetAgentRegisterPointerAndCommit(agr,el);
+    cta::log::LogContext lc(logger);
+    re.addOrGetAgentRegisterPointerAndCommit(agr,el, lc);
     rel.release();
-    ag.insertAndRegisterSelf();
+    ag.insertAndRegisterSelf(lc);
     rel.lock(re);
     re.fetch();
     re.addOrGetDriveRegisterPointerAndCommit(agr, el);

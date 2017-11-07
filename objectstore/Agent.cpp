@@ -47,7 +47,7 @@ void cta::objectstore::Agent::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::Agent::insertAndRegisterSelf() {
+void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
   // We suppose initialize was already called, and that the agent name
   // is set.
   // We need to get hold of the agent register, which we suppose is available

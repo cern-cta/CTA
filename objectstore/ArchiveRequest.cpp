@@ -566,7 +566,7 @@ bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   remove();
   log::ScopedParamContainer params(lc);
   params.add("archiveRequestObject", getAddressIfSet());
-  lc.log(log::INFO, "In ArchiveRequest::finishIfNecessary(): Removing completed request.");
+  lc.log(log::INFO, "In ArchiveRequest::finishIfNecessary(): Removed completed request.");
   return true;
 }
 

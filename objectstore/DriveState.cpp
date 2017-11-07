@@ -35,6 +35,9 @@ void DriveState::garbageCollect(const std::string& presumedOwner, AgentReference
   if (presumedOwner != m_header.owner())
     return;
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("driveStateObject", getAddressIfSet());
+  lc.log(log::INFO, "In DriveState::garbageCollect(): Garbage collected and removed drive state object.");
 }
 
 void DriveState::initialize(const std::string & driveName) {

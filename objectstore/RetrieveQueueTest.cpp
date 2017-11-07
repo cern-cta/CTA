@@ -27,6 +27,7 @@ namespace unitTests {
 TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   { 
@@ -47,7 +48,7 @@ TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
   cta::objectstore::ScopedExclusiveLock lock(rq);
   rq.fetch();
-  rq.removeIfEmpty();
+  rq.removeIfEmpty(lc);
   ASSERT_FALSE(rq.exists());
 }
 }

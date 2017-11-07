@@ -147,7 +147,7 @@ public:
    */ 
   class ArchiveToFileRequestCancelation {
   public:
-    virtual void complete() = 0;
+    virtual void complete(log::LogContext & lc) = 0;
     virtual ~ArchiveToFileRequestCancelation() {};
   };
 

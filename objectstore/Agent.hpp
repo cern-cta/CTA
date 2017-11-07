@@ -50,7 +50,7 @@ public:
 
   void initialize();
 
-  void insertAndRegisterSelf();
+  void insertAndRegisterSelf(log::LogContext & lc);
   
   void removeAndUnregisterSelf(log::LogContext & lc);
   

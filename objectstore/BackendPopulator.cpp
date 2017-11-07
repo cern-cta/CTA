@@ -32,17 +32,18 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
   re.fetchNoLock();
   cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   // We might have to create the agent register (but this is unlikely)
+  log::LogContext lc2(lc);
   try {
     re.getAgentRegisterAddress();
   } catch (...) {
     RootEntry re2(m_backend);
     ScopedExclusiveLock rel(re2);
     re2.fetch();
-    re2.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+    re2.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc2);
   }
   Agent agent(m_agentReference.getAgentAddress(), m_backend);
   agent.initialize();
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc2);
   // Likewise, make sure the drive register is around.
   try {
     re.getDriveRegisterAddress();

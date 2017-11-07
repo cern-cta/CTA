@@ -76,7 +76,7 @@ int main(int argc, char ** argv) {
     cta::objectstore::AgentReference agr("cta-objectstore-collect-orphaned-object", sl);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
-    ag.insertAndRegisterSelf();
+    ag.insertAndRegisterSelf(lc);
     switch (go.type()) {
     case cta::objectstore::serializers::ObjectType::ArchiveRequest_t:
     {

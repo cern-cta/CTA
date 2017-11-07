@@ -52,7 +52,7 @@ public:
   bool isEmpty();
   
   // Safe remover
-  void removeIfEmpty();
+  void removeIfEmpty(log::LogContext & lc);
   
   // Garbage collection (disallowed for root entry).
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
@@ -63,11 +63,11 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef, log::LogContext & lc);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
-  void removeArchiveQueueAndCommit(const std::string & tapePool);
+  void removeArchiveQueueAndCommit(const std::string & tapePool, log::LogContext & lc);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the archive queue */
   void removeMissingArchiveQueueReference(const std::string & tapePool);
   void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress);
@@ -86,7 +86,7 @@ public:
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the retrieve queue */
   void removeMissingRetrieveQueueReference(const std::string & address);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
-  void removeRetrieveQueueAndCommit(const std::string & vid);
+  void removeRetrieveQueueAndCommit(const std::string & vid, log::LogContext & lc);
   std::string getRetrieveQueueAddress(const std::string & vid);
   struct RetrieveQueueDump {
     std::string vid;
@@ -98,7 +98,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);
   std::string getDriveRegisterAddress();  
   std::string addOrGetDriveRegisterPointerAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
-  void removeDriveRegisterAndCommit();
+  void removeDriveRegisterAndCommit(log::LogContext & lc);
   
   // Agent register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(AgentRegisterNotEmpty);
@@ -108,16 +108,16 @@ public:
    * log for tracking objects being created. We already use an agent here for
    * object name generation, but not yet tracking. */
   std::string addOrGetAgentRegisterPointerAndCommit(AgentReference & agentRef,
-    const EntryLogSerDeser & log);
-  void removeAgentRegisterAndCommit();
+    const EntryLogSerDeser & log, log::LogContext & lc);
+  void removeAgentRegisterAndCommit(log::LogContext & lc);
 
   // Agent register manipulations ==============================================
   std::string getSchedulerGlobalLock();
   std::string addOrGetSchedulerGlobalLockAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
-  void removeSchedulerGlobalLockAndCommit();
+  void removeSchedulerGlobalLockAndCommit(log::LogContext & lc);
   
 private:
-  void addIntendedAgentRegistry(const std::string & address);
+  void addIntendedAgentRegistry(const std::string & address, log::LogContext & lc);
   
 public:
   // Dump the root entry
@@ -125,5 +125,4 @@ public:
 };
 
 }}
-
 

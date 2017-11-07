@@ -98,6 +98,9 @@ void DriveRegister::garbageCollect(const std::string &presumedOwner, AgentRefere
     throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
   }
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("driveRegisterObject", getAddressIfSet());
+  lc.log(log::INFO, "In DriveRegister::garbageCollect(): Garbage collected and removed drive register object.");
 }
 
 //------------------------------------------------------------------------------

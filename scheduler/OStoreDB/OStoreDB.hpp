@@ -207,7 +207,7 @@ public:
       objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger): m_request(be), m_lock(), m_objectStore(be),
       m_catalogue(catalogue), m_logger(logger), m_agentReference(agentReference), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
-    void complete() override;
+    void complete(log::LogContext & lc) override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;

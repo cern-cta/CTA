@@ -71,6 +71,9 @@ void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner, Agent
     throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
   }
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("schedulerGlobalLock", getAddressIfSet());
+  lc.log(log::INFO, "In SchedulerGlobalLock::garbageCollect(): Garbage collected and removed scheduler global lock.");
 }
 
 uint64_t SchedulerGlobalLock::getIncreaseCommitMountId() {
