@@ -19,6 +19,7 @@
 			/* exit codes */
 
 #define	USERR	1
+#define PATH_CONF "cta-smc.conf"
 
 extern char *optarg;
 
@@ -78,7 +79,7 @@ static int smc_qdrive (
 		printf ("Drive Ordinal\tElement Addr.\tStatus\t\tVid\n");
 
         useSpectraLib=0;
-        smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
+        smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType && 
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
           useSpectraLib = 1;

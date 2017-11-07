@@ -25,6 +25,7 @@
 #include "smc_constants.h"
 
 #define	RBT_XTRA_PROC 10
+#define PATH_CONF "cta-smc.conf"
 static struct smc_status smc_status;
 static const char *smc_msgaddr;
 
@@ -442,7 +443,7 @@ int smc_find_cartridge(
 	func[sizeof(func) - 1] = '\0';
         
         /* Skip the 0xB6 cdb command if the tape library is Spectra like */
-        smcLibraryType = getconfent("SMC","LIBRARY_TYPE",0);
+        smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType &&
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
           rc = smc_find_cartridgeWithoutSendVolumeTag (fd, rbtdev, find_template, type, start, nbelem,

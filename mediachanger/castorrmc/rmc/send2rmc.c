@@ -17,6 +17,7 @@
 #include "rmc_constants.h"
 #include "serrno.h"
 
+ #define PATH_CONF "cta-rmcd.conf"
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
 int send2rmc(
@@ -30,6 +31,7 @@ int send2rmc(
 	int c;
 	char func[16];
 	char *getconfent();
+	char *getconfent_fromfile();
 	char *getenv();
 	struct hostent *hp;
 	int magic;
@@ -44,7 +46,7 @@ int send2rmc(
 
 	strncpy (func, "send2rmc", 16);
 	sin.sin_family = AF_INET;
-	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
+	if ((p = getenv ("RMC_PORT")) || (p = getconfent_fromfile (PATH_CONF,"RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else {
 		sin.sin_port = htons ((unsigned short)RMC_PORT);

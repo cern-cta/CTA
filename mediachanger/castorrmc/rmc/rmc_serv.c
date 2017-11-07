@@ -34,6 +34,8 @@
 #include <sys/stat.h>
 #include "rmc_send_scsi_cmd.h"
 
+#define PATH_CONF "cta-rmcd.conf" 
+
 /* Forward declaration */
 static int rmc_getreq(const int s, int *const req_type, char *const req_data,
   char **const clienthost);
@@ -136,7 +138,7 @@ int rmc_main(const char *const robot)
 	sin.sin_family = AF_INET ;
 	{
 		const char *p;
-		if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
+		if ((p = getenv ("RMC_PORT")) || (p = getconfent_fromfile (PATH_CONF,"RMC", "PORT", 0))) {
 			sin.sin_port = htons ((unsigned short)atoi (p));
 		} else {
 			sin.sin_port = htons ((unsigned short)RMC_PORT);
