@@ -129,6 +129,9 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReferen
     throw (NotEmpty("Trying to garbage collect a non-empty ArchiveQueue: internal error"));
   }
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("archiveQueueObject", getAddressIfSet());
+  lc.log(log::INFO, "In ArchiveQueue::garbageCollect(): Garbage collected and moved archive queue object.");
 }
 
 void ArchiveQueue::setTapePool(const std::string& name) {

@@ -47,6 +47,9 @@ void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumed
   if (!isEmpty()) {
     throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
   }
+  log::ScopedParamContainer params(lc);
+  params.add("agentRegisterObject", getAddressIfSet());
+  lc.log(log::INFO, "In AgentRegister::garbageCollect(): Garbage collected and moved agent register object.");
   remove();
 }
 

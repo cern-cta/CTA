@@ -2546,7 +2546,7 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId)) {
+  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, lc)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
