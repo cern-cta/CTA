@@ -178,20 +178,26 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    // Send the Response
 
-   if(m_response_str.size() == 0)
+   if(m_response_stream_ptr != nullptr)
    {
-      // Send a metadata-only response. If the Response is empty, we still have to call SetResponse(),
-      // otherwise Finished() will not be called on the Request.
+      // Stream Response
 
-      SetNilResponse();
-   }
-   else if(m_response_stream_ptr != nullptr)
-   {
       SetResponse(m_response_stream_ptr);
+   }
+   else if(m_response_str.size() != 0)
+   {
+      // Data Response
+
+      SetResponse(m_response_str.c_str(), m_response_str.size());
    }
    else
    {
-      SetResponse(m_response_str.c_str(), m_response_str.size());
+      // Metadata-only Response
+      //
+      // It is necessary to set a Response even for empty responses, otherwise Finished()
+      // will not be called on the Request.
+
+      SetNilResponse();
    }
 
    // Wait for the framework to call Finished()

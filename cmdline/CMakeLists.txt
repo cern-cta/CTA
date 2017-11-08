@@ -51,5 +51,7 @@ install(TARGETS eoscta_stub DESTINATION usr/bin)
 add_executable(cta_admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp Configuration.cpp)
 target_link_libraries(cta_admin XrdCtaMessages XrdSsi-4 XrdSsiLib)
 set_property (TARGET cta_admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Get some extra debug messages on stdout
+target_compile_definitions(cta_admin PUBLIC XRDSSI_DEBUG)
 install(TARGETS cta_admin DESTINATION usr/bin)
 

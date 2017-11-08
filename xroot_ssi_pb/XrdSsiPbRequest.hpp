@@ -20,6 +20,7 @@
 
 #include <future>
 #include <XrdSsi/XrdSsiRequest.hh>
+#include <XrdSsi/XrdSsiStream.hh>
 
 #ifdef XRDSSI_DEBUG
 #include <XrdSsiPbDebug.hpp>
@@ -64,7 +65,6 @@ public:
     * The implementation of GetRequest() must create request data, save it in some manner, and provide
     * it to the framework.
     */
-
    virtual char *GetRequest(int &reqlen) override
    {
       reqlen = m_request_str.size();
@@ -84,7 +84,6 @@ public:
    /*!
     * Return the future associated with this object's promise
     */
-
    auto GetFuture() { return m_promise.get_future(); }
 
 private:
@@ -150,25 +149,19 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
       case XrdSsiRespInfo::isData:
 
          // Process Metadata
-
          ProcessResponseMetadata();
 
          // Process Data
-
          if(rInfo.blen > 0)
          {
             // Process Data Response
-
             m_response_bufptr = new char[m_response_bufsize];
 
             // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
-
             GetResponseData(m_response_bufptr, m_response_bufsize);
-         } else {
-            // Response is Metadata-only
+         } else { // Response is Metadata-only
 
             // Return control of the object to the calling thread and delete rInfo
-
             Finished();
 
             // It is now safe to delete the Request object (implies that the pointer on the calling side will
@@ -176,6 +169,31 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
 
             delete this;
          }
+         break;
+
+      // Stream response
+
+      case XrdSsiRespInfo::isStream:
+
+         // Process Metadata
+         ProcessResponseMetadata();
+
+         {
+         XrdSsiErrInfo errInfo;
+
+         bool is_ok = rInfo.strmP->SetBuff(errInfo, m_response_bufptr, m_response_bufsize);
+
+         if(!is_ok) throw XrdSsiException(errInfo);
+         }
+#if 0
+         // Process Data Response
+         m_response_bufptr = new char[m_response_bufsize];
+
+         // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
+std::cerr << "isStream/GetResponseData" << std::endl;
+         GetResponseData(m_response_bufptr, m_response_bufsize);
+std::cerr << "isStream/GetResponseData-done" << std::endl;
+#endif
          break;
 
       // Handle errors in the XRootD framework (e.g. no response from server)
@@ -189,10 +207,6 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
       // To implement file requests, add another callback type
 
       case XrdSsiRespInfo::isFile:      throw XrdSsiException("File requests are not implemented.");
-
-      // To implement stream requests, add another callback type
-
-      case XrdSsiRespInfo::isStream:    throw XrdSsiException("Stream requests are not implemented.");
 
       // Handle invalid responses
 
@@ -287,20 +301,16 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
    {
       // Handle one block of response data
 
+      response_bufptr[response_buflen] = 0;
+      std::cerr << response_bufptr << std::endl;
+
       // TO DO: Provide an interface to the client to read a chunk of data
    }
 
-   if(!is_last)
-   {
-      // If there is more data, get the next chunk
-
-      GetResponseData(response_bufptr, m_response_bufsize);
-   }
-   else
+   if(is_last)
    {
       // No more data, so clean up
-
-      delete[] response_bufptr;
+      std::cerr << "ProcessResponseData: done" << std::endl;
 
       // If Request objects are uniform, we could re-use them instead of deleting them, to avoid the
       // overhead of repeated object creation. This would require a more complex Request factory. For
@@ -308,6 +318,13 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
 
       Finished();
       delete this;
+   }
+   else
+   {
+      std::cerr << "ProcessResponseData: read next chunk" << std::endl;
+      // If there is more data, get the next chunk
+
+      GetResponseData(response_bufptr, m_response_bufsize);
    }
 
    // Indicate what type of post-processing is required (normal in this case)

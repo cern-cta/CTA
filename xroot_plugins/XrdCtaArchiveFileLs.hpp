@@ -20,42 +20,36 @@
 
 #include <XrdSsi/XrdSsiStream.hh>
 
-/*!
- * The Buffer object is returned by active streams as they supply the buffer holding the requested
- * data. Once the buffer is no longer needed it must be recycled by calling Recycle().
- */
-class ArchiveFileBuffer : public XrdSsiStream::Buffer
+class ArchiveFileLsBuffer : public XrdSsiStream::Buffer
 {
 public:
-   ArchiveFileBuffer(char *dp = nullptr) : Buffer(dp) {}
+   ArchiveFileLsBuffer() { data = test; }
 
-   virtual void Recycle() {}
+   int length() { return 14; }
+
+private:
+   virtual void Recycle() { delete this; }
+
+   char *test = const_cast<char*>("HELLO, WORLD. ");
 };
-#if 0
-virtual void    Recycle() = 0;     //!> Call to recycle the buffer when finished
-
-char           *data;              //!> -> Buffer containing the data
-Buffer         *next;              //!> For chaining by buffer receiver
-
-                Buffer(char *dp=0) : data(dp), next(0) {}
-virtual        ~Buffer() {}
-#endif
 
 
 
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream() :
-      XrdSsiStream(XrdSsiStream::isActive),
-      m_archiveFileLsBuffer(test_buf) {}
+   ArchiveFileLsStream() : XrdSsiStream(XrdSsiStream::isActive) {
+      std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
+   }
 
-   virtual ~ArchiveFileLsStream() {}
+   virtual ~ArchiveFileLsStream() {
+      std::cerr << "[DEBUG] ArchiveFileLsStream() destructor" << std::endl;
+   }
 
    /*!
     * Synchronously obtain data from an active stream (server-side only).
     *
-    * @param[out]       eRef    The object to receive any error description.
+    * @param[out]       eInfo   The object to receive any error description.
     * @param[in,out]    dlen    input:  the optimal amount of data wanted (this is a hint)
     *                           output: the actual amount of data returned in the buffer.
     * @param[in,out]    last    input:  should be set to false.
@@ -69,15 +63,14 @@ public:
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
-      dlen = strlen(m_archiveFileLsBuffer.data);
-      last = false;
+std::cerr << "Called ArchiveFileLsStream::GetBuff" << std::endl;
+      ArchiveFileLsBuffer *buffer = new ArchiveFileLsBuffer();
+std::cerr << "Calling ArchiveFileLsBuffer::length" << std::endl;
+      dlen = buffer->length();
+      last = true;
 
-      return &m_archiveFileLsBuffer;
+std::cerr << "Returning buffer" << std::endl;
+      return buffer;
    }
-
-private:
-   char* test_buf = const_cast<char*>("Hello, world!\n");
-
-   ArchiveFileBuffer m_archiveFileLsBuffer;
 };
 
