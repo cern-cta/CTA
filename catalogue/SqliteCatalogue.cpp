@@ -389,8 +389,6 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autoco
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, autocommitMode, row);
-    } else {
-      throwIfCommonEventDataMismatch(*archiveFile, event);
     }
 
     // Insert the tape file

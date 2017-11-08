@@ -3899,62 +3899,6 @@ void RdbmsCatalogue::updateTape(
 }
 
 //------------------------------------------------------------------------------
-// throwIfCommonEventDataMismatch
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
-  const TapeFileWritten &actual) const {
-  // Throw an exception if the common disk information of this tape file
-  // written event does not match the previous
-  if(expected.diskFileId != actual.diskFileId) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file ID mismatch: expected=" << expected.diskFileId << " actual=" <<
-    actual.diskFileId;
-    throw ex;
-  }
-  if(expected.fileSize != actual.size) {
-    exception::Exception ex;
-    ex.getMessage() << "File size mismatch: expected=" << expected.fileSize << " actual=" << actual.size;
-    throw ex;
-  }
-  if(expected.storageClass != actual.storageClassName) {
-    exception::Exception ex;
-    ex.getMessage() << "Storage class mismatch: expected=" << expected.storageClass << " actual=" <<
-    actual.storageClassName;
-    throw ex;
-  }
-  if(expected.diskInstance != actual.diskInstance) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk instance mismatch: expected=" << expected.diskInstance << " actual=" <<
-    actual.diskInstance;
-    throw ex;
-  }
-  if(expected.diskFileInfo.path != actual.diskFilePath) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file path mismatch: expected=" << expected.diskFileInfo.path << " actual=" <<
-    actual.diskFilePath;
-    throw ex;
-  }
-  if(expected.diskFileInfo.owner != actual.diskFileUser) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file user mismatch: expected=" << expected.diskFileInfo.owner << " actual=" <<
-    actual.diskFileUser;
-    throw ex;
-  }
-  if(expected.diskFileInfo.group != actual.diskFileGroup) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file group mismatch: expected=" << expected.diskFileInfo.group << " actual=" <<
-    actual.diskFileGroup;
-    throw ex;
-  }
-  if(expected.diskFileInfo.group != actual.diskFileGroup) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk recovery blob mismatch";
-    throw ex;
-  }
-
-}
-
-//------------------------------------------------------------------------------
 // prepareToRetrieveFile
 //------------------------------------------------------------------------------
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
