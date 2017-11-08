@@ -23,12 +23,21 @@
 class ArchiveFileLsBuffer : public XrdSsiStream::Buffer
 {
 public:
-   ArchiveFileLsBuffer() { data = test; }
+   ArchiveFileLsBuffer() {
+      std::cerr << "ArchiveFileLsBuffer() constructor" << std::endl;
+      data = test;
+   }
+   ~ArchiveFileLsBuffer() {
+      std::cerr << "ArchiveFileLsBuffer() destructor" << std::endl;
+   }
 
    int length() { return 14; }
 
 private:
-   virtual void Recycle() { delete this; }
+   virtual void Recycle() {
+      std::cerr << "ArchiveFileLsBuffer::Recycle()" << std::endl;
+      delete this;
+   }
 
    char *test = const_cast<char*>("HELLO, WORLD. ");
 };
@@ -39,6 +48,7 @@ class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
    ArchiveFileLsStream() : XrdSsiStream(XrdSsiStream::isActive) {
+      test_count = 100;
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
    }
 
@@ -63,14 +73,17 @@ public:
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
-std::cerr << "Called ArchiveFileLsStream::GetBuff" << std::endl;
+std::cerr << "Called ArchiveFileLsStream::GetBuff with dlen=" << dlen << ", last=" << last << std::endl;
       ArchiveFileLsBuffer *buffer = new ArchiveFileLsBuffer();
 std::cerr << "Calling ArchiveFileLsBuffer::length" << std::endl;
       dlen = buffer->length();
-      last = true;
+      --test_count;
+      last = (test_count == 0);
 
 std::cerr << "Returning buffer" << std::endl;
       return buffer;
    }
+
+   int test_count;
 };
 

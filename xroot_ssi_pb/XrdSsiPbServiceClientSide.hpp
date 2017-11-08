@@ -40,7 +40,7 @@ namespace XrdSsiPb {
 
 // Constants
 
-const unsigned int DefaultResponseBufferSize = 2097152;    //!< Default size for the response buffer in bytes = 2 Mb
+const unsigned int DefaultResponseBufferSize = 1024;       //!< Default size for the response buffer in bytes
 const unsigned int DefaultServerTimeout      = 15;         //!< Maximum XRootD reply timeout in secs
 
 

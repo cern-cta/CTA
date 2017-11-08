@@ -178,22 +178,9 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
          // Process Metadata
          ProcessResponseMetadata();
 
-         {
-         XrdSsiErrInfo errInfo;
-
-         bool is_ok = rInfo.strmP->SetBuff(errInfo, m_response_bufptr, m_response_bufsize);
-
-         if(!is_ok) throw XrdSsiException(errInfo);
-         }
-#if 0
          // Process Data Response
-         m_response_bufptr = new char[m_response_bufsize];
-
-         // GetResponseData() copies one chunk of data into the buffer, then calls ProcessResponseData()
-std::cerr << "isStream/GetResponseData" << std::endl;
          GetResponseData(m_response_bufptr, m_response_bufsize);
-std::cerr << "isStream/GetResponseData-done" << std::endl;
-#endif
+
          break;
 
       // Handle errors in the XRootD framework (e.g. no response from server)
@@ -295,13 +282,17 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
    std::cerr << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes of data" << std::endl;
 #endif
 
-   // The buffer length can be 0 if the response is metadata only
+   // If an error occurred setting up the response, the buflen is set to 0
+   if(response_buflen == -1)
+   {
+      throw XrdSsiException(eInfo);
+   }
 
+   // The buffer length can be 0 if the response is metadata only
    if(response_buflen != 0)
    {
       // Handle one block of response data
-
-      response_bufptr[response_buflen] = 0;
+      response_bufptr[response_buflen-1] = 0;
       std::cerr << response_bufptr << std::endl;
 
       // TO DO: Provide an interface to the client to read a chunk of data
@@ -322,13 +313,12 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
    else
    {
       std::cerr << "ProcessResponseData: read next chunk" << std::endl;
-      // If there is more data, get the next chunk
 
-      GetResponseData(response_bufptr, m_response_bufsize);
+      // If there is more data, get the next chunk
+      GetResponseData(m_response_bufptr, m_response_bufsize);
    }
 
    // Indicate what type of post-processing is required (normal in this case)
-
    return XrdSsiRequest::PRD_Normal;
 
    // If the client is resource-limited and can't handle the queue at this time,
