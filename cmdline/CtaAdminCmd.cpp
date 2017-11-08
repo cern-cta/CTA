@@ -144,6 +144,11 @@ void CtaAdminCmd::send() const
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       default:                            throw XrdSsiPb::PbException("Invalid response type.");
    }
+
+   // If there is a Data/Stream payload to follow, wait until it has been processed before exiting
+   if(response.has_data()) {
+      while(true) ;
+   }
 }
 
 

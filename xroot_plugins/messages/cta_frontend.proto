@@ -40,12 +40,13 @@ message Request {
 message Response {
   enum ResponseType {
     RSP_INVALID                       = 0;      //< Response type was not set
-    RSP_SUCCESS                       = 1;      //< Notification was queued successfully
+    RSP_SUCCESS                       = 1;      //< Request is valid and was accepted for processing
     RSP_ERR_PROTOBUF                  = 2;      //< Framework error caused by Google Protocol Buffers layer
     RSP_ERR_CTA                       = 3;      //< Server error reported by CTA Frontend
   }
-  ResponseType type                   = 1;      //< Encode the type of this reply
-  string message_txt                  = 2;      //< Text of the reply
+  ResponseType type                   = 1;      //< Encode the type of this response
+  bool has_data                       = 2;      //< The response will include a payload of Data or Stream type
+  string message_txt                  = 3;      //< Optional response message text
 }
 
 
