@@ -63,7 +63,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     const auto getConnTime = t.secs();
     rdbms::AutoRollback autoRollback(conn);
     t.reset();
-    const auto archiveFile = getArchiveFile(conn, archiveFileId);
+    const auto archiveFile = getArchiveFileByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs();
 
     if(nullptr == archiveFile.get()) {
@@ -371,7 +371,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autoco
     checkTapeFileWrittenFieldsAreSet(event);
 
     const time_t now = time(nullptr);
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, event.archiveFileId);
+    auto archiveFile = getArchiveFileByArchiveFileId(conn, event.archiveFileId);
 
     // If the archive file does not already exist
     if(nullptr == archiveFile.get()) {
