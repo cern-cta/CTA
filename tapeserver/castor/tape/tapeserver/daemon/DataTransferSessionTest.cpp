@@ -1688,7 +1688,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
-      ar.diskFileID = "x";
+      ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
