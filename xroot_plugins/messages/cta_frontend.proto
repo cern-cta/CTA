@@ -46,8 +46,7 @@ message Response {
     RSP_ERR_CTA                       = 4;      //< Server error reported by CTA Frontend
   }
   ResponseType type                   = 1;      //< Encode the type of this response
-  bool has_data                       = 2;      //< The response will include a payload of Data or Stream type
-  string message_txt                  = 3;      //< Optional response message text
+  string message_txt                  = 2;      //< Optional response message text
 }
 
 

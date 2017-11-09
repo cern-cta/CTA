@@ -651,7 +651,6 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
       m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
 #endif
-      response.set_has_data(true);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
