@@ -49,7 +49,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
  * Defines how Data/Stream messages should be handled
  */
 template<>
-void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen, bool is_last)
+void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
 {
    std::cout.write(response_bufptr, response_buflen);
 }
