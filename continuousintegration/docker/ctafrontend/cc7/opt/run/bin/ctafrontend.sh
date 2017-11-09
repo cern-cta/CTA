@@ -41,12 +41,6 @@ echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
 for ((;;)); do test -e /etc/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
-touch /var/log/cta/cta-frontend.log
-chmod a+w /var/log/cta/cta-frontend.log
-
-touch /var/log/cta-frontend-xrootd.log
-chmod a+w /var/log/cta-frontend-xrootd.log
-
 echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
 echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
 
