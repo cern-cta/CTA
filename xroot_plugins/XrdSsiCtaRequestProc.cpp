@@ -50,8 +50,7 @@ void ExceptionHandler<cta::xrd::Response, PbException>::operator()(cta::xrd::Res
 template <>
 void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::ExecuteAction()
 {
-   try
-   {
+   try {
       // Perform a capability query on the XrdSsiProviderServer object: it must be a XrdSsiCtaServiceProvider
 
       XrdSsiCtaServiceProvider *cta_service_ptr;
@@ -69,16 +68,13 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
       request_msg.process(m_request, m_metadata, m_response_stream_ptr);
-   }
-   catch(PbException &ex)
-   {
-      // Set the response
-
+   } catch(cta::exception::UserError &ex) {
+      m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
+      m_metadata.set_message_txt(ex.getMessageValue());
+   } catch(PbException &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
       m_metadata.set_message_txt(ex.what());
-   }
-   catch(std::exception &ex)
-   {
+   } catch(std::exception &ex) {
 #ifdef XRDSSI_DEBUG
       // Serialize and send a log message
 
@@ -89,8 +85,6 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 
       Alert(alert_msg);
 #endif
-      // Set the response
-
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.what());
    }

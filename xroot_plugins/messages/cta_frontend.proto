@@ -42,7 +42,8 @@ message Response {
     RSP_INVALID                       = 0;      //< Response type was not set
     RSP_SUCCESS                       = 1;      //< Request is valid and was accepted for processing
     RSP_ERR_PROTOBUF                  = 2;      //< Framework error caused by Google Protocol Buffers layer
-    RSP_ERR_CTA                       = 3;      //< Server error reported by CTA Frontend
+    RSP_ERR_USER                      = 3;      //< User request is invalid
+    RSP_ERR_CTA                       = 4;      //< Server error reported by CTA Frontend
   }
   ResponseType type                   = 1;      //< Encode the type of this response
   bool has_data                       = 2;      //< The response will include a payload of Data or Stream type

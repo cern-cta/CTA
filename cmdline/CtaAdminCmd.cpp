@@ -141,6 +141,7 @@ void CtaAdminCmd::send() const
 
       case Response::RSP_SUCCESS:         std::cout << response.message_txt(); break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
+      case Response::RSP_ERR_USER:
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       default:                            throw XrdSsiPb::PbException("Invalid response type.");
    }
