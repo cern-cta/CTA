@@ -41,6 +41,19 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
    OutputJsonString(std::cout, &alert);
 }
 
+
+
+/*!
+ * Data callback.
+ *
+ * Defines how Data/Stream messages should be handled
+ */
+template<>
+void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen, bool is_last)
+{
+   std::cout.write(response_bufptr, response_buflen);
+}
+
 } // namespace XrdSsiPb
 
 

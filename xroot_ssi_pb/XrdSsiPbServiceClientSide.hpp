@@ -133,7 +133,7 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
       // implementation simply returns false. i.e. there is no way to know if we are shutting down
       // cleanly or not.
 
-      std::cout << "[WARNING] ServiceClientSide object was destroyed before shutting down the Service." << std::endl;
+      std::cerr << "[WARNING] ServiceClientSide object was destroyed before shutting down the Service." << std::endl;
    }
 #endif
 }

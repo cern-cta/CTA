@@ -24,9 +24,16 @@
 /*!
  * Bind the type of the XrdSsiService to the types defined in the .proto file
  */
-
 typedef XrdSsiPb::ServiceClientSide<cta::xrd::Request,     //!< XrdSSi Request message type
                                     cta::xrd::Response,    //!< XrdSsi Metadata message type
                                     cta::xrd::Alert>       //!< XrdSsi Alert message type
         XrdSsiPbServiceType;
+
+/*!
+ * Bind the type of the XrdSsiRequest to the types defined in the .proto file
+ */
+typedef XrdSsiPb::Request<cta::xrd::Request,     //!< XrdSSi Request message type
+                          cta::xrd::Response,    //!< XrdSsi Metadata message type
+                          cta::xrd::Alert>       //!< XrdSsi Alert message type
+        XrdSsiPbRequestType;
 
