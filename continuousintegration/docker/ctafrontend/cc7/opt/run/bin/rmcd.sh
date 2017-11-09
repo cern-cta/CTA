@@ -8,7 +8,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable castor
 
   # Install missing RPMs
-  yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server
+  yum -y install mt-st mtx lsscsi sg3_utils castor-rmc-server
 fi
 
 # source library configuration file
