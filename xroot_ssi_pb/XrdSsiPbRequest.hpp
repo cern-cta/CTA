@@ -51,7 +51,7 @@ template <typename RequestType, typename MetadataType, typename AlertType>
 class Request : public XrdSsiRequest
 {
 public:
-   Request(const RequestType &request, unsigned int response_bufsize, uint16_t timeout);
+   Request(const RequestType &request, unsigned int response_bufsize, uint16_t request_timeout);
 
    virtual ~Request() {
 #ifdef XRDSSI_DEBUG
@@ -118,16 +118,16 @@ private:
  */
 template<typename RequestType, typename MetadataType, typename AlertType>
 Request<RequestType, MetadataType, AlertType>::
-Request(const RequestType &request, unsigned int response_bufsize, uint16_t timeout) :
+Request(const RequestType &request, unsigned int response_bufsize, uint16_t request_timeout) :
    m_response_bufsize(response_bufsize)
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] Request constructor: "
              << "Response buffer size = " << m_response_bufsize
-             << " bytes, timeout = " << timeout << std::endl;
+             << " bytes, request timeout = " << request_timeout << std::endl;
 #endif
-   // Set response timeout
-   SetTimeOut(timeout);
+   // Set XRootD request timeout
+   SetTimeOut(request_timeout);
 
    // Serialize the Request
    if(!request.SerializeToString(&m_request_str))

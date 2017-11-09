@@ -41,7 +41,10 @@ namespace XrdSsiPb {
 // Constants
 
 const unsigned int DefaultResponseBufferSize = 1024;       //!< Default size for the response buffer in bytes
-const unsigned int DefaultServerTimeout      = 15;         //!< Maximum XRootD reply timeout in secs
+const unsigned int DefaultRequestTimeout     = 15;         //!< Default XRootD request timeout in secs
+// Better to get the default from XRD_REQUESTTIMEOUT if it is not set explicitly?
+// Decide on order of precedence for setting request timeout
+// What about setting stream timeout?
 
 
 
@@ -54,7 +57,7 @@ class ServiceClientSide
 public:
    ServiceClientSide(const std::string &endpoint, const std::string &resource,
                      unsigned int response_bufsize = DefaultResponseBufferSize,
-                     unsigned int server_tmo       = DefaultServerTimeout);
+                     unsigned int request_tmo      = DefaultRequestTimeout);
 
    virtual ~ServiceClientSide();
 
@@ -68,7 +71,7 @@ private:
    XrdSsiService *m_server_ptr;          //!< Pointer to XRootD Server object
 
    unsigned int   m_response_bufsize;    //!< Buffer size for responses from the XRootD SSI server
-   unsigned int   m_server_tmo;          //!< Timeout for a response from the server
+   unsigned int   m_request_tmo;         //!< Timeout for a response from the server
 };
 
 
@@ -79,10 +82,10 @@ private:
 template <typename RequestType, typename MetadataType, typename AlertType>
 ServiceClientSide<RequestType, MetadataType, AlertType>::
 ServiceClientSide(const std::string &endpoint, const std::string &resource,
-                  unsigned int response_bufsize, unsigned int server_tmo) :
+                  unsigned int response_bufsize, unsigned int request_tmo) :
    m_resource(resource),
    m_response_bufsize(response_bufsize),
-   m_server_tmo(server_tmo)
+   m_request_tmo(request_tmo)
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] ServiceClientSide() constructor" << std::endl;
@@ -148,7 +151,7 @@ MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const
 {
    // Instantiate the Request object
 
-   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(request, m_response_bufsize, m_server_tmo);
+   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(request, m_response_bufsize, m_request_tmo);
 
    auto future_response = request_ptr->GetFuture();
 
