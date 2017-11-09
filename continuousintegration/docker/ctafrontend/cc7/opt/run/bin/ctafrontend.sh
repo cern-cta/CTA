@@ -29,21 +29,12 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 # EOS INSTANCE NAME used as username for SSS key
 EOSINSTANCE=ctaeos
 
-
 # Create SSS key for ctafrontend, must be forwardable in kubernetes realm
 echo y | xrdsssadmin -k ctafrontend+ -u ${EOSINSTANCE} -g cta add /etc/ctafrontend_SSS_s.keytab
 # copy it in the client file that contains only one SSS
 cp /etc/ctafrontend_SSS_s.keytab /etc/ctafrontend_SSS_c.keytab
 chmod 600 /etc/ctafrontend_SSS_s.keytab /etc/ctafrontend_SSS_c.keytab
 chown cta /etc/ctafrontend_SSS_s.keytab /etc/ctafrontend_SSS_c.keytab
-sed -i 's|.*sec.protocol sss.*|sec.protocol sss -s /etc/ctafrontend_SSS_s.keytab -c /etc/ctafrontend_SSS_c.keytab|' /etc/xrootd/xrootd-cta.cfg
-sed -i 's|.*sec.protocol unix.*|#sec.protocol unix|' /etc/xrootd/xrootd-cta.cfg
-
-# Hack the default xrootd-cta.cfg provided by the sources
-sed -i 's|.*sec.protocol krb5.*|sec.protocol krb5 /etc/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA|' /etc/xrootd/xrootd-cta.cfg
-
-# Allow only SSS and krb5 for frontend
-sed -i 's|^sec.protbind .*|sec.protbind * only sss krb5|' /etc/xrootd/xrootd-cta.cfg
 
 # Wait for the keytab file to be pushed in by the creation script.
 echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
