@@ -297,7 +297,9 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Send the Request to the Service and get a Response
 
-   cta::xrd::Response response = cta_service.Send(request);
+   cta::xrd::Response response;
+  
+   cta_service.Send(request, response);
 
    if(isJson)
    {

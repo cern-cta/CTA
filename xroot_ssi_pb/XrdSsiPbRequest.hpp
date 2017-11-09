@@ -82,14 +82,12 @@ public:
    /*!
     * Return the future associated with this object's Metadata promise
     */
-   auto GetMetadataFuture() { return m_metadata_promise.get_future(); }
+   std::future<MetadataType> GetMetadataFuture() { return m_metadata_promise.get_future(); }
 
    /*!
-    * Return the future associated with this object's Metadata promise
+    * Return the future associated with this object's Data/Stream promise
     */
-#if 0
-   auto GetDataFuture() { return m_data_promise.get_future(); }
-#endif
+   std::future<void> GetDataFuture() { return m_data_promise.get_future(); }
 
 private:
    void ProcessResponseMetadata();
@@ -200,7 +198,9 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
          // For Stream responses, the framework allocates the buffer to receive the data
          // Process Stream Response: set m_response_bufptr to point to the next chunk of stream data,
          // then call ProcessResponseData()
+std::cerr << "Calling GetResponseData with m_response_bufptr = " << ", m_response_bufsize = " << m_response_bufsize << std::endl;
          GetResponseData(m_response_bufptr, m_response_bufsize);
+std::cerr << "Returned from GetResponseData with m_response_bufptr = " << ", m_response_bufsize = " << m_response_bufsize << std::endl;
 
          break;
 

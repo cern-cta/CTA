@@ -61,7 +61,7 @@ public:
 
    virtual ~ServiceClientSide();
 
-   MetadataType Send(const RequestType &request);
+   std::future<void> Send(const RequestType &request, MetadataType &response);
 
 private:
    XrdSsiResource m_resource;            //!< Requests are bound to this resource. As the resource is
@@ -145,13 +145,19 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
 
 /*!
  * Send a Request to the Service
+ *
+ * @param[in]     request
+ * @param[out]    response
+ *
+ * @returns       future for Data/Stream requests. This return value can be ignored for Metadata-only Responses.
  */
 template <typename RequestType, typename MetadataType, typename AlertType>
-MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request)
+std::future<void> ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request, MetadataType &response)
 {
    // Instantiate the Request object
    auto request_ptr = new Request<RequestType, MetadataType, AlertType>(request, m_response_bufsize, m_request_tmo);
-   auto future_response = request_ptr->GetMetadataFuture();
+   auto metadata_future = request_ptr->GetMetadataFuture();
+   auto data_future = request_ptr->GetDataFuture();
 
    // Transfer ownership of the Request to the Service object.
    m_server_ptr->ProcessRequest(*request_ptr, m_resource);
@@ -161,9 +167,10 @@ MetadataType ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const
    // we do not need to as we created a reusable Resource.
 
    // Wait synchronously for the framework to return its Response (or an exception)
-   auto response = future_response.get();
+   response = metadata_future.get();
 
-   return response;
+   // Return the future for Data/Stream requests
+   return data_future;
 }
 
 } // namespace XrdSsiPb

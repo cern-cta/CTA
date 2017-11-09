@@ -144,7 +144,9 @@ void CtaAdminCmd::send() const
 
    // Send the Request to the Service and get a Response
 
-   cta::xrd::Response response = cta_service.Send(m_request);
+   cta::xrd::Response response;
+   
+   auto stream_future = cta_service.Send(m_request, response);
 
    // Handle responses
 
@@ -159,10 +161,8 @@ void CtaAdminCmd::send() const
       default:                            throw XrdSsiPb::PbException("Invalid response type.");
    }
 
-   // If there is a Data/Stream payload to follow, wait until it has been processed before exiting
-   if(response.has_data()) {
-      while(true) ;
-   }
+   // If there is a Data/Stream payload, wait until it has been processed before exiting
+   stream_future.wait();
 }
 
 
