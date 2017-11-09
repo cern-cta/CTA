@@ -76,6 +76,13 @@ if [ ! $LIBRARYTYPE == "mhvtl" ]; then
 else
   # library management
   # BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
+  # Emptying drives and move tapes to home slots
+  echo "Unloading tapes that could be remaining in the drives from previous runs"
+  mtx -f /dev/${LIBRARYDEVICE} status
+  for unload in $(mtx -f /dev/${LIBRARYDEVICE}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
+    # normally, there is no need to rewind with virtual tapes...
+    mtx -f /dev/${LIBRARYDEVICE} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+  done
   echo "Labelling tapes using the first drive in ${LIBRARYNAME}: ${DRIVENAMES[${driveslot}]} on /dev/${DRIVEDEVICES[${driveslot}]}:"
   for ((i=0; i<${#TAPES[@]}; i++)); do
     vid=${TAPES[${i}]}
