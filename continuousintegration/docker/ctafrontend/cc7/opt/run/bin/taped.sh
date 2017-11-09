@@ -40,7 +40,7 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 
 ####
-# configuring taped
+# configuring taped using the official location for SSS: /etc/cta/cta-taped.sss.keytab
 CTATAPEDSSS="cta-taped.sss.keytab"
 
 # key generated with 'echo y | xrdsssadmin -k taped+ -u stage -g tape  add /tmp/taped.keytab'
@@ -48,8 +48,6 @@ CTATAPEDSSS="cta-taped.sss.keytab"
 echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/cta/${CTATAPEDSSS}
 chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
-# Official location of the SSS key for taped
-cp -a /etc/cta/${CTATAPEDSSS} /etc/cta/cta-taped.sss.keytab
 
 cat <<EOF > /etc/sysconfig/cta-taped
 export CTA_TAPED_OPTIONS="--foreground -l /var/log/cta/cta-taped.log"
