@@ -172,7 +172,6 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
          {
             // For Data responses, we need to allocate the buffer to receive the data
             m_response_buffer = std::unique_ptr<char[]>(new char[m_response_bufsize]);
-
             m_response_bufptr = m_response_buffer.get();
 
             // Process Data Response: copy one chunk of data into the buffer, then call ProcessResponseData()
@@ -195,12 +194,12 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
          // Process Metadata
          ProcessResponseMetadata();
 
-         // For Stream responses, the framework allocates the buffer to receive the data
-         // Process Stream Response: set m_response_bufptr to point to the next chunk of stream data,
-         // then call ProcessResponseData()
-std::cerr << "Calling GetResponseData with m_response_bufptr = " << ", m_response_bufsize = " << m_response_bufsize << std::endl;
+         // For Stream responses, we need to allocate the buffer to receive the data
+         m_response_buffer = std::unique_ptr<char[]>(new char[m_response_bufsize]);
+         m_response_bufptr = m_response_buffer.get();
+
+         // Process Stream Response: copy one chunk of data into the buffer, then call ProcessResponseData()
          GetResponseData(m_response_bufptr, m_response_bufsize);
-std::cerr << "Returned from GetResponseData with m_response_bufptr = " << ", m_response_bufsize = " << m_response_bufsize << std::endl;
 
          break;
 
@@ -225,11 +224,6 @@ std::cerr << "Returned from GetResponseData with m_response_bufptr = " << ", m_r
       // Use the exception to fulfil the promise
 
       m_metadata_promise.set_exception(std::current_exception());
-
-      Finished();
-      delete this;
-   } catch(...) {
-      // set_exception() above can also throw an exception...
 
       Finished();
       delete this;
@@ -377,8 +371,6 @@ void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &ale
    {
       m_metadata_promise.set_exception(std::current_exception());
    }
-   // catch(...) {} ?
-   // set_exception() can also throw()...
 
    // Recycle the message to free memory
 
