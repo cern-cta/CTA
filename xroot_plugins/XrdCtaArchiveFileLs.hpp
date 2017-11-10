@@ -23,7 +23,8 @@
 #include <XrdSsi/XrdSsiStream.hh>
 #include "catalogue/Catalogue.hpp"
 
-namespace cta { namespace xrd {
+
+namespace XrdSsiPb {
 
 /*!
  * Memory buffer struct
@@ -37,7 +38,8 @@ struct Membuf: public std::streambuf
       this->setp(buffer, buffer + size - 1);
    }
 
-   size_t length() {
+   //! Return the number of bytes in the buffer
+   size_t length() const {
       return pptr()-pbase();
    }
 };
@@ -57,68 +59,56 @@ struct omemstream: virtual Membuf, std::ostream
 
 
 /*!
- * Buffer object.
+ * Stream Buffer.
  *
- * This is a very naïve implementation, where buffers are allocated and deallocated each time they are
- * used. A more performant implementation would use buffer pools.
+ * This class binds XrdSsiStream::Buffer to the stream interface.
+ *
+ * This is a naïve implementation, where buffers are allocated and deallocated each time they are
+ * used. A more performant implementation could be implemented using a buffer pool. See the Recycle()
+ * method below.
  */
-class ArchiveFileLsBuffer : public XrdSsiStream::Buffer
+class StreamBuffer : public XrdSsiStream::Buffer
 {
 public:
-   ArchiveFileLsBuffer(size_t size) : XrdSsiStream::Buffer(new char[size]),
-      out(data, size)
-   {
+   StreamBuffer(size_t size) : XrdSsiStream::Buffer(new char[size]),
+      m_out(data, size) {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "ArchiveFileLsBuffer() constructor" << std::endl;
+      std::cerr << "[DEBUG] StreamBuffer() constructor" << std::endl;
 #endif
-
-      out << "HELLO, WORLD. ";
    }
 
-   ~ArchiveFileLsBuffer() {
+   ~StreamBuffer() {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "ArchiveFileLsBuffer() destructor" << std::endl;
+      std::cerr << "[DEBUG] StreamBuffer() destructor" << std::endl;
 #endif
+      // data is a public member of XrdSsiStream::Buffer. It is an unmanaged char* pointer.
       delete[] data;
    }
 
-   int length() { return out.length(); }
+   //! Return size of the stream buffer in bytes
+   int length() const { return m_out.length(); }
 
-#if 0
-      if(m_displayHeader) {
-               m_readBuffer <<
-                          "\x1b[31;1m" << // Change the colour of the output text to red
-                                  std::setfill(' ') << std::setw(7) << std::right << "id" << " " <<
-                                          std::setfill(' ') << std::setw(7) << std::right << "copy no" << " " <<
-                                                  std::setfill(' ') << std::setw(7) << std::right << "vid" << " " <<
-                                                          std::setfill(' ') << std::setw(7) << std::right << "fseq" << " " <<
-                                                                  std::setfill(' ') << std::setw(8) << std::right << "block id" << " " <<
-                                                                          std::setfill(' ') << std::setw(8) << std::right << "instance" << " " <<
-                                                                                  std::setfill(' ') << std::setw(7) << std::right << "disk id" << " " <<
-                                                                                          std::setfill(' ') << std::setw(12) << std::right << "size" << " " <<
-                                                                                                  std::setfill(' ') << std::setw(13) << std::right << "checksum type" << " " <<
-                                                                                                          std::setfill(' ') << std::setw(14) << std::right << "checksum value" << " " <<
-                                                                                                                  std::setfill(' ') << std::setw(13) << std::right << "storage class" << " " <<
-                                                                                                                          std::setfill(' ') << std::setw(8) << std::right << "owner" << " " <<
-                                                                                                                                  std::setfill(' ') << std::setw(8) << std::right << "group" << " " <<
-                                                                                                                                          std::setfill(' ') << std::setw(13) << std::right << "creation time" << " " <<
-                                                                                                                                                  "path" <<
-                                                                                                                                                          "\x1b[0m\n"; // Return the colour of the output text
-#endif
-
+   //! Overload << to allow streaming into the buffer
+   template<typename T>
+   omemstream &operator<<(const T &t) { m_out << t; return m_out; }
 
 private:
+   //! Called by the XrdSsi framework when it is finished with the object
    virtual void Recycle() {
-      std::cerr << "ArchiveFileLsBuffer::Recycle()" << std::endl;
+      std::cerr << "[DEBUG] StreamBuffer::Recycle()" << std::endl;
       delete this;
    }
 
    // Member variables
 
-   omemstream out;    //!< Ostream interface to the buffer
+   omemstream m_out;    //!< Ostream interface to the buffer
 };
 
+} // namespace XrdSsiPb
 
+
+
+namespace cta { namespace xrd {
 
 /*!
  * Stream object which implements "af ls" command.
@@ -126,7 +116,9 @@ private:
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor, bool show_header) : XrdSsiStream(XrdSsiStream::isActive) {
+   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor, bool show_header) :
+      XrdSsiStream(XrdSsiStream::isActive),
+      m_show_header(show_header) {
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
 #if 0
 ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
@@ -158,15 +150,77 @@ m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileErro
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
-std::cerr << "Called ArchiveFileLsStream::GetBuff with dlen=" << dlen << ", last=" << last << std::endl;
-      ArchiveFileLsBuffer *buffer = new ArchiveFileLsBuffer(dlen);
-      dlen = buffer->length();
-std::cerr << "Got " << dlen << " bytes." << std::endl;
+#ifdef XRDSSI_DEBUG
+      std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
+#endif
+      XrdSsiPb::StreamBuffer *buffer = new XrdSsiPb::StreamBuffer(dlen);
+
+      // Write the header on first call only
+      if(m_show_header) {
+         WriteHeader(buffer);
+         m_show_header = false;
+      }
+
+      *buffer << "HELLO," << " WORLD! " << std::endl;
       last = true;
 
-std::cerr << "Returning buffer" << std::endl;
+      dlen = buffer->length();
+std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
+
       return buffer;
    }
+
+private:
+   /*!
+    * Write the af ls header into the buffer
+    */
+   void WriteHeader(XrdSsiPb::StreamBuffer *buffer) {
+      const char* const TEXT_RED    = "\x1b[31;1m";
+      const char* const TEXT_NORMAL = "\x1b[0m\n";
+
+      *buffer << TEXT_RED <<
+         std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "block id"       << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' ' <<
+         std::setfill(' ') << std::setw(12) << std::right << "size"           << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' ' <<
+         std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "owner"          << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' ' <<
+                                                             "path"           <<
+         TEXT_NORMAL << std::endl;
+   }
+
+   // Member variables
+
+   bool m_show_header;
 };
+
+#if 0
+   {
+      m_readBuffer <<
+        std::setfill(' ') << std::setw(7) << std::right << archiveFile.archiveFileID << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << copyNb << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << tapeFile.vid << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << tapeFile.fSeq << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << tapeFile.blockId << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskInstance << " " <<
+        std::setfill(' ') << std::setw(7) << std::right << archiveFile.diskFileId << " " <<
+        std::setfill(' ') << std::setw(12) << std::right << archiveFile.fileSize << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.checksumType << " " <<
+        std::setfill(' ') << std::setw(14) << std::right << archiveFile.checksumValue << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.storageClass << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.owner << " " <<
+        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.group << " " <<
+        std::setfill(' ') << std::setw(13) << std::right << archiveFile.creationTime << " " <<
+        archiveFile.diskFileInfo.path << "\n";
+   }
+#endif
 
 }} // namespace cta::xrd
