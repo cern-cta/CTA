@@ -571,3 +571,13 @@
    fun:_ZNSt10shared_ptrINSt6thread10_Impl_baseEED1Ev
    ...
 }
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrINSt6thread10_Impl_baseELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt10shared_ptrINSt6thread10_Impl_baseEED1Ev
+   fun:_ZNSt6thread10_Impl_baseD1Ev
+   ...
+}
