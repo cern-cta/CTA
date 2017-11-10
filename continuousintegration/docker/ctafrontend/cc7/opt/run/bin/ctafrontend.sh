@@ -11,6 +11,8 @@ yum-config-manager --enable ceph
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 fi
 
+# just to get the ctafrontend xrootd configuration file in /etc/cta/cta-frontend-xrootd.conf
+# can be removed when taking config file from rpm
 yes | cp -r /opt/ci/ctafrontend/etc / 
 
 /opt/run/bin/init_objectstore.sh
@@ -45,7 +47,7 @@ echo "Generating core file in /var/log/cta directory so that those are available
 echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
 
 echo "Launching frontend"
-runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/xrootd/xrootd-cta.cfg -I v4' cta
+runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
 
 echo "ctafrontend died"
 echo "analysing core file if any"
