@@ -102,8 +102,8 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  void deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId, log::LogContext &lc)
-    override;
+  void deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
+    log::LogContext &lc) override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within

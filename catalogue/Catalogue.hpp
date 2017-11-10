@@ -551,7 +551,7 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual void deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId,
+  virtual void deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
     log::LogContext &lc) = 0;
 
   /**

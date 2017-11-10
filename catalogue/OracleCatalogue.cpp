@@ -247,9 +247,9 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveFile
+// deleteArchiveFileByDiskFileId
 //------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId,
+void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
   log::LogContext &lc) {
   try {
     const char *selectSql =

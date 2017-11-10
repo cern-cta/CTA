@@ -6619,7 +6619,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id) {
   }
 
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->deleteArchiveFile("disk_instance", file1Written.diskFileId, dummyLc);
+  m_catalogue->deleteArchiveFileByDiskFileId("disk_instance", file1Written.diskFileId, dummyLc);
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
 }
@@ -6946,7 +6946,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id_non_exista
 
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->deleteArchiveFile("disk_instance", "12345678", dummyLc);
+  m_catalogue->deleteArchiveFileByDiskFileId("disk_instance", "12345678", dummyLc);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existant_tape) {

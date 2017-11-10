@@ -174,9 +174,9 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveFile
+// deleteArchiveFileByDiskFileId
 //------------------------------------------------------------------------------
-void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId,
+void SqliteCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
   log::LogContext &lc) {
   try {
     utils::Timer t;
