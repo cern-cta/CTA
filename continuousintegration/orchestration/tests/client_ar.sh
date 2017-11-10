@@ -104,7 +104,7 @@ while test 0 != $(grep -c copied$ ${STATUS_FILE}); do
     break
   fi
 
-  echo "$(grep -c archived$ ${STATUS_FILE})/${NB_FILES} archived"
+  echo "$(egrep -c 'archived$|tapeonly' ${STATUS_FILE})/${NB_FILES} archived"
 
   # generating EOS batch script
   grep copied$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
