@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          CTA Frontend stream handler
+ * @brief          CTA Frontend Archive File Ls stream implementation
  * @copyright      Copyright 2017 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -18,20 +18,94 @@
 
 #pragma once
 
+//#include <iostream>
+//#include <algorithm>
 #include <XrdSsi/XrdSsiStream.hh>
+#include "catalogue/Catalogue.hpp"
 
+namespace cta { namespace xrd {
+
+/*!
+ * Memory buffer struct
+ *
+ * Implements a streambuf as a fixed-size char array so that we can provide a char* to XRootD
+ */
+struct Membuf: public std::streambuf
+{
+   Membuf(char *buffer, size_t size) {
+      // Set the boundaries of the buffer
+      this->setp(buffer, buffer + size - 1);
+   }
+
+   size_t length() {
+      return pptr()-pbase();
+   }
+};
+
+
+
+/*!
+ * Stream interface to the memory buffer
+ */
+struct omemstream: virtual Membuf, std::ostream
+{
+   omemstream(char *buffer, size_t size) :
+      Membuf(buffer, size),
+      std::ostream(this) {}
+};
+
+
+
+/*!
+ * Buffer object.
+ *
+ * This is a very naïve implementation, where buffers are allocated and deallocated each time they are
+ * used. A more performant implementation would use buffer pools.
+ */
 class ArchiveFileLsBuffer : public XrdSsiStream::Buffer
 {
 public:
-   ArchiveFileLsBuffer() {
+   ArchiveFileLsBuffer(size_t size) : XrdSsiStream::Buffer(new char[size]),
+      out(data, size)
+   {
+#ifdef XRDSSI_DEBUG
       std::cerr << "ArchiveFileLsBuffer() constructor" << std::endl;
-      data = test;
-   }
-   ~ArchiveFileLsBuffer() {
-      std::cerr << "ArchiveFileLsBuffer() destructor" << std::endl;
+#endif
+
+      out << "HELLO, WORLD. ";
    }
 
-   int length() { return 14; }
+   ~ArchiveFileLsBuffer() {
+#ifdef XRDSSI_DEBUG
+      std::cerr << "ArchiveFileLsBuffer() destructor" << std::endl;
+#endif
+      delete[] data;
+   }
+
+   int length() { return out.length(); }
+
+#if 0
+      if(m_displayHeader) {
+               m_readBuffer <<
+                          "\x1b[31;1m" << // Change the colour of the output text to red
+                                  std::setfill(' ') << std::setw(7) << std::right << "id" << " " <<
+                                          std::setfill(' ') << std::setw(7) << std::right << "copy no" << " " <<
+                                                  std::setfill(' ') << std::setw(7) << std::right << "vid" << " " <<
+                                                          std::setfill(' ') << std::setw(7) << std::right << "fseq" << " " <<
+                                                                  std::setfill(' ') << std::setw(8) << std::right << "block id" << " " <<
+                                                                          std::setfill(' ') << std::setw(8) << std::right << "instance" << " " <<
+                                                                                  std::setfill(' ') << std::setw(7) << std::right << "disk id" << " " <<
+                                                                                          std::setfill(' ') << std::setw(12) << std::right << "size" << " " <<
+                                                                                                  std::setfill(' ') << std::setw(13) << std::right << "checksum type" << " " <<
+                                                                                                          std::setfill(' ') << std::setw(14) << std::right << "checksum value" << " " <<
+                                                                                                                  std::setfill(' ') << std::setw(13) << std::right << "storage class" << " " <<
+                                                                                                                          std::setfill(' ') << std::setw(8) << std::right << "owner" << " " <<
+                                                                                                                                  std::setfill(' ') << std::setw(8) << std::right << "group" << " " <<
+                                                                                                                                          std::setfill(' ') << std::setw(13) << std::right << "creation time" << " " <<
+                                                                                                                                                  "path" <<
+                                                                                                                                                          "\x1b[0m\n"; // Return the colour of the output text
+#endif
+
 
 private:
    virtual void Recycle() {
@@ -39,17 +113,28 @@ private:
       delete this;
    }
 
-   char *test = const_cast<char*>("HELLO, WORLD. ");
+   // Member variables
+
+   omemstream out;    //!< Ostream interface to the buffer
 };
 
 
 
+/*!
+ * Stream object which implements "af ls" command.
+ */
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream() : XrdSsiStream(XrdSsiStream::isActive) {
-      test_count = 100;
+   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor, bool show_header) : XrdSsiStream(XrdSsiStream::isActive) {
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
+#if 0
+ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
+
+XrdOucErrInfo xrdSfsFileError;
+
+m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
+#endif
    }
 
    virtual ~ArchiveFileLsStream() {
@@ -74,16 +159,14 @@ public:
     */
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
 std::cerr << "Called ArchiveFileLsStream::GetBuff with dlen=" << dlen << ", last=" << last << std::endl;
-      ArchiveFileLsBuffer *buffer = new ArchiveFileLsBuffer();
-std::cerr << "Calling ArchiveFileLsBuffer::length" << std::endl;
+      ArchiveFileLsBuffer *buffer = new ArchiveFileLsBuffer(dlen);
       dlen = buffer->length();
-      --test_count;
-      last = (test_count == 0);
+std::cerr << "Got " << dlen << " bytes." << std::endl;
+      last = true;
 
 std::cerr << "Returning buffer" << std::endl;
       return buffer;
    }
-
-   int test_count;
 };
 
+}} // namespace cta::xrd

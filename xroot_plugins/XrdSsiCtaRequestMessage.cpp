@@ -643,14 +643,8 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       cmdlineOutput << formatResponse(responseTable);
       response.set_message_txt(cmdlineOutput.str());
    } else {
-      stream = new ArchiveFileLsStream;
-#if 0
-      auto archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
-
-      XrdOucErrInfo xrdSfsFileError;
-
-      m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
-#endif
+      // Create a XrdSsi stream object to asynchronously return the results
+      stream = new ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
