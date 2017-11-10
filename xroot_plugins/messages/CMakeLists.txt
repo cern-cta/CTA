@@ -20,7 +20,7 @@ find_package(Protobuf3 REQUIRED)
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 foreach(PROTO_SRC ${ProtoSources})
-  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers")
+  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC")
 endforeach(PROTO_SRC)
 set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 

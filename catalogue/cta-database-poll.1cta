@@ -36,7 +36,7 @@ Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES
-cta-database-poll 5 /etc/cta/cta_catalogue_db.conf
+cta-database-poll 5 /etc/cta/cta-catalogue.conf
 
 .SH AUTHOR
 \fBCTA\fP Team

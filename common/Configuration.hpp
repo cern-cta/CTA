@@ -55,7 +55,7 @@ namespace cta { namespace common {
        * constructor
        * @param fileName the file that should be used to build the configuration
        */
-      Configuration(std::string fileName = "/etc/cta/cta.conf");
+      Configuration(std::string fileName);
 
       /**
        * copy constructor

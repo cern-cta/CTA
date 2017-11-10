@@ -125,7 +125,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exception_message", ex.getMessageValue());
-    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    m_this.m_logContext.log(cta::log::ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -135,7 +135,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down);
-    m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+    m_this.m_logContext.log(cta::log::ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.");
     try {
       if (currentErrorToCount.size()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
@@ -205,12 +205,8 @@ const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   m_logContext.pushOrReplace(cta::log::Param("thread", "TapeRead"));
   cta::utils::Timer timer, totalTimer;
-  std::string currentErrorToCount = "Error_setCapabilities";
+  std::string currentErrorToCount = "Error_tapeMountForRead";
   try{
-    // Set capabilities allowing rawio (and hence arbitrary SCSI commands)
-    // through the st driver file descriptor.
-    setCapabilities();
-    
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
     m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
@@ -227,7 +223,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
-      currentErrorToCount = "Error_tapeMountForRead";
       m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting);
       mountTapeReadOnly();
       currentErrorToCount = "Error_tapeLoad";

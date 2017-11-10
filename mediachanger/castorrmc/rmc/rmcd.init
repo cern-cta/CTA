@@ -1,34 +1,42 @@
 #! /bin/sh
 #
+#/******************************************************************************
+#                      rmcd.init
 #
-# The CERN Tape Archive (CTA) project
-# Copyright (C) 2015  CERN
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# chkconfig: 345 71 34
+# description: RMC server daemon
+#
+# @author castor dev team
+#*****************************************************************************/
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
 # Variables
-prog="cta-taped"
+prog="rmcd"
 export DAEMON_COREFILE_LIMIT="unlimited"
 RETVAL=0
 
 # Source sysconfig files
-if [ -f /etc/sysconfig/cta-taped ]; then
-        . /etc/sysconfig/cta-taped
+if [ -f /etc/sysconfig/castor ]; then
+        . /etc/sysconfig/castor
 fi
 if [ -f /etc/sysconfig/$prog ]; then
         . /etc/sysconfig/$prog
@@ -38,8 +46,8 @@ start() {
         # Run daemon
         echo -n $"Starting $prog: "
 
-        cd /var/log/cta
-        daemon /usr/bin/$prog $CTA_TAPED_OPTIONS
+        cd /var/log/castor
+        daemon --user=stage /usr/bin/$prog $RMCD_OPTIONS
 
         # Write the pid to a file.
         RETVAL=$?
@@ -61,15 +69,14 @@ start() {
 }
 
 stop() {
-        echo -n $"Stopping $prog and cleaning up the drive (maximum delay of 10 minutes): "
-        killproc -d 600 $prog
+        echo -n $"Stopping $prog: "
+        killproc $prog
 
         RETVAL=$?
         echo
         [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
         return $RETVAL
 }
-
 
 restart() {
         stop

@@ -144,18 +144,23 @@ public:
     return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
-  std::list<cta::common::dataStructures::DriveState> getDriveStates() const override {
-    return m_OStoreDB.getDriveStates();
+  std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
+    return m_OStoreDB.getDriveStates(lc);
   }
   
-  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState) override {
-    return m_OStoreDB.setDesiredDriveState(drive, desiredState);
+  
+  void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
+    return m_OStoreDB.setDesiredDriveState(drive, state, lc);
   }
   
+  void removeDrive(const std::string & drive, log::LogContext& lc) override {
+    return m_OStoreDB.removeDrive(drive, lc);
+  }
+
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
-    common::dataStructures::DriveStatus status, time_t reportTime, uint64_t mountSessionId, uint64_t byteTransfered, 
-    uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override {
-    m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, mountSessionId, byteTransfered, filesTransfered,
+    common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext& lc, uint64_t mountSessionId, 
+    uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool) override {
+    m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
        latestBandwidth, vid, tapepool);
   }
 
@@ -172,7 +177,7 @@ OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_backend(new cta::objectstore::BackendVFS()), m_logger(new cta::log::DummyLogger("")), 
 m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory") {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory", *m_logger) {
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
   re.initialize();
@@ -182,9 +187,10 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFacto
   objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+  log::LogContext lc(*m_logger);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
   rel.release();
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
@@ -198,7 +204,7 @@ OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_backend(cta::objectstore::BackendFactory::createBackend(URL).release()), m_logger(new cta::log::DummyLogger("")), 
 m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory") {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory", *m_logger) {
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {
@@ -215,9 +221,10 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFact
   objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+  log::LogContext lc(*m_logger);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
   rel.release();
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);

@@ -37,10 +37,10 @@ BuildRequires: xrootd-client-devel = 1:4.2.3
 BuildRequires: xrootd-devel        = 1:4.2.3
 BuildRequires: cryptopp-devel >= 5.6.2
 %else
-BuildRequires: xrootd-client-devel  = 1:4.7.0
-BuildRequires: xrootd-devel         = 1:4.7.0
-BuildRequires: xrootd-server-devel  = 1:4.7.0
-BuildRequires: xrootd-private-devel = 1:4.7.0
+BuildRequires: xrootd-client-devel  = 1:20171005.0e841d1
+BuildRequires: xrootd-devel         = 1:20171005.0e841d1
+BuildRequires: xrootd-server-devel  = 1:20171005.0e841d1
+BuildRequires: xrootd-private-devel = 1:20171005.0e841d1
 BuildRequires: librados-devel >= 11.0, libradosstriper-devel >= 11.0, 
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
@@ -53,7 +53,7 @@ BuildRequires: cryptopp-devel >= 5.6.2
 BuildRequires: libuuid-devel >= 2.17
 BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
-BuildRequires: oracle-instantclient12.1-devel
+BuildRequires: oracle-instantclient12.2-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
 %endif
@@ -136,7 +136,7 @@ The tape server daemon
 %attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.conf.example
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/TPCONFIG.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-taped.1cta.gz
 %attr(0644,root,root) /etc/sysconfig/cta-taped
@@ -163,6 +163,7 @@ The xroot plugin
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
 %attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
+%attr(0644,cta,cta) /etc/systemd/system/cta-frontend.service
 
 #Frontend installs libraries so we need ldconfig.
 %post -n cta-frontend -p /sbin/ldconfig
@@ -184,7 +185,7 @@ The xroot plugin
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: oracle-instantclient12.1-basic
+Requires: oracle-instantclient12.2-basic
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
@@ -200,7 +201,7 @@ The shared libraries
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
 %{_libdir}/libctardbms.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta_catalogue_db.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
 
 #CTA-lib installs libraries so we need ldconfig.
 %post -n cta-lib -p /sbin/ldconfig

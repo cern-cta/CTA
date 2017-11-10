@@ -49,7 +49,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -59,25 +59,25 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // Create 2 agents, A and B and register them
   // The agents are set with a timeout of 0, so they will be delclared
   // dead immediately.
-  cta::objectstore::AgentReference agrA("unitTestAgentA"), agrB("unitTestAgentB");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl), agrB("unitTestAgentB", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be), agB(agrB.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   agB.initialize();
   agB.setTimeout_us(0);
-  agB.insertAndRegisterSelf();
+  agB.insertAndRegisterSelf(lc);
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -86,12 +86,12 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
 TEST(ObjectStore, GarbageCollectorRegister) {
@@ -101,7 +101,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -111,14 +111,14 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string arName;
@@ -131,11 +131,11 @@ TEST(ObjectStore, GarbageCollectorRegister) {
     ar.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -145,12 +145,12 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
 TEST(ObjectStore, GarbageCollectorArchiveQueue) {
@@ -161,7 +161,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -171,14 +171,14 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
@@ -191,11 +191,11 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
     aq.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -205,12 +205,12 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
 TEST(ObjectStore, GarbageCollectorDriveRegister) {
@@ -221,7 +221,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
   cta::objectstore::RootEntry re(be);
@@ -231,14 +231,14 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // Create an agent and add the drive register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   // Create a new drive register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
@@ -251,11 +251,11 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
     dr.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -265,12 +265,12 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
 TEST(ObjectStore, GarbageCollectorArchiveRequest) {
@@ -294,21 +294,21 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
   // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // continue agent creation.
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   // Create an agent to garbage collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   // Several use cases are present for the ArchiveRequests:
   // - just referenced in agent ownership list, but not yet created.
   // - just created but not linked to any tape pool
@@ -325,7 +325,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     re.fetch();
     std::stringstream tapePoolName;
     tapePoolName << "TapePool" << i;
-    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef);
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, lc);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -415,11 +415,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     break;
   }
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -443,7 +443,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -460,11 +460,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aq.commit();
     aql.release();
     // Remove queues from root
-    re.removeArchiveQueueAndCommit(tp);
+    re.removeArchiveQueueAndCommit(tp, lc);
   }
 
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
   // TODO: this unit test still leaks tape pools and requests
 }
 
@@ -489,21 +489,21 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       "unittesthost", time(NULL));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv");
+  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
   // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // continue agent creation.
   cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   // Create an agent to garbage be collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA");
+  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf();
+  agA.insertAndRegisterSelf(lc);
   // Several use cases are present for the RetrieveRequests:
   // - just referenced in agent ownership list, but not yet created.
   // - just created but not linked to any tape
@@ -601,11 +601,11 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // Mark the other tape as disabled
   catalogue.addDisabledTape("Tape1");
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector");
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf();
+  gcAgent.insertAndRegisterSelf(lc);
   {
     cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.runOnePass(lc);
@@ -624,7 +624,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf();
+  gcAgent.removeAndUnregisterSelf(lc);
   // We should not be able to remove the agent register (as it should be empty)
   rel.lock(re);
   re.fetch();
@@ -641,11 +641,11 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rq.commit();
     rql.release();
     // Remove queues from root
-    re.removeRetrieveQueueAndCommit(vid);
+    re.removeRetrieveQueueAndCommit(vid, lc);
   }
 
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
-  ASSERT_NO_THROW(re.removeIfEmpty());
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(lc));
   // TODO: this unit test still leaks tape pools and requests
 }
 

@@ -53,7 +53,7 @@ int main(int argc, char ** argv) {
     } else if (2 == argc) {
       cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
       be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
-      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+      const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
       catalogue = std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
@@ -73,10 +73,10 @@ int main(int argc, char ** argv) {
     std::cout << "Object address: " << go.getAddressIfSet() << std::endl;
     go.fetch();
     // Create an AgentReference in case we need it
-    cta::objectstore::AgentReference agr("cta-objectstore-collect-orphaned-object");
+    cta::objectstore::AgentReference agr("cta-objectstore-collect-orphaned-object", sl);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
-    ag.insertAndRegisterSelf();
+    ag.insertAndRegisterSelf(lc);
     switch (go.type()) {
     case cta::objectstore::serializers::ObjectType::ArchiveRequest_t:
     {
@@ -129,7 +129,7 @@ int main(int argc, char ** argv) {
       break;
     }
     cta::objectstore::ScopedExclusiveLock agl(ag);
-    ag.removeAndUnregisterSelf();
+    ag.removeAndUnregisterSelf(lc);
   } catch (std::exception & e) {
     std::cerr << "Failed to garbage collect object: "
         << std::endl << e.what() << std::endl;

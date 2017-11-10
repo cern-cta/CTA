@@ -298,9 +298,9 @@ bool castor::tape::tapeserver::drive::FakeDrive::hasTapeInPlace() {
   return true;
 }
 
-castor::tape::SCSI::Structures::RAO::udsLimitsPage_t
+castor::tape::SCSI::Structures::RAO::udsLimits
     castor::tape::tapeserver::drive::FakeDrive::getLimitUDS() {
-  castor::tape::SCSI::Structures::RAO::udsLimitsPage_t lims;
+  castor::tape::SCSI::Structures::RAO::udsLimits lims;
   lims.maxSize = 30000;
   lims.maxSupported = 30;
   return lims;

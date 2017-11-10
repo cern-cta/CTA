@@ -147,7 +147,7 @@ public:
    */ 
   class ArchiveToFileRequestCancelation {
   public:
-    virtual void complete() = 0;
+    virtual void complete(log::LogContext & lc) = 0;
     virtual ~ArchiveToFileRequestCancelation() {};
   };
 
@@ -468,7 +468,7 @@ public:
    *
    * @return The current list of registered drives.
    */
-  virtual std::list<cta::common::dataStructures::DriveState> getDriveStates() const = 0;
+  virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const = 0;
   
   /**
    * Sets the administrative desired state (up/down/force down) for an existing drive.
@@ -476,7 +476,16 @@ public:
    * @param drive
    * @param desiredState
    */
-  virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state) = 0;
+  virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state,
+    log::LogContext & lc) = 0;
+  
+  /**
+   * Remove drive from the drive register.
+   * Will throw an exception is the drive does not exist.
+   * 
+   * @param drive The drive name.
+   */
+  virtual void removeDrive(const std::string & drive, log::LogContext & logContext) = 0;
   
   /**
    * Sets the drive status in the object store. The drive status will be recorded in all cases,
@@ -498,6 +507,7 @@ public:
     cta::common::dataStructures::MountType mountType,
     common::dataStructures::DriveStatus status, 
     time_t reportTime,
+    log::LogContext & lc,
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(),
     uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),

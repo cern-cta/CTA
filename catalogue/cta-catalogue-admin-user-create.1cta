@@ -44,7 +44,7 @@ Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES
-cta-catalogue-admin-user-create /etc/cta/cta_catalogue_db.conf -u ctaadmin -c "The CTA admin account"
+cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf -u ctaadmin -c "The CTA admin account"
 
 .SH AUTHOR
 \fBCTA\fP Team

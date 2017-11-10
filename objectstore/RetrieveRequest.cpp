@@ -49,7 +49,7 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
 }
 
 //------------------------------------------------------------------------------
-// initialize
+// RetrieveRequest::initialize()
 //------------------------------------------------------------------------------
 void RetrieveRequest::initialize() {
   // Setup underlying object
@@ -59,7 +59,7 @@ void RetrieveRequest::initialize() {
 }
 
 //------------------------------------------------------------------------------
-// garbageCollect
+// RetrieveRequest::garbageCollect()
 //------------------------------------------------------------------------------
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
@@ -152,6 +152,17 @@ jobFound:;
   Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.files, jobsSummary.bytes, jobsSummary.priority);
   rql.release();
   auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("jobObject", getAddressIfSet())
+          .add("queueObject", rq.getAddressIfSet())
+          .add("copynb", bestTapeFile->copynb())
+          .add("vid", bestTapeFile->vid())
+          .add("tapeSelectionTime", tapeSelectionTime)
+          .add("queueUpdateTime", queueUpdateTime)
+          .add("commitUnlockQueueTime", commitUnlockQueueTime);
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+  }
   timespec ts;
   // We will sleep a bit to make sure other processes can also access the queue
   // as we are very likely to be part of a tight loop.
@@ -174,12 +185,12 @@ jobFound:;
           .add("queueUpdateTime", queueUpdateTime)
           .add("commitUnlockQueueTime", commitUnlockQueueTime)
           .add("sleepTime", sleepTime);
-    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
   }
 }
 
 //------------------------------------------------------------------------------
-// setJobSuccessful
+// RetrieveRequest::addJob()
 //------------------------------------------------------------------------------
 void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
   checkPayloadWritable();
@@ -194,7 +205,7 @@ void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uin
 }
 
 //------------------------------------------------------------------------------
-// setSchedulerRequest
+// RetrieveRequest::setSchedulerRequest()
 //------------------------------------------------------------------------------
 void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest) {
   checkPayloadWritable();
@@ -210,9 +221,8 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
 }
 
 //------------------------------------------------------------------------------
-// getSchedulerRequest
+// RetrieveRequest::getSchedulerRequest()
 //------------------------------------------------------------------------------
-
 cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerRequest() {
   checkPayloadReadable();
   common::dataStructures::RetrieveRequest ret;
@@ -229,9 +239,8 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFile
+// RetrieveRequest::getArchiveFile()
 //------------------------------------------------------------------------------
-
 cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
   objectstore::ArchiveFileSerDeser af;
   af.deserialize(m_payload.archivefile());
@@ -240,9 +249,8 @@ cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
 
 
 //------------------------------------------------------------------------------
-// setRetrieveFileQueueCriteria
+// RetrieveRequest::setRetrieveFileQueueCriteria()
 //------------------------------------------------------------------------------
-
 void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   checkPayloadWritable();
   ArchiveFileSerDeser(criteria.archiveFile).serialize(*m_payload.mutable_archivefile());
@@ -255,7 +263,7 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
 }
 
 //------------------------------------------------------------------------------
-// dumpJobs
+// RetrieveRequest::dumpJobs()
 //------------------------------------------------------------------------------
 auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
@@ -270,7 +278,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
 }
 
 //------------------------------------------------------------------------------
-// getJob
+// RetrieveRequest::getJob()
 //------------------------------------------------------------------------------
 auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   checkPayloadReadable();
@@ -286,6 +294,9 @@ auto  RetrieveRequest::getJob(uint16_t copyNb) -> JobDump {
   throw NoSuchJob("In objectstore::RetrieveRequest::getJob(): job not found for this copyNb");
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getJobs()
+//------------------------------------------------------------------------------
 auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
@@ -297,7 +308,10 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   return ret;
 }
 
-bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
+//------------------------------------------------------------------------------
+// RetrieveRequest::addJobFailure()
+//------------------------------------------------------------------------------
+bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures
@@ -315,7 +329,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RJS_Failed);
-      return finishIfNecessary();
+      return finishIfNecessary(lc);
     } else {
       j.set_status(serializers::RJS_Pending);
       return false;
@@ -324,7 +338,10 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId) {
   throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
-bool RetrieveRequest::finishIfNecessary() {
+//------------------------------------------------------------------------------
+// RetrieveRequest::finishIfNecessary()
+//------------------------------------------------------------------------------
+bool RetrieveRequest::finishIfNecessary(log::LogContext & lc) {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
   // in memory. If the request is complete, we will just remove it.
@@ -337,9 +354,15 @@ bool RetrieveRequest::finishIfNecessary() {
     if (!finishedStatuses.count(j.status()))
       return false;
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("retrieveRequestObject", getAddressIfSet());
+  lc.log(log::INFO, "In RetrieveRequest::finishIfNecessary(): removed finished retrieve request.");
   return true;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getJobStatus()
+//------------------------------------------------------------------------------
 serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber) {
   checkPayloadReadable();
   for (auto & j: m_payload.jobs())
@@ -350,6 +373,9 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
   throw exception::Exception(err.str());
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::asyncUpdateOwner()
+//------------------------------------------------------------------------------
 auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
   -> AsyncOwnerUpdater* {
   std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
@@ -414,27 +440,45 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
   return ret.release();
   }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncOwnerUpdater::wait()
+//------------------------------------------------------------------------------
 void RetrieveRequest::AsyncOwnerUpdater::wait() {
   m_backendUpdater->wait();
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncOwnerUpdater::getArchiveFile()
+//------------------------------------------------------------------------------
 const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest()
+//------------------------------------------------------------------------------
 const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
   return m_retieveRequest;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::setActiveCopyNumber()
+//------------------------------------------------------------------------------
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   checkPayloadWritable();
   m_payload.set_activecopynb(activeCopyNb);
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getActiveCopyNumber()
+//------------------------------------------------------------------------------
 uint32_t RetrieveRequest::getActiveCopyNumber() {
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getRetrieveFileQueueCriteria()
+//------------------------------------------------------------------------------
 cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {
   checkPayloadReadable();
   cta::common::dataStructures::RetrieveFileQueueCriteria ret;
@@ -447,6 +491,9 @@ cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetri
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getEntryLog()
+//------------------------------------------------------------------------------
 cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
   checkPayloadReadable();
   EntryLogSerDeser el;
@@ -454,9 +501,9 @@ cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
   return el;
 }
 
-
-
-
+//------------------------------------------------------------------------------
+// RetrieveRequest::dump()
+//------------------------------------------------------------------------------
 std::string RetrieveRequest::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
@@ -467,12 +514,18 @@ std::string RetrieveRequest::dump() {
   return headerDump;
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::asyncDeleteJob()
+//------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobDeleter * RetrieveRequest::asyncDeleteJob() {
   std::unique_ptr<AsyncJobDeleter> ret(new AsyncJobDeleter);
   ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
   return ret.release();
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::AsyncJobDeleter::wait()
+//------------------------------------------------------------------------------
 void RetrieveRequest::AsyncJobDeleter::wait() {
  m_backendDeleter->wait();
 }

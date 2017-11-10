@@ -31,22 +31,29 @@ add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCt
 set_property(TARGET XrdCtaOfs PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET XrdCtaOfs PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaobjectstore cryptopp)
-set_target_properties(XrdCtaOfs PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property (TARGET XrdCtaOfs APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_property (TARGET XrdCtaOfs APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
 
 # XRootD SSI plugin for CTA Frontend
 
 add_subdirectory(messages)
 
-#add_definitions(-DXRDSSI_DEBUG)
 include_directories(../xroot_ssi_pb)
 
-add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
+add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp ListArchiveFilesCmd.cpp)
 target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
-set_target_properties(XrdSsiCta PROPERTIES INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+# Get some extra debug messages on stdout
+#target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
-INSTALL (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-INSTALL (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-INSTALL (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
-INSTALL (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (FILES xrootd-cta.cfg DESTINATION /etc/xrootd/)
+install (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
-
+install (FILES cta-frontend.service DESTINATION /etc/systemd/system)

@@ -54,9 +54,17 @@ bool cta::ArchiveJob::checkAndAsyncReportComplete() {
   if (m_dbJob->checkSucceed()) {
     m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
     m_reporter->asyncReportArchiveFullyComplete();
+    m_reporterTimer.reset();
     return true;
   }
   return false;
+}
+
+//------------------------------------------------------------------------------
+// getReportTiming()
+//------------------------------------------------------------------------------
+double cta::ArchiveJob::reportTime() {
+  return m_reporterTimer.secs();
 }
 
 //------------------------------------------------------------------------------

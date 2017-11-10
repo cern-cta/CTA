@@ -125,7 +125,7 @@ public:
    */
   void initRAO();
 
-  bool waitForPromise();
+  void waitForPromise();
 
   void setPromise();
 
@@ -223,7 +223,15 @@ private:
   bool m_useRAO;
 
   /** Drive-specific RAO parameters */
-  SCSI::Structures::RAO::udsLimitsPage_t m_raoLimits;
+  SCSI::Structures::RAO::udsLimits m_raoLimits;
+
+  /** Indicator that UDS limits gave been obtained */
+  bool m_hasUDS = false;
+
+  /** Number of jobs to be fetched before the tape is mounted.
+   *  The desired number is m_raoLimits.maxSupported
+   */
+  unsigned int m_fetched;
 
   /**
    * The promise for reordering the read tasks according to RAO by the

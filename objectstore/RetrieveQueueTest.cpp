@@ -20,12 +20,15 @@
 #include "RetrieveQueue.hpp"
 #include "BackendVFS.hpp"
 #include "AgentReference.hpp"
+#include "common/log/DummyLogger.hpp"
 
 namespace unitTests {
   
 TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTest");
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   { 
     // Try to create the tape entry
@@ -45,7 +48,7 @@ TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
   cta::objectstore::ScopedExclusiveLock lock(rq);
   rq.fetch();
-  rq.removeIfEmpty();
+  rq.removeIfEmpty(lc);
   ASSERT_FALSE(rq.exists());
 }
 }

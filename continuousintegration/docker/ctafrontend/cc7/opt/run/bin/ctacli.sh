@@ -2,11 +2,13 @@
 
 . /opt/run/bin/init_pod.sh
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
+if [ ! -e /etc/buildtreeRunner ]; then
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable ceph
 
-# Install missing RPMs
-yum -y install cta-cli cta-debuginfo
+  # Install missing RPMs
+  yum -y install cta-cli cta-debuginfo
+fi
 
 cat <<EOF > /etc/cta/cta-cli.conf
 # The CTA frontend address in the form <FQDN>:<TCPPort>

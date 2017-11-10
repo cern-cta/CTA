@@ -267,7 +267,7 @@ int GarbageCollectorHandler::runChild() {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "garbageCollector", m_processManager.logContext()));
+    backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, "GarbageCollector", m_processManager.logContext()));
     osdb.reset(new cta::OStoreDBWithAgent(*backend, backendPopulator->getAgentReference(), *catalogue, m_processManager.logContext().logger()));
     const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
     const uint64_t nbConns = 1;
@@ -313,7 +313,6 @@ int GarbageCollectorHandler::runChild() {
         receivedMessage=true;
       } catch (server::SocketPair::Timeout & ex) {}
     } while (!receivedMessage);
-    gc.reinjectOwnedObject(m_processManager.logContext());
     m_processManager.logContext().log(log::INFO,
         "In GarbageCollectorHandler::runChild(): Received shutdown message. Exiting.");
   } catch (cta::exception::Exception & ex) {

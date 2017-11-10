@@ -21,6 +21,7 @@
 #include "Agent.hpp"
 #include "ArchiveRequest.hpp"
 #include "DriveRegister.hpp"
+#include "DriveState.hpp"
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "ArchiveQueue.hpp"
@@ -31,45 +32,27 @@
 
 namespace cta {  namespace objectstore {
 
-void GenericObject::fetch() {
-  // Check that the object is locked, one way or another
-  if(!m_locksCount)
-    throw NotLocked("In ObjectOps::fetch(): object not locked");
-  m_existingObject = true;
-  // Get the header from the object store. We don't care for the type
-  auto objData=m_objectStore.read(getAddressIfSet());
-  fetchBottomHalf(objData);
-}
-
-GenericObject::AsyncLockfreeFetcher::AsyncLockfreeFetcher(GenericObject& obj):
-m_object(obj) {}
-
-
-auto GenericObject::asyncLockfreeFetch() -> AsyncLockfreeFetcher * {
-  std::unique_ptr<AsyncLockfreeFetcher> ret (new AsyncLockfreeFetcher(*this));
-  ret->m_backendFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
-  return ret.release();
-}
-
-void GenericObject::AsyncLockfreeFetcher::wait() {
-  auto objData=m_backendFetcher->get();
-  m_object.m_noLock=true;
-  m_object.fetchBottomHalf(objData);
-}
-
-void GenericObject::fetchBottomHalf(const std::string& rawFetchedObject) {
-  if (!m_header.ParseFromString(rawFetchedObject)) {
-    // Use a the tolerant parser to assess the situation.
-    m_header.ParsePartialFromString(rawFetchedObject);
-    throw cta::exception::Exception(std::string("In GenericObject::fetch: could not parse header: ") + 
-      m_header.InitializationErrorString());
-  }
-  m_headerInterpreted = true;
-}
-
 serializers::ObjectType GenericObject::type() {
   checkHeaderReadable();
   return m_header.type();
+}
+
+void GenericObject::getHeaderFromObjectData(const std::string& objData) {
+  if (!m_header.ParseFromString(objData)) {
+    // Use the tolerant parser to assess the situation.
+    m_header.ParsePartialFromString(objData);
+    // Base64 encode the header for diagnostics.
+    const bool noNewLineInBase64Output = false;
+    std::string objDataBase64;
+    CryptoPP::StringSource ss1(objData, true,
+      new CryptoPP::Base64Encoder(
+         new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
+    throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") + 
+            m_header.InitializationErrorString() + 
+            " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+            objDataBase64 + "\"");
+  }
+  m_headerInterpreted = true;
 }
 
 void GenericObject::commit() {
@@ -92,8 +75,6 @@ void GenericObject::transplantHeader(ObjectOpsBase& destination) {
   destination.m_name = m_name;
   destination.m_nameSet = m_nameSet;
   destination.m_noLock = m_noLock;
-  destination.m_locksCount = m_locksCount;
-  destination.m_locksForWriteCount = m_locksForWriteCount;
   destination.m_payloadInterpreted = false;
 }
 
@@ -135,6 +116,9 @@ void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
       break;
     case serializers::DriveRegister_t:
       garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
+      break;
+    case serializers::DriveState_t:
+      garbageCollectWithType<DriveState>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::SchedulerGlobalLock_t:
       garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference, lc, catalogue);

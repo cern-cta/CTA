@@ -65,9 +65,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       xrootd-client \
       xrootd-debuginfo \
       xrootd-server \
-      oracle-instantclient12.1-basic \
-      oracle-instantclient12.1-meta \
-      oracle-instantclient12.1-sqlplus \
+      oracle-instantclient12.2-basic \
+      oracle-instantclient12.2-meta \
+      oracle-instantclient12.2-sqlplus \
       cgdb \
       less \
       psmisc \
@@ -85,13 +85,17 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       protobuf3 \
       cryptopp \
       json-c \
-      castor-rmc-server \
       shadow-utils \
       sudo \
   && \
     yum clean all \
   && \
+    rm -rf /var/cache/yum \
+  && \
     mkdir -pv /etc/cta
+
+# Mark the image as a buildtree image
+RUN touch /etc/buildtreeRunner
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /

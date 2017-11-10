@@ -37,7 +37,7 @@ Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES
-cta-catalogue-schema-drop /etc/cta/cta_catalogue_db.conf
+cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 
 .SH AUTHOR
 \fBCTA\fP Team

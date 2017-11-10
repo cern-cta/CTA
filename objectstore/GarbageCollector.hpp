@@ -23,8 +23,6 @@
 #include "AgentWatchdog.hpp"
 #include "AgentRegister.hpp"
 #include "common/log/LogContext.hpp"
-#include "ArchiveRequest.hpp"
-#include "RetrieveRequest.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.
@@ -35,6 +33,9 @@
  */
 
 namespace cta { namespace objectstore {
+
+class ArchiveRequest;
+class RetrieveRequest;
 
 class GarbageCollector {
 public:
@@ -49,17 +50,12 @@ public:
   void checkHeartbeats(log::LogContext & lc);
   
   void cleanupDeadAgent(const std::string & name, log::LogContext & lc);
-  
-  void reinjectOwnedObject(log::LogContext & lc);
-  
+
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
   struct OwnedObjectSorter {
     std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
     std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
-    /// Some retrieve requests might not be requeueable (disabled tapes) so GC might delete them.
-    std::list<std::shared_ptr<RetrieveRequest>> retrieveRequestsToDelete;
-    std::list<std::shared_ptr <Agent>> agents;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
   };
 private:
@@ -68,7 +64,6 @@ private:
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
   std::map<std::string, AgentWatchdog * > m_watchedAgents;
-  static const size_t c_maxWatchedAgentsPerGC;
 };
   
 }}

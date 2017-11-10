@@ -1,0 +1,17 @@
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_SETERRBUF "3castor" "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_seterrbuf \- set receiving buffer for error messages
+.SH SYNOPSIS
+.BI "void rmc_seterrbuf (char *" buffer ,
+.BI "int " buflen )
+.SH DESCRIPTION
+.B rmc_seterrbuf
+tells the Remote Media Changer client API the address and the size of the buffer
+to be used for error messages. If this routine is not called, the messages
+are printed on
+.BR stderr .
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

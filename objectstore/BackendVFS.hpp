@@ -86,9 +86,9 @@ public:
     int m_fd;
   };
   
-  ScopedLock * lockExclusive(std::string name) override;
+  ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
-  ScopedLock * lockShared(std::string name) override;
+  ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
   
   /**
    * A class mimicking AIO using C++ async tasks
@@ -130,7 +130,7 @@ public:
   class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
   public:
     AsyncLockfreeFetcher(BackendVFS & be, const std::string & name);
-    std::string get() override;
+    std::string wait() override;
   private:
     /** A reference to the backend */
     BackendVFS &m_backend;
@@ -143,8 +143,9 @@ public:
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
   
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
-  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string & name) override;
   
+  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
+
   class Parameters: public Backend::Parameters {
     friend class BackendVFS;
   public:
@@ -180,7 +181,7 @@ public:
 private:
   std::string m_root;
   bool m_deleteOnExit;
-  ScopedLock * lockHelper(std::string name, int type);
+  ScopedLock * lockHelper(std::string name, int type, uint64_t timeout_us);
 };
 
 

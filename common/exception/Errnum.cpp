@@ -66,3 +66,7 @@ void Errnum::throwOnNegative(const int ret, const std::string &context) {
 void Errnum::throwOnMinusOne(const int ret, const std::string &context) {
   if (-1 == ret) throw Errnum(context);
 }
+
+void Errnum::throwOnNegativeErrnoIfNegative(const int ret, const std::string& context) {
+  if (ret < 0) throw Errnum(-ret, context);
+}

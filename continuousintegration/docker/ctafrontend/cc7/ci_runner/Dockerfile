@@ -76,7 +76,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       ltrace \
       cta-cli \
   && \
-    yum clean all
+    yum clean all \
+  && \
+    rm -rf /var/cache/yum
 
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}

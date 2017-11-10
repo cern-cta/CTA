@@ -32,8 +32,8 @@ class GenericObject;
 class EntryLogSerDeser;
 
 class DriveRegister: public ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t> {
-  CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
 public:
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
   DriveRegister(const std::string & address, Backend & os);
   DriveRegister(GenericObject & go);
   void initialize();
@@ -42,39 +42,39 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   
+  /**
+   * A drive register entry (drive name + object address)
+   */
+  struct DriveAddress {
+    std::string driveName;
+    std::string driveStateAddress;
+  };
+  
   // Drives management =========================================================
   /**
-   * Returns all the drive states stored in the drive registry.
+   * Returns all the drive states addresses stored in the drive registry.
    * @return a list of all the drive states
    */
-  std::list<cta::common::dataStructures::DriveState> getAllDrivesState();
+  std::list<DriveAddress> getDriveAddresses();
   
   /**
-   * Query the complete drive state for one drive.
+   * Returns all the drive states addresses stored in the drive registry.
+   * @return a list of all the drive states
+   */
+  std::string getDriveAddress(const std::string & driveName);
+  
+  /**
+   * Adds a drive status reference to the register.
    * @param driveName
-   * @return complete drive state, or throws an exception if the drive is not
-   * known.
+   * @param driveAddress
    */
-  cta::common::dataStructures::DriveState getDriveState(const std::string &driveName);
+  void setDriveAddress(const std::string & driveName, const std::string &driveAddress);
   
   /**
-   * Set the state of a drive. Either creates or overwrites the entry.
-   * @param driveState Full drive state (drive name is part of the structure).
+   * Removes entry from drive addresses.
+   * @param driveName
    */
-  void setDriveState(const cta::common::dataStructures::DriveState driveState);
-  
-  /**
-   * Set the next state of a drive, following a mount decision (scheduling from
-   * idle or preemption).
-   * @param driveNextState Partial drive state.
-   */
-  void setNextDriveState(const cta::common::dataStructures::DriveNextState driveNextState);
-
-  /**
-   * Remove the drive from the register.
-   * @param name
-   */
-  void removeDrive (const std::string  & driveName);
+  void removeDrive(const std::string & driveName);
 
   /**
    * JSON dump of the drive 

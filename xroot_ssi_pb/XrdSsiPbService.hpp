@@ -35,12 +35,12 @@ class Service : public XrdSsiService
 public:
             Service() {
 #ifdef XRDSSI_DEBUG
-               std::cout << "[DEBUG] Service() constructor" << std::endl;
+               std::cerr << "[DEBUG] Service() constructor" << std::endl;
 #endif
             }
    virtual ~Service() {
 #ifdef XRDSSI_DEBUG
-               std::cout << "[DEBUG] ~Service() destructor" << std::endl;
+               std::cerr << "[DEBUG] ~Service() destructor" << std::endl;
 #endif
             }
 
@@ -54,7 +54,7 @@ public:
    virtual bool Stop() override
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Service::Stop()" << std::endl;
+      std::cerr << "[DEBUG] Service::Stop()" << std::endl;
 #endif
       return false;
    }
@@ -67,7 +67,7 @@ public:
    virtual bool Prepare(XrdSsiErrInfo &eInfo, const XrdSsiResource &resource) override
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Service::Prepare():" << std::endl;
+      std::cerr << "[DEBUG] Service::Prepare():" << std::endl;
       std::cerr << "[DEBUG]    Resource name: " << resource.rName << std::endl
                 << "[DEBUG]    Resource user: " << resource.rUser << std::endl
                 << "[DEBUG]    Resource info: " << resource.rInfo << std::endl
@@ -88,8 +88,7 @@ public:
                 << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
                 << std::endl;
 
-      // for debugging. delete me.
-      resource.client->name = "NO_KEYFILE";
+      if(resource.client->name == nullptr) resource.client->name = "dummy_client";
 #endif
       if(resource.client == nullptr || resource.client->name == nullptr)
       {
@@ -111,7 +110,7 @@ public:
                        XrdSsiRequest &reqRef, XrdSsiResource *resp) override
    {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] Service::Attach()" << std::endl;
+      std::cerr << "[DEBUG] Service::Attach()" << std::endl;
 #endif
       return true;
    }
@@ -134,7 +133,7 @@ void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest
    // Bind the processor to the request. Inherits the BindRequest method from XrdSsiResponder.
 
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Binding Processor to Request" << std::endl;
+   std::cerr << "[DEBUG] XrdSsiPbService::ProcessRequest(): Binding Processor to Request" << std::endl;
 #endif
    processor.BindRequest(reqRef);
 
@@ -145,7 +144,7 @@ void Service<RequestType, MetadataType, AlertType>::ProcessRequest(XrdSsiRequest
    // Tell the framework we have finished with the request object: unbind the request from the responder
 
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiPbService::ProcessRequest(): Unbinding Processor from Request" << std::endl;
+   std::cerr << "[DEBUG] XrdSsiPbService::ProcessRequest(): Unbinding Processor from Request" << std::endl;
 #endif
 
    processor.UnBindRequest();

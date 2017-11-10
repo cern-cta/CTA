@@ -63,17 +63,49 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     const auto getConnTime = t.secs();
     rdbms::AutoRollback autoRollback(conn);
     t.reset();
-    const auto archiveFile = getArchiveFile(conn, archiveFileId);
+    const auto archiveFile = getArchiveFileByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs();
 
     if(nullptr == archiveFile.get()) {
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("fileId", std::to_string(archiveFileId)));
-      m_log(log::WARNING, "Ignoring request to delete Archive File because it does not exist in the catalogue", params);
+      log::ScopedParamContainer spc(lc);
+      spc.add("fileId", archiveFileId);
+      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
       return;
     }
 
     if(diskInstanceName != archiveFile->diskInstance) {
+      log::ScopedParamContainer spc(lc);
+      spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+         .add("diskInstance", archiveFile->diskInstance)
+         .add("requestDiskInstance", diskInstanceName)
+         .add("diskFileId", archiveFile->diskFileId)
+         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+         .add("fileSize", std::to_string(archiveFile->fileSize))
+         .add("checksumType", archiveFile->checksumType)
+         .add("checksumValue", archiveFile->checksumValue)
+         .add("creationTime", std::to_string(archiveFile->creationTime))
+         .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+         .add("storageClass", archiveFile->storageClass)
+         .add("getConnTime", getConnTime)
+         .add("getArchiveFileTime", getArchiveFileTime);
+      for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+        std::stringstream tapeCopyLogStream;
+        tapeCopyLogStream << "copy number: " << it->first
+          << " vid: " << it->second.vid
+          << " fSeq: " << it->second.fSeq
+          << " blockId: " << it->second.blockId
+          << " creationTime: " << it->second.creationTime
+          << " compressedSize: " << it->second.compressedSize
+          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+        spc.add("TAPE FILE", tapeCopyLogStream.str());
+      }
+      lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
+        "of the archived file");
+
       exception::UserError ue;
       ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
         "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
@@ -109,7 +141,6 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
        .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
        .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
        .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-       .add("diskFileInfo.recoveryBlob", archiveFile->diskFileInfo.recoveryBlob)
        .add("fileSize", std::to_string(archiveFile->fileSize))
        .add("checksumType", archiveFile->checksumType)
        .add("checksumValue", archiveFile->checksumValue)
@@ -134,7 +165,88 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
-    lc.log(log::INFO, "Archive File Deleted");
+    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteArchiveFile
+//------------------------------------------------------------------------------
+void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const std::string &diskFileId,
+  log::LogContext &lc) {
+  try {
+    utils::Timer t;
+    auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs();
+    rdbms::AutoRollback autoRollback(conn);
+    t.reset();
+    const auto archiveFile = getArchiveFileByDiskFileId(conn, diskInstanceName, diskFileId);
+    const auto getArchiveFileTime = t.secs();
+
+    if(nullptr == archiveFile.get()) {
+      log::ScopedParamContainer spc(lc);
+      spc.add("diskInstance", diskInstanceName);
+      spc.add("diskFileId", diskFileId);
+      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
+      return;
+    }
+
+    t.reset();
+    {
+      const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt->executeNonQuery();
+    }
+    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
+
+    {
+      const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
+      auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+      stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
+      stmt->executeNonQuery();
+    }
+    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
+
+    conn.commit();
+    const auto commitTime = t.secs();
+
+    log::ScopedParamContainer spc(lc);
+    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
+       .add("diskInstance", archiveFile->diskInstance)
+       .add("diskFileId", archiveFile->diskFileId)
+       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
+       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
+       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
+       .add("fileSize", std::to_string(archiveFile->fileSize))
+       .add("checksumType", archiveFile->checksumType)
+       .add("checksumValue", archiveFile->checksumValue)
+       .add("creationTime", std::to_string(archiveFile->creationTime))
+       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+       .add("storageClass", archiveFile->storageClass)
+       .add("getConnTime", getConnTime)
+       .add("getArchiveFileTime", getArchiveFileTime)
+       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+       .add("commitTime", commitTime);
+    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
+      std::stringstream tapeCopyLogStream;
+      tapeCopyLogStream << "copy number: " << it->first
+        << " vid: " << it->second.vid
+        << " fSeq: " << it->second.fSeq
+        << " blockId: " << it->second.blockId
+        << " creationTime: " << it->second.creationTime
+        << " compressedSize: " << it->second.compressedSize
+        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
+        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
+        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
+      spc.add("TAPE FILE", tapeCopyLogStream.str());
+    }
+    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -340,7 +452,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autoco
     checkTapeFileWrittenFieldsAreSet(event);
 
     const time_t now = time(nullptr);
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, event.archiveFileId);
+    auto archiveFile = getArchiveFileByArchiveFileId(conn, event.archiveFileId);
 
     // If the archive file does not already exist
     if(nullptr == archiveFile.get()) {
@@ -358,8 +470,6 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::Stmt::AutocommitMode autoco
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, autocommitMode, row);
-    } else {
-      throwIfCommonEventDataMismatch(*archiveFile, event);
     }
 
     // Insert the tape file

@@ -36,8 +36,6 @@ namespace daemon {
  */
 struct TapedConfiguration {
   static TapedConfiguration createFromCtaConf(
-          cta::log::Logger &log = gDummyLogger);
-  static TapedConfiguration createFromCtaConf(
           const std::string & generalConfigPath,
           cta::log::Logger & log = gDummyLogger);
   
@@ -87,6 +85,12 @@ struct TapedConfiguration {
   SourcedParameter<uint64_t> nbDiskThreads{
     "taped", "NbDiskThreads", 10, "Compile time default"};
   //----------------------------------------------------------------------------
+  // Recommended Access Order usage
+  //----------------------------------------------------------------------------
+  /// Usage of Recommended Access Order for file recall
+  SourcedParameter<std::string> useRAO{
+    "taped", "UseRAO", "no", "Compile time default"};
+  //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------
   /// Maximum time allowed to complete a single mount scheduling.
@@ -109,7 +113,7 @@ struct TapedConfiguration {
     "ObjectStore", "BackendPath"};
   /// Path to the file catalog config file
   SourcedParameter<std::string> fileCatalogConfigFile{
-    "general", "FileCatalogConfigFile", "/etc/cta/cta_catalogue_db.conf", "Compile time default"};
+    "general", "FileCatalogConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
   
 private:
   /** A private dummy logger which will simplify the implementation of the 

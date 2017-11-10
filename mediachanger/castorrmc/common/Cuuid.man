@@ -1,0 +1,50 @@
+.\"   $Id: Cuuid.man,v 1.2 2003/12/08 12:06:22 obarring Exp $
+.\"
+.\"   Man page for the CASTOR's Universally Unique IDentifier (UUID)
+.\"
+.TH CUUID "3castor" "$Date: 2003/12/08 12:06:22 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCuuid\fP \- \fBCASTOR\fP \fBUUID\fP inferface
+.SH SYNOPSIS
+.B #include <Cuuid_api.h>
+.P
+.BI "void Cuuid_create(Cuuid_t *" uuid ");"
+.P
+.BI "int Cuuid_compare(Cuuid_t *" uuid1 ", Cuuid_t *" uuid2 ");"
+
+.SH DESCRIPTION
+The \fBCuuid_create\fP function creates a new universally unique identifier
+(UUID). The uuid will be generated based on high-quality randomness from
+\fI/dev/urandom\fP, if available. If it is not available, then Cuuid_create
+will use an alternative algorithm which uses the current time, the local
+ethernet MAC address (if available), and random data generated using a
+pseudo-random generator. The implementation internally uses the uuid_generate()
+function from e2fsprogs.
+
+The newly created UUID is returned in the memory location pointed to by
+.I uuid.
+
+.P
+The \fBCuuid_compare\fP function compares two UUIDs
+.I uuid1
+and
+.I uuid2
+\"lexically\".
+.P
+Return value is -1 if
+.I uuid1
+is lexically before
+.I uuid2
+, 0 if they are equal, 1 if
+.I uuid1
+is lexically after
+.I uuid2.
+
+.SH NOTES
+Lexical ordering is not temporal ordering.
+
+.SH SEE ALSO
+\fBuuid_generate\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

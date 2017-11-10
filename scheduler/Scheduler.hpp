@@ -217,6 +217,15 @@ public:
     const std::string &driveName, const bool up, const bool force, log::LogContext & lc);
   
   /**
+   * Remove drive from the drive register.
+   * 
+   * @param cliIdentity The identity of the user requesting the drive removal.
+   * @param driveName The drive name
+   */
+  void removeDrive(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
+    const std::string &driveName, log::LogContext & lc);
+  
+  /**
    * Reports the state of the drive to the object store. This information is then reported
    * to the user through the command line interface, via getDriveStates(). This function
    * any necessary field in the drive's state. The drive entry will be created if necessary.

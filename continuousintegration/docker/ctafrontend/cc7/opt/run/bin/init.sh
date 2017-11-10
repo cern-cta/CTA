@@ -5,13 +5,15 @@
 # oracle sqlplus client binary path
 ORACLE_SQLPLUS="/usr/bin/sqlplus64"
 
-# enable cta repository from previously built artifacts
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
+if [ ! -e /etc/buildtreeRunner ]; then
+  # enable cta repository from previously built artifacts
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable ceph
 
-# install needed packages
-yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
-yum clean packages
+  # install needed packages
+  yum -y install cta-objectstore-tools cta-doc mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient-sqlplus
+  yum clean packages
+fi
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
@@ -46,22 +48,22 @@ fi
 echo "Configuring database:"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
-echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
+echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 if [ "$KEEP_DATABASE" == "0" ]; then
   echo "Wiping database"
-  echo yes | cta-catalogue-schema-drop /etc/cta/cta_catalogue_db.conf
+  echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
-    cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
   else
     # Oracle DB
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
-    cta-catalogue-schema-create /etc/cta/cta_catalogue_db.conf
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
   fi
 else
   echo "Reusing database (no check)"
@@ -74,6 +76,13 @@ if [ ! $LIBRARYTYPE == "mhvtl" ]; then
 else
   # library management
   # BEWARE STORAGE SLOTS START @1 and DRIVE SLOTS START @0!!
+  # Emptying drives and move tapes to home slots
+  echo "Unloading tapes that could be remaining in the drives from previous runs"
+  mtx -f /dev/${LIBRARYDEVICE} status
+  for unload in $(mtx -f /dev/${LIBRARYDEVICE}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
+    # normally, there is no need to rewind with virtual tapes...
+    mtx -f /dev/${LIBRARYDEVICE} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+  done
   echo "Labelling tapes using the first drive in ${LIBRARYNAME}: ${DRIVENAMES[${driveslot}]} on /dev/${DRIVEDEVICES[${driveslot}]}:"
   for ((i=0; i<${#TAPES[@]}; i++)); do
     vid=${TAPES[${i}]}

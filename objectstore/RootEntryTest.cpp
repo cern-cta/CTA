@@ -25,11 +25,14 @@
 #include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/log/DummyLogger.hpp"
 
 namespace unitTests {
 
 TEST(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
   { 
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
@@ -50,12 +53,13 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock (re);
     // Create an agent
-    cta::objectstore::AgentReference agentRef("unitTest");
+    cta::log::DummyLogger dl("dummyLogger");
+    cta::objectstore::AgentReference agentRef("unitTest", dl);
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
-    re.addOrGetAgentRegisterPointerAndCommit(agentRef, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
     //agent.registerSelf();
@@ -64,16 +68,18 @@ TEST(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
-  re.removeAgentRegisterAndCommit();
-  re.removeIfEmpty();
+  re.removeAgentRegisterAndCommit(lc);
+  re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 
 TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests");
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -82,9 +88,9 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     re.initialize();
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
-    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
   }
-  ag.insertAndRegisterSelf();
+  ag.insertAndRegisterSelf(lc);
   std::string tpAddr1, tpAddr2;
   {
     // Create the tape pools
@@ -93,7 +99,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     re.fetch();
     ASSERT_THROW(re.getArchiveQueueAddress("tapePool1"),
       cta::objectstore::RootEntry::NoSuchArchiveQueue);
-    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr);
+    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, lc);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
@@ -104,7 +110,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr);
+    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, lc);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {
@@ -112,20 +118,20 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.removeArchiveQueueAndCommit("tapePool2");
+    re.removeArchiveQueueAndCommit("tapePool2", lc);
     ASSERT_FALSE(be.exists(tpAddr2));
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
-  re.removeAgentRegisterAndCommit();
-  re.removeArchiveQueueAndCommit("tapePool1");
+  re.removeAgentRegisterAndCommit(lc);
+  re.removeArchiveQueueAndCommit("tapePool1", lc);
   ASSERT_FALSE(be.exists(tpAddr1));
-  re.removeIfEmpty();
+  re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 
@@ -137,9 +143,11 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -147,9 +155,9 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
   }
-  ag.insertAndRegisterSelf();
+  ag.insertAndRegisterSelf(lc);
   std::string driveRegisterAddress;
   {
     // create the drive register
@@ -168,18 +176,18 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.removeDriveRegisterAndCommit();
+    re.removeDriveRegisterAndCommit(lc);
     ASSERT_FALSE(be.exists(driveRegisterAddress));
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
-  re.removeAgentRegisterAndCommit();
-  re.removeIfEmpty();
+  re.removeAgentRegisterAndCommit(lc);
+  re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 
@@ -191,9 +199,11 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests"); 
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   std::string arAddr;
@@ -204,7 +214,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.fetch();
     ASSERT_THROW(re.getAgentRegisterAddress(),
       cta::objectstore::RootEntry::NotAllocated);
-    arAddr = re.addOrGetAgentRegisterPointerAndCommit(agr, el);
+    arAddr = re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
     // Check that we car read it
     cta::objectstore::AgentRegister ar(arAddr, be);
     cta::objectstore::ScopedSharedLock arl(ar);
@@ -217,9 +227,9 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.fetch();
     // Check that we still get the same agent register
     ASSERT_EQ(arAddr, re.getAgentRegisterAddress());
-    ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(agr, el));
+    ASSERT_EQ(arAddr, re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc));
     // Remove it
-    ASSERT_NO_THROW(re.removeAgentRegisterAndCommit());
+    ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
     // Check that the object is gone
     ASSERT_FALSE(be.exists(arAddr));
   }
@@ -227,7 +237,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
-  re.removeIfEmpty();
+  re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 
@@ -239,9 +249,11 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     re.initialize();
     re.insert();
   }
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
-  cta::objectstore::AgentReference agr("UnitTests");
+  cta::objectstore::EntryLogSerDeser el("user0",
+    "unittesthost", time(NULL));
+  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   { 
@@ -249,9 +261,9 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.addOrGetAgentRegisterPointerAndCommit(agr, el);
+    re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
   }
-  ag.insertAndRegisterSelf();
+  ag.insertAndRegisterSelf(lc);
   std::string schedulerGlobalLockAddress;
   {
     // create the drive register
@@ -270,18 +282,18 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    re.removeSchedulerGlobalLockAndCommit();
+    re.removeSchedulerGlobalLockAndCommit(lc);
     ASSERT_FALSE(be.exists(schedulerGlobalLockAddress));
   }
   // Unregister the agent
   cta::objectstore::ScopedExclusiveLock agl(ag);
-  ag.removeAndUnregisterSelf();
+  ag.removeAndUnregisterSelf(lc);
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
-  re.removeAgentRegisterAndCommit();
-  re.removeIfEmpty();
+  re.removeAgentRegisterAndCommit(lc);
+  re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 

@@ -29,11 +29,9 @@ namespace xrootPlugins {
 // constructor
 //------------------------------------------------------------------------------
 ListArchiveFilesCmd::ListArchiveFilesCmd(
-  log::Logger &log,
   XrdOucErrInfo &xrdSfsFileError,
   const bool displayHeader,
   catalogue::ArchiveFileItor archiveFileItor):
-  m_log(log),
   m_xrdSfsFileError(xrdSfsFileError),
   m_displayHeader(displayHeader),
   m_archiveFileItor(std::move(archiveFileItor)) {

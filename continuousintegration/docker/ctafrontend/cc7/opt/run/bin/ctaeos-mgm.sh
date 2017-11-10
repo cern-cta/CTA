@@ -2,13 +2,15 @@
 
 . /opt/run/bin/init_pod.sh
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable eos-citrine-commit
-yum-config-manager --enable eos-citrine-depend
-yum-config-manager --enable eos-citrine
+if [ ! -e /etc/buildtreeRunner ]; then
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable eos-citrine-commit
+  yum-config-manager --enable eos-citrine-depend
+  yum-config-manager --enable eos-citrine
 
-# Install missing RPMs
-yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
+  # Install missing RPMs
+  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo
+fi
 
 # create local users as the mgm is the only one doing the uid/user/group mapping in the full infrastructure
 groupadd --gid 1100 eosusers
@@ -31,7 +33,7 @@ eoshost=`hostname -f`
 
 EOS_INSTANCE=`hostname -s`
 TAPE_FS_ID=65535
-CTA_BIN=/usr/bin/cta
+CTA_BIN=/usr/bin/eoscta_stub
 CTA_KT=/etc/ctafrontend_SSS_c.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta

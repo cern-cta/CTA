@@ -56,7 +56,7 @@ public:
 
    virtual ~Request() {
 #ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] ~Request destructor" << std::endl;
+      std::cerr << "[DEBUG] ~Request destructor" << std::endl;
 #endif
    }
 
@@ -110,7 +110,7 @@ Request(const RequestType &request, unsigned int response_bufsize, uint16_t time
    m_response_bufsize(response_bufsize)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] Request constructor: "
+   std::cerr << "[DEBUG] Request constructor: "
              << "Response buffer size = " << m_response_bufsize
              << " bytes, timeout = " << timeout << std::endl;
 #endif
@@ -139,7 +139,7 @@ template<typename RequestType, typename MetadataType, typename AlertType>
 bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
+   std::cerr << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
 #endif
 
    try {
@@ -231,7 +231,13 @@ void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
    int metadata_len;
    const char *metadata_buffer = GetMetadata(metadata_len);
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseMetadata(): ";
+   for(int i = 0; i < metadata_len; ++i)
+   {
+      std::cerr << "<" << static_cast<int>(*(metadata_buffer+i)) << ">";
+   }
+   std::cerr << std::endl;
 #endif
 
    // Deserialize the metadata
@@ -272,7 +278,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
 #ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes of data" << std::endl;
 #endif
 
    // The buffer length can be 0 if the response is metadata only

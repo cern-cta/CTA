@@ -24,36 +24,20 @@
 namespace cta {  namespace objectstore {
 
 class GenericObject: public ObjectOps<serializers::GenericObject, serializers::GenericObject_t> {
-    std::unique_ptr <Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
 public:
   GenericObject(const std::string & name, Backend & os):
     ObjectOps<serializers::GenericObject, serializers::GenericObject_t>(os, name) {};
     
   CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
   
-  /** Overload of ObjectOps's implementation: this special object tolerates all
-   * types of objects */
-  void fetch();
+  /** This object has a special, relaxed version of header parsing as all types
+   * of objects are accepted here. */
+  void getHeaderFromObjectData(const std::string& objData) override;
+
+  /** Overload of ObjectOps's implementation: this special object does not really 
+   parse its payload */
+  void getPayloadFromHeader() override {}
   
-  /** An asynchronous lockfree fetcher class */
-  class AsyncLockfreeFetcher {
-    friend class GenericObject;
-  public:
-    void wait();
-  private:
-    AsyncLockfreeFetcher(GenericObject & obj);
-    std::unique_ptr<Backend::AsyncLockfreeFetcher> m_backendFetcher;
-    GenericObject & m_object;
-  };
-  friend AsyncLockfreeFetcher;
-  
-  /** A lockfree fetcher factory */
-  AsyncLockfreeFetcher * asyncLockfreeFetch();
-  
-private:
-  void fetchBottomHalf(const std::string & rawFetchedObject);
-  
-public:
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */
   void commit();

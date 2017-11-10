@@ -44,7 +44,7 @@ Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
 .SH EXAMPLES
-cta-catalogue-admin-host-create /etc/cta/cta_catalogue_db.conf -u ctaadminhost -c "The CTA admin host"
+cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf -u ctaadminhost -c "The CTA admin host"
 
 .SH AUTHOR
 \fBCTA\fP Team

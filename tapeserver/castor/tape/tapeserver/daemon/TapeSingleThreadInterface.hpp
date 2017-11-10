@@ -96,22 +96,6 @@ protected:
   EncryptionControl m_encryptionControl;
  
   /**
-   * This function will try to set the cap_sys_rawio capability that is needed
-   * for by tape thread to access /dev/nst
-   */
-  void setCapabilities(){
-    try {
-      m_capUtils.setProcText("cap_sys_rawio+ep");
-      cta::log::LogContext::ScopedParam sp(m_logContext,
-        cta::log::Param("capabilities", m_capUtils.getProcText()));
-      m_logContext.log(cta::log::INFO, "Set process capabilities for using tape");
-    } catch(const cta::exception::Exception &ne) {
-      m_logContext.log(cta::log::ERR,
-        "Failed to set process capabilities for using the tape ");
-    }
-  }
-  
-  /**
    * Try to mount the tape for read-only access, get an exception if it fails 
    */
   void mountTapeReadOnly(){
@@ -166,8 +150,8 @@ protected:
   void waitForDrive(){
     try{
       cta::utils::Timer timer;
-      // wait 600 drive is ready
-      m_drive.waitUntilReady(600);
+      // wait 60s for drive to be ready (the mount call is synchronous, so this just the load operation.
+      m_drive.waitUntilReady(60);
       cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("loadTime", timer.secs()));
     }catch(const cta::exception::Exception& e){
       cta::log::LogContext::ScopedParam sp01(m_logContext, cta::log::Param("exception_message", e.getMessageValue()));

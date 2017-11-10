@@ -25,6 +25,7 @@
 #include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
+#include <cryptopp/base64.h>
 
 namespace cta { namespace objectstore {
 
@@ -251,14 +252,14 @@ public:
 class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() {}
-  ScopedExclusiveLock(ObjectOpsBase & oo) {
-    lock(oo);
+  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
+    lock(oo, timeout_us);
   }
-  void lock(ObjectOpsBase & oo) {
+  void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     checkNotLocked();
     m_objectOps = &oo;
     checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet()));
+    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
     m_objectOps->m_locksCount++;
     m_objectOps->m_locksForWriteCount++;
     m_locked = true;
@@ -303,6 +304,33 @@ public:
     getPayloadFromHeader();
   }
   
+  class AsyncLockfreeFetcher {
+    friend class ObjectOps;
+    AsyncLockfreeFetcher(ObjectOps & obj): m_obj(obj) {}
+  public:
+    void wait() {
+      // Current simplification: the parsing of the header/payload is synchronous.
+      // This could be delegated to the backend.
+      auto objData = m_asyncLockfreeFetcher->wait();
+      m_obj.m_noLock = true;
+      m_obj.m_existingObject = true;
+      m_obj.getHeaderFromObjectData(objData);
+      m_obj.getPayloadFromHeader();
+    }
+  private:
+    ObjectOps & m_obj;
+    std::unique_ptr<Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
+    
+  };
+  friend AsyncLockfreeFetcher;
+  
+  AsyncLockfreeFetcher * asyncLockfreeFetch () {
+    std::unique_ptr<AsyncLockfreeFetcher> ret;
+    ret.reset(new AsyncLockfreeFetcher(*this));
+    ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
+    return ret.release();
+  }
+  
   void commit() {
     checkPayloadWritable();
     if (!m_existingObject) 
@@ -327,23 +355,38 @@ public:
   
 protected:
   
-  void getPayloadFromHeader () {
+  virtual void getPayloadFromHeader () {
     if (!m_payload.ParseFromString(m_header.payload())) {
-      // Use a the tolerant parser to assess the situation.
+      // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(m_header.payload());
+      // Base64 encode the payload for diagnostics.
+      const bool noNewLineInBase64Output = false;
+      std::string payloadBase64;
+      CryptoPP::StringSource ss1(m_header.payload(), true,
+        new CryptoPP::Base64Encoder(
+           new CryptoPP::StringSink(payloadBase64), noNewLineInBase64Output));
       throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString());
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString() + 
+              " size=" + std::to_string(m_header.payload().size()) + " data(b64)=\"" + 
+              payloadBase64 + "\"");
     }
     m_payloadInterpreted = true;
   }
-
-  void getHeaderFromObjectStore () {
-    auto objData=m_objectStore.read(getAddressIfSet());
+  
+  virtual void getHeaderFromObjectData(const std::string & objData) {
     if (!m_header.ParseFromString(objData)) {
-      // Use a the tolerant parser to assess the situation.
+      // Use the tolerant parser to assess the situation.
       m_header.ParsePartialFromString(objData);
-      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getHeaderFromObjectStore(): could not parse header: " + m_header.InitializationErrorString());
+      // Base64 encode the header for diagnostics.
+      const bool noNewLineInBase64Output = false;
+      std::string objDataBase64;
+      CryptoPP::StringSource ss1(objData, true,
+        new CryptoPP::Base64Encoder(
+           new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
+      throw cta::exception::Exception(std::string("In ObjectOps<") + typeid(PayloadType).name() + 
+              ">::getHeaderFromObjectData(): could not parse header: " + m_header.InitializationErrorString() + 
+              " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+              objDataBase64 + "\"");
     }
     if (m_header.type() != payloadTypeId) {
       std::stringstream err;
@@ -352,6 +395,11 @@ protected:
       throw ObjectOpsBase::WrongType(err.str());
     }
     m_headerInterpreted = true;
+  }
+
+  void getHeaderFromObjectStore () {
+    auto objData=m_objectStore.read(getAddressIfSet());
+    getHeaderFromObjectData(objData);
   }
   
 public:

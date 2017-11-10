@@ -41,7 +41,7 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
-  void removeIfEmpty();
+  void removeIfEmpty(log::LogContext & lc);
   std::string dump();
   
   // Retrieve jobs management ==================================================

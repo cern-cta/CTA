@@ -141,7 +141,8 @@ public:
    * Prepares for a file retrieval by returning the information required to
    * queue the associated retrieve request(s).
    *
-   * @param instanceName The name of the instance from where the retrieval request originated
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
    * @param archiveFileId The unique identifier of the archived file that is
    * to be retrieved.
    * @param user The user for whom the file is to be retrieved.  This will be
@@ -152,8 +153,34 @@ public:
    * @return The information required to queue the associated retrieve request(s).
    */
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
-    const std::string &instanceName,
+    const std::string &diskInstanceName,
     const uint64_t archiveFileId,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) override;
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   * @param lc The log context.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+    const std::string &diskInstanceName,
+    const std::string &diskFileId,
     const common::dataStructures::UserIdentity &user,
     log::LogContext &lc) override;
 
@@ -866,17 +893,28 @@ protected:
    * @return The archive file or nullptr.
    * an empty list.
    */
-  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFile(rdbms::PooledConn &conn, const uint64_t archiveFileId) const;
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByArchiveFileId(
+    rdbms::PooledConn &conn,
+    const uint64_t archiveFileId) const;
 
   /**
-   * Throws an exception if the there is a mismatch between the expected and
-   * actual common event data.
+   * Returns the specified archive file or a nullptr pointer if it does not
+   * exist.
    *
-   * @param expected The expected event data.
-   * @param actual The actual event data.
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance.
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @return The archive file or nullptr.
+   * an empty list.
    */
-  void throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
-    const TapeFileWritten &actual) const;
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByDiskFileId(
+    rdbms::PooledConn &conn,
+    const std::string &diskInstance,
+    const std::string &diskFileId) const;
 
   /**
    * Returns the mount policies for the specified requester and requester group.

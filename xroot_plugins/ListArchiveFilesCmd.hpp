@@ -45,7 +45,6 @@ public:
    * @param archiveFileItor Iterator over the archive files in the CTA catalogue that are to be listed.
    */
   ListArchiveFilesCmd(
-    log::Logger &log,
     XrdOucErrInfo &xrdSfsFileError,
     const bool displayHeader,
     catalogue::ArchiveFileItor archiveFileItor);
@@ -56,11 +55,6 @@ public:
   XrdSfsXferSize read(XrdSfsFileOffset offset, char *buffer, XrdSfsXferSize size);
   
 protected:
-
-  /**
-   * The object representing the API of the CTA logging system.
-   */
-  log::Logger &m_log;
 
   /**
    * The error member-variable of the XrdSfsFile class.

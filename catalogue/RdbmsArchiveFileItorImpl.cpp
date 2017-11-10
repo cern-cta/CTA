@@ -113,7 +113,8 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
         "LEFT OUTER JOIN TAPE ON "
         "TAPE_FILE.VID = TAPE.VID";
-    if(
+
+    const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.diskFileId     ||
@@ -123,7 +124,9 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
       searchCriteria.storageClass   ||
       searchCriteria.vid            ||
       searchCriteria.tapeFileCopyNb ||
-      searchCriteria.tapePool) {
+      searchCriteria.tapePool;
+
+    if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
     }
 
@@ -178,7 +181,21 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
       sql += "TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
     }
 
-    sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+    // Only put an ORDER BY clause if there is at least one search criteria.
+    //
+    // If the whole contents of the ARCHIVE_FILE and TAPE_FILE tables are
+    // listed without a search criteria and with an ORDER BY clause then the
+    // first row back from the database will take a relatively long period of
+    // time to be returned.  This is because the database will have to sort
+    // every row before returning the first.  This long period of time will
+    // cause the current (non SSI) cta command-line tool to time out.
+    if(thereIsAtLeastOneSearchCriteria) {
+      if(searchCriteria.vid) {
+        sql += " ORDER BY FSEQ";
+      } else {
+        sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
+      }
+    }
 
     auto conn = connPool.getConn();
     m_stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);

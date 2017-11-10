@@ -21,12 +21,6 @@
 #include "Tpconfig.hpp"
 
 namespace cta { namespace tape { namespace daemon {
-//------------------------------------------------------------------------------
-// GlobalConfiguration::createFromCtaConf w/o path
-//------------------------------------------------------------------------------
-TapedConfiguration TapedConfiguration::createFromCtaConf(cta::log::Logger& log) {
-  return createFromCtaConf("/etc/cta/cta.conf", log);
-}
 
 //------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
@@ -51,6 +45,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.mountCriteria.setFromConfigurationFile(cf, generalConfigPath);
   // Disk file access parameters
   ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
+  ret.useRAO.setFromConfigurationFile(cf, generalConfigPath);
   // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
@@ -76,6 +71,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.mountCriteria.log(log);
   
   ret.nbDiskThreads.log(log);
+  ret.useRAO.log(log);
   
   ret.wdIdleSessionTimer.log(log);
   ret.wdMountMaxSecs.log(log);

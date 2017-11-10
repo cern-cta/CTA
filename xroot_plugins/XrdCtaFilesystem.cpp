@@ -281,7 +281,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
   m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
   m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
   
-  const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta_catalogue_db.conf");
+  const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
   const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
   const uint64_t nbArchiveFileListingConns = 2;
   m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);

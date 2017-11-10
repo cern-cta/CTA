@@ -2,12 +2,14 @@
 
 . /opt/run/bin/init_pod.sh
 
-yum-config-manager --enable cta-artifacts
-yum-config-manager --enable ceph
-yum-config-manager --enable castor
+if [ ! -e /etc/buildtreeRunner ]; then
+  yum-config-manager --enable cta-artifacts
+  yum-config-manager --enable ceph
+  yum-config-manager --enable castor
 
-# Install missing RPMs
-yum -y install mt-st mtx lsscsi sg3_utils cta-taped cta-debuginfo castor-rmc-server ceph-common
+  # Install missing RPMs
+  yum -y install mt-st lsscsi sg3_utils cta-taped cta-debuginfo ceph-common
+fi
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
@@ -28,7 +30,7 @@ echo "Configuring database"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
-echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
+echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 
 # cta-taped setup
   echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
@@ -38,8 +40,8 @@ echo ${DATABASEURL} >/etc/cta/cta_catalogue_db.conf
 
 
 ####
-# configuring taped
-CTATAPEDSSS="cta_tape_server.keytab"
+# configuring taped using the official location for SSS: /etc/cta/cta-taped.sss.keytab
+CTATAPEDSSS="cta-taped.sss.keytab"
 
 # key generated with 'echo y | xrdsssadmin -k taped+ -u stage -g tape  add /tmp/taped.keytab'
 #echo '0 u:stage g:tape n:taped+ N:6361736405290319874 c:1481207182 e:0 f:0 k:8e2335f24cf8c7d043b65b3b47758860cbad6691f5775ebd211b5807e1a6ec84' >> /etc/cta/${CTATAPEDSSS}
@@ -48,7 +50,7 @@ chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-export CTA_TAPED_OPTIONS="--foreground --config /etc/cta/cta-taped.conf -l /var/log/cta/cta-taped.log"
+export CTA_TAPED_OPTIONS="--foreground -l /var/log/cta/cta-taped.log"
 
 export XrdSecPROTOCOL=sss
 

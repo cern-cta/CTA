@@ -1678,7 +1678,7 @@ std::string XrdCtaFile::xCom_archivefile() {
     if(!summary) {
       const bool displayHeader = hasOption("-h", "--header");
       auto archiveFileItor = m_catalogue->getArchiveFiles(searchCriteria);
-      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(m_log, error, displayHeader, std::move(archiveFileItor)));
+      m_listArchiveFilesCmd.reset(new ListArchiveFilesCmd(error, displayHeader, std::move(archiveFileItor)));
       /*
       std::unique_ptr<cta::catalogue::ArchiveFileItor> itor = m_catalogue->getArchiveFileItor(searchCriteria);
       if(itor->hasMore()) {
@@ -1835,14 +1835,18 @@ std::string XrdCtaFile::xCom_drive() {
   log::LogContext lc(m_log);
   std::stringstream cmdlineOutput;
   std::stringstream help;
-  help << m_requestTokens.at(0) << " dr/drive up/down/ls (it is a synchronous command):"    << std::endl
+  help << m_requestTokens.at(0) << " dr/drive up/down/ls/rm (it is a synchronous command):"    << std::endl
        << "Set the requested state of the drives. The drives will complete any running mount" << std::endl
        << "unless it is preempted with the --force option."                                 << std::endl
        << "\tup <drives_name>"                                                               << std::endl
        << "\tdown <drives_name> [--force/-f]"                                                << std::endl
        << ""                                                                                << std::endl
-       << "List the states for one or all drives"                                           << std::endl
-       << "\tls [<drive_name>]"                                                             << std::endl;
+       << "List the states for one or all drives."                                          << std::endl
+       << "\tls [<drive_name>]"                                                             << std::endl
+       << ""                                                                                << std::endl
+       << "Remove drive or drives by regex. The drives must be in state Down"
+          " unless --force option is set."                                                   << std::endl
+       << "\trm <drive_name> [--force/-f]"                                                  << std::endl;
        
   if (hasOption("-?", "--help")) {
     return help.str();
@@ -1871,6 +1875,22 @@ std::string XrdCtaFile::xCom_drive() {
     // Check if the force option was present.
     bool force=reply.options.size() && (reply.options.at(0).option == "f");
     changeStateForDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, false, force);
+  } else if ("rm" == m_requestTokens.at(2)) {
+    // Parse the command line for option and drive name.
+    cta::utils::GetOpThreadSafe::Request req;
+    for (size_t i=2; i<m_requestTokens.size(); i++)
+      req.argv.push_back(m_requestTokens.at(i));
+    req.optstring = { "f" };
+    struct ::option longOptions[] = { { "force", no_argument, 0 , 'f' }, { 0, 0, 0, 0 } };
+    req.longopts = longOptions;
+    auto reply = cta::utils::GetOpThreadSafe::getOpt(req);
+    // We should have one and only one no-option argument, the drive name.
+    if (reply.remainder.size() != 1) {
+      throw cta::exception::UserError(help.str());
+    }
+    // Check if the force option was present.
+    bool force=reply.options.size() && (reply.options.at(0).option == "f");
+    removeDrivesByRegex(m_requestTokens.at(3), lc, cmdlineOutput, force);
   } else if ("ls" == m_requestTokens.at(2)) {
     if ((m_requestTokens.size() == 3) || (m_requestTokens.size() == 4)) {
       // We will dump all the drives, and select the one asked for if needed.
@@ -1986,6 +2006,41 @@ void XrdCtaFile::changeStateForDrivesByRegex(const std::string &regex,
                       << (toMakeUp?"Up":"Down")
                       << (isForceSet?" (forced)":"")
                       << "." << std::endl;
+        drivesNotFound = false;
+      }
+    }
+    if (drivesNotFound) {
+      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
+    }
+}
+
+//------------------------------------------------------------------------------
+// removeDrivesByRegex
+//------------------------------------------------------------------------------
+void XrdCtaFile::removeDrivesByRegex(const std::string &regex,
+  log::LogContext &lc, std::stringstream &cmdlineOutput,
+  const bool isForceSet) {
+  cta::utils::Regex driveNameRegex(regex.c_str());
+    auto driveStates = m_scheduler->getDriveStates(m_cliIdentity, lc);
+    bool drivesNotFound = true;
+    for (auto driveState: driveStates) {
+      const auto regexResult = driveNameRegex.exec(driveState.driveName);
+      if (regexResult.size()) {
+        const std::set<int> downDriveStatuses = {
+          (int)cta::common::dataStructures::DriveStatus::Down,
+          (int)cta::common::dataStructures::DriveStatus::Shutdown,
+          (int)cta::common::dataStructures::DriveStatus::Unknown};  
+        if (downDriveStatuses.count((int)driveState.driveStatus)
+            || isForceSet ) {  
+            m_scheduler->removeDrive(m_cliIdentity, driveState.driveName, lc);
+            cmdlineOutput << "Drive " << driveState.driveName << " removed"
+                          << (isForceSet?" (forced)":"")
+                          << "." << std::endl;            
+        } else {
+          cmdlineOutput << "Drive " << driveState.driveName << " in state "
+                        << cta::common::dataStructures::toString(driveState.driveStatus)
+                        << " and force is not set (skipped)." << std::endl;
+        }
         drivesNotFound = false;
       }
     }
@@ -2458,7 +2513,7 @@ std::string XrdCtaFile::getGenericHelp(const std::string &programName) const {
   help << programName << " adminhost/ah             add/ch/rm/ls"               << std::endl;
   help << programName << " archivefile/af           ls"                         << std::endl;
   help << programName << " archiveroute/ar          add/ch/rm/ls"               << std::endl;
-  help << programName << " drive/dr                 up/down/ls"                 << std::endl;
+  help << programName << " drive/dr                 up/down/ls/rm"              << std::endl;
   help << programName << " groupmountrule/gmr       add/rm/ls/err"              << std::endl;
   help << programName << " listpendingarchives/lpa"                             << std::endl;
   help << programName << " listpendingretrieves/lpr"                            << std::endl;

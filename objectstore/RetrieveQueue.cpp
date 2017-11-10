@@ -73,12 +73,15 @@ bool cta::objectstore::RetrieveQueue::isEmpty() {
   return !m_payload.retrievejobs_size();
 }
 
-void cta::objectstore::RetrieveQueue::removeIfEmpty() {
+void cta::objectstore::RetrieveQueue::removeIfEmpty(log::LogContext & lc) {
   checkPayloadWritable();
   if (!isEmpty()) {
-    throw NotEmpty("In TapeQueue::removeIfEmpty: trying to remove an tape with retrieves queued");
+    throw NotEmpty("In RetrieveQueue::removeIfEmpty: trying to remove an tape with retrieves queued");
   }
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("retrieveQueueObject", getAddressIfSet());
+  lc.log(log::INFO, "In RetrieveQueue::removeIfEmpty(): removed the queue.");
 }
 
 std::string cta::objectstore::RetrieveQueue::getVid() {

@@ -1,0 +1,37 @@
+.\"   $Id: Cgrp.man,v 1.2 2001/09/26 09:13:48 jdurand Exp $
+.\"
+.TH CGRP "3castor" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCgrp\fP \- \fBCASTOR\fP \fBGr\fPou\fBp\fP file Thread-Safe inferface
+.SH SYNOPSIS
+.B #include <Cgrp.h>
+.P
+.BI "struct group *Cgetgrnam(char *" name ");"
+.P
+.BI "struct group *Cgetgrgid(gid_t " gid ");"
+
+.SH DESCRIPTION
+
+\fBCgrp\fP is a common Thread-Safe API interface to get entries in the group file by
+.BI name
+or
+.BI gid.
+
+.SH RETURN VALUE
+These routines return a group struct for the given name/gid.
+In case of error, 0 is returned and the \fBserrno\fP variable is set.
+
+.SH ERRORS
+possible values for serrno and their meaning :
+.TP 1.2i
+.B SEGROUPUNKN
+the requested group/gid was not found
+.TP
+.B SEINTERNAL
+an error occured while attempting to retrieve the group structure. More details are given in the errno variable.
+
+.SH SEE ALSO
+\fBserrno\fP, \fBgetgrnam\fP, \fBgetgrgid\fP
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

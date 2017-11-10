@@ -93,14 +93,14 @@ public:
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockShared(std::string name) = 0;
+  virtual ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) = 0;
   
   /**
    * Locks the object exclusively
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockExclusive(std::string name) = 0;
+  virtual ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) = 0;
   
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchObject);
@@ -146,7 +146,7 @@ public:
    * (success or exception) will be returned via the wait() function call. 
    */
   class AsyncDeleter { 
-  public:
+ public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -159,6 +159,34 @@ public:
   };
   
   /**
+   * A base class handling asynchronous fetch (lockfree).
+   * The operation will be asynchronous, and the result
+   * (success or exception) will be returned via the wait() function call. 
+   */
+  class AsyncLockfreeFetcher { 
+ public:
+    /**
+     * Waits for completion (success) of throws exception (failure).
+     * The return value is the content of the object.
+     */
+    virtual std::string wait() = 0;
+    
+    /**
+     * Destructor
+     */
+    virtual ~AsyncLockfreeFetcher() {}
+  };
+
+  /**
+   * Triggers the asynchronous object fetch, as described in 
+   * AsyncLockfreeFetcher class description.
+   * 
+   * @param name The name of the object to be deleted.
+   * @return pointer to a newly created AsyncDeleter
+   */
+  virtual AsyncLockfreeFetcher * asyncLockfreeFetch(const std::string & name) = 0;
+  
+  /**
    * Triggers the asynchronous object delete sequence, as described in 
    * AsyncDeleter class description.
    * 
@@ -166,23 +194,6 @@ public:
    * @return pointer to a newly created AsyncDeleter
    */
   virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
-  
-  class AsyncLockfreeFetcher {
-  public:
-    /**
-     * Returns the result of the async operation.
-     * Only could be call once and will throw an exception for second call.
-     * Also throws an exception if a problem was encountered.
-     */
-    virtual std::string get() = 0;
-    
-    /**
-     * Destructor
-     */
-    virtual ~AsyncLockfreeFetcher() {}
-  };
-  
-  virtual AsyncLockfreeFetcher * asyncLockfreeFetch (const std::string & name) = 0;
   
   /**
    * Base class for the representation of the parameters of the BackendStore.

@@ -23,6 +23,7 @@ enum ObjectType {
   AgentRegister_t = 1;
   Agent_t = 2;
   DriveRegister_t = 3;
+  DriveState_t = 4;
   SchedulerGlobalLock_t = 6;
   ArchiveRequest_t = 7;
   RetrieveRequest_t = 8;
@@ -179,7 +180,7 @@ message TapeFile {
 }
 
 message DiskFileInfo {
-  required string recoveryBlob = 8900;
+  required bytes recoveryblob = 8900;
   required string group = 8910;
   required string owner = 8930;
   required string path = 8940;
@@ -283,8 +284,13 @@ message DriveState {
 // TODO: implement or remove  required EntryLog creationlog = 5023;
 }
 
+message DriveStatePointer {
+  required string drivename = 7010;
+  required string drivestateaddress = 7011;
+}
+
 message DriveRegister {
-  repeated DriveState drives = 7000;
+  repeated DriveStatePointer drives = 7001;
 }
 
 // ------------- Scheduler global lock handling  -------------------------------

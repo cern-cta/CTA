@@ -80,6 +80,11 @@ public:
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
 
    /*!
+    * Get a reference to the Catalogue for this Service
+    */
+   cta::catalogue::Catalogue &getCatalogue() const { return *m_catalogue; }
+
+   /*!
     * Get a reference to the Scheduler for this Service
     */
    cta::Scheduler &getScheduler() const { return *m_scheduler; }
