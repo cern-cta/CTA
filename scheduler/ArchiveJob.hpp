@@ -79,6 +79,18 @@ public:
   virtual void asyncSetJobSucceed();
   
   /**
+   * Start an asynchronous update for a batch of jobs and then make sure they complete.
+   */
+  static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
+  
+protected:
+  /**
+   * Backend asynchronous batch of jobs update implementation. The default implementation
+   * can be overridden for efficiency.
+   */
+  virtual void asyncSucceedAndWaitJobsBatch(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
+public:
+  /**
    * Wait if the job was updated in the backend store asynchronously. 
    * @return true if the archive was also sent to client asynchronously.
    */

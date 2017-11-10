@@ -48,6 +48,28 @@ void cta::ArchiveJob::asyncSetJobSucceed() {
 }
 
 //------------------------------------------------------------------------------
+// asyncSetJobSucceed
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::asyncSucceedAndWaitJobsBatch(std::list<std::unique_ptr<cta::ArchiveJob> >& jobs) {
+  // Call succeed on all jobs
+  for (auto & j: jobs) {
+    j->asyncSetJobSucceed();
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// asyncSetJobsSucceed
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs) {
+  // We need a handle on the mount (all jobs are supposed to come from the same mount.
+  // It will be provided indirectly by a non-static member function of one job (if any).
+  if (jobs.size()) {
+    jobs.front()->asyncSucceedAndWaitJobsBatch(jobs);
+  }
+}
+
+//------------------------------------------------------------------------------
 // checkAndReportComplete
 //------------------------------------------------------------------------------
 bool cta::ArchiveJob::checkAndAsyncReportComplete() {
