@@ -141,9 +141,17 @@ std::string BackendRados::read(std::string name) {
   std::string ret;
   librados::bufferlist bl;
   RadosTimeoutLogger rtl;
-  cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
-      std::string("In ObjectStoreRados::read,  failed to read: ")
-      + name);
+  try { 
+    cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
+        std::string("In ObjectStoreRados::read,  failed to read: ")
+        + name);
+  } catch (cta::exception::Errnum & e) {
+    // If the object is not present, throw a more detailed exception.
+    if (e.errorNumber() == ENOENT) {
+      throw Backend::NoSuchObject(e.getMessageValue());
+      throw;
+    }
+  }
   rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
   bl.copy(0, bl.length(), ret);
   return ret;

@@ -96,9 +96,16 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
       lc.log(log::INFO, "In GarbageCollector::aquireTargets(): started tracking an untracked agent");
       // Agent is to be tracked, let's track it.
       double timeout=ag.getTimeout();
-      m_watchedAgents[c] =
-        new AgentWatchdog(c, m_objectStore);
-      m_watchedAgents[c]->setTimeout(timeout);
+      // The creation of the watchdog could fail as well (if agent gets deleted in the mean time).
+      try {
+        m_watchedAgents[c] =
+          new AgentWatchdog(c, m_objectStore);
+        m_watchedAgents[c]->setTimeout(timeout);
+      } catch (...) {
+        if (m_objectStore.exists(c)) throw;
+        m_watchedAgents.erase(c);
+        continue;
+      }
     }
   }
 }
