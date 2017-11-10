@@ -3963,9 +3963,9 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 }
 
 //------------------------------------------------------------------------------
-// prepareToRetrieveFile
+// prepareToRetrieveFileByDiskFileId
 //------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
+common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileId(
   const std::string &diskInstanceName,
   const std::string &diskFileId,
   const common::dataStructures::UserIdentity &user,

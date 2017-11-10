@@ -189,7 +189,7 @@ public:
    *
    * @return The information required to queue the associated retrieve request(s).
    */
-  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
+  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(
     const std::string &diskInstanceName,
     const std::string &diskFileId,
     const common::dataStructures::UserIdentity &user,
