@@ -39,8 +39,8 @@ chmod 600 /etc/ctafrontend_SSS_s.keytab /etc/ctafrontend_SSS_c.keytab
 chown cta /etc/ctafrontend_SSS_s.keytab /etc/ctafrontend_SSS_c.keytab
 
 # Wait for the keytab file to be pushed in by the creation script.
-echo -n "Waiting for /etc/cta-frontend.krb5.keytab"
-for ((;;)); do test -e /etc/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
+echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab"
+for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
 echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
