@@ -11,9 +11,8 @@ yum-config-manager --enable ceph
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 fi
 
-# just to get the ctafrontend xrootd configuration file in /etc/cta/cta-frontend-xrootd.conf
-# can be removed when taking config file from rpm
-yes | cp -r /opt/ci/ctafrontend/etc / 
+# /etc/cta/cta-frontend-xrootd.conf is now provided by ctafrontend rpm and comes with
+# CI ready content
 
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
