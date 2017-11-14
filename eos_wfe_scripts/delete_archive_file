@@ -4,8 +4,7 @@ EINVAL=22
 ECANCELED=125
 
 export XrdSecPROTOCOL=sss
-export XrdSecSSSKT=/etc/cta/cta-cli.sss.keytab   # This location is used on EOSCTATAPE
-export XrdSecSSSKT=/etc/ctafrontend_SSS_c.keytab # This location is used for CI
+export XrdSecSSSKT=/etc/cta/cta-cli.sss.keytab   # This location is used on EOSCTATAPE AND CI
 
 export XRD_STREAMTIMEOUT=600     # increased from 60s
 export XRD_TIMEOUTRESOLUTION=600 # increased from 15s
