@@ -69,6 +69,22 @@ struct TapePool {
   bool encryption;
 
   /**
+   * The total number of tapes in the pool.
+   */
+  uint64_t nbTapes;
+
+  /**
+   * The total capacity of all the tapes in the pool in gigabytes (10^9 bytes).
+   */
+  uint64_t capacityGigabytes;
+
+  /**
+   * The total amount of compressed data written to all the tapes in the pool in
+   * gigabytes * (10^9 bytes).
+   */
+  uint64_t dataGigabytes;
+
+  /**
    * The creation log.
    */
   common::dataStructures::EntryLog creationLog;

@@ -26,7 +26,10 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 TapePool::TapePool():
   nbPartialTapes(0),
-  encryption(false) {
+  encryption(false),
+  nbTapes(0),
+  capacityGigabytes(0),
+  dataGigabytes(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -50,6 +53,9 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   os << "(name=" << obj.name
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
+     << " nbTapes=" << obj.nbTapes
+     << " capacityGigabytes=" << obj.capacityGigabytes
+     << " dataGigabytes=" << obj.dataGigabytes
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";

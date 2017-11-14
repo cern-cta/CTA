@@ -796,11 +796,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
       
-  const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+  const auto pools = m_catalogue->getTapePools();
       
   ASSERT_EQ(1, pools.size());
       
-  const catalogue::TapePool pool = pools.front();
+  const auto &pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
@@ -840,11 +840,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
 
-  const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+  const auto pools = m_catalogue->getTapePools();
 
   ASSERT_EQ(1, pools.size());
 
-  const catalogue::TapePool pool = pools.front();
+  const auto &pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
@@ -881,11 +881,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -903,11 +903,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   m_catalogue->modifyTapePoolNbPartialTapes(m_admin, tapePoolName, modifiedNbPartialTapes);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -942,11 +942,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
 
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -964,11 +964,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   m_catalogue->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -1002,11 +1002,11 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
 
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -1024,11 +1024,11 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   m_catalogue->setTapePoolEncryption(m_admin, tapePoolName, modifiedIsEncrypted);
 
   {
-    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
+    const auto pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const catalogue::TapePool pool = pools.front();
+    const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(modifiedIsEncrypted, pool.encryption);
@@ -2014,6 +2014,17 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
 
   {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityGigabytes);
+    ASSERT_EQ(0, pool.dataGigabytes);
+  }
+
+  {
     m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName,
       capacityInBytes, disabledValue, fullValue, comment);
     const auto tapes = cta_catalogue_CatalogueTest::tapeListToMap(m_catalogue->getTapes());
@@ -2045,6 +2056,18 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   }
 
   {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(0, pool.dataGigabytes);
+  }
+
+  const uint64_t fileSize = 1234 * 1000000000UL;
+  {
     catalogue::TapeFileWritten file1Written;
     file1Written.archiveFileId        = 1234;
     file1Written.diskInstance         = storageClass.diskInstance;
@@ -2053,17 +2076,28 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.diskFileUser         = "public_disk_user";
     file1Written.diskFileGroup        = "public_disk_group";
     file1Written.diskFileRecoveryBlob = "opaque_disk_file_recovery_contents";
-    file1Written.size                 = 1;
+    file1Written.size                 = fileSize;
     file1Written.checksumType         = "checksum_type";
     file1Written.checksumValue        = "checksum_value";
     file1Written.storageClassName     = storageClass.name;
     file1Written.vid                  = vid1;
     file1Written.fSeq                 = 1;
     file1Written.blockId              = 4321;
-    file1Written.compressedSize       = 1;
+    file1Written.compressedSize       = fileSize;
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  }
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(fileSize/1000000000, pool.dataGigabytes);
   }
 
   {
@@ -2095,6 +2129,17 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     const common::dataStructures::EntryLog lastModificationLog =
       tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(2, pool.nbTapes);
+    ASSERT_EQ(2*capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(fileSize/1000000000, pool.dataGigabytes);
   }
 }
 

@@ -951,23 +951,41 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     std::list<TapePool> pools;
     const char *const sql =
       "SELECT "
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
-        "IS_ENCRYPTED AS IS_ENCRYPTED,"
+        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
+        "COALESCE(ROUND(SUM(CAPACITY_IN_BYTES)/1000000000), 0) AS CAPACITY_IN_GB,"
+        "COALESCE(ROUND(SUM(DATA_IN_BYTES)/1000000000), 0) AS DATA_IN_GB,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "TAPE_POOL "
+      "LEFT OUTER JOIN TAPE ON "
+        "TAPE_POOL.TAPE_POOL_NAME = TAPE.TAPE_POOL_NAME "
+      "GROUP BY "
+        "TAPE_POOL.TAPE_POOL_NAME,"
+        "TAPE_POOL.NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED,"
+        "TAPE_POOL.USER_COMMENT,"
+        "TAPE_POOL.CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME,"
+        "TAPE_POOL.LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME "
       "ORDER BY "
         "TAPE_POOL_NAME";
+
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
@@ -977,6 +995,9 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.name = rset.columnString("TAPE_POOL_NAME");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
+      pool.nbTapes = rset.columnUint64("NB_TAPES");
+      pool.capacityGigabytes = rset.columnUint64("CAPACITY_IN_GB");
+      pool.dataGigabytes = rset.columnUint64("DATA_IN_GB");
       pool.comment = rset.columnString("USER_COMMENT");
       pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
