@@ -290,30 +290,29 @@ Utilities to faciliate working with the mediachangers
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-dismount.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-mediachanger-mount.1cta.gz
 
-%package -n cta-rmc
-Summary: Tools to faciliate working with rmc and smc in cta
+
+%package -n cta-rmcd
+Summary: Tools to faciliate working with rmcd and smc in cta
 Group: Application/CTA
-%description -n cta-rmc
+Requires: logrotate
+Requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
+%description -n cta-rmcd
 CERN Tape Archive:
-Tools to faciliate working with rmc and smc in cta
-%files -n cta-rmc
-%attr(0755,root,root) %{_bindir}/rmcd
+Tools to faciliate working with rmcd and smc in cta
+%pre -n cta-rmcd
+/usr/bin/getent group cta || /usr/sbin/groupadd cta
+/usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+%files -n cta-rmcd
+%attr(0755,root,root) %{_bindir}/cta-rmcd
+#%attr(0755,root,root) %{_bindir}/cta-rmcd
 %attr(0755,root,root) %{_bindir}/smc
+%attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %doc /usr/share/man/man1/rmcd.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/smc.1cta.gz
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf.example
-%attr(0644,root,root) /etc/sysconfig/cta-rmc
-%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmc
-
-#%package -n cta-smc
-#Summary: Tools to faciliate working with smc in cta
-#Group: Application/CTA
-#%description -n cta-smc
-#CERN Tape Archive:
-#Tools to faciliate working with smc in cta
-#%files -n cta-smc
-#%attr(0755,root,root) %{_bindir}/smc
-##%attr(0644,root,root) %doc /usr/share/man/man1/rmcd.1cta.gz
+%attr(0644,root,root) /etc/sysconfig/cta-rmcd
+%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
+%attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
 %endif

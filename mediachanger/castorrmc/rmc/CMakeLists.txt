@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
-#install (TARGETS ctarmccommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 include_directories (${PROJECT_SOURCE_DIR}/mediachanger/castorrmc/h)
 
 set (RMCD_SRC_FILES
@@ -28,13 +27,18 @@ set (RMCD_SRC_FILES
   rmc_serv.c
   rmc_smcsubr.c
 )
-add_executable(rmcd ${RMCD_SRC_FILES}) 
-target_link_libraries(rmcd ctarmccommon)
-install (FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+add_executable(cta-rmcd ${RMCD_SRC_FILES}) 
+target_link_libraries(cta-rmcd ctarmccommon)
+#install (FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (FILES cta-rmcd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (FILES cta-smc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
-install (TARGETS rmcd DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/rmcd.1cta DESTINATION /usr/share/man/man1)
+install (TARGETS cta-rmcd DESTINATION /usr/bin)
+#install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/rmcd.1cta DESTINATION /usr/share/man/man1)
+install (FILES rmcd.1cta DESTINATION /usr/share/man/man1)
+install (FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
+install (FILES cta-rmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-rmcd)
+install (FILES cta-rmcd.service DESTINATION /etc/systemd/system)
 
 set (SMC_SRC_FILES
   rmc_dismount.c
