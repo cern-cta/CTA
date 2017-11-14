@@ -946,9 +946,9 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const {
+std::list<TapePool> RdbmsCatalogue::getTapePools() const {
   try {
-    std::list<common::dataStructures::TapePool> pools;
+    std::list<TapePool> pools;
     const char *const sql =
       "SELECT "
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
@@ -972,7 +972,7 @@ std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
     while (rset.next()) {
-      common::dataStructures::TapePool pool;
+      TapePool pool;
 
       pool.name = rset.columnString("TAPE_POOL_NAME");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");

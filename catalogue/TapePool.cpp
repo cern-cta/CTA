@@ -16,30 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/TapePool.hpp"
-#include "common/dataStructures/utils.hpp"
-#include "common/exception/Exception.hpp"
+#include "catalogue/TapePool.hpp"
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+namespace catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 TapePool::TapePool():
-  nbPartialTapes(0) {}
+  nbPartialTapes(0),
+  encryption(false) {
+}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool TapePool::operator==(const TapePool &rhs) const {
-  return name==rhs.name
-      && nbPartialTapes==rhs.nbPartialTapes
-      && encryption==rhs.encryption
-      && creationLog==rhs.creationLog
-      && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+  return name == rhs.name;
 }
 
 //------------------------------------------------------------------------------
@@ -62,6 +56,5 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
+} // namespace catalogue
 } // namespace cta

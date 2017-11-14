@@ -1936,7 +1936,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
 
    std::stringstream cmdlineOutput;
 
-   std::list<cta::common::dataStructures::TapePool> list= m_catalogue.getTapePools();
+   const std::list<cta::catalogue::TapePool> list= m_catalogue.getTapePools();
 
    if(!list.empty())
    {

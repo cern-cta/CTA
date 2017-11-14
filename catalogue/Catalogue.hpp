@@ -22,6 +22,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "catalogue/TapePool.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
@@ -51,7 +52,6 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/dataStructures/TapeFile.hpp"
-#include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
@@ -255,7 +255,7 @@ public:
 
   virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
   virtual void deleteTapePool(const std::string &name) = 0;
-  virtual std::list<common::dataStructures::TapePool> getTapePools() const = 0;
+  virtual std::list<TapePool> getTapePools() const = 0;
   virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
   virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) = 0;

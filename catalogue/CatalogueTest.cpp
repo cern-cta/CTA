@@ -113,7 +113,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
-      const std::list<common::dataStructures::TapePool> tapePools = m_catalogue->getTapePools();
+      const std::list<TapePool> tapePools = m_catalogue->getTapePools();
       for(auto &tapePool: tapePools) {
         m_catalogue->deleteTapePool(tapePool.name);
       }
@@ -796,12 +796,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
       
-  const std::list<common::dataStructures::TapePool> pools =
-    m_catalogue->getTapePools();
+  const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
   ASSERT_EQ(1, pools.size());
       
-  const common::dataStructures::TapePool pool = pools.front();
+  const catalogue::TapePool pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
@@ -841,12 +840,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted,
     comment);
 
-  const std::list<common::dataStructures::TapePool> pools =
-    m_catalogue->getTapePools();
+  const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
 
   ASSERT_EQ(1, pools.size());
 
-  const common::dataStructures::TapePool pool = pools.front();
+  const catalogue::TapePool pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
@@ -883,11 +881,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -905,11 +903,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   m_catalogue->modifyTapePoolNbPartialTapes(m_admin, tapePoolName, modifiedNbPartialTapes);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -944,11 +942,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
 
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -966,11 +964,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   m_catalogue->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -1004,11 +1002,11 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, comment);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
 
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
@@ -1026,11 +1024,11 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   m_catalogue->setTapePoolEncryption(m_admin, tapePoolName, modifiedIsEncrypted);
 
   {
-    const std::list<common::dataStructures::TapePool> pools = m_catalogue->getTapePools();
+    const std::list<catalogue::TapePool> pools = m_catalogue->getTapePools();
       
     ASSERT_EQ(1, pools.size());
       
-    const common::dataStructures::TapePool pool = pools.front();
+    const catalogue::TapePool pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(modifiedIsEncrypted, pool.encryption);

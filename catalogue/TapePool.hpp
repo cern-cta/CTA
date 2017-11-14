@@ -18,16 +18,14 @@
 
 #pragma once
 
-#include <list>
-#include <map>
+#include <ostream>
 #include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+namespace catalogue {
 
 /**
  * A tape pool is a logical grouping of tapes, it is used to separate VOs, types 
@@ -35,23 +33,68 @@ namespace dataStructures {
  */
 struct TapePool {
 
+  /**
+   * Constructor that sets all integer member-variables to 0 and booleans to
+   * false.
+   */
   TapePool();
 
+  /**
+   * Comparison operator.
+   *
+   * @return True if the names of both tape pools are equal.
+   */
   bool operator==(const TapePool &rhs) const;
 
+  /**
+   * Comparison operator.
+   *
+   * @return True if the names of both tape pools are not equal.
+   */
   bool operator!=(const TapePool &rhs) const;
 
+  /**
+   * The name of the tape pool.
+   */
   std::string name;
+
+  /**
+   * The desired number of tapes that should be empty or partially filled.
+   */
   uint64_t nbPartialTapes;
+
+  /**
+   * True if the tapes within this tape pool should be encrypted.
+   */
   bool encryption;
-  EntryLog creationLog;
-  EntryLog lastModificationLog;
+
+  /**
+   * The creation log.
+   */
+  common::dataStructures::EntryLog creationLog;
+
+  /**
+   * The last modification log.
+   */
+  common::dataStructures::EntryLog lastModificationLog;
+
+  /**
+   * The comment.
+   */
   std::string comment;
 
 }; // struct TapePool
 
+/**
+ * Output stream operator for a TapePool object.
+ *
+ * This function writes a human readable form of the specified object to the
+ * specified output stream.
+ *
+ * @param os The output stream.
+ * @param obj The object.
+ */
 std::ostream &operator<<(std::ostream &os, const TapePool &obj);
 
-} // namespace dataStructures
-} // namespace common
+} // namespace catalogue
 } // namespace cta

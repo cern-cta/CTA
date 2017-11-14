@@ -244,7 +244,7 @@ public:
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
-  std::list<common::dataStructures::TapePool> getTapePools() const override;
+  std::list<TapePool> getTapePools() const override;
   void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) override;
   void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) override;
