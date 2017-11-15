@@ -201,7 +201,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    reportPacker.m_archiveMount->reportJobsBatchWritten(std::move(reportPacker.m_successfulArchiveJobs), reportPacker.m_lc);
+    reportPacker.m_archiveMount->reportJobsBatchWritten(reportPacker.m_successfulArchiveJobs, reportPacker.m_lc);
   } else {
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT,"Received a flush after an error: sending file errors to client");

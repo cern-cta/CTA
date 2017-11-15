@@ -452,7 +452,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
-    auto * archiveJob = archiveJobBatch.front().get();
+    std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
     archiveJob->tapeFile.checksumType = "ADLER32";
@@ -460,9 +460,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveJob->tapeFile.compressedSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    archiveJob->writeToCatalogue();
-    archiveJob->asyncSetJobSucceed();
-    archiveJob->checkAndAsyncReportComplete();
+    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    sDBarchiveJobBatch.emplace(std::move(archiveJob));
+    archiveMount->reportJobsBatchWritten(sDBarchiveJobBatch, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();

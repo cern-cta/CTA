@@ -69,16 +69,7 @@ namespace unitTests {
        int & completes, int &failures):
     MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
     
-    virtual void asyncSetJobSucceed() override {
-      completesRef++;
-    }
-    
-    virtual bool checkAndAsyncReportComplete() override {
-      return false;
-    }
-    
     virtual void validate() override {}
-    virtual void writeToCatalogue()  override {}
     virtual cta::catalogue::TapeFileWritten validateAndGetTapeFileWritten() override {
       cta::catalogue::TapeFileWritten fileReport;
       fileReport.archiveFileId = archiveFile.archiveFileID;
@@ -105,6 +96,11 @@ namespace unitTests {
     void failed(const cta::exception::Exception& ex, cta::log::LogContext & lc) override {
       failuresRef++;
     }
+    
+    void reportJobSucceeded() override {
+      completesRef++;
+    }
+
   private:
     int & completesRef;
     int & failuresRef;

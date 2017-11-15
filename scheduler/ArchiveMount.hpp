@@ -32,7 +32,7 @@
 namespace cta {
   /**
    * The class driving a retrieve mount.
-   * The class only has private constructors as it is instanciated by
+   * The class only has private constructors as it is instantiated by
    * the Scheduler class.
    */
   class ArchiveMount: public TapeMount {
@@ -131,7 +131,7 @@ namespace cta {
      * @param successfulArchiveJobs the jobs to report
      * @param logContext
      */
-    void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > successfulArchiveJobs, cta::log::LogContext &logContext);
+    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs, cta::log::LogContext &logContext);
     
     /**
      * Returns the tape pool of the tape to be mounted.

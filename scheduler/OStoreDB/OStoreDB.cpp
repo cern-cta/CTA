@@ -2548,6 +2548,41 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::castFromSchedDBJob()
+//------------------------------------------------------------------------------
+OStoreDB::ArchiveJob * OStoreDB::ArchiveMount::castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job) {
+  OStoreDB::ArchiveJob * ret = dynamic_cast<OStoreDB::ArchiveJob *> (job);
+  if (!ret) {
+    std::string unexpectedType = typeid(*job).name();
+    throw cta::exception::Exception(std::string("In OStoreDB::ArchiveMount::castFromSchedDBJob(): unexpected archive job type while casting: ")+
+        unexpectedType);
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::asyncSetJobBatchSuccessful()
+//------------------------------------------------------------------------------
+std::set<cta::SchedulerDatabase::ArchiveJob*> OStoreDB::ArchiveMount::setJobBatchSuccessful(
+  std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext & lc) {
+  std::set<cta::SchedulerDatabase::ArchiveJob*> ret;
+  std::list<std::string> ajToUnown;
+  // We will asynchronously report the archive jobs (which MUST be OStoreDBJobs).
+  // We let the exceptions through as failing to report is fatal.
+  for (auto & sDBJob: jobsBatch) {
+    castFromSchedDBJob(sDBJob)->asyncSucceed();
+  }
+  for (auto & sDBJob: jobsBatch) {
+    if (castFromSchedDBJob(sDBJob)->waitAsyncSucceed())
+      ret.insert(sDBJob);
+    ajToUnown.push_back(castFromSchedDBJob(sDBJob)->m_archiveRequest.getAddressIfSet());
+  }
+  m_oStoreDB.m_agentReference->removeBatchFromOwnership(ajToUnown, m_oStoreDB.m_objectStore);
+  return ret;
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
@@ -2612,7 +2647,7 @@ void OStoreDB::ArchiveJob::asyncSucceed() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::checkSucceed()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::checkSucceed() {  
+bool OStoreDB::ArchiveJob::waitAsyncSucceed() {  
   m_jobUpdate->wait();
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer params(lc);
@@ -2623,11 +2658,7 @@ bool OStoreDB::ArchiveJob::checkSucceed() {
   }
   // We no more own the job (which could be gone)
   m_jobOwned = false;
-  // Remove ownership from agent
-  const std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  m_oStoreDB.m_agentReference->removeFromOwnership(atfrAddress, m_oStoreDB.m_objectStore);
-  params.add("agentObject", m_oStoreDB.m_agentReference->getAgentAddress());
-  lc.log(log::DEBUG, "Removed job from ownership");
+  // Ownership removal will be done globally by the caller.
   return m_jobUpdate->m_isLastJob;
 }
 

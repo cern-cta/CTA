@@ -123,78 +123,106 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 //------------------------------------------------------------------------------
 // reportJobsBatchWritten
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> > successfulArchiveJobs,
+void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
   cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeFileWritten> tapeFilesWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
   try{
+    uint64_t files=0;
+    uint64_t bytes=0;
+    double catalogueTime=0;
+    double schedulerDbTime=0;
+    double clientReportingTime=0;
     while(!successfulArchiveJobs.empty()) {
       // Get the next job to report and make sure we will not attempt to process it twice.
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
       if (!job.get()) continue;        
       tapeFilesWritten.insert(job->validateAndGetTapeFileWritten());
+      files++;
+      bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
       job.reset(nullptr);
     }
-    
+    utils::Timer t;
     // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten
     updateCatalogueWithTapeFilesWritten(tapeFilesWritten);
+    catalogueTime=t.secs(utils::Timer::resetCounter);
     {
       cta::log::ScopedParamContainer params(logContext);
-      params.add("tapeFilesWritten", tapeFilesWritten.size());
-      logContext.log(cta::log::INFO,"Catalog updated for batch of jobs");   
-    }
-    for (auto &job: validatedSuccessfulArchiveJobs) {
-      job->asyncSetJobSucceed();
+      params.add("tapeFilesWritten", tapeFilesWritten.size())
+            .add("files", files)
+            .add("bytes", bytes)
+            .add("catalogueTime", catalogueTime);
+      logContext.log(cta::log::DEBUG,"Catalog updated for batch of jobs");   
     }
     
-    // Note:  former content of ReportFlush::checkAndAsyncReportCompletedJobs
-    std::list<std::unique_ptr <cta::ArchiveJob> > reportedArchiveJobs;
-
-    for (auto &job: validatedSuccessfulArchiveJobs){
+    // Now get the db mount to mark the jobs as successful.
+    // Extract the db jobs from the scheduler jobs.
+    std::list<cta::SchedulerDatabase::ArchiveJob *> validatedSuccessfulDBArchiveJobs;
+    for (auto &schJob: validatedSuccessfulArchiveJobs) {
+      validatedSuccessfulDBArchiveJobs.emplace_back(schJob->m_dbJob.get());
+    }
+    
+    // We can now pass this list for the dbMount to process.
+    // The dbMount will indicate the list of jobs that need to the reported to
+    // the client (the complete ones) in the report set.
+    std::set<cta::SchedulerDatabase::ArchiveJob *> jobsToReport = 
+        m_dbMount->setJobBatchSuccessful(validatedSuccessfulDBArchiveJobs, logContext);
+    schedulerDbTime=t.secs(utils::Timer::resetCounter);
+    // We have the list of files to report to the user and the that just needed 
+    // an update.
+    for (auto &job: validatedSuccessfulArchiveJobs) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("fileId", job->archiveFile.archiveFileID)
             .add("diskInstance", job->archiveFile.diskInstance)
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
-      logContext.log(cta::log::DEBUG,
-        "In MigrationReportPacker::ReportFlush::checkAndAsyncReportCompletedJobs()"
-        " check for async backend update finished");
-      if(job->checkAndAsyncReportComplete()) { 
-        params.add("reportURL", job->reportURL());
-        reportedArchiveJobs.emplace_back(std::move(job));
-        logContext.log(cta::log::INFO,"Sent to the client a full file archival");
+      if (jobsToReport.count(job->m_dbJob.get())) {
+        logContext.log(cta::log::DEBUG,
+          "In ArchiveMount::reportJobsBatchWritten(): archive request complete. Will launch async report to user.");
+        job->asyncReportComplete();
       } else {
-        logContext.log(cta::log::INFO, "Recorded the partial migration of a file");
+        logContext.log(cta::log::DEBUG,
+          "In ArchiveMount::reportJobsBatchWritten(): Recorded the partial migration of a file.");
       }
     }
-
-    for (const auto &job: reportedArchiveJobs){
-      try {
-        job->waitForReporting();
-        cta::log::ScopedParamContainer params(logContext);
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-              .add("reportURL", job->reportURL())
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-              .add("reportTime", job->reportTime());
-        logContext.log(cta::log::INFO,"Reported to the client a full file archival");
-      } catch(cta::exception::Exception &ex) {
-        cta::log::ScopedParamContainer params(logContext);
+    
+    // Now gather the result of the reporting to client.
+    for (auto &job: validatedSuccessfulArchiveJobs) {
+      if (jobsToReport.count(job->m_dbJob.get())) {
+        try {
+          job->waitForReporting();
+          cta::log::ScopedParamContainer params(logContext);
           params.add("fileId", job->archiveFile.archiveFileID)
                 .add("diskInstance", job->archiveFile.diskInstance)
                 .add("diskFileId", job->archiveFile.diskFileId)
-                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path).add("reportURL", job->reportURL())
-                .add("errorMessage", ex.getMessage().str());
-          logContext.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
+                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+                .add("reportURL", job->reportURL())
+                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
+                .add("reportTime", job->reportTime());
+          logContext.log(cta::log::INFO,"Reported to the client a full file archival");
+        } catch(cta::exception::Exception &ex) {
+          cta::log::ScopedParamContainer params(logContext);
+            params.add("fileId", job->archiveFile.archiveFileID)
+                  .add("diskInstance", job->archiveFile.diskInstance)
+                  .add("diskFileId", job->archiveFile.diskFileId)
+                  .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path).add("reportURL", job->reportURL())
+                  .add("errorMessage", ex.getMessage().str());
+            logContext.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
+        }
       }
     }
-           
-    logContext.log(cta::log::INFO,"Reported to the client that a batch of files was written on tape");    
+    clientReportingTime=t.secs();
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("files", files)
+          .add("bytes", bytes)
+          .add("catalogueTime", catalogueTime)
+          .add("schedulerDbTime", schedulerDbTime)
+          .add("clientReportingTime", clientReportingTime)
+          .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
+    logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
   } catch(const cta::exception::Exception& e){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
@@ -205,7 +233,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
             .add("reportURL", job->reportURL());
     }
-    const std::string msg_error="An exception was caught trying to call reportMigrationResults";
+    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   } catch(const std::exception& e){
@@ -217,7 +245,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
             .add("diskFileId", job->archiveFile.diskFileId)
             .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error="An std::exception was caught trying to call reportMigrationResults";
+    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
   }
@@ -267,4 +295,3 @@ void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daem
 void cta::ArchiveMount::setTapeFull() {
   m_catalogue.noSpaceLeftOnTape(m_dbMount->getMountInfo().vid);
 }
-
