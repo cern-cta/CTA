@@ -46,6 +46,7 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
   chmod 666 /dev/nst* /dev/st* /dev/sg*
   # creating /var/log/cta needed by taped
   mkdir -p /var/log/cta
+  chmod a+rwx /var/log/cta
 else
   # some yum optimisations for the standard system
   SQUID_PROXY=squid.kube-system.svc.cluster.local
