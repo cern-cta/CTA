@@ -230,7 +230,7 @@ int main(const int argc,
 
 	switch(argc) {
 	case 1:
-		fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+		fprintf(stderr, "RMC01 - wrong arguments given ,specify the device file of the tape library\n");
 		exit (USERR);
 	case 2:
 		if(0 == nb_cmdline_options) {

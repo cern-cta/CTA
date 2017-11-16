@@ -3,14 +3,14 @@
 .\"
 .TH RMCD "8castor" "$Date: 2009/08/18 09:43:01 $" CASTOR "rmc Administrator Commands"
 .SH NAME
-rmcd \- start the Remote Media Changer daemon
+cta-rmcd \- start the Remote Media Changer daemon
 .SH SYNOPSIS
-.B rmcd
+.B cta-rmcd
 .I smc_ldr
 .SH DESCRIPTION
 .LP
 The
-.B rmcd
+.B cta-rmcd
 command starts the Remote Media Changer daemon.
 This command is usually executed at system startup time
 .RB ( /etc/rc.local ).
