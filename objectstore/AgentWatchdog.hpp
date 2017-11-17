@@ -31,7 +31,14 @@ public:
   }
   
   bool checkAlive() {
-    uint64_t newHeartBeatCount = readHeartbeat();
+    uint64_t newHeartBeatCount;
+    try { 
+      newHeartBeatCount = readHeartbeat();
+    } catch (Backend::NoSuchObject &) {
+      // The agent could be gone. This is not an error. Mark it as alive,
+      // and will be trimmed later.
+      return true;
+    }        
     auto timer = m_timer.secs();
     if (newHeartBeatCount == m_heartbeatCounter && timer > m_timeout)
       return false;
