@@ -143,7 +143,17 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   // We do not need to be defensive about exception here as calling function will
   // deal with them.
   Agent agent(address, m_objectStore);
-  ScopedExclusiveLock agLock(agent);
+  ScopedExclusiveLock agLock;
+  try {
+    // The agent could be gone while we try to lock it.
+    agLock.lock(agent);
+  } catch (Backend::NoSuchObject & ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("agentAddress", agent.getAddressIfSet())
+          .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
+    lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent already deleted when trying to lock it. Skipping it.");
+    return;
+  }
   agent.fetch();
   log::ScopedParamContainer params(lc);
   params.add("agentAddress", agent.getAddressIfSet())
