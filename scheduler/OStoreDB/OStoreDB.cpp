@@ -1183,26 +1183,26 @@ void OStoreDB::updateDriveStatistics(const common::dataStructures::DriveInfo& dr
       lc, Helpers::CreateIfNeeded::doNotCreate);
   } catch (cta::exception::Exception & ex) {
     // The drive is missing in the registry. Nothing to update
-      return;    
+    return;    
   }
   driveState = ds.getState();
   // Set the parameters that we always set
   driveState.host = driveInfo.host;
   driveState.logicalLibrary = driveInfo.logicalLibrary;
-
+  
   switch (driveState.driveStatus) {    
     case DriveStatus::Transferring:
-      {
+    {
       const time_t timeDifference = inputs.reportTime -  driveState.lastUpdateTime;
       const uint64_t bytesDifference = inputs.bytesTransferred - driveState.bytesTransferredInSession;   
       driveState.lastUpdateTime=inputs.reportTime;
       driveState.bytesTransferredInSession=inputs.bytesTransferred;
       driveState.filesTransferredInSession=inputs.filesTransferred;
       driveState.latestBandwidth = timeDifference?1.0*bytesDifference/timeDifference:0.0;
-      }
-      break;    
+      break;
+    }
     default:
-      return ;
+      return;
   }
   ds.setState(driveState);
   ds.commit();
@@ -2822,5 +2822,4 @@ void OStoreDB::RetrieveJob::checkSucceed() {
 
 
 } // namespace cta
-
 
