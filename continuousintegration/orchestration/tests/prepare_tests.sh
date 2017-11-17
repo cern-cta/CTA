@@ -59,6 +59,9 @@ ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -
 
 echo "Preparing CTA configuration for tests"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname ${ctacliIP} -c "docker cli"
+  # to allow client connecting to dual stack IPv6/IPv4 xrootd server
+  # otherwise only use IPv4 by adding '-I v4' to ExecStart line in /etc/systemd/system/cta-frontend.service
+  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname [::ffff:${ctacliIP}] -c "docker cli"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -c "docker cli"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
      --name ${LIBRARYNAME}                                            \
@@ -131,6 +134,7 @@ echo "Adding super client capabilities"
 
 clientIP=`kubectl --namespace ${NAMESPACE} describe pod client | grep IP | sed -E 's/IP:[[:space:]]+//'`
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin adminhost add --name ${clientIP} --comment "for the super client"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin adminhost add --name [::ffff:${clientIP}] --comment "for the super client"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"

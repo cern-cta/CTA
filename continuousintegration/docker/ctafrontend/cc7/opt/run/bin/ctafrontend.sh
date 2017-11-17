@@ -39,10 +39,18 @@ echo OK
 echo "Generating core file in /var/log/cta directory so that those are available as artifacts"
 echo '/var/log/cta/core_%e.%p' > /proc/sys/kernel/core_pattern
 
-echo "Launching frontend"
-runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
+if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
+  # systemd is not available
+  runuser --shell='/bin/bash' --session-command='cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4' cta
+  echo "ctafrontend died"
+  echo "analysing core file if any"
+  /opt/run/bin/ctafrontend_bt.sh
+  sleep infinity
+else
+  # systemd is available
+  echo "Launching frontend with systemd:"
+  systemctl start cta-frontend
 
-echo "ctafrontend died"
-echo "analysing core file if any"
-/opt/run/bin/ctafrontend_bt.sh
-sleep infinity
+  echo "Status is now:"
+  systemctl status cta-frontend
+fi
