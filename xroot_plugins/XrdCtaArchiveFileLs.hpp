@@ -35,12 +35,17 @@ struct Membuf: public std::streambuf
 {
    Membuf(char *buffer, size_t size) {
       // Set the boundaries of the buffer
-      this->setp(buffer, buffer + size - 1);
+      this->setp(buffer, buffer + size);
    }
 
    //! Return the number of bytes in the buffer
    size_t length() const {
       return pptr()-pbase();
+   }
+
+   int overflow(int c) override {
+      std::cerr << "OVERFLOW " << c << std::endl;
+      return 0;
    }
 };
 
@@ -90,7 +95,10 @@ public:
 
    //! Overload << to allow streaming into the buffer
    template<typename T>
-   omemstream &operator<<(const T &t) { m_out << t; return m_out; }
+   omemstream &operator<<(const T &t) {
+      m_out << t;
+      return m_out;
+   }
 
 private:
    //! Called by the XrdSsi framework when it is finished with the object
@@ -108,6 +116,9 @@ private:
 
 
 
+
+
+
 namespace cta { namespace xrd {
 
 /*!
@@ -120,13 +131,6 @@ public:
       XrdSsiStream(XrdSsiStream::isActive),
       m_show_header(show_header) {
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
-#if 0
-ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
-
-XrdOucErrInfo xrdSfsFileError;
-
-m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
-#endif
    }
 
    virtual ~ArchiveFileLsStream() {
@@ -162,7 +166,7 @@ m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileErro
       }
 
       *buffer << "HELLO," << " WORLD! " << std::endl;
-      last = true;
+      last = false;
 
       dlen = buffer->length();
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
@@ -202,6 +206,13 @@ private:
    bool m_show_header;
 };
 
+#if 0
+ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
+
+XrdOucErrInfo xrdSfsFileError;
+
+m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
+#endif
 #if 0
    {
       m_readBuffer <<
