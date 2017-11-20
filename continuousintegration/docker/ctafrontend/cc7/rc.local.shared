@@ -38,4 +38,3 @@ if [ $(echo ${MY_CONTAINER} | grep -s '^taped') ]; then
   echo "Running /opt/run/bin/taped.sh" &> ${logfile}
   /opt/run/bin/taped.sh 2>&1 | tee -a ${logfile}
 fi
-
