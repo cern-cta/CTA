@@ -28,6 +28,15 @@ echo "DONE"
 #echo "ip_resolve=IPv4" >> /etc/yum.conf
 #echo "DONE"
 
+# defining CI_CONTEXT
+# possible values are "systemd" and "nosystemd"
+# this is just to understand if the container is managed through systemd or not
+CI_CONTEXT="nosystemd"
+if [ "-$(cat /proc/1/cmdline 2>&1 | sed -e 's/\x0//g;s/init.*/init/')-" == '-/usr/sbin/init-' ]; then
+  CI_CONTEXT="systemd"
+fi
+
+
 # redefining yum commands if in BUILDTREE environment
 if [[ -n ${BUILDTREE_BASE} ]]; then
   echo "Configuring BUILDTREE environment"
