@@ -33,8 +33,6 @@ spec:
           key: subdir
     - name: TERM
       value: "xterm"
-    - name: CI_CONTEXT
-      value: "nosystemd"
     command: ['/opt/run/bin/ctafrontend.sh']
     args: ["none"]
     volumeMounts:
