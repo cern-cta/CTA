@@ -17,9 +17,6 @@ cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
-#/usr/bin/rmcd -f /dev/smc&
-
-mkdir -p /etc/castor
 
 tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 
@@ -30,14 +27,13 @@ echo "Configuring database"
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
 
-echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
+echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
 
 # cta-taped setup
   echo "taped BufferCount 10" > /etc/cta/cta-taped.conf
   echo "taped MountCriteria 2000000, 5" >> /etc/cta/cta-taped.conf 
   echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
-
 
 ####
 # configuring taped using the official location for SSS: /etc/cta/cta-taped.sss.keytab
@@ -50,24 +46,34 @@ chmod 600 /etc/cta/${CTATAPEDSSS}
 chown cta /etc/cta/${CTATAPEDSSS}
 
 cat <<EOF > /etc/sysconfig/cta-taped
-export CTA_TAPED_OPTIONS="--foreground -l /var/log/cta/cta-taped.log"
-
-export XrdSecPROTOCOL=sss
-
-export XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
-
+CTA_TAPED_OPTIONS="--log-to-file=/var/log/cta/cta-taped.log"
+XrdSecPROTOCOL=sss
+XrdSecSSSKT=/etc/cta/${CTATAPEDSSS}
 EOF
 
-. /etc/sysconfig/cta-taped
 
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  # systemd is available
+  echo "Launching rmcd with systemd:"
+  systemctl start cta-taped
+
+  echo "Status is now:"
+  systemctl status cta-taped
+
+else
+  # systemd is not available
+
+. /etc/sysconfig/cta-taped
 
 tail -F /var/log/cta/cta-taped.log &
 
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
 # working correctly
-runuser -c "/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}"
+runuser -c "/usr/bin/cta-taped --foreground ${CTA_TAPED_OPTIONS}"
 
 echo "taped died"
 
 sleep infinity
+
+fi

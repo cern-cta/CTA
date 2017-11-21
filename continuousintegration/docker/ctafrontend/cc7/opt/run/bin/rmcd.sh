@@ -6,9 +6,6 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts
   yum-config-manager --enable ceph
   yum-config-manager --enable castor
-
-  # Install missing RPMs
-  yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd
 fi
 
 # source library configuration file
@@ -17,8 +14,37 @@ echo "Using this configuration for library:"
 cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
-# to get rmcd logs to stdout
-tail -F /var/log/cta/cta-rmcd.log &
-
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
-/usr/bin/cta-rmcd -f /dev/smc
+
+
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  # systemd is available
+
+cat <<EOF >/etc/sysconfig/cta-rmcd
+DAEMON_COREFILE_LIMIT=unlimited
+CTA_RMCD_OPTIONS=/dev/smc
+EOF
+
+  # install RPMs?
+  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd
+
+  # rmcd will be running as non root user, we need to fix a few things:
+  # device access rights
+  chmod 666 /dev/${LIBRARYDEVICE}
+
+  echo "Launching cta-rmcd with systemd:"
+  systemctl start cta-rmcd
+
+  echo "Status is now:"
+  systemctl status cta-rmcd
+
+else
+  # systemd is not available
+  # install RPMs?
+  test -e /etc/buildtreeRunner || yum -y install mt-st mtx lsscsi sg3_utils cta-rmcd
+
+  # to get rmcd logs to stdout
+  tail -F /var/log/cta/cta-rmcd.log &
+
+  /usr/bin/cta-rmcd -f /dev/smc
+fi
