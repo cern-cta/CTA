@@ -1,5 +1,5 @@
 
-/var/log/cta/cta-rmc*.log {
+/var/log/cta/cta-rmcd*.log {
     compress
     daily
     missingok

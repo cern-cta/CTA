@@ -84,7 +84,7 @@ itself.
 The completion code of the command is also logged.
 .SH FILES
 .TP 1.5i
-.B /var/log/castor/rmcd.log
+.B /var/log/cta/cta-rmcd.log
 .SH EXAMPLES
 .TP
 Here is a small log:

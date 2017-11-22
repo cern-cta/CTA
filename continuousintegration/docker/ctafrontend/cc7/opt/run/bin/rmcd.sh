@@ -18,7 +18,7 @@ cat /tmp/library-rc.sh
 . /tmp/library-rc.sh
 
 # to get rmcd logs to stdout
-tail -F /var/log/castor/rmcd_legacy.log &
+tail -F /var/log/cta/cta-rmcd.log &
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
 /usr/bin/rmcd -f /dev/smc
