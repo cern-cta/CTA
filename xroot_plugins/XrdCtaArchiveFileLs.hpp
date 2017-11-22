@@ -127,9 +127,8 @@ namespace cta { namespace xrd {
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor, bool show_header) :
-      XrdSsiStream(XrdSsiStream::isActive),
-      m_show_header(show_header) {
+   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor) :
+      XrdSsiStream(XrdSsiStream::isActive) {
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
    }
 
@@ -159,12 +158,6 @@ public:
 #endif
       XrdSsiPb::StreamBuffer *buffer = new XrdSsiPb::StreamBuffer(dlen);
 
-      // Write the header on first call only
-      if(m_show_header) {
-         WriteHeader(buffer);
-         m_show_header = false;
-      }
-
       *buffer << "HELLO," << " WORLD! " << std::endl;
       last = false;
 
@@ -173,37 +166,6 @@ std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 
       return buffer;
    }
-
-private:
-   /*!
-    * Write the af ls header into the buffer
-    */
-   void WriteHeader(XrdSsiPb::StreamBuffer *buffer) {
-      const char* const TEXT_RED    = "\x1b[31;1m";
-      const char* const TEXT_NORMAL = "\x1b[0m\n";
-
-      *buffer << TEXT_RED <<
-         std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' ' <<
-         std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' ' <<
-         std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' ' <<
-         std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' ' <<
-         std::setfill(' ') << std::setw(8)  << std::right << "block id"       << ' ' <<
-         std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' ' <<
-         std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' ' <<
-         std::setfill(' ') << std::setw(12) << std::right << "size"           << ' ' <<
-         std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' ' <<
-         std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' ' <<
-         std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' ' <<
-         std::setfill(' ') << std::setw(8)  << std::right << "owner"          << ' ' <<
-         std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' ' <<
-         std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' ' <<
-                                                             "path"           <<
-         TEXT_NORMAL << std::endl;
-   }
-
-   // Member variables
-
-   bool m_show_header;
 };
 
 #if 0
@@ -235,3 +197,4 @@ m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileErro
 #endif
 
 }} // namespace cta::xrd
+

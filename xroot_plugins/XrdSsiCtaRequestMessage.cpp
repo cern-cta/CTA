@@ -644,7 +644,35 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       response.set_message_txt(cmdlineOutput.str());
    } else {
       // Create a XrdSsi stream object to asynchronously return the results
-      stream = new ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
+      stream = new ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria));
+
+      // Send the column headers in the metadata
+      if(has_flag(OptionBoolean::SHOW_HEADER)) {
+         const char* const TEXT_RED    = "\x1b[31;1m";
+         const char* const TEXT_NORMAL = "\x1b[0m\n";
+
+         std::stringstream ss;
+
+         ss << TEXT_RED <<
+         std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "block id"       << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' ' <<
+         std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' ' <<
+         std::setfill(' ') << std::setw(12) << std::right << "size"           << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' ' <<
+         std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "owner"          << ' ' <<
+         std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' ' <<
+         std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' ' <<
+                                                             "path"
+         << TEXT_NORMAL << std::endl;
+
+         response.set_message_txt(ss.str());
+      }
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
