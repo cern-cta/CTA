@@ -64,6 +64,8 @@ else
   # systemd is not available
 
 . /etc/sysconfig/cta-taped
+export XrdSecPROTOCOL
+export XrdSecSSSKT
 
 tail -F /var/log/cta/cta-taped.log &
 
