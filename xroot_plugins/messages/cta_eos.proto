@@ -14,40 +14,10 @@
 //                 You should have received a copy of the GNU General Public License
 //                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-syntax  = "proto3";
+syntax = "proto3";
 package cta.eos;
 
-message Clock {
-  uint64 sec                 = 1;       //< seconds of a clock
-  uint64 nsec                = 2;       //< nanoseconds of a clock
-}
-
-message Checksum {
-  string name                = 1;       //< checksum name
-  string value               = 2;       //< checksum value
-}
-
-message Service {
-  string name                = 1;       //< name of the service
-  string url                 = 2;       //< access url of the service
-}
-
-message Id {
-  uint64 uid                 = 1;       //< user identity number
-  string username            = 2;       //< user name 
-  uint64 gid                 = 3;       //< group identity number
-  string groupname           = 4;       //< group name
-}
-
-message Security {
-  string host                = 1;       //< client host 
-  string app                 = 2;       //< app string
-  string name                = 3;       //< security name
-  string prot                = 4;       //< security protocol
-  string grps                = 5;       //< security grps
-}
-
-
+import "cta_common.proto";
 
 //
 // Messages sent from EOS to CTA Frontend
@@ -63,45 +33,45 @@ message Workflow {
     DELETE  = 5;
     PREPARE = 6;
   }
-  EventType event            = 1;       //< event
-  string queue               = 2;       //< queue
-  string wfname              = 3;       //< workflow
-  string vpath               = 4;       //< vpath
-  Service instance           = 5;       //< instance information
-  uint64 timestamp           = 6;       //< event timestamp
+  EventType event             =  1;      //< event
+  string queue                =  2;      //< queue
+  string wfname               =  3;      //< workflow
+  string vpath                =  4;      //< vpath
+  cta.common.Service instance =  5;      //< instance information
+  uint64 timestamp            =  6;      //< event timestamp
 }
 
 message Client {
-  Id user                    = 1;       //< acting client
-  Security sec               = 2;       //< client security information
+  cta.common.Id user          =  1;      //< acting client
+  cta.common.Security sec     =  2;      //< client security information
 }
 
 message Transport {
-  string dst_url             = 1;       //< transport destination URL
-  string report_url          = 2;       //< URL to report successful archiving
+  string dst_url              =  1;      //< transport destination URL
+  string report_url           =  2;      //< URL to report successful archiving
 }
 
 message Metadata {
-  uint64 fid                 = 1;       //< file/container id
-  uint64 pid                 = 2;       //< parent id
-  Clock ctime                = 3;       //< change time
-  Clock mtime                = 4;       //< modification time
-  Clock btime                = 5;       //< birth time
-  Clock ttime                = 6;       //< tree modification time
-  Id owner                   = 7;       //< ownership
-  uint64 size                = 8;       //< size 
-  Checksum cks               = 9;       //< checksum information
-  sint32 mode                = 10;      //< mode
-  string lpath               = 11;      //< logical path
-  map<string, string> xattr  = 12;      //< xattribute map
+  uint64 fid                  =  1;      //< file/container id
+  uint64 pid                  =  2;      //< parent id
+  cta.common.Clock ctime      =  3;      //< change time
+  cta.common.Clock mtime      =  4;      //< modification time
+  cta.common.Clock btime      =  5;      //< birth time
+  cta.common.Clock ttime      =  6;      //< tree modification time
+  cta.common.Id owner         =  7;      //< ownership
+  uint64 size                 =  8;      //< size 
+  cta.common.Checksum cks     =  9;      //< checksum information
+  sint32 mode                 = 10;      //< mode
+  string lpath                = 11;      //< logical path
+  map<string, string> xattr   = 12;      //< xattribute map
 };
 
 message Notification {
-  Workflow wf                = 1;       //< workflow
-  Client cli                 = 2;       //< client information
-  Transport transport        = 3;       //< transport
-  Metadata file              = 4;       //< file meta data
-  Metadata directory         = 5;       //< directory meta data
+  Workflow wf                 =  1;      //< workflow
+  Client cli                  =  2;      //< client information
+  Transport transport         =  3;      //< transport
+  Metadata file               =  4;      //< file meta data
+  Metadata directory          =  5;      //< directory meta data
 }
 
 

@@ -17,6 +17,8 @@
 syntax  = "proto3";
 package cta.admin;
 
+import "cta_common.proto";
+
 //
 // Command Options
 //
@@ -140,5 +142,15 @@ message AdminCmd {
   repeated OptionBoolean option_bool   =  3;    //< List of boolean options
   repeated OptionUInt64 option_uint64  =  4;    //< List of integer options
   repeated OptionString option_str     =  5;    //< List of string options
+}
+
+//
+// Archive File Ls response stream protocol buffer
+//
+
+message ArchiveFileLsItem {
+   cta.common.ArchiveFile af           =  1;
+   cta.common.TapeFile tf              =  2;
+   uint64 copy_nb                      =  3;
 }
 

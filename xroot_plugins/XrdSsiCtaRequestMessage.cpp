@@ -633,6 +633,8 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
    }
 
    if(has_flag(OptionBoolean::SUMMARY)) {
+      // Probably we need to use streaming here as well, not because of the volume of data,
+      // but simply to prevent timeouts while calculating the summary statistics.
       cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = { "total number of files","total size" };
