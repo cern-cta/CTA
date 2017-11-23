@@ -25,6 +25,8 @@
 #include "CtaAdminCmd.hpp"
 #include "XrdSsiPbDebug.hpp"
 
+// Move to generic headers
+#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
 
 // Define XRootD SSI Alert message callback
@@ -52,9 +54,48 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 template<>
 void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
 {
+   google::protobuf::io::ArrayInputStream raw_stream(response_bufptr, response_buflen);
+
+   //google::protobuf::io::CodedInputStream coded_stream(&raw_stream);
+   // coded_in->ReadVarint32(&n);
+   // cout << "#" << n << endl;
+   //
+   // std::string s;
+   //
+   // for (uint32_t i = 0; i < n; ++i)
+   // {
+   // uint32_t msgSize;
+   // coded_in->ReadVarint32(&msgSize);
+   //
+   // if ((msgSize > 0) &&
+   // (coded_in->ReadString(&s, msgSize)))
+   // {
+   //
+   // Person p;
+   // p.ParseFromString(s);
+   //
+   // cout << "ID: " << p.id() << endl;
+   // cout << "name: " << p.name() << endl;
+   // cout << "gendre: " << gendres[p.gendre()-1] << endl;
+   // if (p.has_email())
+   // {
+   // cout << "e-mail: " << p.email() << endl;
+   // }
+   //
+   // cout << endl;
+   // }
+   // }
+   //
+   // delete coded_in;
+   // delete raw_in;
+
    cta::admin::ArchiveFileLsItem item;
 
-   item.ParseFromArray(response_bufptr, response_buflen);
+   for(int i = 0; i < 10; ++i)
+   {
+   item.ParseFromBoundedZeroCopyStream(&raw_stream, 18);
+
+   OutputJsonString(std::cout, &item);
 
    std::cout << std::setfill(' ') << std::setw(7)  << std::right << item.af().archive_file_id() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << item.copy_nb()              << ' '
@@ -71,6 +112,7 @@ void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, cha
              << std::setfill(' ') << std::setw(8)  << std::right << item.af().df().group()      << ' '
              << std::setfill(' ') << std::setw(13) << std::right << item.af().creation_time()   << ' '
              << item.af().df().path() << std::endl;
+   }
 
 }
 

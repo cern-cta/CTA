@@ -153,7 +153,7 @@ tmp_num_items = 0;
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
 #endif
-      if(tmp_num_items >= 10)
+      if(tmp_num_items > 9)
       {
          // Nothing more to send, close the stream
          last = true;
@@ -164,7 +164,7 @@ tmp_num_items = 0;
       cta::admin::ArchiveFileLsItem item;
       item.mutable_af()->set_disk_instance("Hello");
       item.mutable_af()->set_disk_file_id("World");
-      item.set_copy_nb(tmp_num_items++);
+      item.set_copy_nb(++tmp_num_items);
 
       std::string bufstr;
       item.SerializeToString(&bufstr);
