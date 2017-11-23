@@ -113,12 +113,12 @@ ELSE(DEFINED PackageOnly)
   set (OCCI_SUPPORT ON)
 
   # Switch OCCI support off if using gcc 5.1 or higher
-  if (CMAKE_COMPILER_IS_GNUCC)
-    if (GCC_VERSION VERSION_GREATER 5.0)
-      message (STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
-      set (OCCI_SUPPORT OFF)
-    endif (GCC_VERSION VERSION_GREATER 5.0)
-  endif (CMAKE_COMPILER_IS_GNUCC)
+  #if (CMAKE_COMPILER_IS_GNUCC)
+  #  if (GCC_VERSION VERSION_GREATER 5.0)
+  #    message (STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
+  #    set (OCCI_SUPPORT OFF)
+  #  endif (GCC_VERSION VERSION_GREATER 5.0)
+  #endif (CMAKE_COMPILER_IS_GNUCC)
 
   if (OCCI_SUPPORT)
     find_package (oracle-instantclient REQUIRED)
