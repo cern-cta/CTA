@@ -28,6 +28,8 @@
 
 namespace cta { namespace objectstore {
 
+std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
+
 AgentReference::AgentReference(const std::string & clientType, log::Logger &logger):
 m_logger(logger) {
   m_nextId=0;
@@ -41,6 +43,7 @@ m_logger(logger) {
   cta::exception::Errnum::throwOnMinusOne(::gethostname(host, sizeof(host)),
     "In AgentId::AgentId:  failed to gethostname");
   // gettid is a safe system call (never fails)
+  uint64_t id=g_nextAgentId++;
   aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
     << 1900 + localNow.tm_year
     << std::setfill('0') << std::setw(2) 
@@ -48,7 +51,8 @@ m_logger(logger) {
     << std::setw(2) << localNow.tm_mday << "-"
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
-    << std::setw(2) << localNow.tm_sec;
+    << std::setw(2) << localNow.tm_sec << "-"
+    << id;
   m_agentAddress = aid.str();
   // Initialize the serialization token for queued actions (lock will make helgrind 
   // happy, but not really needed
