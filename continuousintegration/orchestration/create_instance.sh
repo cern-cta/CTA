@@ -90,10 +90,13 @@ if [ ! -z "${buildtree}" ]; then
     # We are going to run with generic images against a build tree.
     echo "Creating instance for build tree in ${buildtree}"
 
+    # tag image as otherwise kubernetes will always pull latest and won't find it...
+    docker rmi buildtree-runner:v0 &>/dev/null
+    docker tag buildtree-runner buildtree-runner:v0
     # Create temporary directory for modified pod files
     poddir=$(mktemp -d)
     cp pod-* ${poddir}
-    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner\n\1PullPolicy: Never/"
+    sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner:v0\n\1PullPolicy: Never/"
 
     # Add the build tree mount point the pods (volume mount then volume).
     sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumeMounts:\)|\1\2\n\1- mountPath: ${buildtree}\n\1  name: buildtree\n\1  readOnly: true|"
