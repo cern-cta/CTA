@@ -101,6 +101,10 @@ ADD ${BASEDIR}/rc.local /etc/rc.d
 # Make sure it can be executed by root
 RUN chmod 744 /etc/rc.local
 
+# disable selinux so that systemd works if the container is booted
+# with an image that already contains selinux
+ADD ${BASEDIR}/etc_selinux_config /etc/selinux/config
+
 # One more thing so that we can use systemd
 VOLUME [ "/sys/fs/cgroup" ]
 
