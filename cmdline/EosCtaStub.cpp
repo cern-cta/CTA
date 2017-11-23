@@ -112,7 +112,7 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
       else if(key == "uid") notification.mutable_file()->mutable_owner()->set_uid(stoi(val));
       else if(key == "gid") notification.mutable_file()->mutable_owner()->set_gid(stoi(val));
       else if(key == "size") notification.mutable_file()->set_size(stoi(val));
-      else if(key == "xstype") notification.mutable_file()->mutable_cks()->set_name(val);
+      else if(key == "xstype") notification.mutable_file()->mutable_cks()->set_type(val);
       else if(key == "xs") notification.mutable_file()->mutable_cks()->set_value(val);
       else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
       else if(key == "file") notification.mutable_file()->set_lpath(val);
@@ -233,7 +233,7 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_username(argval);
       else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_groupname(argval);
       else if(argstr == "--size")                notification.mutable_file()->set_size(std::stoi(argval));
-      else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_name(argval);
+      else if(argstr == "--checksumtype")        notification.mutable_file()->mutable_cks()->set_type(argval);
       else if(argstr == "--checksumvalue")       notification.mutable_file()->mutable_cks()->set_value(argval);
       else if(argstr == "--diskfilepath")        notification.mutable_file()->set_lpath(argval);
       else if(argstr == "--storageclass")        {

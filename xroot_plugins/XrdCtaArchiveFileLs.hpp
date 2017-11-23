@@ -189,26 +189,6 @@ XrdOucErrInfo xrdSfsFileError;
 
 m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
 #endif
-#if 0
-   {
-      m_readBuffer <<
-        std::setfill(' ') << std::setw(7) << std::right << archiveFile.archiveFileID << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << copyNb << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << tapeFile.vid << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << tapeFile.fSeq << " " <<
-        std::setfill(' ') << std::setw(8) << std::right << tapeFile.blockId << " " <<
-        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskInstance << " " <<
-        std::setfill(' ') << std::setw(7) << std::right << archiveFile.diskFileId << " " <<
-        std::setfill(' ') << std::setw(12) << std::right << archiveFile.fileSize << " " <<
-        std::setfill(' ') << std::setw(13) << std::right << archiveFile.checksumType << " " <<
-        std::setfill(' ') << std::setw(14) << std::right << archiveFile.checksumValue << " " <<
-        std::setfill(' ') << std::setw(13) << std::right << archiveFile.storageClass << " " <<
-        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.owner << " " <<
-        std::setfill(' ') << std::setw(8) << std::right << archiveFile.diskFileInfo.group << " " <<
-        std::setfill(' ') << std::setw(13) << std::right << archiveFile.creationTime << " " <<
-        archiveFile.diskFileInfo.path << "\n";
-   }
-#endif
 
 }} // namespace cta::xrd
 

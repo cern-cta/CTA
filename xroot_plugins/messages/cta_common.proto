@@ -27,7 +27,7 @@ message Clock {
 }
 
 message Checksum {
-  string name                = 1;       //< checksum name
+  string type                = 1;       //< checksum type
   string value               = 2;       //< checksum value
 }
 

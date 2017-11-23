@@ -19,6 +19,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 
 #include "cmdline/Configuration.hpp"
 #include "CtaAdminCmd.hpp"
@@ -51,7 +52,26 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 template<>
 void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
 {
-   std::cout.write(response_bufptr, response_buflen);
+   cta::admin::ArchiveFileLsItem item;
+
+   item.ParseFromArray(response_bufptr, response_buflen);
+
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << item.af().archive_file_id() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << item.copy_nb()              << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << item.tf().vid()             << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << item.tf().f_seq()           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << item.tf().block_id()        << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << item.af().disk_instance()   << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << item.af().disk_file_id()    << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << item.af().file_size()       << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << item.af().cs().type()       << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << item.af().cs().value()      << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << item.af().storage_class()   << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << item.af().df().owner()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << item.af().df().group()      << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << item.af().creation_time()   << ' '
+             << item.af().df().path() << std::endl;
+
 }
 
 } // namespace XrdSsiPb

@@ -330,7 +330,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // and we need to decide what will be stored in the database.
    diskFileInfo.recoveryBlob = "deprecated";
 
-   std::string checksumtype(notification.file().cks().name());
+   std::string checksumtype(notification.file().cks().type());
    if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
 
    std::string checksumvalue("0X" + notification.file().cks().value());
