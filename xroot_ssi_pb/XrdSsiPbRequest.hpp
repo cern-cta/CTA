@@ -246,7 +246,10 @@ void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
    int metadata_len;
    const char *metadata_buffer = GetMetadata(metadata_len);
 #ifdef XRDSSI_DEBUG
-   std::cerr << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseMetadata(): received " << metadata_len << " bytes" << std::endl;
+#endif
+#if 0
+   // Show metadata contents as a string of bytes
    std::cerr << "[DEBUG] ProcessResponseMetadata(): ";
    for(int i = 0; i < metadata_len; ++i)
    {
@@ -292,7 +295,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
 #ifdef XRDSSI_DEBUG
-   std::cerr << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes of data" << std::endl;
+   std::cerr << "[DEBUG] ProcessResponseData(): received " << response_buflen << " bytes" << std::endl;
 #endif
 
    XrdSsiRequest::PRD_Xeq post_process = XrdSsiRequest::PRD_Normal;

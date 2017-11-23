@@ -18,8 +18,6 @@
 
 #pragma once
 
-//#include <iostream>
-//#include <algorithm>
 #include <XrdSsi/XrdSsiStream.hh>
 #include "catalogue/Catalogue.hpp"
 
@@ -116,9 +114,6 @@ private:
 
 
 
-
-
-
 namespace cta { namespace xrd {
 
 /*!
@@ -128,8 +123,10 @@ class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
    ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor) :
-      XrdSsiStream(XrdSsiStream::isActive) {
+      XrdSsiStream(XrdSsiStream::isActive)
+   {
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
+tmp_num_items = 0;
    }
 
    virtual ~ArchiveFileLsStream() {
@@ -156,16 +153,33 @@ public:
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
 #endif
+      if(tmp_num_items >= 10)
+      {
+         // Nothing more to send, close the stream
+         last = true;
+         return nullptr;
+      }
+
+      // Get the next item and pass it back to the caller
+      cta::admin::ArchiveFileLsItem item;
+      item.mutable_af()->set_disk_instance("Hello");
+      item.mutable_af()->set_disk_file_id("World");
+      item.set_copy_nb(tmp_num_items++);
+
+      std::string bufstr;
+      item.SerializeToString(&bufstr);
+
       XrdSsiPb::StreamBuffer *buffer = new XrdSsiPb::StreamBuffer(dlen);
-
-      *buffer << "HELLO," << " WORLD! " << std::endl;
-      last = false;
-
+      *buffer << bufstr;
       dlen = buffer->length();
+
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 
       return buffer;
    }
+
+private:
+   int tmp_num_items;
 };
 
 #if 0

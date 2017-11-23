@@ -633,8 +633,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
    }
 
    if(has_flag(OptionBoolean::SUMMARY)) {
-      // Probably we need to use streaming here as well, not because of the volume of data,
-      // but simply to prevent timeouts while calculating the summary statistics.
+      // Probably we should use a data response here, to prevent timeouts while calculating the summary statistics
       cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = { "total number of files","total size" };
@@ -643,9 +642,8 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       responseTable.push_back(row);
       cmdlineOutput << formatResponse(responseTable);
-      response.set_message_txt(cmdlineOutput.str());
    } else {
-      // Create a XrdSsi stream object to asynchronously return the results
+      // Create a XrdSsi stream object to return the results
       stream = new ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria));
 
       // Send the column headers in the metadata
@@ -653,9 +651,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
          const char* const TEXT_RED    = "\x1b[31;1m";
          const char* const TEXT_NORMAL = "\x1b[0m\n";
 
-         std::stringstream ss;
-
-         ss << TEXT_RED <<
+         cmdlineOutput << TEXT_RED <<
          std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' ' <<
          std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' ' <<
          std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' ' <<
@@ -672,11 +668,10 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
          std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' ' <<
                                                              "path"
          << TEXT_NORMAL << std::endl;
-
-         response.set_message_txt(ss.str());
       }
    }
 
+   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
