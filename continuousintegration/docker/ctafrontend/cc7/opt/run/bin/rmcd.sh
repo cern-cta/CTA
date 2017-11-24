@@ -21,4 +21,4 @@ cat /tmp/library-rc.sh
 tail -F /var/log/cta/cta-rmcd.log &
 
 ln -s /dev/${LIBRARYDEVICE} /dev/smc
-/usr/bin/rmcd -f /dev/smc
+/usr/bin/cta-rmcd -f /dev/smc
