@@ -54,21 +54,33 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 template<>
 void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
 {
-   google::protobuf::io::ArrayInputStream raw_stream(response_bufptr, response_buflen);
-   google::protobuf::io::CodedInputStream coded_stream(&raw_stream);
+   google::protobuf::io::CodedInputStream coded_stream(reinterpret_cast<const uint8_t*>(response_bufptr), response_buflen);
 
    cta::admin::ArchiveFileLsItem line_item;
 
    uint32_t bytesize;
    int buf_len;
 
-   do {
-      coded_stream.ReadLittleEndian32(&bytesize);
-std::cout << "Bytesize = " << bytesize << std::endl;
-
+   do
+   {
       const char *buf_ptr;
       coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
 std::cout << "buf_len = " << buf_len << std::endl;
+
+      if(buf_len < static_cast<int>(sizeof(uint32_t))) {
+         throw std::runtime_error("Not enough data to read size of next protobuf");
+      }
+
+      coded_stream.ReadLittleEndian32(&bytesize);
+std::cout << "Bytesize = " << bytesize << std::endl;
+
+      coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
+std::cout << "buf_len = " << buf_len << std::endl;
+
+      if(buf_len < static_cast<int>(bytesize)) {
+         throw std::runtime_error("Not enough data in stream");
+      }
+
       line_item.ParseFromArray(buf_ptr, bytesize);
       coded_stream.Skip(bytesize);
 
@@ -90,7 +102,7 @@ std::cout << "buf_len = " << buf_len << std::endl;
                 << std::setfill(' ') << std::setw(13) << std::right << line_item.af().creation_time()   << ' '
                 << line_item.af().df().path() << std::endl;
    }
-   while(static_cast<int>(bytesize) != buf_len);
+   while(buf_len != static_cast<int>(bytesize));
 
 }
 

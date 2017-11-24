@@ -40,11 +40,10 @@ namespace XrdSsiPb {
 
 // Constants
 
-const unsigned int DefaultResponseBufferSize = 1024;       //!< Default size for the response buffer in bytes
+const unsigned int DefaultResponseBufferSize = 89;       //!< Default size for the response buffer in bytes
 const unsigned int DefaultRequestTimeout     = 15;         //!< Default XRootD request timeout in secs
 // Better to get the default from XRD_REQUESTTIMEOUT if it is not set explicitly?
 // Decide on order of precedence for setting request timeout
-// What about setting stream timeout?
 
 
 
