@@ -18,99 +18,8 @@
 
 #pragma once
 
-#include <XrdSsi/XrdSsiStream.hh>
+#include "xroot_ssi_pb/XrdSsiPbOStreamBuffer.hpp"
 #include "catalogue/Catalogue.hpp"
-
-
-namespace XrdSsiPb {
-
-/*!
- * Memory buffer struct
- *
- * Implements a streambuf as a fixed-size char array so that we can provide a char* to XRootD
- */
-struct Membuf: public std::streambuf
-{
-   Membuf(char *buffer, size_t size) {
-      // Set the boundaries of the buffer
-      this->setp(buffer, buffer + size);
-   }
-
-   //! Return the number of bytes in the buffer
-   size_t length() const {
-      return pptr()-pbase();
-   }
-
-   int overflow(int c) override {
-      std::cerr << "OVERFLOW " << c << std::endl;
-      return 0;
-   }
-};
-
-
-
-/*!
- * Stream interface to the memory buffer
- */
-struct omemstream: virtual Membuf, std::ostream
-{
-   omemstream(char *buffer, size_t size) :
-      Membuf(buffer, size),
-      std::ostream(this) {}
-};
-
-
-
-/*!
- * Stream Buffer.
- *
- * This class binds XrdSsiStream::Buffer to the stream interface.
- *
- * This is a naïve implementation, where buffers are allocated and deallocated each time they are
- * used. A more performant implementation could be implemented using a buffer pool. See the Recycle()
- * method below.
- */
-class StreamBuffer : public XrdSsiStream::Buffer
-{
-public:
-   StreamBuffer(size_t size) : XrdSsiStream::Buffer(new char[size]),
-      m_out(data, size) {
-#ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] StreamBuffer() constructor" << std::endl;
-#endif
-   }
-
-   ~StreamBuffer() {
-#ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] StreamBuffer() destructor" << std::endl;
-#endif
-      // data is a public member of XrdSsiStream::Buffer. It is an unmanaged char* pointer.
-      delete[] data;
-   }
-
-   //! Return size of the stream buffer in bytes
-   int length() const { return m_out.length(); }
-
-   //! Overload << to allow streaming into the buffer
-   template<typename T>
-   omemstream &operator<<(const T &t) {
-      m_out << t;
-      return m_out;
-   }
-
-private:
-   //! Called by the XrdSsi framework when it is finished with the object
-   virtual void Recycle() {
-      std::cerr << "[DEBUG] StreamBuffer::Recycle()" << std::endl;
-      delete this;
-   }
-
-   // Member variables
-
-   omemstream m_out;    //!< Ostream interface to the buffer
-};
-
-} // namespace XrdSsiPb
 
 
 
@@ -166,12 +75,9 @@ tmp_num_items = 0;
       item.mutable_af()->set_disk_file_id("World");
       item.set_copy_nb(++tmp_num_items);
 
-      std::string bufstr;
-      item.SerializeToString(&bufstr);
-
-      XrdSsiPb::StreamBuffer *buffer = new XrdSsiPb::StreamBuffer(dlen);
-      *buffer << bufstr;
-      dlen = buffer->length();
+      Buffer *streambuf = new XrdSsiPb::StreamBuffer(dlen);
+      streambuf->serialize(item);
+      dlen = streambuf->bytesize();
 
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 
