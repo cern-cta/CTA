@@ -57,74 +57,40 @@ void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, cha
    google::protobuf::io::ArrayInputStream raw_stream(response_bufptr, response_buflen);
    google::protobuf::io::CodedInputStream coded_stream(&raw_stream);
 
-   // coded_in->ReadVarint32(&n);
-   // cout << "#" << n << endl;
-   //
-   // std::string s;
-   //
-   // for (uint32_t i = 0; i < n; ++i)
-   // {
-   // uint32_t msgSize;
-   // coded_in->ReadVarint32(&msgSize);
-   //
-   // if ((msgSize > 0) &&
-   // (coded_in->ReadString(&s, msgSize)))
-   // {
-   //
-   // Person p;
-   // p.ParseFromString(s);
-   //
-   // cout << "ID: " << p.id() << endl;
-   // cout << "name: " << p.name() << endl;
-   // cout << "gendre: " << gendres[p.gendre()-1] << endl;
-   // if (p.has_email())
-   // {
-   // cout << "e-mail: " << p.email() << endl;
-   // }
-   //
-   // cout << endl;
-   // }
-   // }
-   //
-   // delete coded_in;
-   // delete raw_in;
+   cta::admin::ArchiveFileLsItem line_item;
 
-   cta::admin::ArchiveFileLsItem item;
+   uint32_t bytesize;
+   int buf_len;
 
-   for(int i = 0; i < 10; ++i)
-   {
-      uint32_t bytesize;
+   do {
       coded_stream.ReadLittleEndian32(&bytesize);
 std::cout << "Bytesize = " << bytesize << std::endl;
 
       const char *buf_ptr;
-      int buf_len;
       coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
 std::cout << "buf_len = " << buf_len << std::endl;
-      item.ParseFromArray(buf_ptr, bytesize);
+      line_item.ParseFromArray(buf_ptr, bytesize);
       coded_stream.Skip(bytesize);
 
-      //coded_stream.Skip(bytesize);
-      //item.ParseFromBoundedZeroCopyStream(&raw_stream, bytesize);
+      //OutputJsonString(std::cout, &line_item);
 
-      OutputJsonString(std::cout, &item);
-
-   std::cout << std::setfill(' ') << std::setw(7)  << std::right << item.af().archive_file_id() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << item.copy_nb()              << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << item.tf().vid()             << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << item.tf().f_seq()           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << item.tf().block_id()        << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << item.af().disk_instance()   << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << item.af().disk_file_id()    << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << item.af().file_size()       << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << item.af().cs().type()       << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << item.af().cs().value()      << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << item.af().storage_class()   << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << item.af().df().owner()      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << item.af().df().group()      << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << item.af().creation_time()   << ' '
-             << item.af().df().path() << std::endl;
+      std::cout << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().archive_file_id() << ' '
+                << std::setfill(' ') << std::setw(7)  << std::right << line_item.copy_nb()              << ' '
+                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().vid()             << ' '
+                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().f_seq()           << ' '
+                << std::setfill(' ') << std::setw(8)  << std::right << line_item.tf().block_id()        << ' '
+                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().disk_instance()   << ' '
+                << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().disk_file_id()    << ' '
+                << std::setfill(' ') << std::setw(12) << std::right << line_item.af().file_size()       << ' '
+                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().cs().type()       << ' '
+                << std::setfill(' ') << std::setw(14) << std::right << line_item.af().cs().value()      << ' '
+                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().storage_class()   << ' '
+                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().owner()      << ' '
+                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().group()      << ' '
+                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().creation_time()   << ' '
+                << line_item.af().df().path() << std::endl;
    }
+   while(static_cast<int>(bytesize) != buf_len);
 
 }
 
