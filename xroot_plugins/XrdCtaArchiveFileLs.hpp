@@ -75,13 +75,12 @@ tmp_num_items = 0;
       item.mutable_af()->set_disk_file_id("World");
       item.set_copy_nb(++tmp_num_items);
 
-      Buffer *streambuf = new XrdSsiPb::StreamBuffer(dlen);
-      streambuf->serialize(item);
-      dlen = streambuf->bytesize();
+      XrdSsiPb::OStreamBuffer *streambuf = new XrdSsiPb::OStreamBuffer();
+      dlen = streambuf->serialize(item);
 
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 
-      return buffer;
+      return streambuf;
    }
 
 private:
