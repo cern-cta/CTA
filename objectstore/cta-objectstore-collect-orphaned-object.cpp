@@ -76,7 +76,7 @@ int main(int argc, char ** argv) {
     cta::objectstore::AgentReference agr("cta-objectstore-collect-orphaned-object", sl);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
-    ag.insertAndRegisterSelf();
+    ag.insertAndRegisterSelf(lc);
     switch (go.type()) {
     case cta::objectstore::serializers::ObjectType::ArchiveRequest_t:
     {
@@ -129,7 +129,7 @@ int main(int argc, char ** argv) {
       break;
     }
     cta::objectstore::ScopedExclusiveLock agl(ag);
-    ag.removeAndUnregisterSelf();
+    ag.removeAndUnregisterSelf(lc);
   } catch (std::exception & e) {
     std::cerr << "Failed to garbage collect object: "
         << std::endl << e.what() << std::endl;

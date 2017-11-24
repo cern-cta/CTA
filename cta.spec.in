@@ -161,26 +161,13 @@ The xroot plugin
 %{_libdir}/libXrdSsiCta.so*
 %attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
-%attr(0644,root,root) %config(noreplace) /etc/xrootd/xrootd-cta.cfg
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend.conf
 %attr(0644,cta,cta) /etc/systemd/system/cta-frontend.service
 
 #Frontend installs libraries so we need ldconfig.
 %post -n cta-frontend -p /sbin/ldconfig
 %postun -n cta-frontend -p /sbin/ldconfig
-
-%package -n cta-frontend-interface
-Summary: CERN Tape Archive Frontend Interface
-Group: Application/CTA
-Requires: xrootd-server-libs, xrootd-private-devel
-%description -n cta-frontend-interface
-CERN Tape Archive:
-Frontend Interface
-%files -n cta-frontend-interface
-%defattr(0755,root,root)
-%{_libdir}/libXrdCtaMessages.a
-%{_includedir}/cta
-%{_includedir}/cta/xroot_plugins/messages
 
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface

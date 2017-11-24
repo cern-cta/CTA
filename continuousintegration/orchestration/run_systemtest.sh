@@ -22,12 +22,16 @@ SYSTEMTEST_TIMEOUT=3600
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID>] [-t <systemtest timeout in seconds>] [-k] [-O] [-D]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-k] [-O] [-D]
 
 Options:
+  -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
+        containers.
+  -B    The subdirectory within the -b directory where the build tree is.
   -k    keep namespace after systemtest_script run if successful
   -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
   -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
+
 
 Create a kubernetes instance and launch the system test script specified.
 Makes sure the created instance is cleaned up at the end and return the status of the system test.
@@ -40,7 +44,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:t:kDO" o; do
+while getopts "n:s:p:b:B:t:kDO" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -51,6 +55,12 @@ while getopts "n:s:p:t:kDO" o; do
             ;;
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
+            ;;
+        b)
+            CREATE_OPTS="${CREATE_OPTS} -b ${OPTARG}"
+            ;;
+        B)
+            CREATE_OPTS="${CREATE_OPTS} -B ${OPTARG}"
             ;;
         t)
             SYSTEMTEST_TIMEOUT=${OPTARG}

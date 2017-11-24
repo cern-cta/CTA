@@ -34,7 +34,7 @@ eoshost=`hostname -f`
 EOS_INSTANCE=`hostname -s`
 TAPE_FS_ID=65535
 CTA_BIN=/usr/bin/eoscta_stub
-CTA_KT=/etc/ctafrontend_SSS_c.keytab
+CTA_KT=/etc/cta/cta-cli.sss.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
@@ -62,8 +62,9 @@ EOF
 # prepare eos startup
   # skip systemd for eos initscripts
     export SYSTEMCTL_SKIP_REDIRECT=1
-#  echo y | xrdsssadmin -k ${EOS_INSTANCE} -u daemon -g daemon add /etc/eos.keytab
-# need a deterministic key for taped
+#  echo y | xrdsssadmin -k ${EOS_INSTANCE}+ -u daemon -g daemon add /etc/eos.keytab
+# need a deterministic key for taped and it must be forwardable in case of kubernetes
+# see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
 echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab 
     chmod 400 /etc/eos.keytab
@@ -191,7 +192,7 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 # for sss authorisation  unix has to be replaced by sss
 
 # Set the worfklow rule for archiving files to tape
-eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} archive --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --diskid <eos::wfe::fid> --instance eoscta --srcurl <eos::wfe::turl> --size <eos::wfe::size> --checksumtype <eos::wfe::checksumtype> --checksumvalue <eos::wfe::checksum> --storageclass <eos::wfe::cxattr:CTA_StorageClass> --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --reportURL 'eosQuery://${EOS_INSTANCE}//eos/wfe/passwd?mgm.pcmd=event\&mgm.fid=<eos::wfe::fxid>\&mgm.logid=cta\&mgm.event=archived\&mgm.workflow=default\&mgm.path=/eos/wfe/passwd\&mgm.ruid=0\&mgm.rgid=0' --stderr" ${CTA_WF_DIR}
+eos attr set sys.workflow.closew.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} archive --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --diskid <eos::wfe::fid> --instance ignored_instance_name --srcurl <eos::wfe::turl> --size <eos::wfe::size> --checksumtype <eos::wfe::checksumtype> --checksumvalue <eos::wfe::checksum> --storageclass <eos::wfe::cxattr:CTA_StorageClass> --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --reportURL 'eosQuery://${EOS_INSTANCE}//eos/wfe/passwd?mgm.pcmd=event\&mgm.fid=<eos::wfe::fxid>\&mgm.logid=cta\&mgm.event=archived\&mgm.workflow=default\&mgm.path=/eos/wfe/passwd\&mgm.ruid=0\&mgm.rgid=0' --stderr" ${CTA_WF_DIR}
 
 # Set the worflow rule for creating tape file replicas in the EOS namespace.
 eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}

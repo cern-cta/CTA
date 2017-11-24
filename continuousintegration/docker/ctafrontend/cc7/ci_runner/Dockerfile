@@ -27,7 +27,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     LOCALORCHESTRATIONDIR="/opt/ci" \
     BASEDIR="continuousintegration/docker/ctafrontend/cc7" \
-    CTAREPODIR="/tmp/repo"
+    CTAREPODIR="/opt/repo"
 
 # Manage repos before running yum
 ADD ${BASEDIR}/etc /etc
@@ -78,7 +78,9 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     yum clean all \
   && \
-    rm -rf /var/cache/yum
+    rm -rf /var/cache/yum \
+  ; \
+    rm -f /etc/rc.d/rc.local
 
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
@@ -92,4 +94,15 @@ ADD ${BASEDIR}/opt /opt
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /
 
-ENTRYPOINT ["/run.sh"]
+# Add custom rc.local to massage kubernetes resources for
+# the taget docker container
+ADD ${BASEDIR}/rc.local /etc/rc.d
+
+# Make sure it can be executed by root
+RUN chmod 744 /etc/rc.local
+
+# One more thing so that we can use systemd
+VOLUME [ "/sys/fs/cgroup" ]
+
+# And finally run systemd if the entrypoint is not overriden by docker
+ENTRYPOINT ["/usr/sbin/init"]

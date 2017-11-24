@@ -49,6 +49,38 @@ namespace cta {
         }
       }
       
+      void reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
+        cta::log::LogContext& logContext) override {
+        try {
+          std::set<cta::catalogue::TapeFileWritten> tapeFilesWritten;
+          std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
+          std::unique_ptr<cta::ArchiveJob> job;
+          while(!successfulArchiveJobs.empty()) {
+            // Get the next job to report and make sure we will not attempt to process it twice.
+            job = std::move(successfulArchiveJobs.front());
+            successfulArchiveJobs.pop();
+            if (!job.get()) continue;        
+            tapeFilesWritten.insert(job->validateAndGetTapeFileWritten());
+            validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
+            job.reset(nullptr);
+          }
+          m_catalogue.filesWrittenToTape(tapeFilesWritten);
+          for (auto &job: validatedSuccessfulArchiveJobs) {
+            MockArchiveJob * maj = dynamic_cast<MockArchiveJob *>(job.get());
+            if (!maj) throw cta::exception::Exception("Wrong job type.");
+            maj->reportJobSucceeded();
+            logContext.log(log::INFO, "Reported to the client a full file archival.");
+          }
+          logContext.log(log::INFO, "Reported to the client that a batch of files was written on tape");
+        } catch(const cta::exception::Exception& e){
+          cta::log::ScopedParamContainer params(logContext);
+          params.add("exceptionMessageValue", e.getMessageValue());
+          const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
+          logContext.log(cta::log::ERR, msg_error);
+          throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
+        }
+      }
+
       void complete() override {
         completes++;
       }

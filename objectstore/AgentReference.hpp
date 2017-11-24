@@ -99,6 +99,7 @@ public:
    */
   std::string getAgentAddress();
 private:
+  static std::atomic<uint64_t> g_nextAgentId;
   std::atomic<uint64_t> m_nextId;
   std::string m_agentAddress;
   

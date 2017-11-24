@@ -194,10 +194,7 @@ int acceptConnection(const int listenSockFd);
  */
 int acceptConnection(
   const int    listenSockFd,
-  const time_t timeout)
-  throw(cta::exception::TimeOut,
-    cta::exception::AcceptConnectionInterrupted,
-    cta::exception::Exception);
+  const time_t timeout);
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.
@@ -276,7 +273,7 @@ std::string getPeerHostName(const int socketFd);
 void writeIp(
   std::ostream        &os,
   const unsigned long ip)
-  throw();
+  noexcept;
 
 /**
  * Writes a textual description of the specified socket to the specified
@@ -288,8 +285,7 @@ void writeIp(
  */
 void writeSockDescription(
   std::ostream &os,
-  const int socketFd)
-  throw();
+  const int socketFd);
 
 /**
  * Reads the specified number of bytes from the specified socket and writes
@@ -349,8 +345,7 @@ void writeBytes(
 int connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
-  const int            timeout)
-  throw(cta::exception::TimeOut, cta::exception::Exception);
+  const int            timeout);
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -381,8 +376,7 @@ int connectWithTimeout(
   const int             sockProtocol,
   const struct sockaddr *address,
   const socklen_t       address_len,
-  const int             timeout)
-  throw(cta::exception::TimeOut, cta::exception::Exception);
+  const int             timeout);
 
 /**
  * Marshals the specified src value into the specified destination buffer.

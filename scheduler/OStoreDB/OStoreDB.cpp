@@ -306,7 +306,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       aq.fetch();
       if (!aq.dumpJobs().size()) {
         aql.release();
-        re.removeArchiveQueueAndCommit(a.tapePool);
+        re.removeArchiveQueueAndCommit(a.tapePool, lc);
         log::ScopedParamContainer params(lc);
         params.add("tapePool", a.tapePool)
               .add("queueObject", a.address);
@@ -320,7 +320,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       rq.fetch();
       if (!rq.dumpJobs().size()) {
         rql.release();
-        re.removeRetrieveQueueAndCommit(r.vid);
+        re.removeRetrieveQueueAndCommit(r.vid, lc);
         log::ScopedParamContainer params(lc);
         params.add("vid", r.vid)
               .add("queueObject", r.address);
@@ -544,7 +544,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
             .add("queueUnlockTime", qUnlockTime);
       logContext.log(log::INFO, "In OStoreDB::queueArchive(): added job to queue");
     }
-  } catch (NoSuchArchiveQueue &) {
+  } catch (NoSuchArchiveQueue &ex) {
     // Unlink the request from already connected tape pools
     for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
       objectstore::ArchiveQueue aq(*tpa, m_objectStore);
@@ -552,10 +552,12 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       aq.fetch();
       aq.removeJob(aReq.getAddressIfSet());
       aq.commit();
-      aReq.remove();
     }
+    aReq.remove();
     log::ScopedParamContainer params(logContext);
     params.add("tapepool", currentTapepool)
+          .add("archiveRequestObject", aReq.getAddressIfSet())
+          .add("exceptionMessage", ex.getMessageValue())
           .add("jobObject", aReq.getAddressIfSet());
     logContext.log(log::INFO, "In OStoreDB::queueArchive(): failed to enqueue job");
     throw;
@@ -625,6 +627,10 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
           ar.setJobOwner(j.copyNb, m_agentReference->getAgentAddress());
         }
         ar.remove();
+        log::LogContext lc(m_logger);
+        log::ScopedParamContainer params(lc);
+        params.add("archiveRequestObject", ar.getAddressIfSet());
+        lc.log(log::INFO, "In OStoreDB::deleteArchiveRequest(): delete archive request.");
         m_agentReference->removeFromOwnership(ar.getAddressIfSet(), m_objectStore);
         // We found and deleted the job: return.
         return;
@@ -637,11 +643,14 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveToFileRequestCancelation::complete()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveToFileRequestCancelation::complete() {
+void OStoreDB::ArchiveToFileRequestCancelation::complete(log::LogContext & lc) {
   if (m_closed)
     throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
   // We just need to delete the object and forget it
   m_request.remove();
+  log::ScopedParamContainer params(lc);
+  params.add("archiveRequestObject", m_request.getAddressIfSet());
+  lc.log(log::INFO, "In ArchiveToFileRequestCancelation::complete(): removed archive request.");
   m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
   m_closed = true;
 }
@@ -1053,6 +1062,8 @@ void OStoreDB::removeDrive(const std::string& drive, log::LogContext &lc) {
         ds.remove();
         dr.removeDrive(drive);
         dr.commit();
+        log::ScopedParamContainer params(lc);
+        params.add("driveStateObject", ds.getAddressIfSet());
         lc.log(log::INFO, "In OStoreDB::removeDrive(): removed and dereferenced drive state object.");
       } else {
         dr.removeDrive(drive);
@@ -1172,26 +1183,26 @@ void OStoreDB::updateDriveStatistics(const common::dataStructures::DriveInfo& dr
       lc, Helpers::CreateIfNeeded::doNotCreate);
   } catch (cta::exception::Exception & ex) {
     // The drive is missing in the registry. Nothing to update
-      return;    
+    return;    
   }
   driveState = ds.getState();
   // Set the parameters that we always set
   driveState.host = driveInfo.host;
   driveState.logicalLibrary = driveInfo.logicalLibrary;
-
+  
   switch (driveState.driveStatus) {    
     case DriveStatus::Transferring:
-      {
+    {
       const time_t timeDifference = inputs.reportTime -  driveState.lastUpdateTime;
       const uint64_t bytesDifference = inputs.bytesTransferred - driveState.bytesTransferredInSession;   
       driveState.lastUpdateTime=inputs.reportTime;
       driveState.bytesTransferredInSession=inputs.bytesTransferred;
       driveState.filesTransferredInSession=inputs.filesTransferred;
       driveState.latestBandwidth = timeDifference?1.0*bytesDifference/timeDifference:0.0;
-      }
-      break;    
+      break;
+    }
     default:
-      return ;
+      return;
   }
   ds.setState(driveState);
   ds.commit();
@@ -1792,7 +1803,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
@@ -1970,7 +1981,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       for (const auto &j: jobsToDequeue) aq.removeJob(j);
       queueProcessTime += t.secs(utils::Timer::resetCounter);
       if (jobsToForget.size()) {
-        m_oStoreDB.m_agentReference->removeBatchFromOwnership(addedJobs, m_oStoreDB.m_objectStore);
+        m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
         ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
       }
       // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
@@ -1991,7 +2002,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
@@ -2180,7 +2191,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
-          re.removeRetrieveQueueAndCommit(mountInfo.vid);
+          re.removeRetrieveQueueAndCommit(mountInfo.vid, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
@@ -2335,7 +2346,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
       for (const auto &j: jobsToDequeue) rq.removeJob(j);
-      if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(addedJobs, m_oStoreDB.m_objectStore);
+      if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
       // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
       rq.commit();
       // We can now add the validated jobs to the return value.
@@ -2353,7 +2364,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool);
+          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", rq.getAddressIfSet());
@@ -2537,6 +2548,41 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::castFromSchedDBJob()
+//------------------------------------------------------------------------------
+OStoreDB::ArchiveJob * OStoreDB::ArchiveMount::castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job) {
+  OStoreDB::ArchiveJob * ret = dynamic_cast<OStoreDB::ArchiveJob *> (job);
+  if (!ret) {
+    std::string unexpectedType = typeid(*job).name();
+    throw cta::exception::Exception(std::string("In OStoreDB::ArchiveMount::castFromSchedDBJob(): unexpected archive job type while casting: ")+
+        unexpectedType);
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveMount::asyncSetJobBatchSuccessful()
+//------------------------------------------------------------------------------
+std::set<cta::SchedulerDatabase::ArchiveJob*> OStoreDB::ArchiveMount::setJobBatchSuccessful(
+  std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext & lc) {
+  std::set<cta::SchedulerDatabase::ArchiveJob*> ret;
+  std::list<std::string> ajToUnown;
+  // We will asynchronously report the archive jobs (which MUST be OStoreDBJobs).
+  // We let the exceptions through as failing to report is fatal.
+  for (auto & sDBJob: jobsBatch) {
+    castFromSchedDBJob(sDBJob)->asyncSucceed();
+  }
+  for (auto & sDBJob: jobsBatch) {
+    if (castFromSchedDBJob(sDBJob)->waitAsyncSucceed())
+      ret.insert(sDBJob);
+    ajToUnown.push_back(castFromSchedDBJob(sDBJob)->m_archiveRequest.getAddressIfSet());
+  }
+  m_oStoreDB.m_agentReference->removeBatchFromOwnership(ajToUnown, m_oStoreDB.m_objectStore);
+  return ret;
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
@@ -2546,7 +2592,7 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId)) {
+  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, lc)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2601,7 +2647,7 @@ void OStoreDB::ArchiveJob::asyncSucceed() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::checkSucceed()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::checkSucceed() {  
+bool OStoreDB::ArchiveJob::waitAsyncSucceed() {  
   m_jobUpdate->wait();
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer params(lc);
@@ -2612,11 +2658,7 @@ bool OStoreDB::ArchiveJob::checkSucceed() {
   }
   // We no more own the job (which could be gone)
   m_jobOwned = false;
-  // Remove ownership from agent
-  const std::string atfrAddress = m_archiveRequest.getAddressIfSet();
-  m_oStoreDB.m_agentReference->removeFromOwnership(atfrAddress, m_oStoreDB.m_objectStore);
-  params.add("agentObject", m_oStoreDB.m_agentReference->getAgentAddress());
-  lc.log(log::DEBUG, "Removed job from ownership");
+  // Ownership removal will be done globally by the caller.
   return m_jobUpdate->m_isLastJob;
 }
 
@@ -2666,7 +2708,7 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId)) {
+  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, logContext)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2780,5 +2822,4 @@ void OStoreDB::RetrieveJob::checkSucceed() {
 
 
 } // namespace cta
-
 

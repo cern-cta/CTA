@@ -74,12 +74,15 @@ bool RootEntry::isEmpty() {
   return true;
 }
 
-void RootEntry::removeIfEmpty() {
+void RootEntry::removeIfEmpty(log::LogContext & lc) {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw NotEmpty("In RootEntry::removeIfEmpty(): root entry not empty");
   }
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("rootObjectName", getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeIfEmpty(): removed root entry.");
 }
 
 void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
@@ -102,7 +105,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, log::LogContext & lc) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -134,7 +137,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   return archiveQueueAddress;
 }
 
-void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
+void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
@@ -171,6 +174,11 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool) {
     }
     // We can delete the queue
     aq.remove();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("archiveQueueObject", aq.getAddressIfSet());
+      lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue.");
+    }
   deleteFromRootEntry:
     // ... and remove it from our entry
     serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
@@ -258,7 +266,7 @@ void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid) {
   serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
 }
 
-void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
+void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the retrieve queue object
   try {
@@ -295,6 +303,11 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid) {
     }
     // We can now delete the queue
     rq.remove();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("retrieveQueueObject", rq.getAddressIfSet());
+      lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue.");
+    }
   deleteFromRootEntry:
     // ... and remove it from our entry
     serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
@@ -370,7 +383,7 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
   }
 }
 
-void RootEntry::removeDriveRegisterAndCommit() {
+void RootEntry::removeDriveRegisterAndCommit(log::LogContext & lc) {
   checkPayloadWritable();
   // Get the address of the drive register (nothing to do if there is none)
   if (!m_payload.has_driveregisterpointer() || 
@@ -387,6 +400,9 @@ void RootEntry::removeDriveRegisterAndCommit() {
   }
   // we can delete the drive register
   dr.remove();
+  log::ScopedParamContainer params(lc);
+  params.add("driveRegisterObject", dr.getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeDriveRegisterAndCommit(): removed drive register.");
   // And update the root entry
   m_payload.mutable_driveregisterpointer()->set_address("");
   // We commit for safety and symmetry with the add operation
@@ -418,7 +434,7 @@ std::string RootEntry::getAgentRegisterAddress() {
 
 // Get the name of a (possibly freshly created) agent register
 std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& agentRef,
-  const EntryLogSerDeser & log) {
+  const EntryLogSerDeser & log, log::LogContext & lc) {
   // Check if the agent register exists
   try {
     return getAgentRegisterAddress();
@@ -435,7 +451,7 @@ std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& age
     // decide on the object's name
     std::string arAddress (agentRef.nextId("AgentRegister"));
     // Record the agent registry in our own intent
-    addIntendedAgentRegistry(arAddress);
+    addIntendedAgentRegistry(arAddress, lc);
     commit();
     // Create the agent registry
     AgentRegister ar(arAddress, m_objectStore);
@@ -463,7 +479,7 @@ std::string RootEntry::addOrGetAgentRegisterPointerAndCommit(AgentReference& age
   }
 }
 
-void RootEntry::removeAgentRegisterAndCommit() {
+void RootEntry::removeAgentRegisterAndCommit(log::LogContext & lc) {
   checkPayloadWritable();
   // Check that we do have an agent register set. Cleanup a potential intent as
   // well
@@ -479,6 +495,9 @@ void RootEntry::removeAgentRegisterAndCommit() {
         "a non-empty intended agent register. Internal error.");
     }
     iar.remove();
+    log::ScopedParamContainer params(lc);
+    params.add("agentRegisterObject", iar.getAddressIfSet());
+    lc.log(log::INFO, "In RootEntry::removeAgentRegisterAndCommit(): removed agent register");
     m_payload.set_agentregisterintent("");
     commit();
   }
@@ -493,12 +512,15 @@ void RootEntry::removeAgentRegisterAndCommit() {
         "register is not empty. Cannot remove.");
     }
     ar.remove();
+    log::ScopedParamContainer params(lc);
+    params.add("agentRegisterObject", ar.getAddressIfSet());
+    lc.log(log::INFO, "In RootEntry::removeAgentRegisterAndCommit(): removed agent register.");
     m_payload.mutable_agentregisterpointer()->set_address("");
     commit();
   }
 }
 
-void RootEntry::addIntendedAgentRegistry(const std::string& address) {
+void RootEntry::addIntendedAgentRegistry(const std::string& address, log::LogContext & lc) {
   checkPayloadWritable();
   // We are supposed to have only one intended agent registry at a time.
   // If we got the lock and there is one entry, this means the previous
@@ -525,6 +547,9 @@ void RootEntry::addIntendedAgentRegistry(const std::string& address) {
           "found a non-empty intended agent register. Internal Error.");
       }
       iar.remove();
+      log::ScopedParamContainer params (lc);
+      params.add("agentRegisterObject", iar.getAddressIfSet());
+      lc.log(log::INFO, "In RootEntry::addIntendedAgentRegistry(): removed agent register.");
     }
   }
   m_payload.set_agentregisterintent(address);
@@ -577,7 +602,7 @@ std::string RootEntry::addOrGetSchedulerGlobalLockAndCommit(AgentReference& agen
   }
 }
 
-void RootEntry::removeSchedulerGlobalLockAndCommit() {
+void RootEntry::removeSchedulerGlobalLockAndCommit(log::LogContext & lc) {
   checkPayloadWritable();
   // Get the address of the scheduler lock (nothing to do if there is none)
   if (!m_payload.has_schedulerlockpointer() ||
@@ -594,6 +619,9 @@ void RootEntry::removeSchedulerGlobalLockAndCommit() {
   }
   // we can delete the drive register
   sgl.remove();
+  log::ScopedParamContainer params(lc);
+  params.add("schedulerGlobalLockObject", sgl.getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeSchedulerGlobalLockAndCommit(): removed scheduler global lock object.");
   // And update the root entry
   m_payload.mutable_schedulerlockpointer()->set_address("");
   // We commit for safety and symmetry with the add operation

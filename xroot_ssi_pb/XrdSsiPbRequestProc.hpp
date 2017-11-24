@@ -138,10 +138,6 @@ private:
 template <typename RequestType, typename MetadataType, typename AlertType>
 void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 {
-   const int ExecuteTimeout = 600;    //< Maximum no. of seconds to wait before deleting myself
-                                      //< What is a sensible number? Does it need to be configurable?
-                                      //< In any case it should be <= timeout on the client side?
-
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] RequestProc::Execute()" << std::endl;
 #endif
@@ -204,14 +200,7 @@ void RequestProc<RequestType, MetadataType, AlertType>::Execute()
 
    auto finished = m_promise.get_future();
 
-   if(finished.wait_for(std::chrono::seconds(ExecuteTimeout)) == std::future_status::timeout)
-   {
-      throw XrdSsiException("RequestProc::Finished() was never called!");
-
-      // Should call Finished(true) instead of throwing an exception, waiting for Andy to comment on
-      // whether the handling of Finished() is reentrant in the framework, or whether the application
-      // has to manage it.
-   }
+   finished.wait();
 }
 
 
@@ -234,7 +223,10 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
 
    if(cancel)
    {
-      // Reclaim resources dedicated to the request and then tell caller the request object can be reclaimed.
+      // Reclaim resources dedicated to the request and tell caller the request object can be reclaimed
+#ifdef XRDSSI_DEBUG
+      std::cerr << "[DEBUG] Request timed out or was cancelled" << std::endl;
+#endif
    }
    else
    {
@@ -242,7 +234,6 @@ void RequestProc<RequestType, MetadataType, AlertType>::Finished(XrdSsiRequest &
    }
 
    // Tell Execute() that we have Finished()
-
    m_promise.set_value();
 }
 

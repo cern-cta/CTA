@@ -172,6 +172,10 @@ std::string BackendVFS::read(std::string name) {
   std::string ret;
   std::ifstream file(path.c_str());
   if (!file) {
+    if (errno == ENOENT) {
+      throw Backend::NoSuchObject(
+          "In ObjectStoreVFS::read, failed to open file for read: No such object.");
+    }
     throw cta::exception::Errnum(
         std::string("In ObjectStoreVFS::read, failed to open file for read: ") +
         path);

@@ -38,14 +38,11 @@ namespace cta {
       failures++;
     }
     
-    virtual void asyncSetJobSucceed() override {
+    virtual void reportJobSucceeded() {
       completes++;
     }
-    virtual bool checkAndAsyncReportComplete() override {
-      return false;
-    }    
+    
     virtual void validate() override  {}
-    virtual void writeToCatalogue() override {}
     virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten() override {
       catalogue::TapeFileWritten fileReport;
       fileReport.archiveFileId = archiveFile.archiveFileID;

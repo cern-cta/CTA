@@ -22,6 +22,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "catalogue/TapePool.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
@@ -51,7 +52,6 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/dataStructures/TapeFile.hpp"
-#include "common/dataStructures/TapePool.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/VerifyInfo.hpp"
@@ -154,7 +154,8 @@ public:
    * Prepares for a file retrieval by returning the information required to
    * queue the associated retrieve request(s).
    *
-   * @param instanceName The name of the instance from where the retrieval request originated
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
    * @param archiveFileId The unique identifier of the archived file that is
    * to be retrieved.
    * @param user The user for whom the file is to be retrieved.  This will be
@@ -165,8 +166,32 @@ public:
    * @return The information required to queue the associated retrieve request(s).
    */
   virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
-    const std::string &instanceName,
+    const std::string &diskInstanceName,
     const uint64_t archiveFileId,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc) = 0;
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   * @param lc The log context.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(
+    const std::string &diskInstanceName,
+    const std::string &diskFileId,
     const common::dataStructures::UserIdentity &user,
     log::LogContext &lc) = 0;
 
@@ -230,7 +255,7 @@ public:
 
   virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) = 0;
   virtual void deleteTapePool(const std::string &name) = 0;
-  virtual std::list<common::dataStructures::TapePool> getTapePools() const = 0;
+  virtual std::list<TapePool> getTapePools() const = 0;
   virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
   virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool encryptionValue) = 0;
@@ -506,6 +531,27 @@ public:
    * the associated and also deleted tape copies.
    */
   virtual void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+    log::LogContext &lc) = 0;
+
+  /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param diskInstanceName The name of the instance from where the deletion
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  virtual void deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
     log::LogContext &lc) = 0;
 
   /**

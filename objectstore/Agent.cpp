@@ -47,7 +47,7 @@ void cta::objectstore::Agent::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::Agent::insertAndRegisterSelf() {
+void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
   // We suppose initialize was already called, and that the agent name
   // is set.
   // We need to get hold of the agent register, which we suppose is available
@@ -70,7 +70,7 @@ void cta::objectstore::Agent::insertAndRegisterSelf() {
   arLock.release();
 }
 
-void cta::objectstore::Agent::removeAndUnregisterSelf() {
+void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
   // Check that we own the proper lock
   checkPayloadWritable();
   // Check that we are not empty
@@ -85,13 +85,14 @@ void cta::objectstore::Agent::removeAndUnregisterSelf() {
   }
   // First delete ourselves
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("agentObject", getAddressIfSet());
+  lc.log(log::INFO, "In Agent::removeAndUnregisterSelf(): Removed agent object.");
   // Then we remove the dangling pointer about ourselves in the agent register.
   // We need to get hold of the agent register, which we suppose is available
   RootEntry re(m_objectStore);
-  ScopedSharedLock reLock(re);
-  re.fetch();
+  re.fetchNoLock();
   AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
-  reLock.release();
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);
   ar.fetch();

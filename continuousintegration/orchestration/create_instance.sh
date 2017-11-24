@@ -245,7 +245,7 @@ kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespac
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
 kubectl --namespace=${instance} exec kdc cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /root/user1.keytab"
-kubectl --namespace=${instance} exec kdc cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/cta-frontend.krb5.keytab"
+kubectl --namespace=${instance} exec kdc cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/cta/cta-frontend.krb5.keytab"
 kubectl --namespace=${instance} exec kdc cat /root/eos-server.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/eos-server.krb5.keytab"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
@@ -275,11 +275,13 @@ kubectl --namespace=${instance} exec ctacli klist
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  [ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/ctafrontend_SSS_c.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
+  [ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/ctafrontend_SSS_c.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
-kubectl --namespace=${instance} exec ctafrontend -- cat /etc/ctafrontend_SSS_c.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/ctafrontend_SSS_c.keytab; chmod 600 /etc/ctafrontend_SSS_c.keytab; chown daemon /etc/ctafrontend_SSS_c.keytab"
+[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+# just in case /etc/cta directory does not exist yet
+kubectl --namespace=${instance} exec -i ctaeos --  bash -c "mkdir -p /etc/cta"
+kubectl --namespace=${instance} exec ctafrontend -- cat /etc/cta/cta-cli.sss.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/cta/cta-cli.sss.keytab; chmod 600 /etc/cta/cta-cli.sss.keytab; chown daemon /etc/cta/cta-cli.sss.keytab"
 echo OK
 
 

@@ -281,10 +281,7 @@ int acceptConnection(const int listenSocketFd) {
 // acceptConnection
 //------------------------------------------------------------------------------
 int acceptConnection(const int listenSocketFd,
-  const time_t timeout) throw(
-    cta::exception::TimeOut,
-    cta::exception::AcceptConnectionInterrupted,
-    cta::exception::Exception) {
+  const time_t timeout) {
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
@@ -581,7 +578,7 @@ std::string getPeerHostName(const int socketFd) {
 //------------------------------------------------------------------------------
 void writeIp(
   std::ostream        &os,
-  const unsigned long ip) throw() {
+  const unsigned long ip) noexcept {
   os << ((ip >> 24) & 0x000000FF) << "."
      << ((ip >> 16) & 0x000000FF) << "."
      << ((ip >>  8) & 0x000000FF) << "."
@@ -593,7 +590,7 @@ void writeIp(
 //------------------------------------------------------------------------------
 void writeSockDescription(
   std::ostream &os,
-  const int    socketFd) throw() {
+  const int    socketFd) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -827,8 +824,7 @@ static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
 int connectWithTimeout(
   const std::string    &hostName,
   const unsigned short port,
-  const int            timeout)
-  throw(cta::exception::TimeOut, cta::exception::Exception) {
+  const int            timeout) {
   try {
     std::ostringstream portStream;
     portStream << port;
@@ -890,8 +886,7 @@ int connectWithTimeout(
   const int             sockProtocol,
   const struct sockaddr *address,
   const socklen_t       address_len,
-  const int             timeout)
-  throw(cta::exception::TimeOut, cta::exception::Exception) {
+  const int             timeout) {
 
   // Create the socket for the new connection
   SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));

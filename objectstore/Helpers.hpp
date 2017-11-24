@@ -57,6 +57,7 @@ public:
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
     const std::string & tapePoolOrVid, log::LogContext & lc);
   
+  CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**
    * Find the most appropriate queue (bid) to add the retrieve request to. The potential
    * VIDs (VIDs for non-failed copies) is provided by the caller. The status of the

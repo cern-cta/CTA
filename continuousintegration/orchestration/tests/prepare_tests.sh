@@ -134,3 +134,4 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta adminhost add --name ${clien
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl --namespace=${NAMESPACE} exec kdc cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"

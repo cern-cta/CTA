@@ -187,9 +187,10 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFacto
   objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+  log::LogContext lc(*m_logger);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
   rel.release();
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
@@ -220,9 +221,10 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFact
   objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl);
+  log::LogContext lc(*m_logger);
+  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
   rel.release();
-  agent.insertAndRegisterSelf();
+  agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
   re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);

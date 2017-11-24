@@ -115,6 +115,7 @@ public:
   void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */
+  class ArchiveJob;
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
@@ -123,11 +124,16 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
       uint64_t bytesRequested, log::LogContext& logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  private:
+    OStoreDB::ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
+  public:
+    std::set<cta::SchedulerDatabase::ArchiveJob*> setJobBatchSuccessful(
+      std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext & lc) override;
   };
   friend class ArchiveMount;
   
@@ -138,8 +144,10 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void fail(log::LogContext & lc) override;
-    void asyncSucceed() override;
-    bool checkSucceed() override;
+  private:
+    void asyncSucceed();
+    bool waitAsyncSucceed();
+  public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
@@ -207,7 +215,7 @@ public:
       objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger): m_request(be), m_lock(), m_objectStore(be),
       m_catalogue(catalogue), m_logger(logger), m_agentReference(agentReference), m_closed(false) {} 
     virtual ~ArchiveToFileRequestCancelation();
-    void complete() override;
+    void complete(log::LogContext & lc) override;
   private:
     objectstore::ArchiveRequest m_request;
     objectstore::ScopedExclusiveLock m_lock;

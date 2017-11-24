@@ -50,9 +50,9 @@ public:
 
   void initialize();
 
-  void insertAndRegisterSelf();
+  void insertAndRegisterSelf(log::LogContext & lc);
   
-  void removeAndUnregisterSelf();
+  void removeAndUnregisterSelf(log::LogContext & lc);
   
   bool isEmpty();
   

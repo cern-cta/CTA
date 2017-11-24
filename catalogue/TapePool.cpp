@@ -16,30 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/TapePool.hpp"
-#include "common/dataStructures/utils.hpp"
-#include "common/exception/Exception.hpp"
+#include "catalogue/TapePool.hpp"
 
 namespace cta {
-namespace common {
-namespace dataStructures {
+namespace catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 TapePool::TapePool():
-  nbPartialTapes(0) {}
+  nbPartialTapes(0),
+  encryption(false),
+  nbTapes(0),
+  capacityGigabytes(0),
+  dataGigabytes(0) {
+}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool TapePool::operator==(const TapePool &rhs) const {
-  return name==rhs.name
-      && nbPartialTapes==rhs.nbPartialTapes
-      && encryption==rhs.encryption
-      && creationLog==rhs.creationLog
-      && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+  return name == rhs.name;
 }
 
 //------------------------------------------------------------------------------
@@ -56,12 +53,14 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   os << "(name=" << obj.name
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
+     << " nbTapes=" << obj.nbTapes
+     << " capacityGigabytes=" << obj.capacityGigabytes
+     << " dataGigabytes=" << obj.dataGigabytes
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
+} // namespace catalogue
 } // namespace cta

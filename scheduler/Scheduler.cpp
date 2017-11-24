@@ -701,7 +701,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             return std::unique_ptr<TapeMount> (internalRet.release());
           } catch (cta::exception::Exception & ex) {
             log::ScopedParamContainer params(lc);
-            params.add("Message", ex.getMessage());
+            params.add("Message", ex.getMessage().str());
             lc.log(log::WARNING, "In Scheduler::getNextMount(): got an exception trying to schedule an archive mount. Trying others.");
             continue;
           }
@@ -759,7 +759,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         return std::unique_ptr<TapeMount> (internalRet.release()); 
       } catch (exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
-        params.add("Message", ex.getMessage());
+        params.add("Message", ex.getMessage().str());
         lc.log(log::WARNING, "In Scheduler::getNextMount(): got an exception trying to schedule a retrieve mount. Trying others.");
         continue;
       }

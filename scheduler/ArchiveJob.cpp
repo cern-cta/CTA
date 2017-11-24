@@ -41,23 +41,12 @@ cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
   tapeFile(tapeFile) {}
 
 //------------------------------------------------------------------------------
-// asyncSetJobSucceed
+// asyncReportComplete
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::asyncSetJobSucceed() {
-  m_dbJob->asyncSucceed();
-}
-
-//------------------------------------------------------------------------------
-// checkAndReportComplete
-//------------------------------------------------------------------------------
-bool cta::ArchiveJob::checkAndAsyncReportComplete() {
-  if (m_dbJob->checkSucceed()) {
-    m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
-    m_reporter->asyncReportArchiveFullyComplete();
-    m_reporterTimer.reset();
-    return true;
-  }
-  return false;
+void cta::ArchiveJob::asyncReportComplete() {
+  m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
+  m_reporter->asyncReportArchiveFullyComplete();
+  m_reporterTimer.reset();
 }
 
 //------------------------------------------------------------------------------
@@ -67,30 +56,6 @@ double cta::ArchiveJob::reportTime() {
   return m_reporterTimer.secs();
 }
 
-//------------------------------------------------------------------------------
-// ArchiveJob::writeToCatalogue
-//------------------------------------------------------------------------------
-void cta::ArchiveJob::writeToCatalogue() {
-  catalogue::TapeFileWritten fileReport;
-  fileReport.archiveFileId = archiveFile.archiveFileID;
-  fileReport.blockId = tapeFile.blockId;
-  fileReport.checksumType = tapeFile.checksumType;
-  fileReport.checksumValue = tapeFile.checksumValue;
-  fileReport.compressedSize = tapeFile.compressedSize;
-  fileReport.copyNb = tapeFile.copyNb;
-  fileReport.diskFileId = archiveFile.diskFileId;
-  fileReport.diskFileUser = archiveFile.diskFileInfo.owner;
-  fileReport.diskFileGroup = archiveFile.diskFileInfo.group;
-  fileReport.diskFilePath = archiveFile.diskFileInfo.path;
-  fileReport.diskFileRecoveryBlob = archiveFile.diskFileInfo.recoveryBlob;
-  fileReport.diskInstance = archiveFile.diskInstance;
-  fileReport.fSeq = tapeFile.fSeq;
-  fileReport.size = archiveFile.fileSize;
-  fileReport.storageClassName = archiveFile.storageClass;
-  fileReport.tapeDrive = m_mount.getDrive();
-  fileReport.vid = tapeFile.vid;
-  m_catalogue.filesWrittenToTape (std::set<catalogue::TapeFileWritten>{fileReport});
-}
 //------------------------------------------------------------------------------
 // ArchiveJob::validateAndGetTapeFileWritten
 //------------------------------------------------------------------------------

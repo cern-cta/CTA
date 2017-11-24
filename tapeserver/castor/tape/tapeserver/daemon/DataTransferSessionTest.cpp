@@ -573,12 +573,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       tapeFileWritten.checksumValue="0xDEADBEEF";
       tapeFileWritten.vid=volInfo.vid;
       tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=1;
+      tapeFileWritten.fSeq=fseq;
       tapeFileWritten.blockId=0;
       tapeFileWritten.copyNb=1;
       tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
-      tapeFileWritten.diskFileId = 1;
+      tapeFileWritten.diskFileId = std::to_string(fseq);
       tapeFileWritten.diskFilePath = "/somefile";
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
@@ -598,7 +598,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       tapeFileWritten.copyNb=1;
       tapeFileWritten.compressedSize=archiveFileSize; // No compression
       tapeFileWritten.diskInstance = s_diskInstance;
-      tapeFileWritten.diskFileId = fseq;
+      tapeFileWritten.diskFileId = std::to_string(fseq + 1);
       tapeFileWritten.diskFilePath = remoteFilePath.str();
       tapeFileWritten.diskFileUser = s_userName;
       tapeFileWritten.diskFileGroup = "someGroup";
@@ -1260,7 +1260,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
-      ar.diskFileID = "x";
+      ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
@@ -1538,7 +1538,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
-      ar.diskFileID = "x";
+      ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
@@ -1688,7 +1688,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
-      ar.diskFileID = "x";
+      ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";

@@ -51,11 +51,7 @@ public:
   class JobDump {
   public:
     uint64_t copyNb;
-    uint32_t maxTotalRetries;
-    uint32_t maxRetriesWithinMount;
-    uint32_t retriesWithinMount;
-    uint32_t totalRetries;
-    // TODO: status
+    serializers::RetrieveJobStatus status;
   };
   // An asynchronous job ownership updating class.
   class AsyncJobDeleter {
@@ -68,9 +64,9 @@ public:
   AsyncJobDeleter * asyncDeleteJob();
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint16_t copyNumber, uint64_t mountId); /**< Returns true is the request is completely failed 
+  bool addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc); /**< Returns true is the request is completely failed 
                                                                    (telling wheather we should requeue or not). */
-  bool finishIfNecessary();                   /**< Handling of the consequences of a job status change for the entire request.
+  bool finishIfNecessary(log::LogContext & lc);                   /**< Handling of the consequences of a job status change for the entire request.
                                                * This function returns true if the request got finished. */
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
   // Mark all jobs as pending mount (following their linking to a tape pool)

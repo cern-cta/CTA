@@ -87,7 +87,7 @@ bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
 }
 
 bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
-    uint64_t mountId) {
+    uint64_t mountId, log::LogContext & lc) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures 
@@ -104,7 +104,7 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::AJS_Failed);
-      finishIfNecessary();
+      finishIfNecessary(lc);
       return true;
     } else {
       j.set_status(serializers::AJS_PendingMount);
@@ -271,6 +271,7 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
     ret.back().owner = j->owner();
+    ret.back().status = j->status();
   }
   return ret;
 }
@@ -313,6 +314,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         jd.copyNb = j->copynb();
         jd.tapePool = j->tapepool();
         jd.owner = j->owner();
+        jd.status = j->status();
         if (aq.addJobIfNecessary(jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time))
           aq.commit();
@@ -348,6 +350,9 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         params.add("jobObject", getAddressIfSet())
               .add("queueObject", queueObject)
               .add("presumedOwner", presumedOwner)
+              .add("copyNb", j->copynb())
+              .add("queueUpdateTime", queueUpdateTime)
+              .add("commitUnlockQueueTime", commitUnlockQueueTime)
               .add("sleepTime", sleepTime);
         lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
       } catch (...) {
@@ -372,7 +377,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         }        
         // This could be the end of the request, with various consequences.
         // This is handled here:
-        if (finishIfNecessary()) {
+        if (finishIfNecessary(lc)) {
           std::string message="In ArchiveRequest::garbageCollect(): failed to requeue the job. Failed it and removed the request as a consequence.";
           if (backtrace.size()) message += " Backtrace follows.";
           lc.log(log::ERR, message);
@@ -551,7 +556,7 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
 }
 
 
-bool ArchiveRequest::finishIfNecessary() {
+bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   checkPayloadWritable();
   // This function is typically called after changing the status of one job
   // in memory. If the request is complete, we will just remove it.
@@ -564,6 +569,9 @@ bool ArchiveRequest::finishIfNecessary() {
     if (!finishedStatuses.count(j.status()))
       return false;
   remove();
+  log::ScopedParamContainer params(lc);
+  params.add("archiveRequestObject", getAddressIfSet());
+  lc.log(log::INFO, "In ArchiveRequest::finishIfNecessary(): Removed completed request.");
   return true;
 }
 
@@ -578,5 +586,4 @@ std::string ArchiveRequest::dump() {
 }
 
 }} // namespace cta::objectstore
-
 

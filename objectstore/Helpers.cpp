@@ -62,7 +62,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference));
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference, lc));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -286,7 +286,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
   }
   // We now have all the candidates listed (if any).
   if (candidateVidsStats.empty())
-    throw exception::NonRetryableError("In Helpers::selectBestRetrieveQueue(): no tape available to recall from.");
+    throw NoTapeAvailableForRetrieve("In Helpers::selectBestRetrieveQueue(): no tape available to recall from.");
   // Sort the tapes.
   candidateVidsStats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
   // Get a list of equivalent best tapes
@@ -396,11 +396,12 @@ void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclus
     RootEntry re(be);
     re.fetchNoLock();
     DriveRegister dr(re.getDriveRegisterAddress(), be);
-    dr.fetch();
+    dr.fetchNoLock();
     driveState.setAddress(dr.getDriveAddress(driveName));
     driveStateLock.lock(driveState);
     driveState.fetch();
     if (driveState.getOwner() != dr.getAddressIfSet()) {
+      std::string previouslySeenOwner=driveState.getOwner();
       // We have a special case: the drive state is not owned by the
       // drive register.
       // As we are lock free, we will re-lock in proper order.
@@ -408,12 +409,20 @@ void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclus
       ScopedExclusiveLock drl(dr);
       dr.fetch();
       // Re-get the state (could have changed).
+      driveState.resetAddress();
       driveState.setAddress(dr.getDriveAddress(driveName));
       driveStateLock.lock(driveState);
+      driveState.fetch();
       // We have an exclusive lock on everything. We can now
       // safely switch the owner of the drive status to the drive register
       // (there is no other steady state ownership).
       // return all as we are done.
+      log::ScopedParamContainer params (lc);
+      params.add("driveRegisterObject", dr.getAddressIfSet())
+            .add("driveStateObject", driveState.getAddressIfSet())
+            .add("driveStateCurrentOwner", driveState.getOwner())
+            .add("driveStatePreviouslySeenOwner", previouslySeenOwner);
+      lc.log(log::WARNING, "In Helpers::getLockedAndFetchedDriveState(): unexpected owner for driveState (should be register, will fix it).");
       if (driveState.getOwner() != dr.getAddressIfSet()) {
         driveState.setOwner(dr.getAddressIfSet());
         driveState.commit();
@@ -457,12 +466,15 @@ void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclus
       driveState.setAddress(agentReference.nextId(std::string ("DriveStatus-")+driveName));
       driveState.initialize(driveName);
       agentReference.addToOwnership(driveState.getAddressIfSet(), be);
+      driveState.setOwner(agentReference.getAgentAddress());
       driveState.insert();
       dr.setDriveAddress(driveName, driveState.getAddressIfSet());
       dr.commit();
-      agentReference.removeFromOwnership(driveState.getAddressIfSet(), be);
       driveStateLock.lock(driveState);
       driveState.fetch();
+      driveState.setOwner(dr.getAddressIfSet());
+      driveState.commit();
+      agentReference.removeFromOwnership(driveState.getAddressIfSet(), be);
       return;
     }
   }

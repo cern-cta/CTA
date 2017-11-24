@@ -27,11 +27,12 @@
 
 #include <memory>
 #include <atomic>
+#include <queue>
 
 namespace cta {
   /**
    * The class driving a retrieve mount.
-   * The class only has private constructors as it is instanciated by
+   * The class only has private constructors as it is instantiated by
    * the Scheduler class.
    */
   class ArchiveMount: public TapeMount {
@@ -54,6 +55,7 @@ namespace cta {
 
     CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
     CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+    CTA_GENERATE_EXCEPTION_CLASS(FailedMigrationRecallResult);
 
     /**
      * Returns The type of this tape mount.
@@ -121,6 +123,15 @@ namespace cta {
      */
     std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext &logContext);
+    
+    /**
+     * Report a batch of jobs successes. The reporting will be asynchronous behind
+     * the scenes.
+     *
+     * @param successfulArchiveJobs the jobs to report
+     * @param logContext
+     */
+    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs, cta::log::LogContext &logContext);
     
     /**
      * Returns the tape pool of the tape to be mounted.

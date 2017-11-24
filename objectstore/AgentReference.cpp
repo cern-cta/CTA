@@ -28,6 +28,8 @@
 
 namespace cta { namespace objectstore {
 
+std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
+
 AgentReference::AgentReference(const std::string & clientType, log::Logger &logger):
 m_logger(logger) {
   m_nextId=0;
@@ -41,6 +43,7 @@ m_logger(logger) {
   cta::exception::Errnum::throwOnMinusOne(::gethostname(host, sizeof(host)),
     "In AgentId::AgentId:  failed to gethostname");
   // gettid is a safe system call (never fails)
+  uint64_t id=g_nextAgentId++;
   aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
     << 1900 + localNow.tm_year
     << std::setfill('0') << std::setw(2) 
@@ -48,7 +51,8 @@ m_logger(logger) {
     << std::setw(2) << localNow.tm_mday << "-"
     << std::setw(2) << localNow.tm_hour << ":"
     << std::setw(2) << localNow.tm_min << ":"
-    << std::setw(2) << localNow.tm_sec;
+    << std::setw(2) << localNow.tm_sec << "-"
+    << id;
   m_agentAddress = aid.str();
   // Initialize the serialization token for queued actions (lock will make helgrind 
   // happy, but not really needed
@@ -84,7 +88,7 @@ void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdr
   for (const auto & oa: objectAdresses) {
     ag.addToOwnership(oa);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", oa);
+    params.add("ownedObject", oa);
     lc.log(log::DEBUG, "In AgentReference::addBatchToOwnership(): added object to ownership.");
   }
   ag.commit();
@@ -105,7 +109,7 @@ void AgentReference::removeBatchFromOwnership(const std::list<std::string>& obje
   for (const auto & oa: objectAdresses) {
     ag.removeFromOwnership(oa);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", oa);
+    params.add("ownedObject", oa);
     lc.log(log::DEBUG, "In AgentReference::removeBatchFromOwnership(): removed object from ownership.");
   }
   ag.commit();
@@ -216,7 +220,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::
   {
     agent.addToOwnership(action.objectAddress);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", action.objectAddress);
+    params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
     break;
   }
@@ -224,7 +228,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::
   {
     agent.removeFromOwnership(action.objectAddress);
     log::ScopedParamContainer params(lc);
-    params.add("ownedOdject", action.objectAddress);
+    params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
     break;
   }

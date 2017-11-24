@@ -836,7 +836,7 @@ std::string XrdCtaFile::xCom_tapepool() {
     }
   }
   else if("ls" == m_requestTokens.at(2)) { //ls
-    std::list<cta::common::dataStructures::TapePool> list= m_catalogue->getTapePools();
+    const std::list<cta::catalogue::TapePool> list= m_catalogue->getTapePools();
     if(list.size()>0) {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {"name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"};

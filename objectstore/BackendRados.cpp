@@ -141,9 +141,17 @@ std::string BackendRados::read(std::string name) {
   std::string ret;
   librados::bufferlist bl;
   RadosTimeoutLogger rtl;
-  cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
-      std::string("In ObjectStoreRados::read,  failed to read: ")
-      + name);
+  try { 
+    cta::exception::Errnum::throwOnNegativeErrnoIfNegative(m_radosCtx.read(name, bl, std::numeric_limits<int32_t>::max(), 0),
+        std::string("In ObjectStoreRados::read,  failed to read: ")
+        + name);
+  } catch (cta::exception::Errnum & e) {
+    // If the object is not present, throw a more detailed exception.
+    if (e.errorNumber() == ENOENT) {
+      throw Backend::NoSuchObject(e.getMessageValue());
+      throw;
+    }
+  }
   rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
   bl.copy(0, bl.length(), ret);
   return ret;
@@ -512,7 +520,7 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            m_backend.lock(m_name, 300*1000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the read operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
             RadosTimeoutLogger rtl;
@@ -707,7 +715,7 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
         [this](){
           try {
             m_lockClient = BackendRados::createUniqueClientId();
-            m_backend.lock(m_name, 60*1000, BackendRados::LockType::Exclusive, m_lockClient);
+            m_backend.lock(m_name, 300*1000, BackendRados::LockType::Exclusive, m_lockClient);
             // Locking is done, we can launch the remove operation (async).
             librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, deleteCallback, nullptr);
             m_radosTimeoutLogger.reset();

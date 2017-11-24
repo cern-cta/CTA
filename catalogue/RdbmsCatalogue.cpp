@@ -946,37 +946,58 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapePool> RdbmsCatalogue::getTapePools() const {
+std::list<TapePool> RdbmsCatalogue::getTapePools() const {
   try {
-    std::list<common::dataStructures::TapePool> pools;
+    std::list<TapePool> pools;
     const char *const sql =
       "SELECT "
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
-        "IS_ENCRYPTED AS IS_ENCRYPTED,"
+        "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
+        "COALESCE(ROUND(SUM(CAPACITY_IN_BYTES)/1000000000), 0) AS CAPACITY_IN_GB,"
+        "COALESCE(ROUND(SUM(DATA_IN_BYTES)/1000000000), 0) AS DATA_IN_GB,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE_POOL.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "TAPE_POOL "
+      "LEFT OUTER JOIN TAPE ON "
+        "TAPE_POOL.TAPE_POOL_NAME = TAPE.TAPE_POOL_NAME "
+      "GROUP BY "
+        "TAPE_POOL.TAPE_POOL_NAME,"
+        "TAPE_POOL.NB_PARTIAL_TAPES,"
+        "TAPE_POOL.IS_ENCRYPTED,"
+        "TAPE_POOL.USER_COMMENT,"
+        "TAPE_POOL.CREATION_LOG_USER_NAME,"
+        "TAPE_POOL.CREATION_LOG_HOST_NAME,"
+        "TAPE_POOL.CREATION_LOG_TIME,"
+        "TAPE_POOL.LAST_UPDATE_USER_NAME,"
+        "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
+        "TAPE_POOL.LAST_UPDATE_TIME "
       "ORDER BY "
         "TAPE_POOL_NAME";
+
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     auto rset = stmt->executeQuery();
     while (rset.next()) {
-      common::dataStructures::TapePool pool;
+      TapePool pool;
 
       pool.name = rset.columnString("TAPE_POOL_NAME");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
+      pool.nbTapes = rset.columnUint64("NB_TAPES");
+      pool.capacityGigabytes = rset.columnUint64("CAPACITY_IN_GB");
+      pool.dataGigabytes = rset.columnUint64("DATA_IN_GB");
       pool.comment = rset.columnString("USER_COMMENT");
       pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -3708,7 +3729,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uint64_t id) {
   try {
     auto conn = m_connPool.getConn();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile(getArchiveFile(conn, id));
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile(getArchiveFileByArchiveFileId(conn, id));
 
     // Throw an exception if the archive file does not exist
     if(nullptr == archiveFile.get()) {
@@ -3899,62 +3920,6 @@ void RdbmsCatalogue::updateTape(
 }
 
 //------------------------------------------------------------------------------
-// throwIfCommonEventDataMismatch
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::throwIfCommonEventDataMismatch(const common::dataStructures::ArchiveFile &expected,
-  const TapeFileWritten &actual) const {
-  // Throw an exception if the common disk information of this tape file
-  // written event does not match the previous
-  if(expected.diskFileId != actual.diskFileId) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file ID mismatch: expected=" << expected.diskFileId << " actual=" <<
-    actual.diskFileId;
-    throw ex;
-  }
-  if(expected.fileSize != actual.size) {
-    exception::Exception ex;
-    ex.getMessage() << "File size mismatch: expected=" << expected.fileSize << " actual=" << actual.size;
-    throw ex;
-  }
-  if(expected.storageClass != actual.storageClassName) {
-    exception::Exception ex;
-    ex.getMessage() << "Storage class mismatch: expected=" << expected.storageClass << " actual=" <<
-    actual.storageClassName;
-    throw ex;
-  }
-  if(expected.diskInstance != actual.diskInstance) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk instance mismatch: expected=" << expected.diskInstance << " actual=" <<
-    actual.diskInstance;
-    throw ex;
-  }
-  if(expected.diskFileInfo.path != actual.diskFilePath) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file path mismatch: expected=" << expected.diskFileInfo.path << " actual=" <<
-    actual.diskFilePath;
-    throw ex;
-  }
-  if(expected.diskFileInfo.owner != actual.diskFileUser) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file user mismatch: expected=" << expected.diskFileInfo.owner << " actual=" <<
-    actual.diskFileUser;
-    throw ex;
-  }
-  if(expected.diskFileInfo.group != actual.diskFileGroup) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk file group mismatch: expected=" << expected.diskFileInfo.group << " actual=" <<
-    actual.diskFileGroup;
-    throw ex;
-  }
-  if(expected.diskFileInfo.group != actual.diskFileGroup) {
-    exception::Exception ex;
-    ex.getMessage() << "Disk recovery blob mismatch";
-    throw ex;
-  }
-
-}
-
-//------------------------------------------------------------------------------
 // prepareToRetrieveFile
 //------------------------------------------------------------------------------
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFile(
@@ -3966,7 +3931,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     cta::utils::Timer t;
     auto conn = m_connPool.getConn();
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile = getArchiveFile(conn, archiveFileId);
+    auto archiveFile = getArchiveFileByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     if(nullptr == archiveFile.get()) {
       exception::Exception ex;
@@ -4004,6 +3969,64 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
         " archiveFileId=" << archiveFileId << " path=" << archiveFile->diskFileInfo.path << " requester=" <<
         diskInstanceName << ":" << user.name << ":" << user.group;
+      throw ue;
+    }
+
+    common::dataStructures::RetrieveFileQueueCriteria criteria;
+    criteria.archiveFile = *archiveFile;
+    criteria.mountPolicy = mountPolicy;
+    return criteria;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// prepareToRetrieveFileByDiskFileId
+//------------------------------------------------------------------------------
+common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileId(
+  const std::string &diskInstanceName,
+  const std::string &diskFileId,
+  const common::dataStructures::UserIdentity &user,
+  log::LogContext &lc) {
+  try {
+    cta::utils::Timer t;
+    auto conn = m_connPool.getConn();
+    const auto getConnTime = t.secs(utils::Timer::resetCounter);
+    auto archiveFile = getArchiveFileByDiskFileId(conn, diskInstanceName, diskFileId);
+    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
+    if(nullptr == archiveFile.get()) {
+      exception::Exception ex;
+      ex.getMessage() << "Archive file with disk instance name " << diskInstanceName << " and disk file ID" <<
+        diskFileId << " does not exist";
+      throw ex;
+    }
+
+    t.reset();
+    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
+      user.group);
+     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+
+    log::ScopedParamContainer spc(lc);
+    spc.add("getConnTime", getConnTime)
+       .add("getArchiveFileTime", getArchiveFileTime)
+       .add("getMountPoliciesTime", getMountPoliciesTime);
+    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
+
+    // Requester mount policies overrule requester group mount policies
+    common::dataStructures::MountPolicy mountPolicy;
+    if(!mountPolicies.requesterMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterMountPolicies.front();
+    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+    } else {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
+        " diskInstanceName=" << diskInstanceName << " diskFileId=" << diskFileId << " archiveFileId=" <<
+        archiveFile->archiveFileID << " path=" << archiveFile->diskFileInfo.path << " requester=" << diskInstanceName <<
+        ":" << user.name << ":" << user.group;
       throw ue;
     }
 
@@ -4302,9 +4325,10 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::PooledConn &conn, const std::str
 }
 
 //------------------------------------------------------------------------------
-// getArchiveFile
+// getArchiveFileByArchiveId
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFile(rdbms::PooledConn &conn,
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFileByArchiveFileId(
+  rdbms::PooledConn &conn,
   const uint64_t archiveFileId) const {
   try {
     const char *const sql =
@@ -4336,6 +4360,89 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
     auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
     stmt->bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt->executeQuery();
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
+    while (rset.next()) {
+      if(nullptr == archiveFile.get()) {
+        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+
+        archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+        archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+        archiveFile->diskFileId = rset.columnString("DISK_FILE_ID");
+        archiveFile->diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+        archiveFile->diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
+        archiveFile->diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+        archiveFile->diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
+        archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
+        archiveFile->checksumType = rset.columnString("CHECKSUM_TYPE");
+        archiveFile->checksumValue = rset.columnString("CHECKSUM_VALUE");
+        archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
+        archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+        archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+      }
+
+      // If there is a tape file
+      if(!rset.columnIsNull("VID")) {
+        // Add the tape file to the archive file's in-memory structure
+        common::dataStructures::TapeFile tapeFile;
+        tapeFile.vid = rset.columnString("VID");
+        tapeFile.fSeq = rset.columnUint64("FSEQ");
+        tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+        tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+        tapeFile.copyNb = rset.columnUint64("COPY_NB");
+        tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
+        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
+
+        archiveFile->tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+      }
+    }
+
+    return archiveFile;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileByDiskFileId
+//------------------------------------------------------------------------------
+std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveFileByDiskFileId(
+  rdbms::PooledConn &conn,
+  const std::string &diskInstanceName,
+  const std::string &diskFileId) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "LEFT OUTER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "WHERE "
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+    auto stmt = conn.createStmt(sql, rdbms::Stmt::AutocommitMode::OFF);
+    stmt->bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt->bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt->executeQuery();
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {

@@ -34,6 +34,9 @@
 
 namespace cta { namespace objectstore {
 
+class ArchiveRequest;
+class RetrieveRequest;
+
 class GarbageCollector {
 public:
   GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
@@ -47,8 +50,14 @@ public:
   void checkHeartbeats(log::LogContext & lc);
   
   void cleanupDeadAgent(const std::string & name, log::LogContext & lc);
-  
-  void reinjectOwnedObject(log::LogContext & lc);
+
+  /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
+    * one batch per queue. */
+  struct OwnedObjectSorter {
+    std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    std::list<std::shared_ptr<GenericObject>> otherObjects;
+  };
 private:
   Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;

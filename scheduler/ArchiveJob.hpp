@@ -73,16 +73,14 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ChecksumMismatch);
   
   /**
-   * Indicates that the job was successful and updates the backend store 
-   * asynchronously. 
+   * Start an asynchronous update for a batch of jobs and then make sure they complete.
    */
-  virtual void asyncSetJobSucceed();
-  
+  static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
+public:
   /**
-   * Wait if the job was updated in the backend store asynchronously. 
-   * @return true if the archive was also sent to client asynchronously.
+   * Launch a report to the user.
    */
-  virtual bool checkAndAsyncReportComplete();
+  virtual void asyncReportComplete();
   
   /**
    * Get the report time (in seconds).
@@ -95,11 +93,6 @@ public:
    * Throw appropriate exception if there is any problem.
    */
   virtual void validate();
-  
-  /**
-   * Update the catalog with the archive request.
-   */
-  virtual void writeToCatalogue();
   
   /**
    * Validate that archiveFile and tapeFile fields are set correctly for archive
