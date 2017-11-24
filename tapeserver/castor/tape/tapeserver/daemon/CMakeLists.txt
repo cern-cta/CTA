@@ -70,6 +70,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
       set_property(SOURCE ${CTATAPESERVERDAEMON_LIBRARY_SRC}
         PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
     endforeach(CTATAPESERVERDAEMON_LIBRARY_SRC)
+
+    # Add -Wno-unused-function compiler flag if using gcc version 7 or greater
+    if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+      set_property(SOURCE DataTransferSessionTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
+    endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
   endif(GCC_VERSION_GE_4_8_0)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
@@ -92,6 +97,13 @@ add_library(ctatapeserverdaemonunittests SHARED
 )
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+if(CMAKE_COMPILER_IS_GNUCC)
+  # Add -Wno-unused-function compiler flag if using gcc version 7 or greater
+  if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+    set_property(SOURCE RecallReportPackerTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
+  endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+endif(CMAKE_COMPILER_IS_GNUCC)
 
 target_link_libraries(ctatapeserverdaemonunittests
   ctamessagesutils)
