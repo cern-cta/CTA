@@ -405,7 +405,11 @@ size_t XrootBaseReadFile::size() const {
 
 XrootBaseReadFile::~XrootBaseReadFile() throw() {
   try{
-    m_xrootFile.Close(m_timeout);
+    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
+    // warning (casting the result to void is not good enough for gcc >= 7)
+    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+      // Ignore the error
+    }
   } catch (...) {}
 }
 
@@ -502,7 +506,11 @@ void XrootBaseWriteFile::close()  {
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
   if(!m_closeTried){
-    m_xrootFile.Close(m_timeout);
+    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
+    // warning (casting the result to void is not good enough for gcc >= 7)
+    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+      // Ignore the error
+    }
   }
 }
 
@@ -543,7 +551,11 @@ size_t EosReadFile::size() const {
 
 EosReadFile::~EosReadFile() throw() {
   try{
-    m_xrootFile.Close(m_timeout);
+    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
+    // warning (casting the result to void is not good enough for gcc >= 7)
+    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+      // Ignore the error
+    }
   } catch (...) {}
 }
 
@@ -586,7 +598,11 @@ void EosWriteFile::close()  {
 
 EosWriteFile::~EosWriteFile() throw() {
   if(!m_closeTried){
-    m_xrootFile.Close(m_timeout);
+    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
+    // warning (casting the result to void is not good enough for gcc >= 7)
+    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+      // Ignore the error
+    }
   }
 }
 
