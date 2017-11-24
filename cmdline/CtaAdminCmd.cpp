@@ -55,8 +55,8 @@ template<>
 void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
 {
    google::protobuf::io::ArrayInputStream raw_stream(response_bufptr, response_buflen);
+   google::protobuf::io::CodedInputStream coded_stream(&raw_stream);
 
-   //google::protobuf::io::CodedInputStream coded_stream(&raw_stream);
    // coded_in->ReadVarint32(&n);
    // cout << "#" << n << endl;
    //
@@ -93,9 +93,21 @@ void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, cha
 
    for(int i = 0; i < 10; ++i)
    {
-   item.ParseFromBoundedZeroCopyStream(&raw_stream, 18);
+      uint32_t bytesize;
+      coded_stream.ReadLittleEndian32(&bytesize);
+std::cout << "Bytesize = " << bytesize << std::endl;
 
-   OutputJsonString(std::cout, &item);
+      const char *buf_ptr;
+      int buf_len;
+      coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
+std::cout << "buf_len = " << buf_len << std::endl;
+      item.ParseFromArray(buf_ptr, bytesize);
+      coded_stream.Skip(bytesize);
+
+      //coded_stream.Skip(bytesize);
+      //item.ParseFromBoundedZeroCopyStream(&raw_stream, bytesize);
+
+      OutputJsonString(std::cout, &item);
 
    std::cout << std::setfill(' ') << std::setw(7)  << std::right << item.af().archive_file_id() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << item.copy_nb()              << ' '

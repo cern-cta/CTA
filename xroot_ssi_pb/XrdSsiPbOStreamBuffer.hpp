@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <arpa/inet.h>
 #include <XrdSsi/XrdSsiStream.hh>
 
 namespace XrdSsiPb {
@@ -60,8 +59,8 @@ public:
       uint32_t bytesize = pb.ByteSize();
       data = new char[bytesize + sizeof(uint32_t)];
 
-      // Write the size into the buffer in network order
-      *reinterpret_cast<uint32_t*>(data) = htonl(bytesize);
+      // Write the size into the buffer
+      google::protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(bytesize, reinterpret_cast<google::protobuf::uint8*>(data));
 
       // Serialize the Protocol Buffer
       pb.SerializeToArray(data + sizeof(uint32_t), bytesize);
