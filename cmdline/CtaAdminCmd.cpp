@@ -21,12 +21,12 @@
 #include <iostream>
 #include <iomanip>
 
+#include <XrdSsiPbDebug.hpp>
+#include <XrdSsiPbIStreamBuffer.hpp>
+
 #include "cmdline/Configuration.hpp"
 #include "CtaAdminCmd.hpp"
-#include "XrdSsiPbDebug.hpp"
 
-// Move to generic headers
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
 
 // Define XRootD SSI Alert message callback
@@ -42,68 +42,6 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
    OutputJsonString(std::cout, &alert);
-}
-
-
-
-/*!
- * Data callback.
- *
- * Defines how Data/Stream messages should be handled
- */
-template<>
-void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
-{
-   google::protobuf::io::CodedInputStream coded_stream(reinterpret_cast<const uint8_t*>(response_bufptr), response_buflen);
-
-   cta::admin::ArchiveFileLsItem line_item;
-
-   uint32_t bytesize;
-   int buf_len;
-
-   do
-   {
-      const char *buf_ptr;
-      coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
-std::cout << "buf_len = " << buf_len << std::endl;
-
-      if(buf_len < static_cast<int>(sizeof(uint32_t))) {
-         throw std::runtime_error("Not enough data to read size of next protobuf");
-      }
-
-      coded_stream.ReadLittleEndian32(&bytesize);
-std::cout << "Bytesize = " << bytesize << std::endl;
-
-      coded_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len);
-std::cout << "buf_len = " << buf_len << std::endl;
-
-      if(buf_len < static_cast<int>(bytesize)) {
-         throw std::runtime_error("Not enough data in stream");
-      }
-
-      line_item.ParseFromArray(buf_ptr, bytesize);
-      coded_stream.Skip(bytesize);
-
-      //OutputJsonString(std::cout, &line_item);
-
-      std::cout << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().archive_file_id() << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.copy_nb()              << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().vid()             << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().f_seq()           << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.tf().block_id()        << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().disk_instance()   << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().disk_file_id()    << ' '
-                << std::setfill(' ') << std::setw(12) << std::right << line_item.af().file_size()       << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().cs().type()       << ' '
-                << std::setfill(' ') << std::setw(14) << std::right << line_item.af().cs().value()      << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().storage_class()   << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().owner()      << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().group()      << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().creation_time()   << ' '
-                << line_item.af().df().path() << std::endl;
-   }
-   while(buf_len != static_cast<int>(bytesize));
-
 }
 
 } // namespace XrdSsiPb

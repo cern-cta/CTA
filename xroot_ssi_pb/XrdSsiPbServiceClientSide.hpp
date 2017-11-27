@@ -41,7 +41,7 @@ namespace XrdSsiPb {
 // Constants
 
 const unsigned int DefaultResponseBufferSize = 89;       //!< Default size for the response buffer in bytes
-const unsigned int DefaultRequestTimeout     = 15;         //!< Default XRootD request timeout in secs
+const unsigned int DefaultRequestTimeout     = 15;       //!< Default XRootD request timeout in secs
 // Better to get the default from XRD_REQUESTTIMEOUT if it is not set explicitly?
 // Decide on order of precedence for setting request timeout
 
@@ -50,7 +50,7 @@ const unsigned int DefaultRequestTimeout     = 15;         //!< Default XRootD r
 /*!
  * Convenience object to manage the XRootD SSI service on the client side
  */
-template <typename RequestType, typename MetadataType, typename AlertType>
+template <typename RequestType, typename MetadataType, typename DataType, typename AlertType>
 class ServiceClientSide
 {
 public:
@@ -78,8 +78,8 @@ private:
 /*!
  * Client-side Service Constructor
  */
-template <typename RequestType, typename MetadataType, typename AlertType>
-ServiceClientSide<RequestType, MetadataType, AlertType>::
+template <typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+ServiceClientSide<RequestType, MetadataType, DataType, AlertType>::
 ServiceClientSide(const std::string &endpoint, const std::string &resource,
                   unsigned int response_bufsize, unsigned int request_tmo) :
    m_resource(resource),
@@ -123,8 +123,8 @@ ServiceClientSide(const std::string &endpoint, const std::string &resource,
 /*!
  * Client-side Service Destructor
  */
-template <typename RequestType, typename MetadataType, typename AlertType>
-ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
+template <typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+ServiceClientSide<RequestType, MetadataType, DataType, AlertType>::~ServiceClientSide()
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] ServiceClientSide() destructor" << std::endl;
@@ -150,11 +150,11 @@ ServiceClientSide<RequestType, MetadataType, AlertType>::~ServiceClientSide()
  *
  * @returns       future for Data/Stream requests. This return value can be ignored for Metadata-only Responses.
  */
-template <typename RequestType, typename MetadataType, typename AlertType>
-std::future<void> ServiceClientSide<RequestType, MetadataType, AlertType>::Send(const RequestType &request, MetadataType &response)
+template <typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+std::future<void> ServiceClientSide<RequestType, MetadataType, DataType, AlertType>::Send(const RequestType &request, MetadataType &response)
 {
    // Instantiate the Request object
-   auto request_ptr = new Request<RequestType, MetadataType, AlertType>(request, m_response_bufsize, m_request_tmo);
+   auto request_ptr = new Request<RequestType, MetadataType, DataType, AlertType>(request, m_response_bufsize, m_request_tmo);
    auto metadata_future = request_ptr->GetMetadataFuture();
    auto data_future = request_ptr->GetDataFuture();
 

@@ -34,7 +34,7 @@ message Request {
 
 
 //
-// Responses sent by the CTA Frontend
+// Metadata responses sent by the CTA Frontend
 //
 
 message Response {
@@ -47,6 +47,17 @@ message Response {
   }
   ResponseType type                   = 1;      //< Encode the type of this response
   string message_txt                  = 2;      //< Optional response message text
+}
+
+
+
+//
+// Stream/Data responses sent by the CTA Frontend
+//
+
+message Data {
+  // If there is a requirement for more than one type of streaming/data response, use "oneof" here
+  cta.admin.ArchiveFileLsItem af_ls_item = 1;
 }
 
 

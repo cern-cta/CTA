@@ -26,6 +26,8 @@
 #include <XrdSsiPbDebug.hpp>
 #endif
 
+#include "XrdSsiPbIStreamBuffer.hpp"
+
 namespace XrdSsiPb {
 
 /*!
@@ -47,7 +49,7 @@ public:
 /*!
  * Request class
  */
-template <typename RequestType, typename MetadataType, typename AlertType>
+template <typename RequestType, typename MetadataType, typename DataType, typename AlertType>
 class Request : public XrdSsiRequest
 {
 public:
@@ -100,22 +102,9 @@ private:
    std::promise<MetadataType>  m_metadata_promise;    //!< Promise a reply of Metadata type
    std::promise<void>          m_data_promise;        //!< Promise a data or stream response
 
-   RequestCallback<AlertType>  AlertCallback;         //!< Callback for Alert messages
+   IStreamBuffer<DataType>     m_istream_buffer;      //!< Input stream buffer object
 
-   /*!
-    * Callback for Data Responses
-    *
-    * This method needs to be specialised for any client which can accept Data or Stream payloads.
-    *
-    * @param[in,out]    post_process       Indicate what type of post-processing should be done by the XrdSsi framework:
-    *                      XrdSsiRequest::PRD_Normal (default): normal post-processing
-    *                      XrdSsiRequest::PRD_Hold: client is resource-limited and can't handle the queue at this time
-    * @param[in]        response_bufptr    Pointer to newly-arrived data buffer
-    * @param[in]        response_buflen    Length of response_bufptr
-    */
-   void DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen) {
-      throw XrdSsiException("Data/Stream Responses are not implemented.");
-   }
+   RequestCallback<AlertType>  AlertCallback;         //!< Callback for Alert messages
 };
 
 
@@ -123,10 +112,11 @@ private:
 /*!
  * Request constructor
  */
-template<typename RequestType, typename MetadataType, typename AlertType>
-Request<RequestType, MetadataType, AlertType>::
+template<typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+Request<RequestType, MetadataType, DataType, AlertType>::
 Request(const RequestType &request, unsigned int response_bufsize, uint16_t request_timeout) :
-   m_response_bufsize(response_bufsize)
+   m_response_bufsize(response_bufsize),
+   m_istream_buffer(response_bufsize)
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] Request constructor: "
@@ -151,8 +141,8 @@ Request(const RequestType &request, unsigned int response_bufsize, uint16_t requ
  * Requests are sent to the server asynchronously via the service object. ProcessResponse() informs
  * the Request object on the client side if it completed or failed.
  */
-template<typename RequestType, typename MetadataType, typename AlertType>
-bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
+template<typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+bool Request<RequestType, MetadataType, DataType, AlertType>::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo &rInfo)
 {
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] ProcessResponse(): response type = " << rInfo.State() << std::endl;
@@ -240,8 +230,8 @@ bool Request<RequestType, MetadataType, AlertType>::ProcessResponse(const XrdSsi
  * A Response can (optionally) contain Metadata. This can be used for simple responses (e.g. status
  * code, short message) or as the header for large asynchronous data transfers or streaming data.
  */
-template<typename RequestType, typename MetadataType, typename AlertType>
-void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
+template<typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+void Request<RequestType, MetadataType, DataType, AlertType>::ProcessResponseMetadata()
 {
    int metadata_len;
    const char *metadata_buffer = GetMetadata(metadata_len);
@@ -277,21 +267,30 @@ void Request<RequestType, MetadataType, AlertType>::ProcessResponseMetadata()
 /*!
  * Process Response Data.
  *
- * Responses will be implemented as a binary blob or binary stream, which is received one chunk at a time.
- * The chunk size is defined when the Request object is instantiated (see m_response_bufsize above).
+ * Data Responses are implemented as a binary stream, which is received one chunk at a time.
+ * The chunk size is defined when the Request object is instantiated (see m_response_bufsize).
  *
- * The format of Responses is not defined by a Protocol Buffer, as this would require us to read the entire
- * Response before parsing it, which would defeat the point of reading the Response in chunks. How the
- * Response is parsed is up to the client, but two possibilities are:
+ * In this implementation, the data returned in the response buffer is record-based, where each
+ * record is a protocol buffer of type DataType. The framework ensures that the client application
+ * receives only complete records.
  *
- * 1. The format is defined in the metadata which is a kind of header
- * 2. The format is record-based, and each record is a protocol buffer
+ * An alternative implementation would be to return typeless blobs to the client application,
+ * possibly with the format defined in the metadata. This would make sense for cases where the
+ * data size is in excess of the chunk size. Currently there is no use case for this but
+ * it could be added in future if required. A possible implementation would be to use type traits
+ * on DataType to decide how it should be handled.
  *
  * ProcessResponseData() is called either by GetResponseData(), or asynchronously at any time for data
  * streams.
+ *
+ * @retval    PRD_Normal    The response was accepted for processing
+ * @retval    PRD_Hold      The response could not be handled at this time. The callback will be placed
+ *                          in a global hold queue and the thread will be released. The client is
+ *                          responsible for calling the static method XrdSsiRequest::RestartDataResponse()
+ *                          to restart processing responses (in FIFO order).
  */
-template<typename RequestType, typename MetadataType, typename AlertType>
-XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
+template<typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, DataType, AlertType>
              ::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *response_bufptr, int response_buflen, bool is_last)
 {
 #ifdef XRDSSI_DEBUG
@@ -309,7 +308,8 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
    // The buffer length can be 0 if the response is metadata only
    if(response_buflen != 0)
    {
-      DataCallback(post_process, response_bufptr, response_buflen);
+      // Push stream/data buffer onto the input stream for the client
+      m_istream_buffer.push(response_bufptr, response_buflen);
    }
 
    if(is_last) // No more data to come
@@ -347,8 +347,8 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, AlertType>
  * Deserialize Alert messages and call the Alert callback
  */
 
-template<typename RequestType, typename MetadataType, typename AlertType>
-void Request<RequestType, MetadataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
+template<typename RequestType, typename MetadataType, typename DataType, typename AlertType>
+void Request<RequestType, MetadataType, DataType, AlertType>::Alert(XrdSsiRespInfoMsg &alert_msg)
 {
    try
    {

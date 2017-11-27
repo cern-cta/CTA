@@ -26,6 +26,7 @@
  */
 typedef XrdSsiPb::ServiceClientSide<cta::xrd::Request,     //!< XrdSSi Request message type
                                     cta::xrd::Response,    //!< XrdSsi Metadata message type
+                                    cta::xrd::Data,        //!< XrdSsi Data message type
                                     cta::xrd::Alert>       //!< XrdSsi Alert message type
         XrdSsiPbServiceType;
 
@@ -34,6 +35,7 @@ typedef XrdSsiPb::ServiceClientSide<cta::xrd::Request,     //!< XrdSSi Request m
  */
 typedef XrdSsiPb::Request<cta::xrd::Request,     //!< XrdSSi Request message type
                           cta::xrd::Response,    //!< XrdSsi Metadata message type
+                          cta::xrd::Data,        //!< XrdSsi Data message type
                           cta::xrd::Alert>       //!< XrdSsi Alert message type
         XrdSsiPbRequestType;
 

@@ -23,7 +23,7 @@
 namespace XrdSsiPb {
 
 /*!
- * Stream Buffer.
+ * Output Stream Buffer class.
  *
  * This class binds XrdSsiStream::Buffer to the stream interface.
  *
@@ -37,13 +37,13 @@ class OStreamBuffer : public XrdSsiStream::Buffer
 public:
    OStreamBuffer() : XrdSsiStream::Buffer(nullptr) {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] StreamBuffer() constructor" << std::endl;
+      std::cerr << "[DEBUG] OStreamBuffer() constructor" << std::endl;
 #endif
    }
 
    ~OStreamBuffer() {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] StreamBuffer() destructor" << std::endl;
+      std::cerr << "[DEBUG] OStreamBuffer() destructor" << std::endl;
 #endif
       // data is a public member of XrdSsiStream::Buffer. It is an unmanaged char* pointer.
       delete[] data;
@@ -72,7 +72,7 @@ public:
 private:
    //! Called by the XrdSsi framework when it is finished with the object
    virtual void Recycle() {
-      std::cerr << "[DEBUG] StreamBuffer::Recycle()" << std::endl;
+      std::cerr << "[DEBUG] OStreamBuffer::Recycle()" << std::endl;
       delete this;
    }
 };
