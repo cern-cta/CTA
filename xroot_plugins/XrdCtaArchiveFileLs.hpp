@@ -32,18 +32,25 @@ class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
    ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor) :
-      XrdSsiStream(XrdSsiStream::isActive)
+      XrdSsiStream(XrdSsiStream::isActive),
+      m_archiveFileItor(std::move(archiveFileItor))
    {
+#ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
-tmp_num_items = 0;
+#endif
    }
 
    virtual ~ArchiveFileLsStream() {
+#ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream() destructor" << std::endl;
+#endif
    }
 
    /*!
-    * Synchronously obtain data from an active stream (server-side only).
+    * Synchronously obtain data from an active stream
+    *
+    * Active streams can only exist on the server-side. This XRootD SSI Stream class is marked as an
+    * active stream in the constructor.
     *
     * @param[out]       eInfo   The object to receive any error description.
     * @param[in,out]    dlen    input:  the optimal amount of data wanted (this is a hint)
@@ -62,21 +69,44 @@ tmp_num_items = 0;
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
 #endif
-      if(tmp_num_items > 30)
+      if(!m_archiveFileItor.hasMore())
       {
          // Nothing more to send, close the stream
          last = true;
          return nullptr;
       }
 
-      // Get the next item and pass it back to the caller
-      cta::xrd::Data record;
-      record.mutable_af_ls_item()->mutable_af()->set_disk_instance("Hello");
-      record.mutable_af_ls_item()->mutable_af()->set_disk_file_id("World");
-      record.mutable_af_ls_item()->set_copy_nb(++tmp_num_items);
-
       XrdSsiPb::OStreamBuffer *streambuf = new XrdSsiPb::OStreamBuffer();
-      dlen = streambuf->serialize(record);
+      const cta::common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
+
+      for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
+         cta::xrd::Data record;
+
+         // Copy number
+         record.mutable_af_ls_item()->set_copy_nb(jt->first);
+
+         // Archive file
+         auto af = record.mutable_af_ls_item()->mutable_af();
+         af->set_archive_id(archiveFile.archiveFileID);
+         af->set_disk_instance(archiveFile.diskInstance);
+         af->set_disk_id(archiveFile.diskFileId);
+         af->set_size(archiveFile.fileSize);
+         af->mutable_cs()->set_type(archiveFile.checksumType);
+         af->mutable_cs()->set_value(archiveFile.checksumValue);
+         af->set_storage_class(archiveFile.storageClass);
+         af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
+         af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
+         af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
+         af->set_creation_time(archiveFile.creationTime);
+
+         // Tape file
+         auto tf = record.mutable_af_ls_item()->mutable_tf();
+         tf->set_vid(jt->second.vid);
+         tf->set_f_seq(jt->second.fSeq);
+         tf->set_block_id(jt->second.blockId);
+
+         dlen = streambuf->serialize(record);
+      }
 
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 
@@ -84,13 +114,11 @@ std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
    }
 
 private:
-   int tmp_num_items;
+   catalogue::ArchiveFileItor m_archiveFileItor;
 };
 
 #if 0
 ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
-
-XrdOucErrInfo xrdSfsFileError;
 
 m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
 #endif

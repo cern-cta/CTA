@@ -58,10 +58,10 @@ message DiskFileInfo {
 }
 
 message ArchiveFile {
-   uint64 archive_file_id    = 1;       //< Archive File ID
+   uint64 archive_id         = 1;       //< Archive File ID
    string disk_instance      = 2;       //< Disk instance
-   string disk_file_id       = 3;       //< Disk file ID
-   uint64 file_size          = 4;       //< File size
+   string disk_id            = 3;       //< Disk file ID
+   uint64 size               = 4;       //< File size
    Checksum cs               = 5;       //< Checksum
    string storage_class      = 6;       //< Storage Class
    DiskFileInfo df           = 7;       //< Disk File Info

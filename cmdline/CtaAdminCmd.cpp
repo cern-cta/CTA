@@ -60,20 +60,20 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record)
    OutputJsonString(std::cout, &af_ls_item);
 #endif
 
-   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_file_id() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()              << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().vid()             << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().f_seq()           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.tf().block_id()        << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().disk_instance()   << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().disk_file_id()    << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_ls_item.af().file_size()       << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().cs().type()       << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << af_ls_item.af().cs().value()      << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().storage_class()   << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().owner()      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().group()      << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().creation_time()   << ' '
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().vid()           << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().f_seq()         << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.tf().block_id()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_ls_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << af_ls_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().group()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().creation_time() << ' '
              << af_ls_item.af().df().path() << std::endl;
 }
 
