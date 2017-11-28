@@ -62,7 +62,7 @@ tmp_num_items = 0;
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
 #endif
-      if(tmp_num_items > 9)
+      if(tmp_num_items > 30)
       {
          // Nothing more to send, close the stream
          last = true;
