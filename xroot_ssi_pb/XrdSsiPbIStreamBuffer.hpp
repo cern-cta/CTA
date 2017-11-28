@@ -196,42 +196,5 @@ std::cout << "[POP_RECORD] Saving split of 4+" << buf_len << " bytes" << std::en
    }
 }
 
-
-
-#if 0
-/*!
- * Data callback.
- *
- * Defines how Data/Stream messages should be handled
- */
-template<>
-void XrdSsiPbRequestType::DataCallback(XrdSsiRequest::PRD_Xeq &post_process, char *response_bufptr, int response_buflen)
-{
-   IStreamBuffer istream;
-
-   istream.push(response_bufptr, response_buflen);
-   google::protobuf::io::CodedInputStream coded_stream(reinterpret_cast<const uint8_t*>(response_bufptr), response_buflen);
-
-
-      //OutputJsonString(std::cout, &line_item);
-
-      std::cout << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().archive_file_id() << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.copy_nb()              << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().vid()             << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.tf().f_seq()           << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.tf().block_id()        << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().disk_instance()   << ' '
-                << std::setfill(' ') << std::setw(7)  << std::right << line_item.af().disk_file_id()    << ' '
-                << std::setfill(' ') << std::setw(12) << std::right << line_item.af().file_size()       << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().cs().type()       << ' '
-                << std::setfill(' ') << std::setw(14) << std::right << line_item.af().cs().value()      << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().storage_class()   << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().owner()      << ' '
-                << std::setfill(' ') << std::setw(8)  << std::right << line_item.af().df().group()      << ' '
-                << std::setfill(' ') << std::setw(13) << std::right << line_item.af().creation_time()   << ' '
-                << line_item.af().df().path() << std::endl;
-}
-#endif
-
 } // namespace XrdSsiPb
 

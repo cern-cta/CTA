@@ -70,13 +70,13 @@ tmp_num_items = 0;
       }
 
       // Get the next item and pass it back to the caller
-      cta::admin::ArchiveFileLsItem item;
-      item.mutable_af()->set_disk_instance("Hello");
-      item.mutable_af()->set_disk_file_id("World");
-      item.set_copy_nb(++tmp_num_items);
+      cta::xrd::Data record;
+      record.mutable_af_ls_item()->mutable_af()->set_disk_instance("Hello");
+      record.mutable_af_ls_item()->mutable_af()->set_disk_file_id("World");
+      record.mutable_af_ls_item()->set_copy_nb(++tmp_num_items);
 
       XrdSsiPb::OStreamBuffer *streambuf = new XrdSsiPb::OStreamBuffer();
-      dlen = streambuf->serialize(item);
+      dlen = streambuf->serialize(record);
 
 std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
 

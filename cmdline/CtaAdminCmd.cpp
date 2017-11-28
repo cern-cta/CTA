@@ -44,6 +44,37 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
    OutputJsonString(std::cout, &alert);
 }
 
+
+
+/*!
+ * Data/Stream callback.
+ *
+ * Defines how incoming records from the stream should be handled
+ */
+template<>
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record)
+{
+   const cta::admin::ArchiveFileLsItem &af_ls_item = record.af_ls_item();
+
+   OutputJsonString(std::cout, &af_ls_item);
+
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_file_id() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()              << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().vid()             << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().f_seq()           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.tf().block_id()        << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().disk_instance()   << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().disk_file_id()    << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_ls_item.af().file_size()       << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().cs().type()       << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << af_ls_item.af().cs().value()      << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().storage_class()   << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().owner()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().group()      << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().creation_time()   << ' '
+             << af_ls_item.af().df().path() << std::endl;
+}
+
 } // namespace XrdSsiPb
 
 
