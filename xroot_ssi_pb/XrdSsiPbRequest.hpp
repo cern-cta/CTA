@@ -315,7 +315,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, DataType, AlertType>
    if(is_last) // No more data to come
    {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] ProcessResponseData: done" << std::endl;
+      std::cerr << "[DEBUG] ProcessResponseData(): done" << std::endl;
 #endif
       // Clean up
 
@@ -332,7 +332,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, DataType, AlertType>
    else
    {
 #ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] ProcessResponseData: read next chunk" << std::endl;
+      std::cerr << "[DEBUG] ProcessResponseData(): request more response data" << std::endl;
 #endif
       // If there is more data, get the next chunk
       GetResponseData(m_response_bufptr, m_response_bufsize);

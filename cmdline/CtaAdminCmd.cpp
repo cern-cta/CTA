@@ -56,7 +56,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record)
 {
    const cta::admin::ArchiveFileLsItem &af_ls_item = record.af_ls_item();
 
+#ifdef XRDSSI_DEBUG_VERBOSE
    OutputJsonString(std::cout, &af_ls_item);
+#endif
 
    std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_file_id() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()              << ' '

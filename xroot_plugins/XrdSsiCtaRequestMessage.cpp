@@ -667,7 +667,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
          std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' ' <<
          std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' ' <<
                                                              "path"
-         << TEXT_NORMAL << std::endl;
+         << TEXT_NORMAL;
       }
    }
 

@@ -118,7 +118,6 @@ void IStreamBuffer<DataType>::push(const char *buf_ptr, int buf_len)
          input_stream.Skip(bytes_to_copy);
 
          google::protobuf::io::CodedInputStream::ReadLittleEndian32FromArray(m_split_buffer.get(), &msg_len);
-std::cout << "Option 1, msg_len = " << msg_len << std::endl;
          popRecord(msg_len, input_stream);
       } else {
          // The payload is split across the boundary, copy the entire record
@@ -132,7 +131,6 @@ std::cout << "Option 1, msg_len = " << msg_len << std::endl;
          input_stream.Skip(bytes_to_copy);
 
          google::protobuf::io::CodedInputStream split_stream(reinterpret_cast<const uint8_t*>(m_split_buffer.get() + sizeof(uint32_t)), msg_len);
-std::cout << "Option 2, msg_len = " << msg_len << std::endl;
          popRecord(msg_len, split_stream);
       }
    }
@@ -144,11 +142,9 @@ std::cout << "Option 2, msg_len = " << msg_len << std::endl;
 
       // Get pointer to next record
       if(!input_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len)) break;
-std::cout << "[POP_RECORDS] buf_len = " << buf_len << std::endl;
 
       if(buf_len < static_cast<int>(sizeof(uint32_t))) {
          // Size field is split across the boundary, save the partial field and finish
-std::cout << "[POP_RECORDS] Saving split of " << buf_len << " bytes" << std::endl;
          m_split_buflen = buf_len;
          memcpy(m_split_buffer.get(), buf_ptr, m_split_buflen);
          break;
@@ -156,7 +152,6 @@ std::cout << "[POP_RECORDS] Saving split of " << buf_len << " bytes" << std::end
 
       // Get size of next item on the stream
       input_stream.ReadLittleEndian32(&msg_len);
-std::cout << "[POP_RECORDS] Popping next message, msg_len = " << msg_len << std::endl;
    } while(popRecord(msg_len, input_stream));
 }
 
@@ -174,10 +169,8 @@ bool IStreamBuffer<DataType>::popRecord(int msg_len, google::protobuf::io::Coded
 
    // Get pointer to next record
    if(!input_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len)) buf_len = 0;
-std::cout << "[POP_RECORD] buf_len = " << buf_len << ", msg_len = " << msg_len << std::endl;
 
    if(buf_len < msg_len) {
-std::cout << "[POP_RECORD] Saving split of 4+" << buf_len << " bytes" << std::endl;
       // Record payload is split across the boundary, save the partial record
       google::protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(msg_len, m_split_buffer.get());
       memcpy(m_split_buffer.get() + sizeof(uint32_t), buf_ptr, buf_len);
