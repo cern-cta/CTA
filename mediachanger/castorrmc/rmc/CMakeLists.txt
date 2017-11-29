@@ -38,7 +38,7 @@ endif(CMAKE_COMPILER_IS_GNUCC)
 add_executable(cta-rmcd ${RMCD_SRC_FILES}) 
 target_link_libraries(cta-rmcd ctarmccommon)
 install (FILES cta-rmcd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES cta-smc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (FILES cta-smc.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 install (TARGETS cta-rmcd DESTINATION /usr/bin)
 install (FILES cta-rmcd.1cta DESTINATION /usr/share/man/man1)
@@ -57,7 +57,7 @@ set (SMC_SRC_FILES
   rmc_read_elem_status.c
   send2rmc.c
   smc.c)
-add_executable(smc ${SMC_SRC_FILES}) 
-target_link_libraries(smc ctarmccommon)
-install (TARGETS smc DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/smc.1cta DESTINATION /usr/share/man/man1)
+add_executable(cta-smc ${SMC_SRC_FILES}) 
+target_link_libraries(cta-smc ctarmccommon)
+install (TARGETS cta-smc DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)

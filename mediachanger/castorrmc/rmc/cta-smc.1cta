@@ -3,9 +3,9 @@
 .\"
 .TH SMC "1castor" "$Date: 2005/06/16 09:43:12 $" CASTOR "Ctape User Commands"
 .SH NAME
-smc \- command line interface to drive robotic devices through SCSI
+cta-smc \- command line interface to drive robotic devices through SCSI
 .SH SYNOPSIS
-.B smc
+.B cta-smc
 .BI -d
 .BI -D " drive_ordinal"
 [
@@ -14,14 +14,14 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .BI -e
 .BI -V " vid"
 [
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .BI -i
 [
 .BI -V " vid"
@@ -29,7 +29,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .BI -m
 .BI -D " drive_ordinal"
 .BI -V " vid"
@@ -37,7 +37,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .B -q D
 [
 .BI -D " drive_ordinal"
@@ -46,19 +46,19 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .B -q L
 [
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .B -q P
 [
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .B -q S
 [
 .BI -N " nbelem"
@@ -68,7 +68,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .br
-.B smc
+.B cta-smc
 .B -q V
 [
 .BI -N " nbelem"
@@ -78,7 +78,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .BI -v
 ]
 .SH DESCRIPTION
-.B smc
+.B cta-smc
 is a program allowing to mount, dismount, export volumes in a robotic
 library through SCSI. It allows also to query various elements of the library.
 .SH OPTIONS
@@ -155,19 +155,19 @@ verbose mode. On query requests it prints headers on top of the columns.
 To mount the volume JK2005 on drive 1:
 .br
 .RS
-.B "smc -m -D 1 -V JK2005"
+.B "cta-smc -m -D 1 -V JK2005"
 .RE
 .LP
 To dismount the volume present on drive 1 after checking the vid:
 .br
 .RS
-.B "smc -d -D 1 -V JK2005"
+.B "cta-smc -d -D 1 -V JK2005"
 .RE
 .LP
 To query the main charateristics of the library:
 .br
 .RS
-.B "smc -q L"
+.B "cta-smc -q L"
 .sp
 .nf
 Vendor/Product/Revision = <STK     9714            1500>
@@ -181,7 +181,7 @@ Device Count = 2, Start = 1030
 To query the status of all the drives:
 .br
 .RS
-.B "smc -q D -v"
+.B "cta-smc -q D -v"
 .sp
 .nf
 .cs R 20
@@ -195,7 +195,7 @@ Drive Ordinal   Element Addr.   Status          Vid
 To get the list of a few slots in the library:
 .br
 .RS
-.B "smc -q S -S 20 -N 10 -v"
+.B "cta-smc -q S -S 20 -N 10 -v"
 .sp
 .nf
 .cs R 20
@@ -217,7 +217,7 @@ Element Addr.   Vid
 To get the status of volumes for which the vid starts with JK200
 .br
 .RS
-.B "smc -q V -V 'JK200*' -v"
+.B "cta-smc -q V -V 'JK200*' -v"
 .sp
 .nf
 .cs R 20

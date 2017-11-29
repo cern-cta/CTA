@@ -309,10 +309,10 @@ Tools to faciliate working with rmcd and smc in cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0755,root,root) %{_bindir}/smc
+%attr(0755,root,root) %{_bindir}/cta-smc
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf.example
-%attr(0644,root,root) %doc /usr/share/man/man1/smc.1cta.gz
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
 %attr(0644,root,root) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
