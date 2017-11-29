@@ -309,7 +309,7 @@ XrdSsiRequest::PRD_Xeq Request<RequestType, MetadataType, DataType, AlertType>
    if(response_buflen != 0)
    {
       // Push stream/data buffer onto the input stream for the client
-      m_istream_buffer.push(response_bufptr, response_buflen);
+      m_istream_buffer.Push(response_bufptr, response_buflen);
    }
 
    if(is_last) // No more data to come

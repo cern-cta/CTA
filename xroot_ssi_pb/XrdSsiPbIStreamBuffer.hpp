@@ -66,7 +66,7 @@ public:
     * @param[in]    buf_ptr    XRootD SSI stream or data buffer
     * @param[in]    buf_len    Size of buf_ptr
     */
-   void push(const char *buf_ptr, int buf_len);
+   void Push(const char *buf_ptr, int buf_len);
 
 private:
    /*!
@@ -85,9 +85,11 @@ private:
    bool popRecord(int msg_len, google::protobuf::io::CodedInputStream &input_stream);
 
    /*!
+    * Callback to handle stream data
     *
+    * Define a specialised version of this method on the client side to handle a specific type of data stream
     */
-   void DataCallback(DataType record) {
+   void DataCallback(DataType record) const {
       throw XrdSsiException("Stream/data payload received, but IStreamBuffer::DataCallback() has not been defined");
    }
 
@@ -101,7 +103,7 @@ private:
 
 
 template<typename DataType>
-void IStreamBuffer<DataType>::push(const char *buf_ptr, int buf_len)
+void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
 {
    google::protobuf::io::CodedInputStream input_stream(reinterpret_cast<const uint8_t*>(buf_ptr), buf_len);
 

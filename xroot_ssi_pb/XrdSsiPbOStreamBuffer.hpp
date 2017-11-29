@@ -27,15 +27,28 @@ namespace XrdSsiPb {
  *
  * This class binds XrdSsiStream::Buffer to the stream interface.
  *
- * This is a naïve implementation, where memory is allocated and deallocated on every use.
+ * This is a naïve implementation, where memory is allocated and deallocated on every use. It favours
+ * computation efficiency over memory efficiency: the buffer allocated is twice the hint size, but data
+ * copying is minimized.
  *
  * A more performant implementation could be implemented using a buffer pool, using the Recycle()
  * method to return buffers to the pool.
  */
+template<typename DataType>
 class OStreamBuffer : public XrdSsiStream::Buffer
 {
 public:
-   OStreamBuffer() : XrdSsiStream::Buffer(nullptr) {
+   /*!
+    * Constructor
+    *
+    * data is a public member of XrdSsiStream::Buffer. It is an unmanaged char* pointer. We initialize
+    * it to double the hint size, with the implicit rule that the size of an individual serialized
+    * record on the wire cannot exceed the hint size.
+    */
+   OStreamBuffer(uint32_t hint_size) : XrdSsiStream::Buffer(new char[hint_size * 2]),
+      m_hint_size(hint_size),
+      m_data_ptr(data),
+      m_data_size(0) {
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] OStreamBuffer() constructor" << std::endl;
 #endif
@@ -45,36 +58,57 @@ public:
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] OStreamBuffer() destructor" << std::endl;
 #endif
-      // data is a public member of XrdSsiStream::Buffer. It is an unmanaged char* pointer.
       delete[] data;
    }
 
-   //! Serialize a Protocol Buffer into the Stream Buffer and return its size
-   template<typename ProtoBuf>
-   int serialize(const ProtoBuf &pb) {
-      // Drop any existing data. A more sophisticated implementation could chain new objects onto the buffer,
-      // using XrdSsiStream::Buffer::Next
-      delete[] data;
+   /*!
+    * Get the data size
+    */
+   uint32_t Size() const {
+      return m_data_size;
+   }
 
-      uint32_t bytesize = pb.ByteSize();
-      data = new char[bytesize + sizeof(uint32_t)];
+   /*!
+    * Push a protobuf into the queue
+    *
+    * @retval    true     The buffer has been filled and is ready for sending
+    * @retval    false    There is room in the buffer for more records
+    */
+   bool Push(const DataType &record) {
+      uint32_t bytesize = record.ByteSize();
 
-      // Write the size into the buffer
-      google::protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(bytesize, reinterpret_cast<google::protobuf::uint8*>(data));
+      if(m_data_size + bytesize > m_hint_size * 2) {
+         throw XrdSsiException("OStreamBuffer::Push(): Stream buffer overflow");
+      }
+
+      // Write the size of the next record into the buffer
+      google::protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(bytesize, reinterpret_cast<google::protobuf::uint8*>(m_data_ptr));
+      m_data_ptr += sizeof(uint32_t);
 
       // Serialize the Protocol Buffer
-      pb.SerializeToArray(data + sizeof(uint32_t), bytesize);
+      record.SerializeToArray(m_data_ptr, bytesize);
+      m_data_ptr += bytesize;
 
-      // Return the total size of the buffer including bytesize
-      return bytesize + sizeof(uint32_t);
+      m_data_size += sizeof(uint32_t) + bytesize;
+
+      return m_data_size >= m_hint_size;
    }
 
 private:
-   //! Called by the XrdSsi framework when it is finished with the object
+   /*!
+    * Called by the XrdSsi framework when it is finished with the object
+    */
    virtual void Recycle() {
       std::cerr << "[DEBUG] OStreamBuffer::Recycle()" << std::endl;
       delete this;
    }
+
+   // Member variables
+
+   const uint32_t                              m_hint_size;     //!< Requested size of the buffer from the XRootD framework
+   char                                       *m_data_ptr;      //!< Pointer to the raw storage
+   uint32_t                                    m_data_size;     //!< Total size of the buffer on the wire
+   std::vector<std::pair<uint32_t, DataType>>  m_protobuf_q;    //!< Queue of protobufs to be serialized
 };
 
 } // namespace XrdSsiPb

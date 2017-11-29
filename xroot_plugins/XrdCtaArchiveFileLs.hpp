@@ -69,59 +69,74 @@ public:
 #ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
 #endif
-      if(!m_archiveFileItor.hasMore())
-      {
-         // Nothing more to send, close the stream
-         last = true;
-         return nullptr;
+
+      XrdSsiPb::OStreamBuffer<cta::xrd::Data> *streambuf;
+
+      try {
+         if(!m_archiveFileItor.hasMore()) {
+            // Nothing more to send, close the stream
+            last = true;
+            return nullptr;
+         }
+
+         streambuf = new XrdSsiPb::OStreamBuffer<cta::xrd::Data>(dlen);
+
+         for(bool is_buffer_full = false; m_archiveFileItor.hasMore() && !is_buffer_full; )
+         {
+            const cta::common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
+
+            for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
+               cta::xrd::Data record;
+
+               // Copy number
+               record.mutable_af_ls_item()->set_copy_nb(jt->first);
+
+               // Archive file
+               auto af = record.mutable_af_ls_item()->mutable_af();
+               af->set_archive_id(archiveFile.archiveFileID);
+               af->set_disk_instance(archiveFile.diskInstance);
+               af->set_disk_id(archiveFile.diskFileId);
+               af->set_size(archiveFile.fileSize);
+               af->mutable_cs()->set_type(archiveFile.checksumType);
+               af->mutable_cs()->set_value(archiveFile.checksumValue);
+               af->set_storage_class(archiveFile.storageClass);
+               af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
+               af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
+               af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
+               af->set_creation_time(archiveFile.creationTime);
+
+               // Tape file
+               auto tf = record.mutable_af_ls_item()->mutable_tf();
+               tf->set_vid(jt->second.vid);
+               tf->set_f_seq(jt->second.fSeq);
+               tf->set_block_id(jt->second.blockId);
+
+               is_buffer_full = streambuf->Push(record);
+            }
+         }
+         dlen = streambuf->Size();
+#ifdef XRDSSI_DEBUG
+         std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): Returning buffer with " << dlen << " bytes of data." << std::endl;
+#endif
+      } catch(cta::exception::Exception &ex) {
+         throw std::runtime_error(ex.getMessage().str());
+      } catch(std::exception &ex) {
+         std::ostringstream errMsg;
+         errMsg << __FUNCTION__ << " failed: " << ex.what();
+         eInfo.Set(errMsg.str().c_str(), ECANCELED);
+         delete streambuf;
+      } catch(...) {
+         std::ostringstream errMsg;
+         errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
+         eInfo.Set(errMsg.str().c_str(), ECANCELED);
+         delete streambuf;
       }
-
-      XrdSsiPb::OStreamBuffer *streambuf = new XrdSsiPb::OStreamBuffer();
-      const cta::common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
-
-      for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
-         cta::xrd::Data record;
-
-         // Copy number
-         record.mutable_af_ls_item()->set_copy_nb(jt->first);
-
-         // Archive file
-         auto af = record.mutable_af_ls_item()->mutable_af();
-         af->set_archive_id(archiveFile.archiveFileID);
-         af->set_disk_instance(archiveFile.diskInstance);
-         af->set_disk_id(archiveFile.diskFileId);
-         af->set_size(archiveFile.fileSize);
-         af->mutable_cs()->set_type(archiveFile.checksumType);
-         af->mutable_cs()->set_value(archiveFile.checksumValue);
-         af->set_storage_class(archiveFile.storageClass);
-         af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
-         af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
-         af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
-         af->set_creation_time(archiveFile.creationTime);
-
-         // Tape file
-         auto tf = record.mutable_af_ls_item()->mutable_tf();
-         tf->set_vid(jt->second.vid);
-         tf->set_f_seq(jt->second.fSeq);
-         tf->set_block_id(jt->second.blockId);
-
-         dlen = streambuf->serialize(record);
-      }
-
-std::cerr << "Returning buffer with " << dlen << " bytes of data." << std::endl;
-
       return streambuf;
    }
 
 private:
    catalogue::ArchiveFileItor m_archiveFileItor;
 };
-
-#if 0
-ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria), has_flag(OptionBoolean::SHOW_HEADER));
-
-m_listArchiveFilesCmd.reset(new xrootPlugins::ListArchiveFilesCmd(xrdSfsFileError, has_flag(OptionBoolean::SHOW_HEADER), std::move(archiveFileItor)));
-#endif
 
 }} // namespace cta::xrd
 
