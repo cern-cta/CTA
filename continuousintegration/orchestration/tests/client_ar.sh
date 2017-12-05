@@ -72,7 +72,7 @@ EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=${FILE_KB_SIZE} || exit 1
 
 if [[ $VERBOSE == 1 ]]; then
-  tail -v -f /mnt/logs/tpsrv0*/rmcd/castor/rmcd_legacy.log &
+  tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log &
   TAILPID=$!
 fi
 

@@ -1,16 +1,36 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMCD "8castor" "$Date: 2009/08/18 09:43:01 $" CASTOR "rmc Administrator Commands"
+CTA supports two types of tape libraries, SCSI compatible ones and Oracle
+Automatic Cartridge System (ACS) ones.  The cta-taped daemon requires a tape
+library daemon to be installed and run on the same tape server as itself.
+There are two types of CTA tape library daemons, one for SCSI compatible tape
+libraries and one for ACS tape libraries.
+
+A SCSI compatible tape library requires the following daemon:
+
+\fBrmcd\fP
+
+The installation RPM for the \fBrmcd\fP daemon and its manual page is:
+
+\fBcta-rmc-server-0.0-XX.slc6.x86_64\fP
+
+The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
+the usual service commands:
+
 .SH NAME
-rmcd \- start the Remote Media Changer daemon
+\fBservice cta-rmcd start the device file of the tape library\fP 
+.br
+\fBservice cta-rmcd status\fP
+.br
+\fBservice cta-rmcd stop\fP
 .SH SYNOPSIS
-.B rmcd
+.B cta-rmcd
 .I smc_ldr
 .SH DESCRIPTION
 .LP
 The
-.B rmcd
+.B cta-rmcd
 command starts the Remote Media Changer daemon.
 This command is usually executed at system startup time
 .RB ( /etc/rc.local ).
@@ -64,7 +84,7 @@ itself.
 The completion code of the command is also logged.
 .SH FILES
 .TP 1.5i
-.B /var/log/castor/rmcd.log
+.B /var/log/cta/cta-rmcd.log
 .SH EXAMPLES
 .TP
 Here is a small log:

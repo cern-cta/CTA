@@ -27,7 +27,18 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # XRootD OFS plugin for CTA Frontend
 
-add_library (XrdCtaOfs MODULE ListArchiveFilesCmd.cpp XrdCtaFilesystem.cpp XrdCtaFile.cpp XrdCtaDir.cpp)
+add_library (XrdCtaOfs MODULE
+  ListArchiveFilesCmd.cpp
+  XrdCtaFilesystem.cpp
+  XrdCtaFile.cpp
+  XrdCtaDir.cpp)
+if(CMAKE_COMPILER_IS_GNUCC)
+  # Add -Wno-implicit-fallthrough compiler flag if using gcc version 7 or greater
+  if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+    set_property(SOURCE XrdCtaFile.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-implicit-fallthrough")
+  endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+endif(CMAKE_COMPILER_IS_GNUCC)
+
 set_property(TARGET XrdCtaOfs PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET XrdCtaOfs PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (XrdCtaOfs ctacatalogue ctascheduler ctacommon ctaobjectstore cryptopp)

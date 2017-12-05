@@ -17,7 +17,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project(cta)
 
-set(CMAKE_C_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Please note that the -fms-extensions option should be dropped when this
 # project gets to be compiled on a fully C++ 11 compliant compiler.  The option

@@ -20,7 +20,15 @@ find_package(Protobuf3 REQUIRED)
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 foreach(PROTO_SRC ${ProtoSources})
-  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC")
+  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
+
+  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc
+  # version 7 or greater
+  if (CMAKE_COMPILER_IS_GNUCC)
+    if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+      set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
+    endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  endif (CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
 set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
