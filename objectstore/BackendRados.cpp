@@ -791,6 +791,9 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
     if (rados_aio_get_return_value(completion)<0) {
       cta::exception::Errnum errnum(-rados_aio_get_return_value(completion),
           std::string("In BackendRados::AsyncLockfreeFetcher::fetchCallback(): could not read object: ") + au.m_name);
+      if (errnum.errorNumber() == ENOENT) {
+        throw Backend::NoSuchObject(errnum.getMessageValue());
+      }
       throw Backend::CouldNotFetch(errnum.getMessageValue());
     }
     // The data is in the buffer list.
