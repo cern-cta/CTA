@@ -13,6 +13,9 @@ model="mhvtl"
 # EOS short instance name
 EOSINSTANCE=ctaeos
 
+# By default to not use systemd to manage services inside the containers
+usesystemd=0
+
 # By default keep Database and keep Objectstore
 # default should not make user loose data if he forgot the option
 keepdatabase=1
@@ -21,9 +24,10 @@ keepobjectstore=1
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ]  \
-      [-D] [-O] [-m [mhvtl|ibm]]
+      [-S] [-D] [-O] [-m [mhvtl|ibm]]
 
 Options:
+  -S    Use systemd to manage services inside containers
   -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
         containers.
   -B    The subdirectory within the -b directory where the build tree is.
@@ -35,7 +39,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:p:b:B:DOm:" o; do
+while getopts "n:o:d:p:b:B:SDOm:" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -57,6 +61,9 @@ while getopts "n:o:d:p:b:B:DOm:" o; do
             ;;
         b)
             buildtree=${OPTARG}
+            ;;
+        S)
+            usesystemd=1
             ;;
         B)
             buildtreesubdir=${OPTARG}
@@ -82,6 +89,9 @@ if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" ]; then
     usage
 fi
 
+# everyone needs poddir temporary directory to generate pod yamls
+poddir=$(mktemp -d)
+
 if [ ! -z "${buildtree}" ]; then
     # We need to know the subdir as well
     if [ -z "${buildtreesubdir}" ]; then
@@ -93,8 +103,6 @@ if [ ! -z "${buildtree}" ]; then
     # tag image as otherwise kubernetes will always pull latest and won't find it...
     docker rmi buildtree-runner:v0 &>/dev/null
     docker tag buildtree-runner buildtree-runner:v0
-    # Create temporary directory for modified pod files
-    poddir=$(mktemp -d)
     cp pod-* ${poddir}
     sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner:v0\n\1PullPolicy: Never/"
 
@@ -122,8 +130,6 @@ else
     fi
     echo "Creating instance using docker image with tag: ${imagetag}"
 
-    # Create temporary directory for modified pod files
-    poddir=$(mktemp -d)
     cp pod-* ${poddir}
     sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
 
@@ -133,6 +139,12 @@ else
     fi
 fi
 
+if [ $usesystemd == 1 ] ; then
+    echo "Using systemd to start services on some pods"
+    for podname in ctafrontend tpsrv; do
+        sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
+    done
+fi
 
 if [ $keepdatabase == 1 ] ; then
     echo "DB content will be kept"

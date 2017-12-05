@@ -16,13 +16,15 @@ keepnamespace=0
 useoracle=0
 # by default use VFS objectstore
 useceph=0
+# by default do not use systemd to manage services in containers
+usesystemd=0
 # default systemtest timeout is 1 hour
 SYSTEMTEST_TIMEOUT=3600
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-k] [-O] [-D]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-k] [-O] [-D] [-S]
 
 Options:
   -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
@@ -31,6 +33,7 @@ Options:
   -k    keep namespace after systemtest_script run if successful
   -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
   -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
+  -S    Use systemd to manage services inside containers 
 
 
 Create a kubernetes instance and launch the system test script specified.
@@ -44,7 +47,7 @@ exit 1
 # always delete DB and OBJECTSTORE for tests
 CREATE_OPTS="-D -O"
 
-while getopts "n:s:p:b:B:t:kDO" o; do
+while getopts "n:s:p:b:B:t:kDOS" o; do
     case "${o}" in
         s)
             systemtest_script=${OPTARG}
@@ -73,6 +76,9 @@ while getopts "n:s:p:b:B:t:kDO" o; do
             ;;
         O)
             useceph=1
+            ;;
+        S)
+            usesystemd=1
             ;;
         *)
             usage
@@ -115,6 +121,9 @@ if [ $useceph == 1 ] ; then
     fi
 fi
 
+if [ $usesystemd == 1 ] ; then
+    CREATE_OPTS="${CREATE_OPTS} -S"
+fi
 
 log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
 mkdir -p ${log_dir}
