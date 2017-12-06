@@ -319,6 +319,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
                                           break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
+      case Response::RSP_ERR_USER:        throw std::runtime_error(response.message_txt());
       // ... define other response types in the protocol buffer (e.g. user error)
       default:                            throw XrdSsiPb::PbException("Invalid response type.");
    }
