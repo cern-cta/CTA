@@ -723,7 +723,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
         .add("decisionTime", decisionTime)
         .add("schedulerDbTime", schedulerDbTime)
         .add("catalogueTime", catalogueTime);
-  lc.log(log::DEBUG, "In Scheduler::getNextMount(): No valid mount found.");
+  lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): No valid mount found.");
   return false;
 }
 
