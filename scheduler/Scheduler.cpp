@@ -516,7 +516,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         params.add("vid", em.vid)
               .add("mountType", common::dataStructures::toString(em.type))
               .add("drive", em.driveName);
-        lc.log(log::DEBUG,"In Scheduler::getNextMount(): tapeAlreadyInUse found.");
+        lc.log(log::DEBUG,"In Scheduler::sortAndGetTapesForMountInfo(): tapeAlreadyInUse found.");
       }
     }
   }
@@ -559,7 +559,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minArchiveRequestAge", m->minArchiveRequestAge)
             .add("existingMounts", existingMounts)
             .add("maxDrivesAllowed", m->maxDrivesAllowed);
-      lc.log(log::DEBUG, "Removing potential mount not passing criteria");
+      lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
@@ -580,7 +580,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("existingMounts", existingMounts)
             .add("maxDrivesAllowed", m->maxDrivesAllowed)
             .add("ratioOfMountQuotaUsed", m->ratioOfMountQuotaUsed);
-      lc.log(log::DEBUG, "Will consider potential mount");
+      lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Will consider potential mount");
       m++;
    }
   }
