@@ -8,7 +8,7 @@ chmod 755 /var/eos/wfe/bash/*
 
 eos mkdir ${PREPROD_DIR}
 eos chmod 555 ${PREPROD_DIR}
-eos attr set sys.acl=g:eosusers:rwx!d,g:powerusers:rwx+dp ${PREPROD_DIR}
+eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp ${PREPROD_DIR}
 
 eos attr set CTA_StorageClass=ctaStorageClass ${PREPROD_DIR}
 
