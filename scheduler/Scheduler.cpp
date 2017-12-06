@@ -628,7 +628,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
   double schedulerDbTime = 0;
   double catalogueTime = 0;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfo(lc);
+  mountInfo = m_db.getMountInfoNoLock(lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   std::map<tpType, uint32_t> existingMountsSummary;
   std::set<std::string> tapesInUse;
