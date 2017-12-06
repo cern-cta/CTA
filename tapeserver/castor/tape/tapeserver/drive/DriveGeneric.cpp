@@ -2560,7 +2560,7 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
   } while(t.secs() < timeoutSecond);
 
   // Throw an exception for the last tolerated exception that exceeded the timer
-  cta::exception::Exception ex;
+  cta::exception::TimeOut ex;
   ex.getMessage() << "Failed to test unit ready after waiting " <<
     timeoutSecond << " seconds: " << lastTestUnitReadyExceptionMsg;
   throw ex;

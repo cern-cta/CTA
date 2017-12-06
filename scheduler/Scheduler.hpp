@@ -41,6 +41,7 @@
 #include "common/dataStructures/VerifyInfo.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/dataStructures/QueueAndMountSummary.hpp"
+#include "common/Timer.hpp"
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
@@ -247,6 +248,27 @@ public:
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
 
   /*============== Actual mount scheduling and queue status reporting ========*/
+private:
+  typedef std::pair<std::string, common::dataStructures::MountType> tpType;
+  /**
+   * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
+   * The structure should be pre-loaded by the calling function.
+   */
+  void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo, 
+    const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
+    std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
+  
+public:
+  /**
+   * Run the mount decision logic lock free, so we have no contention in the 
+   * most usual case where there is no mount to create.
+   * @param logicalLibraryName library for the drive we are scheduling
+   * @param driveName name of the drive we are scheduling
+   * @param lc log context
+   * @return true if a valid mount would have been found.
+   */
+  bool getNextMountDryRun(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
   /**
    * Actually decide which mount to do next for a given drive.
    * @param logicalLibraryName library for the drive we are scheduling

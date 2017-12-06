@@ -1728,7 +1728,7 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
-  utils::Timer t;
+  utils::Timer t, totalTime;
   double driveRegisterCheckTime = 0;
   double findQueueTime = 0;
   double lockFetchQueueTime = 0;
@@ -2074,7 +2074,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           .add("jobsUpdateTime", jobsUpdateTime)
           .add("queueProcessTime", queueProcessTime)
           .add("ownershipRemovalTime", ownershipRemovalTime)
-          .add("queueCommitTime", queueCommitTime);
+          .add("queueCommitTime", queueCommitTime)
+          .add("schedulerDbTime", totalTime.secs());
     logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
   }
   // We can construct the return value.
