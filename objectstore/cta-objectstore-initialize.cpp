@@ -33,12 +33,13 @@
 
 int main(int argc, char ** argv) {
   try {
+    cta::log::StdoutLogger logger("cta-objectstore-initialize");
+    cta::log::LogContext lc(logger);
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
       be.reset(new cta::objectstore::BackendVFS);
-      
     } else if (2 == argc) {
-      be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+      be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], logger).release());
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1");
     }
@@ -52,12 +53,10 @@ int main(int argc, char ** argv) {
     re.insert();
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    cta::log::StdoutLogger logger("cta-objectstore-initialize");
     cta::objectstore::AgentReference agr("cta-objectstore-initialize", logger);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
     cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));
-    cta::log::LogContext lc(logger);
     re.addOrGetAgentRegisterPointerAndCommit(agr,el, lc);
     rel.release();
     ag.insertAndRegisterSelf(lc);

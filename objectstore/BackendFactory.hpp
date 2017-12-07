@@ -19,11 +19,12 @@
 #pragma once
 
 #include "Backend.hpp"
+#include "common/log/Logger.hpp"
 #include <memory>
 
 namespace cta { namespace objectstore {
   class BackendFactory {
   public:
-    static std::unique_ptr<Backend> createBackend(const std::string & URL);
+    static std::unique_ptr<Backend> createBackend(const std::string & URL, log::Logger & logger);
   };
 }}

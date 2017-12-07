@@ -278,7 +278,7 @@ XrdCtaFilesystem::XrdCtaFilesystem():
     throw cta::exception::Exception(std::string("Failed to instantiate object representing CTA logging system: ")+ex.getMessage().str());
   }
   
-  m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));
+  m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), *m_log));
   m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
   
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");

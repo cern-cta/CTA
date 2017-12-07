@@ -21,6 +21,9 @@
 #include "Backend.hpp"
 #include "rados/librados.hpp"
 #include "common/threading/Mutex.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 #include <future>
 
 // RADOS_LOCKING can be NOTIFY or BACKOFF
@@ -57,7 +60,7 @@ public:
    * @param userId
    * @param pool
    */
-  BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
+  BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool, const std::string &radosNameSpace = "");
   ~BackendRados() override;
   std::string user() {
     return m_user;
@@ -182,6 +185,42 @@ private:
     librados::IoCtx & m_context;
     uint64_t m_watchHandle;
   };
+  
+private:
+  /**
+   * Base class for jobs handled by the thread-and-context pool.
+   */
+  class AsyncJob {
+    virtual void execute(librados::IoCtx & context)=0;
+    virtual ~AsyncJob() {}
+  };
+  
+  /**
+   * The queue for the thread-and-context pool.
+   */
+  cta::threading::BlockingQueue<AsyncJob *> m_JobQueue;
+  
+  /**
+   * The class for the worker threads
+   */
+  class RadosWorkerThreadAndContext: private cta::threading::Thread {
+  public:
+    RadosWorkerThreadAndContext(librados::Rados & cluster, const std::string & pool, const std::string & radosNameSpace, 
+      int threadID, log::Logger & logger);
+    virtual ~RadosWorkerThreadAndContext();
+    void start() { cta::threading::Thread::start(); }
+    void wait() { cta::threading::Thread::wait(); }
+  private:
+    librados::IoCtx m_radosCtx;
+    const int m_threadID;
+    log::LogContext m_lc;
+    void run() override;
+  };
+  
+  /**
+   * The container for the threads
+   */
+  std::vector<RadosWorkerThreadAndContext *> m_threads;
   
 public:
   /**
