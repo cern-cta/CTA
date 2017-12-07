@@ -52,10 +52,8 @@ void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
   // is set.
   // We need to get hold of the agent register, which we suppose is available
   RootEntry re(m_objectStore);
-  ScopedSharedLock reLock(re);
-  re.fetch();
+  re.fetchNoLock();
   AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
-  reLock.release();
   // Then we should first create a pointer to our agent
   ScopedExclusiveLock arLock(ar);
   ar.fetch();
@@ -116,10 +114,8 @@ void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, A
   if (m_header.owner() == presumedOwner) {
     // We need to get hold of the agent register, which we suppose is available
     RootEntry re(m_objectStore);
-    ScopedSharedLock reLock(re);
-    re.fetch();
+    re.fetchNoLock();
     AgentRegister ar(re.getAgentRegisterAddress(), m_objectStore);
-    reLock.release();
     // Then we should first create a pointer to our agent
     ScopedExclusiveLock arLock(ar);
     ar.fetch();
