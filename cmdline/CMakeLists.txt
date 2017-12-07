@@ -52,6 +52,6 @@ add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp Configuration.cpp)
 target_link_libraries(cta-admin XrdCtaMessages XrdSsi-4 XrdSsiLib)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
-target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
+#target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
 install(TARGETS cta-admin DESTINATION usr/bin)
 
