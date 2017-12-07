@@ -296,6 +296,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
       for(auto map_it = cmdLookup.begin(); map_it != cmdLookup.end(); ++map_it) {
          if(admincmd == map_it->second) {
             help << map_it->first << ' ';
+            break;
          }
       }
 
