@@ -353,7 +353,9 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
   std::list<SchedulerDatabase::RetrieveQueueStatistics> ret;
   // Find the retrieve queues for each vid if they exist (absence is possible).
   RootEntry re(objectstore);
-  re.fetchNoLock();
+  ScopedSharedLock rel(re);
+  re.fetch();
+  rel.release();
   for (auto &tf:criteria.archiveFile.tapeFiles) {
     if (!vidsToConsider.count(tf.second.vid))
       continue;
@@ -369,7 +371,9 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     }
     RetrieveQueue rq(rqAddr, objectstore);
-    rq.fetchNoLock();
+    ScopedSharedLock rql(rq);
+    rq.fetch();
+    rql.release();
     if (rq.getVid() != tf.second.vid)
       throw cta::exception::Exception("In OStoreDB::getRetrieveQueueStatistics(): unexpected vid for retrieve queue");
     ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());

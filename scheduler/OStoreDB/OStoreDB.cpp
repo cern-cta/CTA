@@ -590,8 +590,10 @@ void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName,
   uint64_t fileId) {
   // First of, find the archive request from all the tape pools.
   objectstore::RootEntry re(m_objectStore);
-  re.fetchNoLock();
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
   auto aql = re.dumpArchiveQueues();
+  rel.release();
   for (auto & aqp: aql) {
     objectstore::ArchiveQueue aq(aqp.address, m_objectStore);
     ScopedSharedLock aqlock(aq);
@@ -719,8 +721,10 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 std::list<cta::common::dataStructures::ArchiveJob>
   OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
   objectstore::RootEntry re(m_objectStore);
-  re.fetchNoLock();
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
   auto tpl = re.dumpArchiveQueues();
+  rel.release();
   for (auto & tpp:tpl) {
     if (tpp.tapePool != tapePoolName) continue;
     std::list<cta::common::dataStructures::ArchiveJob> ret;
@@ -772,8 +776,10 @@ std::list<cta::common::dataStructures::ArchiveJob>
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
   OStoreDB::getArchiveJobs() const {
   objectstore::RootEntry re(m_objectStore);
-  re.fetchNoLock();
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
   auto tpl = re.dumpArchiveQueues();
+  rel.release();
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > ret;
   for (auto & tpp:tpl) {
     objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
@@ -970,8 +976,10 @@ std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB:
   // We will walk all the tapes to get the jobs.
   std::map<std::string, std::list<common::dataStructures::RetrieveJob> > ret;
   RootEntry re(m_objectStore);
-  re.fetchNoLock();
+  ScopedSharedLock rel(re);
+  re.fetch();
   auto rql=re.dumpRetrieveQueues();
+  rel.release();
   for (auto & rqp: rql) {
     // This implementation gives imperfect consistency. Do we need better? (If so, TODO: improve).
     // This implementation is racy, so we tolerate that the queue is gone.
