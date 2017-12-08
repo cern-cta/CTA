@@ -87,8 +87,6 @@ public:
                 << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
                 << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
                 << std::endl;
-
-      resource.client->name = "ctadev";
 #endif
       if(resource.client == nullptr || resource.client->name == nullptr)
       {
@@ -96,6 +94,10 @@ public:
             "Possible misconfiguration of the KRB5 or SSS keyfile.", EACCES);
          return false;
       }
+
+#ifdef XRDSSI_DEBUG
+      std::cerr << "[DEBUG]    Resource client name: " << resource.client->name << std::endl;
+#endif
 
       return true;
    }
