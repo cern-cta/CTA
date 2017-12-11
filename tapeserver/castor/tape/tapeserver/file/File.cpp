@@ -70,14 +70,12 @@ namespace castor {
           throw ex;
         }
 
-        // this readBlock only for mhvtl workaround
         m_drive.rewind();
         m_drive.disableLogicalBlockProtection();
-        VOL1withCrc vol1WithCrc;
-        const ssize_t res = m_drive.readBlock((void * )&vol1WithCrc,
-          sizeof(vol1WithCrc));
-        if (res >= (ssize_t)(sizeof(VOL1withCrc) - sizeof(VOL1))) {
-          switch(vol1WithCrc.getLBPMethod()) {
+        {
+          VOL1 vol1;
+          m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
+          switch(vol1.getLBPMethod()) {
             case SCSI::logicBlockProtectionMethod::CRC32C:
               m_detectedLbp = true;
               if (m_useLbp) {
@@ -94,21 +92,22 @@ namespace castor {
               m_detectedLbp = false;
               break;
             default:
-              throw cta::exception::Exception("In ReadSession::ReadSession(): "
-                  "unknown LBP method");
+              throw cta::exception::Exception("In ReadSession::ReadSession(): unknown LBP method");
           }
         }
    
         // from this point the right LBP mode should be set or not set
         m_drive.rewind();
-        VOL1 vol1;
-        m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
-        try {
-          vol1.verify();
-        } catch (std::exception & e) {
-          throw TapeFormatError(e.what());
+        {
+          VOL1 vol1;
+          m_drive.readExactBlock((void *) &vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
+          try {
+            vol1.verify();
+          } catch (std::exception &e) {
+            throw TapeFormatError(e.what());
+          }
+          HeaderChecker::checkVOL1(vol1, volInfo.vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
         }
-        HeaderChecker::checkVOL1(vol1, volInfo.vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
       }
 
       void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
@@ -403,14 +402,12 @@ namespace castor {
           throw ex;
         }
 
-        // this readBlock only for mhvtl workaround
         m_drive.rewind();
         m_drive.disableLogicalBlockProtection();
-        VOL1withCrc vol1WithCrc;
-        const ssize_t res = m_drive.readBlock((void * )&vol1WithCrc,
-          sizeof(vol1WithCrc));
-        if (res >= (ssize_t)(sizeof(VOL1withCrc) - sizeof(VOL1))) {
-          switch(vol1WithCrc.getLBPMethod()) {
+        {
+          VOL1 vol1;
+          m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[WriteSession::WriteSession()] - Reading VOL1");
+          switch(vol1.getLBPMethod()) {
             case SCSI::logicBlockProtectionMethod::CRC32C:
               m_detectedLbp = true;
               if (m_useLbp) {
@@ -431,21 +428,22 @@ namespace castor {
               m_detectedLbp = false;
               break;
             default:
-              throw cta::exception::Exception("In WriteSession::WriteSession(): "
-                  "unknown LBP method");
+              throw cta::exception::Exception("In WriteSession::WriteSession(): unknown LBP method");
           }
         }
 
         // from this point the right LBP mode should be set or not set
         m_drive.rewind();
-        VOL1 vol1;
-        m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[WriteSession::WriteSession()] - Reading VOL1");
-        try {
-          vol1.verify();
-        } catch (std::exception & e) {
-          throw TapeFormatError(e.what());
-        }  
-        HeaderChecker::checkVOL1(vol1, m_vid); // now we know that we are going to write on the correct tape
+        {
+          VOL1 vol1;
+          m_drive.readExactBlock((void *) &vol1, sizeof(vol1), "[WriteSession::WriteSession()] - Reading VOL1");
+          try {
+            vol1.verify();
+          } catch (std::exception &e) {
+            throw TapeFormatError(e.what());
+          }
+          HeaderChecker::checkVOL1(vol1, m_vid); // now we know that we are going to write on the correct tape
+        }
         //if the tape is not empty let's move to the last trailer
         if(last_fSeq>0) {
           uint32_t dst_filemark = last_fSeq*3-1; // 3 file marks per file but we want to read the last trailer (hence the -1)
