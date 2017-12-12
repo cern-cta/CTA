@@ -21,9 +21,9 @@ find_package (cryptopp REQUIRED)
 find_package (xrootdclient REQUIRED)
 include_directories (${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 
-add_executable (cta CTACmdMain.cpp Configuration.cpp)
-target_link_libraries (cta ${XROOTD_XRDCL_LIB} cryptopp)
-install (TARGETS cta DESTINATION usr/bin)
+add_executable (cta.deprecated CTACmdMain.cpp Configuration.cpp)
+target_link_libraries (cta.deprecated ${XROOTD_XRDCL_LIB} cryptopp)
+install (TARGETS cta.deprecated DESTINATION usr/bin)
 INSTALL (FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 include_directories (${CMAKE_SOURCE_DIR}/tapeserver/)

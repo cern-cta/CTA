@@ -99,7 +99,9 @@ private:
     * Called by the XrdSsi framework when it is finished with the object
     */
    virtual void Recycle() {
+#ifdef XRDSSI_DEBUG
       std::cerr << "[DEBUG] OStreamBuffer::Recycle()" << std::endl;
+#endif
       delete this;
    }
 
