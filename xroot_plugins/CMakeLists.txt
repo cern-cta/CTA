@@ -60,7 +60,7 @@ if (OCCI_SUPPORT)
   set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 # Get some extra debug messages on stdout
-target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
+#target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
 install (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
