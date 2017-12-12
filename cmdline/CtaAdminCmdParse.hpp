@@ -383,11 +383,11 @@ const Option opt_lbp                  { Option::OPT_BOOL, "--lbp",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>",
                                         "--logicallibrary" };
-const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <maxDrivesAllowed>" };
-const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <minRequestAge>" };
-const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <minRequestAge>" };
-const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mountpolicy_name>" };
-const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mountpolicy_name>",
+const Option opt_maxdrivesallowed     { Option::OPT_UINT, "--maxdrivesallowed",      "-d",   " <max_drives_allowed>" };
+const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
+const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>" };
+const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mount_policy_name>" };
+const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>",
                                         "--mountpolicy" };
 const Option opt_number_of_files      { Option::OPT_UINT, "--nbfiles",               "-n",   " <number_of_files_per_tape>" };
 const Option opt_number_of_files_alias{ Option::OPT_UINT, "--number",                "-n",   " <number_of_files>",
@@ -396,7 +396,7 @@ const Option opt_output               { Option::OPT_STR,  "--output",           
 const Option opt_owner                { Option::OPT_STR,  "--owner",                 "-o",   " <owner>" };
 const Option opt_partialfiles         { Option::OPT_UINT, "--partial",               "-p",   " <number_of_files_per_tape>" };
 const Option opt_partialtapes         { Option::OPT_UINT, "--partialtapesnumber",    "-p",   " <number_of_partial_tapes>" };
-const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <fullpath>" };
+const Option opt_path                 { Option::OPT_STR,  "--path",                  "-p",   " <full_path>" };
 const Option opt_retrievepriority     { Option::OPT_UINT, "--retrievepriority",      "--rp", " <priority_value>" };
 const Option opt_size                 { Option::OPT_UINT, "--size",                  "-s",   " <file_size>" };
 const Option opt_storageclass         { Option::OPT_STR,  "--storageclass",          "-s",   " <storage_class_name>" };
@@ -404,7 +404,7 @@ const Option opt_storageclass_alias   { Option::OPT_STR,  "--name",             
                                         "--storageclass" };
 const Option opt_summary              { Option::OPT_FLAG, "--summary",               "-S",   "" };
 const Option opt_tag                  { Option::OPT_STR,  "--tag",                   "-t",   " <tag_name>" };
-const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",              "-n",   " <tapepool_name>" };
+const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",              "-t",   " <tapepool_name>" };
 const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>",
                                         "--tapepool" };
 const Option opt_username             { Option::OPT_STR,  "--username",              "-u",   " <user_name>" };
@@ -480,10 +480,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_SHRINK,               AdminCmd::SUBCMD_NONE  }, { opt_tapepool }},
    {{ AdminCmd::CMD_SHOWQUEUES,           AdminCmd::SUBCMD_NONE  }, { opt_header.optional() }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_storageclass, opt_copynb, opt_comment }},
+      { opt_instance, opt_storageclass_alias, opt_copynb, opt_comment }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_storageclass, opt_copynb.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass }},
+      { opt_instance, opt_storageclass_alias, opt_copynb.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_RM    }, { opt_instance, opt_storageclass_alias }},
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
       { opt_vid, opt_logicallibrary, opt_tapepool, opt_capacity, opt_disabled, opt_full, opt_comment.optional() }},

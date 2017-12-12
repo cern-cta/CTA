@@ -48,7 +48,7 @@ void Option::validateCmd(const AdminCmd &admincmd) const
          }
    }
 
-   throw std::runtime_error((m_type == Option::OPT_CMD ? m_help_txt : m_long_opt) + " is obligatory.");
+   throw std::runtime_error("Missing option: " + (m_type == Option::OPT_CMD ? m_help_txt : m_long_opt));
 }
 
 
@@ -86,7 +86,7 @@ std::string CmdHelp::help() const
                       [](std::string const& lhs, std::string const& rhs) { return lhs.size() < rhs.size(); });
 
    // Terminate with a colon if there are subcommands to follow
-   m_help_full += (max_sub_cmd != m_sub_cmd.end()) ? ":\n" : "\n";
+   m_help_full += (max_sub_cmd != m_sub_cmd.end()) ? cmd_line + ":\n" : "\n";
 
    // Add optional additional help
    m_help_full += m_help_extra;

@@ -290,15 +290,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    {
       // Command has been set: show command-specific help
 
-      // Reverse lookup of long command name
-      std::string longcmd;
-      for(auto map_it = cmdLookup.begin(); map_it != cmdLookup.end(); ++map_it) {
-         if(admincmd == map_it->second && map_it->first.length() > longcmd.length()) {
-            longcmd = map_it->first;
-         }
-      }
-
-      help << m_execname << ' ' << longcmd << cmdHelp.at(admincmd).help();
+      help << m_execname << ' ' << cmdHelp.at(admincmd).help();
    }
 
    throw std::runtime_error(help.str());
