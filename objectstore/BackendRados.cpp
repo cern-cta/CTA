@@ -80,23 +80,53 @@ namespace cta { namespace objectstore {
 
 cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
 
-BackendRados::BackendRados(const std::string & userId, const std::string & pool, const std::string &radosNameSpace) :
+BackendRados::BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool,
+  const std::string &radosNameSpace) :
 m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtx() {
   cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
+  bool contextSet=false;
   try {
+    RadosTimeoutLogger rtl;
     cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.conf_read_file(NULL),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_read_file");
+    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_read_file()", "no object");
+    rtl.reset();
     cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.conf_parse_env(NULL),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.conf_parse_env");
+    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_parse_env()", "no object");
+    rtl.reset();
     cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.connect(),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.connect");
+    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.connect()", "no object");
+    rtl.reset();
     cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.ioctx_create(pool.c_str(), m_radosCtx),
         "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.ioctx_create");
+    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.ioctx_create()", "no object");
+    contextSet=true;
     // An empty string also sets the namespace to default so no need to filter. This function does not fail.
     m_radosCtx.set_namespace(radosNameSpace);
+    // Create the thread pool. One thread per CPU hardware thread.
+    for (size_t i=0; i<std::thread::hardware_concurrency(); i++) {
+      RadosWorkerThreadAndContext * rwtac = new RadosWorkerThreadAndContext(m_cluster, pool, radosNameSpace, i, logger);
+      m_threads.push_back(rwtac);
+      m_threads.back()->start();
+    }
   } catch (...) {
+    for (size_t i=0; i<m_threads.size(); i++) m_JobQueue.push(nullptr);
+    for (auto &t: m_threads) {
+      if (t) t->wait();
+      delete t;
+    }
+    if (contextSet) 
+    {
+      RadosTimeoutLogger rtl;
+      m_radosCtx.close();
+      rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtx.close()", "no object");
+    }
+    RadosTimeoutLogger rtl;
     m_cluster.shutdown();
+    rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.shutdown()", "no object");
     throw;
   }
 }
@@ -503,6 +533,28 @@ BackendRados::ScopedLock* BackendRados::lockShared(std::string name, uint64_t ti
   ret->set(name, client, LockType::Shared);
   return ret.release();
 }
+
+BackendRados::RadosWorkerThreadAndContext::RadosWorkerThreadAndContext(librados::Rados& cluster, 
+  const std::string & pool, const std::string& radosNameSpace, int threadID, log::Logger & logger): 
+  m_threadID(threadID), m_lc(logger) {
+  RadosTimeoutLogger rtl;
+  cta::exception::Errnum::throwOnReturnedErrno(-cluster.ioctx_create(pool.c_str(), m_radosCtx),
+      "In RadosWorkerThreadAndContext::RadosWorkerThreadAndContext, failed to cluster.ioctx_create");
+  rtl.logIfNeeded("In RadosWorkerThreadAndContext::RadosWorkerThreadAndContext(): ", "no object");
+  // An empty string also sets the namespace to default so no need to filter. This function does not fail.
+  m_radosCtx.set_namespace(radosNameSpace);
+}
+
+BackendRados::RadosWorkerThreadAndContext::~RadosWorkerThreadAndContext() {
+  RadosTimeoutLogger rtl;
+  m_radosCtx.close();
+  rtl.logIfNeeded("In RadosWorkerThreadAndContext::~RadosWorkerThreadAndContext(): m_radosCtx.close()", "no object");
+}
+
+void BackendRados::RadosWorkerThreadAndContext::run() {
+  
+}
+
 
 Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update)
 {

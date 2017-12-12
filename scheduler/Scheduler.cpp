@@ -464,40 +464,12 @@ std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const co
 }
 
 //------------------------------------------------------------------------------
-// getNextMount
+// sortAndGetTapesForMountInfo
 //------------------------------------------------------------------------------
-std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc) {
-  // In order to decide the next mount to do, we have to take a global lock on 
-  // the scheduling, retrieve a list of all running mounts, queues sizes for 
-  // tapes and tape pools, order the candidates by priority
-  // below threshold, and pick one at a time, we then attempt to get a tape 
-  // from the catalogue (for the archive mounts), and walk the list until we
-  // mount or find nothing to do.
-  // We then skip to the next candidate, until we find a suitable one and
-  // return the mount, or exhaust all of them an 
-  // Many steps for this logic are not specific for the database and are hence
-  // implemented in the scheduler itself.
-  // First, get the mount-related info from the DB
-  utils::Timer timer;
-  double getMountInfoTime = 0;
-  double queueTrimingTime = 0;
-  double getTapeInfoTime = 0;
-  double candidateSortingTime = 0;
-  double getTapeForWriteTime = 0;
-  double decisionTime = 0;
-  double mountCreationTime = 0;
-  double driveStatusSetTime = 0;
-  double schedulerDbTime = 0;
-  double catalogueTime = 0;
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-  mountInfo = m_db.getMountInfo(lc);
-  getMountInfoTime = timer.secs(utils::Timer::resetCounter);
-  if (mountInfo->queueTrimRequired) {
-    m_db.trimEmptyQueues(lc);
-    queueTrimingTime = timer.secs(utils::Timer::resetCounter);
-  }
-  __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
-  
+void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>& mountInfo,
+    const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
+    std::map<tpType, uint32_t> & existingMountsSummary, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc) {
   // The library information is not know for the tapes involved in retrieves. We 
   // need to query the catalogue now about all those tapes.
   // Build the list of tapes.
@@ -530,9 +502,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
-  typedef std::pair<std::string, common::dataStructures::MountType> tpType;
-  std::map<tpType, uint32_t> existingMountsSummary;
-  std::set<std::string> tapesInUse;
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
@@ -547,7 +516,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         params.add("vid", em.vid)
               .add("mountType", common::dataStructures::toString(em.type))
               .add("drive", em.driveName);
-        lc.log(log::DEBUG,"In Scheduler::getNextMount(): tapeAlreadyInUse found.");
+        lc.log(log::DEBUG,"In Scheduler::sortAndGetTapesForMountInfo(): tapeAlreadyInUse found.");
       }
     }
   }
@@ -590,7 +559,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             .add("minArchiveRequestAge", m->minArchiveRequestAge)
             .add("existingMounts", existingMounts)
             .add("maxDrivesAllowed", m->maxDrivesAllowed);
-      lc.log(log::DEBUG, "Removing potential mount not passing criteria");
+      lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
       m = mountInfo->potentialMounts.erase(m);
     } else {
       // populate the mount with a weight 
@@ -611,7 +580,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             .add("existingMounts", existingMounts)
             .add("maxDrivesAllowed", m->maxDrivesAllowed)
             .add("ratioOfMountQuotaUsed", m->ratioOfMountQuotaUsed);
-      lc.log(log::DEBUG, "Will consider potential mount");
+      lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Will consider potential mount");
       m++;
    }
   }
@@ -626,7 +595,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   
   // Find out if we have any potential archive mount in the list. If so, get the
   // list of tapes from the catalogue.
-  std::list<catalogue::TapeForWriting> tapeList;
   if (std::count_if(
         mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), 
         [](decltype(*mountInfo->potentialMounts.cbegin())& m){ return m.type == common::dataStructures::MountType::Archive; } )) {
@@ -643,6 +611,165 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
       t++;
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// getNextMountDryRun
+//------------------------------------------------------------------------------
+bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const std::string& driveName, log::LogContext& lc) {
+  // We run the same algorithm as the actual getNextMount without the global lock
+  // For this reason, we just return true as soon as valid mount has been found.
+  utils::Timer timer;
+  double getMountInfoTime = 0;
+  double getTapeInfoTime = 0;
+  double candidateSortingTime = 0;
+  double getTapeForWriteTime = 0;
+  double decisionTime = 0;
+  double schedulerDbTime = 0;
+  double catalogueTime = 0;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
+  mountInfo = m_db.getMountInfoNoLock(lc);
+  getMountInfoTime = timer.secs(utils::Timer::resetCounter);
+  std::map<tpType, uint32_t> existingMountsSummary;
+  std::set<std::string> tapesInUse;
+  std::list<catalogue::TapeForWriting> tapeList;
+  
+  sortAndGetTapesForMountInfo(mountInfo, logicalLibraryName, driveName, timer,
+      existingMountsSummary, tapesInUse, tapeList,
+      getTapeInfoTime, candidateSortingTime, getTapeForWriteTime, lc);
+  
+  // We can now simply iterate on the candidates until we manage to find a valid mount
+  for (auto m = mountInfo->potentialMounts.begin(); m!=mountInfo->potentialMounts.end(); m++) {
+    // If the mount is an archive, we still have to find a tape.
+    if (m->type==common::dataStructures::MountType::Archive) {
+      // We need to find a tape for archiving. It should be both in the right 
+      // tape pool and in the drive's logical library
+      // The first tape matching will go for a prototype.
+      // TODO: improve to reuse already partially written tapes and randomization
+      for (auto & t: tapeList) {
+        if (t.tapePool == m->tapePool) {
+          // We have our tape. That's enough.
+          decisionTime += timer.secs(utils::Timer::resetCounter);
+          schedulerDbTime = getMountInfoTime;
+          catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+          uint32_t existingMounts = 0;
+          try {
+            existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+          } catch (...) {}
+          log::ScopedParamContainer params(lc);
+          params.add("tapepool", m->tapePool)
+                .add("vid", t.vid)
+                .add("mountType", common::dataStructures::toString(m->type))
+                .add("existingMounts", existingMounts)
+                .add("bytesQueued", m->bytesQueued)
+                .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+                .add("filesQueued", m->filesQueued)
+                .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+                .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+                .add("minArchiveRequestAge", m->minArchiveRequestAge)
+                .add("getMountInfoTime", getMountInfoTime)
+                .add("getTapeInfoTime", getTapeInfoTime)
+                .add("candidateSortingTime", candidateSortingTime)
+                .add("getTapeForWriteTime", getTapeForWriteTime)
+                .add("decisionTime", decisionTime)
+                .add("schedulerDbTime", schedulerDbTime)
+                .add("catalogueTime", catalogueTime);
+          lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): Found a potential mount (archive)");
+          return true;
+        }
+      }
+    } else if (m->type==common::dataStructures::MountType::Retrieve) {
+      // We know the tape we intend to mount. We have to validate the tape is 
+      // actually available to read (not mounted or about to be mounted, and pass 
+      // on it if so).
+      if (tapesInUse.count(m->vid)) continue;
+      decisionTime += timer.secs(utils::Timer::resetCounter);
+      log::ScopedParamContainer params(lc);
+      uint32_t existingMounts = 0;
+      try {
+        existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
+      } catch (...) {}
+      schedulerDbTime = getMountInfoTime;
+      catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+      params.add("tapepool", m->tapePool)
+            .add("vid", m->vid)
+            .add("mountType", common::dataStructures::toString(m->type))
+            .add("existingMounts", existingMounts)
+            .add("bytesQueued", m->bytesQueued)
+            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("filesQueued", m->filesQueued)
+            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("minArchiveRequestAge", m->minArchiveRequestAge)
+            .add("getMountInfoTime", getMountInfoTime)
+            .add("getTapeInfoTime", getTapeInfoTime)
+            .add("candidateSortingTime", candidateSortingTime)
+            .add("getTapeForWriteTime", getTapeForWriteTime)
+            .add("decisionTime", decisionTime)
+            .add("schedulerDbTime", schedulerDbTime)
+            .add("catalogueTime", catalogueTime);
+      lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): Found a potential mount (retrieve)");
+      return true;
+    }
+  }
+  schedulerDbTime = getMountInfoTime;
+  catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  decisionTime += timer.secs(utils::Timer::resetCounter);
+  log::ScopedParamContainer params(lc);
+  params.add("getMountInfoTime", getMountInfoTime)
+        .add("getTapeInfoTime", getTapeInfoTime)
+        .add("candidateSortingTime", candidateSortingTime)
+        .add("getTapeForWriteTime", getTapeForWriteTime)
+        .add("decisionTime", decisionTime)
+        .add("schedulerDbTime", schedulerDbTime)
+        .add("catalogueTime", catalogueTime);
+  lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): No valid mount found.");
+  return false;
+}
+
+
+//------------------------------------------------------------------------------
+// getNextMount
+//------------------------------------------------------------------------------
+std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc) {
+  // In order to decide the next mount to do, we have to take a global lock on 
+  // the scheduling, retrieve a list of all running mounts, queues sizes for 
+  // tapes and tape pools, order the candidates by priority
+  // below threshold, and pick one at a time, we then attempt to get a tape 
+  // from the catalogue (for the archive mounts), and walk the list until we
+  // mount or find nothing to do.
+  // We then skip to the next candidate, until we find a suitable one and
+  // return the mount, or exhaust all of them an 
+  // Many steps for this logic are not specific for the database and are hence
+  // implemented in the scheduler itself.
+  // First, get the mount-related info from the DB
+  utils::Timer timer;
+  double getMountInfoTime = 0;
+  double queueTrimingTime = 0;
+  double getTapeInfoTime = 0;
+  double candidateSortingTime = 0;
+  double getTapeForWriteTime = 0;
+  double decisionTime = 0;
+  double mountCreationTime = 0;
+  double driveStatusSetTime = 0;
+  double schedulerDbTime = 0;
+  double catalogueTime = 0;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
+  mountInfo = m_db.getMountInfo(lc);
+  getMountInfoTime = timer.secs(utils::Timer::resetCounter);
+  if (mountInfo->queueTrimRequired) {
+    m_db.trimEmptyQueues(lc);
+    queueTrimingTime = timer.secs(utils::Timer::resetCounter);
+  }
+  __attribute__((unused)) SchedulerDatabase::TapeMountDecisionInfo & debugMountInfo = *mountInfo;
+  
+  std::map<tpType, uint32_t> existingMountsSummary;
+  std::set<std::string> tapesInUse;
+  std::list<catalogue::TapeForWriting> tapeList;
+  
+  sortAndGetTapesForMountInfo(mountInfo, logicalLibraryName, driveName, timer,
+      existingMountsSummary, tapesInUse, tapeList,
+      getTapeInfoTime, candidateSortingTime, getTapeForWriteTime, lc);
 
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them
@@ -769,6 +896,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
   }
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
   catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+  decisionTime += timer.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params(lc);
   params.add("getMountInfoTime", getMountInfoTime)
         .add("queueTrimingTime", queueTrimingTime)

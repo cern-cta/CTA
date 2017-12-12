@@ -158,7 +158,7 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
   # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,g:powerusers:rwx+d /eos/ctaeos/cta
+  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp /eos/ctaeos/cta
 
   eos attr set CTA_StorageClass=ctaStorageClass ${CTA_TEST_DIR}
     

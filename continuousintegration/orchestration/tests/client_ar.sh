@@ -76,6 +76,14 @@ if [[ $VERBOSE == 1 ]]; then
   TAILPID=$!
 fi
 
+# get some common useful helpers for krb5
+. /root/client_helper.sh
+
+# Get kerberos credentials for poweruser1
+eospower_kdestroy
+eospower_kinit
+
+
 EOS_DIR="${EOS_BASEDIR}/$(uuidgen)"
 echo "Creating test dir in eos: ${EOS_DIR}"
 # uuid should be unique no need to remove dir before...
@@ -141,7 +149,8 @@ echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 #  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200" || echo "Could not trigger retrieve for ${EOS_DIR}/${TEST_FILE_NAME}"
 #done
 
-grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | XrdSecPROTOCOL=sss xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s "${EOS_DIR}/TEST_FILE_NAME?eos.ruid=12001&eos.rgid=1200"
+# We need the -s as we are staging the files from tape (see xrootd prepare definition)
+grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/TEST_FILE_NAME
 
 
 # Wait for the copy to appear on disk

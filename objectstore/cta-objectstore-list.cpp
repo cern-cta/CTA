@@ -25,6 +25,8 @@
 #include "common/Configuration.hpp"
 #include "BackendVFS.hpp"
 #include "BackendFactory.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "common/log/LogContext.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 #include <iostream>
@@ -32,12 +34,13 @@
 
 int main(int argc, char ** argv) {
   try {
+    cta::log::DummyLogger dl("");
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
       cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
-      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr)));      
+      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), dl));      
     } else if (2 == argc) {
-      be.reset(cta::objectstore::BackendFactory::createBackend(argv[1]).release());
+      be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }

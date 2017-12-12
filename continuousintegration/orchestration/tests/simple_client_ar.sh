@@ -4,6 +4,11 @@
 EOSINSTANCE=ctaeos
 TEST_FILE_NAME=`uuidgen`
 
+# get some common useful helpers for krb5
+. /root/client_helper.sh
+
+eospower_kdestroy
+eospower_kinit
 
 echo "xrdcp /etc/group root://${EOSINSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}//eos/ctaeos/cta/${TEST_FILE_NAME}
@@ -41,9 +46,11 @@ echo "Information about the testing file without disk replica"
   eos root://${EOSINSTANCE} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
-echo "XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s \"/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200\""
-  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
+#echo "XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s \"/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200\""
+#  XrdSecPROTOCOL=sss xrdfs ${EOSINSTANCE} prepare -s "/eos/ctaeos/cta/${TEST_FILE_NAME}?eos.ruid=12001&eos.rgid=1200"
 
+# We need the -s as we are staging the files from tape (see xrootd prepare definition)
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 # Wait for the copy to appear on disk
 SECONDS_PASSED=0

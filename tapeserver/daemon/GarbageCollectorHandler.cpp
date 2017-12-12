@@ -254,7 +254,7 @@ int GarbageCollectorHandler::runChild() {
   // fail likewise, so we just wait for shutdown signal (no feedback to main
   // process).
   std::unique_ptr<cta::objectstore::Backend> backend(
-    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value()).release());
+    cta::objectstore::BackendFactory::createBackend(m_tapedConfig.backendPath.value(), m_processManager.logContext().logger()).release());
   // If the backend is a VFS, make sure we don't delete it on exit.
   // If not, nevermind.
   try {
