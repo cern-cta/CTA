@@ -126,7 +126,8 @@ void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
 
          google::protobuf::io::CodedInputStream::ReadLittleEndian32FromArray(m_split_buffer.get(), &msg_len);
          if(msg_len > m_max_msglen) {
-            throw XrdSsiException("Data record size exceeds XRootD SSI buffer size");
+            throw XrdSsiException("IStreamBuffer::Push(): Data record size (" + std::to_string(msg_len) +
+               " bytes) exceeds XRootD SSI buffer size (" + std::to_string(m_max_msglen) + " bytes)");
          }
          int bytes_to_copy = msg_len + sizeof(uint32_t) - m_split_buflen;
          memcpy(m_split_buffer.get() + m_split_buflen, buf_ptr, bytes_to_copy);
@@ -166,7 +167,8 @@ bool IStreamBuffer<DataType>::popRecord(int msg_len, google::protobuf::io::Coded
    int buf_len;
 
    if(msg_len > m_max_msglen) {
-      throw XrdSsiException("Data record size exceeds XRootD SSI buffer size");
+      throw XrdSsiException("IStreamBuffer::popRecord(): Data record size (" + std::to_string(msg_len) +
+         " bytes) exceeds XRootD SSI buffer size (" + std::to_string(m_max_msglen) + " bytes)");
    }
 
    // Get pointer to next record
