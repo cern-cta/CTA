@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <iostream> // delete me
 #include <google/protobuf/io/coded_stream.h>
 #include "XrdSsiPbException.hpp"
 
@@ -120,6 +121,7 @@ void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
          input_stream.Skip(bytes_to_copy);
 
          google::protobuf::io::CodedInputStream::ReadLittleEndian32FromArray(m_split_buffer.get(), &msg_len);
+std::cerr << "[1] " << msg_len << std::endl;
          popRecord(msg_len, input_stream);
       } else {
          // The payload is split across the boundary, copy the entire record
@@ -134,6 +136,7 @@ void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
          input_stream.Skip(bytes_to_copy);
 
          google::protobuf::io::CodedInputStream split_stream(reinterpret_cast<const uint8_t*>(m_split_buffer.get() + sizeof(uint32_t)), msg_len);
+std::cerr << "[2] " << msg_len << std::endl;
          popRecord(msg_len, split_stream);
       }
    }
@@ -155,6 +158,7 @@ void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
 
       // Get size of next item on the stream
       input_stream.ReadLittleEndian32(&msg_len);
+std::cerr << "[3] " << msg_len << std::endl;
    } while(popRecord(msg_len, input_stream));
 }
 
