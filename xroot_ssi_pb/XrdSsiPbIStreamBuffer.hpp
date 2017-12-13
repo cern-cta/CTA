@@ -148,6 +148,7 @@ std::cerr << "[2] " << msg_len << std::endl;
 
       // Get pointer to next record
       if(!input_stream.GetDirectBufferPointer(reinterpret_cast<const void**>(&buf_ptr), &buf_len)) break;
+std::cerr << "[3] buf_len = " << buf_len;
 
       if(buf_len < static_cast<int>(sizeof(uint32_t))) {
          // Size field is split across the boundary, save the partial field and finish
@@ -158,7 +159,7 @@ std::cerr << "[2] " << msg_len << std::endl;
 
       // Get size of next item on the stream
       input_stream.ReadLittleEndian32(&msg_len);
-std::cerr << "[3] " << msg_len << std::endl;
+std::cerr << ", msg_len = " << msg_len << std::endl;
    } while(popRecord(msg_len, input_stream));
 }
 
