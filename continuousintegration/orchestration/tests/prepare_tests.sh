@@ -60,10 +60,10 @@ ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -
 echo "Preparing CTA configuration for tests"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname ${ctacliIP} -c "docker cli"
   kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -c "docker cli"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta logicallibrary add \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
      --name ${LIBRARYNAME}                                            \
      --comment "ctasystest"                                           
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta tapepool add       \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
     --partialtapesnumber 5                                            \
     --encrypted false                                                 \
@@ -71,7 +71,7 @@ echo "Preparing CTA configuration for tests"
   # add all tapes
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
-    kubectl --namespace ${NAMESPACE} exec ctacli -- cta tape add         \
+    kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add         \
       --logicallibrary ${LIBRARYNAME}                                 \
       --tapepool ctasystest                                           \
       --capacity 1000000000                                           \
@@ -81,18 +81,18 @@ echo "Preparing CTA configuration for tests"
       --full false                                                    \
       --comment "ctasystest"
   done
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta storageclass add   \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
     --instance ${EOSINSTANCE}                                            \
     --name ctaStorageClass                                            \
     --copynb 1                                                        \
     --comment "ctasystest"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta archiveroute add   \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add   \
     --instance ${EOSINSTANCE}                                         \
     --storageclass ctaStorageClass                                    \
     --copynb 1                                                        \
     --tapepool ctasystest                                             \
     --comment "ctasystest"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta mountpolicy add    \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
     --name ctasystest                                                 \
     --archivepriority 1                                               \
     --minarchiverequestage 1                                          \
@@ -100,26 +100,26 @@ echo "Preparing CTA configuration for tests"
     --minretrieverequestage 1                                         \
     --maxdrivesallowed 1                                              \
     --comment "ctasystest"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta requestermountrule add \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add \
      --instance ${EOSINSTANCE}                                        \
      --name adm                                                       \
      --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta groupmountrule add \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
      --instance ${EOSINSTANCE}                                        \
      --name eosusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta groupmountrule add \
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
      --instance ${EOSINSTANCE}                                        \
      --name powerusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
 
 echo "Setting drive up: ${DRIVENAMES[${driveslot}]}"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta drive up ${DRIVENAMES[${driveslot}]}
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta drive ls
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAMES[${driveslot}]}
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
 
 # A bit of reporting
 echo "EOS server version is used:"
@@ -130,8 +130,8 @@ echo "EOS server version is used:"
 echo "Adding super client capabilities"
 
 clientIP=`kubectl --namespace ${NAMESPACE} describe pod client | grep IP | sed -E 's/IP:[[:space:]]+//'`
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta adminhost add --name ${clientIP} --comment "for the super client"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta admin add --username ctaadmin2 --comment "ctaadmin2"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin adminhost add --name ${clientIP} --comment "for the super client"
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"

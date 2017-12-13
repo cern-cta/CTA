@@ -20,7 +20,7 @@ die() {
 }
 
 admin_cta() {
-  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta $@
+  KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 cta-admin $@
 }
 
 admin_klist() {
