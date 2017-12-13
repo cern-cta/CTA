@@ -139,6 +139,8 @@ std::cerr << "[1] " << msg_len << std::endl;
 std::cerr << "[2] " << msg_len << std::endl;
          popRecord(msg_len, split_stream);
       }
+
+      m_split_buflen = 0;
    }
 
    // Extract remaining records from the input buffer
