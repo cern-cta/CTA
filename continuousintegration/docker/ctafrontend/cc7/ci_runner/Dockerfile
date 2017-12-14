@@ -74,7 +74,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       lynx \
       strace \
       ltrace \
-      cta-cli \
   && \
     yum clean all \
   && \
