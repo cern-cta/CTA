@@ -49,8 +49,6 @@ endif (OCCI_SUPPORT)
 
 # XRootD SSI plugin for CTA Frontend
 
-add_subdirectory(messages)
-
 include_directories(../xroot_ssi_pb)
 
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
