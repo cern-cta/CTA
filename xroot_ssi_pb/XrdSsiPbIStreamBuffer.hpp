@@ -157,7 +157,6 @@ void IStreamBuffer<DataType>::Push(const char *buf_ptr, int buf_len)
 
       // Get size of next item on the stream
       input_stream.ReadLittleEndian32(&msg_len);
-std::cerr << ", msg_len = " << msg_len << std::endl;
    } while(popRecord(msg_len, input_stream));
 }
 
