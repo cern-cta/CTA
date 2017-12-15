@@ -34,6 +34,7 @@ cta_rpm:
   stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
+    - git submodule update --init --recursive
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
@@ -60,6 +61,7 @@ cta_tagged_rpm:
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
+    - git submodule update --init --recursive
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc-c++ cmake make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
