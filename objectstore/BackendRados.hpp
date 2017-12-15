@@ -114,8 +114,12 @@ private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */
   void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
+  void lockWithIoContext(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId, 
+    librados::IoCtx & radosCtx);
+  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, 
+    const std::string & clientId, librados::IoCtx & radosCtx);
+  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 
+    const std::string & clientId, librados::IoCtx & radosCtx);
   
 public:  
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
@@ -191,7 +195,8 @@ private:
    * Base class for jobs handled by the thread-and-context pool.
    */
   class AsyncJob {
-    virtual void execute(librados::IoCtx & context)=0;
+  public:
+    virtual void execute()=0;
     virtual ~AsyncJob() {}
   };
   
@@ -205,17 +210,17 @@ private:
    */
   class RadosWorkerThreadAndContext: private cta::threading::Thread {
   public:
-    RadosWorkerThreadAndContext(librados::Rados & cluster, const std::string & pool, const std::string & radosNameSpace, 
-      int threadID, log::Logger & logger);
+    RadosWorkerThreadAndContext(BackendRados & parentBackend, int threadID, log::Logger & logger);
     virtual ~RadosWorkerThreadAndContext();
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
   private:
-    librados::IoCtx m_radosCtx;
+    BackendRados & m_parentBackend;
     const int m_threadID;
     log::LogContext m_lc;
     void run() override;
   };
+  friend RadosWorkerThreadAndContext;
   
   /**
    * The container for the threads
@@ -353,7 +358,10 @@ private:
   std::string m_pool;
   std::string m_namespace;
   librados::Rados m_cluster;
-  librados::IoCtx m_radosCtx;
+  std::vector<librados::IoCtx> m_radosCtxPool;
+  cta::threading::Mutex m_radosCxtIndexMutex;
+  size_t m_radosCtxIndex=0;
+  librados::IoCtx & getRadosCtx();
 };
 
 }} // end of cta::objectstore
