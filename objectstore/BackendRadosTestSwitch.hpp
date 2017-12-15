@@ -18,4 +18,4 @@
 
 // A central switch to enable/disable RADOS based tests.
 #pragma once
-#define TEST_RADOS
+#undef TEST_RADOS
