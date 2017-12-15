@@ -1,5 +1,5 @@
 # The CERN Tape Archive (CTA) project
-# Copyright (C) 2015  CERN
+# Copyright 2018 CERN
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,20 +13,45 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 cmake_minimum_required (VERSION 2.6)
 
 list (APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package (xrootd REQUIRED)
-include_directories(${CMAKE_SOURCE_DIR})
+find_package(xrootd REQUIRED)
+find_package(Protobuf3 REQUIRED)
+
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
-include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-find_package(Protobuf3 REQUIRED)
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
+#
+# XRootD SSI Protocol Buffer bindings
+#
+# This is a git submodule
+#
+set(XRD_SSI_PB_DIR xrootd-ssi-protobuf-interface)
+include_directories(${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/include ${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/eos_cta/include)
 
-# XRootD OFS plugin for CTA Frontend
+#
+# Compiled protocol buffers
+#
+include_directories(${CMAKE_BINARY_DIR}/${XRD_SSI_PB_DIR}/eos_cta/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
+#
+# XRootD SSI plugin for CTA Frontend
+#
+add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
+target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
+set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+if (OCCI_SUPPORT)
+  set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif (OCCI_SUPPORT)
+# Get some extra debug messages on stderr
+#target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
+
+####################################################################################################
+#
+# XRootD OFS plugin for CTA Frontend (DEPRECATED)
+#
 add_library (XrdCtaOfs MODULE
   ListArchiveFilesCmd.cpp
   XrdCtaFilesystem.cpp
@@ -47,22 +72,12 @@ if (OCCI_SUPPORT)
   set_property (TARGET XrdCtaOfs APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
 
-# XRootD SSI plugin for CTA Frontend
-
-include_directories(../xroot_ssi_pb)
-
-add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
-target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
-set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
-# Get some extra debug messages on stdout
-#target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
-
 install (TARGETS XrdCtaOfs DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install (TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install (FILES cta-frontend-xrootd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
-install (FILES cta-frontend.service DESTINATION /etc/systemd/system)
+#
+####################################################################################################
+
+install(TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(FILES cta-frontend-xrootd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(FILES cta-frontend.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
+install(FILES cta-frontend.service DESTINATION /etc/systemd/system)

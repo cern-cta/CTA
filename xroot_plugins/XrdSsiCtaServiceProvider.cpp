@@ -22,7 +22,7 @@
 
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
-#include "xroot_plugins/messages/cta_frontend.pb.h"
+#include "cta_frontend.pb.h"
 
 #include "version.h"
 #include "common/make_unique.hpp"

@@ -23,7 +23,7 @@
 #include <set>
 #include <string>
 
-#include "xroot_plugins/messages/CtaFrontendApi.hpp"
+#include "CtaFrontendApi.hpp"
 
 namespace cta {
 namespace admin {

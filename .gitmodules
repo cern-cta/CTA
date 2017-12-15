@@ -1,0 +1,3 @@
+[submodule "xrootd-ssi-protobuf-interface"]
+	path = xrootd-ssi-protobuf-interface
+	url = https://:@gitlab.cern.ch:8443/eos/xrootd-ssi-protobuf-interface.git

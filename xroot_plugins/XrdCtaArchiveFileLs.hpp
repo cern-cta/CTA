@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "xroot_ssi_pb/XrdSsiPbOStreamBuffer.hpp"
+#include "XrdSsiPbOStreamBuffer.hpp"
 #include "catalogue/Catalogue.hpp"
 
 

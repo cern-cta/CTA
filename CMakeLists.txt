@@ -131,8 +131,11 @@ ELSE(DEFINED PackageOnly)
     install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
     install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
 
-    add_subdirectory(catalogue)
+    add_subdirectory(xrootd-ssi-protobuf-interface)
     add_subdirectory(cmdline)
+    add_subdirectory(xroot_plugins)
+
+    add_subdirectory(catalogue)
     add_subdirectory(common)
     add_subdirectory(eos)
     add_subdirectory(mediachanger)
@@ -141,7 +144,6 @@ ELSE(DEFINED PackageOnly)
     add_subdirectory(scheduler)
     add_subdirectory(tapeserver)
     add_subdirectory(tests)
-    add_subdirectory(xroot_plugins)
   endif(BUILD_CMDLINE_ONLY)
   
   #Generate version information
