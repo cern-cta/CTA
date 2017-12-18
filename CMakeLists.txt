@@ -131,6 +131,11 @@ ELSE(DEFINED PackageOnly)
     install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
     install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
 
+    #
+    # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
+    #
+    set(XRD_SSI_PB_DIR xrootd-ssi-protobuf-interface)
+
     add_subdirectory(xrootd-ssi-protobuf-interface)
     add_subdirectory(cmdline)
     add_subdirectory(xroot_plugins)

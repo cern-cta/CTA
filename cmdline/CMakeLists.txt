@@ -30,9 +30,6 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 #
 # XRootD SSI Protocol Buffer bindings
 #
-# This is a git submodule
-#
-set(XRD_SSI_PB_DIR xrootd-ssi-protobuf-interface)
 include_directories(${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/include ${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/eos_cta/include)
 
 #
