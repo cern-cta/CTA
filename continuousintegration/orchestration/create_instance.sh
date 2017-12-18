@@ -306,10 +306,10 @@ echo OK
 echo -n "Waiting for EOS to be configured"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" && break
+  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break  
   sleep 1
 done
-kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" || die "TIMED OUT"
+[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
 echo OK
 
 

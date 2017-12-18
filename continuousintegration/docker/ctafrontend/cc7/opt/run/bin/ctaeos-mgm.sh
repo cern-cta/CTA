@@ -182,7 +182,7 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
-echo "### ctaeos mgm ready ###"
+touch /EOSOK
 
 /bin/bash
 
