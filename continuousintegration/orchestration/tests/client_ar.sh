@@ -207,7 +207,8 @@ if [[ $REMOVE == 1 ]]; then
   # recount the files on tape as the workflows may have gone further...
   INITIALFILESONTAPE=$(admin_cta archivefile ls  --all | grep ${EOS_DIR} | wc -l)
   echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-  XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  # XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
   EOSRMPID=$!
   # wait a bit in case eos prematurely fails...
   sleep 1
