@@ -40,7 +40,7 @@ include_directories(${CMAKE_BINARY_DIR}/${XRD_SSI_PB_DIR}/eos_cta/protobuf ${PRO
 # XRootD SSI plugin for CTA Frontend
 #
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp ../cmdline/CtaAdminCmdParse.cpp)
-target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdCtaMessages ctascheduler ctacommon ctaobjectstore ctacatalogue)
+target_link_libraries(XrdSsiCta XrdSsi-4 XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
