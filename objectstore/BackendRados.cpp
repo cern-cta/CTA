@@ -84,6 +84,7 @@ cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
 BackendRados::BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool,
   const std::string &radosNameSpace) :
 m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtxPool() {
+  log::LogContext lc(logger);
   cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.init(userId.c_str()),
       "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.init");
   try {
@@ -102,12 +103,32 @@ m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosC
     // Create the connection pool. One per CPU hardware thread.
     for (size_t i=0; i<std::thread::hardware_concurrency(); i++) {
       m_radosCtxPool.emplace_back(librados::IoCtx());
+      log::ScopedParamContainer params(lc);
+      params.add("contextId", i);
+      lc.log(log::DEBUG, "BackendRados::BackendRados() about to create a new context");
       rtl.reset();
       cta::exception::Errnum::throwOnReturnedErrno(-m_cluster.ioctx_create(pool.c_str(), m_radosCtxPool.back()),
           "In ObjectStoreRados::ObjectStoreRados, failed to m_cluster.ioctx_create");
       rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.ioctx_create()", "no object");
+      lc.log(log::DEBUG, "BackendRados::BackendRados() context created. About to set namespace.");
+      librados::bufferlist bl;
+      rtl.reset();
       // An empty string also sets the namespace to default so no need to filter. This function does not fail.
       m_radosCtxPool.back().set_namespace(radosNameSpace);
+      rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtxPool.back().set_namespace()", "no object");
+      rtl.reset();
+lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test access.");
+      // Try to read a non-existing object through the newly created context, in hope this will protect against
+      // race conditions(?) when creating the contexts in a tight loop.
+      auto rc=m_radosCtxPool.back().read("TestObjectThatDoesNotNeedToExist", bl, 1, 0);
+      rtl.logIfNeeded("In BackendRados::BackendRados(): m_radosCtxPool.back().read()", "TestObjectThatDoesNotNeedToExist");
+      if (-rc != ENOENT) cta::exception::Errnum::throwOnReturnedErrno(-rc,
+          "In ObjectStoreRados::ObjectStoreRados, failed to m_radosCtxPool.back().read(), and error is not ENOENT as expected");
+    }
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("radosContexts", m_radosCtxPool.size());
+      lc.log(log::DEBUG, "In BackendRados::BackendRados(): created rados contexts");
     }
     // Create the thread pool. One thread per CPU hardware thread.
     for (size_t i=0; i<std::thread::hardware_concurrency(); i++) {
@@ -115,10 +136,9 @@ m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosC
       m_threads.push_back(rwtac);
       m_threads.back()->start();
     }
-    log::LogContext lc(logger);
     log::ScopedParamContainer params(lc);
     params.add("workThreads", m_threads.size());
-    lc.log(log::INFO, "In BackendRados::BackendRados(): created worked threads");
+    lc.log(log::INFO, "In BackendRados::BackendRados(): created worker threads");
   } catch (...) {
     for (size_t i=0; i<m_threads.size(); i++) m_JobQueue.push(nullptr);
     for (auto &t: m_threads) {
