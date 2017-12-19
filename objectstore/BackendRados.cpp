@@ -879,18 +879,31 @@ void BackendRados::AsyncDeleter::wait() {
 
 BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendRados& be, const std::string& name):
   m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
-  // At construction time, we just start the read.
-  librados::AioCompletion * aioc = librados::Rados::aio_create_completion(this, fetchCallback, nullptr);
-  RadosTimeoutLogger rtl;
-  m_radosTimeoutLogger.reset();
-  auto rc=m_backend.getRadosCtx().aio_read(m_name, aioc, &m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
-  rtl.logIfNeeded("BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): m_radosCtx.aio_read()", m_name);
-  aioc->release();
-  if (rc) {
-    cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): failed to launch aio_read(): ")+m_name);
-    throw Backend::NoSuchObject(errnum.getMessageValue());
+  // At construction, just post the aio poster to the thread pool.
+  m_aioReadPoster.setParentFatcher(this);
+  m_backend.m_jobQueue.push(&m_aioReadPoster);
+}
+
+void BackendRados::AsyncLockfreeFetcher::AioReadPoster::execute() {
+  AsyncLockfreeFetcher & au = *m_parentFetcher;
+  try {
+    // Just start the read.
+    librados::AioCompletion * aioc = librados::Rados::aio_create_completion(m_parentFetcher, fetchCallback, nullptr);
+    RadosTimeoutLogger rtl;
+    au.m_radosTimeoutLogger.reset();
+    auto rc=au.m_backend.getRadosCtx().aio_read(au.m_name, aioc, &au.m_radosBufferList, std::numeric_limits<int32_t>::max(), 0);
+    rtl.logIfNeeded("BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): m_radosCtx.aio_read()", au.m_name);
+    aioc->release();
+    if (rc) {
+      cta::exception::Errnum errnum (-rc, std::string("In BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(): failed to launch aio_read(): ")+au.m_name);
+      throw Backend::NoSuchObject(errnum.getMessageValue());
+    }
+  } catch (...) {
+    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
+    au.m_job.set_exception(std::current_exception());
   }
 }
+
 
 void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t completion, void* pThis) {
   AsyncLockfreeFetcher & au = *((AsyncLockfreeFetcher *) pThis);

@@ -263,7 +263,6 @@ public:
       void execute() override;
     private:
       AsyncUpdater * m_parentUpdater = nullptr;
-      
     };
     friend class UpdateJob;
     UpdateJob m_updateJob;
@@ -326,6 +325,16 @@ public:
     BackendRados &m_backend;
     /** The object name */
     const std::string m_name;
+    /** The aio posting task */
+    class AioReadPoster: public AsyncJob {
+    public:
+      void setParentFatcher (AsyncLockfreeFetcher * fetcher) { m_parentFetcher = fetcher; }
+      void execute() override;
+    private:
+      AsyncLockfreeFetcher * m_parentFetcher = nullptr;
+    };
+    friend class AioReadPoster;
+    AioReadPoster m_aioReadPoster;
     /** The promise that will both do the job and allow synchronization with the caller. */
     std::promise<std::string> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
