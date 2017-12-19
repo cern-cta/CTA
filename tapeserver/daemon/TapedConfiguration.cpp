@@ -17,7 +17,7 @@
  */
 
 #include "TapedConfiguration.hpp"
-#include "ConfigurationFile.hpp"
+#include "common/ConfigurationFile.hpp"
 #include "Tpconfig.hpp"
 
 namespace cta { namespace tape { namespace daemon {
