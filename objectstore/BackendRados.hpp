@@ -203,7 +203,7 @@ private:
   /**
    * The queue for the thread-and-context pool.
    */
-  cta::threading::BlockingQueue<AsyncJob *> m_JobQueue;
+  cta::threading::BlockingQueue<AsyncJob *> m_jobQueue;
   
   /**
    * The class for the worker threads
@@ -229,7 +229,7 @@ private:
   
 public:
   /**
-   * A class following up the check existence-lock-fetch-update-write-unlock. Constructor implicitly
+   * A class following up the lock-fetch-update-write-unlock. Constructor implicitly
    * starts the lock step.
    */
   class AsyncUpdater: public Backend::AsyncUpdater {
@@ -256,9 +256,17 @@ public:
     std::string m_lockClient;
     /** The rados bufferlist used to hold the object data (read+write) */
     ::librados::bufferlist m_radosBufferList;
-    /** A future the hole the the structure of the update operation. It will be either empty of complete at 
-     destruction time */
-    std::unique_ptr<std::future<void>> m_updateAsync;
+    /** An async job that will process the update of the object. */ 
+    class UpdateJob: public AsyncJob {
+    public:
+      void setParentUpdater (AsyncUpdater * updater) { m_parentUpdater = updater; }
+      void execute() override;
+    private:
+      AsyncUpdater * m_parentUpdater = nullptr;
+      
+    };
+    friend class UpdateJob;
+    UpdateJob m_updateJob;
     /** Async delete in case of zero sized object */
     static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
     /** The second callback operation (after reading) */
