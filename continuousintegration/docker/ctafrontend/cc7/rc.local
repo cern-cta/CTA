@@ -18,4 +18,7 @@ fi
 printenv > /tmp/rc.local
 
 # Let the next step take over
-exec /shared/rc.local
+## we can override the default by providing content in the shared folder
+test -e /shared/rc.local && exec /shared/rc.local
+
+exec /opt/run/bin/rc.local.shared
