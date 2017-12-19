@@ -38,3 +38,10 @@ if [ $(echo ${MY_CONTAINER} | grep -s '^taped') ]; then
   echo "Running /opt/run/bin/taped.sh" &> ${logfile}
   /opt/run/bin/taped.sh 2>&1 | tee -a ${logfile}
 fi
+
+if [ $(echo ${MY_NAME} | grep -s '^ctaeos') ]; then
+  echo "Running /shared/ctaeos-mgm.sh" &> ${logfile}
+  /opt/run/bin/ctaeos-mgm.sh 2>&1 | tee -a ${logfile}
+fi
+
+echo "DONE" >> ${logfile}

@@ -109,20 +109,38 @@ echo
 echo "Limits summary for user daemon:"
 sudo -u daemon bash -c 'ulimit -a'
 
-# Using jemalloc as specified in
-# it-puppet-module-eos:
-#  code/templates/etc_sysconfig_mgm.erb
-#  code/templates/etc_sysconfig_mgm_env.erb
-#  code/templates/etc_sysconfig_fst.erb
-#  code/templates/etc_sysconfig_fst_env.erb
-test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
-test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
+  # generate eos_env file for systemd
+  cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
+  test -e /usr/lib64/libjemalloc.so.1 && echo LD_PRELOAD=/usr/lib64/libjemalloc.so.1 >> /etc/sysconfig/eos_env
 
-# start and setup eos for xrdcp to the ${CTA_TEST_DIR}
+  # start eos
+  systemctl start eos@mq
+  systemctl start eos@mgm
+  systemctl start eos@fst
+
+  echo -n "Waiting for eos to start"
+  for ((i=1;i<20;i++)); do systemctl status eos@{mq,mgm,fst} &>/dev/null && break; sleep 1; echo -n .; done
+  systemctl status eos@{mq,mgm,fst} &>/dev/null && echo OK || echo FAILED
+
+  systemctl status eos@{mq,mgm,fst}
+
+else
+  # Using jemalloc as specified in
+  # it-puppet-module-eos:
+  #  code/templates/etc_sysconfig_mgm.erb
+  #  code/templates/etc_sysconfig_mgm_env.erb
+  #  code/templates/etc_sysconfig_fst.erb
+  #  code/templates/etc_sysconfig_fst_env.erb
+  test -e /usr/lib64/libjemalloc.so.1 && echo "Using jemalloc for EOS processes"
+  test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.so.1
+
+  # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
     /usr/bin/xrootd -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     /usr/bin/xrootd -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     /usr/bin/xrootd -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
+fi
 
   eos vid enable krb5
   eos vid enable sss
@@ -184,5 +202,6 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 
 touch /EOSOK
 
-/bin/bash
-
+if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
+  /bin/bash
+fi

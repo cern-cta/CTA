@@ -141,7 +141,7 @@ fi
 
 if [ $usesystemd == 1 ] ; then
     echo "Using systemd to start services on some pods"
-    for podname in ctafrontend tpsrv; do
+    for podname in ctafrontend tpsrv ctaeos; do
         sed -i "/^\ *command:/d" ${poddir}/pod-${podname}*.yaml
     done
 fi
