@@ -76,7 +76,7 @@ add_library (ctaobjectstore SHARED
 set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctaobjectstore rados json-c ctautils cryptopp)
+target_link_libraries(ctaobjectstore rados json-c cryptopp)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -98,7 +98,7 @@ install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
 set_property(TARGET cta-objectstore-initialize APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-initialize
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctautils)
+  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
 set_property(TARGET cta-objectstore-list APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})

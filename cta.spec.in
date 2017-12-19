@@ -196,7 +196,6 @@ The shared libraries
 %{_libdir}/libctacatalogue.so*
 %{_libdir}/libctacommon.so*
 #TODO: merge util and common
-%{_libdir}/libctautils.so*
 %{_libdir}/libctascheduler.so*
 %{_libdir}/libctaobjectstore.so*
 %{_libdir}/libctamediachanger.so*

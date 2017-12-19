@@ -57,7 +57,6 @@ add_dependencies(ctamessages ctamessagesprotobuf)
 target_link_libraries(ctamessages
   ctamessagesprotobuf
   ctamediachanger
-  ctautils
   ctatapesession
   ${PROTOBUF3_LIBRARIES}
   ssl)

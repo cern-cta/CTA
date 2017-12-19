@@ -72,7 +72,6 @@ set_property(TARGET ctatapeserverdriveunittests PROPERTY   VERSION "${CTA_LIBVER
 target_link_libraries(ctatapeserverdriveunittests
   ctaTapeServerDaemon
   System
-  TapeDrive
-  ctautils)
+  TapeDrive)
 
 install(TARGETS ctatapeserverdriveunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

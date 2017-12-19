@@ -22,7 +22,6 @@
  *****************************************************************************/
 #include <sys/types.h>
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"

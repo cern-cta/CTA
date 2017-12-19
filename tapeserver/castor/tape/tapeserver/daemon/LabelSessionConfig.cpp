@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 
 //------------------------------------------------------------------------------

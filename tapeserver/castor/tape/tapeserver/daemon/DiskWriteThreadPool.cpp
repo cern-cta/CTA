@@ -22,7 +22,6 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/common/CastorConfiguration.hpp"
 #include "common/Timer.hpp"
 #include "common/log/LogContext.hpp"
 
