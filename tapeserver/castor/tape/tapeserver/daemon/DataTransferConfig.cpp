@@ -21,10 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
