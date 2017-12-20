@@ -546,7 +546,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rqc.archiveFile.reconciliationTime = 0;
     rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
     rqc.archiveFile.diskInstance = "eoseos";
-    rqc.archiveFile.fileSize = 667;
+    rqc.archiveFile.fileSize = 1000 + pass;
     rqc.archiveFile.storageClass = "sc";
     rqc.archiveFile.tapeFiles[1].blockId=0;
     rqc.archiveFile.tapeFiles[1].compressedSize=1;
@@ -591,7 +591,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       rq.addJobsAndCommit(jta);
     }
     if (pass < 5) { pass++; continue; }
-    // - Still marked a not owned but referenced in the agent
+    // - Still marked as not owned but referenced in the agent
     {
       rr.setOwner(tAddr[0]);
       rr.setActiveCopyNumber(1);

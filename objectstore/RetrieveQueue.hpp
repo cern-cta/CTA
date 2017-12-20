@@ -55,10 +55,12 @@ public:
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
-    const std::string & retrieveRequestAddress, uint64_t size,
-    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  // returns the count and sizes of actually added jobs if a new job was actually inserted.
+  struct AdditionSummary {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd);
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;

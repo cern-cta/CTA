@@ -137,47 +137,56 @@ void cta::objectstore::RetrieveQueue::addJobsAndCommit(std::list<cta::objectstor
   commit();
 }
 
-bool cta::objectstore::RetrieveQueue::addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
-  const std::string & retrieveRequestAddress, uint64_t size, 
-  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+auto cta::objectstore::RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<cta::objectstore::RetrieveQueue::JobToAdd> & jobsToAdd) 
+-> AdditionSummary {
   checkPayloadWritable();
-  // Check if the job is present and skip insertion if so
-  for (auto &j: m_payload.retrievejobs()) {
-    if (j.address() == retrieveRequestAddress)
-      return false;
-  }
-  // Keep track of the mounting criteria
+  AdditionSummary ret;
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.retrievePriority);
   ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
-  if (m_payload.retrievejobs_size()) {
-    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
-      m_payload.set_oldestjobcreationtime(startTime);
+  for (auto & jta: jobsToAdd) {
+    // Check if the job is present and skip insertion if so
+    for (auto &j: m_payload.retrievejobs()) {
+      if (j.address() == jta.retrieveRequestAddress)
+        goto skipInsertion;
     }
-    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
-  } else {
-    m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_retrievejobstotalsize(size);
+    {
+      // Keep track of the mounting criteria
+      maxDriveAllowedMap.incCount(jta.policy.maxDrivesAllowed);
+      priorityMap.incCount(jta.policy.retrievePriority);
+      minRetrieveRequestAgeMap.incCount(jta.policy.retrieveMinRequestAge);
+      if (m_payload.retrievejobs_size()) {
+        if (m_payload.oldestjobcreationtime() > (uint64_t)jta.startTime) {
+          m_payload.set_oldestjobcreationtime(jta.startTime);
+        }
+        m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + jta.size);
+      } else {
+        m_payload.set_oldestjobcreationtime(jta.startTime);
+        m_payload.set_retrievejobstotalsize(jta.size);
+      }
+      auto * j = m_payload.add_retrievejobs();
+      j->set_address(jta.retrieveRequestAddress);
+      j->set_size(jta.size);
+      j->set_copynb(jta.copyNb);
+      j->set_fseq(jta.fSeq);
+      j->set_priority(jta.policy.retrievePriority);
+      j->set_minretrieverequestage(jta.policy.retrieveMinRequestAge);
+      j->set_maxdrivesallowed(jta.policy.maxDrivesAllowed);
+      // move the the new job in the right spot on the queue.
+      // i points to the newly added job all the time.
+      size_t i=m_payload.retrievejobs_size() - 1;
+      while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+        m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+        i--;
+      }
+      // Keep track of this addition.
+      ret.files++;
+      ret.bytes+=jta.size;
+    }
+    skipInsertion:;
   }
-  auto * j = m_payload.add_retrievejobs();
-  j->set_address(retrieveRequestAddress);
-  j->set_size(size);
-  j->set_copynb(copyNb);
-  j->set_fseq(fSeq);
-  j->set_priority(policy.retrievePriority);
-  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  // move the the new job in the right spot on the queue.
-  // i points to the newly added job all the time.
-  size_t i=m_payload.retrievejobs_size() - 1;
-  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
-    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
-    i--;
-  }
-  return true;
+  commit();
+  return ret;
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {

@@ -532,8 +532,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   // Then should hence not have changes since we pre-fetched them.
   for (auto & tape: ownedObjectSorter.retrieveQueuesAndRequests) {
     double queueLockFetchTime=0;
-    double queuePreparationTime=0;
-    double queueCommitTime=0;
+    double queueProcessAndCommitTime=0;
     double requestsUpdatePreparationTime=0;
     double requestsUpdatingTime=0;
     double queueRecommitTime=0;
@@ -545,7 +544,6 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     uint64_t bytesBefore=0;
     utils::Timer t;
     // Get the retrieve queue and add references to the jobs to it.
-    bool didAddToQueue=false;
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
     Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, m_ourAgentReference, tape.first, lc);
@@ -553,30 +551,26 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     auto jobsSummary=rq.getJobsSummary();
     filesBefore=jobsSummary.files;
     bytesBefore=jobsSummary.bytes;
-    // We have the queue. We will loop on the requests, add them to the queue. We will launch their updates 
+    // Prepare the list of requests to add to the queue (if needed).
+    std::list<RetrieveQueue::JobToAdd> jta;
+    // We have the queue. We will loop on the requests, add them to the list. We will launch their updates 
     // after committing the queue.
     for (auto & rr: tape.second) {
       // Determine the copy number and feed the queue with it.
       for (auto &tf: rr->getArchiveFile().tapeFiles) {
         if (tf.second.vid == tape.first) {
-          if (rq.addJobIfNecessary(tf.second.copyNb, tf.second.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
-              rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time)) {
-            didAddToQueue = true;
-            filesQueued++;
-            bytesQueued += rr->getArchiveFile().fileSize;
-          }          
+          jta.push_back({tf.second.copyNb, tf.second.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
+              rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time});
         }
       }
     }
-    queuePreparationTime = t.secs(utils::Timer::resetCounter);
+    auto addedJobs = rq.addJobsIfNecessaryAndCommit(jta);
+    queueProcessAndCommitTime = t.secs(utils::Timer::resetCounter);
     // If we have an unexpected failure, we will re-run the individual garbage collection. Before that, 
     // we will NOT remove the object from agent's ownership. This variable is declared a bit ahead so
     // the goto will not cross its initialization.
     std::set<std::string> jobsIndividuallyGCed;
-    if (didAddToQueue) {
-      rq.commit();
-      queueCommitTime = t.secs(utils::Timer::resetCounter);
-    } else {
+    if (!addedJobs.files) {
       goto agentCleanupForRetrieve;
     }
     // We will keep individual references for each job update we launch so that we make
@@ -673,8 +667,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
             .add("filesAfter", jobsSummary.files)
             .add("bytesAfter", jobsSummary.bytes)
             .add("queueLockFetchTime", queueLockFetchTime)
-            .add("queuePreparationTime", queuePreparationTime)
-            .add("queueCommitTime", queueCommitTime)
+            .add("queuePreparationTime", queueProcessAndCommitTime)
             .add("requestsUpdatePreparationTime", requestsUpdatePreparationTime)
             .add("requestsUpdatingTime", requestsUpdatingTime)
             .add("queueRecommitTime", queueRecommitTime);

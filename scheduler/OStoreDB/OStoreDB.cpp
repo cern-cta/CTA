@@ -2757,7 +2757,9 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     auto & af=rfqc.archiveFile;
     auto & tf = af.tapeFiles.at(bestCopyNb);
     auto sr = m_retrieveRequest.getSchedulerRequest();
-    rq.addJobIfNecessary(bestCopyNb, tf.fSeq, m_retrieveRequest.getAddressIfSet(), af.fileSize, rfqc.mountPolicy, sr.creationLog.time);
+    std::list<objectstore::RetrieveQueue::JobToAdd> jta;
+    jta.push_back({bestCopyNb, tf.fSeq, m_retrieveRequest.getAddressIfSet(), af.fileSize, rfqc.mountPolicy, sr.creationLog.time});
+    rq.addJobsIfNecessaryAndCommit(jta);
     m_retrieveRequest.setOwner(rq.getAddressIfSet());
     m_retrieveRequest.commit();
     // We do not own the request anymore

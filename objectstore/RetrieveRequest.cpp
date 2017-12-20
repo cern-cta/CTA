@@ -139,10 +139,11 @@ jobFound:;
   // Enqueue add the job to the queue
   objectstore::MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());
-  rq.addJobIfNecessary(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
-    mp, m_payload.schedulerrequest().entrylog().time());
+  std::list<RetrieveQueue::JobToAdd> jta;
+  jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
+    mp, (signed)m_payload.schedulerrequest().entrylog().time()});
+  rq.addJobsIfNecessaryAndCommit(jta);
   auto jobsSummary=rq.getJobsSummary();
-  rq.commit();
   auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
   // We can now make the transition official
   bestJob->set_status(serializers::RetrieveJobStatus::RJS_Pending);
