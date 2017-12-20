@@ -3,9 +3,9 @@
 touch /var/lock/subsys/local
 
 # for now we do tests using locally hackable resources mounter in /shared
-echo -n "Waiting for /shared/rc.local" > /tmp/rc.log
-for ((;;)); do test -e /shared/rc.local && break; sleep 1; echo -n . >> /tmp/rc.log; done
-echo OK >> /tmp/rc.log
+#echo -n "Waiting for /shared/rc.local" > /tmp/rc.log
+#for ((;;)); do test -e /shared/rc.local && break; sleep 1; echo -n . >> /tmp/rc.log; done
+#echo OK >> /tmp/rc.log
 
 # rc.local envinronment is empty but I need all the kubernetes environment
 # variables to go further and configure the services.
