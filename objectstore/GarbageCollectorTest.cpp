@@ -588,7 +588,9 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       cta::objectstore::RetrieveQueue rq(tAddr[0], be);
       cta::objectstore::ScopedExclusiveLock rql(rq);
       rq.fetch();
-      rq.addJob(1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time);
+      std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
+      jta.push_back({1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
+      rq.addJobs(jta);
       rq.commit();
     }
     if (pass < 5) { pass++; continue; }

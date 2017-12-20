@@ -45,22 +45,25 @@ template<>
 void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueue(
   std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
   objectstore::RetrieveQueue &queue) {
+  std::list<objectstore::RetrieveQueue::JobToAdd> jtal;
+  auto queueAddress = queue.getAddressIfSet();
   for (auto & jta: jobsToAdd) {
-    // We need to find corresponding to the copyNb
+    // We need to find the job corresponding to the copyNb
     auto & job = jta.job;
     auto & request = jta.request;
     for (auto & j: request.getArchiveFile().tapeFiles) {
       if (j.second.copyNb == job.copyNb) {
         auto criteria = request.getRetrieveFileQueueCriteria();
-        queue.addJob(j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
-            criteria.mountPolicy, request.getEntryLog().time);
+        jtal.push_back({j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
+            criteria.mountPolicy, request.getEntryLog().time});
         request.setActiveCopyNumber(j.second.copyNb);
-        request.setOwner(queue.getAddressIfSet());
+        request.setOwner(queueAddress);
         goto jobAdded;
       }
     }
   jobAdded:;
   }
+  queue.addJobs(jtal);
 }
 
 template<>
