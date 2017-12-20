@@ -24,31 +24,43 @@
 namespace cta { namespace ostoredb {
 
 template<>
-void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobToQueue(
-  objectstore::ArchiveRequest::JobDump& job, objectstore::ArchiveRequest& request, objectstore::ArchiveQueue& queue) {
-  auto af = request.getArchiveFile();
-  queue.addJob(job, request.getAddressIfSet(), af.archiveFileID,
-      af.fileSize, request.getMountPolicy(), request.getEntryLog().time);
-  // Back reference the queue in the job and archive request
-  job.owner = queue.getAddressIfSet();
-  request.setJobOwner(job.copyNb, job.owner);
+void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobsToQueue(
+  std::list<MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::JobAndRequest> & jobsToAdd,
+  objectstore::ArchiveQueue& queue) {
+  std::list<objectstore::ArchiveQueue::JobToAdd> jtal;
+  auto queueAddress = queue.getAddressIfSet();
+  for (auto & j: jobsToAdd) {
+    jtal.push_back({j.job, j.request.getAddressIfSet(), j.request.getArchiveFile().archiveFileID, j.request.getArchiveFile().fileSize,
+      j.request.getMountPolicy(), j.request.getEntryLog().time});
+    // We pre-mark (in memory) request as being owned by the queue.
+    // The actual commit of the request will happen after the queue's,
+    // so the back reference will be valid.
+    j.job.owner = queueAddress;
+    j.request.setJobOwner(j.job.copyNb, j.job.owner);
+  }
+  queue.addJobs(jtal);
 }
 
 template<>
-void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobToQueue(
-  objectstore::RetrieveRequest::JobDump& job, objectstore::RetrieveRequest& request, objectstore::RetrieveQueue& queue) {
-  // We need to find corresponding to the copyNb
-  for (auto & j: request.getArchiveFile().tapeFiles) {
-    if (j.second.copyNb == job.copyNb) {
-      auto criteria = request.getRetrieveFileQueueCriteria();
-      queue.addJob(j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
-          criteria.mountPolicy, request.getEntryLog().time);
-      request.setActiveCopyNumber(j.second.copyNb);
-      request.setOwner(queue.getAddressIfSet());
-      goto jobAdded;
+void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueue(
+  std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
+  objectstore::RetrieveQueue &queue) {
+  for (auto & jta: jobsToAdd) {
+    // We need to find corresponding to the copyNb
+    auto & job = jta.job;
+    auto & request = jta.request;
+    for (auto & j: request.getArchiveFile().tapeFiles) {
+      if (j.second.copyNb == job.copyNb) {
+        auto criteria = request.getRetrieveFileQueueCriteria();
+        queue.addJob(j.second.copyNb, j.second.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
+            criteria.mountPolicy, request.getEntryLog().time);
+        request.setActiveCopyNumber(j.second.copyNb);
+        request.setOwner(queue.getAddressIfSet());
+        goto jobAdded;
+      }
     }
-  }
   jobAdded:;
+  }
 }
 
 template<>

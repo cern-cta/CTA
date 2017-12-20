@@ -56,10 +56,16 @@ public:
   void setTapePool(const std::string & name);
   std::string getTapePool();
   
-  // Archive jobs management ===================================================  
-  void addJob(const ArchiveRequest::JobDump & job,
-    const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  // Archive jobs management ===================================================
+  struct JobToAdd {
+    ArchiveRequest::JobDump & job;
+    const std::string archiveRequestAddress;
+    uint64_t archiveFileId;
+    uint64_t fileSize;
+    const cta::common::dataStructures::MountPolicy policy;
+    time_t startTime;
+  };
+  void addJobs(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,

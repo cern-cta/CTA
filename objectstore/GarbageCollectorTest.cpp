@@ -329,7 +329,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
-  int pass=0;
+  unsigned int pass=0;
   while (true)
   {
     // -just referenced
@@ -385,7 +385,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
+      std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
+      aq.addJobs(jta);
       aq.commit();
     }
     if (pass < 4) { pass++; continue; }
@@ -403,7 +405,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
+      std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
+      aq.addJobs(jta);
       aq.commit();
     }
     if (pass < 5) { pass++; continue; }
