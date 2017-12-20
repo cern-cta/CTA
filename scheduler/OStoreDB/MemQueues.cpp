@@ -24,7 +24,7 @@
 namespace cta { namespace ostoredb {
 
 template<>
-void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobsToQueue(
+void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobsToQueueAndCommit(
   std::list<MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::JobAndRequest> & jobsToAdd,
   objectstore::ArchiveQueue& queue) {
   std::list<objectstore::ArchiveQueue::JobToAdd> jtal;
@@ -38,11 +38,11 @@ void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializ
     j.job.owner = queueAddress;
     j.request.setJobOwner(j.job.copyNb, j.job.owner);
   }
-  queue.addJobs(jtal);
+  queue.addJobsAndCommit(jtal);
 }
 
 template<>
-void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueue(
+void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueueAndCommit(
   std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
   objectstore::RetrieveQueue &queue) {
   std::list<objectstore::RetrieveQueue::JobToAdd> jtal;
@@ -63,7 +63,7 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
     }
   jobAdded:;
   }
-  queue.addJobs(jtal);
+  queue.addJobsAndCommit(jtal);
 }
 
 template<>

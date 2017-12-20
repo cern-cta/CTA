@@ -185,7 +185,7 @@ private:
   };
   
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
-  static void specializedAddJobsToQueue(std::list<JobAndRequest> & jobsToAdd, Queue & queue);
+  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue);
   
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
   static void specializedUpdateCachedQueueStats(Queue &queue);
@@ -320,11 +320,8 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       addedJobs++;
     }
     // Actually ass the jobs.
-    specializedAddJobsToQueue(jta, queue);
-    double inMemoryQueueProcessTime = timer.secs(utils::Timer::resetCounter);
-    // We can now commit the multi-request addition to the object store
-    queue.commit();
-    double queueCommitTime = timer.secs(utils::Timer::resetCounter);
+    specializedAddJobsToQueueAndCommit(jta, queue);
+    double queueProcessAndCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.
     specializedUpdateCachedQueueStats(queue);
     double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
@@ -351,10 +348,9 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
             .add("getFetchedQueueTime", getFetchedQueueTime)
-            .add("inMemoryQueueProcessTime", inMemoryQueueProcessTime)
-            .add("queueCommitTime", queueCommitTime)
+            .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
             .add("cacheUpdateTime", cacheUpdateTime) 
-            .add("totalEnqueueTime", getFetchedQueueTime + inMemoryQueueProcessTime + queueCommitTime 
+            .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime 
                                     + cacheUpdateTime + timer.secs());
       logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }

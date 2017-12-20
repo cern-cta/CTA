@@ -99,7 +99,7 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   return headerDump;
 }
 
-void cta::objectstore::RetrieveQueue::addJobs(std::list<cta::objectstore::RetrieveQueue::JobToAdd> & jobsToAdd) {
+void cta::objectstore::RetrieveQueue::addJobsAndCommit(std::list<cta::objectstore::RetrieveQueue::JobToAdd> & jobsToAdd) {
   checkPayloadWritable();
   // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
@@ -134,6 +134,7 @@ void cta::objectstore::RetrieveQueue::addJobs(std::list<cta::objectstore::Retrie
       i--;
     }
   }
+  commit();
 }
 
 bool cta::objectstore::RetrieveQueue::addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,

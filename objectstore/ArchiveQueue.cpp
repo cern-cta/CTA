@@ -144,7 +144,7 @@ std::string ArchiveQueue::getTapePool() {
   return m_payload.tapepool();
 }
 
-void ArchiveQueue::addJobs(std::list<JobToAdd> & jobsToAdd) {
+void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd) {
   checkPayloadWritable();
   for (auto & jta: jobsToAdd) {
     // Keep track of the mounting criteria
@@ -171,6 +171,7 @@ void ArchiveQueue::addJobs(std::list<JobToAdd> & jobsToAdd) {
     j->set_priority(jta.policy.archivePriority);
     j->set_minarchiverequestage(jta.policy.archiveMinRequestAge);
   }
+  commit();
 }
 
 auto ArchiveQueue::getJobsSummary() -> JobsSummary {

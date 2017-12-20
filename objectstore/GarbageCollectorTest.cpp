@@ -387,8 +387,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
-      aq.addJobs(jta);
-      aq.commit();
+      aq.addJobsAndCommit(jta);
     }
     if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
@@ -407,8 +406,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
-      aq.addJobs(jta);
-      aq.commit();
+      aq.addJobsAndCommit(jta);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent
@@ -590,8 +588,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       rq.fetch();
       std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
-      rq.addJobs(jta);
-      rq.commit();
+      rq.addJobsAndCommit(jta);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent

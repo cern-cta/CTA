@@ -65,7 +65,7 @@ public:
     const cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
   };
-  void addJobs(std::list<JobToAdd> & jobsToAdd);
+  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
