@@ -363,8 +363,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   // 1) Get the archive requests done.
   for (auto & tapepool: ownedObjectSorter.archiveQueuesAndRequests) {
     double queueLockFetchTime=0;
-    double queuePreparationTime=0;
-    double queueCommitTime=0;
+    double queueProcessAndCommitTime=0;
     double requestsUpdatePreparationTime=0;
     double requestsUpdatingTime=0;
     double queueRecommitTime=0;
@@ -376,7 +375,6 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     uint64_t bytesBefore=0;
     utils::Timer t;
     // Get the archive queue and add references to the jobs in it.
-    bool didAddToQueue=false;
     ArchiveQueue aq(m_objectStore);
     ScopedExclusiveLock aql;
     Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, m_ourAgentReference, tapepool.first, lc);
@@ -386,28 +384,23 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     bytesBefore=jobsSummary.bytes;
     // We have the queue. We will loop on the requests, add them to the queue. We will launch their updates 
     // after committing the queue.
+    std::list<ArchiveQueue::JobToAdd> jtal;
     for (auto & ar: tapepool.second) {
       // Determine the copy number and feed the queue with it.
       for (auto &j: ar->dumpJobs()) {
         if (j.tapePool == tapepool.first) {
-          if (aq.addJobIfNecessary(j, ar->getAddressIfSet(), ar->getArchiveFile().archiveFileID, 
-              ar->getArchiveFile().fileSize, ar->getMountPolicy(), ar->getEntryLog().time)) {
-            didAddToQueue = true;
-            filesQueued++;
-            bytesQueued += ar->getArchiveFile().fileSize;
-          }          
+          jtal.push_back({j, ar->getAddressIfSet(), ar->getArchiveFile().archiveFileID, 
+              ar->getArchiveFile().fileSize, ar->getMountPolicy(), ar->getEntryLog().time});         
         }
       }
     }
-    queuePreparationTime = t.secs(utils::Timer::resetCounter);
+    auto addedJobs = aq.addJobsIfNecessaryAndCommit(jtal);
+    queueProcessAndCommitTime = t.secs(utils::Timer::resetCounter);
     // If we have an unexpected failure, we will re-run the individual garbage collection. Before that, 
     // we will NOT remove the object from agent's ownership. This variable is declared a bit ahead so
     // the goto will not cross its initialization.
     std::set<std::string> jobsIndividuallyGCed;
-    if (didAddToQueue) {
-      aq.commit();
-      queueCommitTime = t.secs(utils::Timer::resetCounter);
-    } else {
+    if (!addedJobs.files) {
       goto agentCleanupForArchive;
     }
     // We will keep individual references for each job update we launch so that we make
@@ -503,8 +496,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
             .add("filesAfter", jobsSummary.files)
             .add("bytesAfter", jobsSummary.bytes)
             .add("queueLockFetchTime", queueLockFetchTime)
-            .add("queuePreparationTime", queuePreparationTime)
-            .add("queueCommitTime", queueCommitTime)
+            .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
             .add("requestsUpdatePreparationTime", requestsUpdatePreparationTime)
             .add("requestsUpdatingTime", requestsUpdatingTime)
             .add("queueRecommitTime", queueRecommitTime);

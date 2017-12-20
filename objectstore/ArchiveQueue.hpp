@@ -67,10 +67,12 @@ public:
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
-    const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  // returns the count and sizes of actually added jobs (if any).
+  struct AdditionSummary {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
   // returns true if a new job was actually inserted.
   bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,

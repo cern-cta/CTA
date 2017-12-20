@@ -195,41 +195,47 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   return ret;
 }
 
-bool ArchiveQueue::addJobIfNecessary(
-  const ArchiveRequest::JobDump& job,
-  const std::string & archiveRequestAddress, uint64_t archiveFileId,
-  uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy,
-  time_t startTime) {
+ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd>& jobsToAdd) {
   checkPayloadWritable();
-  auto & jl=m_payload.pendingarchivejobs();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveRequestAddress)
-      return false;
-  }
-  // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.archivePriority);
   ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  minArchiveRequestAgeMap.incCount(policy.archiveMinRequestAge);
-  if (m_payload.pendingarchivejobs_size()) {
-    if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
-      m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + fileSize);
-  } else {
-    m_payload.set_archivejobstotalsize(fileSize);
-    m_payload.set_oldestjobcreationtime(startTime);
+  AdditionSummary ret;
+  for (auto & jta: jobsToAdd) {
+    auto & jl=m_payload.pendingarchivejobs();
+    for (auto j=jl.begin(); j!= jl.end(); j++) {
+      if (j->address() == jta.archiveRequestAddress)
+        goto skipInsertion;
+    }
+    {
+      // Keep track of the mounting criteria
+      maxDriveAllowedMap.incCount(jta.policy.maxDrivesAllowed);
+      priorityMap.incCount(jta.policy.archivePriority);
+      minArchiveRequestAgeMap.incCount(jta.policy.archiveMinRequestAge);
+      if (m_payload.pendingarchivejobs_size()) {
+        if ((uint64_t)jta.startTime < m_payload.oldestjobcreationtime())
+          m_payload.set_oldestjobcreationtime(jta.startTime);
+        m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + jta.fileSize);
+      } else {
+        m_payload.set_archivejobstotalsize(jta.fileSize);
+        m_payload.set_oldestjobcreationtime(jta.startTime);
+      }
+      auto * j = m_payload.add_pendingarchivejobs();
+      j->set_address(jta.archiveRequestAddress);
+      j->set_size(jta.fileSize);
+      j->set_fileid(jta.archiveFileId);
+      j->set_copynb(jta.job.copyNb);
+      j->set_maxdrivesallowed(jta.policy.maxDrivesAllowed);
+      j->set_priority(jta.policy.archivePriority);
+      j->set_minarchiverequestage(jta.policy.archiveMinRequestAge);
+      // Keep track of this addition.
+      ret.files++;
+      ret.bytes+=jta.fileSize;
+    }
+    skipInsertion:;
   }
-  auto * j = m_payload.add_pendingarchivejobs();
-  j->set_address(archiveRequestAddress);
-  j->set_size(fileSize);
-  j->set_fileid(archiveFileId);
-  j->set_copynb(job.copyNb);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  j->set_priority(policy.archivePriority);
-  j->set_minarchiverequestage(policy.archiveMinRequestAge);
-  return true;
+  if (ret.files) commit();
+  return ret;
 }
 
 void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {

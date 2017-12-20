@@ -55,7 +55,7 @@ public:
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
-  // returns the count and sizes of actually added jobs if a new job was actually inserted.
+  // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
     uint64_t bytes = 0;

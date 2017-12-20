@@ -185,7 +185,7 @@ auto cta::objectstore::RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<cta:
     }
     skipInsertion:;
   }
-  commit();
+  if (ret.files) commit();
   return ret;
 }
 

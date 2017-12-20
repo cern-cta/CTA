@@ -2609,9 +2609,10 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   auto jl = m_archiveRequest.dumpJobs();
   for (auto & j:jl) {
     if (j.copyNb == tapeFile.copyNb) {
-      aq.addJobIfNecessary(j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
-          m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time);
-      aq.commit();
+      std::list<objectstore::ArchiveQueue::JobToAdd> jta;
+      jta.push_back({j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
+          m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time});
+      aq.addJobsIfNecessaryAndCommit(jta);
       aqlock.release();
       // We have a pointer to the job, we can change the job ownership
       m_archiveRequest.setJobOwner(tapeFile.copyNb, aq.getAddressIfSet());
