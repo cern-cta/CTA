@@ -587,7 +587,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
       }
       requestsUpdatePreparationTime = t.secs(utils::Timer::resetCounter);
       // Now collect the results.
-      bool rqUpdated=false;
+      std::list<std::string> requestsToDequeue;
       for (auto & rrup: rrUpdatersParams) {
         try {
           rrup.updater->wait();
@@ -630,16 +630,15 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
           // In all cases, the object did NOT make it to the queue.
           filesDequeued ++;
           bytesDequeued += rrup.retrieveRequest->getArchiveFile().fileSize;
-          rq.removeJob(rrup.retrieveRequest->getAddressIfSet());
-          rqUpdated=true;
+          requestsToDequeue.push_back(rrup.retrieveRequest->getAddressIfSet());
         }
       }
       requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
-      if (rqUpdated) {
-        rq.commit();
+      if (requestsToDequeue.size()) {
+        rq.removeJobsAndCommit(requestsToDequeue);
         log::ScopedParamContainer params(lc);
         params.add("retreveQueueObject", rq.getAddressIfSet());
-        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): RE-committed retrieve queue after error handling.");
+        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Cleaned up and re-committed retrieve queue after error handling.");
         queueRecommitTime = t.secs(utils::Timer::resetCounter);
       }
     }

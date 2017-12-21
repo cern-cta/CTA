@@ -78,7 +78,7 @@ public:
   };
   std::list<JobDump> dumpJobs();
   
-  void removeJob(const std::string & retrieveToFileAddress);
+  void removeJobsAndCommit(const std::list<std::string> & requestsToRemove);
   // -- Generic parameters
   std::string getVid();
 };

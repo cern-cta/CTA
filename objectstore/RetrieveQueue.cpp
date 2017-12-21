@@ -244,34 +244,39 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-void cta::objectstore::RetrieveQueue::removeJob(const std::string& retrieveToFileAddress) {
+void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& requestsToRemove) {
   checkPayloadWritable();
   auto * jl = m_payload.mutable_retrievejobs();
-  bool found=false;
-  do {
-    found=false;
-    // Push the found entry all the way to the end.
-    for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == retrieveToFileAddress) {
-        found = true;
-        // Keep track of the mounting criteria
-        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
-        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-        priorityMap.decCount(jl->Get(i).priority());
-        ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-        minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
-        while (i+1 < (size_t)jl->size()) {
-          jl->SwapElements(i, i+1);
-          i++;
+  bool jobRemoved=false;
+  for (auto &rrt: requestsToRemove) {
+    bool found=false;
+    do {
+      found=false;
+      // Push the found entry all the way to the end.
+      for (size_t i=0; i<(size_t)jl->size(); i++) {
+        if (jl->Get(i).address() == rrt) {
+          found = true;
+          // Keep track of the mounting criteria
+          ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+          maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
+          ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+          priorityMap.decCount(jl->Get(i).priority());
+          ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+          minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
+          while (i+1 < (size_t)jl->size()) {
+            jl->SwapElements(i, i+1);
+            i++;
+          }
+          break;
         }
-        break;
       }
-    }
-    // and remove it
-    if (found)
-      jl->RemoveLast();
-  } while (found);
+      // and remove it
+      if (found)
+        jl->RemoveLast();
+      jobRemoved |= found;
+    } while (found);
+  }
+  if (jobRemoved) commit();
 }
 
 void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

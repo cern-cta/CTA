@@ -638,10 +638,11 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
+    std::list<std::string> jtrl;
     for (auto &j: rq.dumpJobs()) {
-      rq.removeJob(j.address);
+      jtrl.push_back(j.address);
     }
-    rq.commit();
+    rq.removeJobsAndCommit(jtrl);
     rql.release();
     // Remove queues from root
     re.removeRetrieveQueueAndCommit(vid, lc);

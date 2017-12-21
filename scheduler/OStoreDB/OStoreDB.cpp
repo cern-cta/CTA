@@ -2346,10 +2346,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
         j=candidateJobs.erase(j);
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
-      for (const auto &j: jobsToDequeue) rq.removeJob(j);
+      rq.removeJobsAndCommit(jobsToDequeue);
       if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
-      // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
-      rq.commit();
       // We can now add the validated jobs to the return value.
       auto vj = validatedJobs.begin();
       while (vj != validatedJobs.end()) {
