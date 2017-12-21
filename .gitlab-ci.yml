@@ -4,6 +4,8 @@ stages:
   - build:dockerimage
   - rename:dockerimage
   - test
+  - regressions
+  - shouldfail
   - publish_rpm
 
 before_script:
@@ -151,7 +153,7 @@ archiveretrieve:
 
 
 nightly1:
-  stage: test
+  stage: shouldfail
   only:
     - triggers
     - schedules
@@ -170,7 +172,7 @@ nightly1:
     - xlarge
 
 regressioneos:
-  stage: test
+  stage: regressions
   only:
     - triggers
     - schedules
