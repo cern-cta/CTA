@@ -58,7 +58,7 @@ public:
   
   // Archive jobs management ===================================================
   struct JobToAdd {
-    ArchiveRequest::JobDump & job;
+    ArchiveRequest::JobDump job;
     const std::string archiveRequestAddress;
     uint64_t archiveFileId;
     uint64_t fileSize;
