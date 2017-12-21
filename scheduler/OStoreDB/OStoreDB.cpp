@@ -304,7 +304,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       ArchiveQueue aq(a.address, m_objectStore);
       ScopedSharedLock aql(aq);
       aq.fetch();
-      if (!aq.dumpJobs().size()) {
+      if (!aq.getJobsSummary().files) {
         aql.release();
         re.removeArchiveQueueAndCommit(a.tapePool, lc);
         log::ScopedParamContainer params(lc);
@@ -584,63 +584,6 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::deleteArchiveRequest()
-//------------------------------------------------------------------------------
-void OStoreDB::deleteArchiveRequest(const std::string &diskInstanceName, 
-  uint64_t fileId) {
-  // First of, find the archive request from all the tape pools.
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  auto aql = re.dumpArchiveQueues();
-  rel.release();
-  for (auto & aqp: aql) {
-    objectstore::ArchiveQueue aq(aqp.address, m_objectStore);
-    ScopedSharedLock aqlock(aq);
-    aq.fetch();
-    auto ajl=aq.dumpJobs();
-    aqlock.release();
-    for (auto & ajp: ajl) {
-      objectstore::ArchiveRequest ar(ajp.address, m_objectStore);
-      ScopedSharedLock arl(ar);
-      ar.fetch();
-      if (ar.getArchiveFile().archiveFileID == fileId) {
-        // We found a job for the right file Id.
-        // We now need to dequeue it from all it archive queues (one per job).
-        // Upgrade the lock to an exclusive one.
-        arl.release();
-        ScopedExclusiveLock arxl(ar);
-        m_agentReference->addToOwnership(ar.getAddressIfSet(), m_objectStore);
-        ar.fetch();
-        ar.setAllJobsFailed();
-        for (auto j:ar.dumpJobs()) {
-          // Dequeue the job from the queue.
-          // The owner might not be a queue, in which case the fetch will fail (and it's fine)
-          try {
-            // The queue on which we found the job is not locked anymore, so we can re-lock it.
-            ArchiveQueue aq2(j.owner, m_objectStore);
-            ScopedExclusiveLock aq2xl(aq2);
-            aq2.fetch();
-            aq2.removeJob(ar.getAddressIfSet());
-            aq2.commit();
-          } catch (...) {}
-          ar.setJobOwner(j.copyNb, m_agentReference->getAgentAddress());
-        }
-        ar.remove();
-        log::LogContext lc(m_logger);
-        log::ScopedParamContainer params(lc);
-        params.add("archiveRequestObject", ar.getAddressIfSet());
-        lc.log(log::INFO, "In OStoreDB::deleteArchiveRequest(): delete archive request.");
-        m_agentReference->removeFromOwnership(ar.getAddressIfSet(), m_objectStore);
-        // We found and deleted the job: return.
-        return;
-      }
-    }
-  }
-  throw NoSuchArchiveRequest("In OStoreDB::deleteArchiveRequest: ArchiveToFileRequest not found");
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::ArchiveToFileRequestCancelation::complete()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveToFileRequestCancelation::complete(log::LogContext & lc) {
@@ -667,53 +610,6 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
     } catch (...) {}
   }
 }
-
-
-//------------------------------------------------------------------------------
-// OStoreDB::getArchiveRequests()
-//------------------------------------------------------------------------------
-//std::map<std::string, std::list<ArchiveToTapeCopyRequest> >
-//  OStoreDB::getArchiveRequests() const {
-//  objectstore::RootEntry re(m_objectStore);
-//  objectstore::ScopedSharedLock rel(re);
-//  re.fetch();
-//  std::map<std::string, std::list<ArchiveToTapeCopyRequest> > ret;
-//  auto aql = re.dumpArchiveQueues();
-//  rel.release();
-//  for (auto & aqp:aql) {
-//    objectstore::ArchiveQueue osaq(aqp.address, m_objectStore);
-//    ScopedSharedLock osaql(osaq);
-//    osaq.fetch();  
-//    auto arl = osaq.dumpJobs();
-//    osaql.release();
-//    for (auto & ar: arl) {
-//      objectstore::ArchiveRequest osar(ar.address, m_objectStore);
-//      ScopedSharedLock osarl(osar);
-//      osar.fetch();
-//      // Find which copy number is for this tape pool.
-//      // skip the request if not found
-//      auto jl = osar.dumpJobs();
-//      uint16_t copynb;
-//      bool copyndFound=false;
-//      for (auto & j:jl) {
-//        if (j.tapePool == aqp.tapePool) {
-//          copynb = j.copyNb;
-//          copyndFound = true;
-//          break;
-//        }
-//      }
-//      if (!copyndFound) continue;
-//      ret[aqp.tapePool].push_back(cta::ArchiveToTapeCopyRequest(
-//        osar.getDiskFileID(),
-//        osar.getArchiveFileID(),
-//        copynb,
-//        aqp.tapePool,
-//        osar.getMountPolicy().archivePriority,
-//        osar.getCreationLog()));
-//    }
-//  }
-//  return ret;
-//}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
@@ -1830,28 +1726,21 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         log::ScopedParamContainer params(logContext);
         params.add("tapepool", mountInfo.tapePool)
               .add("queueObject", aq.getAddressIfSet())
-              .add("queueSize", aq.dumpJobs().size());
+              .add("queueSize", aq.getJobsSummary().files);
         logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): archive queue found.");
       }
-      // We should build the list of jobs we intend to grab. We will attempt to 
+      // The queue will give us a list of files to try and grab. We will attempt to 
       // dequeue them in one go, updating jobs in parallel. If some jobs turn out
       // to not be there really, we will have to do several passes.
       // We build directly the return value in the process.
-      auto candidateDumps=aq.dumpJobs();
+      auto candidateJobsFromQueue=aq.getCandidateList(bytesRequested, filesRequested, archiveRequestsToSkip);
       std::list<std::unique_ptr<OStoreDB::ArchiveJob>> candidateJobs;
       // If we fail to find jobs in one round, we will exit.
-      while (candidateDumps.size() && currentBytes < bytesRequested && currentFiles < filesRequested) {
-        auto job=candidateDumps.front();
-        candidateDumps.pop_front();
-        // If we saw an archive request we could not pop nor cleanup (really bad case), we
-        // will disregard it for the rest of this getNextJobBatch call. We will re-consider
-        // in the next call.
-        if (!archiveRequestsToSkip.count(job.address)) {
-          currentFiles++;
-          currentBytes+=job.size;
-          candidateJobs.emplace_back(new OStoreDB::ArchiveJob(job.address, m_oStoreDB, *this));
-          candidateJobs.back()->tapeFile.copyNb = job.copyNb;
-        }
+      for (auto & cj: candidateJobsFromQueue.candidates) {
+        currentFiles++;
+        currentBytes+=cj.size;
+        candidateJobs.emplace_back(new OStoreDB::ArchiveJob(cj.address, m_oStoreDB, *this));
+        candidateJobs.back()->tapeFile.copyNb = cj.copyNb;
       }
       {
         log::ScopedParamContainer params(logContext);
@@ -2034,7 +1923,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         break;
       // If we had exhausted the queue while selecting the jobs, we stop here, else we can go for another
       // round.
-      if (!candidateDumps.size())
+      if (!candidateJobsFromQueue.remainingFilesAfterCandidates)
         break;
     } catch (cta::exception::Exception & ex) {
       log::ScopedParamContainer params (logContext);

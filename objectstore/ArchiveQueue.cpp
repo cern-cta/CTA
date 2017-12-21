@@ -268,7 +268,7 @@ void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
   } while (found);
 }
 
-auto ArchiveQueue::dumpJobs() -> std::list<ArchiveQueue::JobDump> {
+auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto & jl=m_payload.pendingarchivejobs();
@@ -278,6 +278,23 @@ auto ArchiveQueue::dumpJobs() -> std::list<ArchiveQueue::JobDump> {
     jd.address = j->address();
     jd.size = j->size();
     jd.copyNb = j->copynb();
+  }
+  return ret;
+}
+
+auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
+  CandidateJobList ret;
+  ret.remainingBytesAfterCandidates = m_payload.archivejobstotalsize();
+  ret.remainingFilesAfterCandidates = m_payload.pendingarchivejobs_size();
+  for (auto & j: m_payload.pendingarchivejobs()) {
+    if (!archiveRequestsToSkip.count(j.address())) {
+      ret.candidates.push_back({j.size(), j.address(), (uint16_t)j.copynb()});
+      ret.candidateBytes += j.size();
+      ret.candidateFiles ++;
+    }
+    ret.remainingBytesAfterCandidates -= j.size();
+    ret.remainingFilesAfterCandidates--;
+    if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) break;
   }
   return ret;
 }

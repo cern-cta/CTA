@@ -95,14 +95,23 @@ public:
   JobsSummary getJobsSummary();
   
   void removeJob(const std::string &archiveToFileAddress);
-  class JobDump {
-  public:
+  struct JobDump {
     uint64_t size;
     std::string address;
     uint16_t copyNb;
   };
   std::list<JobDump> dumpJobs();
-  
+  struct CandidateJobList {
+    uint64_t remainingFilesAfterCandidates = 0;
+    uint64_t remainingBytesAfterCandidates = 0;
+    uint64_t candidateFiles = 0;
+    uint64_t candidateBytes = 0;
+    std::list<JobDump> candidates;
+  };
+  // The set of archive requests to skip are requests previously identified by the caller as bad,
+  // which still should be removed from the queue. They will be disregarded from  listing.
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip);
+   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
  

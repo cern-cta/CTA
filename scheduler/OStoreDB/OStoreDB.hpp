@@ -204,10 +204,8 @@ public:
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) override;
-
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveRequest);
+  
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
-  virtual void deleteArchiveRequest(const std::string &diskInstanceName, uint64_t fileId) override;
   class ArchiveToFileRequestCancelation:
     public SchedulerDatabase::ArchiveToFileRequestCancelation {
   public:
