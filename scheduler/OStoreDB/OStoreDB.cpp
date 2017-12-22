@@ -550,8 +550,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       objectstore::ArchiveQueue aq(*tpa, m_objectStore);
       ScopedExclusiveLock aql(aq);
       aq.fetch();
-      aq.removeJob(aReq.getAddressIfSet());
-      aq.commit();
+      aq.removeJobsAndCommit({aReq.getAddressIfSet()});
     }
     aReq.remove();
     log::ScopedParamContainer params(logContext);
@@ -1633,9 +1632,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   double ownershipAdditionTime = 0;
   double asyncUpdateLaunchTime = 0;
   double jobsUpdateTime = 0;
-  double queueProcessTime = 0;
+  double queueProcessAndCommitTime = 0;
   double ownershipRemovalTime = 0;
-  double queueCommitTime = 0;
   // Find the next files to archive
   // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
   // Get drive register
@@ -1867,15 +1865,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         j=candidateJobs.erase(j);
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
-      for (const auto &j: jobsToDequeue) aq.removeJob(j);
-      queueProcessTime += t.secs(utils::Timer::resetCounter);
+      aq.removeJobsAndCommit(jobsToDequeue);
+      queueProcessAndCommitTime += t.secs(utils::Timer::resetCounter);
       if (jobsToForget.size()) {
         m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
         ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
       }
-      // (Possibly intermediate) commit of the queue. We keep the lock for the moment.
-      aq.commit();
-      queueCommitTime += t.secs(utils::Timer::resetCounter);
       // We can now add the validated jobs to the return value.
       auto vj = validatedJobs.begin();
       while (vj != validatedJobs.end()) {
@@ -1961,9 +1956,8 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           .add("ownershipAdditionTime", ownershipAdditionTime)
           .add("asyncUpdateLaunchTime", asyncUpdateLaunchTime)
           .add("jobsUpdateTime", jobsUpdateTime)
-          .add("queueProcessTime", queueProcessTime)
+          .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
           .add("ownershipRemovalTime", ownershipRemovalTime)
-          .add("queueCommitTime", queueCommitTime)
           .add("schedulerDbTime", totalTime.secs());
     logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): jobs retrieval complete.");
   }

@@ -456,10 +456,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
+    std::list<std::string> ajtr;
     for (auto &j: aq.dumpJobs()) {
-      aq.removeJob(j.address);
+      ajtr.push_back(j.address);
     }
-    aq.commit();
+    aq.removeJobsAndCommit(ajtr);
     aql.release();
     // Remove queues from root
     re.removeArchiveQueueAndCommit(tp, lc);

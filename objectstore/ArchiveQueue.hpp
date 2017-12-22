@@ -94,7 +94,7 @@ public:
   };
   JobsSummary getJobsSummary();
   
-  void removeJob(const std::string &archiveToFileAddress);
+  void removeJobsAndCommit(const std::list<std::string> & requestsToRemove);
   struct JobDump {
     uint64_t size;
     std::string address;

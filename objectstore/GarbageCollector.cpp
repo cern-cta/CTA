@@ -426,7 +426,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
       }
       requestsUpdatePreparationTime = t.secs(utils::Timer::resetCounter);
       // Now collect the results.
-      bool aqUpdated=false;
+      std::list<std::string> requestsToDequeue;
       for (auto & arup: arUpdatersParams) {
         try {
           arup.updater->wait();
@@ -467,16 +467,15 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
           // In all cases, the object did NOT make it to the queue.
           filesDequeued ++;
           bytesDequeued += arup.archiveRequest->getArchiveFile().fileSize;
-          aq.removeJob(arup.archiveRequest->getAddressIfSet());
-          aqUpdated=true;
+          requestsToDequeue.push_back(arup.archiveRequest->getAddressIfSet());
         }
       }
       requestsUpdatingTime = t.secs(utils::Timer::resetCounter);
-      if (aqUpdated) {
-        aq.commit();
+      if (requestsToDequeue.size()) {
+        aq.removeJobsAndCommit(requestsToDequeue);
         log::ScopedParamContainer params(lc);
         params.add("archiveQueueObject", aq.getAddressIfSet());
-        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): RE-committed archive queue after error handling.");
+        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Cleaned up and re-committed archive queue after error handling.");
         queueRecommitTime = t.secs(utils::Timer::resetCounter);
       }
     }

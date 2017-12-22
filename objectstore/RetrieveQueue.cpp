@@ -246,6 +246,9 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
 
 void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& requestsToRemove) {
   checkPayloadWritable();
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
   auto * jl = m_payload.mutable_retrievejobs();
   bool jobRemoved=false;
   for (auto &rrt: requestsToRemove) {
@@ -255,13 +258,10 @@ void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::s
       // Push the found entry all the way to the end.
       for (size_t i=0; i<(size_t)jl->size(); i++) {
         if (jl->Get(i).address() == rrt) {
-          found = true;
+          found = jobRemoved = true;
           // Keep track of the mounting criteria
-          ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
           maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
-          ValueCountMap priorityMap(m_payload.mutable_prioritymap());
           priorityMap.decCount(jl->Get(i).priority());
-          ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
           minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
           while (i+1 < (size_t)jl->size()) {
             jl->SwapElements(i, i+1);
@@ -273,7 +273,6 @@ void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::s
       // and remove it
       if (found)
         jl->RemoveLast();
-      jobRemoved |= found;
     } while (found);
   }
   if (jobRemoved) commit();

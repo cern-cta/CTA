@@ -238,34 +238,38 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   return ret;
 }
 
-void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
+void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& requestsToRemove) {
   checkPayloadWritable();
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
   auto * jl=m_payload.mutable_pendingarchivejobs();
-  bool found = false;
-  do {
-    found = false;
-    // Push the found entry all the way to the end.
-    for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == archiveToFileAddress) {
-        found = true;
-        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
-        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-        priorityMap.decCount(jl->Get(i).priority());
-        ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-        minArchiveRequestAgeMap.decCount(jl->Get(i).minarchiverequestage());
-        m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - jl->Get(i).size());
-        while (i+1 < (size_t)jl->size()) {
-          jl->SwapElements(i, i+1);
-          i++;
+  bool jobRemoved=false;
+  for (auto &rrt: requestsToRemove) {
+    bool found = false;
+    do {
+      found = false;
+      // Push the found entry all the way to the end.
+      for (size_t i=0; i<(size_t)jl->size(); i++) {
+        if (jl->Get(i).address() == rrt) {
+          found = jobRemoved = true;
+          maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
+          priorityMap.decCount(jl->Get(i).priority());
+          minArchiveRequestAgeMap.decCount(jl->Get(i).minarchiverequestage());
+          m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - jl->Get(i).size());
+          while (i+1 < (size_t)jl->size()) {
+            jl->SwapElements(i, i+1);
+            i++;
+          }
+          break;
         }
-        break;
       }
-    }
-    // and remove it
-    if (found)
-      jl->RemoveLast();
-  } while (found);
+      // and remove it
+      if (found)
+        jl->RemoveLast();
+    } while (found);
+  }
+  if (jobRemoved) commit();
 }
 
 auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
