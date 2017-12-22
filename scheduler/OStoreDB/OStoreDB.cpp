@@ -2012,6 +2012,17 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested, 
     uint64_t bytesRequested, log::LogContext& logContext) {
+  utils::Timer t, totalTime;
+  double driveRegisterCheckTime = 0;
+  double findQueueTime = 0;
+  double lockFetchQueueTime = 0;
+  double emptyQueueCleanupTime = 0;
+  double jobSelectionTime = 0;
+  double ownershipAdditionTime = 0;
+  double asyncUpdateLaunchTime = 0;
+  double jobsUpdateTime = 0;
+  double queueProcessAndCommitTime = 0;
+  double ownershipRemovalTime = 0;
   // Find the next files to retrieve
   // First, check we should not forcibly go down. In such an occasion, we just find noting to do.
   // Get drive register
@@ -2034,6 +2045,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       params.add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::INFO, "In OStoreDB::RetrieveMount::getNextJobBatch(): failed to check up/down status.");
     }
+    driveRegisterCheckTime = t.secs(utils::Timer::resetCounter);
   }
   // Now, we should repeatedly fetch jobs from the queue until we fulfilled the request or there is nothing to get form the
   // queue anymore.
@@ -2050,8 +2062,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     uint64_t beforeFiles=currentFiles;
     // Try and get access to a queue.
     objectstore::RootEntry re(m_oStoreDB.m_objectStore);
-    objectstore::ScopedSharedLock rel(re);
-    re.fetch();
+    re.fetchNoLock();
     std::string rqAddress;
     auto rql = re.dumpRetrieveQueues();
     for (auto & rqp : rql) {
@@ -2062,16 +2073,16 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
     objectstore::RetrieveQueue rq(rqAddress, m_oStoreDB.m_objectStore);
     objectstore::ScopedExclusiveLock rqLock;
+    findQueueTime += t.secs(utils::Timer::resetCounter);
     try {
       try {
         rqLock.lock(rq);
-        rel.release();
         rq.fetch();
+        lockFetchQueueTime += t.secs(utils::Timer::resetCounter);
       } catch (cta::exception::Exception & ex) {
         // The queue is now absent. We can remove its reference in the root entry.
         // A new queue could have been added in the mean time, and be non-empty.
         // We will then fail to remove from the RootEntry (non-fatal).
-        if (rel.isLocked()) rel.release();
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
@@ -2088,6 +2099,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
         }
+        emptyQueueCleanupTime += t.secs(utils::Timer::resetCounter);
         continue;
       }
       // We now have the queue.
@@ -2129,17 +2141,20 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
               .add("requestedBytes", bytesRequested);
         logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): will process a set of candidate jobs.");
       }
+      jobSelectionTime += t.secs(utils::Timer::resetCounter);
       // We now have a batch of jobs to try and dequeue. Should not be empty.
       // First add the jobs to the owned list of the agent.
       std::list<std::string> addedJobs;
       for (const auto &j: candidateJobs) addedJobs.emplace_back(j->m_retrieveRequest.getAddressIfSet());
       m_oStoreDB.m_agentReference->addBatchToOwnership(addedJobs, m_oStoreDB.m_objectStore);
+      ownershipAdditionTime += t.secs(utils::Timer::resetCounter);
       // We can now attempt to switch the ownership of the jobs. Depending on the type of failure (if any) we
       // will adapt the rest.
       // First, start the parallel updates of jobs
       std::list<std::unique_ptr<objectstore::RetrieveRequest::AsyncOwnerUpdater>> jobUpdates;
       for (const auto &j: candidateJobs) jobUpdates.emplace_back(
         j->m_retrieveRequest.asyncUpdateOwner(j->selectedCopyNb, m_oStoreDB.m_agentReference->getAgentAddress(), rqAddress));
+      asyncUpdateLaunchTime += t.secs(utils::Timer::resetCounter);
       // Now run through the results of the asynchronous updates. Non-sucess results come in the form of exceptions.
       std::list<std::string> jobsToForget; // The jobs either absent or not owned, for which we should just remove references (agent).
       std::list<std::string> jobsToDequeue; // The jobs that should not be queued anymore. All of them indeed (invalid or successfully poped).
@@ -2224,13 +2239,18 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           currentFiles--;
           currentBytes-=(*j)->archiveFile.fileSize;
         }
+        jobsUpdateTime += t.secs(utils::Timer::resetCounter);
         // In all cases: move to the nexts.
         ju=jobUpdates.erase(ju);
         j=candidateJobs.erase(j);
       }
       // All (most) jobs are now officially owned by our agent. We can hence remove them from the queue.
       rq.removeJobsAndCommit(jobsToDequeue);
-      if (jobsToForget.size()) m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
+      ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
+      if (jobsToForget.size()) {
+        m_oStoreDB.m_agentReference->removeBatchFromOwnership(jobsToForget, m_oStoreDB.m_objectStore);
+        ownershipRemovalTime += t.secs(utils::Timer::resetCounter);
+      }
       // We can now add the validated jobs to the return value.
       auto vj = validatedJobs.begin();
       while (vj != validatedJobs.end()) {
@@ -2307,7 +2327,18 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     log::ScopedParamContainer params(logContext);
     params.add("tapepool", mountInfo.tapePool)
           .add("files", nFiles)
-          .add("bytes", nBytes);
+          .add("bytes", nBytes)
+          .add("driveRegisterCheckTime", driveRegisterCheckTime)
+          .add("findQueueTime", findQueueTime)
+          .add("lockFetchQueueTime", lockFetchQueueTime)
+          .add("emptyQueueCleanupTime", emptyQueueCleanupTime)
+          .add("jobSelectionTime", jobSelectionTime)
+          .add("ownershipAdditionTime", ownershipAdditionTime)
+          .add("asyncUpdateLaunchTime", asyncUpdateLaunchTime)
+          .add("jobsUpdateTime", jobsUpdateTime)
+          .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
+          .add("ownershipRemovalTime", ownershipRemovalTime)
+          .add("schedulerDbTime", totalTime.secs());
     logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): jobs retrieval complete.");
   }
   // We can construct the return value.
