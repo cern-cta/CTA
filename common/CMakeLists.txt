@@ -128,7 +128,8 @@ set (COMMON_LIB_SRC_FILES
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
   Configuration.cpp
-  ConfigurationFile.cpp  
+  ConfigurationFile.cpp
+  SourcedParameter.cpp   
   TapePool.cpp
   Timer.cpp
   UserIdentity.cpp
@@ -150,6 +151,8 @@ target_link_libraries (ctacommon
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
+  ConfigurationFileTests.cpp
+  SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/StorageClassTest.cpp
   processCap/SmartCapTest.cpp
@@ -183,6 +186,6 @@ set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
-target_link_libraries (mutexLtrace ctacommon)
+target_link_libraries(mutexLtrace ctacommon)
+

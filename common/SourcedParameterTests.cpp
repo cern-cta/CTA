@@ -18,8 +18,8 @@
 
 #include <gtest/gtest.h>
 
-#include "SourcedParameter.hpp"
-#include "FetchReportOrFlushLimits.hpp"
+#include "common/SourcedParameter.hpp"
+#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
 
 namespace unitTests {
 

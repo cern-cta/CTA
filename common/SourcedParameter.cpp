@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tapeserver/daemon/SourcedParameter.hpp"
+#include "SourcedParameter.hpp"
 #include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 #include <algorithm>
