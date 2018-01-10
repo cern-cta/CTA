@@ -16,10 +16,10 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(xrootdclient REQUIRED)
 find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
+# Cryptopp can be dropped when we get rid of eoscta_stub
 find_package(cryptopp REQUIRED)
 
 #
@@ -38,7 +38,7 @@ include_directories(${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/include ${CMAKE_SOURCE
 include_directories(${CMAKE_BINARY_DIR}/${XRD_SSI_PB_DIR}/eos_cta/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 #
-# eosctastub is a drop-in replacement for "cta archive|retrieve|delete"
+# eoscta_stub is a drop-in replacement for "cta archive|retrieve|delete"
 #
 add_executable(eoscta_stub EosCtaStub.cpp Configuration.cpp)
 target_link_libraries(eoscta_stub cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
@@ -57,8 +57,6 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
 install(TARGETS cta-admin DESTINATION usr/bin)
 
-#include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
-#include_directories(${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
 add_executable(cta.deprecated CTACmdMain.cpp Configuration.cpp)
 target_link_libraries(cta.deprecated ${XROOTD_XRDCL_LIB} cryptopp)
 install(TARGETS cta.deprecated DESTINATION usr/bin)
