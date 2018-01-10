@@ -124,32 +124,27 @@ ELSE(DEFINED PackageOnly)
     find_package (oracle-instantclient REQUIRED)
   endif (OCCI_SUPPORT)
 
-  if(BUILD_CMDLINE_ONLY)
-    message(STATUS "Build cmdline only")
-    add_subdirectory(cmdline)
-  else(BUILD_CMDLINE_ONLY)
-    install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
-    install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
+  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
+  install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
 
-    #
-    # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
-    #
-    set(XRD_SSI_PB_DIR xrootd-ssi-protobuf-interface)
+  #
+  # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
+  #
+  set(XRD_SSI_PB_DIR xrootd-ssi-protobuf-interface)
 
-    add_subdirectory(xrootd-ssi-protobuf-interface)
-    add_subdirectory(cmdline)
-    add_subdirectory(xroot_plugins)
+  add_subdirectory(xrootd-ssi-protobuf-interface)
+  add_subdirectory(cmdline)
+  add_subdirectory(xroot_plugins)
 
-    add_subdirectory(catalogue)
-    add_subdirectory(common)
-    add_subdirectory(eos)
-    add_subdirectory(mediachanger)
-    add_subdirectory(objectstore)
-    add_subdirectory(rdbms)
-    add_subdirectory(scheduler)
-    add_subdirectory(tapeserver)
-    add_subdirectory(tests)
-  endif(BUILD_CMDLINE_ONLY)
+  add_subdirectory(catalogue)
+  add_subdirectory(common)
+  add_subdirectory(eos)
+  add_subdirectory(mediachanger)
+  add_subdirectory(objectstore)
+  add_subdirectory(rdbms)
+  add_subdirectory(scheduler)
+  add_subdirectory(tapeserver)
+  add_subdirectory(tests)
   
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
