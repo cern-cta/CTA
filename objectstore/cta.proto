@@ -389,9 +389,7 @@ message ValueCountPair {
 
 message ArchiveQueue {
   required string tapepool = 10000;
-  repeated ArchiveJobPointer pendingarchivejobs = 10010;
-  repeated ArchiveJobPointer orphanedarchivejobsnscreation = 10020;
-  repeated ArchiveJobPointer orphanedarchivejobsnsdeletion = 10030;
+  repeated ArchiveJobPointer archivejobs = 10010;
   repeated ValueCountPair prioritymap = 10031;
   repeated ValueCountPair minarchiverequestagemap = 10032;
   repeated ValueCountPair maxdrivesallowedmap = 10033;
