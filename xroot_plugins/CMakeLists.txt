@@ -25,12 +25,12 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 #
 # XRootD SSI Protocol Buffer bindings
 #
-include_directories(${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/include ${CMAKE_SOURCE_DIR}/${XRD_SSI_PB_DIR}/eos_cta/include)
+include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 
 #
 # Compiled protocol buffers
 #
-include_directories(${CMAKE_BINARY_DIR}/${XRD_SSI_PB_DIR}/eos_cta/protobuf ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 #
 # XRootD SSI plugin for CTA Frontend
