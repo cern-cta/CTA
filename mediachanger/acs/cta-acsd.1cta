@@ -1,0 +1,117 @@
+.\" The CERN Tape Archive (CTA) project
+.\" Copyright (C) 2015  CERN
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH CTA-ACSD "cta" "$Date: 2018/01/10 14:44:00 $" CTA "CTA"
+.SH NAME
+cta-taped \- Tape server daemon
+.SH SYNOPSIS
+.BI "cta-taped [OPTIONS]"
+
+.SH DESCRIPTION
+\fBcta-taped\fP is the daemon responsible for controlling one or more tape
+drives.
+.P
+When \fBcta-taped\fP is executed it immediately forks with the parent
+terminating and the child running in the background.  If required the
+\fB\-f, \-\-foreground\fP option can be used to stop \fBcta-taped\fP from
+forking and keep the parent process in the foreground.
+
+.SH TAPE LIBRARY SUPPORT
+
+CTA supports two types of tape libraries, SCSI compatible ones and Oracle
+Automatic Cartridge System (ACS) ones.  The cta-taped daemon requires a tape
+library daemon to be installed and run on the same tape server as itself.
+There are two types of CTA tape library daemons, one for SCSI compatible tape
+libraries and one for ACS tape libraries.
+
+A SCSI compatible tape library requires the following daemon:
+
+\fBrmcd\fP
+
+The installation RPM for the \fBrmcd\fP daemon and its manual page is:
+
+\fBcta-rmc-server-0.0-XX.slc6.x86_64\fP
+
+The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
+the usual service commands:
+
+\fBservice cta-rmcd start\fP
+.br
+\fBservice cta-acsd status\fP
+.br
+\fBservice cta-acsd stop\fP
+
+Even though there is a separate daemon for each of the supported tape library
+types, there is a single generic set of command-line tools for mounting and
+un-mounting tapes:
+
+\fBcta-tape-mediachanger-mount\fP
+.br
+\fBcta-tape-mediachanger-dismount\fP
+
+The installation RPM for these command-line tools and their manual pages is:
+
+\fBcta-tape-developer-tools-2.1.15-XX.slc6.x86_64\fP
+
+.SH OPTIONS
+.TP
+\fB\-f, \-\-foreground
+Remain in the foreground.
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.TP
+\fB\-c, \-\-config <config-file>
+Set the location of the CTA configuration file (cta.conf).  The default location is /etc/cta/cta.conf.
+
+.SH CTA CONFIGURATION PARAMETERS
+The cta-taped daemon reads and uses the following CTA configuration
+parameters which are specified within the CTA configuration file (the
+default location is /etc/cta/cta.conf).
+
+.TP
+\fBRMC HOST
+The host on which the rmcd daemon is running.
+
+.TP
+\fBRMC MAXRQSTATTEMPTS
+Maximum number of attempts a retriable RMC request should be issued.
+
+.TP
+\fBTapeServer BlkMoveTimeout
+The maximum time in seconds the data-transfer session of tapeserverd can
+cease to move data blocks
+
+.TP
+\fBTapeServer BufSize
+Size of a memory buffer in the data-transfer cache in bytes (default is 5
+Mebibytes).
+## acsd ########################################################################
+# The TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
+#AcsDaemon Port 54521
+#AcsDaemon QueryInterval 10
+#AcsDaemon CmdTimeout 610
+# The TCP/IP port on which the CTA ACS daemon listens for incoming Zmq
+# connections from the tape server.
+#AcsDaemon Port 54521
+
+# Time to wait in seconds between queries to the tape Library.
+#AcsDaemon QueryInterval 10
+
+# The maximum time to wait in seconds for a tape-library command to
+# conclude.
+#AcsDaemon CmdTimeout 610
+
+# End-of-File
