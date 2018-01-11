@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/System.hpp"

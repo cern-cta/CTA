@@ -22,7 +22,6 @@
  *****************************************************************************/
 #include <sys/types.h>
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/file/DiskFile.hpp"
 #include "castor/tape/tapeserver/file/DiskFileImplementations.hpp"
 #include "castor/tape/tapeserver/file/RadosStriperPool.hpp"
@@ -45,7 +44,6 @@ DiskFileFactory::DiskFileFactory(const std::string & xrootPrivateKeyFile, uint16
   m_NoURLRemoteFile("^([^:]*:)(.*)$"),
   m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
   m_URLLocalFile("^file://(.*)$"),
-  m_URLEosFile("^eos://(.*)$"),
   m_URLXrootFile("^(root://.*)$"),
   m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
   m_xrootPrivateKeyFile(xrootPrivateKeyFile),
@@ -130,10 +128,6 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalReadFile(regexResult[1]);
-  }// EOS URL?
-  regexResult = m_URLEosFile.exec(path);
-  if (regexResult.size()) {
-    return new EosReadFile(regexResult[1]);
   }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
@@ -179,10 +173,6 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
     return new LocalWriteFile(regexResult[1]);
-  }// EOS URL?
-  regexResult = m_URLEosFile.exec(path);
-  if (regexResult.size()) {
-    return new EosWriteFile(regexResult[1]);
   }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
@@ -505,98 +495,6 @@ void XrootBaseWriteFile::close()  {
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
-  if(!m_closeTried){
-    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
-    // warning (casting the result to void is not good enough for gcc >= 7)
-    if(!m_xrootFile.Close(m_timeout).IsOK()) {
-      // Ignore the error
-    }
-  }
-}
-
-//==============================================================================
-// EOS READ FILE
-//==============================================================================  
-EosReadFile::EosReadFile(const std::string &eosUrl, uint16_t timeout):
-  m_timeout(timeout) {
-  // Setup parent's variables
-  m_readPosition = 0;
-  std::stringstream ss;
-  ss << "xroot://" << castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort") << "//" << eosUrl;
-  m_URL = ss.str();
-  // and simply open
-  using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-    std::string("In EosReadFile::EosReadFile failed XrdCl::File::Open() on ")+m_URL);
-}
-
-size_t EosReadFile::read(void *data, const size_t size) const {
-  uint32_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret,  m_timeout),
-    std::string("In EosReadFile::read failed XrdCl::File::Read() on ")+m_URL);
-  m_readPosition += ret;
-  return ret;
-}
-
-size_t EosReadFile::size() const {
-  const bool forceStat=true;
-  XrdCl::StatInfo *statInfo(NULL);
-  size_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
-    std::string("In EosReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
-  ret= statInfo->GetSize();
-  delete statInfo;
-  return ret;
-}
-
-EosReadFile::~EosReadFile() throw() {
-  try{
-    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
-    // warning (casting the result to void is not good enough for gcc >= 7)
-    if(!m_xrootFile.Close(m_timeout).IsOK()) {
-      // Ignore the error
-    }
-  } catch (...) {}
-}
-
-//==============================================================================
-// EOS WRITE FILE
-//============================================================================== 
-EosWriteFile::EosWriteFile(const std::string& eosUrl, uint16_t timeout):
-  m_writePosition(0), m_timeout(timeout), m_closeTried(false) {
-  // Setup parent's variables
-  m_writePosition = 0;
-  std::stringstream ss;
-  ss << "xroot://" << castor::common::CastorConfiguration::getConfig().getConfEntString("TapeServer", "EOSRemoteHostAndPort") << "//" << eosUrl;
-  m_URL = ss.str();
-  // and simply open
-  using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write,
-    XrdCl::Access::None, m_timeout),
-    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
-
-}
-
-void EosWriteFile::write(const void *data, const size_t size)  {
-  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
-    std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
-    +m_URL);
-  m_writePosition += size;
-}
-
-void EosWriteFile::setChecksum(uint32_t checksum) {
-  // Noop: this is only implemented for rados striper
-}
-
-void EosWriteFile::close()  {
-  // Multiple close protection
-  if (m_closeTried) return;
-  m_closeTried=true;
-  XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
-    std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
-}
-
-EosWriteFile::~EosWriteFile() throw() {
   if(!m_closeTried){
     // Use the result of Close() to avoid gcc >= 7 generating an unused-result
     // warning (casting the result to void is not good enough for gcc >= 7)

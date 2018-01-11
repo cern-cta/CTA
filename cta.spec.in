@@ -32,6 +32,7 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
+%define radosVersion 2:12.2.2
 %if "%{?dist}" == ".slc6" || "%{?dist}" == ".el6"
 BuildRequires: xrootd-client-devel = 1:4.2.3
 BuildRequires: xrootd-devel        = 1:4.2.3
@@ -41,7 +42,7 @@ BuildRequires: xrootd-client-devel  >= 1:4.8.0
 BuildRequires: xrootd-devel         >= 1:4.8.0
 BuildRequires: xrootd-server-devel  >= 1:4.8.0
 BuildRequires: xrootd-private-devel >= 1:4.8.0
-BuildRequires: librados-devel >= 11.0, libradosstriper-devel >= 11.0, 
+BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion}, 
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
 BuildRequires: sqlite-devel >= 3.6
@@ -123,7 +124,7 @@ The xroot plugin
 Summary: CERN Tape Archive: tape daemon
 Group: Application/CTA
 Requires: logrotate
-Requires: cta-lib
+Requires: cta-lib = %{ctaVersion}
 Requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 %description -n cta-taped
 CERN Tape Archive:
@@ -146,7 +147,7 @@ The tape server daemon
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 Requires: logrotate
-Requires: cta-lib
+Requires: cta-lib = %{ctaVersion}
 Requires: xrootd-server
 Requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 %description -n cta-frontend
@@ -186,6 +187,7 @@ The xroot plugin
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: oracle-instantclient12.2-basic
+Requires: librados2 = %{radosVersion}
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
@@ -194,7 +196,6 @@ The shared libraries
 %{_libdir}/libctacatalogue.so*
 %{_libdir}/libctacommon.so*
 #TODO: merge util and common
-%{_libdir}/libctautils.so*
 %{_libdir}/libctascheduler.so*
 %{_libdir}/libctaobjectstore.so*
 %{_libdir}/libctamediachanger.so*
@@ -295,7 +296,7 @@ Utilities to faciliate working with the mediachangers
 Summary: Tools to faciliate working with rmcd and smc in cta
 Group: Application/CTA
 Requires: logrotate
-#Requires: cta-lib
+#Requires: cta-lib = %{ctaVersion}
 Requires(pre): /usr/bin/getent, /usr/sbin/groupadd, /usr/sbin/useradd
 %description -n cta-rmcd
 CERN Tape Archive:
@@ -313,7 +314,7 @@ Tools to faciliate working with rmcd and smc in cta
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
-%attr(0644,root,root) /etc/sysconfig/cta-rmcd
+%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
 %endif

@@ -21,7 +21,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 
 //------------------------------------------------------------------------------
@@ -30,26 +29,4 @@
 castor::tape::tapeserver::daemon::LabelSessionConfig::LabelSessionConfig()
   throw():
   useLbp(false) {
-}
-
-//------------------------------------------------------------------------------
-// createFromCastorConf
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::LabelSessionConfig
-  castor::tape::tapeserver::daemon::LabelSessionConfig::createFromCastorConf(
-    cta::log::Logger *const log) {
-  common::CastorConfiguration &castorConf =
-    common::CastorConfiguration::getConfig();
-  LabelSessionConfig config;
-
-  const std::string useLBP = castorConf.getConfEntString(
-    "TapeServer", "UseLogicalBlockProtection", "no");
-
-  if (!strcasecmp(useLBP.c_str(), "yes") || !strcmp(useLBP.c_str(), "1")) {
-    config.useLbp = true;
-  } else {
-    config.useLbp = false;
-  }
-
-  return config;
 }

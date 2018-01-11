@@ -128,6 +128,7 @@ set (COMMON_LIB_SRC_FILES
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
   Configuration.cpp
+  ConfigurationFile.cpp  
   TapePool.cpp
   Timer.cpp
   UserIdentity.cpp
@@ -141,7 +142,6 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
-  ctautils
   pthread
   uuid
   z

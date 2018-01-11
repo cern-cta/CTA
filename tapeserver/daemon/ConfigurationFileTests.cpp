@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include "ConfigurationFile.hpp"
+#include "common/ConfigurationFile.hpp"
 #include "tests/TempFile.hpp"
 
 namespace unitTests {

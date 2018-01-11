@@ -24,7 +24,6 @@
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/common/CastorConfiguration.hpp"
 #include <memory>
 #include <sstream>
 

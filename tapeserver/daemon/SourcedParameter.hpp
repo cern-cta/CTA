@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "tapeserver/daemon/ConfigurationFile.hpp"
+#include "common/ConfigurationFile.hpp"
 #include "common/utils/utils.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"

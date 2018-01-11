@@ -129,16 +129,6 @@ struct DataTransferConfig {
    */
   DataTransferConfig() throw();
 
-  /**
-   * Returns a configuration structure based on the contents of
-   * /etc/castor/castor.conf and compile-time constants.
-   *
-   * @param log pointer to NULL or an optional logger object.
-   * @return The configuration structure.
-   */
-  static DataTransferConfig createFromCastorConf(
-    cta::log::Logger *const log = NULL);
-
 }; // DataTransferConfig
 
 } // namespace daemon

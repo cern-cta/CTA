@@ -141,42 +141,6 @@ namespace castor {
       };     
       
       //==============================================================================
-      // EOS FILES
-      //==============================================================================  
-      class EosReadFile: public ReadFile {
-      public:
-        EosReadFile(const std::string &eosUrl, uint16_t timeout = 0);
-        virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size) const;
-        virtual ~EosReadFile() throw();
-      protected:
-        // Access to parent's protected member...
-        void setURL(const std::string & v) { m_URL = v; }
-        // There is no const-correctness with XrdCl...
-        mutable XrdCl::File m_xrootFile;
-        mutable uint64_t m_readPosition;
-        const uint16_t m_timeout;
-        typedef cta::exception::XrootCl XrootClEx;
-      };
-      
-      class EosWriteFile: public WriteFile {
-      public:
-        EosWriteFile(const std::string &eosUrl,  uint16_t timeout = 0);
-        virtual void write(const void *data, const size_t size);
-        virtual void setChecksum(uint32_t checksum);
-        virtual void close();
-        virtual ~EosWriteFile() throw();        
-      protected:
-        // Access to parent's protected member...
-        void setURL(const std::string & v) { m_URL = v; }
-        XrdCl::File m_xrootFile;
-        uint64_t m_writePosition;
-        const uint16_t m_timeout;
-        typedef cta::exception::XrootCl XrootClEx;
-        bool m_closeTried;      
-      };
-      
-      //==============================================================================
       // RADOS STRIPER FILES
       //==============================================================================
       // The Rados striper URLs in CASTOR are in the form:

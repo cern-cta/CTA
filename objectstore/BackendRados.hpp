@@ -114,8 +114,12 @@ private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */
   void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
+  void lockWithIoContext(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId, 
+    librados::IoCtx & radosCtx);
+  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, 
+    const std::string & clientId, librados::IoCtx & radosCtx);
+  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 
+    const std::string & clientId, librados::IoCtx & radosCtx);
   
 public:  
   ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
@@ -191,31 +195,32 @@ private:
    * Base class for jobs handled by the thread-and-context pool.
    */
   class AsyncJob {
-    virtual void execute(librados::IoCtx & context)=0;
+  public:
+    virtual void execute()=0;
     virtual ~AsyncJob() {}
   };
   
   /**
    * The queue for the thread-and-context pool.
    */
-  cta::threading::BlockingQueue<AsyncJob *> m_JobQueue;
+  cta::threading::BlockingQueue<AsyncJob *> m_jobQueue;
   
   /**
    * The class for the worker threads
    */
   class RadosWorkerThreadAndContext: private cta::threading::Thread {
   public:
-    RadosWorkerThreadAndContext(librados::Rados & cluster, const std::string & pool, const std::string & radosNameSpace, 
-      int threadID, log::Logger & logger);
+    RadosWorkerThreadAndContext(BackendRados & parentBackend, int threadID, log::Logger & logger);
     virtual ~RadosWorkerThreadAndContext();
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
   private:
-    librados::IoCtx m_radosCtx;
+    BackendRados & m_parentBackend;
     const int m_threadID;
     log::LogContext m_lc;
     void run() override;
   };
+  friend RadosWorkerThreadAndContext;
   
   /**
    * The container for the threads
@@ -224,7 +229,7 @@ private:
   
 public:
   /**
-   * A class following up the check existence-lock-fetch-update-write-unlock. Constructor implicitly
+   * A class following up the lock-fetch-update-write-unlock. Constructor implicitly
    * starts the lock step.
    */
   class AsyncUpdater: public Backend::AsyncUpdater {
@@ -251,9 +256,16 @@ public:
     std::string m_lockClient;
     /** The rados bufferlist used to hold the object data (read+write) */
     ::librados::bufferlist m_radosBufferList;
-    /** A future the hole the the structure of the update operation. It will be either empty of complete at 
-     destruction time */
-    std::unique_ptr<std::future<void>> m_updateAsync;
+    /** An async job that will process the update of the object. */ 
+    class UpdateJob: public AsyncJob {
+    public:
+      void setParentUpdater (AsyncUpdater * updater) { m_parentUpdater = updater; }
+      void execute() override;
+    private:
+      AsyncUpdater * m_parentUpdater = nullptr;
+    };
+    friend class UpdateJob;
+    UpdateJob m_updateJob;
     /** Async delete in case of zero sized object */
     static void deleteEmptyCallback(librados::completion_t completion, void *pThis);
     /** The second callback operation (after reading) */
@@ -313,6 +325,16 @@ public:
     BackendRados &m_backend;
     /** The object name */
     const std::string m_name;
+    /** The aio posting task */
+    class AioReadPoster: public AsyncJob {
+    public:
+      void setParentFatcher (AsyncLockfreeFetcher * fetcher) { m_parentFetcher = fetcher; }
+      void execute() override;
+    private:
+      AsyncLockfreeFetcher * m_parentFetcher = nullptr;
+    };
+    friend class AioReadPoster;
+    AioReadPoster m_aioReadPoster;
     /** The promise that will both do the job and allow synchronization with the caller. */
     std::promise<std::string> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
@@ -353,7 +375,10 @@ private:
   std::string m_pool;
   std::string m_namespace;
   librados::Rados m_cluster;
-  librados::IoCtx m_radosCtx;
+  std::vector<librados::IoCtx> m_radosCtxPool;
+  cta::threading::Mutex m_radosCxtIndexMutex;
+  size_t m_radosCtxIndex=0;
+  librados::IoCtx & getRadosCtx();
 };
 
 }} // end of cta::objectstore

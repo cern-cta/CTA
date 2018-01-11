@@ -21,10 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/common/CastorConfiguration.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferConfig.hpp"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/TapeBridgeConstants.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -44,65 +41,3 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   useRAO(false),
   externalEncryptionKeyScript("") {}
 
-//------------------------------------------------------------------------------
-// createFromCastorConf
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferConfig
-  castor::tape::tapeserver::daemon::DataTransferConfig::createFromCastorConf(
-    cta::log::Logger *const log) {
-  common::CastorConfiguration &castorConf =
-    common::CastorConfiguration::getConfig();
-  DataTransferConfig config;
-
-  config.bufsz = castorConf.getConfEntInt(
-    "TapeServer", "BufSize",
-    castor::tape::tapeserver::daemon::TAPESERVER_BUFSZ, log);
-  config.nbBufs = castorConf.getConfEntInt<uint32_t>(
-    "TapeServer", "NbBufs", log);
-  config.bulkRequestMigrationMaxBytes = castorConf.getConfEntInt(
-    "TapeServer", "BulkRequestMigrationMaxBytes",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES, log);
-  config.bulkRequestMigrationMaxFiles = castorConf.getConfEntInt(
-    "TapeServer", "BulkRequestMigrationMaxFiles",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES, log);
-  config.bulkRequestRecallMaxBytes = castorConf.getConfEntInt(
-    "TapeServer", "BulkRequestRecallMaxBytes",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES, log);
-  config.bulkRequestRecallMaxFiles = castorConf.getConfEntInt(
-    "TapeServer", "BulkRequestRecallMaxFiles",
-    (uint64_t)TAPEBRIDGE_BULKREQUESTRECALLMAXFILES, log);
-  config.maxBytesBeforeFlush = castorConf.getConfEntInt(
-    "TapeServer", "MaxBytesBeforeFlush",
-    (uint64_t)TAPEBRIDGE_MAXBYTESBEFOREFLUSH, log);
-  config.maxFilesBeforeFlush = castorConf.getConfEntInt(
-    "TapeServer", "MaxFilesBeforeFlush",
-    (uint64_t)TAPEBRIDGE_MAXFILESBEFOREFLUSH, log);
-  config.nbDiskThreads = castorConf.getConfEntInt(
-    "TapeServer", "NbDiskThreads", 
-    castor::tape::tapeserver::daemon::TAPESERVER_NB_DISK_THREAD, log);
-  config.xrootPrivateKey = castorConf.getConfEntString(
-    "TapeServer", "XrootPrivateKey", "/etc/castor/xrd_tape_key.pem", log);
-  config.xrootTimeout = castorConf.getConfEntInt(
-    "TapeServer", "XrootTimeout", 0, log);
-  const std::string useLBP = castorConf.getConfEntString(
-    "TapeServer", "UseLogicalBlockProtection", "no", log);
-  const std::string useRAO = castorConf.getConfEntString(
-    "TapeServer", "UseRecommendedAccessOrder", "no", log);
-
-  if (!strcasecmp(useLBP.c_str(), "yes") || !strcmp(useLBP.c_str(), "1")) {
-    config.useLbp = true;
-  } else {
-    config.useLbp = false;
-  }
-
-  if (!strcasecmp(useRAO.c_str(), "yes") || !strcmp(useRAO.c_str(), "1")) {
-    config.useRAO = true;
-  } else {
-    config.useRAO = false;
-  }
-
-  config.externalEncryptionKeyScript = castorConf.getConfEntString("TapeServer",
-    "ExternalEncryptionKeyScript", "");
-
-  return config;
-}
