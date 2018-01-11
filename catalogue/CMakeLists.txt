@@ -98,7 +98,7 @@ install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_L
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
-  DbConfigCatalogueTest.cpp)
+  DbConfigVersionOfCatalogueTest.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
