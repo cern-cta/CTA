@@ -287,6 +287,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
 }
 
 auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
+  checkPayloadReadable();
   CandidateJobList ret;
   ret.remainingBytesAfterCandidates = m_payload.archivejobstotalsize();
   ret.remainingFilesAfterCandidates = m_payload.pendingarchivejobs_size();
@@ -301,45 +302,6 @@ auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::s
     if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) break;
   }
   return ret;
-}
-
-bool ArchiveQueue::addOrphanedJobPendingNsCreation(
-  const ArchiveRequest::JobDump& job, 
-  const std::string& archiveToFileAddress, 
-  uint64_t fileid,
-  uint64_t size, const cta::common::dataStructures::MountPolicy & policy) {
-  checkPayloadWritable();
-  auto & jl=m_payload.orphanedarchivejobsnscreation();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveToFileAddress)
-      return false;
-  }
-  auto * j = m_payload.add_orphanedarchivejobsnscreation();
-  j->set_address(archiveToFileAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
-  j->set_copynb(job.copyNb);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  j->set_priority(policy.archivePriority);
-  j->set_minarchiverequestage(policy.archiveMinRequestAge);
-  return true;
-}
-
-bool ArchiveQueue::addOrphanedJobPendingNsDeletion(
-  const ArchiveRequest::JobDump& job, 
-  const std::string& archiveToFileAddress, 
-  uint64_t fileid, uint64_t size) {
-  checkPayloadWritable();
-  auto & jl=m_payload.orphanedarchivejobsnsdeletion();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveToFileAddress)
-      return false;
-  }
-  auto * j = m_payload.add_orphanedarchivejobsnsdeletion();
-  j->set_address(archiveToFileAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
-  return true;
 }
 
 }} // namespace cta::objectstore

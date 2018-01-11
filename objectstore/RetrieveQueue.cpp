@@ -244,6 +244,23 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
+auto cta::objectstore::RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) -> CandidateJobList {
+  CandidateJobList ret;
+  ret.remainingBytesAfterCandidates = m_payload.retrievejobstotalsize();
+  ret.remainingFilesAfterCandidates = m_payload.retrievejobs_size();
+  for (auto & j: m_payload.retrievejobs()) {
+    if (!retrieveRequestsToSkip.count(j.address())) {
+      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size()});
+      ret.candidateBytes += j.size();
+      ret.candidateFiles ++;
+    }
+    ret.remainingBytesAfterCandidates -= j.size();
+    ret.remainingFilesAfterCandidates--;
+    if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) break;
+  }
+  return ret;
+}
+
 void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& requestsToRemove) {
   checkPayloadWritable();
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
@@ -263,6 +280,7 @@ void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::s
           maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
           priorityMap.decCount(jl->Get(i).priority());
           minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
+          m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() - jl->Get(i).size());
           while (i+1 < (size_t)jl->size()) {
             jl->SwapElements(i, i+1);
             i++;
