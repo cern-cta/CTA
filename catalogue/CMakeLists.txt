@@ -84,6 +84,7 @@ add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   CatalogueFactoryTest.cpp
+  InMemoryCatalogueTest.cpp
   InMemoryVersionOfCatalogueTest.cpp)
 
 add_library (ctainmemorycatalogueunittests SHARED
