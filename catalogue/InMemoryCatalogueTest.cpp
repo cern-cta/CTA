@@ -37,8 +37,8 @@ TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDat
   using namespace cta;
 
   log::DummyLogger dummyLog("dummy");
-  const uint64_t nbConns = 2;
-  const uint64_t nbArchiveFileListingConns = 1;
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 0;
 
   // First in-memory database
   {
