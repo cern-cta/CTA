@@ -1,5 +1,5 @@
 # The CERN Tape Archive (CTA) project
-# Copyright (C) 2015  CERN
+# Copyright 2018 CERN
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,26 +13,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required(VERSION 2.6)
 
 find_package(Protobuf3 REQUIRED)
+set(PROTOBUF3_INCLUDE_PATH ${XRD_SSI_PB_DIR}/eos_cta/protobuf/)
+file(GLOB ProtoFiles "${PROTOBUF3_INCLUDE_PATH}/*.proto")
 
-file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+
+set_source_files_properties(
+  ${ProtoSources} ${ProtoHeaders}
+  PROPERTIES GENERATED 1)
+
 foreach(PROTO_SRC ${ProtoSources})
   set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
 
-  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc
-  # version 7 or greater
-  if (CMAKE_COMPILER_IS_GNUCC)
-    if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
+  if(CMAKE_COMPILER_IS_GNUCC)
+    if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
       set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
-    endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-  endif (CMAKE_COMPILER_IS_GNUCC)
+    endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
-set (CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
+set(CTA_FRONT_END_MESSAGES_SRC_FILES ${ProtoSources})
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
-add_library (XrdCtaMessages ${CTA_FRONT_END_MESSAGES_SRC_FILES})
-
-target_link_libraries (XrdCtaMessages ${PROTOBUF3_LIBRARIES})
+add_library(XrdSsiPbEosCta ${CTA_FRONT_END_MESSAGES_SRC_FILES})
+set_target_properties(XrdSsiPbEosCta PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(XrdSsiPbEosCta ${PROTOBUF3_LIBRARIES})

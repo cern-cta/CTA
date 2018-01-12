@@ -21,7 +21,7 @@
 #include <XrdSsi/XrdSsiEntity.hh>
 
 #include "XrdSsiCtaServiceProvider.hpp"
-#include "xroot_plugins/messages/cta_frontend.pb.h"
+#include "cta_frontend.pb.h"
 
 
 
