@@ -84,6 +84,7 @@ install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
+  ConnTest.cpp
   LoginTest.cpp
   ParamNameToIdxTest.cpp
   SqliteStmtTest.cpp)
