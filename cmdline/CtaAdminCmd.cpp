@@ -161,9 +161,7 @@ void CtaAdminCmd::send() const
 
    // Obtain a Service Provider
 
-   std::string resource("/ctafrontend");
-
-   XrdSsiPbServiceType cta_service(endpoint, resource);
+   XrdSsiPbServiceType cta_service(endpoint, Resource, StreamBufferSize, GetRequestTimeout());
 
    // Send the Request to the Service and get a Response
 
@@ -294,6 +292,23 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    }
 
    throw std::runtime_error(help.str());
+}
+
+
+
+int CtaAdminCmd::GetRequestTimeout() const
+{
+   const char *request_timeout_str = ::getenv("XRD_REQUESTTIMEOUT");
+
+   int request_timeout = request_timeout_str == nullptr ? DefaultRequestTimeout : atoi(request_timeout_str);
+
+   // Use default if XRD_REQUESTTIMEOUT is not a valid positive integer
+   if(request_timeout <= 0) request_timeout = DefaultRequestTimeout;
+
+#ifdef XRDSSI_DEBUG
+   std::cerr << "[DEBUG] CtaAdminCmd::GetRequestTimeout(): Request timeout = " << request_timeout << "s" << std::endl;
+#endif
+   return request_timeout;
 }
 
 }} // namespace cta::admin

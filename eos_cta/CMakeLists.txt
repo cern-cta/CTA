@@ -16,7 +16,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 find_package(Protobuf3 REQUIRED)
-set(PROTOBUF3_INCLUDE_PATH ${XRD_SSI_PB_DIR}/eos_cta/protobuf/)
+set(PROTOBUF3_INCLUDE_PATH ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
 file(GLOB ProtoFiles "${PROTOBUF3_INCLUDE_PATH}/*.proto")
 
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})

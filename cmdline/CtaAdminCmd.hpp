@@ -50,11 +50,21 @@ private:
     */
    void throwUsage(const std::string &error_txt = "") const;
 
+   /*!
+    * Return the request timeout value (to pass to the ServiceClientSide constructor)
+    */
+   int GetRequestTimeout() const;
+
    /*
     * Member variables
     */
-   std::string       m_execname;         //!< Executable name of this program
-   cta::xrd::Request m_request;          //!< Protocol Buffer for the command and parameters
+   const std::string Resource      = "/ctafrontend";    //!< XRootD SSI Resource name
+   const int StreamBufferSize      = 1024;              //!< Buffer size for Data/Stream Responses
+   const int DefaultRequestTimeout = 10;                //!< Default Request Timeout. Can be overridden by
+                                                        //!< XRD_REQUESTTIMEOUT environment variable.
+
+   std::string       m_execname;                        //!< Executable name of this program
+   cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
 };
 
 }} // namespace cta::admin
