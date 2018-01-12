@@ -39,6 +39,10 @@ public:
       m_lc       (service->getLogContext()) {
          m_cliIdentity.username = client.name;
          m_cliIdentity.host     = client.host;
+
+         // Map the client protcol string to an enum value
+         auto proto_it = m_protomap.find(client.prot);
+         m_protocol = proto_it != m_protomap.end() ? proto_it->second : Protocol::OTHER;
       }
 
    /*!
@@ -257,12 +261,22 @@ private:
       return opt_it != m_option_bool.end() && opt_it->second;
    }
 
+   // Security protocol used to connect
+
+   enum class Protocol { SSS, KRB5, OTHER };
+
+   const std::map<std::string, Protocol> m_protomap = {
+      { "sss",  Protocol::SSS  },
+      { "krb5", Protocol::KRB5 },
+   };
+
    // Member variables
 
+   Protocol                                                m_protocol;               //!< The protocol the client used to connect
+   cta::common::dataStructures::SecurityIdentity           m_cliIdentity;            //!< Client identity: username/host
    cta::catalogue::Catalogue                              &m_catalogue;              //!< Reference to CTA Catalogue
    cta::Scheduler                                         &m_scheduler;              //!< Reference to CTA Scheduler
    cta::log::LogContext                                    m_lc;                     //!< CTA Log Context
-   cta::common::dataStructures::SecurityIdentity           m_cliIdentity;            //!< The client identity info: username and host
    std::map<cta::admin::OptionBoolean::Key, bool>          m_option_bool;            //!< Boolean options
    std::map<cta::admin::OptionUInt64::Key,  uint64_t>      m_option_uint64;          //!< UInt64 options
    std::map<cta::admin::OptionString::Key,  std::string>   m_option_str;             //!< String options

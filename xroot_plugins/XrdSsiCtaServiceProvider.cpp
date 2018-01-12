@@ -61,6 +61,13 @@ namespace XrdSsiPb {
 template<>
 bool Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Prepare(XrdSsiErrInfo &eInfo, const XrdSsiResource &resource)
 {
+   if(resource.client == nullptr || resource.client->name == nullptr)
+   {
+      eInfo.Set("Service::Prepare(): XRootD client name is not set. "
+         "Possible misconfiguration of the KRB5 or SSS keyfile.", EACCES);
+      return false;
+   }
+
 #ifdef XRDSSI_DEBUG
    std::cerr << "[DEBUG] Service::Prepare():" << std::endl;
    std::cerr << "[DEBUG]    Resource name: " << resource.rName << std::endl
@@ -82,14 +89,8 @@ bool Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Prepare(Xr
              << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
              << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
              << std::endl;
-#endif
-   if(resource.client == nullptr || resource.client->name == nullptr)
-   {
-      eInfo.Set("Service::Prepare(): XRootD client name is not set. "
-         "Possible misconfiguration of the KRB5 or SSS keyfile.", EACCES);
-      return false;
-   }
-#ifdef XRDSSI_DEBUG
+
+   std::cerr << "[DEBUG]    Resource client protocol: " << resource.client->prot << std::endl;
    std::cerr << "[DEBUG]    Resource client name: " << resource.client->name << std::endl;
 #endif
 

@@ -76,6 +76,12 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       using namespace cta::xrd;
 
       case Request::kAdmincmd:
+         // Validate that the Kerberos user is an authorized CTA Admin user
+         if(m_protocol != Protocol::KRB5) {
+            throw cta::exception::Exception("[ERROR] Admin commands must be authenticated using the Kerberos 5 protocol.");
+         }
+         m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
+
          // Validate the Protocol Buffer and import options into maps
          importOptions(request.admincmd());
 
