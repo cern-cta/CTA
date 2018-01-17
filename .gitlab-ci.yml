@@ -5,7 +5,6 @@ stages:
   - rename:dockerimage
   - test
   - regressions
-  - shouldfail
   - publish_rpm
 
 before_script:
