@@ -5,6 +5,7 @@ stages:
   - rename:dockerimage
   - test
   - regressions
+  - shouldfail
   - publish_rpm
 
 before_script:
@@ -155,7 +156,6 @@ nightly1:
   stage: shouldfail
   only:
     - triggers
-    - schedules
   script:
     - echo "Running  nightly tests"
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
