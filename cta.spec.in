@@ -115,7 +115,6 @@ The xroot plugin
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta.deprecated
 %attr(0755,root,root) %{_bindir}/cta-admin
-%attr(0755,root,root) %{_bindir}/eoscta_stub
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
 %else
@@ -180,7 +179,6 @@ The xroot plugin
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta.deprecated
 %attr(0755,root,root) %{_bindir}/cta-admin
-%attr(0755,root,root) %{_bindir}/eoscta_stub
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
 
 %package -n cta-lib
