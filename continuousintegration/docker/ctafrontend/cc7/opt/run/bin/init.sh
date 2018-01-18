@@ -34,7 +34,7 @@ if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   else
     if [[ $(rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | wc -l) -gt 0 ]]; then
       echo "Rados objectstore ${OBJECTSTOREURL} is not empty: deleting content"
-      rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -itoto -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm toto
+      rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE ls | xargs -itoto -L 100 -P 100 rados -p $OBJECTSTOREPOOL --id $OBJECTSTOREID --namespace $OBJECTSTORENAMESPACE rm toto
     fi
     cta-objectstore-initialize $OBJECTSTOREURL
     echo "Rados objectstore ${OBJECTSTOREURL} content:"
