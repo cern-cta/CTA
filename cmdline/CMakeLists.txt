@@ -40,6 +40,20 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install(TARGETS cta-admin DESTINATION usr/bin)
 
 #
+# cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
+# without invoking EOS.
+#
+# Previously this was the eoscta_stub which was called by a script invoked by the EOS WFE.
+#
+find_package(cryptopp REQUIRED)
+add_executable(cta-wfe-test EosCtaStub.cpp Configuration.cpp)
+target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
+set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Get some extra debug messages on stdout
+#target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
+install(TARGETS cta-wfe-test DESTINATION usr/bin)
+
+#
 # Old cta is scheduled for deletion
 #
 add_executable(cta.deprecated CTACmdMain.cpp Configuration.cpp)
