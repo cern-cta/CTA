@@ -148,18 +148,17 @@ namespace {
   using cta::objectstore::GenericObject;
   using cta::objectstore::ScopedExclusiveLock;
   template <class C>
-  std::string dumpWithType(GenericObject * gop, ScopedSharedLock& lock) {
+  std::string dumpWithType(GenericObject * gop) {
     C typedObject(*gop);
-    lock.transfer(typedObject);
+    ScopedLock::transfer(*gop, typedObject);
     std::string ret = typedObject.dump();
     // Release the lock now as if we let the caller do, it will point
     // to the then-removed typedObject.
-    lock.release();
     return ret;
   }
 }
 
-std::string GenericObject::dump(ScopedSharedLock& lock) {
+std::string GenericObject::dump() {
   checkHeaderReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -169,31 +168,31 @@ std::string GenericObject::dump(ScopedSharedLock& lock) {
   google::protobuf::util::MessageToJsonString(m_header, &headerDump, options);
   switch(m_header.type()) {
     case serializers::RootEntry_t:
-      bodyDump = dumpWithType<RootEntry>(this, lock);
+      bodyDump = dumpWithType<RootEntry>(this);
       break;
     case serializers::AgentRegister_t:
-      bodyDump = dumpWithType<AgentRegister>(this, lock);
+      bodyDump = dumpWithType<AgentRegister>(this);
       break;
     case serializers::Agent_t:
-      bodyDump = dumpWithType<Agent>(this, lock);
+      bodyDump = dumpWithType<Agent>(this);
       break;
     case serializers::DriveRegister_t:
-      bodyDump = dumpWithType<DriveRegister>(this, lock);
+      bodyDump = dumpWithType<DriveRegister>(this);
       break;
     case serializers::ArchiveQueue_t:
-      bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this, lock);
+      bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this);
       break;
     case serializers::RetrieveQueue_t:
-      bodyDump = dumpWithType<cta::objectstore::RetrieveQueue>(this, lock);
+      bodyDump = dumpWithType<cta::objectstore::RetrieveQueue>(this);
       break;
     case serializers::ArchiveRequest_t:
-      bodyDump = dumpWithType<ArchiveRequest>(this, lock);
+      bodyDump = dumpWithType<ArchiveRequest>(this);
       break;
     case serializers::RetrieveRequest_t:
-      bodyDump = dumpWithType<RetrieveRequest>(this, lock);
+      bodyDump = dumpWithType<RetrieveRequest>(this);
       break;
     case serializers::SchedulerGlobalLock_t:
-      bodyDump = dumpWithType<SchedulerGlobalLock>(this, lock);
+      bodyDump = dumpWithType<SchedulerGlobalLock>(this);
       break;
     default:
       std::stringstream err;

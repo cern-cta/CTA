@@ -387,7 +387,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
-      aq.addJobsAndCommit(jta);
+      aq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
@@ -406,7 +406,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.maxDrivesAllowed = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
-      aq.addJobsAndCommit(jta);
+      aq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent
@@ -439,8 +439,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     auto d1=aq1.dumpJobs();
     // We expect all jobs with sizes 1002-1005 inclusive to be connected to
     // their respective tape pools.
-    ASSERT_EQ(5, aq0.getJobsSummary().files);
-    ASSERT_EQ(5, aq1.getJobsSummary().files);
+    ASSERT_EQ(5, aq0.getJobsSummary().jobs);
+    ASSERT_EQ(5, aq1.getJobsSummary().jobs);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);

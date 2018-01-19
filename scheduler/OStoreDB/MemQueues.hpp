@@ -185,7 +185,8 @@ private:
   };
   
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
-  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue);
+  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue, 
+    objectstore::AgentReference & agentReference, log::LogContext & logContext);
   
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
   static void specializedUpdateCachedQueueStats(Queue &queue);
@@ -320,7 +321,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       addedJobs++;
     }
     // Actually ass the jobs.
-    specializedAddJobsToQueueAndCommit(jta, queue);
+    specializedAddJobsToQueueAndCommit(jta, queue, *oStoreDB.m_agentReference, logContext);
     double queueProcessAndCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.
     specializedUpdateCachedQueueStats(queue);

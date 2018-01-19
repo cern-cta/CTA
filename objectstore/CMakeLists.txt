@@ -51,6 +51,7 @@ SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
+  ObjectOps.cpp
   RootEntry.cpp
   Agent.cpp
   AgentHeartbeatThread.cpp
@@ -58,6 +59,7 @@ add_library (ctaobjectstore SHARED
   AgentRegister.cpp
   AgentWatchdog.cpp
   ArchiveQueue.cpp
+  ArchiveQueueShard.cpp
   RetrieveQueue.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp

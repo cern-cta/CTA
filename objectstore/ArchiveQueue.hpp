@@ -51,7 +51,14 @@ public:
   
   // Commit with sanity checks (override from ObjectOps
   void commit();
+private:
+  // Validates all summaries are in accordance with each other.
+  bool checkMapsAndShardsCoherency();
   
+  // Rebuild from shards if something goes wrong.
+  void rebuild();
+  
+public:
   // Set/get tape pool
   void setTapePool(const std::string & name);
   std::string getTapePool();
@@ -65,17 +72,25 @@ public:
     const cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
   };
-  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
+  /** Add the jobs to the queue. 
+   * The lock will be used to mark the shards as locked (the lock is the same for 
+   * the main object and the shard, the is no shared access.
+   * As we potentially have to create new shard(s), we need access to the agent 
+   * reference (to generate a non-colliding object name).
+   * We will also log the shard creation (hence the context)
+   */ 
+  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   /// This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
     uint64_t bytes = 0;
   };
-  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd);
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+    AgentReference & agentReference, log::LogContext & lc);
   
   struct JobsSummary {
-    uint64_t files;
+    uint64_t jobs;
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
@@ -84,7 +99,7 @@ public:
   };
   JobsSummary getJobsSummary();
   
-  void removeJobsAndCommit(const std::list<std::string> & requestsToRemove);
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
   struct JobDump {
     uint64_t size;
     std::string address;
@@ -111,6 +126,13 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   
   std::string dump();
+  
+  // The shard size. From experience, 100k is where we start to see performance difference,
+  // but nothing prevents us from using a smaller size.
+  // The performance will be roughly flat until the queue size reaches the square of this limit
+  // (meaning the queue object updates start to take too much time).
+  // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
+  static const uint64_t c_maxShardSize = 25000;
 };
   
 }}

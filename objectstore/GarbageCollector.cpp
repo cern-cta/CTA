@@ -380,7 +380,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
     Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, m_ourAgentReference, tapepool.first, lc);
     queueLockFetchTime = t.secs(utils::Timer::resetCounter);
     auto jobsSummary=aq.getJobsSummary();
-    filesBefore=jobsSummary.files;
+    filesBefore=jobsSummary.jobs;
     bytesBefore=jobsSummary.bytes;
     // We have the queue. We will loop on the requests, add them to the queue. We will launch their updates 
     // after committing the queue.
@@ -394,7 +394,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
         }
       }
     }
-    auto addedJobs = aq.addJobsIfNecessaryAndCommit(jtal);
+    auto addedJobs = aq.addJobsIfNecessaryAndCommit(jtal, m_ourAgentReference, lc);
     queueProcessAndCommitTime = t.secs(utils::Timer::resetCounter);
     // If we have an unexpected failure, we will re-run the individual garbage collection. Before that, 
     // we will NOT remove the object from agent's ownership. This variable is declared a bit ahead so
@@ -492,7 +492,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
             .add("bytesDequeuedAfterErrors", bytesDequeued)
             .add("filesBefore", filesBefore)
             .add("bytesBefore", bytesBefore)
-            .add("filesAfter", jobsSummary.files)
+            .add("filesAfter", jobsSummary.jobs)
             .add("bytesAfter", jobsSummary.bytes)
             .add("queueLockFetchTime", queueLockFetchTime)
             .add("queueProcessAndCommitTime", queueProcessAndCommitTime)

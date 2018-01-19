@@ -28,7 +28,9 @@ enum ObjectType {
   ArchiveRequest_t = 7;
   RetrieveRequest_t = 8;
   ArchiveQueue_t = 9;
+  ArchiveQueueShard_t = 90;
   RetrieveQueue_t = 10;
+  RetrieveQueueShard_t = 100;
   GenericObject_t = 1000;
 }
 
@@ -135,28 +137,6 @@ message Agent {
 message AgentRegister {
   repeated string agents = 2100;
   repeated string untrackedagents = 2101;
-}
-
-// ------------- Jobs handling -------------------------------------------------
-
-message ArchiveJobPointer {
-  required uint64 fileid = 3000;
-  required uint64 size = 3001;
-  required string address = 3002;
-  required uint32 copynb = 3003;
-  required uint64 priority = 3004;
-  required uint64 minarchiverequestage = 3005;
-  required uint64 maxdrivesallowed = 3006;
-}
-
-message RetrieveJobPointer {
-  required uint64 size = 3101;
-  required string address = 3102;
-  required uint32 copynb = 3103;
-  required uint64 fseq = 3107;
-  required uint64 priority = 3104;
-  required uint64 minretrieverequestage = 3105;
-  required uint64 maxdrivesallowed = 3106;
 }
 
 // ------------- Mount criteria and quota  -------------------------------------
@@ -387,15 +367,48 @@ message ValueCountPair {
   required uint64 count = 9302;
 }
 
+message ArchiveJobPointer {
+  required uint64 fileid = 3000;
+  required uint64 size = 3001;
+  required string address = 3002;
+  required uint32 copynb = 3003;
+  required uint64 priority = 3004;
+  required uint64 minarchiverequestage = 3005;
+  required uint64 maxdrivesallowed = 3006;
+  required uint64 starttime = 3007;
+}
+
+message ArchiveQueueShardPointer {
+  required string address = 10200;
+  required uint64 shardjobscount = 10201;
+  required uint64 shardbytescount = 10202;
+}
+
+message ArchiveQueueShard {
+  repeated ArchiveJobPointer archivejobs = 10300;
+  required uint64 archivejobstotalsize = 10301;
+}
+
 message ArchiveQueue {
   required string tapepool = 10000;
-  repeated ArchiveJobPointer archivejobs = 10010;
+  repeated ArchiveQueueShardPointer archivequeuesshards = 10010;
   repeated ValueCountPair prioritymap = 10031;
   repeated ValueCountPair minarchiverequestagemap = 10032;
   repeated ValueCountPair maxdrivesallowedmap = 10033;
   required uint64 archivejobstotalsize = 10040;
+  required uint64 archivejobscount = 10045;
   required uint64 oldestjobcreationtime = 10050;
   required uint64 mapsrebuildcount = 10060;
+}
+
+message RetrieveJobPointer {
+  required uint64 size = 3101;
+  required string address = 3102;
+  required uint32 copynb = 3103;
+  required uint64 fseq = 3107;
+  required uint64 priority = 3104;
+  required uint64 minretrieverequestage = 3105;
+  required uint64 maxdrivesallowed = 3106;
 }
 
 message RetrieveQueue {

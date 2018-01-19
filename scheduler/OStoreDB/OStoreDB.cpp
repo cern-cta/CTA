@@ -108,13 +108,13 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    if (aqueue.getJobsSummary().files) {
+    if (aqueue.getJobsSummary().jobs) {
       tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
       auto & m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
       m.type = cta::common::dataStructures::MountType::Archive;
       m.bytesQueued = aqueue.getJobsSummary().bytes;
-      m.filesQueued = aqueue.getJobsSummary().files;      
+      m.filesQueued = aqueue.getJobsSummary().jobs;      
       m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
       m.priority = aqueue.getJobsSummary().priority;
       m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
@@ -304,7 +304,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       ArchiveQueue aq(a.address, m_objectStore);
       ScopedSharedLock aql(aq);
       aq.fetch();
-      if (!aq.getJobsSummary().files) {
+      if (!aq.getJobsSummary().jobs) {
         aql.release();
         re.removeArchiveQueueAndCommit(a.tapePool, lc);
         log::ScopedParamContainer params(lc);
@@ -1614,7 +1614,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         log::ScopedParamContainer params(logContext);
         params.add("tapepool", mountInfo.tapePool)
               .add("queueObject", aq.getAddressIfSet())
-              .add("queueSize", aq.getJobsSummary().files);
+              .add("queueSize", aq.getJobsSummary().jobs);
         logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): archive queue found.");
       }
       // The queue will give us a list of files to try and grab. We will attempt to 
@@ -2407,7 +2407,7 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
       std::list<objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({j, m_archiveRequest.getAddressIfSet(), m_archiveRequest.getArchiveFile().archiveFileID,
           m_archiveRequest.getArchiveFile().fileSize, m_archiveRequest.getMountPolicy(), m_archiveRequest.getEntryLog().time});
-      aq.addJobsIfNecessaryAndCommit(jta);
+      aq.addJobsIfNecessaryAndCommit(jta, *m_oStoreDB.m_agentReference, lc);
       aqlock.release();
       // We have a pointer to the job, we can change the job ownership
       m_archiveRequest.setJobOwner(tapeFile.copyNb, aq.getAddressIfSet());

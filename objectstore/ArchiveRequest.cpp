@@ -318,7 +318,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         std::list<ArchiveQueue::JobToAdd> jta;
         jta.push_back({jd, getAddressIfSet(), getArchiveFile().archiveFileID,
           getArchiveFile().fileSize, getMountPolicy(), getEntryLog().time});
-        aq.addJobsIfNecessaryAndCommit(jta);
+        aq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
         auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
         j->set_owner(aq.getAddressIfSet());
         j->set_status(serializers::AJS_PendingMount);
