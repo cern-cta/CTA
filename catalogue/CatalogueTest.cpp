@@ -1789,7 +1789,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
   // The maximum size of an SQLite integer is a signed 64-bit integer
-  const uint64_t capacityInBytes = std::numeric_limits<int64_t>::max();
+  const uint64_t capacityInBytes = 9L * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
   const std::string comment = "Create tape";
