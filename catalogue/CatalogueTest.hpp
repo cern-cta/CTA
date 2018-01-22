@@ -92,6 +92,16 @@ protected:
    */
   std::map<std::string, cta::common::dataStructures::AdminHost> adminHostListToMap(
     const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts);
+
+  /**
+   * Creates a map from tape pool name to tape pool from the specified list of
+   * tape pools.
+   *
+   * @param listOfTapePools The list of tape pools.
+   * @return Map from tape pool name to tape pool.
+   */
+  std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
+    const std::list<cta::catalogue::TapePool> &listOfTapePools);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests
