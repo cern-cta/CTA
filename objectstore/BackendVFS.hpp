@@ -19,6 +19,7 @@
 #pragma once
 
 #include "Backend.hpp"
+#include "common/threading/Thread.hpp"
 #include <future>
 #include <functional>
 
@@ -127,7 +128,7 @@ public:
   /**
    * A class mimicking AIO using C++ async tasks
    */
-  class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
+  class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher, public cta::threading::Thread  {
   public:
     AsyncLockfreeFetcher(BackendVFS & be, const std::string & name);
     std::string wait() override;
@@ -136,8 +137,14 @@ public:
     BackendVFS &m_backend;
     /** The object name */
     const std::string m_name;
-     /** The future that will both do the job and allow synchronization with the caller. */
-    std::future<std::string> m_job;
+    /** The fetched value */
+    std::string m_value;
+    /** The exception we might receive */
+    std::exception_ptr m_exception = nullptr;
+    /** A mutex to make helgrind happy */
+    cta::threading::Mutex m_mutex;
+    /** The thread that will both do the job and allow synchronization with the caller. */
+    void run() override;
   };
   
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;

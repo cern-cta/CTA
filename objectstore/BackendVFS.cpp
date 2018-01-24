@@ -23,6 +23,7 @@
 #include "common/Timer.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -441,24 +442,29 @@ void BackendVFS::AsyncDeleter::wait() {
 }
 
 BackendVFS::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendVFS& be, const std::string& name):
-  m_backend(be), m_name(name), 
-  m_job(std::async(std::launch::async,
-    [&](){ 
-      auto ret = m_backend.read(name);
-      ANNOTATE_HAPPENS_BEFORE(&m_job);
-      return ret;
-    })) 
-{ }
+  m_backend(be), m_name(name) {
+  cta::threading::Thread::start();
+}
+
+void BackendVFS::AsyncLockfreeFetcher::run() {
+  threading::MutexLocker ml(m_mutex);
+  try {
+    m_value = m_backend.read(m_name);
+  } catch (...) {
+    m_exception = std::current_exception();
+  }
+}
 
 Backend::AsyncLockfreeFetcher* BackendVFS::asyncLockfreeFetch(const std::string& name) {
   return new AsyncLockfreeFetcher(*this, name);
 }
 
 std::string BackendVFS::AsyncLockfreeFetcher::wait() {
-  auto ret = m_job.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
-  return ret;
+  cta::threading::Thread::wait();
+  threading::MutexLocker ml(m_mutex);
+  if (m_exception)
+    std::rethrow_exception(m_exception);
+  return m_value;
 }
 
 std::string BackendVFS::Parameters::toStr() {
