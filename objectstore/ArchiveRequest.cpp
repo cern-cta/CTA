@@ -59,8 +59,6 @@ void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_status(serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue);
   j->set_tapepool(tapepool);
   j->set_owner(archivequeueaddress);
-  // XXX This field (archivequeueaddress) is a leftover from a past layout when tape pools were static
-  // in the object store, and should be eventually removed.
   j->set_archivequeueaddress("");
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);

@@ -84,17 +84,19 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
     bytesFromShardPointers += aqs.shardbytescount();
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
+  uint64_t totalBytes = m_payload.archivejobstotalsize();
+  uint64_t totalJobs = m_payload.archivejobscount();
   // The sum of shards should be equal to the summary
-  if (m_payload.archivejobstotalsize() != bytesFromShardPointers || 
-      m_payload.archivejobscount() != jobsExpectedFromShardsPointers)
+  if (totalBytes != bytesFromShardPointers || 
+      totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
   ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  if (maxDriveAllowedMap.total() != m_payload.archivejobstotalsize() || 
-      priorityMap.total() != m_payload.archivejobstotalsize() ||
-      minArchiveRequestAgeMap.total() != m_payload.archivejobstotalsize())
+  if (maxDriveAllowedMap.total() != m_payload.archivejobscount() || 
+      priorityMap.total() != m_payload.archivejobscount() ||
+      minArchiveRequestAgeMap.total() != m_payload.archivejobscount())
     return false;
   return true;
 }
@@ -331,6 +333,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
       ValueCountMap priorityMap(m_payload.mutable_prioritymap());
       ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
       while (nextJob != jobsToAdd.end() && aqsp->shardjobscount() < c_maxShardSize) {
+        // Update stats and global counters.
         maxDriveAllowedMap.incCount(nextJob->policy.maxDrivesAllowed);
         priorityMap.incCount(nextJob->policy.archivePriority);
         minArchiveRequestAgeMap.incCount(nextJob->policy.archiveMinRequestAge);
@@ -342,7 +345,8 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
           m_payload.set_archivejobstotalsize(nextJob->fileSize);
           m_payload.set_oldestjobcreationtime(nextJob->startTime);
         }
-        // Add the job to shard, update pointer counts.
+        m_payload.set_archivejobscount(m_payload.archivejobscount()+1);
+        // Add the job to shard, update pointer counts and queue summary.
         aqsp->set_shardjobscount(aqs.addJob(*nextJob));
         aqsp->set_shardbytescount(aqsp->shardbytescount() + nextJob->fileSize);
         // And move to the next job
@@ -364,7 +368,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
 auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   checkPayloadReadable();
   JobsSummary ret;
-  ret.jobs = m_payload.archivejobstotalsize();
+  ret.jobs = m_payload.archivejobscount();
   ret.bytes = m_payload.archivejobstotalsize();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
   if (ret.jobs) {
@@ -442,8 +446,10 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
   auto localJobsToRemove = jobsToRemove;
   // The jobs are expected to be removed from the front shards first.
   // Remove jobs until there are no more jobs or no more shards.
-  auto shardPointer = m_payload.mutable_archivequeuesshards()->begin();
-  while (localJobsToRemove.size() && shardPointer != m_payload.mutable_archivequeuesshards()->end()) {
+  ssize_t shardIndex=0;
+  auto * mutableArchiveQueueShards= m_payload.mutable_archivequeuesshards();
+  while (localJobsToRemove.size() && shardIndex <  mutableArchiveQueueShards->size()) {
+    auto * shardPointer = mutableArchiveQueueShards->Mutable(shardIndex);
     // Get hold of the shard
     ArchiveQueueShard aqs(shardPointer->address(), m_objectStore);
     m_exclusiveLock->includeSubObject(aqs);
@@ -463,31 +469,38 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
       priorityMap.decCount(j.priority);
       minArchiveRequestAgeMap.decCount(j.minArchiveRequestAge);
     }
+    // In all cases, we should update the global statistics.
+    m_payload.set_archivejobscount(m_payload.archivejobscount() - removalResult.jobsRemoved);
+    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - removalResult.bytesRemoved);
     // If the shard is still around, we shall update its pointer's stats too.
     if (removalResult.jobsAfter) {
-      m_payload.set_archivejobscount(m_payload.archivejobscount() - removalResult.jobsRemoved);
-      m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - removalResult.bytesRemoved);
       // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.
       shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
       shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
-      if (shardPointer->shardbytescount() != removalResult.bytesRemoved 
-          || shardPointer->shardjobscount() != removalResult.jobsAfter)
+      if (shardPointer->shardbytescount() != removalResult.bytesAfter 
+          || shardPointer->shardjobscount() != removalResult.jobsAfter) {
         rebuild();
+      }
       // We will commit when exiting anyway...
-      shardPointer++;
+      shardIndex++;
     } else {
       // Shard's gone, so should the pointer. Push it to the end of the queue and 
       // trim it.
-      auto shardPointerToRemove = shardPointer;
-      // Update the pointer for the next iteration.
-      shardPointer++;
-      while ((shardPointerToRemove + 1) != m_payload.mutable_archivequeuesshards()->end()) {
-        // Swap wants a pointer as a parameter, which the iterator is not, so we convert it to pointer
-        // with &*
-        shardPointerToRemove->Swap(&*++shardPointerToRemove);
+      for (auto i=shardIndex; i<mutableArchiveQueueShards->size()-1; i++) {
+        mutableArchiveQueueShards->SwapElements(i, i+1);
       }
       m_payload.mutable_archivequeuesshards()->RemoveLast();
     }
+    // We should also trim the removed jobs from our list.
+    localJobsToRemove.remove_if(
+      [&removalResult](const std::string & ja){ 
+        return std::count_if(removalResult.removedJobs.begin(), removalResult.removedJobs.end(),
+          [&ja](ArchiveQueueShard::JobInfo & j) {
+            return j.address == ja;
+          }
+        );
+      }
+    ); // end of remove_if
     // And commit the queue (once per shard should not hurt performance).
     commit();
   }

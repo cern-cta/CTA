@@ -30,11 +30,17 @@ public:
   // Constructor
   ArchiveQueueShard(const std::string & address, Backend & os);
   
+  // Upgrader form generic object
+  ArchiveQueueShard(GenericObject & go);
+  
   // Forbid/hide base initializer
   void initialize() = delete;
   
   // Initializer
   void initialize(const std::string & owner);
+  
+  // dumper
+  std::string dump();
   
   void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) override;
 

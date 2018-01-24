@@ -342,13 +342,13 @@ public:
   }
   
   void setObjectLocked(ObjectOpsBase* objectOps) override {
-    m_objectOps->m_locksCount++;
-    m_objectOps->m_locksForWriteCount++;
+    objectOps->m_locksCount++;
+    objectOps->m_locksForWriteCount++;
   }
   
   void setObjectUnlocked(ObjectOpsBase* objectOps) override {
-    m_objectOps->m_locksCount--;
-    m_objectOps->m_locksForWriteCount--;
+    objectOps->m_locksCount--;
+    objectOps->m_locksForWriteCount--;
   }
 
   void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {

@@ -18,6 +18,9 @@
  */
 
 #include "ArchiveQueueShard.hpp"
+#include "GenericObject.hpp"
+#include <google/protobuf/util/json_util.h>
+
 
 
 namespace cta { namespace objectstore {
@@ -28,6 +31,14 @@ ArchiveQueueShard::ArchiveQueueShard(Backend& os):
 ArchiveQueueShard::ArchiveQueueShard(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os, address) { }
 
+ArchiveQueueShard::ArchiveQueueShard(GenericObject& go):
+  ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
+
 void ArchiveQueueShard::rebuild() {
   checkPayloadWritable();
   uint64_t totalSize=0;
@@ -35,6 +46,16 @@ void ArchiveQueueShard::rebuild() {
     totalSize += j.size();
   }
   m_payload.set_archivejobstotalsize(totalSize);
+}
+
+std::string ArchiveQueueShard::dump() {  
+  checkPayloadReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 void ArchiveQueueShard::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
@@ -124,6 +145,7 @@ auto ArchiveQueueShard::getJobsSummary() -> JobsSummary {
   checkPayloadReadable();
   JobsSummary ret;
   ret.bytes = m_payload.archivejobstotalsize();
+  ret.jobs = m_payload.archivejobs_size();
   return ret;
 }
 

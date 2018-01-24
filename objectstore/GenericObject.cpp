@@ -25,6 +25,7 @@
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "ArchiveQueue.hpp"
+#include "ArchiveQueueShard.hpp"
 #include "RetrieveQueue.hpp"
 #include "DriveRegister.hpp"
 #include <stdexcept>
@@ -181,6 +182,9 @@ std::string GenericObject::dump() {
       break;
     case serializers::ArchiveQueue_t:
       bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this);
+      break;
+    case serializers::ArchiveQueueShard_t:
+      bodyDump = dumpWithType<cta::objectstore::ArchiveQueueShard>(this);
       break;
     case serializers::RetrieveQueue_t:
       bodyDump = dumpWithType<cta::objectstore::RetrieveQueue>(this);
