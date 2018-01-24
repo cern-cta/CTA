@@ -16,40 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "catalogue/CatalogueTest.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
+#include "common/log/DummyLogger.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
-namespace {
+class cta_catalogue_InMemoryCatalogue : public ::testing::Test {
+protected:
 
-/**
- * Creates Login objects for in-memory catalogue databases.
- */
-class InMemoryLoginFactory: public cta::rdbms::LoginFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~InMemoryLoginFactory() {
+  virtual void SetUp() {
   }
 
-  /**
-   * Returns a newly created Login object.
-   *
-   * @return A newly created Login object.
-   */
-  virtual cta::rdbms::Login create() {
-    using namespace cta::catalogue;
-    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
+  virtual void TearDown() {
   }
-}; // class InMemoryLoginFactory
+};
 
-InMemoryLoginFactory g_inMemoryLoginFactory;
+TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDatabases) {
+  using namespace cta;
 
-} // anonymous namespace
+  log::DummyLogger dummyLog("dummy");
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 0;
 
-INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_CatalogueTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_inMemoryLoginFactory)));
+  // First in-memory database
+  {
+    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
+  }
+
+  // Second in-memory database
+  {
+    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
+  }
+}
 
 } // namespace unitTests

@@ -1,0 +1,6 @@
+# Arguments for the ACS daemon
+#   -f             keep process in the foreground, do not fork
+#   -h             display help and exit
+#   -c             config file location (castor.conf)
+#
+#ACSD_OPTIONS=

@@ -73,23 +73,29 @@ set (COMMON_LIB_SRC_FILES
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
   checksum/Checksum.cpp
-  exception/Backtrace.cpp
-  exception/Errnum.cpp
-  exception/Exception.cpp
-  exception/NonRetryableError.cpp
-  exception/RetryableError.cpp
-  exception/UserError.cpp
   exception/AcceptConnectionInterrupted.cpp
+  exception/AcsQueryVolumeCmd.cpp
+  exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
+  exception/DismountFailed.cpp  
+  exception/Errnum.cpp
+  exception/Exception.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
+  exception/Mismatch.cpp
   exception/MissingOperand.cpp
+  exception/MountFailed.cpp
   exception/NoEntry.cpp
+  exception/NonRetryableError.cpp
   exception/NoPortInRange.cpp
   exception/NotAnOwner.cpp
   exception/OutOfMemory.cpp
+  exception/QueryVolumeFailed.cpp
+  exception/RequestFailed.cpp
+  exception/RetryableError.cpp
   exception/TimeOut.cpp
+  exception/UserError.cpp
   exception/XrootCl.cpp
   log/DummyLogger.cpp
   log/FileLogger.cpp
@@ -128,7 +134,8 @@ set (COMMON_LIB_SRC_FILES
   utils/strerror_r_wrapper.cpp
   CreationLog.cpp
   Configuration.cpp
-  ConfigurationFile.cpp  
+  ConfigurationFile.cpp
+  SourcedParameter.cpp   
   TapePool.cpp
   Timer.cpp
   UserIdentity.cpp
@@ -150,6 +157,8 @@ target_link_libraries (ctacommon
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumTest.cpp
+  ConfigurationFileTests.cpp
+  SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/StorageClassTest.cpp
   processCap/SmartCapTest.cpp
@@ -183,6 +192,6 @@ set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
-target_link_libraries (mutexLtrace ctacommon)
+target_link_libraries(mutexLtrace ctacommon)
+

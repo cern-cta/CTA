@@ -23,7 +23,7 @@
 #include <limits>
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
-#include "SourcedParameter.hpp"
+#include "common/SourcedParameter.hpp"
 #include "FetchReportOrFlushLimits.hpp"
 #include "Tpconfig.hpp"
 

@@ -22,7 +22,7 @@
 
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
-#include "xroot_plugins/messages/cta_frontend.pb.h"
+#include "cta_frontend.pb.h"
 
 #include "version.h"
 #include "common/make_unique.hpp"
@@ -47,6 +47,57 @@
  */
 
 XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
+
+
+
+namespace XrdSsiPb {
+
+/*!
+ * Override the Service::Prepare method
+ *
+ * Ensures that resource.client->name is valid. This is obtained from the KRB5 or SSS key, so
+ * connections via unix sockets are not possible in this scheme.
+ */
+template<>
+bool Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Prepare(XrdSsiErrInfo &eInfo, const XrdSsiResource &resource)
+{
+   if(resource.client == nullptr || resource.client->name == nullptr)
+   {
+      eInfo.Set("Service::Prepare(): XRootD client name is not set. "
+         "Possible misconfiguration of the KRB5 or SSS keyfile.", EACCES);
+      return false;
+   }
+
+#ifdef XRDSSI_DEBUG
+   std::cerr << "[DEBUG] Service::Prepare():" << std::endl;
+   std::cerr << "[DEBUG]    Resource name: " << resource.rName << std::endl
+             << "[DEBUG]    Resource user: " << resource.rUser << std::endl
+             << "[DEBUG]    Resource info: " << resource.rInfo << std::endl
+             << "[DEBUG]    Hosts to avoid: " << resource.hAvoid << std::endl
+             << "[DEBUG]    Affinity: ";
+
+   switch(resource.affinity)
+   {
+      case XrdSsiResource::None:     std::cerr << "None" << std::endl; break;
+      case XrdSsiResource::Default:  std::cerr << "Default" << std::endl; break;
+      case XrdSsiResource::Weak:     std::cerr << "Weak" << std::endl; break;
+      case XrdSsiResource::Strong:   std::cerr << "Strong" << std::endl; break;
+      case XrdSsiResource::Strict:   std::cerr << "Strict" << std::endl; break;
+   }
+
+   std::cerr << "[DEBUG]    Resource options: "
+             << (resource.rOpts & XrdSsiResource::Reusable ? "Resuable " : "")
+             << (resource.rOpts & XrdSsiResource::Discard  ? "Discard"   : "")
+             << std::endl;
+
+   std::cerr << "[DEBUG]    Resource client protocol: " << resource.client->prot << std::endl;
+   std::cerr << "[DEBUG]    Resource client name: " << resource.client->name << std::endl;
+#endif
+
+   return true;
+}
+
+} // namespace XrdSsiPb
 
 
 

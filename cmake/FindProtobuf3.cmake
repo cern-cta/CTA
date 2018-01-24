@@ -18,6 +18,8 @@
 set(PROTOBUF3_RPATH /usr/lib64/protobuf3)
 message(STATUS "PROTOBUF3_RPATH=${PROTOBUF3_RPATH}")
 
+set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
 find_program(PROTOBUF3_PROTOC3_EXECUTABLE
     NAMES protoc3
     DOC "Version 3 of The Google Protocol Buffers Compiler"
@@ -42,7 +44,7 @@ function(PROTOBUF3_GENERATE_CPP SRCS HDRS)
     return()
   endif()
 
-  set(_protobuf_include_path -I ${CMAKE_CURRENT_SOURCE_DIR})
+  set(_protobuf_include_path -I ${PROTOBUF3_INCLUDE_PATH})
 
   set(${SRCS})
   set(${HDRS})

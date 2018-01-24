@@ -17,7 +17,6 @@ add_library(ctatapedaemon
   DriveHandlerProxy.cpp
   GarbageCollectorHandler.cpp
   SignalHandler.cpp
-  SourcedParameter.cpp
   SubprocessHandler.cpp
   ProcessManager.cpp
   TapedConfiguration.cpp
@@ -44,10 +43,8 @@ target_link_libraries(ctatapedaemon
   File)
 
 add_library(ctadaemonunittests SHARED
-  ConfigurationFileTests.cpp
   TapedConfigurationTests.cpp
-  TpconfigTests.cpp
-  SourcedParameterTests.cpp)
+  TpconfigTests.cpp)
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

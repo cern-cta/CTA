@@ -17,6 +17,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project(cta)
 
+
 set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Please note that the -fms-extensions option should be dropped when this
@@ -112,6 +113,7 @@ ELSE(DEFINED PackageOnly)
   # OCCI support is on by default
   set (OCCI_SUPPORT ON)
 
+  find_package(stk REQUIRED)
   # Switch OCCI support off if using gcc 5.1 or higher
   #if (CMAKE_COMPILER_IS_GNUCC)
   #  if (GCC_VERSION VERSION_GREATER 5.0)
@@ -124,25 +126,27 @@ ELSE(DEFINED PackageOnly)
     find_package (oracle-instantclient REQUIRED)
   endif (OCCI_SUPPORT)
 
-  if(BUILD_CMDLINE_ONLY)
-    message(STATUS "Build cmdline only")
-    add_subdirectory(cmdline)
-  else(BUILD_CMDLINE_ONLY)
-    install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
-    install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
+  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
+  install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
 
-    add_subdirectory(catalogue)
-    add_subdirectory(cmdline)
-    add_subdirectory(common)
-    add_subdirectory(eos)
-    add_subdirectory(mediachanger)
-    add_subdirectory(objectstore)
-    add_subdirectory(rdbms)
-    add_subdirectory(scheduler)
-    add_subdirectory(tapeserver)
-    add_subdirectory(tests)
-    add_subdirectory(xroot_plugins)
-  endif(BUILD_CMDLINE_ONLY)
+  #
+  # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
+  #
+  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
+
+  add_subdirectory(eos_cta)
+  add_subdirectory(cmdline)
+  add_subdirectory(xroot_plugins)
+
+  add_subdirectory(catalogue)
+  add_subdirectory(common)
+  add_subdirectory(eos)
+  add_subdirectory(mediachanger)
+  add_subdirectory(objectstore)
+  add_subdirectory(rdbms)
+  add_subdirectory(scheduler)
+  add_subdirectory(tapeserver)
+  add_subdirectory(tests)
   
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

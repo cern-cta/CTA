@@ -24,7 +24,7 @@
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
 #include "cmdline/Configuration.hpp"
-#include "xroot_plugins/messages/CtaFrontendApi.hpp"
+#include "CtaFrontendApi.hpp"
 
 #include "XrdSsiPbDebug.hpp"
 

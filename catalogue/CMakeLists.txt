@@ -84,7 +84,8 @@ add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
   CatalogueFactoryTest.cpp
-  InMemoryCatalogueTest.cpp)
+  InMemoryCatalogueTest.cpp
+  InMemoryVersionOfCatalogueTest.cpp)
 
 add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
@@ -98,7 +99,7 @@ install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_L
 
 set (CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
-  DbConfigCatalogueTest.cpp)
+  DbConfigVersionOfCatalogueTest.cpp)
 
 add_library (ctacatalogueunittests SHARED
   ${CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

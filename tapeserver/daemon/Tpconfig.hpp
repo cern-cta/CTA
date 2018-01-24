@@ -19,7 +19,7 @@
 #pragma once
 
 #include "tapeserver/daemon/TpconfigLine.hpp"
-#include "tapeserver/daemon/SourcedParameter.hpp"
+#include "common/SourcedParameter.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <map>

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/exception/Backtrace.hpp"
+#include "Backtrace.hpp"
 
 #include <exception>
 #include <sstream>
