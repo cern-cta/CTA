@@ -157,7 +157,6 @@ The xroot plugin
 /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
 %files -n cta-frontend
 %defattr(0755,root,root)
-%{_libdir}/libXrdCtaOfs.so*
 %{_libdir}/libXrdSsiCta.so*
 %attr(0755,cta,cta) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
