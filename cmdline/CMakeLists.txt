@@ -53,11 +53,3 @@ set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPAT
 #target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
 install(TARGETS cta-wfe-test DESTINATION usr/bin)
 
-#
-# Old cta is scheduled for deletion
-#
-add_executable(cta.deprecated CTACmdMain.cpp Configuration.cpp)
-target_link_libraries(cta.deprecated ${XROOTD_XRDCL_LIB} cryptopp)
-install(TARGETS cta.deprecated DESTINATION usr/bin)
-INSTALL(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-
