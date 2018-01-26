@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <memory>
 #include <time.h>
+#include <common/exception/LostDatabaseConnection.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -4146,8 +4147,27 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
 // isAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  auto conn = m_connPool.getConn();
-  return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
+  const uint32_t maxTries = 3;
+
+  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+    try {
+      auto conn = m_connPool.getConn();
+      return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
+    } catch(exception::LostDatabaseConnection &lc) {
+      // Ignore lost connection
+      std::list<log::Param> params = {
+        {"maxTries", maxTries},
+        {"tryNb", tryNb},
+        {"msg", lc.getMessage()}
+      };
+      m_log(cta::log::WARNING, "Lost database connection", params);
+    }
+  }
+
+  exception::Exception ex;
+  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
+    " times";
+  throw ex;
 }
 
 //------------------------------------------------------------------------------
