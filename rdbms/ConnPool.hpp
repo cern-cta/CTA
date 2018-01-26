@@ -20,15 +20,18 @@
 
 #include "common/threading/CondVar.hpp"
 #include "common/threading/Mutex.hpp"
+#include "rdbms/ConnAndStmts.hpp"
 #include "rdbms/Conn.hpp"
-#include "rdbms/ConnFactory.hpp"
-#include "rdbms/PooledConn.hpp"
+#include "rdbms/wrapper/Conn.hpp"
+#include "rdbms/wrapper/ConnFactory.hpp"
 
 #include <list>
 #include <memory>
 
 namespace cta {
 namespace rdbms {
+
+class Login;
 
 /**
  * A pool of database connections.
@@ -39,11 +42,12 @@ public:
   /**
    * Constructor.
    *
-   * @param connFactory The database connection factory.
+   * @param login The database login details to be used to create new
+   * connections.
    * @param maxNbConns The maximum number of database connections within the
    * pool.
    */
-  ConnPool(ConnFactory &connFactory, const uint64_t maxNbConns);
+  ConnPool(const Login &login, const uint64_t maxNbConns);
 
   /**
    * Takes a connection from the pool.
@@ -54,11 +58,11 @@ public:
    *
    * @return A connection from the pool.
    */
-  PooledConn getConn();
+  Conn getConn();
 
 private:
 
-  friend PooledConn;
+  friend Conn;
 
   /**
    * If the specified database connection is open, then this method calls
@@ -69,14 +73,14 @@ private:
    *
    * A closed connection is reopened when it is pulled from the pool.
    *
-   * @param conn The connection to be commited and returned to the pool.
+   * @param connAndStmts The connection to be commited and returned to the pool.
    */
-  void returnConn(std::unique_ptr<Conn> conn);
+  void returnConn(std::unique_ptr<ConnAndStmts> connAndStmts);
 
   /**
    * The database connection factory.
    */
-  ConnFactory &m_connFactory;
+  std::unique_ptr<wrapper::ConnFactory> m_connFactory;
 
   /**
    * The maximum number of database connections within the pool.
@@ -91,18 +95,18 @@ private:
   /**
    * Mutex used to serialize access to the database connections within the pool.
    */
-  threading::Mutex m_connsMutex;
+  threading::Mutex m_connsAndStmtsMutex;
 
   /**
    * Condition variable used by threads returning connections to the pool to
    * notify threads waiting for connections.
    */
-  threading::CondVar m_connsCv;
+  threading::CondVar m_connsAndStmtsCv;
 
   /**
    * The database connections within the pool.
    */
-  std::list< std::unique_ptr<Conn> > m_conns;
+  std::list<std::unique_ptr<ConnAndStmts> > m_connsAndStmts;
 
   /**
    * Creates the specified number of database connections with the pool.

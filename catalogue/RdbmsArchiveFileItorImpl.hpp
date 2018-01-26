@@ -23,8 +23,8 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/Rset.hpp"
 #include "rdbms/Stmt.hpp"
+#include "rdbms/Rset.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -97,7 +97,7 @@ private:
   /**
    * The database statement.
    */
-  std::unique_ptr<rdbms::Stmt> m_stmt;
+  rdbms::Stmt m_stmt;
 
   /**
    * The result set of archive files that is to be iterated over.

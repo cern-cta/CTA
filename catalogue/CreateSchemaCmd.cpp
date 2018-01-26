@@ -16,14 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rdbms/ConnFactoryFactory.hpp"
 #include "catalogue/CreateSchemaCmd.hpp"
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
-
-#include <iostream>
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -53,10 +52,11 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   }
 
   const auto login = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
-  auto factory = rdbms::ConnFactoryFactory::create(login);
-  auto conn = factory->create();
+  const uint64_t maxNbConns = 1;
+  rdbms::ConnPool connPool(login, maxNbConns);
+  auto conn = connPool.getConn();;
 
-  const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", *conn);
+  const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
 
   if(ctaCatalogueTableExists) {
     std::cerr << "Cannot create the database schema because the CTA_CATALOGUE table already exists" << std::endl;
@@ -68,13 +68,13 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        SqliteCatalogueSchema schema;
-       conn->executeNonQueries(schema.sql);
+       conn.executeNonQueries(schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
     {
       OracleCatalogueSchema schema;
-      conn->executeNonQueries(schema.sql);
+      conn.executeNonQueries(schema.sql);
     }
     break;
   case rdbms::Login::DBTYPE_NONE:

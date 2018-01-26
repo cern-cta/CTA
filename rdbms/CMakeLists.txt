@@ -15,70 +15,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
+add_subdirectory (wrapper)
+
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 find_package (sqlite REQUIRED)
+find_package (oracle-instantclient REQUIRED)
 
-if(OCCI_SUPPORT)
-  find_package (oracle-instantclient REQUIRED)
-  include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-endif(OCCI_SUPPORT)
+include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
 set (RDBMS_LIB_SRC_FILES
   AutoRollback.cpp
-  ColumnNameToIdx.cpp
-  ColumnNameToIdxAndType.cpp
   Conn.cpp
-  ConnFactory.cpp
   ConnPool.cpp
   Login.cpp
   LoginFactory.cpp
-  Rset.cpp
-  RsetImpl.cpp
-  Stmt.cpp
   NullDbValue.cpp
-  ParamNameToIdx.cpp
-  PooledConn.cpp
-  Sqlite.cpp
-  SqliteConn.cpp
-  SqliteConnFactory.cpp
-        SqliteRsetImpl.cpp
-  SqliteStmt.cpp)
-
-if (OCCI_SUPPORT)
-  set (RDBMS_LIB_SRC_FILES
-    ${RDBMS_LIB_SRC_FILES}
-    ConnFactoryFactory.cpp
-    OcciColumn.cpp
-    OcciConn.cpp
-    OcciConnFactory.cpp
-    OcciEnv.cpp
-    OcciEnvSingleton.cpp
-          OcciRsetImpl.cpp
-    OcciStmt.cpp)
-else (OCCI_SUPPORT)
-  set (RDBMS_LIB_SRC_FILES
-    ${RDBMS_LIB_SRC_FILES}
-    ConnFactoryFactory_OCCI_SUPPORT_OFF.cpp)
-endif (OCCI_SUPPORT)
+  Rset.cpp
+  Stmt.cpp
+  StmtPool.cpp)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})
 set_property(TARGET ctardbms PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbms PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-set (CTARDBMS_LINK_LIBRARIES
-  ctacommon
-  ${SQLITE_LIBRARIES})
-
-if (OCCI_SUPPORT)
-  set (CTARDBMS_LINK_LIBRARIES
-    ${CTARDBMS_LINK_LIBRARIES}
-    ${ORACLE-INSTANTCLIENT_LIBRARIES})
-endif (OCCI_SUPPORT)
-
 target_link_libraries (ctardbms
-  ${CTARDBMS_LINK_LIBRARIES})
+  ctardbmswrapper)
 
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -86,12 +49,7 @@ set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
   ConnTest.cpp
   LoginTest.cpp
-  ParamNameToIdxTest.cpp
-  SqliteStmtTest.cpp)
-
-if (OCCI_SUPPORT)
-  list (APPEND RDBMS_UNIT_TESTS_LIB_SRC_FILES OcciColumnTest.cpp)
-endif (OCCI_SUPPORT)
+  StmtPoolTest.cpp)
 
 add_library (ctardbmsunittests SHARED
   ${RDBMS_UNIT_TESTS_LIB_SRC_FILES})

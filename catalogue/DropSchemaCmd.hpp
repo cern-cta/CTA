@@ -22,7 +22,6 @@
 #include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "rdbms/OcciConn.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -109,9 +108,10 @@ private:
   /**
    * Drops the database sequences with the specified names.
    *
+   * @param conn The database connection.
    * @param seqeuncesToDrop The names of the database sequences to be dropped.
    */
-  void dropDatabaseSequences(rdbms::OcciConn &conn, const std::list<std::string> &sequencesToDrop);
+  void dropDatabaseSequences(rdbms::Conn &conn, const std::list<std::string> &sequencesToDrop);
 
 }; // class DropSchemaCmd
 

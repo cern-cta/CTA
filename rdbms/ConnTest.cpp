@@ -17,11 +17,10 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/Login.hpp"
 
 #include <gtest/gtest.h>
-#include <sstream>
 
 namespace unitTests {
 
@@ -35,6 +34,45 @@ protected:
   }
 };
 
+TEST_F(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
+  using namespace cta::rdbms;
+
+  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
+
+  {
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
+
+    ASSERT_TRUE(conn.getTableNames().empty());
+
+    conn.executeNonQuery(sql, AutocommitMode::ON);
+
+    ASSERT_EQ(1, conn.getTableNames().size());
+  }
+}
+
+TEST_F(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQueries) {
+  using namespace cta::rdbms;
+
+  const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER);";
+
+  // First in-memory database
+  {
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
+
+    ASSERT_TRUE(conn.getTableNames().empty());
+
+    conn.executeNonQueries(sql);
+
+    ASSERT_EQ(1, conn.getTableNames().size());
+  }
+}
+
 TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_executeNonQuery) {
   using namespace cta::rdbms;
 
@@ -43,27 +81,29 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
   // First in-memory database
   {
     const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-    auto connFactory = ConnFactoryFactory::create(login);
-    auto conn = connFactory->create();
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
 
-    ASSERT_TRUE(conn->getTableNames().empty());
+    ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn->executeNonQuery(sql, Stmt::AutocommitMode::ON);
+    conn.executeNonQuery(sql, AutocommitMode::ON);
 
-    ASSERT_EQ(1, conn->getTableNames().size());
+    ASSERT_EQ(1, conn.getTableNames().size());
   }
 
   // Second in-memory database
   {
     const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-    auto connFactory = ConnFactoryFactory::create(login);
-    auto conn = connFactory->create();
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
 
-    ASSERT_TRUE(conn->getTableNames().empty());
+    ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn->executeNonQuery(sql, Stmt::AutocommitMode::ON);
+    conn.executeNonQuery(sql, AutocommitMode::ON);
 
-    ASSERT_EQ(1, conn->getTableNames().size());
+    ASSERT_EQ(1, conn.getTableNames().size());
   }
 }
 
@@ -75,27 +115,29 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
   // First in-memory database
   {
     const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-    auto connFactory = ConnFactoryFactory::create(login);
-    auto conn = connFactory->create();
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
 
-    ASSERT_TRUE(conn->getTableNames().empty());
+    ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn->executeNonQueries(sql);
+    conn.executeNonQueries(sql);
 
-    ASSERT_EQ(1, conn->getTableNames().size());
+    ASSERT_EQ(1, conn.getTableNames().size());
   }
 
   // Second in-memory database
   {
     const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
-    auto connFactory = ConnFactoryFactory::create(login);
-    auto conn = connFactory->create();
+    const uint64_t maxNbConns = 1;
+    ConnPool connPool(login, maxNbConns);
+    auto conn = connPool.getConn();
 
-    ASSERT_TRUE(conn->getTableNames().empty());
+    ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn->executeNonQueries(sql);
+    conn.executeNonQueries(sql);
 
-    ASSERT_EQ(1, conn->getTableNames().size());
+    ASSERT_EQ(1, conn.getTableNames().size());
   }
 }
 

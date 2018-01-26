@@ -18,8 +18,6 @@
 
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
-#include "rdbms/SqliteConn.hpp"
-#include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
 namespace catalogue {

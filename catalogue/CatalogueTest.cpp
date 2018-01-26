@@ -21,7 +21,7 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -53,7 +53,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
   try {
     const rdbms::Login &login = GetParam()->create();
-    auto connFactory = rdbms::ConnFactoryFactory::create(login);
+    auto connFactory = rdbms::wrapper::ConnFactoryFactory::create(login);
     const uint64_t nbConns = 2;
     const uint64_t nbArchiveFileListingConns = 2;
 
@@ -4525,6 +4525,64 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule_non_existant) 
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
   ASSERT_THROW(m_catalogue->deleteRequesterGroupMountRule("non_existant_disk_isntance", "non_existant_requester_group"),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_no_archive_routes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterMountRule rule = rules.front();
+
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  // Do not create any archive routes
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+
+  ASSERT_THROW(m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity),
     exception::UserError);
 }
 
