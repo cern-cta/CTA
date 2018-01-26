@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
@@ -183,6 +184,9 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
   try {
     return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(occi::SQLException &ex) {
+    std::ostringstream msg;
+    msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();
+
     if(connShouldBeClosed(ex)) {
       // Close the statement first and then the connection
       try {
@@ -194,9 +198,9 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
         m_conn.close();
       } catch(...) {
       }
+      throw exception::LostDatabaseConnection(msg.str());
     }
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.what());
+    throw exception::Exception(msg.str());
   }
 }
 
