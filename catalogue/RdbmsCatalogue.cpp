@@ -3787,16 +3787,16 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
-      exception::Exception ex;
-      ex.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
-      throw ex;
+      exception::UserError ue;
+      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
+      throw ue;
     }
     if(copyToPoolMap.size() != expectedNbRoutes) {
-      exception::Exception ex;
-      ex.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
+      exception::UserError ue;
+      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
         " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
         copyToPoolMap.size();
-      throw ex;
+      throw ue;
     }
 
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
