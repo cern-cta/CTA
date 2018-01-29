@@ -4165,6 +4165,36 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const std::string &diskFileId,
   const common::dataStructures::UserIdentity &user,
   log::LogContext &lc) {
+  const uint32_t maxTries = 3;
+
+  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+    try {
+      return prepareToRetrieveFileByDiskFileIdInternal(diskInstanceName, diskFileId, user, lc);
+    } catch(exception::LostDatabaseConnection &lce) {
+      // Ignore lost connection
+      std::list<log::Param> params = {
+        {"maxTries", maxTries},
+        {"tryNb", tryNb},
+        {"msg", lce.getMessage()}
+      };
+      m_log(cta::log::WARNING, "Lost database connection", params);
+    }
+  }
+
+  exception::Exception ex;
+  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
+    " times";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// prepareToRetrieveFileByDiskFileIdInternal
+//------------------------------------------------------------------------------
+common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileIdInternal(
+  const std::string &diskInstanceName,
+  const std::string &diskFileId,
+  const common::dataStructures::UserIdentity &user,
+  log::LogContext &lc) {
   try {
     cta::utils::Timer t;
     auto conn = m_connPool.getConn();
@@ -4208,6 +4238,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     criteria.archiveFile = *archiveFile;
     criteria.mountPolicy = mountPolicy;
     return criteria;
+  } catch(exception::LostDatabaseConnection &) {
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
