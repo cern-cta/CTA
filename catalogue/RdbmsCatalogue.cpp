@@ -2191,6 +2191,32 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
+  const uint32_t maxTries = 3;
+
+  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+    try {
+      return tapeMountedForArchiveInternal(vid, drive);
+    } catch(exception::LostDatabaseConnection &lc) {
+      // Ignore lost connection
+      std::list<log::Param> params = {
+        {"maxTries", maxTries},
+        {"tryNb", tryNb},
+        {"msg", lc.getMessage()}
+      };
+      m_log(cta::log::WARNING, "Lost database connection", params);
+    }
+  }
+
+  exception::Exception ex;
+  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
+    " times";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// tapeMountedForArchiveInternal
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::tapeMountedForArchiveInternal(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -2206,9 +2232,11 @@ void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::st
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch(exception::LostDatabaseConnection &) {
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
