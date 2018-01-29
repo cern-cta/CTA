@@ -4226,22 +4226,41 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "IS_DISABLED = 0 AND "
         "IS_FULL = 0 AND "
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      TapeForWriting tape;
-      tape.vid = rset.columnString("VID");
-      tape.tapePool = rset.columnString("TAPE_POOL_NAME");
-      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
 
-      tapes.push_back(tape);
+    const uint32_t maxTries = 3;
+    for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+      try {
+        auto conn = m_connPool.getConn();
+        auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+        stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+        auto rset = stmt.executeQuery();
+        while (rset.next()) {
+          TapeForWriting tape;
+          tape.vid = rset.columnString("VID");
+          tape.tapePool = rset.columnString("TAPE_POOL_NAME");
+          tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+          tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+          tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+
+          tapes.push_back(tape);
+        }
+        return tapes;
+      } catch(exception::LostDatabaseConnection &lc) {
+        // Ignore lost connection
+        std::list<log::Param> params = {
+          {"maxTries", maxTries},
+          {"tryNb", tryNb},
+          {"msg", lc.getMessage()}
+        };
+        m_log(cta::log::WARNING, "Lost database connection", params);
+      }
     }
 
-    return tapes;
+    exception::Exception ex;
+    ex.getMessage() << "Lost the database connection after trying " << maxTries <<
+      " times";
+    throw ex;
+
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
