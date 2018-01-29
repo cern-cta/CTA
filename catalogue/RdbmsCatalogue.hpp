@@ -984,6 +984,15 @@ protected:
   bool isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const;
 
   /**
+   * Notifies the catalogue that the specified tape was labelled.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of tape drive that was used to label the tape.
+   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
+   */
+  void tapeLabelledInternal(const std::string &vid, const std::string &drive, const bool lbpIsOn);
+
+  /**
    * Returns the list of tapes that can be written to by a tape drive in the
    * specified logical library, in other words tapes that are labelled, not
    * disabled, not full and are in the specified logical library.
