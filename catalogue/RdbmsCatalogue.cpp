@@ -4216,10 +4216,42 @@ bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName)
 //------------------------------------------------------------------------------
 std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
   try {
+    std::list<TapeForWriting> tapes;
+    const char *const sql =
+      "SELECT "
+        "VID AS VID,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "LAST_FSEQ AS LAST_FSEQ "
+      "FROM "
+        "TAPE "
+      "WHERE "
+//      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
+//      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
+//      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
+        "IS_DISABLED = 0 AND "
+        "IS_FULL = 0 AND "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+
     const uint32_t maxTries = 3;
     for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
       try {
-        return getTapesForWriting(logicalLibraryName);
+        auto conn = m_connPool.getConn();
+        auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+        stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
+        auto rset = stmt.executeQuery();
+        while (rset.next()) {
+          TapeForWriting tape;
+          tape.vid = rset.columnString("VID");
+          tape.tapePool = rset.columnString("TAPE_POOL_NAME");
+          tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+          tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+          tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+
+          tapes.push_back(tape);
+        }
+        return tapes;
       } catch(exception::LostDatabaseConnection &lc) {
         // Ignore lost connection
         std::list<log::Param> params = {
@@ -4236,51 +4268,6 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       " times";
     throw ex;
 
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// getTapesForWritingInternal
-//------------------------------------------------------------------------------
-std::list<TapeForWriting> RdbmsCatalogue::getTapesForWritingInternal(const std::string &logicalLibraryName) const {
-  try {
-    std::list<TapeForWriting> tapes;
-    const char *const sql =
-      "SELECT "
-        "VID AS VID,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ "
-        "FROM "
-        "TAPE "
-        "WHERE "
-//      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
-//      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
-//      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
-        "IS_DISABLED = 0 AND "
-        "IS_FULL = 0 AND "
-        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
-
-    auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      TapeForWriting tape;
-      tape.vid = rset.columnString("VID");
-      tape.tapePool = rset.columnString("TAPE_POOL_NAME");
-      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-
-      tapes.push_back(tape);
-    }
-    return tapes;
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
