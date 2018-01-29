@@ -1021,6 +1021,30 @@ protected:
   void tapeMountedForArchiveInternal(const std::string &vid, const std::string &drive);
 
   /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   * @param lc The log context.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileInternal(
+    const std::string &diskInstanceName,
+    const uint64_t archiveFileId,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc);
+
+  /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to retrieve files.
    *
