@@ -1036,6 +1036,14 @@ protected:
   void tapeMountedForRetrieveInternal(const std::string &vid, const std::string &drive);
 
   /**
+   * This method notifies the CTA catalogue that there is no more free space on
+   * the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void noSpaceLeftOnTapeInternal(const std::string &vid);
+
+  /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
    *

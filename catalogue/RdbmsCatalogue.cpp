@@ -2339,6 +2339,32 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
 // noSpaceLeftOnTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
+  const uint32_t maxTries = 3;
+
+  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+    try {
+      return noSpaceLeftOnTapeInternal(vid);
+    } catch(exception::LostDatabaseConnection &lc) {
+      // Ignore lost connection
+      std::list<log::Param> params = {
+        {"maxTries", maxTries},
+        {"tryNb", tryNb},
+        {"msg", lc.getMessage()}
+      };
+      m_log(cta::log::WARNING, "Lost database connection", params);
+    }
+  }
+
+  exception::Exception ex;
+  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
+    " times";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// noSpaceLeftOnTapeInternal
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::noSpaceLeftOnTapeInternal(const std::string &vid) {
   try {
     const char *const sql =
       "UPDATE TAPE SET "
@@ -2350,9 +2376,11 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
     stmt.bindString(":VID", vid);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw exception::Exception(std::string("Tape ") + vid + " does not exist");
     }
+  } catch (exception::LostDatabaseConnection &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
