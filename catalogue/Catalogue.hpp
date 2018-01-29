@@ -128,6 +128,7 @@ public:
    * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
    */
   virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
