@@ -969,6 +969,19 @@ protected:
    */
   void checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event);
 
+  /**
+   * Returns true if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param admin The administrator.
+   * @return True if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   */
+  bool isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const;
+
 }; // class RdbmsCatalogue
 
 } // namespace catalogue

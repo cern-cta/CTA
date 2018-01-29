@@ -4151,8 +4151,7 @@ bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &adm
 
   for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
     try {
-      auto conn = m_connPool.getConn();
-      return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
+      return isAdminInternal(admin);
     } catch(exception::LostDatabaseConnection &lc) {
       // Ignore lost connection
       std::list<log::Param> params = {
@@ -4168,6 +4167,14 @@ bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &adm
   ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
     " times";
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// isAdminInternal
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const {
+  auto conn = m_connPool.getConn();
+  return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
 }
 
 //------------------------------------------------------------------------------
