@@ -123,6 +123,7 @@ public:
    * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
    */
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
@@ -981,6 +982,19 @@ protected:
    * the specified host has administrator privileges.
    */
   bool isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const;
+
+  /**
+   * Returns the list of tapes that can be written to by a tape drive in the
+   * specified logical library, in other words tapes that are labelled, not
+   * disabled, not full and are in the specified logical library.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
+   */
+  std::list<TapeForWriting> getTapesForWritingInternal(const std::string &logicalLibraryName) const;
 
 }; // class RdbmsCatalogue
 
