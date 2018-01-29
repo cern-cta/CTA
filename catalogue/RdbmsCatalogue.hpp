@@ -1005,6 +1005,29 @@ protected:
    */
   std::list<TapeForWriting> getTapesForWritingInternal(const std::string &logicalLibraryName) const;
 
+  /**
+   * Prepares the catalogue for a new archive file and returns the information
+   * required to queue the associated archive request.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return The information required to queue the associated archive request.
+   */
+  common::dataStructures::ArchiveFileQueueCriteria prepareForNewFileInternal(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const common::dataStructures::UserIdentity &user);
+
 }; // class RdbmsCatalogue
 
 } // namespace catalogue

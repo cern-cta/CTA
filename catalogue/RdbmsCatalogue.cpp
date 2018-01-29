@@ -3808,6 +3808,34 @@ void RdbmsCatalogue::tapeLabelledInternal(const std::string &vid, const std::str
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
+  const uint32_t maxTries = 3;
+
+  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+    try {
+      return prepareForNewFileInternal(diskInstanceName, storageClassName, user);
+    } catch(exception::LostDatabaseConnection &lc) {
+      // Ignore lost connection
+      std::list<log::Param> params = {
+        {"maxTries", maxTries},
+        {"tryNb", tryNb},
+        {"msg", lc.getMessage()}
+      };
+      m_log(cta::log::WARNING, "Lost database connection", params);
+    }
+  }
+
+  exception::Exception ex;
+  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
+    " times";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// prepareForNewFileInternal
+//------------------------------------------------------------------------------
+common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFileInternal(
+  const std::string &diskInstanceName, const std::string &storageClassName,
+  const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
@@ -3845,10 +3873,12 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     }
 
     // Now that we have both the archive routes and the mount policy it's safe to
-    // consume an archive file identifierarchiveFileId
+    // consume an archive file identifier
     const uint64_t archiveFileId = getNextArchiveFileId(conn);
 
     return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId, copyToPoolMap, mountPolicy);
+  } catch(exception::LostDatabaseConnection &) {
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
