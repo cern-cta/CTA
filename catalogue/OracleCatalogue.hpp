@@ -128,6 +128,16 @@ public:
 private:
 
   /**
+   * Notifies the catalogue that the specified files have been written to tape.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param events The tape file written events.
+   */
+  void filesWrittenToTapeInternal(const std::set<TapeFileWritten> &events);
+
+  /**
    * Selects the specified tape within the Tape table for update.
    *
    * @param conn The database connection.

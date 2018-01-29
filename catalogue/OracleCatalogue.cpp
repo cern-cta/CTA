@@ -18,8 +18,9 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/OracleCatalogue.hpp"
-#include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -592,6 +593,36 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 //------------------------------------------------------------------------------
 void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
   try {
+    const uint32_t maxTries = 3;
+    for (uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
+      try {
+        return filesWrittenToTapeInternal(events);
+      } catch (exception::LostDatabaseConnection &lc) {
+        // Ignore lost connection
+        std::list<log::Param> params = {
+          {"maxTries", maxTries},
+          {"tryNb", tryNb},
+          {"msg", lc.getMessage()}
+        };
+        m_log(cta::log::WARNING, "Lost database connection", params);
+      }
+    }
+
+    exception::Exception ex;
+    ex.getMessage() << " failed: Lost the database connection after trying " << maxTries << " times";
+    throw ex;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch(std::exception &se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  }
+}
+
+//------------------------------------------------------------------------------
+// filesWrittenToTapeInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::filesWrittenToTapeInternal(const std::set<TapeFileWritten> &events) {
+  try {
     if (events.empty()) {
       return;
     }
@@ -692,6 +723,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 
     conn.commit();
 
+  } catch(exception::LostDatabaseConnection &) {
+    throw;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {
