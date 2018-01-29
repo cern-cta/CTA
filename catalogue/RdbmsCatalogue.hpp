@@ -1021,6 +1021,21 @@ protected:
   void tapeMountedForArchiveInternal(const std::string &vid, const std::string &drive);
 
   /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to retrieve files.
+   *
+   * The purpose of this method is to keep track of which drive mounted a given
+   * tape for retrieving files last.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  void tapeMountedForRetrieveInternal(const std::string &vid, const std::string &drive);
+
+  /**
    * Prepares the catalogue for a new archive file and returns the information
    * required to queue the associated archive request.
    *
