@@ -609,7 +609,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     }
 
     exception::Exception ex;
-    ex.getMessage() << " failed: Lost the database connection after trying " << maxTries << " times";
+    ex.getMessage() << "Lost the database connection after trying " << maxTries << " times";
     throw ex;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
