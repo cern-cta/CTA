@@ -27,8 +27,6 @@
 namespace cta {
 namespace catalogue {
 
-class CatalogueFactory;
-
 /**
  * An Oracle based implementation of the CTA catalogue.
  */
