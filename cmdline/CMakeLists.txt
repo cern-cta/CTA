@@ -37,7 +37,6 @@ target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
 #target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
-install(TARGETS cta-admin DESTINATION usr/bin)
 
 #
 # cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
@@ -51,5 +50,8 @@ target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 Xr
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
 #target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
+
+install(TARGETS cta-admin DESTINATION usr/bin)
 install(TARGETS cta-wfe-test DESTINATION usr/bin)
+install(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
