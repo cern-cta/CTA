@@ -19,6 +19,7 @@
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
@@ -44,10 +45,12 @@ RdbmsCatalogue::RdbmsCatalogue(
   log::Logger &log,
   const rdbms::Login &login,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
   Catalogue(log),
   m_connPool(login, nbConns),
-  m_archiveFileListingConnPool(login, nbArchiveFileListingConns) {
+  m_archiveFileListingConnPool(login, nbArchiveFileListingConns),
+  m_maxTriesToConnect(maxTriesToConnect) {
 }
 
 //------------------------------------------------------------------------------
@@ -2191,26 +2194,7 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return tapeMountedForArchiveInternal(vid, drive);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection(m_log, [&]{return tapeMountedForArchiveInternal(vid, drive);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -2235,8 +2219,8 @@ void RdbmsCatalogue::tapeMountedForArchiveInternal(const std::string &vid, const
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + "failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2248,26 +2232,7 @@ void RdbmsCatalogue::tapeMountedForArchiveInternal(const std::string &vid, const
 // tapeMountedForRetrieve
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return tapeMountedForRetrieveInternal(vid, drive);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection(m_log, [&]{return tapeMountedForRetrieveInternal(vid, drive);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -2292,8 +2257,8 @@ void RdbmsCatalogue::tapeMountedForRetrieveInternal(const std::string &vid, cons
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + "failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2339,26 +2304,7 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
 // noSpaceLeftOnTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return noSpaceLeftOnTapeInternal(vid);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection(m_log, [&]{return noSpaceLeftOnTapeInternal(vid);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -2379,8 +2325,8 @@ void RdbmsCatalogue::noSpaceLeftOnTapeInternal(const std::string &vid) {
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::Exception(std::string("Tape ") + vid + " does not exist");
     }
-  } catch (exception::LostDatabaseConnection &) {
-    throw;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3832,26 +3778,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
 // tapeLabelled
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return tapeLabelledInternal(vid, drive, lbpIsOn);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection(m_log, [&]{return tapeLabelledInternal(vid, drive, lbpIsOn);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -3878,8 +3805,8 @@ void RdbmsCatalogue::tapeLabelledInternal(const std::string &vid, const std::str
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3892,26 +3819,8 @@ void RdbmsCatalogue::tapeLabelledInternal(const std::string &vid, const std::str
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return prepareForNewFileInternal(diskInstanceName, storageClassName, user);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection( m_log, [&]{return prepareForNewFileInternal(diskInstanceName, storageClassName, user);},
+    m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -3961,8 +3870,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     const uint64_t archiveFileId = getNextArchiveFileId(conn);
 
     return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId, copyToPoolMap, mountPolicy);
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -4069,26 +3978,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user,
   log::LogContext &lc) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return prepareToRetrieveFileInternal(diskInstanceName, archiveFileId, user, lc);
-    } catch(exception::LostDatabaseConnection &lce) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lce.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection( m_log, [&]{return prepareToRetrieveFileInternal(diskInstanceName, archiveFileId, user,
+    lc);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -4148,8 +4039,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     criteria.archiveFile = *archiveFile;
     criteria.mountPolicy = mountPolicy;
     return criteria;
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -4165,26 +4056,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const std::string &diskFileId,
   const common::dataStructures::UserIdentity &user,
   log::LogContext &lc) {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return prepareToRetrieveFileByDiskFileIdInternal(diskInstanceName, diskFileId, user, lc);
-    } catch(exception::LostDatabaseConnection &lce) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lce.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection( m_log, [&]{return prepareToRetrieveFileByDiskFileIdInternal(diskInstanceName,
+    diskFileId, user, lc);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -4238,8 +4111,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     criteria.archiveFile = *archiveFile;
     criteria.mountPolicy = mountPolicy;
     return criteria;
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -4353,34 +4226,23 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
 // isAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  const uint32_t maxTries = 3;
-
-  for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-    try {
-      return isAdminInternal(admin);
-    } catch(exception::LostDatabaseConnection &lc) {
-      // Ignore lost connection
-      std::list<log::Param> params = {
-        {"maxTries", maxTries},
-        {"tryNb", tryNb},
-        {"msg", lc.getMessage()}
-      };
-      m_log(cta::log::WARNING, "Lost database connection", params);
-    }
-  }
-
-  exception::Exception ex;
-  ex.getMessage() << std::string(__FUNCTION__) << " failed: Lost the database connection after trying " << maxTries <<
-    " times";
-  throw ex;
+  return retryOnLostConnection(m_log, [&]{return isAdminInternal(admin);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
 // isAdminInternal
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const {
-  auto conn = m_connPool.getConn();
-  return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
+  try {
+    auto conn = m_connPool.getConn();
+    return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -4421,30 +4283,7 @@ bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName)
 // getTapesForWriting
 //------------------------------------------------------------------------------
 std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
-  try {
-    const uint32_t maxTries = 3;
-    for(uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-      try {
-        return getTapesForWritingInternal(logicalLibraryName);
-      } catch(exception::LostDatabaseConnection &lc) {
-        // Ignore lost connection
-        std::list<log::Param> params = {
-          {"maxTries", maxTries},
-          {"tryNb", tryNb},
-          {"msg", lc.getMessage()}
-        };
-        m_log(cta::log::WARNING, "Lost database connection", params);
-      }
-    }
-
-    exception::Exception ex;
-    ex.getMessage() << "Lost the database connection after trying " << maxTries <<
-      " times";
-    throw ex;
-
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  return retryOnLostConnection(m_log, [&]{return getTapesForWritingInternal(logicalLibraryName);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -4485,8 +4324,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWritingInternal(const std::
       tapes.push_back(tape);
     }
     return tapes;
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

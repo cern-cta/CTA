@@ -18,6 +18,7 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/retryOnLostConnection.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -119,13 +120,14 @@ OracleCatalogue::OracleCatalogue(
   const std::string &password,
   const std::string &database,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database),
     nbConns,
-    nbArchiveFileListingConns) {
-
+    nbArchiveFileListingConns,
+    maxTriesToConnect) {
 }
 
 //------------------------------------------------------------------------------
@@ -592,30 +594,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 // filesWrittenToTape
 //------------------------------------------------------------------------------
 void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
-  try {
-    const uint32_t maxTries = 3;
-    for (uint32_t tryNb = 1; tryNb <= maxTries; tryNb++) {
-      try {
-        return filesWrittenToTapeInternal(events);
-      } catch (exception::LostDatabaseConnection &lc) {
-        // Ignore lost connection
-        std::list<log::Param> params = {
-          {"maxTries", maxTries},
-          {"tryNb", tryNb},
-          {"msg", lc.getMessage()}
-        };
-        m_log(cta::log::WARNING, "Lost database connection", params);
-      }
-    }
-
-    exception::Exception ex;
-    ex.getMessage() << "Lost the database connection after trying " << maxTries << " times";
-    throw ex;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
-  }
+  return retryOnLostConnection(m_log, [&]{return filesWrittenToTapeInternal(events);}, m_maxTriesToConnect);
 }
 
 //------------------------------------------------------------------------------
@@ -723,8 +702,8 @@ void OracleCatalogue::filesWrittenToTapeInternal(const std::set<TapeFileWritten>
 
     conn.commit();
 
-  } catch(exception::LostDatabaseConnection &) {
-    throw;
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) +  " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {
