@@ -21,9 +21,6 @@
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
 
-#include <occi.h>
-#include <string.h>
-
 namespace cta {
 namespace catalogue {
 
