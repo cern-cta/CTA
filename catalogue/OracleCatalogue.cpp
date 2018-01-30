@@ -172,6 +172,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       "FOR UPDATE";
     utils::Timer t;
     auto conn = m_connPool.getConn();
+    rdbms::AutoRollback autoRollback(conn);
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
     auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
     const auto createStmtTime = t.secs();
