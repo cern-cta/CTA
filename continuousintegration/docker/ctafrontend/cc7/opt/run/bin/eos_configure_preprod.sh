@@ -15,12 +15,7 @@ eos attr set CTA_StorageClass=ctaStorageClass ${PREPROD_DIR}
 eos attr set CTA_TapeFsId=65535 ${PREPROD_DIR}
 
 eos attr set sys.workflow.closew.default="proto/cta:ctafrontend:10955 <parent/file>" ${PREPROD_DIR}
-
-#eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${PREPROD_DIR}
-eos attr set sys.workflow.archived.default="bash:create_tape_drop_disk_replicas:cta <eos::wfe::path> <eos::wfe::cxattr:CTA_TapeFsId>" ${PREPROD_DIR}
-
+eos attr set sys.workflow.closew.CTA_retrieve="proto/cta:ctafrontend:10955 <parent/file>" ${PREPROD_DIR}
+eos attr set sys.workflow.archived.default="proto/cta:ctafrontend:10955 <parent/file>" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::prepare.default="proto/cta:ctafrontend:10955 <parent/file>" ${PREPROD_DIR}
-
-eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${PREPROD_DIR}
-
 eos attr set sys.workflow.sync::delete.default="proto/cta:ctafrontend:10955 <parent/file>" ${PREPROD_DIR}

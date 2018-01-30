@@ -187,7 +187,7 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
 eos attr set sys.workflow.closew.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
 
 # Set the worflow rule for creating tape file replicas in the EOS namespace.
-eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}
+eos attr set sys.workflow.archived.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
 
 # Set the workflow rule for retrieving file from tape.
 eos attr set sys.workflow.sync::prepare.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
@@ -198,7 +198,7 @@ eos attr set sys.workflow.sync::prepare.default="proto/cta:ctafrontend:10955 <pa
 # haved causes the unwanted action of copying the disk file to tape again.
 # The action of the CTA_retrieve workflow when triggered by the closew event is
 # to set the CTA_retrieved_timestamp attribute.
-eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${CTA_WF_DIR}
+eos attr set sys.workflow.closew.CTA_retrieve="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
