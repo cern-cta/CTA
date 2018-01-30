@@ -141,6 +141,15 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
   log::LogContext &lc) {
+  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileInternal(diskInstanceName, archiveFileId, lc);},
+    m_maxTriesToConnect);
+}
+
+//------------------------------------------------------------------------------
+// deleteArchiveFileInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceName, const uint64_t archiveFileId,
+  log::LogContext &lc) {
   try {
     const char *selectSql =
       "SELECT "

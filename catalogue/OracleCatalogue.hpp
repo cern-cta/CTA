@@ -127,6 +127,30 @@ public:
 private:
 
   /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that the name of the disk instance is specified in order to
+   * prevent a disk instance deleting an archive file that belongs to another
+   * disk instance.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFileInternal(const std::string &diskInstanceName, const uint64_t archiveFileId,
+    log::LogContext &lc);
+
+  /**
    * Notifies the catalogue that the specified files have been written to tape.
    *
    * This internal method can be re-tried if it throws a LostDatabaseConnection
