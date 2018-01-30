@@ -340,8 +340,17 @@ void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceN
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
   log::LogContext &lc) {
+  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileByDiskFileIdInternal(diskInstanceName, diskFileId,
+    lc);}, m_maxTriesToConnect);
+}
+
+//------------------------------------------------------------------------------
+// deleteArchiveFileByDiskFileIdInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::deleteArchiveFileByDiskFileIdInternal(const std::string &diskInstanceName,
+  const std::string &diskFileId, log::LogContext &lc) {
   try {
-    const char *selectSql =
+    const char *const selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
