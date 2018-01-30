@@ -328,6 +328,8 @@ void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceN
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -487,6 +489,8 @@ void OracleCatalogue::deleteArchiveFileByDiskFileIdInternal(const std::string &d
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
