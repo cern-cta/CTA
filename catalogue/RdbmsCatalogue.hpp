@@ -79,7 +79,7 @@ protected:
     const rdbms::Login &login,
     const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect = 3);
+    const uint32_t maxTriesToConnect);
 
 public:
 

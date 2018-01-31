@@ -37,12 +37,14 @@ SqliteCatalogue::SqliteCatalogue(
   log::Logger &log,
   const std::string &filename,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename),
     nbConns,
-    nbArchiveFileListingConns) {
+    nbArchiveFileListingConns,
+    maxTriesToConnect) {
 }
 
 //------------------------------------------------------------------------------
