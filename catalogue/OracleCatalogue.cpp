@@ -141,15 +141,6 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
   log::LogContext &lc) {
-  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileInternal(diskInstanceName, archiveFileId, lc);},
-    m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// deleteArchiveFileInternal
-//------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceName, const uint64_t archiveFileId,
-  log::LogContext &lc) {
   try {
     const char *selectSql =
       "SELECT "
@@ -342,15 +333,6 @@ void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceN
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
   log::LogContext &lc) {
-  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileByDiskFileIdInternal(diskInstanceName, diskFileId,
-    lc);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// deleteArchiveFileByDiskFileIdInternal
-//------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFileByDiskFileIdInternal(const std::string &diskInstanceName,
-  const std::string &diskFileId, log::LogContext &lc) {
   try {
     const char *const selectSql =
       "SELECT "
@@ -617,13 +599,6 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 // filesWrittenToTape
 //------------------------------------------------------------------------------
 void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
-  return retryOnLostConnection(m_log, [&]{return filesWrittenToTapeInternal(events);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// filesWrittenToTapeInternal
-//------------------------------------------------------------------------------
-void OracleCatalogue::filesWrittenToTapeInternal(const std::set<TapeFileWritten> &events) {
   try {
     if (events.empty()) {
       return;

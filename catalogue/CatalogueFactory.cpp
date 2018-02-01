@@ -17,6 +17,7 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueRetryWrapper.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
@@ -38,13 +39,22 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      {
+        auto c = cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
+      }
     case rdbms::Login::DBTYPE_ORACLE:
-      return cta::make_unique<OracleCatalogue>(log, login.username, login.password, login.database, nbConns,
-        nbArchiveFileListingConns, maxTriesToConnect);
+      {
+        auto c = cta::make_unique<OracleCatalogue>(log, login.username, login.password, login.database, nbConns,
+          nbArchiveFileListingConns, maxTriesToConnect);
+        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
+      }
     case rdbms::Login::DBTYPE_SQLITE:
-      return cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
-         maxTriesToConnect);
+      {
+        auto c = cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
+          maxTriesToConnect);
+        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
+      }
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

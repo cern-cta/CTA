@@ -2194,13 +2194,6 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  return retryOnLostConnection(m_log, [&]{return tapeMountedForArchiveInternal(vid, drive);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// tapeMountedForArchiveInternal
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::tapeMountedForArchiveInternal(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -2232,13 +2225,6 @@ void RdbmsCatalogue::tapeMountedForArchiveInternal(const std::string &vid, const
 // tapeMountedForRetrieve
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
-  return retryOnLostConnection(m_log, [&]{return tapeMountedForRetrieveInternal(vid, drive);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// tapeMountedForRetrieveInternal
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::tapeMountedForRetrieveInternal(const std::string &vid, const std::string &drive) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -2304,13 +2290,6 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
 // noSpaceLeftOnTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
-  return retryOnLostConnection(m_log, [&]{return noSpaceLeftOnTapeInternal(vid);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// noSpaceLeftOnTapeInternal
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::noSpaceLeftOnTapeInternal(const std::string &vid) {
   try {
     const char *const sql =
       "UPDATE TAPE SET "
@@ -3778,13 +3757,6 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
 // tapeLabelled
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) {
-  return retryOnLostConnection(m_log, [&]{return tapeLabelledInternal(vid, drive, lbpIsOn);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// tapeLabelledInternal
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::tapeLabelledInternal(const std::string &vid, const std::string &drive, const bool lbpIsOn) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -3819,16 +3791,6 @@ void RdbmsCatalogue::tapeLabelledInternal(const std::string &vid, const std::str
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
-  return retryOnLostConnection( m_log, [&]{return prepareForNewFileInternal(diskInstanceName, storageClassName, user);},
-    m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// prepareForNewFileInternal
-//------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFileInternal(
-  const std::string &diskInstanceName, const std::string &storageClassName,
-  const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
@@ -3978,18 +3940,6 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const uint64_t archiveFileId,
   const common::dataStructures::UserIdentity &user,
   log::LogContext &lc) {
-  return retryOnLostConnection( m_log, [&]{return prepareToRetrieveFileInternal(diskInstanceName, archiveFileId, user,
-    lc);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// prepareToRetrieveFileInternal
-//------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileInternal(
-  const std::string &diskInstanceName,
-  const uint64_t archiveFileId,
-  const common::dataStructures::UserIdentity &user,
-  log::LogContext &lc) {
   try {
     cta::utils::Timer t;
     auto conn = m_connPool.getConn();
@@ -4052,18 +4002,6 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 // prepareToRetrieveFileByDiskFileId
 //------------------------------------------------------------------------------
 common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileId(
-  const std::string &diskInstanceName,
-  const std::string &diskFileId,
-  const common::dataStructures::UserIdentity &user,
-  log::LogContext &lc) {
-  return retryOnLostConnection( m_log, [&]{return prepareToRetrieveFileByDiskFileIdInternal(diskInstanceName,
-    diskFileId, user, lc);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// prepareToRetrieveFileByDiskFileIdInternal
-//------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileIdInternal(
   const std::string &diskInstanceName,
   const std::string &diskFileId,
   const common::dataStructures::UserIdentity &user,
@@ -4226,13 +4164,6 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
 // isAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
-  return retryOnLostConnection(m_log, [&]{return isAdminInternal(admin);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// isAdminInternal
-//------------------------------------------------------------------------------
-bool RdbmsCatalogue::isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const {
   try {
     auto conn = m_connPool.getConn();
     return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
@@ -4283,13 +4214,6 @@ bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName)
 // getTapesForWriting
 //------------------------------------------------------------------------------
 std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
-  return retryOnLostConnection(m_log, [&]{return getTapesForWritingInternal(logicalLibraryName);}, m_maxTriesToConnect);
-}
-
-//------------------------------------------------------------------------------
-// getTapesForWritingInternal
-//------------------------------------------------------------------------------
-std::list<TapeForWriting> RdbmsCatalogue::getTapesForWritingInternal(const std::string &logicalLibraryName) const {
   try {
     std::list<TapeForWriting> tapes;
     const char *const sql =
