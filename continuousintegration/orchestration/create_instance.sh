@@ -10,6 +10,9 @@ config_database="./database-sqlite.yaml"
 # default library model
 model="mhvtl"
 
+# EOS short instance name
+EOSINSTANCE=ctaeos
+
 # By default keep Database and keep Objectstore
 # default should not make user loose data if he forgot the option
 keepdatabase=1
