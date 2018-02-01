@@ -297,6 +297,21 @@ kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###
 echo OK
 
 
+# Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
+# files from tape and deleting files.
+#
+# The closew.CTA_retrieve workflow prevents the default workflow from receiving the closew event, as
+# we don't want to trigger the action of copying the retrived disk file to tape again. The
+# closew.CTA_retrieve workflow sets the CTA_retrieved_timestamp attribute.
+echo "Setting workflows in namespace ${instance} pod ctaeos:"
+CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
+for WORKFLOW in closew.default archived.default sync::prepare.default closew.CTA_retrieve sync::delete.default
+do
+  echo "eos attr set sys.workflow.${WORKFLOW}=\"proto/cta:${CTA_ENDPOINT} <parent/file>\" ${CTA_WF_DIR}"
+  kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto/cta:${CTA_ENDPOINT} <parent/file>\" ${CTA_WF_DIR}"
+done
+
+
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
 kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"

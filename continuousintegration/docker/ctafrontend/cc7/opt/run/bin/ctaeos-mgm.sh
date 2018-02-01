@@ -179,29 +179,10 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
   # set interval in which the WFE engine is running
   #eos space config default space.wfe.interval=1
 
-# ATTENTION
-# for sss authorisation  unix has to be replaced by sss
-
-# Set the worfklow rule for archiving files to tape
-eos attr set sys.workflow.closew.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
-
-# Set the worflow rule for creating tape file replicas in the EOS namespace.
-eos attr set sys.workflow.archived.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
-
-# Set the workflow rule for retrieving file from tape.
-eos attr set sys.workflow.sync::prepare.default="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
-
-# Set the workflow rule for the closew event of the CTA_retrieve workflow.
-# Using the CTA_retrieve workflow will prevent the default workflow from
-# receiving the closew event.  Triggering the default workflow in this way would
-# haved causes the unwanted action of copying the disk file to tape again.
-# The action of the CTA_retrieve workflow when triggered by the closew event is
-# to set the CTA_retrieved_timestamp attribute.
-eos attr set sys.workflow.closew.CTA_retrieve="proto/cta:ctafrontend:10955 <parent/file>" ${CTA_WF_DIR}
-
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
 echo "### ctaeos mgm ready ###"
 
 /bin/bash
+
