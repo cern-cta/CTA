@@ -275,15 +275,14 @@ kubectl --namespace=${instance} exec ctacli klist
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  [ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
+  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
-# just in case /etc/cta directory does not exist yet
-kubectl --namespace=${instance} exec -i ctaeos --  bash -c "mkdir -p /etc/cta"
-kubectl --namespace=${instance} exec ctafrontend -- cat /etc/cta/cta-cli.sss.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/cta/cta-cli.sss.keytab; chmod 600 /etc/cta/cta-cli.sss.keytab; chown daemon /etc/cta/cta-cli.sss.keytab"
+[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+kubectl --namespace=${instance} exec ctaeos -- grep ${EOSINSTANCE} /etc/eos.keytab | sed "s/daemon/${EOSINSTANCE}/g" |\
+kubectl --namespace=${instance} exec -i ctafrontend -- \
+bash -c "cat > /etc/cta/eos.sss.keytab; chmod 400 /etc/cta/eos.sss.keytab; chown cta:cta /etc/cta/eos.sss.keytab"
 echo OK
-
 
 echo -n "Waiting for EOS to be configured"
 for ((i=0; i<300; i++)); do

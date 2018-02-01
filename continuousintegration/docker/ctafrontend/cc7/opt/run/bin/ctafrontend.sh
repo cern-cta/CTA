@@ -30,13 +30,6 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 # EOS INSTANCE NAME used as username for SSS key
 EOSINSTANCE=ctaeos
 
-# Create SSS key for cta-cli, must be forwardable in kubernetes realm (this is what the + is for)
-# USER IN THE SSS FILE IS THE EOS INSTANCE NAME THE REST IS BS
-echo y | xrdsssadmin -k cta-cli+ -u ${EOSINSTANCE} -g cta add /etc/cta/cta-cli.sss.keytab
-chmod 600 /etc/cta/cta-cli.sss.keytab
-chown cta /etc/cta/cta-cli.sss.keytab
-# DO NOT FORGET THAT YOU CAN DEFINE SEPARATE CLIENT AND SERVER KEYTABS
-
 # Wait for the keytab file to be pushed in by the creation script.
 echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab"
 for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
