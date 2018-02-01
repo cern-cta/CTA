@@ -305,6 +305,7 @@ echo OK
 # closew.CTA_retrieve workflow sets the CTA_retrieved_timestamp attribute.
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
+CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
 for WORKFLOW in closew.default archived.default sync::prepare.default closew.CTA_retrieve sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto/cta:${CTA_ENDPOINT} <parent/file>\" ${CTA_WF_DIR}"
