@@ -303,8 +303,14 @@ echo OK
 # The closew.CTA_retrieve workflow prevents the default workflow from receiving the closew event, as
 # we don't want to trigger the action of copying the retrived disk file to tape again. The
 # closew.CTA_retrieve workflow sets the CTA_retrieved_timestamp attribute.
+#
+# The FQDN can be set as follows:
+# CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
+#
+# however the simple hostname should be sufficient:
+CTA_ENDPOINT=ctafrontend:10955
+
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
-CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
 for WORKFLOW in closew.default archived.default sync::prepare.default closew.CTA_retrieve sync::delete.default
 do
