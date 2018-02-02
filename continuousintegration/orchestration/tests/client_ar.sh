@@ -201,8 +201,9 @@ if [[ $REMOVE == 1 ]]; then
     echo "Got cta admin privileges, can proceed with the workflow"
   else
     # displays what failed and fail
+    cat /etc/cta/cta-cli.conf
     admin_cta admin ls
-    die "Could not launch cta command."
+    die "Could not launch cta-admin command."
   fi
   # recount the files on tape as the workflows may have gone further...
   INITIALFILESONTAPE=$(admin_cta archivefile ls  --all | grep ${EOS_DIR} | wc -l)
@@ -233,7 +234,7 @@ if [[ $REMOVE == 1 ]]; then
     fi
     FILESONTAPE=$(admin_cta archivefile ls --all > >(grep ${EOS_DIR} | wc -l) 2> >(cat > /tmp/ctaerr))
     if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
-      echo "cta COMMAND FAILED!!"
+      echo "cta-admin COMMAND FAILED!!"
       echo "ERROR CTA ERROR MESSAGE:"
       cat /tmp/ctaerr
       break
