@@ -29,10 +29,10 @@ echo ${DATABASEURL} >/etc/cta/cta-catalogue.conf
 EOSINSTANCE=ctaeos
 
 # Wait for the keytab files to be pushed in by the creation script
-echo -n "Waiting for /etc/cta/eos.sss.keytab"
+echo -n "Waiting for /etc/cta/eos.sss.keytab."
 for ((;;)); do test -e /etc/cta/eos.sss.keytab && break; sleep 1; echo -n .; done
 echo OK
-echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab"
+echo -n "Waiting for /etc/cta/cta-frontend.krb5.keytab."
 for ((;;)); do test -e /etc/cta/cta-frontend.krb5.keytab && break; sleep 1; echo -n .; done
 echo OK
 
