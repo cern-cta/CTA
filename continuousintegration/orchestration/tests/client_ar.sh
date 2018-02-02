@@ -201,7 +201,6 @@ if [[ $REMOVE == 1 ]]; then
     echo "Got cta admin privileges, can proceed with the workflow"
   else
     # displays what failed and fail
-    cat /etc/cta/cta-cli.conf
     admin_cta admin ls
     die "Could not launch cta-admin command."
   fi
