@@ -42,12 +42,16 @@ public:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
+   * @param maxTriesToConnext The maximum number of times a single method should
+   * try to connect to the database in the event of LostDatabaseConnection
+   * exceptions being thrown.
    */
   SqliteCatalogue(
     log::Logger &log,
     const std::string &filename,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+    const uint64_t nbArchiveFileListingConns,
+    const uint32_t maxTriesToConnect);
 
 public:
 
@@ -116,7 +120,7 @@ protected:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Notifies the catalogue that the specified files have been written to tape.
@@ -134,7 +138,7 @@ private:
    * @param conn The database connection.
    * @param event The tape file written event.
    */
-  void fileWrittenToTape(const rdbms::Stmt::AutocommitMode autocommitMode, rdbms::PooledConn &conn,
+  void fileWrittenToTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
     const TapeFileWritten &event);
 
   /**
@@ -144,7 +148,7 @@ private:
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTape(const rdbms::Stmt::AutocommitMode autocommitMode, rdbms::PooledConn &conn,
+  common::dataStructures::Tape selectTape(const rdbms::AutocommitMode autocommitMode, rdbms::Conn &conn,
     const std::string &vid);
 
 }; // class SqliteCatalogue

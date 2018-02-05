@@ -22,7 +22,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "rdbms/Conn.hpp"
+#include "rdbms/wrapper/Conn.hpp"
 #include "rdbms/LoginFactory.hpp"
 
 #include <gtest/gtest.h>
@@ -48,7 +48,7 @@ protected:
    * A general purpose database connection outside of the m_catalogue object to
    * be used to run tests directly on the underlying "raw" catalogue database.
    */
-  std::unique_ptr<cta::rdbms::Conn> m_conn;
+  std::unique_ptr<cta::rdbms::wrapper::Conn> m_conn;
 
   virtual void SetUp();
 
@@ -92,6 +92,16 @@ protected:
    */
   std::map<std::string, cta::common::dataStructures::AdminHost> adminHostListToMap(
     const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts);
+
+  /**
+   * Creates a map from tape pool name to tape pool from the specified list of
+   * tape pools.
+   *
+   * @param listOfTapePools The list of tape pools.
+   * @return Map from tape pool name to tape pool.
+   */
+  std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
+    const std::list<cta::catalogue::TapePool> &listOfTapePools);
 }; // cta_catalogue_CatalogueTest
 
 } // namespace unitTests

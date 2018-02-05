@@ -24,7 +24,7 @@ namespace rdbms {
 /**
  * Forward declaration.
  */
-class PooledConn;
+class Conn;
 
 /**
  * A class to automatically rollback a database connection when an instance of
@@ -38,7 +38,7 @@ public:
    *
    * @param conn The database connection.
    */
-  AutoRollback(PooledConn &conn);
+  AutoRollback(Conn &conn);
 
   /**
    * Prevent copying.
@@ -72,7 +72,7 @@ private:
   /**
    * The database connection or nullptr if no rollback should take place.
    */
-  PooledConn &m_conn;
+  Conn &m_conn;
 
 }; // class Login
 

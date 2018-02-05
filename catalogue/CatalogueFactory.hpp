@@ -51,12 +51,16 @@ public:
    * listing archive files.
    * @return The newly created CTA catalogue object.  Please note that it is the
    * responsibility of the caller to delete the returned CTA catalogue object.
+   * @param maxTriesToConnext The maximum number of times a single method should
+   * try to connect to the database in the event of LostDatabaseConnection
+   * exceptions being thrown.
    */
   static std::unique_ptr<Catalogue> create(
     log::Logger &log,
     const rdbms::Login &login,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+    const uint64_t nbArchiveFileListingConns,
+    const uint32_t maxTriesToConnect = 3);
 
 }; // class CatalogueFactory
 

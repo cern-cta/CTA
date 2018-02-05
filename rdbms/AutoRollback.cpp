@@ -18,7 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "rdbms/AutoRollback.hpp"
-#include "rdbms/PooledConn.hpp"
+#include "rdbms/Conn.hpp"
 
 namespace cta {
 namespace rdbms {
@@ -26,7 +26,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(PooledConn &conn):
+AutoRollback::AutoRollback(Conn &conn):
   m_cancelled(false),
   m_conn(conn) {
 }

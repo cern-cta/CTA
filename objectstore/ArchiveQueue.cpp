@@ -22,6 +22,8 @@
 #include "EntryLogSerDeser.hpp"
 #include "RootEntry.hpp"
 #include "ValueCountMap.hpp"
+#include "ArchiveQueueShard.hpp"
+#include "AgentReference.hpp"
 #include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore { 
@@ -57,6 +59,7 @@ void ArchiveQueue::initialize(const std::string& name) {
   m_payload.set_tapepool(name);
   // set the archive jobs counter to zero
   m_payload.set_archivejobstotalsize(0);
+  m_payload.set_archivejobscount(0);
   m_payload.set_oldestjobcreationtime(0);
   // set the initial summary map rebuild count to zero
   m_payload.set_mapsrebuildcount(0);
@@ -65,34 +68,138 @@ void ArchiveQueue::initialize(const std::string& name) {
 }
 
 void ArchiveQueue::commit() {
-  // Before calling ObjectOps::commit, check that we have coherent queue summaries
-  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  if (maxDriveAllowedMap.total() != (uint64_t)m_payload.pendingarchivejobs_size() ||
-      priorityMap.total() != (uint64_t)m_payload.pendingarchivejobs_size() ||
-      minArchiveRequestAgeMap.total() != (uint64_t)m_payload.pendingarchivejobs_size()) {
-    // The maps counts are off: recompute them.
-    maxDriveAllowedMap.clear();
-    priorityMap.clear();
-    minArchiveRequestAgeMap.clear();
-    for (size_t i=0; i<(size_t)m_payload.pendingarchivejobs_size(); i++) {
-      maxDriveAllowedMap.incCount(m_payload.pendingarchivejobs(i).maxdrivesallowed());
-      priorityMap.incCount(m_payload.pendingarchivejobs(i).priority());
-      minArchiveRequestAgeMap.incCount(m_payload.pendingarchivejobs(i).priority());
-    }
+  if (!checkMapsAndShardsCoherency()) {
+    rebuild();
     m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
   }
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::commit();
+}
+
+bool ArchiveQueue::checkMapsAndShardsCoherency() {
+  checkPayloadReadable();
+  uint64_t bytesFromShardPointers = 0;
+  uint64_t jobsExpectedFromShardsPointers = 0;
+  // Add up shard summaries
+  for (auto & aqs: m_payload.archivequeuesshards()) {
+    bytesFromShardPointers += aqs.shardbytescount();
+    jobsExpectedFromShardsPointers += aqs.shardjobscount();
+  }
+  uint64_t totalBytes = m_payload.archivejobstotalsize();
+  uint64_t totalJobs = m_payload.archivejobscount();
+  // The sum of shards should be equal to the summary
+  if (totalBytes != bytesFromShardPointers || 
+      totalJobs != jobsExpectedFromShardsPointers)
+    return false;
+  // Check that we have coherent queue summaries
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  if (maxDriveAllowedMap.total() != m_payload.archivejobscount() || 
+      priorityMap.total() != m_payload.archivejobscount() ||
+      minArchiveRequestAgeMap.total() != m_payload.archivejobscount())
+    return false;
+  return true;
+}
+
+void ArchiveQueue::rebuild() {
+  checkPayloadWritable();
+  // Something is off with the queue. We will hence rebuild it. The rebuild of the 
+  // queue will consist in:
+  // 1) Attempting to read all shards in parallel. Absent shards are possible, and will
+  // mean we have dangling pointers.
+  // 2) Rebuild the summaries from the shards.
+  // As a side note, we do not go as far as validating the pointers to jobs within th
+  // shards, as this is already handled as access goes.
+  std::list<ArchiveQueueShard> shards;
+  std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  
+  // Get the summaries structures ready
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  maxDriveAllowedMap.clear();
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  priorityMap.clear();
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  minArchiveRequestAgeMap.clear();
+  for (auto & sa: m_payload.archivequeuesshards()) {
+    shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+    shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
+  }
+  auto s = shards.begin();
+  auto sf = shardsFetchers.begin();
+  uint64_t totalJobs=0;
+  uint64_t totalBytes=0;
+  time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
+  while (s != shards.end()) {
+    // Each shard could be gone
+    try {
+      (*sf)->wait();
+    } catch (Backend::NoSuchObject & ex) {
+      // Remove the shard from the list
+      auto aqs = m_payload.mutable_archivequeuesshards()->begin();
+      while (aqs != m_payload.mutable_archivequeuesshards()->end()) {
+        if (aqs->address() == s->getAddressIfSet()) {
+          aqs = m_payload.mutable_archivequeuesshards()->erase(aqs);
+        } else {
+          aqs++;
+        }
+      }
+      goto nextShard;
+    }
+    {
+      // The shard is still around, let's compute its summaries.
+      uint64_t jobs = 0;
+      uint64_t size = 0;
+      for (auto & j: s->dumpJobs()) {
+        jobs++;
+        size += j.size;
+        priorityMap.incCount(j.priority);
+        minArchiveRequestAgeMap.incCount(j.minArchiveRequestAge);
+        maxDriveAllowedMap.incCount(j.maxDrivesAllowed);
+        if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
+      }
+      // Add the summary to total.
+      totalJobs+=jobs;
+      totalBytes+=size;
+      // And store the value in the shard pointers.
+      auto maqs = m_payload.mutable_archivequeuesshards();
+      for (auto & aqs: *maqs) {
+        if (aqs.address() == s->getAddressIfSet()) {
+          aqs.set_shardjobscount(jobs);
+          aqs.set_shardbytescount(size);
+          goto shardUpdated;
+        }
+      }
+      {
+        // We had to update a shard and did not find it. This is an error.
+        throw exception::Exception(std::string ("In ArchiveQueue::rebuild(): failed to record summary for shard " + s->getAddressIfSet()));
+      }
+    shardUpdated:;
+      // We still need to check if the shard itself is coherent (we have an opportunity to
+      // match its summary with the jobs total we just recomputed.
+      if (size != s->getJobsSummary().bytes) {
+        ArchiveQueueShard aqs(s->getAddressIfSet(), m_objectStore);
+        m_exclusiveLock->includeSubObject(aqs);
+        aqs.fetch();
+        aqs.rebuild();
+        aqs.commit();
+      }
+    }
+  nextShard:;
+    s++;
+    sf++;
+  }
+  m_payload.set_archivejobscount(totalJobs);
+  m_payload.set_archivejobstotalsize(totalBytes);
+  m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  // We went through all the shard, re-updated the summaries, removed references to
+  // gone shards. Done.
 }
 
 
 bool ArchiveQueue::isEmpty() {
   checkPayloadReadable();
   // Check we have no archive jobs pending
-  if (m_payload.pendingarchivejobs_size() 
-      || m_payload.orphanedarchivejobsnscreation_size()
-      || m_payload.orphanedarchivejobsnsdeletion_size())
+  if (m_payload.archivequeuesshards_size())
     return false;
   // If we made it to here, it seems the pool is indeed empty.
   return true;
@@ -144,43 +251,127 @@ std::string ArchiveQueue::getTapePool() {
   return m_payload.tapepool();
 }
 
-void ArchiveQueue::addJob(const ArchiveRequest::JobDump& job,
-  const std::string & archiveRequestAddress, uint64_t archiveFileId,
-  uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy,
-  time_t startTime) {
+void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
-  // Keep track of the mounting criteria
-  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
-  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.archivePriority);
-  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  minArchiveRequestAgeMap.incCount(policy.archiveMinRequestAge);
-  if (m_payload.pendingarchivejobs_size()) {
-    if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
-      m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + fileSize);
-  } else {
-    m_payload.set_archivejobstotalsize(fileSize);
-    m_payload.set_oldestjobcreationtime(startTime);
-  }
-  auto * j = m_payload.add_pendingarchivejobs();
-  j->set_address(archiveRequestAddress);
-  j->set_size(fileSize);
-  j->set_fileid(archiveFileId);
-  j->set_copynb(job.copyNb);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  j->set_priority(policy.archivePriority);
-  j->set_minarchiverequestage(policy.archiveMinRequestAge);
+  // Before adding the jobs, we have to decide how to lay them out in the shards.
+  // We are here in FIFO mode, so the algorithm is just 1) complete the current last
+  // shard, if it did not reach the maximum size
+  // 2) create new shard(s) as needed.
+  //
+  //  First implementation is shard by shard. A batter, parallel one could be implemented,
+  // but the performance gain should be marginal as most of the time we will be dealing
+  // with a single shard.
+  
+  auto nextJob = jobsToAdd.begin();
+  while (nextJob != jobsToAdd.end()) {
+    // If we're here, the is at least a job to add.
+    // Let's find a shard for it/them. It can be either the last (incomplete) shard or
+    // a new shard to create. In all case, we will max out the shard, jobs list permitting.
+    // If we do fill up the shard, we'll go through another round here.
+    // Is there a last shard, and is it not full?
+    ArchiveQueueShard aqs(m_objectStore);
+    serializers::ArchiveQueueShardPointer * aqsp = nullptr;
+    bool newShard=false;
+    uint64_t shardCount = m_payload.archivequeuesshards_size();
+    if (shardCount && m_payload.archivequeuesshards(shardCount - 1).shardjobscount() < c_maxShardSize) {
+      auto & shardPointer=m_payload.archivequeuesshards(shardCount - 1);
+      aqs.setAddress(shardPointer.address());
+      // include-locking does not check existence of the object in the object store.
+      // we will find out on fetch. If we fail, we have to rebuild.
+      m_exclusiveLock->includeSubObject(aqs);
+      try {
+        aqs.fetch();
+      } catch (Backend::NoSuchObject & ex) {
+        log::ScopedParamContainer params (lc);
+        params.add("archiveQueueObject", getAddressIfSet())
+              .add("shardNumber", shardCount - 1)
+              .add("shardObject", shardPointer.address());
+        lc.log(log::ERR, "In ArchiveQueue::addJobsAndCommit(): shard not present. Rebuilding queue.");
+        rebuild();
+        commit();
+        continue;
+      }
+      // Validate that the shard is as expected from the pointer. If not we need to
+      // rebuild the queue and restart the shard selection.
+      auto shardSummary = aqs.getJobsSummary();
+      if (shardPointer.shardbytescount() != shardSummary.bytes ||
+          shardPointer.shardjobscount() != shardSummary.jobs) {
+        log::ScopedParamContainer params(lc);
+        params.add("archiveQueueObject", getAddressIfSet())
+              .add("shardNumber", shardCount - 1)
+              .add("shardObject", shardPointer.address())
+              .add("shardReportedBytes", shardSummary.bytes)
+              .add("shardReportedJobs", shardSummary.jobs)
+              .add("expectedBytes", shardPointer.shardbytescount())
+              .add("expectedJobs", shardPointer.shardjobscount());
+        lc.log(log::ERR, "In ArchiveQueue::addJobsAndCommit(): mismatch found. Rebuilding the queue.");
+        rebuild();
+        commit();
+        continue;
+      }
+      // The shard looks good. We will now proceed with the addition of individual jobs.
+      aqsp = m_payload.mutable_archivequeuesshards(shardCount - 1);
+    } else {
+      // We need a new shard. Just add it (in memory).
+      newShard = true;
+      aqsp = m_payload.mutable_archivequeuesshards()->Add();
+      // Create the shard in memory.
+      std::stringstream shardName;
+      shardName << "ArchiveQueueShard-" << m_payload.tapepool();
+      aqs.setAddress(agentReference.nextId(shardName.str()));
+      aqs.initialize(getAddressIfSet());
+      // Reference the shard in the pointer, and initialized counters.
+      aqsp->set_address(aqs.getAddressIfSet());
+      aqsp->set_shardbytescount(0);
+      aqsp->set_shardjobscount(0);
+    }
+    // We can now add the individual jobs, commit the main queue and then insert or commit the shard.
+    {
+      // As the queue could be rebuilt on each shard round, we get access to the 
+      // value maps here
+      ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+      ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+      ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+      while (nextJob != jobsToAdd.end() && aqsp->shardjobscount() < c_maxShardSize) {
+        // Update stats and global counters.
+        maxDriveAllowedMap.incCount(nextJob->policy.maxDrivesAllowed);
+        priorityMap.incCount(nextJob->policy.archivePriority);
+        minArchiveRequestAgeMap.incCount(nextJob->policy.archiveMinRequestAge);
+        if (m_payload.archivejobscount()) {
+          if ((uint64_t)nextJob->startTime < m_payload.oldestjobcreationtime())
+            m_payload.set_oldestjobcreationtime(nextJob->startTime);
+          m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + nextJob->fileSize);
+        } else {
+          m_payload.set_archivejobstotalsize(nextJob->fileSize);
+          m_payload.set_oldestjobcreationtime(nextJob->startTime);
+        }
+        m_payload.set_archivejobscount(m_payload.archivejobscount()+1);
+        // Add the job to shard, update pointer counts and queue summary.
+        aqsp->set_shardjobscount(aqs.addJob(*nextJob));
+        aqsp->set_shardbytescount(aqsp->shardbytescount() + nextJob->fileSize);
+        // And move to the next job
+        nextJob++;
+      }
+    }
+    // We will new commit this shard (and the queue) before moving to the next.
+    // Commit in the right order:
+    // 1) commit the queue so the shard is referenced in all cases (creation).
+    commit();
+    // Now get the shard on storage. Could be either insert or commit.
+    if (newShard)
+      aqs.insert();
+    else
+      aqs.commit();
+  } // end of loop over all objects.
 }
 
 auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   checkPayloadReadable();
   JobsSummary ret;
-  ret.files = m_payload.pendingarchivejobs_size();
+  ret.jobs = m_payload.archivejobscount();
   ret.bytes = m_payload.archivejobstotalsize();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
-  if (ret.files) {
+  if (ret.jobs) {
     ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
     ret.maxDrivesAllowed = maxDriveAllowedMap.maxValue();
     ValueCountMap priorityMap(m_payload.mutable_prioritymap());
@@ -195,124 +386,179 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   return ret;
 }
 
-bool ArchiveQueue::addJobIfNecessary(
-  const ArchiveRequest::JobDump& job,
-  const std::string & archiveRequestAddress, uint64_t archiveFileId,
-  uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy,
-  time_t startTime) {
+ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd>& jobsToAdd,
+    AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
-  auto & jl=m_payload.pendingarchivejobs();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveRequestAddress)
-      return false;
+  // First get all the shards of the queue to understand which jobs to add.
+  std::list<ArchiveQueueShard> shards;
+  std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  
+  for (auto & sa: m_payload.archivequeuesshards()) {
+    shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+    shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
-  // Keep track of the mounting criteria
-  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
-  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.archivePriority);
-  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  minArchiveRequestAgeMap.incCount(policy.archiveMinRequestAge);
-  if (m_payload.pendingarchivejobs_size()) {
-    if ((uint64_t)startTime < m_payload.oldestjobcreationtime())
-      m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + fileSize);
-  } else {
-    m_payload.set_archivejobstotalsize(fileSize);
-    m_payload.set_oldestjobcreationtime(startTime);
+  std::list<std::list<JobDump>> shardsDumps;
+  auto s = shards.begin();
+  auto sf = shardsFetchers.begin();
+  
+  while (s!= shards.end()) {
+    try {
+      (*sf)->wait();
+    } catch (Backend::NoSuchObject & ex) {
+      goto nextShard;
+    }
+    shardsDumps.emplace_back(std::list<JobDump>());
+    for (auto & j: s->dumpJobs()) {
+      shardsDumps.back().emplace_back(JobDump({j.size, j.address, j.copyNb}));
+    }
+  nextShard:
+    s++;
+    sf++;
   }
-  auto * j = m_payload.add_pendingarchivejobs();
-  j->set_address(archiveRequestAddress);
-  j->set_size(fileSize);
-  j->set_fileid(archiveFileId);
-  j->set_copynb(job.copyNb);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  j->set_priority(policy.archivePriority);
-  j->set_minarchiverequestage(policy.archiveMinRequestAge);
-  return true;
-}
-
-void ArchiveQueue::removeJob(const std::string& archiveToFileAddress) {
-  checkPayloadWritable();
-  auto * jl=m_payload.mutable_pendingarchivejobs();
-  bool found = false;
-  do {
-    found = false;
-    // Push the found entry all the way to the end.
-    for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == archiveToFileAddress) {
-        found = true;
-        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
-        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-        priorityMap.decCount(jl->Get(i).priority());
-        ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-        minArchiveRequestAgeMap.decCount(jl->Get(i).minarchiverequestage());
-        m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - jl->Get(i).size());
-        while (i+1 < (size_t)jl->size()) {
-          jl->SwapElements(i, i+1);
-          i++;
-        }
-        break;
+  
+  // Now filter the jobs to add
+  AdditionSummary ret;
+  std::list<JobToAdd> jobsToReallyAdd;
+  for (auto & jta: jobsToAdd) {
+    for (auto & sd: shardsDumps) {
+      for (auto & sjd: sd) {
+        if (sjd.address == jta.archiveRequestAddress)
+          goto found;
       }
     }
-    // and remove it
-    if (found)
-      jl->RemoveLast();
-  } while (found);
+    jobsToReallyAdd.emplace_back(jta);
+    ret.bytes += jta.fileSize;
+    ret.files++;
+  found:;
+  }
+  
+  // We can now proceed with the standard addition.
+  addJobsAndCommit(jobsToReallyAdd, agentReference, lc);
+  return ret;
 }
 
-auto ArchiveQueue::dumpJobs() -> std::list<ArchiveQueue::JobDump> {
+void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
+  checkPayloadWritable();
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+  // Make a working copy of the jobs to remove. We will progressively trim this local list.
+  auto localJobsToRemove = jobsToRemove;
+  // The jobs are expected to be removed from the front shards first.
+  // Remove jobs until there are no more jobs or no more shards.
+  ssize_t shardIndex=0;
+  auto * mutableArchiveQueueShards= m_payload.mutable_archivequeuesshards();
+  while (localJobsToRemove.size() && shardIndex <  mutableArchiveQueueShards->size()) {
+    auto * shardPointer = mutableArchiveQueueShards->Mutable(shardIndex);
+    // Get hold of the shard
+    ArchiveQueueShard aqs(shardPointer->address(), m_objectStore);
+    m_exclusiveLock->includeSubObject(aqs);
+    aqs.fetch();
+    // Remove jobs from shard
+    auto removalResult = aqs.removeJobs(localJobsToRemove);
+    // If the shard is drained, remove, otherwise commit. We update the pointer afterwards.
+    if (removalResult.jobsAfter) {
+      aqs.commit();
+    } else {
+      aqs.remove();
+    }
+    // We still need to update the tracking queue side.
+    // Update stats and remove the jobs from the todo list.
+    for (auto & j: removalResult.removedJobs) {
+      maxDriveAllowedMap.decCount(j.maxDrivesAllowed);
+      priorityMap.decCount(j.priority);
+      minArchiveRequestAgeMap.decCount(j.minArchiveRequestAge);
+    }
+    // In all cases, we should update the global statistics.
+    m_payload.set_archivejobscount(m_payload.archivejobscount() - removalResult.jobsRemoved);
+    m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - removalResult.bytesRemoved);
+    // If the shard is still around, we shall update its pointer's stats too.
+    if (removalResult.jobsAfter) {
+      // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.
+      shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
+      shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
+      if (shardPointer->shardbytescount() != removalResult.bytesAfter 
+          || shardPointer->shardjobscount() != removalResult.jobsAfter) {
+        rebuild();
+      }
+      // We will commit when exiting anyway...
+      shardIndex++;
+    } else {
+      // Shard's gone, so should the pointer. Push it to the end of the queue and 
+      // trim it.
+      for (auto i=shardIndex; i<mutableArchiveQueueShards->size()-1; i++) {
+        mutableArchiveQueueShards->SwapElements(i, i+1);
+      }
+      m_payload.mutable_archivequeuesshards()->RemoveLast();
+    }
+    // We should also trim the removed jobs from our list.
+    localJobsToRemove.remove_if(
+      [&removalResult](const std::string & ja){ 
+        return std::count_if(removalResult.removedJobs.begin(), removalResult.removedJobs.end(),
+          [&ja](ArchiveQueueShard::JobInfo & j) {
+            return j.address == ja;
+          }
+        );
+      }
+    ); // end of remove_if
+    // And commit the queue (once per shard should not hurt performance).
+    commit();
+  }
+}
+
+auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
+  // Go read the shards in parallel...
   std::list<JobDump> ret;
-  auto & jl=m_payload.pendingarchivejobs();
-  for (auto j=jl.begin(); j!=jl.end(); j++) {
-    ret.push_back(JobDump());
-    JobDump & jd = ret.back();
-    jd.address = j->address();
-    jd.size = j->size();
-    jd.copyNb = j->copynb();
+  std::list<ArchiveQueueShard> shards;
+  std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  for (auto & sa: m_payload.archivequeuesshards()) {
+    shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+    shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
+  }
+  auto s = shards.begin();
+  auto sf = shardsFetchers.begin();
+  while (s != shards.end()) {
+    try {
+      (*sf)->wait();
+    } catch (Backend::NoSuchObject & ex) {
+      // We are possibly in read only mode, so we cannot rebuild.
+      // Just skip this shard.
+      goto nextShard;
+    }
+    for (auto & j: s->dumpJobs()) {
+      ret.emplace_back(JobDump{j.size, j.address, j.copyNb});
+    }
+  nextShard:
+    s++; sf++;
   }
   return ret;
 }
 
-bool ArchiveQueue::addOrphanedJobPendingNsCreation(
-  const ArchiveRequest::JobDump& job, 
-  const std::string& archiveToFileAddress, 
-  uint64_t fileid,
-  uint64_t size, const cta::common::dataStructures::MountPolicy & policy) {
-  checkPayloadWritable();
-  auto & jl=m_payload.orphanedarchivejobsnscreation();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveToFileAddress)
-      return false;
+auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
+  checkPayloadReadable();
+  CandidateJobList ret;
+  for (auto & aqsp: m_payload.archivequeuesshards()) {
+    // We need to go through all shard poiters unconditionnaly to count what is left (see else part)
+    if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
+      // Fetch the shard
+      ArchiveQueueShard aqs(aqsp.address(), m_objectStore);
+      aqs.fetchNoLock();
+      auto shardCandidates = aqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles, archiveRequestsToSkip);
+      ret.candidateBytes += shardCandidates.candidateBytes;
+      ret.candidateFiles += shardCandidates.candidateFiles;
+      // We overwrite the remaining values each time as the previous
+      // shards have exhaustied their candidate lists.
+      ret.remainingBytesAfterCandidates = shardCandidates.remainingBytesAfterCandidates;
+      ret.remainingFilesAfterCandidates = shardCandidates.remainingFilesAfterCandidates;
+      ret.candidates.splice(ret.candidates.end(), shardCandidates.candidates);
+    } else {
+      // We are done with finding candidates. We just need to count what is left in the non-visited shards.
+      ret.remainingBytesAfterCandidates += aqsp.shardbytescount();
+      ret.remainingFilesAfterCandidates += aqsp.shardjobscount();
+    }
   }
-  auto * j = m_payload.add_orphanedarchivejobsnscreation();
-  j->set_address(archiveToFileAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
-  j->set_copynb(job.copyNb);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  j->set_priority(policy.archivePriority);
-  j->set_minarchiverequestage(policy.archiveMinRequestAge);
-  return true;
-}
-
-bool ArchiveQueue::addOrphanedJobPendingNsDeletion(
-  const ArchiveRequest::JobDump& job, 
-  const std::string& archiveToFileAddress, 
-  uint64_t fileid, uint64_t size) {
-  checkPayloadWritable();
-  auto & jl=m_payload.orphanedarchivejobsnsdeletion();
-  for (auto j=jl.begin(); j!= jl.end(); j++) {
-    if (j->address() == archiveToFileAddress)
-      return false;
-  }
-  auto * j = m_payload.add_orphanedarchivejobsnsdeletion();
-  j->set_address(archiveToFileAddress);
-  j->set_size(size);
-  j->set_fileid(fileid);
-  return true;
+  return ret;
 }
 
 }} // namespace cta::objectstore

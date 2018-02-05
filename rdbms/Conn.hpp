@@ -18,31 +18,65 @@
 
 #pragma once
 
-#include "Stmt.hpp"
+#include "rdbms/ConnAndStmts.hpp"
+#include "rdbms/Stmt.hpp"
 
-#include <atomic>
 #include <list>
 #include <memory>
-#include <string>
 
 namespace cta {
 namespace rdbms {
 
+class ConnPool;
+
 /**
- * Abstract class that specifies the interface to a database connection.
+ * A smart database connection that will automatically return the underlying
+ * database connection to its parent connection pool when it goes out of scope.
  */
 class Conn {
 public:
 
   /**
-   * Destructor.
+   * Constructor.
+   *
+   * @param connAndStmts The database connection and its pool of prepared
+   * statements.
+   * @param pool The database connection pool to which the connection
+   * should be returned.
    */
-  virtual ~Conn() throw() = 0;
+  Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool *const pool);
 
   /**
-   * Idempotent close() method.  The destructor calls this method.
+   * Deletion of the copy constructor.
    */
-  virtual void close() = 0;
+  Conn(Conn &) = delete;
+
+  /**
+   * Move constructor.
+   *
+   * @param other The other object.
+   */
+  Conn(Conn &&other);
+
+  /**
+   * Destructor.
+   *
+   * Returns the database connection back to its pool.
+   */
+  ~Conn() noexcept;
+
+  /**
+   * Deletion of the copy assignment operator.
+   */
+  Conn &operator=(const Conn &) = delete;
+
+  /**
+   * Move assignment operator.
+   *
+   * @param rhs The object on the right-hand side of the operator.
+   * @return This object.
+   */
+  Conn &operator=(Conn &&rhs);
 
   /**
    * Creates a prepared statement.
@@ -51,7 +85,7 @@ public:
    * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<Stmt> createStmt(const std::string &sql, const Stmt::AutocommitMode autocommitMode) = 0;
+  Stmt createStmt(const std::string &sql, const AutocommitMode autocommitMode);
 
   /**
    * Convenience method that parses the specified string of multiple SQL
@@ -73,17 +107,17 @@ public:
    * @param sql The SQL statement.
    * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery(const std::string &sql, const Stmt::AutocommitMode autocommitMode);
+  void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode);
 
   /**
    * Commits the current transaction.
    */
-  virtual void commit() = 0;
+  void commit();
 
   /**
    * Rolls back the current transaction.
    */
-  virtual void rollback() = 0;
+  void rollback();
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -92,12 +126,36 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  virtual std::list<std::string> getTableNames() = 0;
+  std::list<std::string> getTableNames();
 
   /**
    * Returns true if this connection is open.
    */
-  virtual bool isOpen() const = 0;
+  bool isOpen() const;
+
+  /**
+   * Returns the names of all the sequences in the database schema in
+   * alphabetical order.
+   *
+   * If the underlying database technologies does not supported sequences then
+   * this method simply returns an empty list.
+   *
+   * @return The names of all the sequences in the database schema in
+   * alphabetical order.
+   */
+  std::list<std::string> getSequenceNames();
+
+private:
+
+  /**
+   * The database connection and its pool of prepared statements.
+   */
+  std::unique_ptr<ConnAndStmts> m_connAndStmts;
+
+  /**
+   * The database connection pool to which the m_conn should be returned.
+   */
+  ConnPool *m_pool;
 
 }; // class Conn
 

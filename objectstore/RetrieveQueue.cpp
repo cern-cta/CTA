@@ -99,84 +99,94 @@ std::string cta::objectstore::RetrieveQueue::dump() {
   return headerDump;
 }
 
-void cta::objectstore::RetrieveQueue::addJob(uint64_t copyNb, uint64_t fSeq,
-  const std::string & retrieveRequestAddress, uint64_t size, 
-  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+void cta::objectstore::RetrieveQueue::addJobsAndCommit(std::list<cta::objectstore::RetrieveQueue::JobToAdd> & jobsToAdd) {
   checkPayloadWritable();
   // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.retrievePriority);
   ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
-  if (m_payload.retrievejobs_size()) {
-    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
-      m_payload.set_oldestjobcreationtime(startTime);
+  for (auto & jta: jobsToAdd) {
+    maxDriveAllowedMap.incCount(jta.policy.maxDrivesAllowed);
+    priorityMap.incCount(jta.policy.retrievePriority);
+    minRetrieveRequestAgeMap.incCount(jta.policy.retrieveMinRequestAge);
+    if (m_payload.retrievejobs_size()) {
+      if (m_payload.oldestjobcreationtime() > (uint64_t)jta.startTime) {
+        m_payload.set_oldestjobcreationtime(jta.startTime);
+      }
+      m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + jta.size);
+    } else {
+      m_payload.set_oldestjobcreationtime(jta.startTime);
+      m_payload.set_retrievejobstotalsize(jta.size);
     }
-    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
-  } else {
-    m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_retrievejobstotalsize(size);
+    auto * j = m_payload.add_retrievejobs();
+    j->set_address(jta.retrieveRequestAddress);
+    j->set_size(jta.size);
+    j->set_copynb(jta.copyNb);
+    j->set_fseq(jta.fSeq);
+    j->set_priority(jta.policy.retrievePriority);
+    j->set_minretrieverequestage(jta.policy.retrieveMinRequestAge);
+    j->set_maxdrivesallowed(jta.policy.maxDrivesAllowed);
+    // move the the new job in the right spot on the queue.
+    // i points to the newly added job all the time.
+    size_t i=m_payload.retrievejobs_size() - 1;
+    while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+      m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+      i--;
+    }
   }
-  auto * j = m_payload.add_retrievejobs();
-  j->set_address(retrieveRequestAddress);
-  j->set_size(size);
-  j->set_copynb(copyNb);
-  j->set_fseq(fSeq);
-  j->set_priority(policy.retrievePriority);
-  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  // move the the new job in the right spot on the queue.
-  // i points to the newly added job all the time.
-  size_t i=m_payload.retrievejobs_size() - 1;
-  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
-    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
-    i--;
-  }
+  commit();
 }
 
-bool cta::objectstore::RetrieveQueue::addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
-  const std::string & retrieveRequestAddress, uint64_t size, 
-  const cta::common::dataStructures::MountPolicy & policy, time_t startTime) {
+auto cta::objectstore::RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<cta::objectstore::RetrieveQueue::JobToAdd> & jobsToAdd) 
+-> AdditionSummary {
   checkPayloadWritable();
-  // Check if the job is present and skip insertion if so
-  for (auto &j: m_payload.retrievejobs()) {
-    if (j.address() == retrieveRequestAddress)
-      return false;
-  }
-  // Keep track of the mounting criteria
+  AdditionSummary ret;
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-  maxDriveAllowedMap.incCount(policy.maxDrivesAllowed);
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-  priorityMap.incCount(policy.retrievePriority);
   ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-  minRetrieveRequestAgeMap.incCount(policy.retrieveMinRequestAge);
-  if (m_payload.retrievejobs_size()) {
-    if (m_payload.oldestjobcreationtime() > (uint64_t)startTime) {
-      m_payload.set_oldestjobcreationtime(startTime);
+  for (auto & jta: jobsToAdd) {
+    // Check if the job is present and skip insertion if so
+    for (auto &j: m_payload.retrievejobs()) {
+      if (j.address() == jta.retrieveRequestAddress)
+        goto skipInsertion;
     }
-    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + size);
-  } else {
-    m_payload.set_oldestjobcreationtime(startTime);
-    m_payload.set_retrievejobstotalsize(size);
+    {
+      // Keep track of the mounting criteria
+      maxDriveAllowedMap.incCount(jta.policy.maxDrivesAllowed);
+      priorityMap.incCount(jta.policy.retrievePriority);
+      minRetrieveRequestAgeMap.incCount(jta.policy.retrieveMinRequestAge);
+      if (m_payload.retrievejobs_size()) {
+        if (m_payload.oldestjobcreationtime() > (uint64_t)jta.startTime) {
+          m_payload.set_oldestjobcreationtime(jta.startTime);
+        }
+        m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + jta.size);
+      } else {
+        m_payload.set_oldestjobcreationtime(jta.startTime);
+        m_payload.set_retrievejobstotalsize(jta.size);
+      }
+      auto * j = m_payload.add_retrievejobs();
+      j->set_address(jta.retrieveRequestAddress);
+      j->set_size(jta.size);
+      j->set_copynb(jta.copyNb);
+      j->set_fseq(jta.fSeq);
+      j->set_priority(jta.policy.retrievePriority);
+      j->set_minretrieverequestage(jta.policy.retrieveMinRequestAge);
+      j->set_maxdrivesallowed(jta.policy.maxDrivesAllowed);
+      // move the the new job in the right spot on the queue.
+      // i points to the newly added job all the time.
+      size_t i=m_payload.retrievejobs_size() - 1;
+      while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
+        m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
+        i--;
+      }
+      // Keep track of this addition.
+      ret.files++;
+      ret.bytes+=jta.size;
+    }
+    skipInsertion:;
   }
-  auto * j = m_payload.add_retrievejobs();
-  j->set_address(retrieveRequestAddress);
-  j->set_size(size);
-  j->set_copynb(copyNb);
-  j->set_fseq(fSeq);
-  j->set_priority(policy.retrievePriority);
-  j->set_minretrieverequestage(policy.retrieveMinRequestAge);
-  j->set_maxdrivesallowed(policy.maxDrivesAllowed);
-  // move the the new job in the right spot on the queue.
-  // i points to the newly added job all the time.
-  size_t i=m_payload.retrievejobs_size() - 1;
-  while (i > 0 && m_payload.retrievejobs(i).fseq() < m_payload.retrievejobs(i - 1).fseq()) {
-    m_payload.mutable_retrievejobs()->SwapElements(i-1, i);
-    i--;
-  }
-  return true;
+  if (ret.files) commit();
+  return ret;
 }
 
 cta::objectstore::RetrieveQueue::JobsSummary cta::objectstore::RetrieveQueue::getJobsSummary() {
@@ -234,34 +244,56 @@ auto cta::objectstore::RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-void cta::objectstore::RetrieveQueue::removeJob(const std::string& retrieveToFileAddress) {
-  checkPayloadWritable();
-  auto * jl = m_payload.mutable_retrievejobs();
-  bool found=false;
-  do {
-    found=false;
-    // Push the found entry all the way to the end.
-    for (size_t i=0; i<(size_t)jl->size(); i++) {
-      if (jl->Get(i).address() == retrieveToFileAddress) {
-        found = true;
-        // Keep track of the mounting criteria
-        ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
-        maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
-        ValueCountMap priorityMap(m_payload.mutable_prioritymap());
-        priorityMap.decCount(jl->Get(i).priority());
-        ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-        minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
-        while (i+1 < (size_t)jl->size()) {
-          jl->SwapElements(i, i+1);
-          i++;
-        }
-        break;
-      }
+auto cta::objectstore::RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip) -> CandidateJobList {
+  CandidateJobList ret;
+  ret.remainingBytesAfterCandidates = m_payload.retrievejobstotalsize();
+  ret.remainingFilesAfterCandidates = m_payload.retrievejobs_size();
+  for (auto & j: m_payload.retrievejobs()) {
+    if (!retrieveRequestsToSkip.count(j.address())) {
+      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size()});
+      ret.candidateBytes += j.size();
+      ret.candidateFiles ++;
     }
-    // and remove it
-    if (found)
-      jl->RemoveLast();
-  } while (found);
+    ret.remainingBytesAfterCandidates -= j.size();
+    ret.remainingFilesAfterCandidates--;
+    if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) break;
+  }
+  return ret;
+}
+
+void cta::objectstore::RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& requestsToRemove) {
+  checkPayloadWritable();
+  ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
+  ValueCountMap priorityMap(m_payload.mutable_prioritymap());
+  ValueCountMap minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+  auto * jl = m_payload.mutable_retrievejobs();
+  bool jobRemoved=false;
+  for (auto &rrt: requestsToRemove) {
+    bool found=false;
+    do {
+      found=false;
+      // Push the found entry all the way to the end.
+      for (size_t i=0; i<(size_t)jl->size(); i++) {
+        if (jl->Get(i).address() == rrt) {
+          found = jobRemoved = true;
+          // Keep track of the mounting criteria
+          maxDriveAllowedMap.decCount(jl->Get(i).maxdrivesallowed());
+          priorityMap.decCount(jl->Get(i).priority());
+          minRetrieveRequestAgeMap.decCount(jl->Get(i).minretrieverequestage());
+          m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() - jl->Get(i).size());
+          while (i+1 < (size_t)jl->size()) {
+            jl->SwapElements(i, i+1);
+            i++;
+          }
+          break;
+        }
+      }
+      // and remove it
+      if (found)
+        jl->RemoveLast();
+    } while (found);
+  }
+  if (jobRemoved) commit();
 }
 
 void cta::objectstore::RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

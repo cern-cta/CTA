@@ -329,7 +329,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
-  int pass=0;
+  unsigned int pass=0;
   while (true)
   {
     // -just referenced
@@ -385,8 +385,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
-      aq.commit();
+      std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
+      aq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
@@ -403,8 +404,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       policy.maxDrivesAllowed = 1;
-      aq.addJob(jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL));
-      aq.commit();
+      std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
+      aq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked a not owned but referenced in the agent
@@ -437,8 +439,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     auto d1=aq1.dumpJobs();
     // We expect all jobs with sizes 1002-1005 inclusive to be connected to
     // their respective tape pools.
-    ASSERT_EQ(5, aq0.getJobsSummary().files);
-    ASSERT_EQ(5, aq1.getJobsSummary().files);
+    ASSERT_EQ(5, aq0.getJobsSummary().jobs);
+    ASSERT_EQ(5, aq1.getJobsSummary().jobs);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
@@ -454,10 +456,11 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
+    std::list<std::string> ajtr;
     for (auto &j: aq.dumpJobs()) {
-      aq.removeJob(j.address);
+      ajtr.push_back(j.address);
     }
-    aq.commit();
+    aq.removeJobsAndCommit(ajtr);
     aql.release();
     // Remove queues from root
     re.removeArchiveQueueAndCommit(tp, lc);
@@ -544,7 +547,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rqc.archiveFile.reconciliationTime = 0;
     rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
     rqc.archiveFile.diskInstance = "eoseos";
-    rqc.archiveFile.fileSize = 667;
+    rqc.archiveFile.fileSize = 1000 + pass;
     rqc.archiveFile.storageClass = "sc";
     rqc.archiveFile.tapeFiles[1].blockId=0;
     rqc.archiveFile.tapeFiles[1].compressedSize=1;
@@ -584,11 +587,12 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       cta::objectstore::RetrieveQueue rq(tAddr[0], be);
       cta::objectstore::ScopedExclusiveLock rql(rq);
       rq.fetch();
-      rq.addJob(1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time);
-      rq.commit();
+      std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
+      jta.push_back({1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
+      rq.addJobsAndCommit(jta);
     }
     if (pass < 5) { pass++; continue; }
-    // - Still marked a not owned but referenced in the agent
+    // - Still marked as not owned but referenced in the agent
     {
       rr.setOwner(tAddr[0]);
       rr.setActiveCopyNumber(1);
@@ -635,10 +639,11 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
+    std::list<std::string> jtrl;
     for (auto &j: rq.dumpJobs()) {
-      rq.removeJob(j.address);
+      jtrl.push_back(j.address);
     }
-    rq.commit();
+    rq.removeJobsAndCommit(jtrl);
     rql.release();
     // Remove queues from root
     re.removeRetrieveQueueAndCommit(vid, lc);

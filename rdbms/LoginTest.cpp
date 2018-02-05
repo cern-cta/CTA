@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Login.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/Login.hpp"
 
 #include <gtest/gtest.h>
 #include <sstream>

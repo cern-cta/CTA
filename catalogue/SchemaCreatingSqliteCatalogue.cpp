@@ -18,8 +18,6 @@
 
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
-#include "rdbms/SqliteConn.hpp"
-#include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -31,8 +29,9 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
   log::Logger &log,
   const std::string &filename,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
+  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns, maxTriesToConnect) {
   try {
     createCatalogueSchema();
   } catch(exception::Exception &ex) {

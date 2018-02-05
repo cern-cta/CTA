@@ -581,3 +581,16 @@
    fun:_ZNSt6thread10_Impl_baseD1Ev
    ...
 }
+
+{
+   pthread_create_stack_creation
+   Helgrind:Race
+   fun:memset
+   fun:get_cached_stack
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:pthread_create_WRK
+   fun:pthread_create@*
+   fun:__gthread_create
+   ...
+}

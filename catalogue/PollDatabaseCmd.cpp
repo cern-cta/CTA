@@ -19,7 +19,6 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/PollDatabaseCmd.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <unistd.h>
@@ -52,9 +51,8 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
   }
 
   const auto dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
-  auto factory = rdbms::ConnFactoryFactory::create(dbLogin); 
   const uint64_t nbConns = 2;
-  rdbms::ConnPool connPool(*factory, nbConns);
+  rdbms::ConnPool connPool(dbLogin, nbConns);
 
   uint32_t elapsedSeconds = 0;
   for(uint32_t i = 0; i < cmdLineArgs.numberOfSecondsToKeepPolling; i++) {

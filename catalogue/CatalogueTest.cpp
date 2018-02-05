@@ -21,7 +21,7 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -53,7 +53,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
   try {
     const rdbms::Login &login = GetParam()->create();
-    auto connFactory = rdbms::ConnFactoryFactory::create(login);
+    auto connFactory = rdbms::wrapper::ConnFactoryFactory::create(login);
     const uint64_t nbConns = 2;
     const uint64_t nbArchiveFileListingConns = 2;
 
@@ -231,6 +231,31 @@ std::map<std::string, cta::common::dataStructures::AdminHost> cta_catalogue_Cata
       }
       m[adminHost.name] = adminHost;
     }
+    return m;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// tapePoolListToMap
+//------------------------------------------------------------------------------
+std::map<std::string, cta::catalogue::TapePool> cta_catalogue_CatalogueTest::tapePoolListToMap(
+  const std::list<cta::catalogue::TapePool> &listOfTapePools) {
+  using namespace cta;
+
+  try {
+    std::map<std::string, cta::catalogue::TapePool> m;
+
+    for(auto &tapePool: listOfTapePools) {
+      if(m.end() != m.find(tapePool.name)) {
+        exception::Exception ex;
+        ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
+        throw ex;
+      }
+      m[tapePool.name] = tapePool;
+    }
+
     return m;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -1789,7 +1814,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const std::string logicalLibraryName = "logical_library_name";
   const std::string tapePoolName = "tape_pool_name";
   // The maximum size of an SQLite integer is a signed 64-bit integer
-  const uint64_t capacityInBytes = std::numeric_limits<int64_t>::max();
+  const uint64_t capacityInBytes = 9L * 1000 * 1000 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
   const std::string comment = "Create tape";
@@ -4503,6 +4528,64 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule_non_existant) 
     exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_no_archive_routes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterMountRule rule = rules.front();
+
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  // Do not create any archive routes
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+
+  ASSERT_THROW(m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity),
+    exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   using namespace cta;
 
@@ -5497,7 +5580,8 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const std::string vid1 = "VID123";
   const std::string vid2 = "VID456";
   const std::string logicalLibraryName = "logical_library_name";
-  const std::string tapePoolName = "tape_pool_name";
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
   const bool disabledValue = true;
   const bool fullValue = false;
@@ -5505,44 +5589,69 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
 
-  m_catalogue->createTapePool(m_admin, tapePoolName, 2, true, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, tapePoolName1, 1, true, "Create tape pool");
   {
     const auto pools = m_catalogue->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
+    auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityGigabytes);
     ASSERT_EQ(0, pool.dataGigabytes);
   }
 
-  uint64_t totalCapacityInBytes = 0;
-  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
-    disabledValue, fullValue, comment);
-  totalCapacityInBytes += capacityInBytes;
+  m_catalogue->createTapePool(m_admin, tapePoolName2, 1, true, "Create tape pool");
   {
     const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(2, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(totalCapacityInBytes/1000000000, pool.capacityGigabytes);
+    auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName2, pool.name);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityGigabytes);
     ASSERT_EQ(0, pool.dataGigabytes);
   }
 
-  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName, capacityInBytes,
+  m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName1, capacityInBytes,
     disabledValue, fullValue, comment);
-  totalCapacityInBytes += capacityInBytes;
   {
     const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(2, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(totalCapacityInBytes/1000000000, pool.capacityGigabytes);
+    auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(0, pool.dataGigabytes);
+  }
+
+  m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName2, capacityInBytes,
+    disabledValue, fullValue, comment);
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(2, pools.size());
+
+    auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName2, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
     ASSERT_EQ(0, pool.dataGigabytes);
   }
 
@@ -5558,7 +5667,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       const common::dataStructures::Tape &tape = it->second;
       ASSERT_EQ(vid1, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5582,7 +5691,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
       const auto &tape = it->second;
       ASSERT_EQ(vid2, tape.vid);
       ASSERT_EQ(logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(tapePoolName2, tape.tapePoolName);
       ASSERT_EQ(capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(disabledValue == tape.disabled);
       ASSERT_TRUE(fullValue == tape.full);
@@ -5617,7 +5726,6 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
-  uint64_t totalCompressedFileSize = 0;
   std::set<catalogue::TapeFileWritten> tapeFilesWrittenCopy1;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
@@ -5645,19 +5753,21 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWritten);
-
-    totalCompressedFileSize += compressedFileSize;
   }
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   {
     const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(2, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(totalCapacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(totalCompressedFileSize/1000000000, pool.dataGigabytes);
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName1, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize/1000000000, pool.dataGigabytes);
   }
 
   {
@@ -5705,19 +5815,21 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy2.emplace(fileWritten);
-
-    totalCompressedFileSize += compressedFileSize;
   }
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy2);
   {
     const auto pools = m_catalogue->getTapePools();
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(2, pools.size());
 
-    const auto &pool = pools.front();
-    ASSERT_EQ(tapePoolName, pool.name);
-    ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(totalCapacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(totalCompressedFileSize/1000000000, pool.dataGigabytes);
+    const auto tapePoolMap = tapePoolListToMap(pools);
+    auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
+    ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
+    const auto &pool = tapePoolMapItor->second;
+
+    ASSERT_EQ(tapePoolName2, pool.name);
+    ASSERT_EQ(1, pool.nbTapes);
+    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize/1000000000, pool.dataGigabytes);
   }
 
   {
@@ -5749,7 +5861,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
     searchCriteria.storageClass = storageClass.name;
     searchCriteria.vid = vid1;
     searchCriteria.tapeFileCopyNb = 1;
-    searchCriteria.tapePool = tapePoolName;
+    searchCriteria.tapePool = tapePoolName1;
 
     auto archiveFileItor = m_catalogue->getArchiveFiles(searchCriteria);
     std::map<uint64_t, common::dataStructures::ArchiveFile> m = archiveFileItorToMap(archiveFileItor);
@@ -5988,15 +6100,28 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
 
   {
     catalogue::TapeFileSearchCriteria searchCriteria;
-    searchCriteria.tapePool = "tape_pool_name";
+    searchCriteria.tapePool = tapePoolName1;
     auto archiveFileItor = m_catalogue->getArchiveFiles(searchCriteria);
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * compressedFileSize, summary.totalCompressedBytes);
-    ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
+    ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
+  }
+
+  {
+    catalogue::TapeFileSearchCriteria searchCriteria;
+    searchCriteria.tapePool = tapePoolName2;
+    auto archiveFileItor = m_catalogue->getArchiveFiles(searchCriteria);
+    const auto m = archiveFileItorToMap(archiveFileItor);
+    ASSERT_EQ(nbArchiveFiles, m.size());
+
+    const common::dataStructures::ArchiveFileSummary summary = m_catalogue->getTapeFileSummary(searchCriteria);
+    ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize, summary.totalCompressedBytes);
+    ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
 
   {

@@ -178,8 +178,15 @@ private:
   static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToNewQueue(typename Request::JobDump & job, const std::string & queueIndex,
     Request & request, OStoreDB & oStoreDB, log::LogContext & logContext, threading::MutexLocker &globalLock);
   
+  /** Struct holding the job plus request data */
+  struct JobAndRequest {
+    typename Request::JobDump & job;
+    Request & request;
+  };
+  
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
-  static void specializedAddJobToQueue(typename Request::JobDump & job, Request & request, Queue & queue);
+  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue, 
+    objectstore::AgentReference & agentReference, log::LogContext & logContext);
   
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
   static void specializedUpdateCachedQueueStats(Queue &queue);
@@ -301,20 +308,21 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       qBytesBefore+=j.size;
     }
     size_t addedJobs=1;
+    // Build the list of jobs to add to the queue
+    std::list<JobAndRequest> jta;
     // First add the job for this thread
-    specializedAddJobToQueue(job, request, queue);
+    jta.push_back({job, request});
     // We are done with the queue: release the lock to make helgrind happy.
     ulq.unlock();
     // We do the same for all the queued requests
     for (auto &maqr: maq->m_requests) {
       // Add the job
-      specializedAddJobToQueue(maqr->m_job, maqr->m_request, queue);
+      jta.push_back({maqr->m_job, maqr->m_request});
       addedJobs++;
     }
-    double inMemoryQueueProcessTime = timer.secs(utils::Timer::resetCounter);
-    // We can now commit the multi-request addition to the object store
-    queue.commit();
-    double queueCommitTime = timer.secs(utils::Timer::resetCounter);
+    // Actually ass the jobs.
+    specializedAddJobsToQueueAndCommit(jta, queue, *oStoreDB.m_agentReference, logContext);
+    double queueProcessAndCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.
     specializedUpdateCachedQueueStats(queue);
     double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
@@ -341,10 +349,9 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
             .add("addedJobs", addedJobs)
             .add("waitTime", waitTime)
             .add("getFetchedQueueTime", getFetchedQueueTime)
-            .add("inMemoryQueueProcessTime", inMemoryQueueProcessTime)
-            .add("queueCommitTime", queueCommitTime)
+            .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
             .add("cacheUpdateTime", cacheUpdateTime) 
-            .add("totalEnqueueTime", getFetchedQueueTime + inMemoryQueueProcessTime + queueCommitTime 
+            .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime 
                                     + cacheUpdateTime + timer.secs());
       logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }

@@ -126,16 +126,6 @@ public:
   virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(
     const std::string &tapePoolName) const = 0;
   
-  /**
-   * Deletes the specified archive request.
-   *
-   * @param archiveFile The ID of the destination file within the
-   * archive catalogue.
-   */
-  virtual void deleteArchiveRequest(
-    const std::string &diskInstanceName, 
-    uint64_t archiveFileId) = 0;
-  
   /*
    * Subclass allowing the tracking and automated cleanup of a 
    * ArchiveToFile requests on the SchdulerDB for deletion.

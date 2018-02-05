@@ -84,11 +84,6 @@ public:
     return m_OStoreDB.queueArchive(instanceName, request, criteria, logContext);
   }
 
-  
-  void deleteArchiveRequest(const std::string &diskInstanceName, uint64_t archiveFileId) override {
-    m_OStoreDB.deleteArchiveRequest(diskInstanceName, archiveFileId);
-  }
-
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }

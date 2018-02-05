@@ -54,9 +54,8 @@ int main(int argc, char ** argv) {
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl 
         << "Object name: " << objectName << std::endl;
     cta::objectstore::GenericObject ge(objectName, *be);
-    cta::objectstore::ScopedSharedLock gel(ge);
-    ge.fetch();
-    std::cout << ge.dump(gel) << std::endl;
+    ge.fetchNoLock();
+    std::cout << ge.dump() << std::endl;
   } catch (std::exception & e) {
     std::cerr << "Failed to dump object: "
         << std::endl << e.what() << std::endl;

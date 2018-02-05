@@ -21,7 +21,7 @@
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "rdbms/ConnFactoryFactory.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 namespace cta {
 namespace catalogue {

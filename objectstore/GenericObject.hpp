@@ -78,7 +78,7 @@ public:
    *
    * @param lock reference to the generic object's lock
    */
-  std::string dump(ScopedSharedLock & lock);
+  std::string dump();
   
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
   

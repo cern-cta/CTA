@@ -51,33 +51,46 @@ public:
   
   // Commit with sanity checks (override from ObjectOps
   void commit();
+private:
+  // Validates all summaries are in accordance with each other.
+  bool checkMapsAndShardsCoherency();
   
+  // Rebuild from shards if something goes wrong.
+  void rebuild();
+  
+public:
   // Set/get tape pool
   void setTapePool(const std::string & name);
   std::string getTapePool();
   
-  // Archive jobs management ===================================================  
-  void addJob(const ArchiveRequest::JobDump & job,
-    const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  // Archive jobs management ===================================================
+  struct JobToAdd {
+    ArchiveRequest::JobDump job;
+    const std::string archiveRequestAddress;
+    uint64_t archiveFileId;
+    uint64_t fileSize;
+    const cta::common::dataStructures::MountPolicy policy;
+    time_t startTime;
+  };
+  /** Add the jobs to the queue. 
+   * The lock will be used to mark the shards as locked (the lock is the same for 
+   * the main object and the shard, the is no shared access.
+   * As we potentially have to create new shard(s), we need access to the agent 
+   * reference (to generate a non-colliding object name).
+   * We will also log the shard creation (hence the context)
+   */ 
+  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addJobIfNecessary(const ArchiveRequest::JobDump & job,
-    const std::string & archiveRequestAddress, uint64_t archiveFileId,
-    uint64_t fileSize, const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
-  /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addOrphanedJobPendingNsCreation(const ArchiveRequest::JobDump& job,
-    const std::string& archiveToFileAddress, uint64_t fileid,
-    uint64_t size, const cta::common::dataStructures::MountPolicy & policy);
-  /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addOrphanedJobPendingNsDeletion(const ArchiveRequest::JobDump& job,
-    const std::string& archiveToFileAddress,
-    uint64_t fileid, uint64_t size);
+  // returns the count and sizes of actually added jobs (if any).
+  struct AdditionSummary {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+    AgentReference & agentReference, log::LogContext & lc);
   
   struct JobsSummary {
-    uint64_t files;
+    uint64_t jobs;
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
@@ -86,15 +99,24 @@ public:
   };
   JobsSummary getJobsSummary();
   
-  void removeJob(const std::string &archiveToFileAddress);
-  class JobDump {
-  public:
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
+  struct JobDump {
     uint64_t size;
     std::string address;
     uint16_t copyNb;
   };
   std::list<JobDump> dumpJobs();
-  
+  struct CandidateJobList {
+    uint64_t remainingFilesAfterCandidates = 0;
+    uint64_t remainingBytesAfterCandidates = 0;
+    uint64_t candidateFiles = 0;
+    uint64_t candidateBytes = 0;
+    std::list<JobDump> candidates;
+  };
+  // The set of archive requests to skip are requests previously identified by the caller as bad,
+  // which still should be removed from the queue. They will be disregarded from  listing.
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip);
+   
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
  
@@ -104,6 +126,13 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   
   std::string dump();
+  
+  // The shard size. From experience, 100k is where we start to see performance difference,
+  // but nothing prevents us from using a smaller size.
+  // The performance will be roughly flat until the queue size reaches the square of this limit
+  // (meaning the queue object updates start to take too much time).
+  // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
+  static const uint64_t c_maxShardSize = 25000;
 };
   
 }}

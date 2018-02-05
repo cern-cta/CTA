@@ -19,16 +19,10 @@
 #pragma once
 
 #include "catalogue/RdbmsCatalogue.hpp"
-#include "rdbms/OcciColumn.hpp"
-#include "rdbms/PooledConn.hpp"
-
-#include <occi.h>
-#include <string.h>
+#include "rdbms/Conn.hpp"
 
 namespace cta {
 namespace catalogue {
-
-class CatalogueFactory;
 
 /**
  * An Oracle based implementation of the CTA catalogue.
@@ -49,6 +43,9 @@ public:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
+   * @param maxTriesToConnext The maximum number of times a single method should
+   * try to connect to the database in the event of LostDatabaseConnection
+   * exceptions being thrown.
    */
   OracleCatalogue(
     log::Logger       &log,
@@ -56,7 +53,8 @@ public:
     const std::string &password,
     const std::string &database,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+    const uint64_t nbArchiveFileListingConns,
+    const uint32_t maxTriesToConnect = 3);
 
   /**
    * Destructor.
@@ -117,7 +115,7 @@ public:
    * @return A unique archive ID that can be used by a new archive file within
    * the catalogue.
    */
-  uint64_t getNextArchiveFileId(rdbms::PooledConn &conn) override;
+  uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
    * Notifies the catalogue that the specified files have been written to tape.
@@ -129,86 +127,70 @@ public:
 private:
 
   /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that the name of the disk instance is specified in order to
+   * prevent a disk instance deleting an archive file that belongs to another
+   * disk instance.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFileInternal(const std::string &diskInstanceName, const uint64_t archiveFileId,
+    log::LogContext &lc);
+
+  /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the instance from where the deletion
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFileByDiskFileIdInternal(const std::string &diskInstanceName, const std::string &diskFileId,
+    log::LogContext &lc);
+
+  /**
+   * Notifies the catalogue that the specified files have been written to tape.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param events The tape file written events.
+   */
+  void filesWrittenToTapeInternal(const std::set<TapeFileWritten> &events);
+
+  /**
    * Selects the specified tape within the Tape table for update.
    *
    * @param conn The database connection.
    * @param vid The volume identifier of the tape.
    */
-  common::dataStructures::Tape selectTapeForUpdate(rdbms::PooledConn &conn, const std::string &vid);
-
-  /**
-   * Structure used to assemble a batch of rows to insert into the TAPE_FILE
-   * table.
-   */
-  struct TapeFileBatch {
-    size_t nbRows;
-    rdbms::OcciColumn vid;
-    rdbms::OcciColumn fSeq;
-    rdbms::OcciColumn blockId;
-    rdbms::OcciColumn compressedSize;
-    rdbms::OcciColumn copyNb;
-    rdbms::OcciColumn creationTime;
-    rdbms::OcciColumn archiveFileId;
-
-    /**
-     * Constructor.
-     *
-     * @param nbRowsValue  The Number of rows to be inserted.
-     */
-    TapeFileBatch(const size_t nbRowsValue):
-      nbRows(nbRowsValue),
-      vid("VID", nbRows),
-      fSeq("FSEQ", nbRows),
-      blockId("BLOCK_ID", nbRows),
-      compressedSize("COMPRESSED_SIZE_IN_BYTES", nbRows),
-      copyNb("COPY_NB", nbRows),
-      creationTime("CREATION_TIME", nbRows),
-      archiveFileId("ARCHIVE_FILE_ID", nbRows) {
-    }
-  }; // struct TapeFileBatch
-
-  /**
-   * Structure used to assemble a batch of rows to insert into the ARCHIVE_FILE
-   * table.
-   */
-  struct ArchiveFileBatch {
-    size_t nbRows;
-    rdbms::OcciColumn archiveFileId;
-    rdbms::OcciColumn diskInstance;
-    rdbms::OcciColumn diskFileId;
-    rdbms::OcciColumn diskFilePath;
-    rdbms::OcciColumn diskFileUser;
-    rdbms::OcciColumn diskFileGroup;
-    rdbms::OcciColumn diskFileRecoveryBlob;
-    rdbms::OcciColumn size;
-    rdbms::OcciColumn checksumType;
-    rdbms::OcciColumn checksumValue;
-    rdbms::OcciColumn storageClassName;
-    rdbms::OcciColumn creationTime;
-    rdbms::OcciColumn reconciliationTime;
-
-    /**
-     * Constructor.
-     *
-     * @param nbRowsValue  The Number of rows to be inserted.
-     */
-    ArchiveFileBatch(const size_t nbRowsValue):
-      nbRows(nbRowsValue),
-      archiveFileId("ARCHIVE_FILE_ID", nbRows),
-      diskInstance("DISK_INSTANCE_NAME", nbRows),
-      diskFileId("DISK_FILE_ID", nbRows),
-      diskFilePath("DISK_FILE_PATH", nbRows),
-      diskFileUser("DISK_FILE_USER", nbRows),
-      diskFileGroup("DISK_FILE_GROUP", nbRows),
-      diskFileRecoveryBlob("DISK_FILE_RECOVERY_BLOB", nbRows),
-      size("SIZE_IN_BYTES", nbRows),
-      checksumType("CHECKSUM_TYPE", nbRows),
-      checksumValue("CHECKSUM_VALUE", nbRows),
-      storageClassName("STORAGE_CLASS_NAME", nbRows),
-      creationTime("CREATION_TIME", nbRows),
-      reconciliationTime("RECONCILIATION_TIME", nbRows) {
-    }
-  }; // struct ArchiveFileBatch
+  common::dataStructures::Tape selectTapeForUpdate(rdbms::Conn &conn, const std::string &vid);
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -227,7 +209,7 @@ private:
    * @param autocommitMode The autocommit mode of the SQL insert statement.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::PooledConn &conn, const rdbms::Stmt::AutocommitMode autocommitMode,
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
     const std::set<TapeFileWritten> &events);
 
 }; // class OracleCatalogue

@@ -45,14 +45,22 @@ public:
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  void addJob(uint64_t copyNb, uint64_t fSeq,
-    const std::string & retrieveRequestAddress, uint64_t size,
-    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  struct JobToAdd {
+    uint64_t copyNb;
+    uint64_t fSeq;
+    const std::string retrieveRequestAddress;
+    uint64_t size;
+    const cta::common::dataStructures::MountPolicy policy;
+    time_t startTime;
+  };
+  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
   /// This version will check for existence of the job in the queue before
-  // returns true if a new job was actually inserted.
-  bool addJobIfNecessary(uint64_t copyNb, uint64_t fSeq,
-    const std::string & retrieveRequestAddress, uint64_t size,
-    const cta::common::dataStructures::MountPolicy & policy, time_t startTime);
+  // returns the count and sizes of actually added jobs (if any).
+  struct AdditionSummary {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd);
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;
@@ -69,8 +77,18 @@ public:
     uint64_t size;
   };
   std::list<JobDump> dumpJobs();
+  struct CandidateJobList {
+    uint64_t remainingFilesAfterCandidates = 0;
+    uint64_t remainingBytesAfterCandidates = 0;
+    uint64_t candidateFiles = 0;
+    uint64_t candidateBytes = 0;
+    std::list<JobDump> candidates;
+  };
+  // The set of retrieve requests to skip are requests previously identified by the caller as bad,
+  // which still should be removed from the queue. They will be disregarded from  listing.
+  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip);
   
-  void removeJob(const std::string & retrieveToFileAddress);
+  void removeJobsAndCommit(const std::list<std::string> & requestsToRemove);
   // -- Generic parameters
   std::string getVid();
 };

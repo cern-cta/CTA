@@ -17,9 +17,6 @@
  */
 
 #include "catalogue/InMemoryCatalogue.hpp"
-#include "catalogue/SqliteCatalogueSchema.hpp"
-#include "rdbms/SqliteConn.hpp"
-#include "rdbms/SqliteConnFactory.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -30,8 +27,10 @@ namespace catalogue {
 InMemoryCatalogue::InMemoryCatalogue(
   log::Logger &log,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
+  SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns,
+    maxTriesToConnect) {
 }
 
 //------------------------------------------------------------------------------
