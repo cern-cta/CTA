@@ -171,7 +171,7 @@ template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("")), m_backend(new cta::objectstore::BackendVFS()), 
-m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_catalogue(new cta::catalogue::DummyCatalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory", *m_logger) {
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
@@ -198,7 +198,7 @@ template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()), 
-m_catalogue(new cta::catalogue::DummyCatalogue(*m_logger)),
+m_catalogue(new cta::catalogue::DummyCatalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory", *m_logger) {
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
