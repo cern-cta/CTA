@@ -284,7 +284,7 @@ done
 [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
 kubectl --namespace=${instance} exec ctaeos -- grep ${EOSINSTANCE} /etc/eos.keytab | sed "s/daemon/${EOSINSTANCE}/g" |\
 kubectl --namespace=${instance} exec -i ctafrontend -- \
-bash -c "cat > /etc/cta/eos.sss.keytab; chmod 400 /etc/cta/eos.sss.keytab; chown cta:cta /etc/cta/eos.sss.keytab"
+bash -c "cat > /etc/cta/eos.sss.keytab.tmp; chmod 400 /etc/cta/eos.sss.keytab.tmp; chown cta:cta /etc/cta/eos.sss.keytab.tmp; mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab"
 echo OK
 
 echo -n "Waiting for EOS to be configured"
