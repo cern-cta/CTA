@@ -31,7 +31,7 @@ namespace catalogue {
  */
 class DummyCatalogue: public Catalogue {
 public:
-  DummyCatalogue() {}
+  DummyCatalogue(log::Logger &l): Catalogue(l) {}
   virtual ~DummyCatalogue() { }
   void createAdminHost(const common::dataStructures::SecurityIdentity& admin, const std::string& hostName, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 

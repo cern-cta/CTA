@@ -77,6 +77,12 @@ namespace catalogue {
  */
 class Catalogue {
 public:
+  /**
+   * Constructor.
+   *
+   * @param log Object representing the API to the CTA logging system.
+   */
+  Catalogue(log::Logger &log);
 
   /**
    * Destructor.
@@ -579,6 +585,13 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
+
+protected:
+
+  /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
 
 }; // class Catalogue
 

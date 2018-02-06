@@ -535,11 +535,6 @@ public:
 protected:
 
   /**
-   * Object representing the API to the CTA logging system.
-   */
-  log::Logger &m_log;
-
-  /**
    * Mutex to be used to a take a global lock on the database.
    */
   threading::Mutex m_mutex;

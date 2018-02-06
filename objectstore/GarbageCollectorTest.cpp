@@ -44,7 +44,7 @@ namespace unitTests {
 TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // We will need a log object 
   cta::log::DummyLogger dl("unitTest");
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   cta::log::LogContext lc(dl);
   // Here we check for the ability to detect dead (but empty agents)
   // and clean them up.
@@ -98,7 +98,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   // We will need a log object 
   cta::log::DummyLogger dl("unitTest");
   cta::log::LogContext lc(dl);
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
@@ -158,7 +158,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   cta::log::DummyLogger dl("unitTest");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
@@ -218,7 +218,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   cta::log::DummyLogger dl("unitTest");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call agentRegister's garbage collector
   cta::objectstore::BackendVFS be;
   cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
@@ -282,7 +282,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call ArchiveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   // Create the root entry
@@ -480,7 +480,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
+  cta::catalogue::DummyCatalogue catalogue(dl);
   // Here we check that can successfully call RetrieveRequests's garbage collector
   cta::objectstore::BackendVFS be;
   // Create the root entry
