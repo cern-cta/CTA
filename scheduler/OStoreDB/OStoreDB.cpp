@@ -118,7 +118,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.oldestJobStartTime = aqueue.getJobsSummary().oldestJobStartTime;
       m.priority = aqueue.getJobsSummary().priority;
       m.maxDrivesAllowed = aqueue.getJobsSummary().maxDrivesAllowed;
-      m.minArchiveRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
+      m.minRequestAge = aqueue.getJobsSummary().minArchiveRequestAge;
       m.logicalLibrary = "";
     } else {
       tmdi.queueTrimRequired = true;
@@ -164,7 +164,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
       m.priority = rqueue.getJobsSummary().priority;
       m.maxDrivesAllowed = rqueue.getJobsSummary().maxDrivesAllowed;
-      m.minArchiveRequestAge = rqueue.getJobsSummary().minArchiveRequestAge;
+      m.minRequestAge = rqueue.getJobsSummary().minRetrieveRequestAge;
       m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
     } else {
       tmdi.queueTrimRequired = true;
@@ -2555,7 +2555,7 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     auto sr = m_retrieveRequest.getSchedulerRequest();
     std::list<objectstore::RetrieveQueue::JobToAdd> jta;
     jta.push_back({bestCopyNb, tf.fSeq, m_retrieveRequest.getAddressIfSet(), af.fileSize, rfqc.mountPolicy, sr.creationLog.time});
-    rq.addJobsIfNecessaryAndCommit(jta);
+    rq.addJobsIfNecessaryAndCommit(jta, *m_oStoreDB.m_agentReference, logContext);
     m_retrieveRequest.setOwner(rq.getAddressIfSet());
     m_retrieveRequest.commit();
     // We do not own the request anymore

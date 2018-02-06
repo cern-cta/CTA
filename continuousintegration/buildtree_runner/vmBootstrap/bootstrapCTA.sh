@@ -3,7 +3,7 @@
 set -x
 
 echo Getting CTA sources...
-( cd ~ ; git clone https://:@gitlab.cern.ch:8443/cta/CTA.git)
+( cd ~ ; git clone https://:@gitlab.cern.ch:8443/cta/CTA.git; cd CTA ; git submodule update --init --recursive)
 
 echo Creating source rpm
 mkdir -p ~/CTA-build-srpm

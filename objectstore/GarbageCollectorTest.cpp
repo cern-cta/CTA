@@ -589,7 +589,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       rq.fetch();
       std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles[1].fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy, sReq.creationLog.time});
-      rq.addJobsAndCommit(jta);
+      rq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked as not owned but referenced in the agent

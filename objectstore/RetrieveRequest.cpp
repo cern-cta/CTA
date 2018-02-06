@@ -142,7 +142,7 @@ jobFound:;
   std::list<RetrieveQueue::JobToAdd> jta;
   jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(), 
     mp, (signed)m_payload.schedulerrequest().entrylog().time()});
-  rq.addJobsIfNecessaryAndCommit(jta);
+  rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
   auto jobsSummary=rq.getJobsSummary();
   auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
   // We can now make the transition official

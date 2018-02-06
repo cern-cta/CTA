@@ -63,7 +63,7 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
     }
   jobAdded:;
   }
-  queue.addJobsAndCommit(jtal);
+  queue.addJobsAndCommit(jtal, agentReference, logContext);
 }
 
 template<>

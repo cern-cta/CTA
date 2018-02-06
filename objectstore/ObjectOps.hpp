@@ -91,8 +91,9 @@ protected:
   }
   
   void checkReadable() {
-    if (!m_locksCount && !m_noLock)
-     throw NotLocked("In ObjectOps::checkReadable: object not locked");
+    // We could still read from a fresh, not yet inserted object.
+    if (m_existingObject && (!m_locksCount && !m_noLock))
+      throw NotLocked("In ObjectOps::checkReadable: object not locked");
   }
   
 public:

@@ -151,7 +151,7 @@ auto ArchiveQueueShard::getJobsSummary() -> JobsSummary {
 
 uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   checkPayloadWritable();
-  auto * j = m_payload.mutable_archivejobs()->Add();
+  auto * j = m_payload.add_archivejobs();
   j->set_address(jobToAdd.archiveRequestAddress);
   j->set_size(jobToAdd.fileSize);
   j->set_fileid(jobToAdd.archiveFileId);

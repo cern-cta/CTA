@@ -37,6 +37,15 @@ public:
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
   void commit();
+
+private:
+  // Validates all summaries are in accordance with each other.
+  bool checkMapsAndShardsCoherency();
+  
+  // Rebuild from shards if something goes wrong.
+  void rebuild();
+public:
+  
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
@@ -48,29 +57,29 @@ public:
   struct JobToAdd {
     uint64_t copyNb;
     uint64_t fSeq;
-    const std::string retrieveRequestAddress;
-    uint64_t size;
-    const cta::common::dataStructures::MountPolicy policy;
+    std::string retrieveRequestAddress;
+    uint64_t fileSize;
+    cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
   };
-  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd);
+  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   /// This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
     uint64_t bytes = 0;
   };
-  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd);
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+    AgentReference & agentReference, log::LogContext & lc);
   struct JobsSummary {
     uint64_t files;
     uint64_t bytes;
     time_t oldestJobStartTime;
     uint64_t priority;
-    uint64_t minArchiveRequestAge;
+    uint64_t minRetrieveRequestAge;
     uint64_t maxDrivesAllowed;
   };
   JobsSummary getJobsSummary();
-  std::list<RetrieveRequestDump> dumpAndFetchRetrieveRequests();
   struct JobDump {
     std::string address;
     uint16_t copyNb;
@@ -88,9 +97,17 @@ public:
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> retrieveRequestsToSkip);
   
-  void removeJobsAndCommit(const std::list<std::string> & requestsToRemove);
+  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
   // -- Generic parameters
   std::string getVid();
+  
+  
+  // The shard size. From experience, 100k is where we start to see performance difference,
+  // but nothing prevents us from using a smaller size.
+  // The performance will be roughly flat until the queue size reaches the square of this limit
+  // (meaning the queue object updates start to take too much time).
+  // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
+  static const uint64_t c_maxShardSize = 25000;
 };
 
 }}

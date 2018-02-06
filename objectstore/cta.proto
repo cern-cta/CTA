@@ -391,7 +391,7 @@ message ArchiveQueueShard {
 
 message ArchiveQueue {
   required string tapepool = 10000;
-  repeated ArchiveQueueShardPointer archivequeuesshards = 10010;
+  repeated ArchiveQueueShardPointer archivequeueshards = 10010;
   repeated ValueCountPair prioritymap = 10031;
   repeated ValueCountPair minarchiverequestagemap = 10032;
   repeated ValueCountPair maxdrivesallowedmap = 10033;
@@ -409,15 +409,30 @@ message RetrieveJobPointer {
   required uint64 priority = 3104;
   required uint64 minretrieverequestage = 3105;
   required uint64 maxdrivesallowed = 3106;
+  required uint64 starttime = 3108;
+}
+
+message RetrieveQueueShardPointer {
+  required string address = 10400;
+  required uint64 shardjobscount = 10401;
+  required uint64 shardbytescount = 10402;
+  required uint64 minfseq = 10403;
+  required uint64 maxfseq = 10404;
+}
+
+message RetrieveQueueShard {
+  repeated RetrieveJobPointer retrievejobs = 10500;
+  required uint64 retrievejobstotalsize = 10501;
 }
 
 message RetrieveQueue {
   required string vid = 10100;
-  repeated RetrieveJobPointer retrievejobs = 10110;
+  repeated RetrieveQueueShardPointer retrievequeueshards = 10111;
   repeated ValueCountPair prioritymap = 10131;
   repeated ValueCountPair minretrieverequestagemap = 10132;
   repeated ValueCountPair maxdrivesallowedmap = 10133;
   required uint64 retrievejobstotalsize = 10140;
+  required uint64 retrievejobscount = 10145;
   required uint64 oldestjobcreationtime = 10150;
   required uint64 mapsrebuildcount = 10160;
 }

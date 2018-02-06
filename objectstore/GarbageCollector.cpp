@@ -555,7 +555,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
         }
       }
     }
-    auto addedJobs = rq.addJobsIfNecessaryAndCommit(jta);
+    auto addedJobs = rq.addJobsIfNecessaryAndCommit(jta, m_ourAgentReference, lc);
     queueProcessAndCommitTime = t.secs(utils::Timer::resetCounter);
     // If we have an unexpected failure, we will re-run the individual garbage collection. Before that, 
     // we will NOT remove the object from agent's ownership. This variable is declared a bit ahead so

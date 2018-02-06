@@ -80,7 +80,7 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
   uint64_t bytesFromShardPointers = 0;
   uint64_t jobsExpectedFromShardsPointers = 0;
   // Add up shard summaries
-  for (auto & aqs: m_payload.archivequeuesshards()) {
+  for (auto & aqs: m_payload.archivequeueshards()) {
     bytesFromShardPointers += aqs.shardbytescount();
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
@@ -120,7 +120,7 @@ void ArchiveQueue::rebuild() {
   priorityMap.clear();
   ValueCountMap minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
   minArchiveRequestAgeMap.clear();
-  for (auto & sa: m_payload.archivequeuesshards()) {
+  for (auto & sa: m_payload.archivequeueshards()) {
     shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
@@ -135,10 +135,10 @@ void ArchiveQueue::rebuild() {
       (*sf)->wait();
     } catch (Backend::NoSuchObject & ex) {
       // Remove the shard from the list
-      auto aqs = m_payload.mutable_archivequeuesshards()->begin();
-      while (aqs != m_payload.mutable_archivequeuesshards()->end()) {
+      auto aqs = m_payload.mutable_archivequeueshards()->begin();
+      while (aqs != m_payload.mutable_archivequeueshards()->end()) {
         if (aqs->address() == s->getAddressIfSet()) {
-          aqs = m_payload.mutable_archivequeuesshards()->erase(aqs);
+          aqs = m_payload.mutable_archivequeueshards()->erase(aqs);
         } else {
           aqs++;
         }
@@ -161,11 +161,11 @@ void ArchiveQueue::rebuild() {
       totalJobs+=jobs;
       totalBytes+=size;
       // And store the value in the shard pointers.
-      auto maqs = m_payload.mutable_archivequeuesshards();
-      for (auto & aqs: *maqs) {
-        if (aqs.address() == s->getAddressIfSet()) {
-          aqs.set_shardjobscount(jobs);
-          aqs.set_shardbytescount(size);
+      auto maqs = m_payload.mutable_archivequeueshards();
+      for (auto & aqsp: *maqs) {
+        if (aqsp.address() == s->getAddressIfSet()) {
+          aqsp.set_shardjobscount(jobs);
+          aqsp.set_shardbytescount(size);
           goto shardUpdated;
         }
       }
@@ -199,7 +199,7 @@ void ArchiveQueue::rebuild() {
 bool ArchiveQueue::isEmpty() {
   checkPayloadReadable();
   // Check we have no archive jobs pending
-  if (m_payload.archivequeuesshards_size())
+  if (m_payload.archivequeueshards_size())
     return false;
   // If we made it to here, it seems the pool is indeed empty.
   return true;
@@ -272,9 +272,9 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
     ArchiveQueueShard aqs(m_objectStore);
     serializers::ArchiveQueueShardPointer * aqsp = nullptr;
     bool newShard=false;
-    uint64_t shardCount = m_payload.archivequeuesshards_size();
-    if (shardCount && m_payload.archivequeuesshards(shardCount - 1).shardjobscount() < c_maxShardSize) {
-      auto & shardPointer=m_payload.archivequeuesshards(shardCount - 1);
+    uint64_t shardCount = m_payload.archivequeueshards_size();
+    if (shardCount && m_payload.archivequeueshards(shardCount - 1).shardjobscount() < c_maxShardSize) {
+      auto & shardPointer=m_payload.archivequeueshards(shardCount - 1);
       aqs.setAddress(shardPointer.address());
       // include-locking does not check existence of the object in the object store.
       // we will find out on fetch. If we fail, we have to rebuild.
@@ -310,11 +310,11 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
         continue;
       }
       // The shard looks good. We will now proceed with the addition of individual jobs.
-      aqsp = m_payload.mutable_archivequeuesshards(shardCount - 1);
+      aqsp = m_payload.mutable_archivequeueshards(shardCount - 1);
     } else {
       // We need a new shard. Just add it (in memory).
       newShard = true;
-      aqsp = m_payload.mutable_archivequeuesshards()->Add();
+      aqsp = m_payload.add_archivequeueshards();
       // Create the shard in memory.
       std::stringstream shardName;
       shardName << "ArchiveQueueShard-" << m_payload.tapepool();
@@ -393,7 +393,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   std::list<ArchiveQueueShard> shards;
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
   
-  for (auto & sa: m_payload.archivequeuesshards()) {
+  for (auto & sa: m_payload.archivequeueshards()) {
     shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
@@ -447,7 +447,7 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
   // The jobs are expected to be removed from the front shards first.
   // Remove jobs until there are no more jobs or no more shards.
   ssize_t shardIndex=0;
-  auto * mutableArchiveQueueShards= m_payload.mutable_archivequeuesshards();
+  auto * mutableArchiveQueueShards= m_payload.mutable_archivequeueshards();
   while (localJobsToRemove.size() && shardIndex <  mutableArchiveQueueShards->size()) {
     auto * shardPointer = mutableArchiveQueueShards->Mutable(shardIndex);
     // Get hold of the shard
@@ -489,7 +489,7 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
       for (auto i=shardIndex; i<mutableArchiveQueueShards->size()-1; i++) {
         mutableArchiveQueueShards->SwapElements(i, i+1);
       }
-      m_payload.mutable_archivequeuesshards()->RemoveLast();
+      mutableArchiveQueueShards->RemoveLast();
     }
     // We should also trim the removed jobs from our list.
     localJobsToRemove.remove_if(
@@ -512,7 +512,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   std::list<JobDump> ret;
   std::list<ArchiveQueueShard> shards;
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  for (auto & sa: m_payload.archivequeuesshards()) {
+  for (auto & sa: m_payload.archivequeueshards()) {
     shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
@@ -538,7 +538,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
 auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  for (auto & aqsp: m_payload.archivequeuesshards()) {
+  for (auto & aqsp: m_payload.archivequeueshards()) {
     // We need to go through all shard poiters unconditionnaly to count what is left (see else part)
     if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
       // Fetch the shard

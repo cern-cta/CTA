@@ -61,6 +61,7 @@ add_library (ctaobjectstore SHARED
   ArchiveQueue.cpp
   ArchiveQueueShard.cpp
   RetrieveQueue.cpp
+  RetrieveQueueShard.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
