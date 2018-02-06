@@ -47,7 +47,7 @@ RdbmsCatalogue::RdbmsCatalogue(
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns,
   const uint32_t maxTriesToConnect):
-  Catalogue(log),
+  m_log(log),
   m_connPool(login, nbConns),
   m_archiveFileListingConnPool(login, nbArchiveFileListingConns),
   m_maxTriesToConnect(maxTriesToConnect) {
