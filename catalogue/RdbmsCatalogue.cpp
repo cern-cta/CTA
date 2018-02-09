@@ -68,7 +68,7 @@ void RdbmsCatalogue::createAdminUser(
   const std::string &comment) {
   try {
     auto conn = m_connPool.getConn();
-    if(adminUserExists(conn, username)) {
+    if (adminUserExists(conn, username)) {
       throw exception::UserError(std::string("Cannot create admin user " + username +
         " because an admin user with the same name already exists"));
     }
@@ -113,7 +113,9 @@ void RdbmsCatalogue::createAdminUser(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -155,7 +157,9 @@ void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
     }
-  } catch(exception::UserError &) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -204,6 +208,8 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
     }
 
     return admins;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -236,6 +242,8 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -297,6 +305,8 @@ void RdbmsCatalogue::createAdminHost(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -339,6 +349,8 @@ void RdbmsCatalogue::deleteAdminHost(const std::string &hostName) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete admin-host ") + hostName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -388,6 +400,8 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
     }
 
     return hosts;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -420,6 +434,8 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify admin host ") + hostName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -486,6 +502,8 @@ void RdbmsCatalogue::createStorageClass(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -540,6 +558,8 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
       throw exception::UserError(std::string("Cannot delete storage-class ") + diskInstanceName + ":" +
         storageClassName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -550,8 +570,7 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
 //------------------------------------------------------------------------------
 // getStorageClasses
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::StorageClass>
-  RdbmsCatalogue::getStorageClasses() const {
+std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasses() const {
   try {
     std::list<common::dataStructures::StorageClass> storageClasses;
     const char *const sql =
@@ -594,6 +613,8 @@ std::list<common::dataStructures::StorageClass>
     }
 
     return storageClasses;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -629,6 +650,8 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
       throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
         " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -666,6 +689,8 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
       throw exception::UserError(std::string("Cannot modify storage class ") + instanceName + ":" + name +
         " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -736,6 +761,8 @@ void RdbmsCatalogue::createTapePool(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -750,6 +777,8 @@ bool RdbmsCatalogue::tapePoolExists(const std::string &tapePoolName) const {
   try {
     auto conn = m_connPool.getConn();
     return tapePoolExists(conn, tapePoolName);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -939,6 +968,8 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1013,6 +1044,8 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     }
 
     return pools;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1045,6 +1078,8 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1055,7 +1090,8 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapePoolComment
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) {
+void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -1078,6 +1114,8 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1112,6 +1150,8 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1201,6 +1241,8 @@ void RdbmsCatalogue::createArchiveRoute(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1234,6 +1276,8 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, con
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1289,6 +1333,8 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
     }
 
     return routes;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1329,6 +1375,8 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1371,6 +1419,8 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
         " and copy number " << copyNb << " because it does not exist";
       throw ue;
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1432,6 +1482,8 @@ void RdbmsCatalogue::createLogicalLibrary(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(std::exception &ex) {
@@ -1474,6 +1526,8 @@ void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete logical-library ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1484,8 +1538,7 @@ void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
 //------------------------------------------------------------------------------
 // getLogicalLibraries
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::LogicalLibrary>
-  RdbmsCatalogue::getLogicalLibraries() const {
+std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibraries() const {
   try {
     std::list<common::dataStructures::LogicalLibrary> libs;
     const char *const sql =
@@ -1524,6 +1577,8 @@ std::list<common::dataStructures::LogicalLibrary>
     }
 
     return libs;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1556,6 +1611,8 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1651,6 +1708,8 @@ void RdbmsCatalogue::createTape(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1665,6 +1724,8 @@ bool RdbmsCatalogue::tapeExists(const std::string &vid) const {
   try {
     auto conn = m_connPool.getConn();
     return tapeExists(conn, vid);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1705,6 +1766,8 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1719,6 +1782,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
   try {
     auto conn = m_connPool.getConn();
     return getTapes(conn, searchCriteria);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1958,6 +2023,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     }
 
     return vidToTapeMap;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -2014,6 +2081,8 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     }
 
     conn.commit();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2081,6 +2150,8 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2115,6 +2186,8 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2149,6 +2222,8 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2183,6 +2258,8 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2279,6 +2356,8 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2338,6 +2417,8 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2372,6 +2453,8 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2409,6 +2492,8 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
       throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" +
         requesterName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2446,6 +2531,8 @@ void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures
       throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" +
         requesterName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2483,6 +2570,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
       throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":" +
         requesterGroupName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2520,6 +2609,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
       throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":" +
         requesterGroupName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2610,6 +2701,8 @@ void RdbmsCatalogue::createMountPolicy(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2687,6 +2780,8 @@ void RdbmsCatalogue::createRequesterMountRule(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2740,6 +2835,8 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
     }
 
     return rules;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -2766,6 +2863,8 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceNam
       throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":" + requesterName +
         " because the rule does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2842,6 +2941,8 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2968,6 +3069,8 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
     }
 
     return rules;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -2995,6 +3098,8 @@ void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstan
       throw exception::UserError(std::string("Cannot delete the mount rule for requester group ") + diskInstanceName + ":" +
         requesterGroupName + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3161,6 +3266,8 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete mount policy ") + name + " because it does not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3229,6 +3336,8 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
     }
 
     return policies;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3261,6 +3370,8 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3295,6 +3406,8 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3329,6 +3442,8 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3363,6 +3478,8 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3397,6 +3514,8 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3431,6 +3550,8 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
     }
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3597,6 +3718,8 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
   try {
     auto impl = new RdbmsArchiveFileItorImpl(m_log, m_archiveFileListingConnPool, searchCriteria);
     return ArchiveFileItor(impl);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3727,6 +3850,8 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     summary.totalCompressedBytes = rset.columnUint64("TOTAL_COMPRESSED_BYTES");
     summary.totalFiles = rset.columnUint64("TOTAL_FILES");
     return summary;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3748,6 +3873,8 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
     }
 
     return *archiveFile;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3868,6 +3995,8 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     }
 
     return copyToPoolMap;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
