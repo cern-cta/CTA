@@ -27,6 +27,7 @@
 #include "ArchiveQueue.hpp"
 #include "ArchiveQueueShard.hpp"
 #include "RetrieveQueue.hpp"
+#include "RetrieveQueueShard.hpp"
 #include "DriveRegister.hpp"
 #include <stdexcept>
 #include <google/protobuf/util/json_util.h>
@@ -188,6 +189,9 @@ std::string GenericObject::dump() {
       break;
     case serializers::RetrieveQueue_t:
       bodyDump = dumpWithType<cta::objectstore::RetrieveQueue>(this);
+      break;
+    case serializers::RetrieveQueueShard_t:
+      bodyDump = dumpWithType<cta::objectstore::RetrieveQueueShard>(this);
       break;
     case serializers::ArchiveRequest_t:
       bodyDump = dumpWithType<ArchiveRequest>(this);

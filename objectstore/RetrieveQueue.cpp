@@ -48,6 +48,7 @@ void RetrieveQueue::initialize(const std::string &vid) {
   m_payload.set_retrievejobscount(0);
   m_payload.set_vid(vid);
   m_payload.set_mapsrebuildcount(0);
+  m_payload.set_maxshardsize(m_maxShardSize);
   m_payloadInterpreted = true;
 }
 
@@ -186,6 +187,11 @@ void RetrieveQueue::commit() {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::commit();
 }
 
+void RetrieveQueue::getPayloadFromHeader() {
+  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::getPayloadFromHeader();
+  m_maxShardSize = m_payload.maxshardsize();
+}
+
 bool RetrieveQueue::isEmpty() {
   checkPayloadReadable();
   return !m_payload.retrievejobstotalsize() && !m_payload.retrievequeueshards_size();
@@ -217,34 +223,17 @@ std::string RetrieveQueue::dump() {
   return headerDump;
 }
 
-namespace {
-struct ShardForAddition {
-  bool newShard=false;
-  bool creationDone=false;
-  bool splitDone=false;
-  bool toSplit=false;
-  ShardForAddition * splitDestination = nullptr;
-  bool fromSplit=false;
-  ShardForAddition * splitSource = nullptr;
-  std::string address;
-  uint64_t minFseq;
-  uint64_t maxFseq;
-  uint64_t jobsCount;
-  std::list<RetrieveQueue::JobToAdd> jobsToAdd;
-  size_t shardIndex = std::numeric_limits<size_t>::max();
-};
-
-void updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
+void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
   if (fSeq < sfa.minFseq) sfa.minFseq=fSeq;
   if (fSeq > sfa.maxFseq) sfa.maxFseq=fSeq;
 }
 
 /** Add a jobs to a shard, spliting it if necessary*/
-void addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd, 
+void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd, 
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList) {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
-  if (   shardForAddition->jobsCount < RetrieveQueue::c_maxShardSize
+  if (   shardForAddition->jobsCount < m_maxShardSize
       || shardForAddition->fromSplit || shardForAddition->newShard) {
     // We just piggy back here. No need to increase range, we are within it.
     shardForAddition->jobsCount++;
@@ -256,21 +245,22 @@ void addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd,
     // Create the new shard
     auto newSfa = shardList.insert(shardForAddition, ShardForAddition());
     // The new shard size can only be estimated, but we will update it to the actual value as we update the shard.
+    // The new shard is inserted before the old one, so the old one will keep the high
+    // half and new shard gets the bottom half.
     uint64_t shardRange = shardForAddition->maxFseq - shardForAddition->minFseq;
-    uint64_t oldMax = shardForAddition->maxFseq;
-    shardForAddition->maxFseq = shardForAddition->minFseq + shardRange/2;
-    shardForAddition->jobsCount = shardForAddition->jobsCount/2;
-    shardForAddition->toSplit = true;
-    shardForAddition->splitDestination = &*newSfa;
-    newSfa->minFseq = shardForAddition->maxFseq+1;
-    newSfa->maxFseq = oldMax;
-    newSfa->jobsCount = shardForAddition->jobsCount;
+    newSfa->minFseq = shardForAddition->minFseq;
+    newSfa->maxFseq = shardForAddition->minFseq + shardRange/2;
+    newSfa->jobsCount = shardForAddition->jobsCount/2;
     newSfa->splitSource = &*shardForAddition;
     newSfa->fromSplit = true;
     newSfa->newShard = true;
+    shardForAddition->minFseq = shardForAddition->minFseq + shardRange/2 + 1;
+    shardForAddition->jobsCount = shardForAddition->jobsCount/2;
+    shardForAddition->toSplit = true;
+    shardForAddition->splitDestination = &*newSfa;
     // Transfer jobs to add to new shard if needed
     for (auto jta2=shardForAddition->jobsToAdd.begin(); jta2!=shardForAddition->jobsToAdd.end();) {
-      if (jta2->fSeq >= newSfa->minFseq) {
+      if (jta2->fSeq <= newSfa->maxFseq) {
         newSfa->jobsToAdd.emplace_back(*jta2);
         jta2 = shardForAddition->jobsToAdd.erase(jta2);
       } else {
@@ -278,22 +268,21 @@ void addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd,
       }
     }
     // We can finally add our job to one of the two shards from the split
-    if (jobToAdd.fSeq <= shardForAddition->maxFseq) {
+    if (jobToAdd.fSeq >= shardForAddition->minFseq) {
       shardForAddition->jobsToAdd.emplace_back(jobToAdd);
       shardForAddition->jobsCount++;
       updateShardLimits(jobToAdd.fSeq, *shardForAddition);
     } else {
       newSfa->jobsToAdd.emplace_back(jobToAdd);
       newSfa->jobsCount++;
-      updateShardLimits(jobToAdd.fSeq, *shardForAddition);
+      updateShardLimits(jobToAdd.fSeq, *newSfa);
     }
   }
 }
 
-} // anonymous namespace
-
 void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
+  if (jobsToAdd.empty()) return;
   // Keep track of the mounting criteria
   ValueCountMap maxDriveAllowedMap(m_payload.mutable_maxdrivesallowedmap());
   ValueCountMap priorityMap(m_payload.mutable_prioritymap());
@@ -349,8 +338,12 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     }
     // Find where the job lands in the shards
     for (auto sfa=shardsForAddition.begin(); sfa != shardsForAddition.end(); sfa++) {
-      // Is it within this shard?
-      if (jta.fSeq >= sfa->minFseq && jta.fSeq <= sfa->maxFseq) {
+      if (sfa->minFseq > jta.fSeq) {
+        // Are we before the current shard? (for example, before first shard)
+        addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
+        goto jobInserted;
+      } else if (jta.fSeq >= sfa->minFseq && jta.fSeq <= sfa->maxFseq) {
+        // Is it within this shard?
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
         goto jobInserted;
       } else if (sfa != shardsForAddition.end() && std::next(sfa) != shardsForAddition.end()) {
@@ -364,10 +357,6 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
           }
           goto jobInserted;
         }
-      } else if (sfa->minFseq > jta.fSeq) {
-        // Are we before the current shard? (for example, before first shard)
-        addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
-        goto jobInserted;
       } else if (std::next(sfa) == shardsForAddition.end() && sfa->maxFseq < jta.fSeq) {
         // Are we after the last shard?
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
@@ -376,7 +365,6 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     }
     // Still not inserted? Now we run out of options. Segfault to ease debugging.
     {
-      *((int *)nullptr) = 0; // TODO: remove in the long run.
       throw cta::exception::Exception("In RetrieveQueue::addJobsAndCommit(): could not find an appropriate shard for job");
     }
     jobInserted:;
@@ -394,8 +382,8 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   // TODO: shard creation and update could be parallelized (to some extent as we
   // have shard to shard dependencies with the splits), but as a first implementation
   // we just go iteratively.
-  uint64_t addedJobs = 0, addedBytes = 0;
   for (auto & shard: shardsForAddition) {
+    uint64_t addedJobs = 0, addedBytes = 0, transferedInSplitJobs = 0, transferedInSplitBytes = 0;
     // Variables which will allow the shard/pointer updates in all cases.
     cta::objectstore::serializers::RetrieveQueueShardPointer * shardPointer = nullptr, * splitFromShardPointer = nullptr;
     RetrieveQueueShard rqs(m_objectStore), rqsSplitFrom(m_objectStore);
@@ -406,13 +394,15 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       rqs.setAddress(agentReference.nextId(shardName.str()));
       rqs.initialize(getAddressIfSet());
       // We also need to create the pointer, and insert it to the right spot.
-      shardPointer = m_payload.add_retrievequeueshards();
+      shardPointer = m_payload.mutable_retrievequeueshards()->Add();
       // Pre-update the shard pointer.
       shardPointer->set_address(rqs.getAddressIfSet());
-      shardPointer->set_minfseq(0);
+      shardPointer->set_maxfseq(0);
       shardPointer->set_minfseq(0);
       shardPointer->set_shardbytescount(0);
       shardPointer->set_shardjobscount(0);
+      shard.creationDone = true;
+      shard.address = rqs.getAddressIfSet();
       // Move the shard pointer to its intended location.
       size_t currentShardPosition=m_payload.retrievequeueshards_size() - 1;
       while (currentShardPosition != shard.shardIndex) {
@@ -432,16 +422,27 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
         for (auto &j: jobsFromSource) {
           if (j.fSeq >= shard.minFseq && j.fSeq <= shard.maxFseq) {
             rqs.addJob(j);
+            addedJobs++;
+            addedBytes+=j.fileSize;
             jobsToTransferAddresses.emplace_back(j.retrieveRequestAddress);
           }
         }
-        rqsSplitFrom.removeJobs(jobsToTransferAddresses);
-        auto splitFromShardSummary = rqsSplitFrom.getJobsSummary();
-        splitFromShardPointer->set_maxfseq(splitFromShardSummary.maxFseq);
-        splitFromShardPointer->set_minfseq(splitFromShardSummary.minFseq);
-        splitFromShardPointer->set_shardbytescount(splitFromShardSummary.bytes);
-        splitFromShardPointer->set_shardjobscount(splitFromShardSummary.jobs);
+        auto removalResult = rqsSplitFrom.removeJobs(jobsToTransferAddresses);
+        transferedInSplitBytes += removalResult.bytesRemoved;
+        transferedInSplitJobs += removalResult.jobsRemoved;
+        // We update the shard pointer with fseqs to allow validations, but the actual
+        //values will be updated as the shard itself is populated.
+        shardPointer->set_maxfseq(shard.maxFseq);
+        shardPointer->set_minfseq(shard.minFseq);
+        shardPointer->set_shardjobscount(shard.jobsCount);
+        shardPointer->set_shardbytescount(1);
+        splitFromShardPointer->set_minfseq(shard.splitSource->minFseq);
+        splitFromShardPointer->set_maxfseq(shard.splitSource->maxFseq);
+        splitFromShardPointer->set_shardjobscount(shard.splitSource->jobsCount);
+        shardPointer->set_shardbytescount(1);
         // We are all set (in memory) for the shard from which we split.
+        shard.splitDone = true;
+        shard.splitSource->splitDone = true;
       }
       // We can now fill up the shard (outside of this if/else).
     } else {
@@ -468,11 +469,24 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     // ... and finally commit the queue (first! there is potentially a new shard to 
     // pre-reference before inserting) and shards as is appropriate.
     // Update global summaries
-    m_payload.set_retrievejobscount(m_payload.retrievejobscount() + addedJobs);
-    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + addedBytes);
-    commit();
-    if (shard.newShard)
+    m_payload.set_retrievejobscount(m_payload.retrievejobscount() + addedJobs - transferedInSplitJobs);
+    m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + addedBytes - transferedInSplitBytes);
+    // If we are creating a new shard, we have to do a blind commit: the
+    // stats for shard we are splitting from could not be accounted for properly
+    // and the new shard is not yet inserted yet.
+    if (shard.fromSplit)
+      ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::commit();
+    else {
+      // in other cases, we should have a coherent state.
+      commit();
+    }
+    shard.comitted = true;
+    
+    if (shard.newShard) {
       rqs.insert();
+      if (shard.fromSplit)
+        rqsSplitFrom.commit();
+    }
     else rqs.commit();
   }
 }
@@ -679,5 +693,16 @@ void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentRefere
     cta::catalogue::Catalogue & catalogue) {
   throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
 }
+
+void RetrieveQueue::setShardSize(uint64_t shardSize) {
+  checkPayloadWritable();
+  m_payload.set_maxshardsize(shardSize);
+}
+
+uint64_t RetrieveQueue::getShardCount() {
+  checkPayloadReadable();
+  return m_payload.retrievequeueshards_size();
+}
+
 
 }} // namespace cta::objectstore

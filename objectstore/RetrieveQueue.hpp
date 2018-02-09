@@ -37,6 +37,7 @@ public:
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
   void commit();
+  void getPayloadFromHeader() override;
 
 private:
   // Validates all summaries are in accordance with each other.
@@ -101,13 +102,44 @@ public:
   // -- Generic parameters
   std::string getVid();
   
+private:
+  struct ShardForAddition {
+    bool newShard=false;
+    bool creationDone=false;
+    bool splitDone=false;
+    bool toSplit=false;
+    bool comitted=false;
+    ShardForAddition * splitDestination = nullptr;
+    bool fromSplit=false;
+    ShardForAddition * splitSource = nullptr;
+    std::string address;
+    uint64_t minFseq;
+    uint64_t maxFseq;
+    uint64_t jobsCount;
+    std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+    size_t shardIndex = std::numeric_limits<size_t>::max();
+  };
   
+  void updateShardLimits(uint64_t fSeq, ShardForAddition & sfa);
+  
+  void addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd, 
+    std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList);
+  
+public:
+  /** Helper function for unit tests: use smaller shard size to validate ordered insertion */
+  void setShardSize(uint64_t shardSize);
+  
+  /** Helper function for unit tests: validate that we have the expected number of shards */
+  uint64_t getShardCount();
+private:
   // The shard size. From experience, 100k is where we start to see performance difference,
   // but nothing prevents us from using a smaller size.
   // The performance will be roughly flat until the queue size reaches the square of this limit
   // (meaning the queue object updates start to take too much time).
   // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
-  static const uint64_t c_maxShardSize = 25000;
+  static const uint64_t c_defaultMaxShardSize = 25000;
+  
+  uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
 }}

@@ -435,4 +435,5 @@ message RetrieveQueue {
   required uint64 retrievejobscount = 10145;
   required uint64 oldestjobcreationtime = 10150;
   required uint64 mapsrebuildcount = 10160;
+  required uint64 maxshardsize = 10170;
 }

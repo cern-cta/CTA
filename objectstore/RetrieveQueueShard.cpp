@@ -166,6 +166,8 @@ auto RetrieveQueueShard::getJobsSummary() -> JobsSummary {
   ret.jobs = m_payload.retrievejobs_size();
   ret.minFseq = m_payload.retrievejobs(0).fseq();
   ret.maxFseq = m_payload.retrievejobs(m_payload.retrievejobs_size()-1).fseq();
+  if (ret.minFseq > ret.maxFseq)
+    throw cta::exception::Exception("In RetrieveQueueShard::getJobsSummary(): wrong shard ordering.");
   return ret;
 }
 
@@ -182,6 +184,12 @@ uint64_t RetrieveQueueShard::addJob(RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
   j->set_starttime(jobToAdd.startTime);
   m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize()+jobToAdd.fileSize);
+  // Sort the shard
+  size_t jobIndex = m_payload.retrievejobs_size() - 1;
+  while (jobIndex > 0 && m_payload.retrievejobs(jobIndex).fseq() < m_payload.retrievejobs(jobIndex-1).fseq()) {
+    m_payload.mutable_retrievejobs()->SwapElements(jobIndex-1, jobIndex);
+    jobIndex--;
+  }
   return m_payload.retrievejobs_size();
 }
 
