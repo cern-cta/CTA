@@ -70,12 +70,16 @@ protected:
    * @param nbArchiveFileListingConns The maximum number of concurrent
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
+   * @param maxTriesToConnext The maximum number of times a single method should
+   * try to connect to the database in the event of LostDatabaseConnection
+   * exceptions being thrown.
    */
   RdbmsCatalogue(
     log::Logger &log,
     const rdbms::Login &login,
     const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+    const uint64_t nbArchiveFileListingConns,
+    const uint32_t maxTriesToConnect);
 
 public:
 
@@ -123,6 +127,7 @@ public:
    * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
    */
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
@@ -530,6 +535,11 @@ public:
 protected:
 
   /**
+   * Object representing the API to the CTA logging system.
+   */
+  log::Logger &m_log;
+
+  /**
    * Mutex to be used to a take a global lock on the database.
    */
   threading::Mutex m_mutex;
@@ -546,6 +556,12 @@ protected:
    * for the sole purpose of listing archive files.
    */
   mutable rdbms::ConnPool m_archiveFileListingConnPool;
+
+  /**
+   * The maximum number of times a single method should try to connect to the
+   * database in the event of LostDatabaseConnection exceptions being thrown.
+   */
+  uint32_t m_maxTriesToConnect;
 
   /**
    * Returns true if the specified admin user exists.
@@ -968,6 +984,155 @@ protected:
    * @param event The evnt to be checked.
    */
   void checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event);
+
+  /**
+   * Returns true if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param admin The administrator.
+   * @return True if the specified user running the CTA command-line tool on
+   * the specified host has administrator privileges.
+   */
+  bool isAdminInternal(const common::dataStructures::SecurityIdentity &admin) const;
+
+  /**
+   * Notifies the catalogue that the specified tape was labelled.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of tape drive that was used to label the tape.
+   * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
+   */
+  void tapeLabelledInternal(const std::string &vid, const std::string &drive, const bool lbpIsOn);
+
+  /**
+   * Returns the list of tapes that can be written to by a tape drive in the
+   * specified logical library, in other words tapes that are labelled, not
+   * disabled, not full and are in the specified logical library.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
+   */
+  std::list<TapeForWriting> getTapesForWritingInternal(const std::string &logicalLibraryName) const;
+
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to archive files.
+   *
+   * The purpose of this method is to keep track of which drive mounted a given
+   * tape for archiving files last.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  void tapeMountedForArchiveInternal(const std::string &vid, const std::string &drive);
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   * @param lc The log context.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileInternal(
+    const std::string &diskInstanceName,
+    const uint64_t archiveFileId,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc);
+
+  /**
+   * Prepares for a file retrieval by returning the information required to
+   * queue the associated retrieve request(s).
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the instance from where the retrieval
+   * request originated
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @param archiveFileId The unique identifier of the archived file that is
+   * to be retrieved.
+   * @param user The user for whom the file is to be retrieved.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * retrieving the file.
+   * @param lc The log context.
+   *
+   * @return The information required to queue the associated retrieve request(s).
+   */
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileIdInternal(
+    const std::string &diskInstanceName,
+    const std::string &diskFileId,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc);
+
+  /**
+   * Notifies the CTA catalogue that the specified tape has been mounted in
+   * order to retrieve files.
+   *
+   * The purpose of this method is to keep track of which drive mounted a given
+   * tape for retrieving files last.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The name of the drive where the tape was mounted.
+   */
+  void tapeMountedForRetrieveInternal(const std::string &vid, const std::string &drive);
+
+  /**
+   * This method notifies the CTA catalogue that there is no more free space on
+   * the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void noSpaceLeftOnTapeInternal(const std::string &vid);
+
+  /**
+   * Prepares the catalogue for a new archive file and returns the information
+   * required to queue the associated archive request.
+   *
+   * This internal method can be re-tried if it throws a LostDatabaseConnection
+   * exception.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return The information required to queue the associated archive request.
+   */
+  common::dataStructures::ArchiveFileQueueCriteria prepareForNewFileInternal(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const common::dataStructures::UserIdentity &user);
 
 }; // class RdbmsCatalogue
 

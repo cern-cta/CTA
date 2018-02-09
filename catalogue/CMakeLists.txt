@@ -25,8 +25,10 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileItor.cpp
   ArchiveFileItorImpl.cpp
   Catalogue.cpp
+  CatalogueFactory.cpp
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
+  OracleCatalogue.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
   RdbmsArchiveFileItorImpl.cpp
@@ -34,11 +36,6 @@ set (CATALOGUE_LIB_SRC_FILES
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
   TapeForWriting.cpp)
-
-set (CATALOGUE_LIB_SRC_FILES
-  ${CATALOGUE_LIB_SRC_FILES}
-  CatalogueFactory.cpp
-  OracleCatalogue.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})

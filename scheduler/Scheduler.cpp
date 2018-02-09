@@ -418,7 +418,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> > Scheduler:
 std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext & lc) const {
   utils::Timer t;
   if(!m_catalogue.tapePoolExists(tapePoolName)) {
-    throw exception::Exception(std::string("Tape pool ") + tapePoolName + " does not exist");
+    throw exception::UserError(std::string("Tape pool ") + tapePoolName + " does not exist");
   }
   auto catalogueTime = t.secs(utils::Timer::resetCounter);
   auto ret = m_db.getArchiveJobs(tapePoolName);

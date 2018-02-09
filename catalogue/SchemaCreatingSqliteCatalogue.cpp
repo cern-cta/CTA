@@ -29,8 +29,9 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
   log::Logger &log,
   const std::string &filename,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
+  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns, maxTriesToConnect) {
   try {
     createCatalogueSchema();
   } catch(exception::Exception &ex) {

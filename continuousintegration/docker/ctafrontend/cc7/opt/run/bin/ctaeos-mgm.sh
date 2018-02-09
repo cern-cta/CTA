@@ -34,7 +34,6 @@ eoshost=`hostname -f`
 EOS_INSTANCE=`hostname -s`
 TAPE_FS_ID=65535
 CTA_BIN=/usr/bin/eoscta_stub
-CTA_KT=/etc/cta/cta-cli.sss.keytab
 CTA_XrdSecPROTOCOL=sss
 CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
@@ -42,14 +41,6 @@ CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
 # dir for eos instance basic tests writable and readable by anyone
 EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
-
-# prepare CTA cli commands environment
-cat <<EOF > /etc/cta/cta-cli.conf
-# The CTA frontend address in the form <FQDN>:<TCPPort>
-# solved by kubernetes DNS server so KIS...
-ctafrontend:10955
-EOF
-
 
 # setup eos host and instance name
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/sysconfig/eos
@@ -188,30 +179,10 @@ test -e /usr/lib64/libjemalloc.so.1 && export LD_PRELOAD=/usr/lib64/libjemalloc.
   # set interval in which the WFE engine is running
   #eos space config default space.wfe.interval=1
 
-# ATTENTION
-# for sss authorisation  unix has to be replaced by sss
-
-# Set the worfklow rule for archiving files to tape
-eos attr set sys.workflow.closew.default="bash:shell:cta XRD_LOGLEVEL=Error XrdSecDEBUG=1 XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} archive --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --diskid <eos::wfe::fid> --instance ignored_instance_name --srcurl <eos::wfe::turl> --size <eos::wfe::size> --checksumtype <eos::wfe::checksumtype> --checksumvalue <eos::wfe::checksum> --storageclass <eos::wfe::cxattr:CTA_StorageClass> --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --reportURL 'eosQuery://${EOS_INSTANCE}//eos/wfe/passwd?mgm.pcmd=event\&mgm.fid=<eos::wfe::fxid>\&mgm.logid=cta\&mgm.event=archived\&mgm.workflow=default\&mgm.path=/eos/wfe/passwd\&mgm.ruid=0\&mgm.rgid=0' --stderr" ${CTA_WF_DIR}
-
-# Set the worflow rule for creating tape file replicas in the EOS namespace.
-eos attr set sys.workflow.archived.default="bash:shell:cta eos file tag <eos::wfe::path> +<eos::wfe::cxattr:CTA_TapeFsId>" ${CTA_WF_DIR}
-
-# Set the worfklow rule for retrieving file from tape.
-eos attr set sys.workflow.sync::prepare.default="bash:shell:cta XrdSecPROTOCOL=${CTA_XrdSecPROTOCOL} XrdSecSSSKT=${CTA_KT} ${CTA_BIN} retrieve --user <eos::wfe::rusername> --group <eos::wfe::rgroupname> --id <eos::wfe::fxattr:sys.archiveFileId> --dsturl '<eos::wfe::turl>\&eos.ruid=0\&eos.rgid=0\&eos.injection=1\&eos.workflow=CTA_retrieve' --diskfilepath <eos::wfe::path> --diskfileowner <eos::wfe::username> --diskfilegroup <eos::wfe::groupname> --recoveryblob:base64 <eos::wfe::base64:metadata> --stderr" ${CTA_WF_DIR}
-
-# Set the workflow rule for the closew event of the CTA_retrieve workflow.
-# Using the CTA_retrieve workflow will prevent the default workflow from
-# receiving the closew event.  Triggering the default workflow in this way would
-# haved causes the unwanted action of copying the disk file to tape again.
-# The action of the CTA_retrieve workflow when triggered by the closew event is
-# to set the CTA_retrieved_timestamp attribute.
-eos attr set sys.workflow.closew.CTA_retrieve="bash:shell:cta eos attr set 'CTA_retrieved_timestamp=\"\`date\`\"' <eos::wfe::path>" ${CTA_WF_DIR}
-
-
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
 echo "### ctaeos mgm ready ###"
 
 /bin/bash
+

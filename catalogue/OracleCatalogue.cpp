@@ -18,8 +18,10 @@
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/OracleCatalogue.hpp"
-#include "common/exception/UserError.hpp"
+#include "catalogue/retryOnLostConnection.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
@@ -118,13 +120,14 @@ OracleCatalogue::OracleCatalogue(
   const std::string &password,
   const std::string &database,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect):
   RdbmsCatalogue(
     log,
     rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database),
     nbConns,
-    nbArchiveFileListingConns) {
-
+    nbArchiveFileListingConns,
+    maxTriesToConnect) {
 }
 
 //------------------------------------------------------------------------------
@@ -137,6 +140,15 @@ OracleCatalogue::~OracleCatalogue() {
 // deleteArchiveFile
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
+  log::LogContext &lc) {
+  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileInternal(diskInstanceName, archiveFileId, lc);},
+    m_maxTriesToConnect);
+}
+
+//------------------------------------------------------------------------------
+// deleteArchiveFileInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::deleteArchiveFileInternal(const std::string &diskInstanceName, const uint64_t archiveFileId,
   log::LogContext &lc) {
   try {
     const char *selectSql =
@@ -169,6 +181,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       "FOR UPDATE";
     utils::Timer t;
     auto conn = m_connPool.getConn();
+    rdbms::AutoRollback autoRollback(conn);
     const auto getConnTime = t.secs(utils::Timer::resetCounter);
     auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
     const auto createStmtTime = t.secs();
@@ -315,6 +328,8 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -327,8 +342,17 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 //------------------------------------------------------------------------------
 void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
   log::LogContext &lc) {
+  return retryOnLostConnection(m_log, [&]{return deleteArchiveFileByDiskFileIdInternal(diskInstanceName, diskFileId,
+    lc);}, m_maxTriesToConnect);
+}
+
+//------------------------------------------------------------------------------
+// deleteArchiveFileByDiskFileIdInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::deleteArchiveFileByDiskFileIdInternal(const std::string &diskInstanceName,
+  const std::string &diskFileId, log::LogContext &lc) {
   try {
-    const char *selectSql =
+    const char *const selectSql =
       "SELECT "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
         "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
@@ -465,6 +489,8 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -591,6 +617,13 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 // filesWrittenToTape
 //------------------------------------------------------------------------------
 void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
+  return retryOnLostConnection(m_log, [&]{return filesWrittenToTapeInternal(events);}, m_maxTriesToConnect);
+}
+
+//------------------------------------------------------------------------------
+// filesWrittenToTapeInternal
+//------------------------------------------------------------------------------
+void OracleCatalogue::filesWrittenToTapeInternal(const std::set<TapeFileWritten> &events) {
   try {
     if (events.empty()) {
       return;
@@ -692,6 +725,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 
     conn.commit();
 
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) +  " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {

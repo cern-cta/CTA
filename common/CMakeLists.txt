@@ -83,6 +83,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Exception.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
+  exception/LostDatabaseConnection.cpp
   exception/Mismatch.cpp
   exception/MissingOperand.cpp
   exception/MountFailed.cpp

@@ -77,12 +77,6 @@ namespace catalogue {
  */
 class Catalogue {
 public:
-  /**
-   * Constructor.
-   *
-   * @param log Object representing the API to the CTA logging system.
-   */
-  Catalogue(log::Logger &log);
 
   /**
    * Destructor.
@@ -128,6 +122,7 @@ public:
    * disabled, not full and are in the specified logical library.
    *
    * @param logicalLibraryName The name of the logical library.
+   * @return The list of tapes for writing.
    */
   virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
@@ -584,13 +579,6 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
-
-protected:
-
-  /**
-   * Object representing the API to the CTA logging system.
-   */
-  log::Logger &m_log;
 
 }; // class Catalogue
 

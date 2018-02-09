@@ -10,6 +10,9 @@ config_database="./database-sqlite.yaml"
 # default library model
 model="mhvtl"
 
+# EOS short instance name
+EOSINSTANCE=ctaeos
+
 # By default keep Database and keep Objectstore
 # default should not make user loose data if he forgot the option
 keepdatabase=1
@@ -275,15 +278,14 @@ kubectl --namespace=${instance} exec ctacli klist
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  [ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
+  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
-[ "`kubectl --namespace=${instance} exec ctafrontend -- bash -c "[ -f /etc/cta/cta-cli.sss.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
-# just in case /etc/cta directory does not exist yet
-kubectl --namespace=${instance} exec -i ctaeos --  bash -c "mkdir -p /etc/cta"
-kubectl --namespace=${instance} exec ctafrontend -- cat /etc/cta/cta-cli.sss.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/cta/cta-cli.sss.keytab; chmod 600 /etc/cta/cta-cli.sss.keytab; chown daemon /etc/cta/cta-cli.sss.keytab"
+[ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"
+kubectl --namespace=${instance} exec ctaeos -- grep ${EOSINSTANCE} /etc/eos.keytab | sed "s/daemon/${EOSINSTANCE}/g" |\
+kubectl --namespace=${instance} exec -i ctafrontend -- \
+bash -c "cat > /etc/cta/eos.sss.keytab.tmp; chmod 400 /etc/cta/eos.sss.keytab.tmp; chown cta:cta /etc/cta/eos.sss.keytab.tmp; mv /etc/cta/eos.sss.keytab.tmp /etc/cta/eos.sss.keytab"
 echo OK
-
 
 echo -n "Waiting for EOS to be configured"
 for ((i=0; i<300; i++)); do
@@ -293,6 +295,28 @@ for ((i=0; i<300; i++)); do
 done
 kubectl --namespace=${instance} logs ctaeos | grep -q  "### ctaeos mgm ready ###" || die "TIMED OUT"
 echo OK
+
+
+# Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
+# files from tape and deleting files.
+#
+# The closew.CTA_retrieve workflow prevents the default workflow from receiving the closew event, as
+# we don't want to trigger the action of copying the retrived disk file to tape again. The
+# closew.CTA_retrieve workflow sets the CTA_retrieved_timestamp attribute.
+#
+# The FQDN can be set as follows:
+# CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
+#
+# however the simple hostname should be sufficient:
+CTA_ENDPOINT=ctafrontend:10955
+
+echo "Setting workflows in namespace ${instance} pod ctaeos:"
+CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
+for WORKFLOW in closew.default archived.default sync::prepare.default closew.CTA_retrieve sync::delete.default
+do
+  echo "eos attr set sys.workflow.${WORKFLOW}=\"proto/cta:${CTA_ENDPOINT} <parent/file>\" ${CTA_WF_DIR}"
+  kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto/cta:${CTA_ENDPOINT} <parent/file>\" ${CTA_WF_DIR}"
+done
 
 
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"

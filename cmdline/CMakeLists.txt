@@ -19,33 +19,15 @@ cmake_minimum_required (VERSION 2.6)
 find_package(xrootdclient REQUIRED)
 find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
-# Cryptopp can be dropped when we get rid of eoscta_stub
-find_package(cryptopp REQUIRED)
 
-#
 # XRootD SSI
-#
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
-#
 # XRootD SSI Protocol Buffer bindings
-#
 include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 
-#
 # Compiled protocol buffers
-#
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
-
-#
-# eoscta_stub is a drop-in replacement for "cta archive|retrieve|delete"
-#
-add_executable(eoscta_stub EosCtaStub.cpp Configuration.cpp)
-target_link_libraries(eoscta_stub cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
-set_property (TARGET eoscta_stub APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-# Get some extra debug messages on stdout
-#target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
-install(TARGETS eoscta_stub DESTINATION usr/bin)
 
 #
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
@@ -55,10 +37,21 @@ target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 # Get some extra debug messages on stdout
 #target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
-install(TARGETS cta-admin DESTINATION usr/bin)
 
-add_executable(cta.deprecated CTACmdMain.cpp Configuration.cpp)
-target_link_libraries(cta.deprecated ${XROOTD_XRDCL_LIB} cryptopp)
-install(TARGETS cta.deprecated DESTINATION usr/bin)
-INSTALL(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+#
+# cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
+# without invoking EOS.
+#
+# Previously this was the eoscta_stub which was called by a script invoked by the EOS WFE.
+#
+find_package(cryptopp REQUIRED)
+add_executable(cta-wfe-test EosCtaStub.cpp Configuration.cpp)
+target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
+set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Get some extra debug messages on stdout
+#target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
+
+install(TARGETS cta-admin DESTINATION usr/bin)
+install(TARGETS cta-wfe-test DESTINATION usr/bin)
+install(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 

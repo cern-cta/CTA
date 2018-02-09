@@ -33,16 +33,18 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(
   log::Logger &log,
   const rdbms::Login &login,
   const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns) {
+  const uint64_t nbArchiveFileListingConns,
+  const uint32_t maxTriesToConnect) {
   try {
     switch(login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns);
+      return cta::make_unique<InMemoryCatalogue>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
       return cta::make_unique<OracleCatalogue>(log, login.username, login.password, login.database, nbConns,
-        nbArchiveFileListingConns);
+        nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_SQLITE:
-      return cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns);
+      return cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
+         maxTriesToConnect);
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

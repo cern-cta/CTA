@@ -53,7 +53,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 
 //! Usage exception
 
-const std::runtime_error Usage("Usage: eoscta_stub archive|retrieve|deletearchive [options] [--stderr]");
+const std::runtime_error Usage("Usage: cta-wfe-test archive|retrieve|deletearchive [options] [--stderr]");
 
 
 
