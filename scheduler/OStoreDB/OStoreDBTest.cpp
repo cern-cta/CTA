@@ -120,7 +120,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   // Add jobs to an archive queue.
   for (size_t i=0; i<10; i++) {
     cta::common::dataStructures::ArchiveRequest ar;
-    cta::common::dataStructures::ArchiveFileQueueCriteria afqc;
+    cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
     ar.fileSize=123*(i+1);
     afqc.copyToPoolMap[1] = "Tapepool1";
     afqc.fileId = i;

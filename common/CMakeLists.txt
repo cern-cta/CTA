@@ -31,7 +31,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
-  dataStructures/ArchiveFileQueueCriteria.cpp
+  dataStructures/ArchiveFileQueueCriteriaAndFileId.cpp
   dataStructures/ArchiveFileSummary.cpp
   dataStructures/ArchiveJob.cpp
   dataStructures/ArchiveRequest.cpp

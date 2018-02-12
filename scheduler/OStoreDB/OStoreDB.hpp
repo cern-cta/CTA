@@ -203,7 +203,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) override;
+    const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
   
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
   class ArchiveToFileRequestCancelation:

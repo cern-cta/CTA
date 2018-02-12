@@ -68,7 +68,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeLabelled(vid, drive, lbpIsOn);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile( const std::string &diskInstanceName, const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override {
+  common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile( const std::string &diskInstanceName, const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareForNewFile(diskInstanceName, storageClassName, user);}, m_maxTriesToConnect);
   }
 

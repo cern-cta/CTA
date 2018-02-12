@@ -153,7 +153,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     [i,&db,&lc](){
       cta::common::dataStructures::ArchiveRequest ar;
       cta::log::LogContext locallc=lc;
-      cta::common::dataStructures::ArchiveFileQueueCriteria afqc;
+      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
       afqc.copyToPoolMap.insert({1, "tapePool"});
       afqc.fileId = 0;
       afqc.mountPolicy.name = "mountPolicy";
@@ -233,7 +233,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     [i,&db,&lc](){
       cta::common::dataStructures::ArchiveRequest ar;
       cta::log::LogContext locallc=lc;
-      cta::common::dataStructures::ArchiveFileQueueCriteria afqc;
+      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
       afqc.copyToPoolMap.insert({1, "tapePool"});
       afqc.fileId = 0;
       afqc.mountPolicy.name = "mountPolicy";

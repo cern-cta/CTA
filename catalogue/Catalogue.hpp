@@ -27,7 +27,7 @@
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
@@ -111,7 +111,7 @@ public:
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
-  virtual common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+  virtual common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const common::dataStructures::UserIdentity &user) = 0;

@@ -27,7 +27,7 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
-#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
@@ -104,7 +104,7 @@ public:
    * @param logContext context allowing logging db operation
    */
   virtual void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-    const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria,
+    const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
 
   /**

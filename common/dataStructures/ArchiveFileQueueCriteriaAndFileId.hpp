@@ -33,12 +33,12 @@ namespace dataStructures {
  * the corresponding data-transfer jobs are to be queued and which mount policy
  * should be used.
  */
-struct ArchiveFileQueueCriteria {
+struct ArchiveFileQueueCriteriaAndFileId {
 
   /**
    * Constructor.
    */
-  ArchiveFileQueueCriteria();
+  ArchiveFileQueueCriteriaAndFileId();
 
   /**
    * Constructor.
@@ -47,7 +47,7 @@ struct ArchiveFileQueueCriteria {
    * @param copyToPoolMap The map from tape copy number to tape pool name.
    * @param mountPolicy The mount policy.
    */
-  ArchiveFileQueueCriteria(
+  ArchiveFileQueueCriteriaAndFileId(
     const uint64_t fileId,
     const TapeCopyToPoolMap &copyToPoolMap,
     const MountPolicy &mountPolicy);
@@ -68,7 +68,7 @@ struct ArchiveFileQueueCriteria {
    */
   MountPolicy mountPolicy;
 
-}; // struct ArchiveFileQueueCriteria
+}; // struct ArchiveFileQueueCriteriaAndFileId
 
 } // namespace dataStructures
 } // namespace common

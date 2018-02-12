@@ -358,7 +358,7 @@ OStoreDB::TapeMountDecisionInfoNoLock::~TapeMountDecisionInfoNoLock() {}
 // OStoreDB::queueArchive()
 //------------------------------------------------------------------------------
 void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
-        const cta::common::dataStructures::ArchiveFileQueueCriteria &criteria, log::LogContext &logContext) {
+        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   cta::utils::Timer timer;
   // Construct the archive request object in memory

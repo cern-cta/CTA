@@ -3916,7 +3916,8 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 //------------------------------------------------------------------------------
 // prepareForNewFile
 //------------------------------------------------------------------------------
-common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFile(const std::string &diskInstanceName,
+common::dataStructures::ArchiveFileQueueCriteriaAndFileId RdbmsCatalogue::prepareForNewFile(
+  const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
@@ -3958,7 +3959,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::prepareForNewFi
     // consume an archive file identifier
     const uint64_t archiveFileId = getNextArchiveFileId(conn);
 
-    return common::dataStructures::ArchiveFileQueueCriteria(archiveFileId, copyToPoolMap, mountPolicy);
+    return common::dataStructures::ArchiveFileQueueCriteriaAndFileId(archiveFileId, copyToPoolMap, mountPolicy);
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {

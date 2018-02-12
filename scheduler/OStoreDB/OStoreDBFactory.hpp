@@ -80,7 +80,7 @@ public:
     m_OStoreDB.ping();
   }
 
-  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteria& criteria, log::LogContext &logContext) override {
+  void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria, log::LogContext &logContext) override {
     return m_OStoreDB.queueArchive(instanceName, request, criteria, logContext);
   }
 

@@ -16,19 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteria::
-  ArchiveFileQueueCriteria(): fileId(0) {
+cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId::
+  ArchiveFileQueueCriteriaAndFileId(): fileId(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteria::ArchiveFileQueueCriteria(
+cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId::ArchiveFileQueueCriteriaAndFileId(
   const uint64_t fileId,
   const TapeCopyToPoolMap &copyToPoolMap,
   const MountPolicy &mountPolicy):

@@ -116,7 +116,7 @@ public:
    * archiving the file.
    * @return The information required to queue the associated archive request.
    */
-  common::dataStructures::ArchiveFileQueueCriteria prepareForNewFile(
+  common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile(
     const std::string &diskInstanceName,
     const std::string &storageClassName,
     const common::dataStructures::UserIdentity &user) override;

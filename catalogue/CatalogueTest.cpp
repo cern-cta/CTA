@@ -4667,7 +4667,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule) {
   userIdentity.group = "group";
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
-    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+    const common::dataStructures::ArchiveFileQueueCriteriaAndFileId queueCriteria =
       m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
@@ -4766,7 +4766,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_group_mount_rule
   userIdentity.group = requesterGroupName;
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
-    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+    const common::dataStructures::ArchiveFileQueueCriteriaAndFileId queueCriteria =
       m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
@@ -4884,7 +4884,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_requester_mount_rule_overi
   userIdentity.group = "group";
   uint64_t expectedArchiveFileId = 0;
   for(uint64_t i = 0; i<10; i++) {
-    const common::dataStructures::ArchiveFileQueueCriteria queueCriteria =
+    const common::dataStructures::ArchiveFileQueueCriteriaAndFileId queueCriteria =
       m_catalogue->prepareForNewFile(storageClass.diskInstance, storageClass.name, userIdentity);
 
     if(0 == i) {
