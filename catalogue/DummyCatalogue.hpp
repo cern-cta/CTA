@@ -99,7 +99,10 @@ public:
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& tapePoolName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void noSpaceLeftOnTape(const std::string& vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void ping() override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile(const std::string& diskInstanceName, const std::string& storageClassName, const common::dataStructures::UserIdentity& user) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(const std::string &diskInstanceName,
+    const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile(const std::string &diskInstanceName,
+    const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& instanceName, const uint64_t archiveFileId, const common::dataStructures::UserIdentity& user, log::LogContext &lc) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId, const common::dataStructures::UserIdentity &user, log::LogContext &lc) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin, const std::string& vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

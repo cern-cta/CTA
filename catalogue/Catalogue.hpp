@@ -27,6 +27,7 @@
 #include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -95,6 +96,25 @@ public:
    * @param lbpIsOn Set to true if Logical Block Protection (LBP) was enabled.
    */
   virtual void tapeLabelled(const std::string &vid, const std::string &drive, const bool lbpIsOn) = 0;
+
+  /**
+   * Returns the information required to queue an archive request.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return The information required to queue an archive request.
+   */
+  virtual common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const common::dataStructures::UserIdentity &user) = 0;
 
   /**
    * Prepares the catalogue for a new archive file and returns the information
