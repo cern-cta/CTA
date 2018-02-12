@@ -367,6 +367,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    std::cerr << result_str << std::endl;
 #endif
    response.set_message_txt(result_str);
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
 
    // Set response type
 
