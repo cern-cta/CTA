@@ -3914,6 +3914,59 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 }
 
 //------------------------------------------------------------------------------
+// checkAndGetNextArchiveFileId
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
+  const std::string &storageClassName, const common::dataStructures::UserIdentity &user){
+  try {
+    auto conn = m_connPool.getConn();
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
+      storageClassName);
+    const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, diskInstanceName, storageClassName);
+
+    // Check that the number of archive routes is correct
+    if(copyToPoolMap.empty()) {
+      exception::UserError ue;
+      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " has no archive routes";
+      throw ue;
+    }
+    if(copyToPoolMap.size() != expectedNbRoutes) {
+      exception::UserError ue;
+      ue.getMessage() << "Storage class " << diskInstanceName << ":" << storageClassName << " does not have the"
+        " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
+        copyToPoolMap.size();
+      throw ue;
+    }
+
+    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
+      user.group);
+    // Requester mount policies overrule requester group mount policies
+    common::dataStructures::MountPolicy mountPolicy;
+    if(!mountPolicies.requesterMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterMountPolicies.front();
+    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
+    } else {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot archive file because there are no mount rules for the requester or their group:"
+        " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
+        user.group;
+      throw ue;
+    }
+
+    // Now that we have found both the archive routes and the mount policy it's
+    // safe to consume an archive file identifier
+    return getNextArchiveFileId(conn);
+  } catch(exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // getArchiveFileQueueCriteria
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQueueCriteria(
