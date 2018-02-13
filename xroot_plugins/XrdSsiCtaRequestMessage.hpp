@@ -63,6 +63,7 @@ private:
     */
    typedef void notification_event_t(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
+   notification_event_t processOPENW;        //!< New archive file ID event
    notification_event_t processCLOSEW;       //!< Archive file event
    notification_event_t processPREPARE;      //!< Retrieve file event
    notification_event_t processDELETE;       //!< Delete file event
