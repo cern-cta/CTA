@@ -4934,6 +4934,327 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_routes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterMountRule rule = rules.front();
+
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  // Do not create any archive routes
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+
+  ASSERT_THROW(m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+
+  const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterMountRule rule = rules.front();
+
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClass.name, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string comment = "Create mount rule for requester group";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
+
+  const std::list<common::dataStructures::RequesterGroupMountRule> rules = m_catalogue->getRequesterGroupMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterGroupMountRule rule = rules.front();
+
+  ASSERT_EQ(requesterGroupName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClass.name, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = "username";
+  userIdentity.group = requesterGroupName;
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  const std::string mountPolicyName = "mount_policy";
+  const uint64_t archivePriority = 1;
+  const uint64_t minArchiveRequestAge = 2;
+  const uint64_t retrievePriority = 3;
+  const uint64_t minRetrieveRequestAge = 4;
+  const uint64_t maxDrivesAllowed = 5;
+
+  m_catalogue->createMountPolicy(
+    m_admin,
+    mountPolicyName,
+    archivePriority,
+    minArchiveRequestAge,
+    retrievePriority,
+    minRetrieveRequestAge,
+    maxDrivesAllowed,
+    "Create mount policy");
+
+  const std::string requesterRuleComment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance_name";
+  const std::string requesterName = "requester_name";
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
+    requesterRuleComment);
+
+  const std::list<common::dataStructures::RequesterMountRule> requesterRules = m_catalogue->getRequesterMountRules();
+  ASSERT_EQ(1, requesterRules.size());
+
+  const common::dataStructures::RequesterMountRule requesterRule = requesterRules.front();
+
+  ASSERT_EQ(requesterName, requesterRule.name);
+  ASSERT_EQ(mountPolicyName, requesterRule.mountPolicy);
+  ASSERT_EQ(requesterRuleComment, requesterRule.comment);
+  ASSERT_EQ(m_admin.username, requesterRule.creationLog.username);
+  ASSERT_EQ(m_admin.host, requesterRule.creationLog.host);
+  ASSERT_EQ(requesterRule.creationLog, requesterRule.lastModificationLog);
+
+  const std::string requesterGroupRuleComment = "Create mount rule for requester group";
+  const std::string requesterGroupName = "requester_group";
+  m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
+    requesterGroupRuleComment);
+
+  const std::list<common::dataStructures::RequesterGroupMountRule> requesterGroupRules =
+    m_catalogue->getRequesterGroupMountRules();
+  ASSERT_EQ(1, requesterGroupRules.size());
+
+  const common::dataStructures::RequesterGroupMountRule requesterGroupRule = requesterGroupRules.front();
+
+  ASSERT_EQ(requesterName, requesterGroupRule.name);
+  ASSERT_EQ(mountPolicyName, requesterGroupRule.mountPolicy);
+  ASSERT_EQ(requesterGroupRuleComment, requesterGroupRule.comment);
+  ASSERT_EQ(m_admin.username, requesterGroupRule.creationLog.username);
+  ASSERT_EQ(m_admin.host, requesterGroupRule.creationLog.host);
+  ASSERT_EQ(requesterGroupRule.creationLog, requesterGroupRule.lastModificationLog);
+
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = diskInstanceName;
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string archiveRouteComment = "Create archive route";
+  m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb, tapePoolName,
+    archiveRouteComment);
+
+  const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
+
+  ASSERT_EQ(1, routes.size());
+
+  const common::dataStructures::ArchiveRoute route = routes.front();
+  ASSERT_EQ(storageClass.name, route.storageClassName);
+  ASSERT_EQ(copyNb, route.copyNb);
+  ASSERT_EQ(tapePoolName, route.tapePoolName);
+  ASSERT_EQ(archiveRouteComment, route.comment);
+
+  const common::dataStructures::EntryLog creationLog = route.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  common::dataStructures::UserIdentity userIdentity;
+  userIdentity.name = requesterName;
+  userIdentity.group = "group";
+  m_catalogue->getArchiveFileQueueCriteria(storageClass.diskInstance, storageClass.name, userIdentity);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, prepareForNewFile_no_archive_routes) {
   using namespace cta;
 
