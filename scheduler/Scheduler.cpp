@@ -22,6 +22,7 @@
 #include "Scheduler.hpp"
 #include "ArchiveMount.hpp"
 #include "RetrieveMount.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/utils/utils.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/NonRetryableError.hpp"
@@ -127,6 +128,57 @@ uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::
      .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "Queued archive request");
   return catalogueInfo.fileId;
+}
+
+//------------------------------------------------------------------------------
+// queueArchiveWithGivenId
+//------------------------------------------------------------------------------
+void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
+  const cta::common::dataStructures::ArchiveRequest &request, log::LogContext &lc) {
+  cta::utils::Timer t;
+  using utils::postEllipsis;
+  using utils::midEllipsis;
+
+  const auto queueCriteria = m_catalogue.getArchiveFileQueueCriteria(instanceName, request.storageClass,
+    request.requester);
+  auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+
+  const common::dataStructures::ArchiveFileQueueCriteriaAndFileId catalogueInfo(archiveFileId,
+    queueCriteria.copyToPoolMap, queueCriteria.mountPolicy);
+
+  m_db.queueArchive(instanceName, request, catalogueInfo, lc);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("instanceName", instanceName)
+     .add("storageClass", request.storageClass)
+     .add("diskFileID", request.diskFileID)
+     .add("fileSize", request.fileSize)
+     .add("fileId", catalogueInfo.fileId);
+  for (auto & ctp: catalogueInfo.copyToPoolMap) {
+    std::stringstream tp;
+    tp << "tapePool" << ctp.first;
+    spc.add(tp.str(), ctp.second);
+  }
+  spc.add("policyName", catalogueInfo.mountPolicy.name)
+     .add("policyArchiveMinAge", catalogueInfo.mountPolicy.archiveMinRequestAge)
+     .add("policyArchivePriority", catalogueInfo.mountPolicy.archivePriority)
+     .add("policyMaxDrives", catalogueInfo.mountPolicy.maxDrivesAllowed)
+     .add("diskFilePath", request.diskFileInfo.path)
+     .add("diskFileOwner", request.diskFileInfo.owner)
+     .add("diskFileGroup", request.diskFileInfo.group)
+     .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
+     .add("checksumValue", request.checksumValue)
+     .add("checksumType", request.checksumType)
+     .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
+     .add("creationHost", request.creationLog.host)
+     .add("creationTime", request.creationLog.time)
+     .add("creationUser", request.creationLog.username)
+     .add("requesterName", request.requester.name)
+     .add("requesterGroup", request.requester.group)
+     .add("srcURL", midEllipsis(request.srcURL, 50, 15))
+     .add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "Queued archive request");
 }
 
 //------------------------------------------------------------------------------
