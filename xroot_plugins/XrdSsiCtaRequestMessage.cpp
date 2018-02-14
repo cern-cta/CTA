@@ -333,15 +333,15 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
    cta::utils::Timer t;
 
    const std::string storageClass = notification.file().xattr().at("CTA_StorageClass");
-   // uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator);
+   const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator);
 
    // Create a log entry
 
    cta::log::ScopedParamContainer params(m_lc);
-   //params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
+   params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
    m_lc.log(cta::log::INFO, "In processOPENW(): getting new archive file ID.");
 
-   // response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
 
    // Set response type
 
