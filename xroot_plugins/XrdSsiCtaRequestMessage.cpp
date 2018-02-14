@@ -385,18 +385,19 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.creationLog.username = m_cliIdentity.username;
    request.creationLog.time     = time(nullptr);
 
+   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
+   // must be converted to a valid uint64_t
+
+   const std::string archiveFileIdStr = notification.file().xattr().at("CTA_ArchiveFileId");
+   uint64_t archiveFileId = 0;
+   if((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
+   {
+      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+   }
+
    // Queue the request
 
-   uint64_t archiveFileId = m_scheduler.queueArchive(m_cliIdentity.username, request, m_lc);
-
-   // Set archiveFileId in response (deprecated)
-
-   std::string result_str = "<eos::wfe::path::fxattr:sys.archiveFileId>" + std::to_string(archiveFileId);
-#ifdef XRDSSI_DEBUG
-   std::cerr << result_str << std::endl;
-#endif
-   response.set_message_txt(result_str);
-   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
+   m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
 
    // Set response type
 
