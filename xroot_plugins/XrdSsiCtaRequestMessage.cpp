@@ -327,10 +327,28 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 void RequestMessage::processOPENW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
+   // Unpack message
+
+   cta::common::dataStructures::UserIdentity originator;
+   originator.name          = notification.cli().user().username();
+   originator.group         = notification.cli().user().groupname();
+
+   cta::utils::Timer t;
+
+   const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
+   if(notification.file().xattr().end() == storageClassItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
+   }
+   const std::string storageClass = storageClassItor->second;
+   const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator);
+
    // Create a log entry
 
    cta::log::ScopedParamContainer params(m_lc);
-   m_lc.log(cta::log::INFO, "In processOPENW(): ignoring OPENW event.");
+   params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
+   m_lc.log(cta::log::INFO, "In processOPENW(): getting new archive file ID.");
+
+   response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
 
    // Set response type
 
