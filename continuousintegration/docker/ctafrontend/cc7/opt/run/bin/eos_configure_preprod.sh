@@ -10,7 +10,6 @@ eos attr set CTA_TapeFsId=65535 ${PREPROD_DIR}
 
 eos attr set sys.workflow.sync::openw.default="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}
 eos attr set sys.workflow.closew.default="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}
-eos attr set sys.workflow.closew.CTA_retrieve="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}
 eos attr set sys.workflow.archived.default="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::prepare.default="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::delete.default="proto:ctafrontend:10955 ctafrontend" ${PREPROD_DIR}

@@ -300,10 +300,6 @@ echo OK
 # Set the workflow rules for archiving, creating tape file replicas in the EOS namespace, retrieving
 # files from tape and deleting files.
 #
-# The closew.CTA_retrieve workflow prevents the default workflow from receiving the closew event, as
-# we don't want to trigger the action of copying the retrived disk file to tape again. The
-# closew.CTA_retrieve workflow sets the CTA_retrieved_timestamp attribute.
-#
 # The FQDN can be set as follows:
 # CTA_ENDPOINT=ctafrontend.${instance}.svc.cluster.local:10955
 #
@@ -312,7 +308,7 @@ CTA_ENDPOINT=ctafrontend:10955
 
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
-for WORKFLOW in sync::openw.default closew.default archived.default sync::prepare.default closew.CTA_retrieve sync::delete.default
+for WORKFLOW in sync::openw.default closew.default archived.default sync::prepare.default sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto:${CTA_ENDPOINT} ctafrontend\" ${CTA_WF_DIR}"
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto:${CTA_ENDPOINT} ctafrontend\" ${CTA_WF_DIR}"
