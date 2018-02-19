@@ -3917,7 +3917,7 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 // checkAndGetNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
-  const std::string &storageClassName, const common::dataStructures::UserIdentity &user){
+  const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
@@ -3948,7 +3948,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
       exception::UserError ue;
-      ue.getMessage() << "Cannot archive file because there are no mount rules for the requester or their group:"
+      ue.getMessage() << "No mount rules for the requester or their group:"
         " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
         user.group;
       throw ue;
@@ -3959,8 +3959,8 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
     return getNextArchiveFileId(conn);
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::UserError &) {
-    throw;
+  } catch(exception::UserError &ue) {
+    throw exception::UserError(std::string("Cannot allocate a new archive file: ") + ue.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
