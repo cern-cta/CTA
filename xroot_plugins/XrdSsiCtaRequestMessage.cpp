@@ -327,6 +327,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 void RequestMessage::processOPENW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
+   // Create a log entry
+
+   cta::log::ScopedParamContainer params(m_lc);
+   m_lc.log(cta::log::INFO, "In processOPENW(): ignoring OPENW event.");
+
+   // Set response type
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
+{
    // Unpack message
 
    cta::common::dataStructures::UserIdentity originator;
@@ -346,21 +358,9 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
 
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processOPENW(): getting new archive file ID.");
+   m_lc.log(cta::log::INFO, "In processCREATE(): getting new archive file ID.");
 
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
-
-   // Set response type
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
-{
-   // Create a log entry
-
-   cta::log::ScopedParamContainer params(m_lc);
-   m_lc.log(cta::log::INFO, "In processCREATE(): ignoring CREATE event.");
 
    // Set response type
 
