@@ -289,8 +289,8 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          switch(request.notification().wf().event()) {
             using namespace cta::eos;
 
-            case Workflow::OPENW:
-               processOPENW (request.notification(), response);
+            case Workflow::CREATE:
+               processCREATE (request.notification(), response);
                break;
             case Workflow::CLOSEW:
                processCLOSEW (request.notification(), response);
@@ -322,7 +322,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
 
 // EOS Workflow commands
 
-void RequestMessage::processOPENW(const cta::eos::Notification &notification, cta::xrd::Response &response)
+void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Unpack message
 
@@ -339,7 +339,7 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
 
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processOPENW(): getting new archive file ID.");
+   m_lc.log(cta::log::INFO, "In processCREATE(): getting new archive file ID.");
 
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
 
