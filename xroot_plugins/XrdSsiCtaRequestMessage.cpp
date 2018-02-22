@@ -292,6 +292,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case Workflow::OPENW:
                processOPENW (request.notification(), response);
                break;
+            case Workflow::CREATE:
+               processCREATE (request.notification(), response);
+               break;
             case Workflow::CLOSEW:
                processCLOSEW (request.notification(), response);
                break;
@@ -328,6 +331,18 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
 
    cta::log::ScopedParamContainer params(m_lc);
    m_lc.log(cta::log::INFO, "In processOPENW(): ignoring OPENW event.");
+
+   // Set response type
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
+{
+   // Create a log entry
+
+   cta::log::ScopedParamContainer params(m_lc);
+   m_lc.log(cta::log::INFO, "In processCREATE(): ignoring CREATE event.");
 
    // Set response type
 
