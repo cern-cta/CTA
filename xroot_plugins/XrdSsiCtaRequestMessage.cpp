@@ -372,6 +372,11 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    std::string checksumvalue("0X" + notification.file().cks().value());
    cta::utils::toUpper(checksumvalue);    // replace this with a number!
 
+   const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
+   if(notification.file().xattr().end() == storageClassItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
+   }
+
    cta::common::dataStructures::ArchiveRequest request;
    request.checksumType         = checksumtype;
    request.checksumValue        = checksumvalue;
@@ -380,7 +385,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.fileSize             = notification.file().size();
    request.requester            = originator;
    request.srcURL               = notification.wf().instance().url();
-   request.storageClass         = notification.file().xattr().at("CTA_StorageClass");
+   request.storageClass         = storageClassItor->second;
    request.archiveReportURL     = notification.transport().report_url();
    request.creationLog.host     = m_cliIdentity.host;
    request.creationLog.username = m_cliIdentity.username;
@@ -434,7 +439,11 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
-   std::string archiveFileIdStr = notification.file().xattr().at("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   if(notification.file().xattr().end() == archiveFileIdItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+   }
+   const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
@@ -470,7 +479,11 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
    // must be converted to a valid uint64_t
 
-   std::string archiveFileIdStr = notification.file().xattr().at("CTA_ArchiveFileId");
+   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   if(notification.file().xattr().end() == archiveFileIdItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+   }
+   const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
