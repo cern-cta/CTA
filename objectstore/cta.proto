@@ -79,6 +79,11 @@ message AgentRegisterPointer {
   required EntryLog log = 101;
 }
 
+message RepackTapeRegisterPointer {
+  required string address = 105;
+  required EntryLog log = 106;
+}
+
 // Pointer to the scheduler global lock
 message SchedulerGlobalLockPointer {
   required string address = 110;
@@ -109,6 +114,7 @@ message RootEntry {
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
+  optional RepackTapeRegisterPointer repacktaperegisterpointer = 1085;
   optional string agentregisterintent = 1090;
   optional SchedulerGlobalLockPointer schedulerlockpointer = 1100;
 }
@@ -477,7 +483,7 @@ message RepackTapePointer {
   required string address = 12010;
 }
 
-message RepackTapeRegistry {
+message RepackTapeRegister {
   repeated RepackTapePointer repacktapepointers = 12100;
   repeated string tapestoblowup = 12110;
 }
