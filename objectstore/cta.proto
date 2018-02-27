@@ -429,3 +429,55 @@ message RetrieveQueue {
   required uint64 mapsrebuildcount = 10160;
   required uint64 maxshardsize = 10170;
 }
+
+// ------------- Repack data strcutures ----------------------------------------
+
+enum RepackTapeStatus {
+  RTS_Starting = 1;
+  RTS_Ongoing = 2;
+  RTS_Finished = 3;
+  RTS_Failed = 4;
+  RTS_Aborting = 5;
+  RTS_Aborted = 6;
+  RTS_Submitted = 7;
+}
+
+message RepackBypassElement {
+  required uint64 fseq = 11500;
+  required string url = 11510;
+}
+
+message RepackTapeState {
+  required string vid = 11000;
+  required RepackTapeStatus status = 11010;
+  required uint64 creationtime = 11020;
+  required uint64 starttime = 11030;
+  required uint64 completiontime = 11040;
+  required uint64 failuretime = 11050;
+  required uint64 abortrequesttime = 11060;
+  required uint64 abortcompletiontime = 11070;
+  required uint64 submissiontime = 11080;
+  required uint64 filescount = 11090;
+  required uint64 bytescount = 11100;
+  required uint64 filesretrieved = 11110;
+  required uint64 bytesretrieved = 11120;
+  required uint64 filessuccessful = 11130;
+  required uint64 bytessuvvessful = 11140;
+  required uint64 filesfailed = 11150;
+  required uint64 bytesfailed = 11160;
+  required uint64 activeretrieves = 11170;
+  required uint64 activearchives = 11180;
+  repeated string sourcevids = 11190;
+  repeated string targettapepools = 11200;
+  repeated RepackBypassElement bypasselements = 11300;
+}
+
+message RepackTapePointer {
+  required string vid = 12000;
+  required string address = 12010;
+}
+
+message RepackTapeRegistry {
+  repeated RepackTapePointer repacktapepointers = 12100;
+  repeated string tapestoblowup = 12110;
+}
