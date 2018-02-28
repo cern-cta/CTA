@@ -87,6 +87,28 @@ public:
    */
   void ping(log::LogContext & lc);
 
+  /**
+   * Checks the specified archival could take place and returns a new and
+   * unique archive file identifier that can be used by a new archive file
+   * within the catalogue.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * storage class belongs.
+   * @param storageClassName The name of the storage class of the file to be
+   * archived.  The storage class name is only guaranteed to be unique within
+   * its disk instance.  The storage class name will be used by the Catalogue
+   * to determine the destination tape pool for each tape copy.
+   * @param user The user for whom the file is to be archived.  This will be
+   * used by the Catalogue to determine the mount policy to be used when
+   * archiving the file.
+   * @return The new archive file identifier.
+   */
+  uint64_t checkAndGetNextArchiveFileId(
+    const std::string &diskInstanceName,
+    const std::string &storageClassName,
+    const common::dataStructures::UserIdentity &user,
+    log::LogContext &lc);
+
   /** 
    * Queue an archive request and return the CTA file ID. 
    * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)

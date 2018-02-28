@@ -85,6 +85,27 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &c
 }
 
 //------------------------------------------------------------------------------
+// checkAndGetNextArchiveFileId
+//------------------------------------------------------------------------------
+uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string &instanceName,
+  const std::string &storageClassName, const common::dataStructures::UserIdentity &user, log::LogContext &lc) {
+  cta::utils::Timer t;
+  const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(instanceName, storageClassName, user);
+  const auto catalogueTime = t.secs();
+  const auto schedulerDbTime = catalogueTime;
+
+  log::ScopedParamContainer spc(lc);
+  spc.add("instanceName", instanceName)
+     .add("storageClass", storageClassName)
+     .add("fileId", archiveFileId)
+     .add("catalogueTime", catalogueTime)
+     .add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "Checked request and got next archive file ID");
+
+  return archiveFileId;
+}
+
+//------------------------------------------------------------------------------
 // queueArchive
 //------------------------------------------------------------------------------
 uint64_t Scheduler::queueArchive(const std::string &instanceName, const common::dataStructures::ArchiveRequest &request,
