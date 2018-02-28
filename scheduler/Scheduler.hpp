@@ -110,18 +110,6 @@ public:
     log::LogContext &lc);
 
   /** 
-   * Queue an archive request and return the CTA file ID. 
-   * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)
-   * Throws a (Non)RetryableError exception in case something else goes wrong with the request
-   * @param instanceName name of the EOS instance
-   * @param request the archive request
-   * @param lc a log context allowing logging from within the scheduler routine.
-   * @return
-   */
-  uint64_t queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
-    log::LogContext &lc);
-
-  /** 
    * Queue the specified archive request. 
    * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request

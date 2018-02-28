@@ -264,7 +264,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   log::DummyLogger dl("");
   log::LogContext lc(dl);
-  scheduler.queueArchive(s_diskInstance, request, lc);
+  const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
+      request.requester, lc);
+  scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
   {
     auto rqsts = scheduler.getPendingArchiveJobs(lc);
@@ -395,7 +397,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
+    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   
   // Check that we have the file in the queues
@@ -570,7 +573,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
+    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   
   // Create the environment for the migration to happen (library + tape) 
@@ -684,7 +688,8 @@ TEST_P(SchedulerTest, showqueues) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
-    archiveFileId = scheduler.queueArchive(s_diskInstance, request, lc);
+    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   
   // get the queues from scheduler

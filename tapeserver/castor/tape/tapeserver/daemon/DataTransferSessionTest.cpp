@@ -1267,7 +1267,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
+      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
+      archiveFileIds.push_back(archiveFileId);
+      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
   // Report the drive's existence and put it up in the drive register.
@@ -1407,7 +1409,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
+      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
+      archiveFileIds.push_back(archiveFileId);
+      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
       // Delete the file: the migration will fail.
       sourceFiles.clear();
     }
@@ -1545,7 +1549,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
+      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
+      archiveFileIds.push_back(archiveFileId);
+      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
   // Report the drive's existence and put it up in the drive register.
@@ -1695,7 +1701,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
       ar.diskFileInfo.recoveryBlob = "b";
-      archiveFileIds.push_back(scheduler.queueArchive(s_diskInstance,ar,logContext));
+      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
+      archiveFileIds.push_back(archiveFileId);
+      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
   // Report the drive's existence and put it up in the drive register.
