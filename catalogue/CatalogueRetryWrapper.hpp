@@ -77,11 +77,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFileQueueCriteria(diskInstanceName, storageClassName, user);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::ArchiveFileQueueCriteriaAndFileId prepareForNewFile(const std::string &diskInstanceName,
-    const std::string &storageClassName, const common::dataStructures::UserIdentity &user) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareForNewFile(diskInstanceName, storageClassName, user);}, m_maxTriesToConnect);
-  }
-
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesForWriting(logicalLibraryName);}, m_maxTriesToConnect);
   }
