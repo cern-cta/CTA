@@ -352,7 +352,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
    }
    const std::string storageClass = storageClassItor->second;
-   const uint64_t archiveFileId = m_catalogue.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator);
+   const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator, m_lc);
 
    // Create a log entry
 
