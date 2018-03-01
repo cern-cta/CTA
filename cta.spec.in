@@ -57,6 +57,8 @@ BuildRequires: libattr-devel >= 2.4.44
 BuildRequires: oracle-instantclient12.2-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
+%{?systemd_requires}
+BuildRequires: systemd
 %endif
 # only build debug info if you're building the whole code
 
@@ -142,6 +144,15 @@ The tape server daemon
 %attr(0644,root,root) /etc/sysconfig/cta-taped
 %attr(0644,root,root) /etc/systemd/system/cta-taped.service
 
+%post -n cta-taped
+%systemd_post cta-taped.service
+
+%preun -n cta-taped
+%systemd_preun cta-taped.service
+
+%postun -n cta-taped
+%systemd_postun cta-taped.service
+
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
@@ -165,8 +176,16 @@ The xroot plugin
 %attr(0644,cta,cta) /etc/systemd/system/cta-frontend.service
 
 #Frontend installs libraries so we need ldconfig.
-%post -n cta-frontend -p /sbin/ldconfig
-%postun -n cta-frontend -p /sbin/ldconfig
+%post -n cta-frontend
+/sbin/ldconfig
+%systemd_post cta-frontend.service
+
+%preun -n cta-frontend
+%systemd_preun cta-frontend.service
+
+%postun -n cta-frontend
+/sbin/ldconfig
+%systemd_post cta-frontend.service
 
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
@@ -315,6 +334,15 @@ Tools to faciliate working with rmcd and smc in cta
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
+
+%post -n cta-rmcd
+%systemd_post cta-rmcd.service
+
+%preun -n cta-rmcd
+%systemd_preun cta-rmcd.service
+
+%postun -n cta-rmcd
+%systemd_postun cta-rmcd.service
 
 %package -n cta-tape-developer-acs-tools
 Summary: Cern Advanced mass STORage
