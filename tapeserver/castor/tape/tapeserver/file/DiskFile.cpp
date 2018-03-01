@@ -491,7 +491,7 @@ void XrootBaseWriteFile::close()  {
   if (m_closeTried) return;
   m_closeTried=true;
   XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
-    std::string("In XrootWriteFile::close failed XrdCl::File::Stat() on ")+m_URL);
+    std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ")+m_URL);
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
