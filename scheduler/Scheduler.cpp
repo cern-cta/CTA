@@ -230,7 +230,8 @@ void Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
+void Scheduler::deleteArchive(const std::string &instanceName, const common::dataStructures::DeleteArchiveRequest &request, 
+    log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
   // First, make sure the file is not queued anymore.
@@ -292,8 +293,20 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const common::dataStructures::RepackType) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
+    const std::string & bufferURL, const common::dataStructures::RepackType repackType, log::LogContext & lc) {
+  // Check request sanity
+  if (vid.empty()) throw exception::UserError("Empty VID name.");
+  if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");
+  utils::Timer t;
+  m_db.queueRepack(vid, bufferURL, repackType, lc);
+  log::TimingList tl;
+  tl.insertAndReset("schedulerDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("VID", vid)
+        .add("repackType", toString(repackType));
+  tl.addToLog(params);
+  lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
 }
 
 //------------------------------------------------------------------------------

@@ -24,6 +24,8 @@
 #include "objectstore/DriveState.hpp"
 //#include "objectstore/ArchiveRequest.hpp"
 //#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "objectstore/RepackIndex.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -1019,6 +1021,38 @@ OStoreDB::getRetrieveJobs() const
 OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vid) const
 {
   return RetrieveQueueItor_t(m_objectStore, vid);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::queueRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
+    common::dataStructures::RepackType repackType, log::LogContext & lc) {
+  // Prepare the repack request object in memory.
+  assertAgentAddressSet();
+  cta::utils::Timer t;
+  cta::objectstore::RepackRequest rr(m_agentReference->nextId("RepackTapeRequest"), m_objectStore);
+  rr.initialize();
+  // We need to own the request until it is queued in the the pending queue.
+  rr.setOwner(m_agentReference->getAgentAddress());
+  rr.setVid(vid);
+  rr.setRepackType(repackType);
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(re.addOrGetRepackIndexAndCommit(*m_agentReference, lc), m_objectStore);
+  try {
+    Helpers::registerRepackRequestToIndex(vid, rr.getAddressIfSet(), *m_agentReference, m_objectStore, lc);
+  } catch (objectstore::RepackIndex::VidAlreadyRegistered &) {
+    throw exception::UserError("A repack request already exists for this VID.");
+  }
+  // We're good to go to create the object. We need to own it.
+  m_agentReference->addToOwnership(rr.getAddressIfSet(), m_objectStore);
+  rr.insert();
+  // If latency needs to the improved, the next steps could be deferred like they are for archive and retrieve requests.
+  // TODO typedef objectstore::ContainerAlgorithms<RepackPendingQueue> RPQA;
+  
+  
 }
 
 

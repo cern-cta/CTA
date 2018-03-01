@@ -30,6 +30,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/log/LogContext.hpp"
@@ -351,6 +352,12 @@ public:
     virtual ~RetrieveJob() {}
   };
 
+  /*============ Repack management: user side ================================*/
+  virtual void queueRepack(const std::string & vid, const std::string & bufferURL,
+      common::dataStructures::RepackType repackType, log::LogContext & lc) = 0;
+  
+  /*============ Repack management: tape server side =========================*/
+  
   /*============ Label management: user side =================================*/
   // TODO
   

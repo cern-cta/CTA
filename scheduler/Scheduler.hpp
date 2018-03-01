@@ -190,8 +190,8 @@ public:
   void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
     const bool force, const bool lbp);
 
-  void queueRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
-    const cta::common::dataStructures::RepackType);
+  void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
+    const std::string & bufferURL, const common::dataStructures::RepackType repackType, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity);

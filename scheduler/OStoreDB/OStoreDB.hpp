@@ -274,6 +274,10 @@ public:
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
   
+  /* === Repack requests handling =========================================== */
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackType repackType, 
+      log::LogContext &logContext) override;
+  
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

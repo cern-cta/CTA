@@ -125,11 +125,16 @@ public:
   std::string addOrGetAgentRegisterPointerAndCommit(AgentReference & agentRef,
     const EntryLogSerDeser & log, log::LogContext & lc);
   void removeAgentRegisterAndCommit(log::LogContext & lc);
-
-  // Agent register manipulations ==============================================
+  
+  // Scheduler global lock manipulations =======================================
   std::string getSchedulerGlobalLock();
   std::string addOrGetSchedulerGlobalLockAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
   void removeSchedulerGlobalLockAndCommit(log::LogContext & lc);
+  
+  // Repack index manipulations ================================================
+  std::string getRepackIndexAddress();
+  std::string addOrGetRepackIndexAndCommit(AgentReference & agentRef, log::LogContext & lc);
+  void removeRepackIndexAndCommit(log::LogContext & lc);
   
 private:
   void addIntendedAgentRegistry(const std::string & address, log::LogContext & lc);

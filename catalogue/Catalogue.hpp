@@ -41,8 +41,6 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
-#include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"

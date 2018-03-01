@@ -31,6 +31,9 @@ enum ObjectType {
   ArchiveQueueShard_t = 90;
   RetrieveQueue_t = 10;
   RetrieveQueueShard_t = 100;
+  RepackRequest_t = 11;
+  RepackIndex_t = 12;
+  RepackQueue_t = 13;
   GenericObject_t = 1000;
 }
 
@@ -79,7 +82,7 @@ message AgentRegisterPointer {
   required EntryLog log = 101;
 }
 
-message RepackTapeRegisterPointer {
+message RepackIndexPointer {
   required string address = 105;
   required EntryLog log = 106;
 }
@@ -114,7 +117,7 @@ message RootEntry {
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
-  optional RepackTapeRegisterPointer repacktaperegisterpointer = 1085;
+  optional RepackIndexPointer repackindexpointer = 1085;
   optional string agentregisterintent = 1090;
   optional SchedulerGlobalLockPointer schedulerlockpointer = 1100;
 }
@@ -438,52 +441,29 @@ message RetrieveQueue {
 
 // ------------- Repack data strcutures ----------------------------------------
 
-enum RepackTapeStatus {
-  RTS_Starting = 1;
-  RTS_Ongoing = 2;
-  RTS_Finished = 3;
-  RTS_Failed = 4;
-  RTS_Aborting = 5;
-  RTS_Aborted = 6;
-  RTS_Submitted = 7;
+enum RepackRequestStatus {
+  RRS_Pending = 1;
+  RRS_ToExpand = 2;
+  RRS_Starting = 3;
+  RRS_Running = 4;
+  RRS_Aborting = 5;
+  RRS_Aborted = 6;
+  RRS_Complete = 7;
+  RRS_Failed = 8;
 }
 
-message RepackBypassElement {
-  required uint64 fseq = 11500;
-  required string url = 11510;
-}
-
-message RepackTapeState {
+message RepackRequest {
   required string vid = 11000;
-  required RepackTapeStatus status = 11010;
-  required uint64 creationtime = 11020;
-  required uint64 starttime = 11030;
-  required uint64 completiontime = 11040;
-  required uint64 failuretime = 11050;
-  required uint64 abortrequesttime = 11060;
-  required uint64 abortcompletiontime = 11070;
-  required uint64 submissiontime = 11080;
-  required uint64 filescount = 11090;
-  required uint64 bytescount = 11100;
-  required uint64 filesretrieved = 11110;
-  required uint64 bytesretrieved = 11120;
-  required uint64 filessuccessful = 11130;
-  required uint64 bytessuvvessful = 11140;
-  required uint64 filesfailed = 11150;
-  required uint64 bytesfailed = 11160;
-  required uint64 activeretrieves = 11170;
-  required uint64 activearchives = 11180;
-  repeated string sourcevids = 11190;
-  repeated string targettapepools = 11200;
-  repeated RepackBypassElement bypasselements = 11300;
+  required RepackRequestStatus status = 11010;
+  required bool expandmode = 11400;
+  required bool repackmode = 11410;
 }
 
-message RepackTapePointer {
+message RepackRequestPointer {
   required string vid = 12000;
   required string address = 12010;
 }
 
-message RepackTapeRegister {
-  repeated RepackTapePointer repacktapepointers = 12100;
-  repeated string tapestoblowup = 12110;
+message RepackIndex {
+  repeated RepackRequestPointer repacktapepointers = 12100;
 }

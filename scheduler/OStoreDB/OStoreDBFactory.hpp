@@ -151,6 +151,11 @@ public:
     return m_OStoreDB.queueRetrieve(rqst, criteria, logContext);
   }
   
+
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackType repackType, log::LogContext& lc) override {
+    m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
+  }
+  
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }

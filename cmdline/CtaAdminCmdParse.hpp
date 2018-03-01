@@ -288,6 +288,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
  * Map string options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionString::Key> strOptions = {
+   { "--bufferurl",             OptionString::BUFFERURL }, 
    { "--comment",               OptionString::COMMENT },
    { "--diskid",                OptionString::DISKID },
    { "--drive",                 OptionString::DRIVE },
@@ -361,6 +362,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 const Option opt_all                  { Option::OPT_FLAG, "--all",                   "-a",   "" };
 const Option opt_archivefileid        { Option::OPT_UINT, "--id",                    "-I",   " <archive_file_id>" };
 const Option opt_archivepriority      { Option::OPT_UINT, "--archivepriority",       "--ap", " <priority_value>" };
+const Option opt_bufferurl            { Option::OPT_STR,  "--bufferurl",             "-b",   " <buffer URL>" };
 const Option opt_capacity             { Option::OPT_UINT, "--capacity",              "-c",   " <capacity_in_bytes>" };
 const Option opt_checkchecksum        { Option::OPT_FLAG, "--checkchecksum",         "-c",   "" };
 const Option opt_comment              { Option::OPT_STR,  "--comment",               "-m",   " <\"comment\">" };
@@ -470,7 +472,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_RM    }, { opt_mountpolicy_alias }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_justexpand.optional(), opt_justrepack.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl, opt_justexpand.optional(), opt_justrepack.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_header.optional(), opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},

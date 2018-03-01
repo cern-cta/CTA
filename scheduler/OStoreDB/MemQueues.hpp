@@ -321,7 +321,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       jta.push_back({maqr->m_job, maqr->m_request});
       addedJobs++;
     }
-    // Actually ass the jobs.
+    // Actually add the jobs.
     specializedAddJobsToQueueAndCommit(jta, queue, *oStoreDB.m_agentReference, logContext);
     double queueProcessAndCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.

@@ -16,17 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+#include "ObjectOps.hpp"
+#include "objectstore/cta.pb.h"
 #include "common/dataStructures/RepackType.hpp"
 
-std::string cta::common::dataStructures::toString(cta::common::dataStructures::RepackType type) {
-  switch(type) {
-    case cta::common::dataStructures::RepackType::expandandrepack:
-      return "expand and repack";
-    case cta::common::dataStructures::RepackType::justexpand:
-      return "expand only";
-    case cta::common::dataStructures::RepackType::justrepack:
-      return "repack only";
-    default:
-      return "UNKNOWN";
-  }
-}
+namespace cta { namespace objectstore {
+
+class Agent;
+class GenericObject;
+
+class RepackRequest: public ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> {
+public:
+  RepackRequest(const std::string & address, Backend & os);
+  RepackRequest(Backend & os);
+  RepackRequest(GenericObject & go);
+  void initialize();
+  
+  // Parameters interface
+  void setVid(const std::string & vid);
+  void setRepackType(common::dataStructures::RepackType repackType);
+  
+  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue) override;
+};
+
+}} // namespace cta::objectstore

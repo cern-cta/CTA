@@ -1343,6 +1343,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
    // VIDs can be provided as a single option or as a list
    std::vector<std::string> vid_list;
+   std::string bufferURL;
 
    auto vidl = getOptional(OptionStrList::VID);
    if(vidl) vid_list = vidl.value();
@@ -1352,6 +1353,12 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
    if(vid_list.empty()) {
       throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
    }
+   
+   auto buff = getOptional(OptionString::BUFFERURL);
+   if (buff)
+     bufferURL = buff.value();
+   else
+     throw cta::exception::UserError("Must specify the buffer URL using --bufferurl option.");
 
    // Expand, repack, or both ?
    cta::common::dataStructures::RepackType type;
@@ -1368,7 +1375,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 
    // Process each item in the list
    for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-      m_scheduler.queueRepack(m_cliIdentity, *it, type);
+      m_scheduler.queueRepack(m_cliIdentity, *it, bufferURL,  type, m_lc);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

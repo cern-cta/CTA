@@ -122,6 +122,12 @@ public:
    * Helper to fetch in parallel all the drive statuses.
    */
   static std::list<cta::common::dataStructures::DriveState> getAllDriveStates(Backend & backend, log::LogContext & lc);
+  
+  /**
+   * Helper to get the repack index. As this structure was developed late, we potentially have to create it on the fly.
+   */
+  static void registerRepackRequestToIndex(const std::string & vid, const std::string & requestAddress,
+      AgentReference & agentReference, Backend & backend, log::LogContext & lc);
 };
 
 }} // namespace cta::objectstore

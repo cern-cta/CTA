@@ -25,6 +25,7 @@
 #include "DriveRegister.hpp"
 #include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
+#include "RepackIndex.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -693,6 +694,74 @@ void RootEntry::removeSchedulerGlobalLockAndCommit(log::LogContext & lc) {
   commit();
 }
 
+// =============================================================================
+// ================ Repack index lock manipulation =============================
+// =============================================================================
+
+std::string RootEntry::getRepackIndexAddress() {
+  checkPayloadReadable();
+  if (m_payload.has_repackindexpointer() &&
+      m_payload.repackindexpointer().address().size()) {
+    return m_payload.repackindexpointer().address();
+  }
+  throw NotAllocated("In RootEntry::getRepackTapeRegistry: repack tape register not yet allocated");
+}
+
+std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef, log::LogContext & lc) {
+  checkPayloadWritable();
+  // Check if the repack tape register exists
+  try {
+    return getRepackIndexAddress();
+  } catch (NotAllocated &) {
+    // TODO: this insertion method is much simpler than the ones used for other objects.
+    // It implies the only dangling pointer situation we can get is the one where
+    // the object does not exist.
+    // As the object never changes ownership, the garbage collection can be left
+    // empty. There should never be garbage collection for this object type.
+    //
+    // decide on the object's name.
+    std::string rtrAddress (agentRef.nextId("RepackTapeRegister"));
+    // Then prepare the repack tape register object
+    RepackIndex ri(rtrAddress, m_objectStore);
+    ri.initialize();
+    ri.setOwner(getAddressIfSet());
+    ri.setBackupOwner(getAddressIfSet());
+    // Reference the registry in the root entry
+    auto * rtrp = m_payload.mutable_repackindexpointer();
+    rtrp->set_address(rtrAddress);
+    commit();
+    // Create the repack tape register
+    ri.insert();
+    // done.
+    return rtrAddress;
+  } 
+}
+
+void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
+  checkPayloadWritable();
+  // Get the address of the scheduler lock (nothing to do if there is none)
+  if (!m_payload.has_repackindexpointer() ||
+      !m_payload.repackindexpointer().address().size())
+    return;
+  std::string rtrAddress = m_payload.repackindexpointer().address();
+  RepackIndex ri(rtrAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  ScopedExclusiveLock rtrl(ri);
+  ri.fetch();
+  // Check the drive register is empty
+  if (!ri.isEmpty()) {
+    throw DriveRegisterNotEmpty("In RootEntry::removeRepackTapeRegistryAndCommit: "
+      "trying to remove a non-empty repack tape register");
+  }
+  // we can delete the drive register
+  ri.remove();
+  log::ScopedParamContainer params(lc);
+  params.add("repackTapeRegister", ri.getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeRepackTapeRegistryAndCommit(): removed repack tape register object.");
+  // And update the root entry
+  m_payload.mutable_schedulerlockpointer()->set_address("");
+  // We commit for safety and symmetry with the add operation
+  commit();
+}
 
 // Dump the root entry
 std::string RootEntry::dump () {

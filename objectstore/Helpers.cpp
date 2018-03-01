@@ -24,6 +24,7 @@
 #include "RootEntry.hpp"
 #include "DriveRegister.hpp"
 #include "DriveState.hpp"
+#include "RepackIndex.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include <random>
@@ -556,6 +557,30 @@ std::list<cta::common::dataStructures::DriveState> Helpers::getAllDriveStates(Ba
   }
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// Helpers::registerRepackRequestToIndex()
+//------------------------------------------------------------------------------
+void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::string& requestAddress,
+    AgentReference & agentReference, Backend& backend, log::LogContext& lc) {
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  RootEntry re(backend);
+  re.fetchNoLock();
+  std::string repackIndexAddress;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    re.getRepackIndexAddress();
+  } catch (RootEntry::NotAllocated &){
+    ScopedExclusiveLock rel(re);
+    re.fetch();
+    repackIndexAddress = re.addOrGetRepackIndexAndCommit(agentReference, lc);
+  }
+  RepackIndex ri(repackIndexAddress, backend);
+  ScopedExclusiveLock ril(ri);
+  ri.fetch();
+  ri.addRepackRequestAddress(vid, requestAddress);
+}
+
 
 
 }} // namespace cta::objectstore.
