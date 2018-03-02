@@ -5926,7 +5926,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existant_vid) {
   ASSERT_THROW(m_catalogue->getArchiveFiles(searchCriteria), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
+TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   using namespace cta;
 
   const std::string vid1 = "VID123";
@@ -6488,7 +6488,7 @@ TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_many_archive_files) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, fileWrittenToTape_2_tape_files_different_tapes) {
+TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_2_tape_files_different_tapes) {
   using namespace cta;
 
   const std::string vid1 = "VID123";
