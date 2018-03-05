@@ -19,6 +19,7 @@
 #include "catalogue/ArchiveFileItor.hpp"
 #include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -232,6 +233,8 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
