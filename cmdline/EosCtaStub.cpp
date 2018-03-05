@@ -117,9 +117,7 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
       else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
       else if(key == "file") notification.mutable_file()->set_lpath(val);
       else {
-#ifdef XRDSSI_DEBUG
-         cout << "No match in protobuf for fmd:" << key << "=" << val << endl;
-#endif
+         XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, "base64Decode", "No match in protobuf for fmd:", key, '=', val);
       }
    }
 
@@ -163,9 +161,7 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
          notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
       }
       else {
-#ifdef XRDSSI_DEBUG
-         cout << "No match in protobuf for dmd:" << key << "=" << val << endl;
-#endif
+         XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, "base64Decode", "No match in protobuf for dmd:", key, '=', val);
       }
    }
 }

@@ -16,10 +16,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef XRDSSI_DEBUG
-#include <iostream>
-#endif
-
 #include "XrdSsiPbAlert.hpp"
 #include "XrdSsiPbService.hpp"
 #include "cta_frontend.pb.h"
@@ -58,9 +54,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 {
    using namespace cta;
 
-#ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] Called Init(" << cfgFn << "," << parms << ")" << std::endl;
-#endif
+   XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called Init(", cfgFn, ',', parms, ')');
   
    // Instantiate the logging system
 
@@ -129,9 +123,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
-#ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] Called GetService(" << contact << "," << oHold << ")" << std::endl;
-#endif
+   XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called GetService(", contact, ',', oHold, ')');
 
    XrdSsiService *ptr = new XrdSsiPb::Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>;
 
@@ -161,11 +153,8 @@ XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName,
    XrdSsiProvider::rStat resourcePresence = (strcmp(rName, "/ctafrontend") == 0) ?
                                             XrdSsiProvider::isPresent : XrdSsiProvider::notPresent;
 
-#ifdef XRDSSI_DEBUG
-   std::cout << "[DEBUG] XrdSsiCtaServiceProvider::QueryResource(" << rName << "): "
-             << ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent")
-             << std::endl;
-#endif
+   XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "QueryResource(", rName, "): ",
+                     ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent"));
 
    return resourcePresence;
 }

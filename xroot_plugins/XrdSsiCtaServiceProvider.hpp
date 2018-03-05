@@ -18,10 +18,6 @@
 
 #pragma once
 
-#ifdef XRDSSI_DEBUG
-#include <iostream>
-#endif
-
 #include <XrdSsi/XrdSsiProvider.hh>
 
 #include "common/Configuration.hpp"
@@ -50,15 +46,11 @@ class XrdSsiCtaServiceProvider : public XrdSsiProvider
 public:
    XrdSsiCtaServiceProvider() : m_ctaConf("/etc/cta/cta-frontend.conf")
    {
-#ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] XrdSsiCtaServiceProvider() constructor" << std::endl;
-#endif
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdSsiCtaServiceProvider() constructor");
    }
 
    virtual ~XrdSsiCtaServiceProvider() {
-#ifdef XRDSSI_DEBUG
-      std::cout << "[DEBUG] ~XrdSsiCtaServiceProvider() destructor" << std::endl;
-#endif
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdSsiCtaServiceProvider() destructor");
    }
 
    /*!
@@ -125,5 +117,7 @@ private:
    std::unique_ptr<cta::Scheduler>                     m_scheduler;           //!< The scheduler
    std::unique_ptr<cta::log::Logger>                   m_log;                 //!< The logger
    UniquePtrAgentHeartbeatThread                       m_agentHeartbeat;      //!< Agent heartbeat thread
+
+   static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
 };
 

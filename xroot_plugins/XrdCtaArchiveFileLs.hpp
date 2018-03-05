@@ -35,15 +35,11 @@ public:
       XrdSsiStream(XrdSsiStream::isActive),
       m_archiveFileItor(std::move(archiveFileItor))
    {
-#ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] ArchiveFileLsStream() constructor" << std::endl;
-#endif
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveFileLsStream() constructor");
    }
 
    virtual ~ArchiveFileLsStream() {
-#ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] ArchiveFileLsStream() destructor" << std::endl;
-#endif
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~ArchiveFileLsStream() destructor");
    }
 
    /*!
@@ -66,9 +62,7 @@ public:
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
-#ifdef XRDSSI_DEBUG
-      std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): XrdSsi buffer fill request (" << dlen << " bytes)" << std::endl;
-#endif
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
       XrdSsiPb::OStreamBuffer<cta::xrd::Data> *streambuf;
 
@@ -120,9 +114,7 @@ public:
             }
          }
          dlen = streambuf->Size();
-#ifdef XRDSSI_DEBUG
-         std::cerr << "[DEBUG] ArchiveFileLsStream::GetBuff(): Returning buffer with " << dlen << " bytes of data." << std::endl;
-#endif
+         XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
       } catch(cta::exception::Exception &ex) {
          throw std::runtime_error(ex.getMessage().str());
       } catch(std::exception &ex) {
@@ -141,6 +133,8 @@ public:
 
 private:
    catalogue::ArchiveFileItor m_archiveFileItor;
+
+   static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
 };
 
 }} // namespace cta::xrd

@@ -301,9 +301,7 @@ int CtaAdminCmd::GetRequestTimeout() const
    // Use default if XRD_REQUESTTIMEOUT is not a valid positive integer
    if(request_timeout <= 0) request_timeout = DefaultRequestTimeout;
 
-#ifdef XRDSSI_DEBUG
-   std::cerr << "[DEBUG] CtaAdminCmd::GetRequestTimeout(): Request timeout = " << request_timeout << "s" << std::endl;
-#endif
+   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetRequestTimeout(): Request timeout = ", request_timeout, 's');
    return request_timeout;
 }
 

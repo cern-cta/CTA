@@ -65,6 +65,8 @@ private:
 
    std::string       m_execname;                        //!< Executable name of this program
    cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
+
+   static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };
 
 }} // namespace cta::admin

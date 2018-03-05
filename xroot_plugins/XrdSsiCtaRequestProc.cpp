@@ -19,9 +19,7 @@
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/exception/Exception.hpp"
 
-#ifdef XRDSSI_DEBUG
-#include "XrdSsiPbDebug.hpp"
-#endif
+#include "XrdSsiPbLog.hpp"
 #include "XrdSsiPbException.hpp"
 #include "XrdSsiPbRequestProc.hpp"
 
@@ -60,11 +58,8 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
          throw cta::exception::Exception("XRootD Service is not a CTA Service");
       }
 
-#ifdef XRDSSI_DEBUG
       // Output message in Json format
-
-      OutputJsonString(std::cerr, &m_request);
-#endif
+      Log::DumpProtobuf(Log::PROTOBUF, &m_request);
 
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
       request_msg.process(m_request, m_metadata, m_response_stream_ptr);
@@ -75,16 +70,6 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
       m_metadata.set_message_txt(ex.what());
    } catch(std::exception &ex) {
-#ifdef XRDSSI_DEBUG
-      // Serialize and send a log message
-
-      cta::xrd::Alert alert_msg;
-
-      alert_msg.set_audience(cta::xrd::Alert::LOG);
-      alert_msg.set_message_txt("Something bad happened");
-
-      Alert(alert_msg);
-#endif
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.what());
    }

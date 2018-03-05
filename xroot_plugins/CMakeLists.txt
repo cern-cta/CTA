@@ -41,8 +41,6 @@ set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif (OCCI_SUPPORT)
-# Get some extra debug messages on stderr
-#target_compile_definitions(XrdSsiCta PRIVATE XRDSSI_DEBUG)
 
 install(TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(FILES cta-frontend-xrootd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
