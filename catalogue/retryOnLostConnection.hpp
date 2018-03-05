@@ -52,7 +52,7 @@ typename std::result_of<T()>::type retryOnLostConnection(log::Logger &log, const
         std::list<log::Param> params = {
           {"maxTriesToConnect", maxTriesToConnect},
           {"tryNb", tryNb},
-          {"msg", le.getMessage()}
+          {"msg", le.getMessage().str()}
         };
         log(cta::log::WARNING, "Lost database connection", params);
       }
