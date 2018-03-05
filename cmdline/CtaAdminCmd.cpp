@@ -21,7 +21,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include <XrdSsiPbDebug.hpp>
+#include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
 
 #include "cmdline/Configuration.hpp"
@@ -41,7 +41,7 @@ template<>
 void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
-   OutputJsonString(std::cout, &alert);
+   Log::DumpProtobuf(Log::PROTOBUF, &alert);
 }
 
 
@@ -56,9 +56,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 {
    const cta::admin::ArchiveFileLsItem &af_ls_item = record.af_ls_item();
 
-#ifdef XRDSSI_DEBUG_VERBOSE
-   OutputJsonString(std::cout, &af_ls_item);
-#endif
+   Log::DumpProtobuf(Log::PROTOBUF, &af_ls_item);
 
    std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_id()    << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()            << ' '
@@ -150,9 +148,7 @@ void CtaAdminCmd::send() const
       throwUsage(ex.what());
    }
 
-#ifdef XRDSSI_DEBUG
-   XrdSsiPb::OutputJsonString(std::cout, &m_request.admincmd());
-#endif
+   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &m_request.admincmd());
 
    // Get socket address of CTA Frontend endpoint
 

@@ -33,10 +33,8 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
 #
 add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp Configuration.cpp)
-target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
+target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-# Get some extra debug messages on stdout
-#target_compile_definitions(cta-admin PUBLIC XRDSSI_DEBUG)
 
 #
 # cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
@@ -46,10 +44,8 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #
 find_package(cryptopp REQUIRED)
 add_executable(cta-wfe-test EosCtaStub.cpp Configuration.cpp)
-target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib)
+target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils)
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-# Get some extra debug messages on stdout
-#target_compile_definitions(eoscta_stub PUBLIC XRDSSI_DEBUG)
 
 install(TARGETS cta-admin DESTINATION usr/bin)
 install(TARGETS cta-wfe-test DESTINATION usr/bin)

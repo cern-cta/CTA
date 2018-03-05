@@ -22,11 +22,11 @@
 #include <sstream>
 #include <cryptopp/base64.h>
 
+#include <XrdSsiPbLog.hpp>
+
 #include "common/dataStructures/FrontendReturnCode.hpp"
 #include "cmdline/Configuration.hpp"
 #include "CtaFrontendApi.hpp"
-
-#include "XrdSsiPbDebug.hpp"
 
 
 
@@ -44,7 +44,7 @@ template<>
 void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
    std::cout << "AlertCallback():" << std::endl;
-   OutputJsonString(std::cout, &alert);
+   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &alert);
 }
 
 } // namespace XrdSsiPb
@@ -281,7 +281,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(std::cout, &notification);
+      XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &notification);
    }
 
    // Get socket address of CTA Frontend endpoint
@@ -303,7 +303,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    if(isJson)
    {
-      XrdSsiPb::OutputJsonString(std::cout, &response);
+      XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &response);
    }
 
    // Handle responses
