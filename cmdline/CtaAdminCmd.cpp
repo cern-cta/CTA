@@ -148,8 +148,6 @@ void CtaAdminCmd::send() const
       throwUsage(ex.what());
    }
 
-   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &m_request.admincmd());
-
    // Get socket address of CTA Frontend endpoint
 
    cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
@@ -301,7 +299,6 @@ int CtaAdminCmd::GetRequestTimeout() const
    // Use default if XRD_REQUESTTIMEOUT is not a valid positive integer
    if(request_timeout <= 0) request_timeout = DefaultRequestTimeout;
 
-   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetRequestTimeout(): Request timeout = ", request_timeout, 's');
    return request_timeout;
 }
 

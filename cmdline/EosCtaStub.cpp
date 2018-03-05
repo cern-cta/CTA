@@ -117,7 +117,7 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
       else if(key == "mode") notification.mutable_file()->set_mode(stoi(val));
       else if(key == "file") notification.mutable_file()->set_lpath(val);
       else {
-         XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, "base64Decode", "No match in protobuf for fmd:", key, '=', val);
+         std::cerr << "base64Decode(): No match in protobuf for fmd:" << key << '=' << val << std::endl;
       }
    }
 
@@ -161,7 +161,7 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
          notification.mutable_directory()->mutable_xattr()->insert(google::protobuf::MapPair<string,string>(xattrn, val));
       }
       else {
-         XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, "base64Decode", "No match in protobuf for dmd:", key, '=', val);
+         std::cerr << "base64Decode(): No match in protobuf for dmd:" << key << '=' << val << std::endl;
       }
    }
 }
@@ -265,8 +265,6 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    fillNotification(notification, argc, argv);
 
-   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &notification);
-
    // Get socket address of CTA Frontend endpoint
 
    cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
@@ -283,8 +281,6 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    cta::xrd::Response response;
   
    cta_service.Send(request, response);
-
-   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &response);
 
    // Handle responses
 
