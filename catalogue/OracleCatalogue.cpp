@@ -17,6 +17,9 @@
  */
 
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/ChecksumTypeMismatch.hpp"
+#include "catalogue/ChecksumValueMismatch.hpp"
+#include "catalogue/FileSizeMismatch.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "common/exception/Exception.hpp"
@@ -628,13 +631,56 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     i++;
   }
 
+  // Update the tape because all the necessary information is now available
   auto lastEventItor = events.cend();
   lastEventItor--;
   const TapeFileWritten &lastEvent = *lastEventItor;
   updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
     lastEvent.tapeDrive);
 
+  // Create the archive file entries, skipping those that already exist
   idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, events);
+
+  // Verify that the archive file entries in the catalogue database agree with
+  // the tape file written events
+  const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, events);
+  for (const auto &event: events) {
+    const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
+
+    std::ostringstream fileContext;
+    fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
+      ", diskFileId=" << event.diskFileId << ", diskFilePath=" << event.diskFilePath;
+
+    // This should never happen
+    if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
+      exception::Exception ex;
+      ex.getMessage() << __FUNCTION__ << ": Failed to find archive file entry in the catalogue: " << fileContext.str();
+      throw ex;
+    }
+
+    const auto &fileSizeAndChecksum = fileSizeAndChecksumItor->second;
+
+    if(fileSizeAndChecksum.fileSize != event.size) {
+      catalogue::FileSizeMismatch ex;
+      ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
+        ", actual=" << event.size << ": " << fileContext.str();
+      throw ex;
+    }
+
+    if(fileSizeAndChecksum.checksumType != event.checksumType) {
+      catalogue::ChecksumTypeMismatch ex;
+      ex.getMessage() << __FUNCTION__ << ": Checksum type mismatch: expected=" << fileSizeAndChecksum.checksumType <<
+        ", actual=" << event.checksumType << ": " << fileContext.str();
+      throw ex;
+    }
+
+    if(fileSizeAndChecksum.checksumValue != event.checksumValue) {
+      catalogue::ChecksumValueMismatch ex;
+      ex.getMessage() << __FUNCTION__ << ": Checksum value mismatch: expected=" << fileSizeAndChecksum.checksumValue
+        << ", actual=" << event.checksumValue << ": " << fileContext.str();
+      throw ex;
+    }
+  }
 
   // Store the value of each field
   i = 0;
@@ -848,6 +894,58 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
 
     throw exception::Exception(msg.str());
   }
+}
+
+//------------------------------------------------------------------------------
+// selectArchiveFileSizeAndChecksum
+//------------------------------------------------------------------------------
+std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::selectArchiveFileSizesAndChecksums(
+  rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events) {
+
+  std::vector<oracle::occi::Number> archiveFileIdList(events.size());
+  for (const auto &event: events) {
+    archiveFileIdList.push_back(oracle::occi::Number(event.archiveFileId));
+  }
+
+  const char *const sql =
+    "SELECT "
+      "ARCHIVE_FILE_ID,"
+      "SIZE_IN_BYTES,"
+      "CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE "
+    "FROM "
+      "ARCHIVE_FILE "
+    "WHERE "
+      "ARCHIVE_FILE_ID IN (SELECT COLUMN_VALUE FROM TABLE(:ARCHIVE_FILE_ID_LIST))";
+  auto stmt = conn.createStmt(sql, autocommitMode);
+
+  {
+    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
+    oracle::occi::setVector(occiStmt.get(), 1, archiveFileIdList, "SYS", "ODCINUMBERLIST");
+  }
+
+  auto rset = stmt.executeQuery();
+
+  std::map<uint64_t, FileSizeAndChecksum> fileSizesAndChecksums;
+  while (rset.next()) {
+    const uint64_t archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
+
+    if (fileSizesAndChecksums.end() != fileSizesAndChecksums.find(archiveFileId)) {
+      exception::Exception ex;
+      ex.getMessage() << __FUNCTION__ << " failed: "
+        "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" << archiveFileId;
+      throw ex;
+    }
+
+    FileSizeAndChecksum fileSizeAndChecksum;
+    fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    fileSizeAndChecksum.checksumType = rset.columnString("CHECKSUM_TYPE");
+    fileSizeAndChecksum.checksumValue = rset.columnString("CHECKSUM_VALUE");
+
+    fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
+  }
+
+  return fileSizesAndChecksums;
 }
 
 } // namespace catalogue

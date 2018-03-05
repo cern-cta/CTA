@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "catalogue/ChecksumTypeMismatch.hpp"
+#include "catalogue/ChecksumValueMismatch.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/log/Logger.hpp"
@@ -61,12 +63,8 @@ typename std::result_of<T()>::type retryOnLostConnection(log::Logger &log, const
     exception::Exception ex;
     ex.getMessage() << "Lost the database connection after trying " << maxTriesToConnect << " times";
     throw ex;
-  } catch (exception::UserError &) {
+  } catch(...) {
     throw;
-  } catch (exception::Exception &) {
-    throw;
-  } catch (std::exception &se) {
-    throw exception::Exception(se.what());
   }
 }
 

@@ -3564,62 +3564,58 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
   const ArchiveFileRow &row) {
-  try {
-    if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
-      throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
-        " does not exist");
-    }
-
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO ARCHIVE_FILE("
-        "ARCHIVE_FILE_ID,"
-        "DISK_INSTANCE_NAME,"
-        "DISK_FILE_ID,"
-        "DISK_FILE_PATH,"
-        "DISK_FILE_USER,"
-        "DISK_FILE_GROUP,"
-        "DISK_FILE_RECOVERY_BLOB,"
-        "SIZE_IN_BYTES,"
-        "CHECKSUM_TYPE,"
-        "CHECKSUM_VALUE,"
-        "STORAGE_CLASS_NAME,"
-        "CREATION_TIME,"
-        "RECONCILIATION_TIME)"
-      "VALUES("
-        ":ARCHIVE_FILE_ID,"
-        ":DISK_INSTANCE_NAME,"
-        ":DISK_FILE_ID,"
-        ":DISK_FILE_PATH,"
-        ":DISK_FILE_USER,"
-        ":DISK_FILE_GROUP,"
-        ":DISK_FILE_RECOVERY_BLOB,"
-        ":SIZE_IN_BYTES,"
-        ":CHECKSUM_TYPE,"
-        ":CHECKSUM_VALUE,"
-        ":STORAGE_CLASS_NAME,"
-        ":CREATION_TIME,"
-        ":RECONCILIATION_TIME)";
-    auto stmt = conn.createStmt(sql, autocommitMode);
-
-    stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
-    stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
-    stmt.bindString(":DISK_FILE_ID", row.diskFileId);
-    stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
-    stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
-    stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
-    stmt.bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
-    stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-    stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
-    stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
-    stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
-    stmt.bindUint64(":CREATION_TIME", now);
-    stmt.bindUint64(":RECONCILIATION_TIME", now);
-
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
+    throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
+      " does not exist");
   }
+
+  const time_t now = time(nullptr);
+  const char *const sql =
+    "INSERT INTO ARCHIVE_FILE("
+      "ARCHIVE_FILE_ID,"
+      "DISK_INSTANCE_NAME,"
+      "DISK_FILE_ID,"
+      "DISK_FILE_PATH,"
+      "DISK_FILE_USER,"
+      "DISK_FILE_GROUP,"
+      "DISK_FILE_RECOVERY_BLOB,"
+      "SIZE_IN_BYTES,"
+      "CHECKSUM_TYPE,"
+      "CHECKSUM_VALUE,"
+      "STORAGE_CLASS_NAME,"
+      "CREATION_TIME,"
+      "RECONCILIATION_TIME)"
+    "VALUES("
+      ":ARCHIVE_FILE_ID,"
+      ":DISK_INSTANCE_NAME,"
+      ":DISK_FILE_ID,"
+      ":DISK_FILE_PATH,"
+      ":DISK_FILE_USER,"
+      ":DISK_FILE_GROUP,"
+      ":DISK_FILE_RECOVERY_BLOB,"
+      ":SIZE_IN_BYTES,"
+      ":CHECKSUM_TYPE,"
+      ":CHECKSUM_VALUE,"
+      ":STORAGE_CLASS_NAME,"
+      ":CREATION_TIME,"
+      ":RECONCILIATION_TIME)";
+  auto stmt = conn.createStmt(sql, autocommitMode);
+
+  stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
+  stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
+  stmt.bindString(":DISK_FILE_ID", row.diskFileId);
+  stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
+  stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
+  stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
+  stmt.bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
+  stmt.bindUint64(":SIZE_IN_BYTES", row.size);
+  stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
+  stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
+  stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
+  stmt.bindUint64(":CREATION_TIME", now);
+  stmt.bindUint64(":RECONCILIATION_TIME", now);
+
+  stmt.executeNonQuery();
 }
 
 //------------------------------------------------------------------------------
