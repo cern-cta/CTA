@@ -177,15 +177,13 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
  *
  * @param[out]    notification    The protobuf to fill
  * @param[out]    isStderr        --stderr appears on the command line
- * @param[out]    isJson          --json appears on the command line
  * @param[in]     argc            The number of command-line arguments
  * @param[in]     argv            The command-line arguments
  */
 
-void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool &isJson, int argc, const char *const *const argv)
+void fillNotification(cta::eos::Notification &notification, bool &isStderr, int argc, const char *const *const argv)
 {
    isStderr = false;
-   isJson = false;
 
    // First argument must be a valid command specifying which workflow action to execute
 
@@ -214,7 +212,6 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, bool
       const std::string argstr(argv[arg]);
 
       if(argstr == "--stderr") { isStderr = true; continue; }
-      if(argstr == "--json") { isJson = true; continue; }
 
       if(argstr.substr(0,2) != "--" || argc == ++arg) throw std::runtime_error("Arguments must be provided as --key value pairs");
 
@@ -275,14 +272,11 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Parse the command line arguments: fill the Notification fields
 
-   bool isStderr, isJson;
+   bool isStderr;
 
-   fillNotification(notification, isStderr, isJson, argc, argv);
+   fillNotification(notification, isStderr, argc, argv);
 
-   if(isJson)
-   {
-      XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &notification);
-   }
+   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &notification);
 
    // Get socket address of CTA Frontend endpoint
 
@@ -301,10 +295,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   
    cta_service.Send(request, response);
 
-   if(isJson)
-   {
-      XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &response);
-   }
+   XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &response);
 
    // Handle responses
 
