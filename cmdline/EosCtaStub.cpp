@@ -176,15 +176,12 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
  * Fill a Notification message from the command-line parameters
  *
  * @param[out]    notification    The protobuf to fill
- * @param[out]    isStderr        --stderr appears on the command line
  * @param[in]     argc            The number of command-line arguments
  * @param[in]     argv            The command-line arguments
  */
 
-void fillNotification(cta::eos::Notification &notification, bool &isStderr, int argc, const char *const *const argv)
+void fillNotification(cta::eos::Notification &notification, int argc, const char *const *const argv)
 {
-   isStderr = false;
-
    // First argument must be a valid command specifying which workflow action to execute
 
    if(argc < 2) throw Usage;
@@ -210,8 +207,6 @@ void fillNotification(cta::eos::Notification &notification, bool &isStderr, int 
    for(int arg = 2; arg < argc; ++arg)
    {
       const std::string argstr(argv[arg]);
-
-      if(argstr == "--stderr") { isStderr = true; continue; }
 
       if(argstr.substr(0,2) != "--" || argc == ++arg) throw std::runtime_error("Arguments must be provided as --key value pairs");
 
@@ -272,9 +267,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 
    // Parse the command line arguments: fill the Notification fields
 
-   bool isStderr;
-
-   fillNotification(notification, isStderr, argc, argv);
+   fillNotification(notification, argc, argv);
 
    XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &notification);
 
@@ -303,11 +296,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    {
       using namespace cta::xrd;
 
-      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl;
-                                          if(isStderr) {
-                                             std::cerr << response.message_txt() << std::endl;
-                                          }
-                                          break;
+      case Response::RSP_SUCCESS:         std::cout << response.message_txt() << std::endl; break;
       case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
       case Response::RSP_ERR_USER:        throw std::runtime_error(response.message_txt());
