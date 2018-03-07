@@ -19,6 +19,8 @@
 #pragma once
 
 #include "Exception.hpp"
+#include<functional>
+#include <system_error>
 
 namespace cta {
 namespace exception {
@@ -30,6 +32,18 @@ namespace exception {
     int errorNumber() const { return m_errnum; }
     std::string strError() const { return m_strerror; }
     static void throwOnReturnedErrno(const int err, const std::string &context = "");
+    template <typename F>
+    static void throwOnReturnedErrnoOrThrownStdException (F f, const std::string &context = "") {
+      try {
+        throwOnReturnedErrno(f(), context);
+      } catch (Errnum &) {
+        throw; // Let the exception of throwOnReturnedErrno pass through.
+      } catch (std::error_code & ec) {
+        throw Errnum(ec.value(), context + " Got an std::error_code: " + ec.message());
+      } catch (std::exception & ex) {
+        throw Exception(context + " Got a standard exception: " + ex.what());
+      }
+    }
     static void throwOnNonZero(const int status, const std::string &context = "");
     static void throwOnZero(const int status, const std::string &context = "");
     static void throwOnNull(const void *const f, const std::string &context = "");
