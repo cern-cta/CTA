@@ -96,6 +96,8 @@ publish_tagged_rpm:
     - docker
 
 cta_valgrind:
+  except:
+    - tags
   stage: test
   variables:
     CTAREPODIR: /tmp/repo
@@ -114,6 +116,8 @@ cta_valgrind:
 
 
 ctageneric_docker:
+  except:
+    - tags
   stage: build:dockerimage
   tags:
     - docker-image-build
@@ -125,6 +129,8 @@ ctageneric_docker:
 
 
 ctageneric_docker_rename:
+  except:
+    - tags
   stage: rename:dockerimage
   variables:
     TO: gitlab-registry.cern.ch/cta/ctageneric
@@ -138,6 +144,8 @@ ctageneric_docker_rename:
 
 
 archiveretrieve:
+  except:
+    - tags
   stage: test
   script:
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
