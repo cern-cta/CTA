@@ -58,13 +58,13 @@ private:
    /*
     * Member variables
     */
-   const std::string Resource      = "/ctafrontend";    //!< XRootD SSI Resource name
-   const int StreamBufferSize      = 1024;              //!< Buffer size for Data/Stream Responses
-   const int DefaultRequestTimeout = 10;                //!< Default Request Timeout. Can be overridden by
-                                                        //!< XRD_REQUESTTIMEOUT environment variable.
+   const std::string Resource              = "/ctafrontend";    //!< XRootD SSI Resource name
+   const std::string StreamBufferSize      = "1024";            //!< Buffer size for Data/Stream Responses
+   const std::string DefaultRequestTimeout = "10";              //!< Default Request Timeout. Can be overridden by
+                                                                //!< XRD_REQUESTTIMEOUT environment variable.
 
-   std::string       m_execname;                        //!< Executable name of this program
-   cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
+   std::string       m_execname;    //!< Executable name of this program
+   cta::xrd::Request m_request;     //!< Protocol Buffer for the command and parameters
 
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };

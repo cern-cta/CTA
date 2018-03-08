@@ -141,7 +141,6 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 void CtaAdminCmd::send() const
 {
    // Validate the Protocol Buffer
-
    try {
       validateCmd(m_request.admincmd());
    } catch(std::runtime_error &ex) {
@@ -149,22 +148,23 @@ void CtaAdminCmd::send() const
    }
 
    // Get socket address of CTA Frontend endpoint
-
    cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
    std::string endpoint = cliConf.getFrontendHostAndPort();
 
-   // Obtain a Service Provider
+   // Set configuration options
+   XrdSsiPb::Config config;
+   config.set("response_bufsize", StreamBufferSize);
+   config.set("request_timeout", DefaultRequestTimeout);
+   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
 
-   XrdSsiPbServiceType cta_service(endpoint, Resource, StreamBufferSize, GetRequestTimeout());
+   // Obtain a Service Provider
+   XrdSsiPbServiceType cta_service(endpoint, Resource, config);
 
    // Send the Request to the Service and get a Response
-
    cta::xrd::Response response;
-   
    auto stream_future = cta_service.Send(m_request, response);
 
    // Handle responses
-
    switch(response.type())
    {
       using namespace cta::xrd;
@@ -286,20 +286,6 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    }
 
    throw std::runtime_error(help.str());
-}
-
-
-
-int CtaAdminCmd::GetRequestTimeout() const
-{
-   const char *request_timeout_str = ::getenv("XRD_REQUESTTIMEOUT");
-
-   int request_timeout = request_timeout_str == nullptr ? DefaultRequestTimeout : atoi(request_timeout_str);
-
-   // Use default if XRD_REQUESTTIMEOUT is not a valid positive integer
-   if(request_timeout <= 0) request_timeout = DefaultRequestTimeout;
-
-   return request_timeout;
 }
 
 }} // namespace cta::admin
