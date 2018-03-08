@@ -31,7 +31,9 @@ XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
   std::stringstream w;
   if (what.size())
     w << what << " ";
-  w << status.ToString();
+  w << status.ToStr() << " code:" << status.code 
+    << " errNo:" << status.errNo 
+    << " status:" << status.status;
   getMessage().str(w.str());
 }
 
