@@ -153,9 +153,16 @@ void CtaAdminCmd::send() const
 
    // Set configuration options
    XrdSsiPb::Config config;
-   config.set("response_bufsize", StreamBufferSize);
-   config.set("request_timeout", DefaultRequestTimeout);
-   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
+   config.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
+   config.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
+   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");   // environment variable can override default
+
+   // If XRDDEBUG=1, switch on all logging
+   if(getenv("XRDDEBUG")) {
+      config.set("log", "all");
+   }
+   // If fine-grained control over log level is required, use XrdSsiPbLogLevel
+   config.getEnv("log", "XrdSsiPbLogLevel");
 
    // Obtain a Service Provider
    XrdSsiPbServiceType cta_service(endpoint, Resource, config);
