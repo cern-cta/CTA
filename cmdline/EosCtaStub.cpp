@@ -255,35 +255,38 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
    // Verify that the Google Protocol Buffer header and linked library versions are compatible
-
    GOOGLE_PROTOBUF_VERIFY_VERSION;
 
    cta::xrd::Request request;
    cta::eos::Notification &notification = *(request.mutable_notification());
 
    // Parse the command line arguments: fill the Notification fields
-
    fillNotification(notification, argc, argv);
 
    // Get socket address of CTA Frontend endpoint
-
    cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
    std::string endpoint = cliConf.getFrontendHostAndPort();
 
+   // Set configuration options
+   XrdSsiPb::Config config;
+   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");   // environment variable can override default
+
+   // If XRDDEBUG=1, switch on all logging
+   if(getenv("XRDDEBUG")) {
+      config.set("log", "all");
+   }
+   // If fine-grained control over log level is required, use XrdSsiPbLogLevel
+   config.getEnv("log", "XrdSsiPbLogLevel");
+
    // Obtain a Service Provider
-
    std::string resource("/ctafrontend");
-
    XrdSsiPbServiceType cta_service(endpoint, resource);
 
    // Send the Request to the Service and get a Response
-
    cta::xrd::Response response;
-  
    cta_service.Send(request, response);
 
    // Handle responses
-
    switch(response.type())
    {
       using namespace cta::xrd;
@@ -297,7 +300,6 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    }
 
    // Delete all global objects allocated by libprotobuf
-
    google::protobuf::ShutdownProtobufLibrary();
 
    return 0;
