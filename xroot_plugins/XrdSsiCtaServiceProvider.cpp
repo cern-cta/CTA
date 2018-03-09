@@ -16,19 +16,20 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "XrdSsiPbAlert.hpp"
-#include "XrdSsiPbService.hpp"
-#include "cta_frontend.pb.h"
+#include <XrdSsiPbConfig.hpp>
+#include <XrdSsiPbAlert.hpp>
+#include <XrdSsiPbService.hpp>
+#include <cta_frontend.pb.h>
 
-#include "version.h"
-#include "common/make_unique.hpp"
-#include "common/log/Logger.hpp"
-#include "common/log/SyslogLogger.hpp"
-#include "common/log/StdoutLogger.hpp"
-#include "common/log/FileLogger.hpp"
-#include "rdbms/Login.hpp"
-#include "catalogue/CatalogueFactory.hpp"
-#include "objectstore/BackendVFS.hpp"
+#include <version.h>
+#include <common/make_unique.hpp>
+#include <common/log/Logger.hpp>
+#include <common/log/SyslogLogger.hpp>
+#include <common/log/StdoutLogger.hpp>
+#include <common/log/FileLogger.hpp>
+#include <rdbms/Login.hpp>
+#include <catalogue/CatalogueFactory.hpp>
+#include <objectstore/BackendVFS.hpp>
 
 #include "XrdSsiCtaServiceProvider.hpp"
 
@@ -41,7 +42,6 @@
  * shared library is loaded, XRootD initialization fails if the appropriate symbol cannot be found (or
  * it is a null pointer).
  */
-
 XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 
@@ -52,12 +52,23 @@ XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
 {
+   using namespace XrdSsiPb;
    using namespace cta;
 
-   XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called Init(", cfgFn, ',', parms, ')');
-  
-   // Instantiate the logging system
+   Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called Init(", cfgFn, ',', parms, ')');
 
+   // Read CTA namespaced configuration options from XRootD config file
+   Config config(cfgFn, "cta");
+
+   // Set XRootD SSI Protobuf logging level
+   auto loglevel = config.getOptionList("log");
+   if(!loglevel.empty()) {
+      Log::SetLogLevel(loglevel);
+   } else {
+      Log::SetLogLevel("info");
+   }
+
+   // Instantiate the CTA logging system
    try {
       std::string loggerURL = m_ctaConf.getConfEntString("Log", "URL", "syslog:");
       if (loggerURL == "syslog:") {
@@ -78,7 +89,6 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    log::Logger &log = *m_log;
 
    // Initialise the catalogue
-  
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
    const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
    const uint64_t nbArchiveFileListingConns = 2;
@@ -86,13 +96,11 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
 
    // Initialise the Backend
-
    m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), *m_log));
    m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
    m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
 
    // Initialise the Scheduler
-
    m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
    try {
@@ -103,13 +111,11 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    }
   
    // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
-
    auto aht = new cta::objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, *m_log);
    aht->startThread();
    m_agentHeartbeat = std::move(UniquePtrAgentHeartbeatThread(aht));
 
    // All done
-
    log(log::INFO, std::string("cta-frontend started"), params);
 
    return true;
