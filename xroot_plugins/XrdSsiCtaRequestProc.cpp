@@ -50,16 +50,12 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
 {
    try {
       // Perform a capability query on the XrdSsiProviderServer object: it must be a XrdSsiCtaServiceProvider
-
       XrdSsiCtaServiceProvider *cta_service_ptr;
-     
+
       if(!(cta_service_ptr = dynamic_cast<XrdSsiCtaServiceProvider*>(XrdSsiProviderServer)))
       {
          throw cta::exception::Exception("XRootD Service is not a CTA Service");
       }
-
-      // Output message in Json format
-      Log::DumpProtobuf(Log::PROTOBUF, &m_request);
 
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
       request_msg.process(m_request, m_metadata, m_response_stream_ptr);
