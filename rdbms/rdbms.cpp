@@ -16,17 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <string>
+#include "rdbms/rdbms.hpp"
 
 namespace cta {
 namespace rdbms {
 
-/**
- * The maximum length an SQL statement can have in exception error message.
- */
-const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 80;
+//------------------------------------------------------------------------------
+// getSqlForException
+//------------------------------------------------------------------------------
+std::string getSqlForException(const std::string &sql, const std::string::size_type maxSqlLenInExceptions) {
+  if(sql.length() <= maxSqlLenInExceptions) {
+    return sql;
+  } else {
+    if(maxSqlLenInExceptions >= 3) {
+      return sql.substr(0, maxSqlLenInExceptions - 3) + "...";
+    } else {
+      return std::string("...").substr(0, maxSqlLenInExceptions);
+    }
+  }
+}
 
 } // namespace rdbms
 } // namespace cta

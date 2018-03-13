@@ -16,17 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "rdbms/rdbms.hpp"
 
-#include <string>
+#include <gtest/gtest.h>
 
-namespace cta {
-namespace rdbms {
+namespace unitTests {
 
-/**
- * The maximum length an SQL statement can have in exception error message.
- */
-const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 80;
+class cta_rdbms_rdbmsTest : public ::testing::Test {
+protected:
 
-} // namespace rdbms
-} // namespace cta
+  virtual void SetUp() {
+  }
+
+  virtual void TearDown() {
+  }
+};
+
+TEST_F(cta_rdbms_rdbmsTest, getSqlForException) {
+  using namespace cta::rdbms;
+
+  const std::string::size_type maxSqlLenInExceptions = 7;
+  const std::string orginalSql = "1234567890";
+  const std::string expectedSql = "1234...";
+
+  const std::string resultingSql = getSqlForException(orginalSql, maxSqlLenInExceptions);
+  ASSERT_EQ(expectedSql, resultingSql);
+}
+
+} // namespace unitTests
