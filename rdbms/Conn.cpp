@@ -155,6 +155,17 @@ std::list<std::string> Conn::getTableNames() {
 }
 
 //------------------------------------------------------------------------------
+// closeUnderlyingDatabaseConnection
+//------------------------------------------------------------------------------
+void Conn::closeUnderlyingDatabaseConnection() {
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    return m_connAndStmts->conn->close();
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+  }
+}
+
+//------------------------------------------------------------------------------
 // isOpen
 //------------------------------------------------------------------------------
 bool Conn::isOpen() const {
