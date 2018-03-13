@@ -129,11 +129,12 @@ public:
   std::list<std::string> getTableNames();
 
   /**
-   * Closes the underlying database connection.  This method should only be used
-   * in extreme cases where the closure of the underlying database connection
-   * needs to be forced.
+   * Closes the underlying cached database statements and their connection.
+   *
+   * This method should only be used in extreme cases where the closure of thei
+   * underlying database connection needs to be forced.
    */
-  void closeUnderlyingDatabaseConnection();
+  void closeUnderlyingStmtsAndConn();
 
   /**
    * Returns true if this connection is open.

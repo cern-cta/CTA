@@ -689,7 +689,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
       }
 
       try {
-        conn.closeUnderlyingDatabaseConnection();
+        conn.closeUnderlyingStmtsAndConn();
       } catch(...) {
       }
       throw exception::LostDatabaseConnection(msg.str());
@@ -834,7 +834,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
       }
 
       try {
-        conn.closeUnderlyingDatabaseConnection();
+        conn.closeUnderlyingStmtsAndConn();
       } catch(...) {
       }
       throw exception::LostDatabaseConnection(msg.str());
