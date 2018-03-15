@@ -79,6 +79,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
+  exception/DatabaseConstraintViolation.cpp  
   exception/DismountFailed.cpp  
   exception/Errnum.cpp
   exception/Exception.cpp

@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseConstraintViolation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "rdbms/NullDbValue.hpp"
@@ -151,7 +152,13 @@ bool SqliteRset::next() {
 
     // Throw an exception if the call to sqlite3_step() failed
     if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
-      throw exception::Exception(Sqlite::rcToStr(stepRc));
+      const std::string msg = Sqlite::rcToStr(stepRc);
+
+      if(SQLITE_CONSTRAINT == stepRc) {
+        throw exception::DatabaseConstraintViolation(msg);
+      } else {
+        throw exception::Exception(msg);
+      }
     }
 
     if(SQLITE_ROW == stepRc) {

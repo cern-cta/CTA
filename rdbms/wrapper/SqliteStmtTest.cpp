@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseConstraintViolation.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -355,6 +356,52 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
     ASSERT_EQ((uint64_t)1, nbRows.value());
 
     ASSERT_FALSE(rset->next());
+  }
+}
+
+TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_violating_primary_key) {
+  using namespace cta;
+  using namespace cta::rdbms::wrapper;
+
+  // Create a connection a memory resident database
+  SqliteConn conn(":memory:");
+
+  ASSERT_TRUE(conn.getTableNames().empty());
+
+  // Create a test table
+  {
+    const char *const sql =
+      "CREATE TABLE TEST("
+        "COL1 INTEGER,"
+        "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->executeNonQuery();
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST", conn.getTableNames().front());
+  }
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO TEST("
+        "COL1)"
+      "VALUES("
+        ":COL1);";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->bindUint64(":COL1", 1);
+    stmt->executeNonQuery();
+  }
+
+  // Try to insert an identical row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO TEST("
+        "COL1)"
+      "VALUES("
+        ":COL1);";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->bindUint64(":COL1", 1);
+    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabaseConstraintViolation);
   }
 }
 
