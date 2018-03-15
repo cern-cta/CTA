@@ -359,7 +359,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
   }
 }
 
-TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_violating_primary_key) {
+TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primary_key) {
   using namespace cta;
   using namespace cta::rdbms::wrapper;
 
@@ -402,6 +402,53 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_violating_primary_key) {
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
     stmt->bindUint64(":COL1", 1);
     ASSERT_THROW(stmt->executeNonQuery(), exception::DatabaseConstraintViolation);
+  }
+}
+
+TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_key) {
+  using namespace cta;
+  using namespace cta::rdbms::wrapper;
+
+  // Create a connection a memory resident database
+  SqliteConn conn(":memory:");
+
+  ASSERT_TRUE(conn.getTableNames().empty());
+
+  // Create a test table
+  {
+    const char *const sql =
+      "CREATE TABLE TEST("
+        "COL1 INTEGER,"
+        "CONSTRAINT TEST_COL1_PK PRIMARY KEY(COL1));";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->executeNonQuery();
+    ASSERT_EQ(1, conn.getTableNames().size());
+    ASSERT_EQ("TEST", conn.getTableNames().front());
+  }
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO TEST("
+        "COL1)"
+      "VALUES("
+        ":COL1);";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->bindUint64(":COL1", 1);
+    stmt->executeNonQuery();
+  }
+
+  // Try to insert an identical row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO TEST("
+        "COL1)"
+      "VALUES("
+        ":COL1);";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt->bindUint64(":COL1", 1);
+    auto rset = stmt->executeQuery();
+    ASSERT_THROW(rset->next(), exception::DatabaseConstraintViolation);
   }
 }
 

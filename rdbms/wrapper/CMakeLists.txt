@@ -59,14 +59,14 @@ target_link_libraries (ctardbmswrapper
 
 install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
+set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
   OcciColumnTest.cpp
   ParamNameToIdxTest.cpp
   SqliteStmtTest.cpp)
 
 add_library (ctardbmswrapperunittests SHARED
-  ${RDBMS_UNIT_TESTS_LIB_SRC_FILES})
+  ${RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES})
 set_property(TARGET ctardbmswrapperunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapperunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
