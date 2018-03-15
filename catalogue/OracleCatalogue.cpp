@@ -126,7 +126,8 @@ OracleCatalogue::OracleCatalogue(
     rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database),
     nbConns,
     nbArchiveFileListingConns,
-    maxTriesToConnect) {
+    maxTriesToConnect),
+  m_databaseUsername(username) {
 }
 
 //------------------------------------------------------------------------------
