@@ -127,11 +127,6 @@ public:
 private:
 
   /**
-   * The name of the database user.
-   */
-  std::string m_databaseUsername;
-
-  /**
    * Selects the specified tape within the Tape table for update.
    *
    * @param conn The database connection.
