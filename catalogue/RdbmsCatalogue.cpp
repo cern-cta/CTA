@@ -4702,7 +4702,8 @@ void RdbmsCatalogue::ping() {
 //------------------------------------------------------------------------------
 // checkTapeWrittenFilesAreSet
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event) {
+void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event)
+  const {
   try {
     if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
     if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
@@ -4721,7 +4722,7 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &eve
     if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string("TapeFileWrittenEvent is invalid: ") + ex.getMessage().str());
+    throw exception::Exception(callingFunc + " failed: TapeFileWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }
 
