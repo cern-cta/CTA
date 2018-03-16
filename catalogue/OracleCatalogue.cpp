@@ -587,7 +587,11 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 
   auto firstEventItor = events.begin();
   const auto &firstEvent = *firstEventItor;
-  checkTapeFileWrittenFieldsAreSet(firstEvent);
+  try {
+    checkTapeFileWrittenFieldsAreSet(firstEvent);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
   const time_t now = time(nullptr);
   threading::MutexLocker locker(m_mutex);
   auto conn = m_connPool.getConn();
@@ -601,7 +605,11 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
   TapeFileBatch tapeFileBatch(events.size());
 
   for (const auto &event: events) {
-    checkTapeFileWrittenFieldsAreSet(firstEvent);
+    try {
+      checkTapeFileWrittenFieldsAreSet(event);
+    } catch(exception::Exception &ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    }
 
     if (event.vid != firstEvent.vid) {
       throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
