@@ -270,6 +270,10 @@ kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab 
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
 
+# Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
+echo "mgmofs.protowfhostport ctafrontend:10955" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+echo "mgmofs.protowfendpoint /ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+
 
 # allow eos to start
 kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
@@ -329,11 +333,6 @@ do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto:${CTA_ENDPOINT} ctafrontend\" ${CTA_WF_DIR}"
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto:${CTA_ENDPOINT} ctafrontend\" ${CTA_WF_DIR}"
 done
-
-# Add this for SSI prococol buffer workflow (xrootd >=4.8.2) 
-echo "mgmofs.protowfhostport ${CTA_ENDPOINT}" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
-echo "mgmofs.protowfendpoint ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
-
 
 
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
