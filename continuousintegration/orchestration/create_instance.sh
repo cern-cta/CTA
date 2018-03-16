@@ -330,6 +330,11 @@ do
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto:${CTA_ENDPOINT} ctafrontend\" ${CTA_WF_DIR}"
 done
 
+# Add this for SSI prococol buffer workflow (xrootd >=4.8.2) 
+echo "mgmofs.protowfhostport ${CTA_ENDPOINT}" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+echo "mgmofs.protowfendpoint ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+
+
 
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
 kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
