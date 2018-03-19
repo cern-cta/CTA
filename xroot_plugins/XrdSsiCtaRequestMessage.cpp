@@ -1440,7 +1440,6 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
    using namespace cta::admin;
 
    auto &vid = getRequired(OptionString::VID);
-   auto  tag = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::RepackType type;
 
@@ -1454,7 +1453,7 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       type = cta::common::dataStructures::RepackType::expandandrepack;
    }
 
-   m_scheduler.queueRepack(m_cliIdentity, vid, tag, type);
+   m_scheduler.queueRepack(m_cliIdentity, vid, type);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1494,7 +1493,7 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","files","size","type","tag","to retrieve","to archive","failed","archived","status","name","host","time"
+         "vid","files","size","type","to retrieve","to archive","failed","archived","status","name","host","time"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++)
@@ -1510,7 +1509,6 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
          currentRow.push_back(type_s.at(it->repackType));
-         currentRow.push_back(it->tag);
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToRetrieve)));//change names
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToArchive)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
@@ -1988,13 +1986,10 @@ void RequestMessage::processTape_Label(const cta::admin::AdminCmd &admincmd, cta
    auto &vid   = getRequired(OptionString::VID);
    auto  force = getOptional(OptionBoolean::FORCE);
    auto  lbp   = getOptional(OptionBoolean::LBP);
-   auto  tag   = getOptional(OptionString::TAG);
 
-   // If the tag option is not specified, the tag will be set to "-", which means no tagging
    m_scheduler.queueLabel(m_cliIdentity, vid,
                           force ? force.value() : false,
-                          lbp ? lbp.value() : true,
-                          tag);
+                          lbp ? lbp.value() : true);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2098,13 +2093,11 @@ void RequestMessage::processTest_Read(const cta::admin::AdminCmd &admincmd, cta:
    auto &output    = getRequired(OptionString::OUTPUT);
    auto &firstfseq = getRequired(OptionUInt64::FIRST_FSEQ);
    auto &lastfseq  = getRequired(OptionUInt64::LAST_FSEQ);
-   auto  tag       = getOptional(OptionString::TAG);
 
    bool checkchecksum = has_flag(OptionBoolean::CHECK_CHECKSUM);
 
-   cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(
-      m_cliIdentity, drive, vid, firstfseq, lastfseq, checkchecksum, output, tag ? tag.value() : "-"
-   );
+   cta::common::dataStructures::ReadTestResult res = m_scheduler.readTest(m_cliIdentity, drive, vid,
+      firstfseq, lastfseq, checkchecksum, output);
 
    std::vector<std::vector<std::string>> responseTable;
    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
@@ -2150,11 +2143,8 @@ void RequestMessage::processTest_Write(const cta::admin::AdminCmd &admincmd, cta
    auto &drive = getRequired(OptionString::DRIVE);
    auto &vid   = getRequired(OptionString::VID);
    auto &file  = getRequired(OptionString::FILENAME);
-   auto  tag   = getOptional(OptionString::TAG);
 
-   cta::common::dataStructures::WriteTestResult res = m_scheduler.writeTest(
-      m_cliIdentity, drive, vid, file, tag ? tag.value() : "-"
-   );
+   cta::common::dataStructures::WriteTestResult res = m_scheduler.writeTest(m_cliIdentity, drive, vid, file);
 
    std::vector<std::vector<std::string>> responseTable;
    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
@@ -2204,7 +2194,6 @@ void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd,
    auto &number = getRequired(OptionUInt64::NUMBER_OF_FILES);
    auto &size   = getRequired(OptionUInt64::FILE_SIZE);
    auto &input  = getRequired(OptionString::INPUT);
-   auto  tag    = getOptional(OptionString::TAG);
 
    cta::common::dataStructures::TestSourceType type;
 
@@ -2216,9 +2205,8 @@ void RequestMessage::processTest_WriteAuto(const cta::admin::AdminCmd &admincmd,
       throw cta::exception::UserError("--input value must be either \"zero\" or \"urandom\"");
    }
 
-   cta::common::dataStructures::WriteTestResult res = m_scheduler.write_autoTest(
-      m_cliIdentity, drive, vid, number, size, type, tag ? tag.value() : "-"
-   );
+   cta::common::dataStructures::WriteTestResult res = m_scheduler.write_autoTest(m_cliIdentity, drive,
+      vid, number, size, type);
 
    std::vector<std::vector<std::string>> responseTable;
    std::vector<std::string> header = { "fseq","checksum type","checksum value","error" };
@@ -2260,9 +2248,8 @@ void RequestMessage::processVerify_Add(const cta::admin::AdminCmd &admincmd, cta
 
    auto &vid    = getRequired(OptionString::VID);
    auto  number = getOptional(OptionUInt64::NUMBER_OF_FILES);
-   auto  tag    = getOptional(OptionString::TAG);
 
-   m_scheduler.queueVerify(m_cliIdentity, vid, tag, number);
+   m_scheduler.queueVerify(m_cliIdentity, vid, number);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2302,7 +2289,7 @@ void RequestMessage::processVerify_Ls(const cta::admin::AdminCmd &admincmd, cta:
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","files","size","tag","to verify","failed","verified","status","name","host","time"
+         "vid","files","size","to verify","failed","verified","status","name","host","time"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
       for(auto it = list.cbegin(); it != list.cend(); it++) {
@@ -2310,7 +2297,6 @@ void RequestMessage::processVerify_Ls(const cta::admin::AdminCmd &admincmd, cta:
          currentRow.push_back(it->vid);
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalFiles)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->totalSize)));
-         currentRow.push_back(it->tag);
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesToVerify)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesFailed)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->filesVerified)));
