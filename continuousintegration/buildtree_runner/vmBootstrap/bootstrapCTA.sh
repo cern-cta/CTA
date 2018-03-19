@@ -4,6 +4,14 @@ set -x
 
 echo Getting CTA sources...
 ( cd ~ ; git clone https://:@gitlab.cern.ch:8443/cta/CTA.git; cd CTA ; git submodule update --init --recursive)
+cat > ~/CTA/.git/hooks/post-checkout << EOFGitHook
+#!/bin/sh
+cd `git rev-parse --show-toplevel`
+git submodule update --init --recursive
+EOFGitHook
+
+chmod +x ~/CTA/.git/hooks/post-checkout
+cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
 
 echo Creating source rpm
 mkdir -p ~/CTA-build-srpm

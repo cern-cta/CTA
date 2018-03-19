@@ -26,7 +26,10 @@ set (CATALOGUE_LIB_SRC_FILES
   ArchiveFileItorImpl.cpp
   Catalogue.cpp
   CatalogueFactory.cpp
+  ChecksumTypeMismatch.cpp
+  ChecksumValueMismatch.cpp
   CmdLineTool.cpp
+  FileSizeMismatch.cpp
   InMemoryCatalogue.cpp
   OracleCatalogue.cpp
   SqliteCatalogueSchema.cpp

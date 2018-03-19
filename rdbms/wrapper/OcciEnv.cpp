@@ -30,7 +30,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 OcciEnv::OcciEnv() {
   using namespace oracle::occi;
-  m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
+  m_env = Environment::createEnvironment((oracle::occi::Environment::Mode)(Environment::THREADED_MUTEXED | Environment::OBJECT));
   if(nullptr == m_env) {
     throw exception::Exception(std::string(__FUNCTION__) + "failed"
       ": oracle::occi::createEnvironment() returned a nullptr pointer");

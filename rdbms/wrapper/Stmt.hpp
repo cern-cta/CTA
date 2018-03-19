@@ -20,6 +20,7 @@
 
 #include "common/optional.hpp"
 #include "rdbms/AutocommitMode.hpp"
+#include "rdbms/Constants.hpp"
 #include "rdbms/wrapper/ParamNameToIdx.hpp"
 #include "rdbms/wrapper/Rset.hpp"
 
@@ -186,16 +187,11 @@ public:
    * characters will indicate to the reader of the exception message that the
    * SQL statement has been clipped.
    *
+   * @param maxSqlLenInExceptions The maximum length an SQL statement can have
+   * in an exception error message.
    * @return The SQL string to be used in an exception message.
    */
-  std::string getSqlForException() const;
-
-protected:
-
-  /**
-   * The maximum length an SQL statement can have in exception error message.
-   */
-  const uint32_t c_maxSqlLenInExceptions = 80;
+  std::string getSqlForException(const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS) const;
 
 private:
 

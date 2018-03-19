@@ -154,6 +154,26 @@ private:
   void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
     const std::set<TapeFileWritten> &events);
 
+  /**
+   * The size and checksum of a file.
+   */
+  struct FileSizeAndChecksum {
+    uint64_t fileSize;
+    std::string checksumType;
+    std::string checksumValue;
+  };
+
+  /**
+   * Returns the sizes and checksums of the specified archive files.
+   *
+   * @param conn The database connection.
+   * @param autocommitMode The autocommit mode of the SQL select statement.
+   * @param events The tape file written events that identify the archive files.
+   * @return A map from the identifier of each archive file to its size and checksum.
+   */
+  std::map<uint64_t, FileSizeAndChecksum> selectArchiveFileSizesAndChecksums(rdbms::Conn &conn,
+    const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events);
+
 }; // class OracleCatalogue
 
 } // namespace catalogue

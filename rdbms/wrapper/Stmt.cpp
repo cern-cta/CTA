@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/Stmt.hpp"
 
 namespace cta {
@@ -61,16 +62,8 @@ uint32_t Stmt::getParamIdx(const std::string &paramName) const {
 //------------------------------------------------------------------------------
 // getSqlForException
 //------------------------------------------------------------------------------
-std::string Stmt::getSqlForException() const {
-  if(m_sql.length() <= c_maxSqlLenInExceptions) {
-    return m_sql;
-  } else {
-    if(c_maxSqlLenInExceptions >= 3) {
-      return m_sql.substr(0, c_maxSqlLenInExceptions - 3) + "...";
-    } else {
-      return std::string("..."). substr(0, c_maxSqlLenInExceptions);
-    }
-  }
+std::string Stmt::getSqlForException(const std::string::size_type maxSqlLenInExceptions) const {
+  return rdbms::getSqlForException(m_sql, maxSqlLenInExceptions);
 }
 
 //------------------------------------------------------------------------------

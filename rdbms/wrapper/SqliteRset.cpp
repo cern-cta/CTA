@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseConstraintViolation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "rdbms/NullDbValue.hpp"
@@ -146,23 +147,26 @@ const std::string &SqliteRset::getSql() const {
 // next
 //------------------------------------------------------------------------------
 bool SqliteRset::next() {
-  try {
-    const int stepRc = sqlite3_step(m_stmt.get());
+  const int stepRc = sqlite3_step(m_stmt.get());
 
-    // Throw an exception if the call to sqlite3_step() failed
-    if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
-      throw exception::Exception(Sqlite::rcToStr(stepRc));
+  // Throw an exception if the call to sqlite3_step() failed
+  if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " failed for SQL statement " << m_stmt.getSqlForException() + ": " <<
+      Sqlite::rcToStr(stepRc);
+
+    if(SQLITE_CONSTRAINT == stepRc) {
+      throw exception::DatabaseConstraintViolation(msg.str());
+    } else {
+      throw exception::Exception(msg.str());
     }
-
-    if(SQLITE_ROW == stepRc) {
-      clearAndPopulateColNameToIdxAndTypeMap();
-    }
-
-    return SQLITE_ROW == stepRc;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSqlForException() +
-      ": " + ex.getMessage().str());
   }
+
+  if(SQLITE_ROW == stepRc) {
+    clearAndPopulateColNameToIdxAndTypeMap();
+  }
+
+  return SQLITE_ROW == stepRc;
 }
 
 //------------------------------------------------------------------------------

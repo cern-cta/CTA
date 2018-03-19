@@ -31,6 +31,7 @@ set (RDBMS_LIB_SRC_FILES
   Login.cpp
   LoginFactory.cpp
   NullDbValue.cpp
+  rdbms.cpp
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp)
@@ -49,6 +50,7 @@ set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
   ConnTest.cpp
   LoginTest.cpp
+  RdbmsTest.cpp
   StmtPoolTest.cpp)
 
 add_library (ctardbmsunittests SHARED

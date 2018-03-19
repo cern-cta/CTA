@@ -16,6 +16,10 @@
 #-------------------------------------
 %define skip_unit_tests @SKIP_UNIT_TESTS@
 
+# Utility for reloading systemctl when needed
+#--------------------------------------------
+%define systemdDaemonReload() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl daemon-reload; fi
+
 # General settings
 #-----------------
 Summary: CERN Tape Archive
@@ -33,10 +37,10 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
 %define radosVersion 2:12.2.2
-BuildRequires: xrootd-client-devel  >= 1:4.8.1
-BuildRequires: xrootd-devel         >= 1:4.8.1
-BuildRequires: xrootd-server-devel  >= 1:4.8.1
-BuildRequires: xrootd-private-devel >= 1:4.8.1
+BuildRequires: xrootd-client-devel  >= 1:4.8.2
+BuildRequires: xrootd-devel         >= 1:4.8.2
+BuildRequires: xrootd-server-devel  >= 1:4.8.2
+BuildRequires: xrootd-private-devel >= 1:4.8.2
 BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion}, 
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
@@ -122,12 +126,14 @@ The tape server daemon
 
 %post -n cta-taped
 %systemd_post cta-taped.service
+%systemdDaemonReload
 
 %preun -n cta-taped
 %systemd_preun cta-taped.service
 
 %postun -n cta-taped
 %systemd_postun cta-taped.service
+%systemdDaemonReload
 
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
@@ -155,6 +161,7 @@ The xroot plugin
 %post -n cta-frontend
 /sbin/ldconfig
 %systemd_post cta-frontend.service
+%systemdDaemonReload
 
 %preun -n cta-frontend
 %systemd_preun cta-frontend.service
@@ -162,6 +169,7 @@ The xroot plugin
 %postun -n cta-frontend
 /sbin/ldconfig
 %systemd_post cta-frontend.service
+%systemdDaemonReload
 
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
@@ -313,12 +321,14 @@ Tools to faciliate working with rmcd and smc in cta
 
 %post -n cta-rmcd
 %systemd_post cta-rmcd.service
+%systemdDaemonReload
 
 %preun -n cta-rmcd
 %systemd_preun cta-rmcd.service
 
 %postun -n cta-rmcd
 %systemd_postun cta-rmcd.service
+%systemdDaemonReload
 
 %package -n cta-tape-developer-acs-tools
 Summary: Cern Advanced mass STORage

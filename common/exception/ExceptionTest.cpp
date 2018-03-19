@@ -87,6 +87,15 @@ namespace unitTests {
     ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"),
       cta::exception::Errnum);
     
+    ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return 0; }, "Context"));
+    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return ENOSPC; }, "Context"),
+      cta::exception::Errnum);
+    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ throw std::error_code(ENOSPC, std::system_category()); return 0; }, "Context"),
+      cta::exception::Errnum);
+    ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ throw std::exception(); return 0; }, "Context"),
+      cta::exception::Exception);
+    
+    
     /* throwOnNonZero */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNonZero(0, "Context"));

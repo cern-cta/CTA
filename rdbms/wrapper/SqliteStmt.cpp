@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/DatabaseConstraintViolation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -26,6 +27,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <stdlib.h>
 #include <string>
@@ -261,8 +263,14 @@ void SqliteStmt::executeNonQuery() {
 
   // Throw an exception if the call to sqlite3_step() failed
   if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + Sqlite::rcToStr(stepRc));
+    std::ostringstream msg;
+    msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
+
+    if(SQLITE_CONSTRAINT == stepRc) {
+      throw exception::DatabaseConstraintViolation(msg.str());
+    } else {
+      throw exception::Exception(msg.str());
+    }
   }
 
   m_nbAffectedRows = sqlite3_changes(m_conn.m_sqliteConn);

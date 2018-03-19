@@ -96,6 +96,8 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string &instanceName
 
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
+     .add("username", user.name)
+     .add("usergroup", user.group)
      .add("storageClass", storageClassName)
      .add("fileId", archiveFileId)
      .add("catalogueTime", catalogueTime)
