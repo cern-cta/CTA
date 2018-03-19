@@ -272,14 +272,14 @@ std::list<common::dataStructures::StorageClass> Scheduler::listStorageClass(cons
 //------------------------------------------------------------------------------
 // labelTape
 //------------------------------------------------------------------------------
-void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp, const optional<std::string> &tag) {
+void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force, const bool lbp) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 // repack
 //------------------------------------------------------------------------------
-void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const common::dataStructures::RepackType) {
+void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const common::dataStructures::RepackType) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -314,7 +314,7 @@ void Scheduler::shrink(const common::dataStructures::SecurityIdentity &cliIdenti
 //------------------------------------------------------------------------------
 // verify
 //------------------------------------------------------------------------------
-void Scheduler::queueVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<std::string> &tag, const optional<uint64_t> numberOfFiles) {
+void Scheduler::queueVerify(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const optional<uint64_t> numberOfFiles) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -343,7 +343,7 @@ common::dataStructures::VerifyInfo Scheduler::getVerify(const common::dataStruct
 // readTest
 //------------------------------------------------------------------------------
 common::dataStructures::ReadTestResult Scheduler::readTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output, const std::string &tag) const {
+        const uint64_t firstFSeq, const uint64_t lastFSeq, const bool checkChecksum, const std::string &output) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -351,7 +351,7 @@ common::dataStructures::ReadTestResult Scheduler::readTest(const common::dataStr
 // writeTest
 //------------------------------------------------------------------------------
 common::dataStructures::WriteTestResult Scheduler::writeTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const std::string &inputFile, const std::string &tag) const {
+        const std::string &inputFile) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 
@@ -359,7 +359,7 @@ common::dataStructures::WriteTestResult Scheduler::writeTest(const common::dataS
 // write_autoTest
 //------------------------------------------------------------------------------
 common::dataStructures::WriteTestResult Scheduler::write_autoTest(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const std::string &vid,
-        const uint64_t numberOfFiles, const uint64_t fileSize, const common::dataStructures::TestSourceType testSourceType, const std::string &tag) const {
+        const uint64_t numberOfFiles, const uint64_t fileSize, const common::dataStructures::TestSourceType testSourceType) const {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 }
 

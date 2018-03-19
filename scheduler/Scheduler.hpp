@@ -176,11 +176,11 @@ public:
    * labeling command, the operation gets queued just like a normal user operation, and the first drive that can 
    * accomplish it will dequeue it.
    */
-  void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const bool force, const bool lbp, const optional<std::string> &tag);
+  void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
+    const bool force, const bool lbp);
 
   void queueRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
-    const optional<std::string> &tag, const cta::common::dataStructures::RepackType);
+    const cta::common::dataStructures::RepackType);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity);
@@ -191,7 +191,7 @@ public:
     // removes extra tape copies from a specific pool(usually an "_2" pool)
 
   void queueVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const optional<std::string> &tag, const optional<uint64_t> numberOfFiles); 
+    const optional<uint64_t> numberOfFiles); 
     //if numberOfFiles is nullopt, all files are verified
   void cancelVerify(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
   std::list<cta::common::dataStructures::VerifyInfo> getVerifys(
@@ -202,15 +202,15 @@ public:
   cta::common::dataStructures::ReadTestResult readTest(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &driveName, const std::string &vid, const uint64_t firstFSeq, const uint64_t lastFSeq, 
-    const bool checkChecksum, const std::string &output, const std::string &tag) const;
+    const bool checkChecksum, const std::string &output) const;
     //when output=="null" discard the data read
   cta::common::dataStructures::WriteTestResult writeTest(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
-    const std::string &driveName, const std::string &vid, const std::string &inputFile, const std::string &tag) const;
+    const std::string &driveName, const std::string &vid, const std::string &inputFile) const;
   cta::common::dataStructures::WriteTestResult write_autoTest(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &driveName, const std::string &vid, const uint64_t numberOfFiles, const uint64_t fileSize, 
-    const cta::common::dataStructures::TestSourceType testSourceType, const std::string &tag) const;
+    const cta::common::dataStructures::TestSourceType testSourceType) const;
 
 
   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
