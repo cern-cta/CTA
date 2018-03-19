@@ -263,6 +263,13 @@ private:
       return opt_it != m_option_bool.end() && opt_it->second;
    }
 
+   /*!
+    * Throw an exception for empty protocol buffer strings
+    */
+   void checkIfEmptyString(const std::string &value, const std::string &error_txt) {
+      if(value.empty()) throw XrdSsiPb::PbException("Protocol buffer field " + error_txt + " is an empty string.");
+   }
+
    // Security protocol used to connect
 
    enum class Protocol { SSS, KRB5, OTHER };

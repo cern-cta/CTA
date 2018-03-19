@@ -337,13 +337,18 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
+
+
 void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
-   // Unpack message
+   // Validate received protobuf
+   checkIfEmptyString(notification.cli().user().username(),  "notification.cli.user.username");
+   checkIfEmptyString(notification.cli().user().groupname(), "notification.cli.user.groupname");
 
+   // Unpack message
    cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
+   originator.name  = notification.cli().user().username();
+   originator.group = notification.cli().user().groupname();
 
    cta::utils::Timer t;
 
@@ -367,18 +372,28 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
+
+
 void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
-   // Unpack message
+   // Validate received protobuf
+   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
+   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
+   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
+   checkIfEmptyString(notification.wf().instance().url(),      "notification.wf.instance.url");
+   checkIfEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
+   // Unpack message
    cta::common::dataStructures::UserIdentity originator;
-   originator.name          = notification.cli().user().username();
-   originator.group         = notification.cli().user().groupname();
+   originator.name    = notification.cli().user().username();
+   originator.group   = notification.cli().user().groupname();
 
    cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner       = notification.file().owner().username();
-   diskFileInfo.group       = notification.file().owner().groupname();
-   diskFileInfo.path        = notification.file().lpath();
+   diskFileInfo.owner = notification.file().owner().username();
+   diskFileInfo.group = notification.file().owner().groupname();
+   diskFileInfo.path  = notification.file().lpath();
 
    // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
    // and we need to decide what will be stored in the database.
@@ -436,8 +451,15 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
 void RequestMessage::processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
-   // Unpack message
+   // Validate received protobuf
+   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
+   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
+   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
+   checkIfEmptyString(notification.transport().dst_url(),      "notification.transport.dst_url");
 
+   // Unpack message
    cta::common::dataStructures::UserIdentity originator;
    originator.name              = notification.cli().user().username();
    originator.group             = notification.cli().user().groupname();
@@ -485,8 +507,14 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
 void RequestMessage::processDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
-   // Unpack message
+   // Validate received protobuf
+   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
+   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
+   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
 
+   // Unpack message
    cta::common::dataStructures::UserIdentity originator;
    originator.name          = notification.cli().user().username();
    originator.group         = notification.cli().user().groupname();
