@@ -1,4 +1,4 @@
-/*
+  /*
  * The CERN Tape Retrieve (CTA) project
  * Copyright (C) 2015  CERN
  *

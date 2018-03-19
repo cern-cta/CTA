@@ -113,13 +113,7 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
   m_successfulRetrieveJob->asyncComplete();
-}
-
-//------------------------------------------------------------------------------
-//ReportSuccessful::waitForAsyncExecuteFinished
-//------------------------------------------------------------------------------
-void RecallReportPacker::ReportSuccessful::waitForAsyncExecuteFinished(){
-  m_successfulRetrieveJob->checkComplete();
+  parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
 }
 
 //------------------------------------------------------------------------------
@@ -251,17 +245,12 @@ void RecallReportPacker::WorkerThread::run(){
     // as opposed to migrations where one failure fails the session.
     try {
       rep->execute(m_parent);
-      if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful)) {
-        reportedSuccessfully.emplace_back(std::move(rep)); 
-        cta::utils::Timer timing;
-        const unsigned int checkedReports = m_parent.flushCheckAndFinishAsyncExecute(reportedSuccessfully);    
-        if(checkedReports) {
-          cta::log::ScopedParamContainer params(m_parent.m_lc);
-          params.add("checkedReports", checkedReports)
-                .add("reportingTime", timing.secs());
-          m_parent.m_lc.log(cta::log::DEBUG, "After flushCheckAndFinishAsyncExecute()");
-        }
-      }
+      // This slightly hackish bit prevents too many calls to sub function and gettime()
+      // m_parent.fullCheckAndFinishAsyncExecute will execute the shared half of the
+      // request updates (individual, asynchronous is done in rep->execute(m_parent);
+      if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful) 
+          && m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE)
+        m_parent.fullCheckAndFinishAsyncExecute();
     } catch(const cta::exception::Exception& e){
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
@@ -296,15 +285,9 @@ void RecallReportPacker::WorkerThread::run(){
     if (endFound) break;
   }
   
+  // Make sure the last batch of reports got cleaned up. 
   try {
-    cta::utils::Timer timing;
-    const unsigned int checkedReports = m_parent.fullCheckAndFinishAsyncExecute(reportedSuccessfully); 
-    if (checkedReports) {
-      cta::log::ScopedParamContainer params(m_parent.m_lc);
-      params.add("checkedReports", checkedReports)
-            .add("reportingTime", timing.secs());
-      m_parent.m_lc.log(cta::log::DEBUG, "After fullCheckAndFinishAsyncExecute()");    
-    } 
+    m_parent.fullCheckAndFinishAsyncExecute(); 
   } catch(const cta::exception::Exception& e){
       cta::log::ScopedParamContainer params(m_parent.m_lc);
       params.add("exceptionWhat", e.getMessageValue())
@@ -362,35 +345,10 @@ bool RecallReportPacker::errorHappened() {
 }
 
 //------------------------------------------------------------------------------
-//flushCheckAndFinishAsyncExecute()
-//------------------------------------------------------------------------------
-unsigned int RecallReportPacker::flushCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully) {
-  unsigned int checkedReports = 0;
-  if (reportedSuccessfully.size() >= RECALL_REPORT_PACKER_FLUSH_SIZE) {
-    while (!reportedSuccessfully.empty()) {
-      std::unique_ptr<Report> report=std::move(reportedSuccessfully.back());
-      reportedSuccessfully.pop_back();
-      if (!report.get()) continue;
-      report->waitForAsyncExecuteFinished();
-      checkedReports ++;
-    }
-  }  
-  return checkedReports;
-}
-
-//------------------------------------------------------------------------------
 //fullCheckAndFinishAsyncExecute()
 //------------------------------------------------------------------------------
-unsigned int RecallReportPacker::fullCheckAndFinishAsyncExecute(std::list <std::unique_ptr<Report>> &reportedSuccessfully) {
-  unsigned int checkedReports = 0;
-  while (!reportedSuccessfully.empty()) {
-    std::unique_ptr<Report> report=std::move(reportedSuccessfully.back());
-    reportedSuccessfully.pop_back();
-    if (!report.get()) continue;
-    report->waitForAsyncExecuteFinished();
-    checkedReports++;
-  }
-  return checkedReports;
+void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
+  m_retrieveMount->waitAndFinishSettingJobsBatchRetrieved(m_successfulRetrieveJobs, m_lc);
 }
 
 //------------------------------------------------------------------------------

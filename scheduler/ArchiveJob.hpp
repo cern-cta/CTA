@@ -118,7 +118,7 @@ public:
    * @return The URL used to report to the disk system.
    */
   virtual std::string reportURL();
-  
+
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
   

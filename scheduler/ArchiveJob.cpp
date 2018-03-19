@@ -110,7 +110,7 @@ void cta::ArchiveJob::validate(){
 std::string cta::ArchiveJob::reportURL() {
   return m_dbJob->archiveReportURL;
 }
-  
+
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------

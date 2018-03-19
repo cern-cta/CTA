@@ -2298,6 +2298,38 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   m_oStoreDB.updateDriveStatistics(driveInfo, inputs, lc);
 }
 
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::castFromSchedDBJob()
+//------------------------------------------------------------------------------
+OStoreDB::RetrieveJob * OStoreDB::RetrieveMount::castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job) {
+  OStoreDB::RetrieveJob * ret = dynamic_cast<OStoreDB::RetrieveJob *> (job);
+  if (!ret) {
+    std::string unexpectedType = typeid(*job).name();
+    throw cta::exception::Exception(std::string("In OStoreDB::RetrieveMount::castFromSchedDBJob(): unexpected archive job type while casting: ")+
+        unexpectedType);
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::waitAndFinishSettingJobsBatchSuccessful()
+//------------------------------------------------------------------------------
+std::set<cta::SchedulerDatabase::RetrieveJob*> OStoreDB::RetrieveMount::finishSettingJobsBatchSuccessful(
+  std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) {
+  std::set<cta::SchedulerDatabase::RetrieveJob*> ret;
+  std::list<std::string> rjToUnown;
+  // We will wait on the asynchronously started reports of jobs and remove them from
+  // ownership.
+  for (auto & sDBJob: jobsBatch) {
+    auto osdbJob = castFromSchedDBJob(sDBJob);
+    rjToUnown.push_back(osdbJob->m_retrieveRequest.getAddressIfSet());
+    ret.insert(sDBJob);
+  }
+  m_oStoreDB.m_agentReference->removeBatchFromOwnership(rjToUnown, m_oStoreDB.m_objectStore);
+  return ret;
+}
+
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
@@ -2613,12 +2645,8 @@ void OStoreDB::RetrieveJob::checkSucceed() {
   m_retrieveRequest.resetValues();
   // We no more own the job (which could be gone)
   m_jobOwned = false;
-  // Remove ownership form the agent
-  const std::string rtfrAddress = m_retrieveRequest.getAddressIfSet();
-  m_oStoreDB.m_agentReference->removeFromOwnership(rtfrAddress, m_oStoreDB.m_objectStore);
+  // Ownership will ber removed from agent by caller through retrieve mount object.
 }
-
-
 
 } // namespace cta
 

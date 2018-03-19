@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/RetrieveMount.hpp"
+#include "common/Timer.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -85,6 +86,76 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   }
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// waitAndFinishSettingJobsBatchRetrieved()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) {
+  std::list<std::unique_ptr<cta::RetrieveJob> > validatedSuccessfulArchiveJobs;
+  std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBArchiveJobs;
+  std::unique_ptr<cta::RetrieveJob> job;
+  double waitUpdateCompletionTime=0;
+  double jobBatchFinishingTime=0;
+  double schedulerDbTime=0;
+  uint64_t files=0;
+  uint64_t bytes=0;
+  utils::Timer t;
+  try {
+    while (!successfulRetrieveJobs.empty()) {
+      job = std::move(successfulRetrieveJobs.front());
+      successfulRetrieveJobs.pop();
+      if (!job.get()) continue;
+      files++;
+      bytes+=job->archiveFile.fileSize;
+      job->checkComplete();
+      validatedSuccessfulDBArchiveJobs.emplace_back(job->m_dbJob.get());
+      validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
+      job.reset();
+    }
+    waitUpdateCompletionTime=t.secs(utils::Timer::resetCounter);
+    // Complete the cleaning up of the jobs in the mount
+    m_dbMount->finishSettingJobsBatchSuccessful(validatedSuccessfulDBArchiveJobs, logContext);
+    jobBatchFinishingTime=t.secs();
+    schedulerDbTime=jobBatchFinishingTime + waitUpdateCompletionTime;
+    {
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("successfulRetrieveJobs", successfulRetrieveJobs.size())
+            .add("files", files)
+            .add("bytes", bytes)
+            .add("waitUpdateCompletionTime", waitUpdateCompletionTime)
+            .add("jobBatchFinishingTime", jobBatchFinishingTime)
+            .add("schedulerDbTime", schedulerDbTime);
+      logContext.log(cta::log::DEBUG,"In RetrieveMout::waitAndFinishSettingJobsBatchRetrieved(): deleted complete retrieve jobs.");
+    }
+  } catch(const cta::exception::Exception& e){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionMessageValue", e.getMessageValue());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+    }
+    const std::string msg_error="In RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(): got an exception";
+    logContext.log(cta::log::ERR, msg_error);
+    // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
+    // will be retried.
+  } catch(const std::exception& e){
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionWhat", e.what());
+    if (job.get()) {
+      params.add("fileId", job->archiveFile.archiveFileID)
+            .add("diskInstance", job->archiveFile.diskInstance)
+            .add("diskFileId", job->archiveFile.diskFileId)
+            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
+    }
+    const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an standard exception";
+    logContext.log(cta::log::ERR, msg_error);
+    // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
+    // will be retried.
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // tapeComplete()

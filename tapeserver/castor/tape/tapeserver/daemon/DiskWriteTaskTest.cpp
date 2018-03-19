@@ -33,6 +33,7 @@
 #include "scheduler/TapeMountDummy.hpp"
 
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 #include <memory>
@@ -45,6 +46,8 @@ namespace unitTests{
     void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
+    std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
+
   };
   
   class TestingRetrieveMount: public cta::RetrieveMount {

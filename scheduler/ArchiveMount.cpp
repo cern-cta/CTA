@@ -143,7 +143,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
       files++;
       bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
-      job.reset(nullptr);
+      job.reset();
     }
     utils::Timer t;
     // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten

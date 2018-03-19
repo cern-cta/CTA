@@ -67,6 +67,8 @@ namespace cta {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {};
     
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
+    
+    void waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
 
   private:
 

@@ -40,7 +40,7 @@ namespace cta {
     
     virtual void reportJobSucceeded() {
       completes++;
-    }
+    } 
     
     virtual void validate() override  {}
     virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten() override {

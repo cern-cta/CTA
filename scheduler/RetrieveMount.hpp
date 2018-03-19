@@ -25,6 +25,7 @@
 #include "scheduler/TapeMount.hpp"
 
 #include <memory>
+#include <queue>
 
 namespace cta {
   
@@ -130,6 +131,17 @@ namespace cta {
      */
     virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext &logContext);
+    
+    /**
+     * Wait and complete reporting of a batch of jobs successes. The per jobs handling has
+     * already been launched in the background using cta::RetrieveJob::asyncComplete().
+     * This function will check completion of those async completes and then proceed
+     * with any necessary common handling.
+     *
+     * @param successfulRetrieveJobs the jobs to report
+     * @param logContext
+     */
+    virtual void waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> > & successfulRetrieveJobs, cta::log::LogContext &logContext);
     
     /**
      * Destructor.

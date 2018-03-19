@@ -210,7 +210,7 @@ private:
    */
   cta::threading::BlockingQueue<Report*> m_fifo;
 
-
+  
   cta::threading::Mutex m_producterProtection;
   
   /** 
