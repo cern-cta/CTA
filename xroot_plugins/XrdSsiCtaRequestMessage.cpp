@@ -510,19 +510,11 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Validate received protobuf
    checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
    checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
-   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
 
    // Unpack message
    cta::common::dataStructures::UserIdentity originator;
    originator.name          = notification.cli().user().username();
    originator.group         = notification.cli().user().groupname();
-
-   cta::common::dataStructures::DiskFileInfo diskFileInfo;
-   diskFileInfo.owner       = notification.file().owner().username();
-   diskFileInfo.group       = notification.file().owner().groupname();
-   diskFileInfo.path        = notification.file().lpath();
 
    cta::common::dataStructures::DeleteArchiveRequest request;
    request.requester        = originator;
