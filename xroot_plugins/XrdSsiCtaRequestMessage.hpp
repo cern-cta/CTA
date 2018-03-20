@@ -140,6 +140,14 @@ private:
    admincmd_t processVerify_Err;
 
    /*!
+    * Log an admin command
+    *
+    * @param[in]    admincmd    CTA Admin command request message
+    * @param[in]    t           CTA Catalogue timer
+    */
+   void logAdminCmd(const std::string &function, const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t);
+
+   /*!
     * "af ls" command
     *
     * This is a special case as it can return a protocol buffer (for the summary) or a stream (for

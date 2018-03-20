@@ -75,12 +75,14 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
    {
       using namespace cta::xrd;
 
-      case Request::kAdmincmd:
+      case Request::kAdmincmd: {
          // Validate that the Kerberos user is an authorized CTA Admin user
          if(m_protocol != Protocol::KRB5) {
             throw cta::exception::UserError("[ERROR] Admin commands must be authenticated using the Kerberos 5 protocol.");
          }
          m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
+
+         cta::utils::Timer t;
 
          // Validate the Protocol Buffer and import options into maps
          importOptions(request.admincmd());
@@ -281,7 +283,11 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
                      AdminCmd_SubCmd_Name(request.admincmd().subcmd()) +
                      "> is not implemented.");
-         }
+            } // end switch
+
+            // Log the admin command
+            logAdminCmd(__FUNCTION__, request.admincmd(), t);
+         } // end case Request::kAdmincmd
          break;
 
       case Request::kNotification:
@@ -556,6 +562,35 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
 
 // Admin commands
+
+void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t)
+{
+   using namespace cta::admin;
+
+   std::string log_msg = "In RequestMessage::" + function + "(): Admin command \"";
+
+   // Reverse lookup of strings corresponding to <command,subcommand> pair
+   for(auto cmd_it = cmdLookup.begin(); cmd_it != cmdLookup.end(); ++cmd_it) {
+      if(admincmd.cmd() == cmd_it->second) {
+         log_msg += cmd_it->first + ' ';
+         break;
+      }
+   }
+   for(auto subcmd_it = subcmdLookup.begin(); subcmd_it != subcmdLookup.end(); ++subcmd_it) {
+      if(admincmd.subcmd() == subcmd_it->second) {
+         log_msg += subcmd_it->first;
+         break;
+      }
+   }
+   log_msg += ": success.";
+
+   // Add the log message
+   cta::log::ScopedParamContainer params(m_lc);
+   params.add("catalogueTime", t.secs());
+   m_lc.log(cta::log::INFO, log_msg);
+}
+
+
 
 void RequestMessage::processAdmin_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
