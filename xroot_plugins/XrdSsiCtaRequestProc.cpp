@@ -39,8 +39,8 @@ void ExceptionHandler<cta::xrd::Response, PbException>::operator()(cta::xrd::Res
    response.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
    response.set_message_txt(ex.what());
 
-   // Log the error in the CTA log
-   //m_lc.log(cta::log::ERROR, "In ExceptionHandler(): RSP_ERR_PROTOBUF: " + ex.what());
+   // Also log the error in the XRootD log
+   XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, "ExceptionHandler", ex.what());
 }
 
 
