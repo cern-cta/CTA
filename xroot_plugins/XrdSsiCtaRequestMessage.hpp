@@ -40,7 +40,7 @@ public:
          m_cliIdentity.username = client.name;
          m_cliIdentity.host     = client.host;
 
-         // Map the client protcol string to an enum value
+         // Map the client protocol string to an enum value
          auto proto_it = m_protomap.find(client.prot);
          m_protocol = proto_it != m_protomap.end() ? proto_it->second : Protocol::OTHER;
       }

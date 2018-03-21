@@ -291,6 +291,12 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          break;
 
       case Request::kNotification:
+         // Validate that instance name in SSS key and instance name in Protocol buffer match
+         if(m_cliIdentity.username != request.notification().wf().instance().name()) {
+            throw PbException("Instance name \"" + request.notification().wf().instance().name() +
+                              "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
+         }
+
          // Map the Workflow Event to a method
          switch(request.notification().wf().event()) {
             using namespace cta::eos;
