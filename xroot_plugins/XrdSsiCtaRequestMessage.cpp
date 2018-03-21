@@ -567,11 +567,12 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
 {
    using namespace cta::admin;
 
-   std::string log_msg = "In RequestMessage::" + function + "(): Admin command \"";
+   std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded: ";
 
    // Reverse lookup of strings corresponding to <command,subcommand> pair
    for(auto cmd_it = cmdLookup.begin(); cmd_it != cmdLookup.end(); ++cmd_it) {
-      if(admincmd.cmd() == cmd_it->second) {
+      // Return the matching long string (length > 3)
+      if(admincmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
          log_msg += cmd_it->first + ' ';
          break;
       }
@@ -582,7 +583,6 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
          break;
       }
    }
-   log_msg += ": success.";
 
    // Add the log message
    cta::log::ScopedParamContainer params(m_lc);
