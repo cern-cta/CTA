@@ -38,6 +38,9 @@ void ExceptionHandler<cta::xrd::Response, PbException>::operator()(cta::xrd::Res
 {
    response.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
    response.set_message_txt(ex.what());
+
+   // Log the error in the CTA log
+   //m_lc.log(cta::log::ERROR, "In ExceptionHandler(): RSP_ERR_PROTOBUF: " + ex.what());
 }
 
 
@@ -48,26 +51,37 @@ void ExceptionHandler<cta::xrd::Response, PbException>::operator()(cta::xrd::Res
 template <>
 void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::ExecuteAction()
 {
-   try {
-      // Perform a capability query on the XrdSsiProviderServer object: it must be a XrdSsiCtaServiceProvider
-      XrdSsiCtaServiceProvider *cta_service_ptr;
+   const std::string ErrorFunction("In RequestProc::ExecuteAction(): ");
+   XrdSsiCtaServiceProvider *cta_service_ptr;
 
+   try {
+      // Perform a capability query (sanity check):
+      // the object pointed to by XrdSsiProviderServer must be a XrdSsiCtaServiceProvider
       if(!(cta_service_ptr = dynamic_cast<XrdSsiCtaServiceProvider*>(XrdSsiProviderServer)))
       {
-         throw cta::exception::Exception("XRootD Service is not a CTA Service");
+         // If not, this is fatal unrecoverable error
+         throw std::logic_error("XRootD Service is not a CTA Service");
       }
 
+      // Process the message
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
       request_msg.process(m_request, m_metadata, m_response_stream_ptr);
-   } catch(cta::exception::UserError &ex) {
-      m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
-      m_metadata.set_message_txt(ex.getMessageValue());
    } catch(PbException &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
       m_metadata.set_message_txt(ex.what());
-   } catch(std::exception &ex) {
+      cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_PROTOBUF: " + ex.what());
+   } catch(cta::exception::UserError &ex) {
+      m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
+      m_metadata.set_message_txt(ex.getMessageValue());
+      cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
+   } catch(cta::exception::Exception &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.what());
+      cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_CTA: " + ex.what());
+   } catch(std::runtime_error &ex) {
+      m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
+      m_metadata.set_message_txt(ex.what());
+      cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_CTA: " + ex.what());
    }
 }
 
