@@ -44,6 +44,12 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // Basics: tp config
   //----------------------------------------------------------------------------
+  /// The user name of the cta-taped daemon process
+  SourcedParameter<std::string> daemonUserName{
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  /// The group name of the cta-taped daemon process
+  SourcedParameter<std::string> daemonGroupName{
+    "taped", "DaemonGroupName", "tape", "Compile time default"};
   /// The log mask.  Logs with a level lower than this value will be masked.
   SourcedParameter<std::string> logMask{
     "taped", "LogMask", "DEBUG", "Compile time default"};

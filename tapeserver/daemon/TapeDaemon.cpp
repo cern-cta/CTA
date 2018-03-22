@@ -81,8 +81,8 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // raw IO in the future
   setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
 
-  const std::string userName = "cta";
-  const std::string groupName = "cta";
+  const std::string userName = m_globalConfiguration.daemonUserName.value();
+  const std::string groupName = m_globalConfiguration.daemonGroupName.value();
   daemonizeIfNotRunInForegroundAndSetUserAndGroup(userName, groupName);
   setDumpable();
 

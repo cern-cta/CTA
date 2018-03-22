@@ -32,6 +32,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ConfigurationFile cf(generalConfigPath);
   // Extract configuration from parsed config file
   // TpConfig
+  ret.daemonUserName.setFromConfigurationFile(cf, generalConfigPath);
+  ret.daemonGroupName.setFromConfigurationFile(cf, generalConfigPath);
   ret.logMask.setFromConfigurationFile(cf, generalConfigPath);
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
   // Memory management
