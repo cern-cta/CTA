@@ -33,6 +33,8 @@ cta_srpm:
     - docker
 
 cta_rpm:
+  except:
+    - tags
   stage: build:rpm
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
