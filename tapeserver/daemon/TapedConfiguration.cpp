@@ -60,6 +60,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
   
   // If we get here, the configuration file is good enough to be logged.
+  ret.daemonUserName.log(log);
+  ret.daemonGroupName.log(log);
   ret.logMask.log(log);
   ret.tpConfigPath.log(log);
   
