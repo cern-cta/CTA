@@ -45,6 +45,8 @@ namespace daemon {
       cta::common::dataStructures::MountType mountType;
       /** The number of files currently on tape*/
       uint32_t nbFiles;
+      /** The mount Id */
+      std::string mountId;
     };
 
 } // namespace daemon

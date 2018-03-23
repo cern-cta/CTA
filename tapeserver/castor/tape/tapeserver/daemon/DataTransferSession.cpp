@@ -178,6 +178,7 @@ schedule:
   m_volInfo.vid=tapeMount->getVid();
   m_volInfo.mountType=tapeMount->getMountType();
   m_volInfo.nbFiles=tapeMount->getNbFiles();
+  m_volInfo.mountId=tapeMount->getMountTransactionId();
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
