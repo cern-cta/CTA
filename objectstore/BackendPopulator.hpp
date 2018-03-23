@@ -46,6 +46,11 @@ public:
    */
   cta::objectstore::AgentReference & getAgentReference();
   
+  /**
+   * allow leaving bahind non-empty agents.
+   */
+  void leaveNonEmptyAgentsBehind();
+  
 private:
   /**
    * The objectstore backend
@@ -61,6 +66,11 @@ private:
    * A log context (copied) in order to be able to log in destructor.
    */
   cta::log::LogContext m_lc;
+  
+  /**
+   * A switch allowing leaving behind a non-empty agent for garbage collection pickup.
+   */
+  bool m_leaveNonEmptyAgentBehind = false;
 };
 
 }}

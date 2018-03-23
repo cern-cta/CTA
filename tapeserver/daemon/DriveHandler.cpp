@@ -888,8 +888,9 @@ int DriveHandler::runChild() {
     processName+=m_configLine.unitName;
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
-    lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry.");
+    lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
     backendPopulator.reset(new cta::objectstore::BackendPopulator(*backend, processName, lc));
+    backendPopulator->leaveNonEmptyAgentsBehind();
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());

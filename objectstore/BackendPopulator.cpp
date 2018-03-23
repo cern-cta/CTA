@@ -63,6 +63,12 @@ BackendPopulator::~BackendPopulator() throw() {
     Agent agent(m_agentReference.getAgentAddress(), m_backend);
     cta::objectstore::ScopedExclusiveLock agl(agent);
     agent.fetch();
+    if (m_leaveNonEmptyAgentBehind && !agent.isEmpty()) {
+      cta::log::ScopedParamContainer params(m_lc);
+      params.add("agentObject", agent.getAddressIfSet())
+            .add("ownedObjectCount", agent.getOwnershipList().size());
+      m_lc.log(log::WARNING, "In BackendPopulator::~BackendPopulator(): not deleting non-empty agent object, left for garbage collection.");
+    }
     agent.removeAndUnregisterSelf(m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(m_lc);
@@ -86,5 +92,13 @@ BackendPopulator::~BackendPopulator() throw() {
 cta::objectstore::AgentReference & BackendPopulator::getAgentReference() {
   return m_agentReference;
 }
+
+//------------------------------------------------------------------------------
+// leaveNonEmptyAgentsBehind
+//------------------------------------------------------------------------------
+void BackendPopulator::leaveNonEmptyAgentsBehind() {
+  m_leaveNonEmptyAgentBehind=true;
+}
+
 
 }}
