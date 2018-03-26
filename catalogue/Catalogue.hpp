@@ -343,6 +343,13 @@ public:
   virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
 
   /**
+   * Returns all the tapes within the CTA catalogue.
+   *
+   * @return Map from tape volume identifier to tape.
+   */
+  virtual common::dataStructures::VidToTapeMap getAllTapes() const = 0;
+
+  /**
    * Reclaims the specified tape.
    *
    * This method will throw an exception if the specified tape does not exist.

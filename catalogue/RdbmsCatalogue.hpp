@@ -342,6 +342,13 @@ public:
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
 
   /**
+   * Returns all the tapes within the CTA catalogue.
+   *
+   * @return Map from tape volume identifier to tape.
+   */
+  common::dataStructures::VidToTapeMap getAllTapes() const override;
+
+  /**
    * Reclaims the specified tape.
    *
    * This method will throw an exception if the specified tape does not exist.

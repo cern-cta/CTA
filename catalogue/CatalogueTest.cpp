@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <iomanip>
 #include <limits>
 #include <map>
 #include <memory>
@@ -8192,6 +8193,53 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_no_vids) {
   ASSERT_TRUE(m_catalogue->getTapes().empty());
   std::set<std::string> vids;
   ASSERT_TRUE(m_catalogue->getTapesByVid(vids).empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getAllTapes_no_tapes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllTapes().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const uint64_t nbPartialTapes = 2;
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
+  m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, true, "Create tape pool");
+
+  const uint32_t nbTapes = 1000;
+
+  for(uint32_t i = 0; i < nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "V" << std::setfill('0') << std::setw(5) << i;
+    const std::string tapeComment = "Create tape " + vid.str();
+    m_catalogue->createTape(m_admin, vid.str(), logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+      fullValue, tapeComment);
+  }
+
+  const auto vidToTapeMap = m_catalogue->getAllTapes();
+  ASSERT_EQ(nbTapes, vidToTapeMap.size());
+
+  for(uint32_t i = 0; i < nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "V" << std::setfill('0') << std::setw(5) << i;
+    const std::string tapeComment = "Create tape " + vid.str();
+
+    const auto tapeItor = vidToTapeMap.find(vid.str());
+    ASSERT_NE(vidToTapeMap.end(), tapeItor);
+
+    ASSERT_EQ(vid.str(), tapeItor->second.vid);
+    ASSERT_EQ(tapeComment, tapeItor->second.comment);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {

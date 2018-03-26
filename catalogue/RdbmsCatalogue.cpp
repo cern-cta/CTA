@@ -2031,6 +2031,87 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
 }
 
 //------------------------------------------------------------------------------
+// getAllTapes
+//------------------------------------------------------------------------------
+common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
+  try {
+    common::dataStructures::VidToTapeMap vidToTapeMap;
+    std::string sql =
+      "SELECT "
+        "VID AS VID,"
+        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "LAST_FSEQ AS LAST_FSEQ,"
+        "IS_DISABLED AS IS_DISABLED,"
+        "IS_FULL AS IS_FULL,"
+        "LBP_IS_ON AS LBP_IS_ON,"
+
+        "LABEL_DRIVE AS LABEL_DRIVE,"
+        "LABEL_TIME AS LABEL_TIME,"
+
+        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "LAST_READ_TIME AS LAST_READ_TIME,"
+
+        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "TAPE";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      common::dataStructures::Tape tape;
+
+      tape.vid = rset.columnString("VID");
+      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
+      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
+      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
+      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+      tape.disabled = rset.columnBool("IS_DISABLED");
+      tape.full = rset.columnBool("IS_FULL");
+      tape.lbp = rset.columnOptionalBool("LBP_IS_ON");
+
+      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
+      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
+      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
+
+      tape.comment = rset.columnString("USER_COMMENT");
+      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      vidToTapeMap[tape.vid] = tape;
+    }
+
+    return vidToTapeMap;
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // reclaimTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) {
