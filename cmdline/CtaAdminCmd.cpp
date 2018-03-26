@@ -232,6 +232,13 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          new_opt->set_value(value);
          break;
       }
+      case Option::OPT_STR_LIST: {
+         auto key = strListOptions.at(option.get_key());
+         auto new_opt = admincmd_ptr->add_option_str_list();
+         new_opt->set_key(key);
+         readListFromFile(*new_opt, value);
+         break;
+      }
       case Option::OPT_FLAG:
       case Option::OPT_BOOL: {
          auto key = boolOptions.at(option.get_key());
@@ -256,6 +263,36 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          throw std::runtime_error(value + " is not a valid uint64: " + option.help());
       } catch(std::out_of_range &) {
          throw std::runtime_error(value + " is out of range: " + option.help());
+      }
+   }
+}
+
+
+
+void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename)
+{
+   std::ifstream file(filename);
+   if (file.fail()) {
+      throw std::runtime_error("Unable to open file " + filename);
+   }
+
+   std::string line;
+
+   while(std::getline(file, line)) {
+      // Strip out comments
+      auto pos = line.find('#');
+      if(pos != std::string::npos) {
+         line.resize(pos);
+      }
+
+      // Extract the list items
+      std::stringstream ss(line);
+      while(!ss.eof()) {
+         std::string item;
+         ss >> item;
+         if(!item.empty()) {
+            str_list.add_item(item);
+         }
       }
    }
 }

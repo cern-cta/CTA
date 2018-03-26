@@ -35,6 +35,12 @@ void Option::validateCmd(const AdminCmd &admincmd) const
          }
          break;
 
+      case Option::OPT_STR_LIST:
+         for(auto opt_it = admincmd.option_str_list().begin(); opt_it != admincmd.option_str_list().end(); ++opt_it) {
+            if(opt_it->key() == strListOptions.at(m_lookup_key)) return;
+         }
+         break;
+
       case Option::OPT_FLAG:
       case Option::OPT_BOOL: 
          for(auto opt_it = admincmd.option_bool().begin(); opt_it != admincmd.option_bool().end(); ++opt_it) {

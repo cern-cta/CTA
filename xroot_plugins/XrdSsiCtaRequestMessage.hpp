@@ -207,6 +207,9 @@ private:
    const std::string &getRequired(cta::admin::OptionString::Key key) const {
       return m_option_str.at(key);
    }
+   const std::vector<std::string> &getRequired(cta::admin::OptionStrList::Key key) const {
+      return m_option_str_list.at(key);
+   }
    const uint64_t &getRequired(cta::admin::OptionUInt64::Key key) const {
       return m_option_uint64.at(key);
    }
@@ -246,6 +249,9 @@ private:
     */
    optional<std::string> getOptional(cta::admin::OptionString::Key key, bool *has_option = nullptr) const {
       return getOptional(key, m_option_str, has_option);
+   }
+   optional<std::vector<std::string>> getOptional(cta::admin::OptionStrList::Key key, bool *has_option = nullptr) const {
+      return getOptional(key, m_option_str_list, has_option);
    }
    optional<uint64_t> getOptional(cta::admin::OptionUInt64::Key key, bool *has_option = nullptr) const {
       return getOptional(key, m_option_uint64, has_option);
@@ -289,14 +295,16 @@ private:
 
    // Member variables
 
-   Protocol                                                m_protocol;               //!< The protocol the client used to connect
-   cta::common::dataStructures::SecurityIdentity           m_cliIdentity;            //!< Client identity: username/host
-   cta::catalogue::Catalogue                              &m_catalogue;              //!< Reference to CTA Catalogue
-   cta::Scheduler                                         &m_scheduler;              //!< Reference to CTA Scheduler
-   cta::log::LogContext                                    m_lc;                     //!< CTA Log Context
-   std::map<cta::admin::OptionBoolean::Key, bool>          m_option_bool;            //!< Boolean options
-   std::map<cta::admin::OptionUInt64::Key,  uint64_t>      m_option_uint64;          //!< UInt64 options
-   std::map<cta::admin::OptionString::Key,  std::string>   m_option_str;             //!< String options
+   Protocol                                              m_protocol;           //!< The protocol the client used to connect
+   cta::common::dataStructures::SecurityIdentity         m_cliIdentity;        //!< Client identity: username/host
+   cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
+   cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
+   cta::log::LogContext                                  m_lc;                 //!< CTA Log Context
+   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;        //!< Boolean options
+   std::map<cta::admin::OptionUInt64::Key, uint64_t>     m_option_uint64;      //!< UInt64 options
+   std::map<cta::admin::OptionString::Key, std::string>  m_option_str;         //!< String options
+   std::map<cta::admin::OptionStrList::Key,
+      std::vector<std::string>>                          m_option_str_list;    //!< String List options
 };
 
 }} // namespace cta::xrd

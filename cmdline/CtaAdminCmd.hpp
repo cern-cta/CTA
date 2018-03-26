@@ -46,6 +46,11 @@ private:
    void addOption(const Option &option, const std::string &value);
 
    /*!
+    * Read a list of string options from a file
+    */
+   void readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename);
+
+   /*!
     * Throw an exception with usage help
     */
    void throwUsage(const std::string &error_txt = "") const;

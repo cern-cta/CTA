@@ -34,7 +34,7 @@ namespace admin {
 class Option
 {
 public:
-   enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_UINT, OPT_STR };
+   enum option_t { OPT_CMD, OPT_FLAG, OPT_BOOL, OPT_UINT, OPT_STR, OPT_STR_LIST };
 
    /*!
     * Constructor
@@ -313,6 +313,15 @@ const std::map<std::string, OptionString::Key> strOptions = {
 
 
 /*!
+ * Map string list options to Protocol Buffer enum values
+ */
+const std::map<std::string, OptionStrList::Key> strListOptions = {
+   { "--vidfile",               OptionStrList::VID }
+};
+
+
+
+/*!
  * Specify the help text for commands
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
@@ -409,6 +418,7 @@ const Option opt_username             { Option::OPT_STR,  "--username",         
 const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>",
                                         "--username" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
+const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
 
 
@@ -465,7 +475,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_RM    }, { opt_mountpolicy_alias }},
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_justexpand.optional(), opt_justrepack.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_justexpand.optional(), opt_justrepack.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_header.optional(), opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},

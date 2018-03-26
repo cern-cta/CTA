@@ -1477,8 +1477,19 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   auto &vid = getRequired(OptionString::VID);
+   // VIDs can be provided as a single option or as a list
+   std::vector<std::string> vid_list;
 
+   auto vidl = getOptional(OptionStrList::VID);
+   if(vidl) vid_list = vidl.value();
+   auto vid = getOptional(OptionString::VID);
+   if(vid) vid_list.push_back(vid.value());
+
+   if(vid_list.empty()) {
+      throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
+   }
+
+   // Expand, repack, or both ?
    cta::common::dataStructures::RepackType type;
 
    if(has_flag(OptionBoolean::JUSTEXPAND) && has_flag(OptionBoolean::JUSTREPACK)) {
@@ -1491,7 +1502,10 @@ void RequestMessage::processRepack_Add(const cta::admin::AdminCmd &admincmd, cta
       type = cta::common::dataStructures::RepackType::expandandrepack;
    }
 
-   m_scheduler.queueRepack(m_cliIdentity, vid, type);
+   // Process each item in the list
+   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
+      m_scheduler.queueRepack(m_cliIdentity, *it, type);
+   }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2482,6 +2496,15 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
    // Import String options
    for(auto opt_it = admincmd.option_str().begin(); opt_it != admincmd.option_str().end(); ++opt_it) {
       m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
+   }
+
+   // Import String List options
+   for(auto opt_it = admincmd.option_str_list().begin(); opt_it != admincmd.option_str_list().end(); ++opt_it) {
+      std::vector<std::string> items;
+      for(auto item_it = opt_it->item().begin(); item_it != opt_it->item().end(); ++item_it) {
+         items.push_back(*item_it);
+      }
+      m_option_str_list.insert(std::make_pair(opt_it->key(), items));
    }
 }
 
