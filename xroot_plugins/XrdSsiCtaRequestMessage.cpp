@@ -1717,8 +1717,8 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
          std::vector<std::string> currentRow;
          currentRow.push_back(common::dataStructures::toString(q.mountType));
          currentRow.push_back(q.tapePool);
-         currentRow.push_back(q.vid);
          currentRow.push_back(q.logicalLibrary);
+         currentRow.push_back(q.vid);
          currentRow.push_back(std::to_string(q.filesQueued));
          currentRow.push_back(bytesToMbString(q.bytesQueued));
          currentRow.push_back(std::to_string(q.oldestJobAge));
