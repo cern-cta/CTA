@@ -946,14 +946,18 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   std::list<common::dataStructures::QueueAndMountSummary> ret;
+  // Obtain a map of vids to tape info from the catalogue
+  auto vid_to_tapeinfo = m_catalogue.getAllTapes();
+
   // Extract relevant information from the object store.
   utils::Timer t;
   auto mountDecisionInfo=m_db.getMountInfoNoLock(lc);
   auto schedulerDbTime = t.secs(utils::Timer::resetCounter);
   auto & mdi __attribute__((unused)) = *mountDecisionInfo;
+
   for (auto & pm: mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.
-    auto & summary  = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid);
+    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, pm.type, pm.tapePool, pm.vid, vid_to_tapeinfo);
     switch (pm.type) {
     case common::dataStructures::MountType::Archive:
       summary.mountPolicy.archivePriority = pm.priority;
@@ -977,7 +981,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     }
   }
   for (auto & em: mountDecisionInfo->existingOrNextMounts) {
-    auto & summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid);
+    auto &summary = common::dataStructures::QueueAndMountSummary::getOrCreateEntry(ret, em.type, em.tapePool, em.vid, vid_to_tapeinfo);
     switch (em.type) {
     case common::dataStructures::MountType::Archive:
     case common::dataStructures::MountType::Retrieve:

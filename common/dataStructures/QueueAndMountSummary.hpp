@@ -20,6 +20,7 @@
 
 #include "MountType.hpp"
 #include "MountPolicy.hpp"
+#include "VidToTapeMap.hpp"
 
 #include <string>
 #include <list>
@@ -33,6 +34,7 @@ struct QueueAndMountSummary {
   MountType mountType=MountType::NoMount;
   std::string tapePool;
   std::string vid;
+  std::string logicalLibrary;
   uint64_t filesQueued=0;
   uint64_t bytesQueued=0;
   time_t oldestJobAge=0;
@@ -50,7 +52,9 @@ struct QueueAndMountSummary {
   uint64_t disabledTapes=0;
   uint64_t writableTapes=0;
   
-  static QueueAndMountSummary & getOrCreateEntry(std::list<QueueAndMountSummary> & summaryList, MountType mountType, const std::string & tapePool, const std::string vid);
+  static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
+    MountType mountType, const std::string &tapePool, const std::string &vid,
+    const common::dataStructures::VidToTapeMap &vid_to_tapeinfo);
 };
 
 }}} //namespace cta::common::dataStructures

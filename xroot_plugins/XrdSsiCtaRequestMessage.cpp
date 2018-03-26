@@ -1705,10 +1705,9 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "type","tapepool","vid","files queued","MBytes queued","oldest age","priority","min age",
-         "max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
-         "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes",
-         "writables tapes"
+         "type","tapepool","logical library","vid","files queued","MBytes queued","oldest age","priority",
+         "min age","max drives","cur. mounts","cur. files","cur. MBytes","MB/s","next mounts","tapes capacity",
+         "files on tapes","MBytes on tapes","full tapes","empty tapes","disabled tapes","writables tapes"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       for (auto & q: queuesAndMounts)
@@ -1719,6 +1718,7 @@ void RequestMessage::processShowQueues(const cta::admin::AdminCmd &admincmd, cta
          currentRow.push_back(common::dataStructures::toString(q.mountType));
          currentRow.push_back(q.tapePool);
          currentRow.push_back(q.vid);
+         currentRow.push_back(q.logicalLibrary);
          currentRow.push_back(std::to_string(q.filesQueued));
          currentRow.push_back(bytesToMbString(q.bytesQueued));
          currentRow.push_back(std::to_string(q.oldestJobAge));

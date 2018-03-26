@@ -25,7 +25,10 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-QueueAndMountSummary& QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> & summaryList, MountType mountType, const std::string& tapePool, const std::string vid) {
+QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
+    MountType mountType, const std::string &tapePool, const std::string &vid,
+    const common::dataStructures::VidToTapeMap &vid_to_tapeinfo)
+{
   for (auto & summary: summaryList) {
     if ((mountType==MountType::Archive && summary.tapePool==tapePool) ||
         (mountType==MountType::Retrieve && summary.vid==vid))
@@ -37,13 +40,14 @@ QueueAndMountSummary& QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndM
     summaryList.back().tapePool=tapePool;
     if (MountType::Archive==mountType) {
       summaryList.back().vid="-";
+      summaryList.back().logicalLibrary="-";
     } else {
       summaryList.back().vid=vid;
+      summaryList.back().logicalLibrary=vid_to_tapeinfo.at(vid).logicalLibraryName;
     }
     return summaryList.back();
   }
   throw cta::exception::Exception ("In QueueAndMountSummary::getOrCreateEntry(): Unexpected mount type.");
 }
-
 
 }}} //namespace cta::common::dataStructures
