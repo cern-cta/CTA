@@ -50,6 +50,7 @@ public:
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   bool addJobFailure(uint16_t copyNumber, uint64_t sessionId, log::LogContext &lc); //< returns true the job is failed
   serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
+  std::string statusToString(const serializers::ArchiveJobStatus & status);
   bool finishIfNecessary(log::LogContext & lc);/**< Handling of the consequences of a job status change for the entire request.
                                                 * This function returns true if the request got finished. */
   // Mark all jobs as pending mount (following their linking to a tape pool)

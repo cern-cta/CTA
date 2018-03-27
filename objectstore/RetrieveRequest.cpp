@@ -339,6 +339,24 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::
   throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
+std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) {
+  switch(status) {
+  case serializers::RetrieveJobStatus::RJS_Complete:
+    return "Complete";
+  case serializers::RetrieveJobStatus::RJS_Failed:
+    return "Failed";
+  case serializers::RetrieveJobStatus::RJS_LinkingToTape:
+    return "LinkingToTape";
+  case serializers::RetrieveJobStatus::RJS_Pending:
+    return "Pending";
+  case serializers::RetrieveJobStatus::RJS_Selected:
+    return "Selected";
+  default:
+    return std::string("Unknown (")+std::to_string((uint64_t) status)+")";
+  }
+}
+
+
 //------------------------------------------------------------------------------
 // RetrieveRequest::finishIfNecessary()
 //------------------------------------------------------------------------------
@@ -357,6 +375,9 @@ bool RetrieveRequest::finishIfNecessary(log::LogContext & lc) {
   remove();
   log::ScopedParamContainer params(lc);
   params.add("retrieveRequestObject", getAddressIfSet());
+  for (auto & j: jl) {
+    params.add(std::string("statusForCopyNb")+std::to_string(j.copynb()), statusToString(j.status()));
+  }
   lc.log(log::INFO, "In RetrieveRequest::finishIfNecessary(): removed finished retrieve request.");
   return true;
 }
