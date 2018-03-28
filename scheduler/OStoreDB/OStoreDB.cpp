@@ -1995,7 +1995,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       // We now have the queue.
       {
         log::ScopedParamContainer params(logContext);
-        params.add("vid", mountInfo.tapePool)
+        params.add("vid", mountInfo.vid)
               .add("queueObject", rq.getAddressIfSet())
               .add("queueSize", rq.getJobsSummary().files);
         logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): retrieve queue found.");
@@ -2071,7 +2071,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             jobsToDequeue.emplace_back((*j)->m_retrieveRequest.getAddressIfSet());
             // Log the event.
             log::ScopedParamContainer params(logContext);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             logContext.log(log::WARNING, "In RetrieveMount::getNextJobBatch(): skipped job not owned or not present.");
@@ -2082,7 +2082,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2101,7 +2101,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2149,14 +2149,14 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
+          re.removeRetrieveQueueAndCommit(mountInfo.vid, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): deleted empty queue");
         } catch (cta::exception::Exception &ex) {
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not delete a presumably empty queue");
