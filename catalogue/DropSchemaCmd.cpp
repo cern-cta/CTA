@@ -17,7 +17,6 @@
  */
 
 #include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/DropOracleCatalogueSchema.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
