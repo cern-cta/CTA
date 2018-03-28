@@ -20,7 +20,6 @@
 #include "catalogue/DropOracleCatalogueSchema.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
 #include "catalogue/DropSchemaCmdLineArgs.hpp"
-#include "catalogue/DropSqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
 
