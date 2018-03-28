@@ -174,6 +174,17 @@ private:
   std::map<uint64_t, FileSizeAndChecksum> selectArchiveFileSizesAndChecksums(rdbms::Conn &conn,
     const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events);
 
+  /**
+   * Batch inserts rows into the TAPE_FILE_BATCH temporary table that correspond
+   * to the specified TapeFileWritten events.
+   *
+   * @param conn The database connection.
+   * @param autocommitMode The autocommit mode of the SQL insert statement.
+   * @param events The tape file written events.
+   */
+  void insertTapeFileBatchIntoTempTable(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
+     const std::set<TapeFileWritten> &events);
+
 }; // class OracleCatalogue
 
 } // namespace catalogue

@@ -111,6 +111,25 @@ namespace {
       reconciliationTime("RECONCILIATION_TIME", nbRows) {
     }
   }; // struct ArchiveFileBatch
+
+  /**
+   * Structure used to assemble a batch of rows to insert into the
+   * TAPE_FILE_BATCH temporary table.
+   */
+  struct TempTapeFileBatch {
+    size_t nbRows;
+    rdbms::wrapper::OcciColumn archiveFileId;
+
+    /**
+     * Constructor.
+     *
+     * @param nbRowsValue  The Number of rows to be inserted.
+     */
+    TempTapeFileBatch(const size_t nbRowsValue):
+      nbRows(nbRowsValue),
+      archiveFileId("ARCHIVE_FILE_ID", nbRows) {
+    }
+  }; // struct TempTapeFileBatch
 } // anonymous namespace
 
 //------------------------------------------------------------------------------
@@ -640,6 +659,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
   // Create the archive file entries, skipping those that already exist
   idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, events);
 
+  insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::OFF, events);
+
   // Verify that the archive file entries in the catalogue database agree with
   // the tape file written events
   const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, events);
@@ -908,20 +929,15 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
 
   const char *const sql =
     "SELECT "
-      "ARCHIVE_FILE_ID,"
-      "SIZE_IN_BYTES,"
-      "CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+      "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+      "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+      "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE "
     "FROM "
       "ARCHIVE_FILE "
-    "WHERE "
-      "ARCHIVE_FILE_ID IN (SELECT COLUMN_VALUE FROM TABLE(:ARCHIVE_FILE_ID_LIST))";
+    "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID";
   auto stmt = conn.createStmt(sql, autocommitMode);
-
-  {
-    rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
-    oracle::occi::setVector(occiStmt.get(), 1, archiveFileIdList, "SYS", "ODCINUMBERLIST");
-  }
 
   auto rset = stmt.executeQuery();
 
@@ -946,6 +962,43 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
 
   return fileSizesAndChecksums;
 }
+
+//------------------------------------------------------------------------------
+// insertArchiveFilesIntoTempTable
+//------------------------------------------------------------------------------
+void OracleCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &conn,
+  const rdbms::AutocommitMode autocommitMode, const std::set<TapeFileWritten> &events) {
+  TempTapeFileBatch tempTapeFileBatch(events.size());
+
+  // Store the length of each field and implicitly calculate the maximum field
+  // length of each column 
+  uint32_t i = 0;
+  for (const auto &event: events) {
+    tempTapeFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
+    i++;
+  }
+
+  // Store the value of each field
+  i = 0;
+  for (const auto &event: events) {
+    tempTapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
+    i++;
+  }
+
+  const char *const sql =
+    "INSERT INTO TEMP_TAPE_FILE_BATCH("
+      "ARCHIVE_FILE_ID)"
+    "VALUES("
+      ":ARCHIVE_FILE_ID)";
+  auto stmt = conn.createStmt(sql, autocommitMode);
+  rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
+  occiStmt->setBatchErrorMode(false);
+
+  occiStmt.setColumn(tempTapeFileBatch.archiveFileId);
+
+  occiStmt->executeArrayUpdate(tempTapeFileBatch.nbRows);
+}
+
 
 } // namespace catalogue
 } // namespace cta

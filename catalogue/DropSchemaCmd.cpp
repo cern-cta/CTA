@@ -178,6 +178,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
       "TAPE_FILE",
       "ARCHIVE_FILE",
       "TAPE",
+      "TEMP_TAPE_FILE_BATCH",
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",
