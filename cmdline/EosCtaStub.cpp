@@ -109,8 +109,6 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
          notification.mutable_file()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
          notification.mutable_file()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
       }
-      else if(key == "uid") notification.mutable_file()->mutable_owner()->set_uid(stoi(val));
-      else if(key == "gid") notification.mutable_file()->mutable_owner()->set_gid(stoi(val));
       else if(key == "size") notification.mutable_file()->set_size(stoi(val));
       else if(key == "xstype") notification.mutable_file()->mutable_cks()->set_type(val);
       else if(key == "xs") notification.mutable_file()->mutable_cks()->set_value(val);
@@ -148,8 +146,6 @@ void base64Decode(cta::eos::Notification &notification, const std::string &argva
          notification.mutable_directory()->mutable_mtime()->set_sec(stoi(val.substr(0, pt_pos)));
          notification.mutable_directory()->mutable_mtime()->set_nsec(stoi(val.substr(pt_pos+1)));
       }
-      else if(key == "uid") notification.mutable_directory()->mutable_owner()->set_uid(stoi(val));
-      else if(key == "gid") notification.mutable_directory()->mutable_owner()->set_gid(stoi(val));
       else if(key == "size") notification.mutable_directory()->set_size(stoi(val));
       else if(key == "mode") notification.mutable_directory()->set_mode(stoi(val));
       else if(key == "file") notification.mutable_directory()->set_lpath(val);
