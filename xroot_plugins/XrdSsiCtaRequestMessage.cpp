@@ -1061,7 +1061,7 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
    }
 
    if(!drivesFound) {
-      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
+      cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
    }
 
    response.set_message_txt(cmdlineOutput.str());
@@ -2425,7 +2425,7 @@ std::string RequestMessage::setDriveState(const std::string &regex, DriveState d
       }
    }
    if (!is_found) {
-      cmdlineOutput << "Drives not found by regex: " << regex << std::endl;
+      cmdlineOutput << "No drives match \"" << regex << "\". No action was taken." << std::endl;
    }
 
    return cmdlineOutput.str();
