@@ -44,8 +44,7 @@ extern XrdSsiProvider *XrdSsiProviderServer;
 class XrdSsiCtaServiceProvider : public XrdSsiProvider
 {
 public:
-   XrdSsiCtaServiceProvider() : m_ctaConf("/etc/cta/cta-frontend.conf")
-   {
+   XrdSsiCtaServiceProvider() {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdSsiCtaServiceProvider() constructor");
    }
 
@@ -107,8 +106,6 @@ private:
       UniquePtrAgentHeartbeatThread;
 
    // Member variables
-
-   cta::common::Configuration                          m_ctaConf;             //!< CTA configuration
 
    std::unique_ptr<cta::objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
    std::unique_ptr<cta::objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend

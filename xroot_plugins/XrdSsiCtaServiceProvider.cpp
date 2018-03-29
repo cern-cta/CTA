@@ -58,10 +58,10 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called Init(", cfgFn, ',', parms, ')');
 
    // Read CTA namespaced configuration options from XRootD config file
-   Config config(cfgFn, "cta");
+   Config config(cfgFn);
 
    // Set XRootD SSI Protobuf logging level
-   auto loglevel = config.getOptionList("log.ssi");
+   auto loglevel = config.getOptionList("cta.log.ssi");
    if(!loglevel.empty()) {
       Log::SetLogLevel(loglevel);
    } else {
@@ -70,15 +70,17 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 
    // Instantiate the CTA logging system
    try {
-      std::string loggerURL = m_ctaConf.getConfEntString("Log", "URL", "syslog:");
-      if (loggerURL == "syslog:") {
+      auto loggerURL = config.getOptionValueStr("cta.log.url");
+      if(!loggerURL.first) loggerURL.second = "syslog:";
+
+      if (loggerURL.second == "syslog:") {
          m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
-      } else if (loggerURL == "stdout:") {
+      } else if (loggerURL.second == "stdout:") {
          m_log.reset(new log::StdoutLogger("cta-frontend"));
-      } else if (loggerURL.substr(0, 5) == "file:") {
-         m_log.reset(new log::FileLogger("cta-frontend", loggerURL.substr(5), log::DEBUG));
+      } else if (loggerURL.second.substr(0, 5) == "file:") {
+         m_log.reset(new log::FileLogger("cta-frontend", loggerURL.second.substr(5), log::DEBUG));
       } else {
-         throw exception::Exception(std::string("Unknown log URL: ")+loggerURL);
+         throw exception::Exception(std::string("Unknown log URL: ") + loggerURL.second);
       }
    } catch(exception::Exception &ex) {
       std::string ex_str("Failed to instantiate object representing CTA logging system: ");
@@ -90,13 +92,20 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 
    // Initialise the catalogue
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
-   const uint64_t nbConns = m_ctaConf.getConfEntInt<uint64_t>("Catalogue", "NumberOfConnections", nullptr);
+   auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
+   if(!catalogue_numberofconnections.first) {
+      throw exception::Exception("cta.catalogue.numberofconnections is not set in configuration filei " + cfgFn);
+   }
    const uint64_t nbArchiveFileListingConns = 2;
 
-   m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
+   m_catalogue = catalogue::CatalogueFactory::create(*m_log, catalogueLogin, catalogue_numberofconnections.second, nbArchiveFileListingConns);
 
    // Initialise the Backend
-   m_backend = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), *m_log));
+   auto objectstore_backendpath = config.getOptionValueStr("cta.objectstore.backendpath");
+   if(!objectstore_backendpath.first) {
+      throw exception::Exception("cta.objectstore.backendpath is not set in configuration file " + cfgFn);
+   }
+   m_backend = std::move(cta::objectstore::BackendFactory::createBackend(objectstore_backendpath.second, *m_log));
    m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
    m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
 
