@@ -61,7 +61,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    Config config(cfgFn, "cta");
 
    // Set XRootD SSI Protobuf logging level
-   auto loglevel = config.getOptionList("log");
+   auto loglevel = config.getOptionList("log.ssi");
    if(!loglevel.empty()) {
       Log::SetLogLevel(loglevel);
    } else {
