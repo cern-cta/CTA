@@ -24,7 +24,6 @@
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
 
-#include "cmdline/Configuration.hpp"
 #include "CtaAdminCmd.hpp"
 
 
@@ -147,15 +146,14 @@ void CtaAdminCmd::send() const
       throwUsage(ex.what());
    }
 
-   // Get socket address of CTA Frontend endpoint
-   cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
-   std::string endpoint = cliConf.getFrontendHostAndPort();
-
    // Set configuration options
-   XrdSsiPb::Config config;
+   XrdSsiPb::Config config("/etc/cta/cta-cli.conf", "cta");
+   config.set("resource", "/ctafrontend");
    config.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
    config.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
-   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");   // environment variable can override default
+
+   // Allow environment variables to override config file
+   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
 
    // If XRDDEBUG=1, switch on all logging
    if(getenv("XRDDEBUG")) {
@@ -165,7 +163,7 @@ void CtaAdminCmd::send() const
    config.getEnv("log", "XrdSsiPbLogLevel");
 
    // Obtain a Service Provider
-   XrdSsiPbServiceType cta_service(endpoint, Resource, config);
+   XrdSsiPbServiceType cta_service(config);
 
    // Send the Request to the Service and get a Response
    cta::xrd::Response response;

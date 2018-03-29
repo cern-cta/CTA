@@ -25,7 +25,6 @@
 #include <XrdSsiPbLog.hpp>
 
 #include "common/dataStructures/FrontendReturnCode.hpp"
-#include "cmdline/Configuration.hpp"
 #include "CtaFrontendApi.hpp"
 
 
@@ -259,13 +258,12 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    // Parse the command line arguments: fill the Notification fields
    fillNotification(notification, argc, argv);
 
-   // Get socket address of CTA Frontend endpoint
-   cta::cmdline::Configuration cliConf("/etc/cta/cta-cli.conf");
-   std::string endpoint = cliConf.getFrontendHostAndPort();
-
    // Set configuration options
-   XrdSsiPb::Config config;
-   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");   // environment variable can override default
+   XrdSsiPb::Config config("/etc/cta/cta-cli.conf", "cta");
+   config.set("resource", "/ctafrontend");
+
+   // Allow environment variables to override config file
+   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
 
    // If XRDDEBUG=1, switch on all logging
    if(getenv("XRDDEBUG")) {
@@ -275,8 +273,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
    config.getEnv("log", "XrdSsiPbLogLevel");
 
    // Obtain a Service Provider
-   std::string resource("/ctafrontend");
-   XrdSsiPbServiceType cta_service(endpoint, resource);
+   XrdSsiPbServiceType cta_service(config);
 
    // Send the Request to the Service and get a Response
    cta::xrd::Response response;
