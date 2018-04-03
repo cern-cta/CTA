@@ -92,8 +92,8 @@ namespace unitTests {
       return fileReport;
     }
    
-    
-    void failed(const cta::exception::Exception& ex, cta::log::LogContext & lc) override {
+
+    void failed(const std::string& failureReason, cta::log::LogContext& lc) override {
       failuresRef++;
     }
     

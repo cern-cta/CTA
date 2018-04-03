@@ -314,7 +314,8 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJobFailure()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc) {
+bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, 
+    const std::string & failureReason, log::LogContext & lc) {
   checkPayloadWritable();
   // Find the job and update the number of failures
   // (and return the full request status: failed (true) or to be retried (false))
@@ -329,6 +330,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::
         j.set_lastmountwithfailure(mountId);
       }
       j.set_totalretries(j.totalretries() + 1);
+      * j.mutable_failurelogs()->Add() = failureReason;
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RJS_Failed);
@@ -577,8 +579,23 @@ RetrieveRequest::AsyncJobDeleter * RetrieveRequest::asyncDeleteJob() {
 // RetrieveRequest::AsyncJobDeleter::wait()
 //------------------------------------------------------------------------------
 void RetrieveRequest::AsyncJobDeleter::wait() {
- m_backendDeleter->wait();
+  m_backendDeleter->wait();
 }
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getFailures()
+//------------------------------------------------------------------------------
+std::list<std::string> RetrieveRequest::getFailures() {
+  checkPayloadReadable();
+  std::list<std::string> ret;
+  for (auto &j: m_payload.jobs()) {
+    for (auto &f: j.failurelogs()) {
+      ret.push_back(f);
+    }
+  }
+  return ret;
+}
+
 
 }} // namespace cta::objectstore
 

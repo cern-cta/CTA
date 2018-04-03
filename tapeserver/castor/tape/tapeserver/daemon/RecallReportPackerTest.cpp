@@ -52,13 +52,13 @@ protected:
     MockRetrieveJobExternalStats(cta::RetrieveMount & rm, int & completes, int &failures):
     MockRetrieveJob(rm), completesRef(completes), failuresRef(failures) {}
 
-    virtual void asyncComplete() override {
+    void asyncComplete() override {
       completesRef++;
     }
     
-    virtual void checkComplete() override {}
-    
-    virtual void failed(const std::string & errorReport, cta::log::LogContext &) override {
+    void checkComplete() override {}
+
+    void failed(const std::string& failureReason, cta::log::LogContext&) override {
       failuresRef++;
     }
     
@@ -149,8 +149,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
 
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
-  job3->failureMessage = ex.getMessageValue();
-  rrp.reportFailedJob(std::move(job3));
+  rrp.reportFailedJob(std::move(job3), ex);
   
   rrp.setDiskDone();
   rrp.setTapeDone();

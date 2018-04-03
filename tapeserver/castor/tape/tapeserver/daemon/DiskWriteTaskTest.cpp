@@ -68,20 +68,20 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::client;
   using namespace castor::tape::diskFile;
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) {
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) override {
       cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob) {
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex) override {
       cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
-    void disableBulk() {}
-    void reportEndOfSession() {
+    void disableBulk() override {}
+    void reportEndOfSession() override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string msg, int error_code) {
+    void reportEndOfSessionWithErrors(const std::string msg, int error_code) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }

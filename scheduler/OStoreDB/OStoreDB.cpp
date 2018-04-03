@@ -2703,14 +2703,14 @@ std::set<cta::SchedulerDatabase::ArchiveJob*> OStoreDB::ArchiveMount::setJobBatc
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
+bool OStoreDB::ArchiveJob::fail(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, lc)) {
+  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, failureReason, lc)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2819,14 +2819,14 @@ OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, OStoreDB & oSt
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::fail()
 //------------------------------------------------------------------------------
-bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
+bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogContext& logContext) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, logContext)) {
+  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, failureReason, logContext)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2834,6 +2834,10 @@ bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     m_jobOwned = false;
     log::ScopedParamContainer params(logContext);
     params.add("object", m_retrieveRequest.getAddressIfSet());
+    size_t failureNumber=0;
+    for (auto failure: m_retrieveRequest.getFailures()) {
+      params.add(std::string("failure")+std::to_string(failureNumber++), failure);
+    }
     logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
     return true;
   } else {
@@ -2881,7 +2885,7 @@ bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     objectstore::ScopedExclusiveLock rql;
     objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, *m_oStoreDB.m_agentReference, bestVid, logContext);
     auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-    auto & af=rfqc.archiveFile;
+    auto & af = rfqc.archiveFile;
     auto & tf = af.tapeFiles.at(bestCopyNb);
     auto sr = m_retrieveRequest.getSchedulerRequest();
     std::list<objectstore::RetrieveQueue::JobToAdd> jta;

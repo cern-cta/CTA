@@ -115,12 +115,12 @@ std::string cta::ArchiveJob::reportURL() {
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogContext & lc) {
-  if (m_dbJob->fail(lc)) {
+void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext & lc) {
+  if (m_dbJob->fail(failureReason, lc)) {
     std::string base64ErrorReport;
     // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
     const bool noNewLineInBase64Output = false;
-    CryptoPP::StringSource ss1(ex.getMessageValue(), true, 
+    CryptoPP::StringSource ss1(failureReason, true, 
         new CryptoPP::Base64Encoder(
           new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
     std::string fullReportURL = m_dbJob->errorReportURL + base64ErrorReport;
@@ -136,7 +136,7 @@ void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogConte
             .add("diskInstance", m_dbJob->archiveFile.diskInstance)
             .add("diskFileId", m_dbJob->archiveFile.diskFileId)
             .add("fullReportURL", fullReportURL)
-            .add("errorReport", ex.getMessageValue())
+            .add("errorReport", failureReason)
             .add("reportTime", t.secs());
       lc.log(log::INFO, "In ArchiveJob::failed(): reported error to client.");
     } catch (cta::exception::Exception & ex) {
@@ -144,7 +144,7 @@ void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogConte
       params.add("fileId", m_dbJob->archiveFile.archiveFileID)
             .add("diskInstance", m_dbJob->archiveFile.diskInstance)
             .add("diskFileId", m_dbJob->archiveFile.diskFileId)
-            .add("errorReport", ex.getMessageValue())
+            .add("errorReport", failureReason)
             .add("exceptionMsg", ex.getMessageValue())
             .add("reportTime", t.secs());
       lc.log(log::ERR, "In ArchiveJob::failed(): failed to report error to client.");

@@ -315,6 +315,7 @@ message ArchiveJob {
   required uint64 lastmountwithfailure = 4407;
   required uint32 maxtotalretries = 4408;
   required uint32 maxretrieswithinmount = 4409;
+  repeated string failurelogs = 4410;
 }
 
 message ArchiveRequest {
@@ -354,6 +355,7 @@ message RetrieveJob {
   required uint32 totalretries = 9204;
   required RetrieveJobStatus status = 9205;
   required uint64 lastmountwithfailure = 9206;
+  repeated string failurelogs = 9207;
 }
 
 message RetrieveRequest {

@@ -36,9 +36,7 @@ namespace daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskWriteTask::DiskWriteTask(cta::RetrieveJob *retrieveJob, RecallMemoryManager& mm): 
-m_retrieveJob(retrieveJob),m_memManager(mm){
-
-}
+m_retrieveJob(retrieveJob),m_memManager(mm){}
 
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
@@ -168,8 +166,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     params.add("errorMessage", e.getMessageValue());
     logWithStat(cta::log::ERR, "File writing to disk failed.", lc);
     lc.logBacktrace(cta::log::ERR, e.backtrace());
-    m_retrieveJob->failureMessage = e.getMessageValue();
-    reporter.reportFailedJob(std::move(m_retrieveJob));
+    reporter.reportFailedJob(std::move(m_retrieveJob), e);
 
     watchdog.deleteParameter("stillOpenFileForThread"+
       std::to_string((long long)threadID));

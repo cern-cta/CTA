@@ -88,11 +88,10 @@ public:
   virtual void checkComplete();
   
   /**
-   * Indicates that the job failed. Like for complete(), reason for failure
-   * should already be recorded in the object beforehand. Retry policy will
+   * Indicates that the job failed. Reason for failure is indicated. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed(const std::string & errorReport, cta::log::LogContext &);
+  virtual void failed(const std::string &failureReason, cta::log::LogContext &);
   
   /**
    * Helper function returning a reference to the currently selected tape file.
@@ -146,11 +145,6 @@ public:
    * complete().
    */
   uint64_t transferredSize;
-  
-  /**
-   * The error string. This should be set before calling failed().
-   */
-  std::string failureMessage;
   
 }; // class RetrieveJob
 
