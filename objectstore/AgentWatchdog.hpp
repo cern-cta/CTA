@@ -49,6 +49,15 @@ public:
     return true; 
   }
   
+  std::list<log::Param> getDeadAgentDetails() {
+    std::list<log::Param> ret;
+    ret.push_back(log::Param("currentHeartbeat", readHeartbeat()));
+    ret.push_back(log::Param("timeout", m_timeout));
+    ret.push_back(log::Param("timer", m_timer.secs()));
+    ret.push_back(log::Param("heartbeatAtTimerStart", m_heartbeatCounter));
+    return ret;
+  }
+  
   bool checkExists() {
     return m_agent.exists();
   }

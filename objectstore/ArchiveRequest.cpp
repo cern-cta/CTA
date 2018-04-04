@@ -554,6 +554,21 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   return j->owner();
 }
 
+std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& status) {
+  switch(status) {
+  case serializers::ArchiveJobStatus::AJS_Complete:
+    return "Complete";
+  case serializers::ArchiveJobStatus::AJS_Failed:
+    return "Failed";
+  case serializers::ArchiveJobStatus::AJS_LinkingToArchiveQueue:
+    return "LinkingToArchiveQueue";
+  case serializers::ArchiveJobStatus::AJS_PendingMount:
+    return "PendingMount";
+  default:
+    return std::string("Unknown (")+std::to_string((uint64_t) status)+")";
+  }
+}
+
 
 bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   checkPayloadWritable();
@@ -570,6 +585,9 @@ bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   remove();
   log::ScopedParamContainer params(lc);
   params.add("archiveRequestObject", getAddressIfSet());
+  for (auto & j: jl) {
+    params.add(std::string("statusForCopyNb")+std::to_string(j.copynb()), statusToString(j.status()));
+  }
   lc.log(log::INFO, "In ArchiveRequest::finishIfNecessary(): Removed completed request.");
   return true;
 }

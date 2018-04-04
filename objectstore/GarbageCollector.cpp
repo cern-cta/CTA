@@ -119,7 +119,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
     // Get the heartbeat. Clean dead agents and remove references to them
     try {
       if (!wa->second->checkAlive()) {
-        cleanupDeadAgent(wa->first, lc);
+        cleanupDeadAgent(wa->first, wa->second->getDeadAgentDetails(), lc);
         delete wa->second;
         m_watchedAgents.erase(wa++);
       } else {
@@ -137,7 +137,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   }
 }
 
-void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogContext & lc) {
+void GarbageCollector::cleanupDeadAgent(const std::string & address, std::list<log::Param> agentDetails, log::LogContext & lc) {
   // We detected a dead agent. Try and take ownership of it. It could already be owned
   // by another garbage collector.
   // To minimize locking, take a lock on the agent and check its ownership first.
@@ -175,7 +175,11 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, log::LogCon
   m_agentRegister.trackAgent(address);
   m_agentRegister.commit();
   arl.release();
-  lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
+  {
+    log::ScopedParamContainer params2(lc);
+    for (auto p: agentDetails) params2.add(p.getName(), p.getValue());
+    lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): will cleanup dead agent.");
+  }
   // Return all objects owned by the agent to their respective backup owners
   
   OwnedObjectSorter ownedObjectSorter;
@@ -217,7 +221,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent, std::l
       log::ScopedParamContainer params(lc);
       params.add("objectAddress", obj)
             .add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to asyncLockfreeFetch(): skipping object. Garbage collection will be incomplete.");
+      lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): failed to asyncLockfreeFetch(): skipping object. Garbage collection will be incomplete.");
     }
   }
   
@@ -230,7 +234,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent, std::l
       ownedObjectsFetchers.at(obj.get())->wait();
     } catch (Backend::NoSuchObject & ex) {
       goneObjects.push_back(obj->getAddressIfSet());
-      lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
+      lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): skipping garbage collection of now gone object.");
       ownedObjectsFetchers.erase(obj.get());
       agent.removeFromOwnership(obj->getAddressIfSet());
       ownershipUdated=true;
@@ -239,7 +243,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent, std::l
       // Again, we have a problem. We will skip the object and have an incomplete GC.
       skippedObjects.push_back(obj->getAddressIfSet());
       params2.add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to AsyncLockfreeFetch::wait(): skipping object. Garbage collection will be incomplete.");
+      lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): failed to AsyncLockfreeFetch::wait(): skipping object. Garbage collection will be incomplete.");
       ownedObjectsFetchers.erase(obj.get());
       continue;
     }
@@ -272,7 +276,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Log the owner (except for archiveRequests which can have several owners).
         params2.add("actualOwner", obj->getAddressIfSet());
       }
-      lc.log(log::WARNING, "In GarbageCollector::cleanupDeadAgent(): skipping object which is not owned by this agent");
+      lc.log(log::WARNING, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): skipping object which is not owned by this agent");
       agent.removeFromOwnership(obj->getAddressIfSet());
       ownershipUdated=true;
       continue;
@@ -454,7 +458,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
                   .add("tapepool", tapepool.first)
                   .add("archiveQueueObject", aq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
-            lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): requeued archive job.");
+            lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
           } catch (cta::exception::Exception & e) {
             // Update did not go through. It could be benign
             std::string debugType=typeid(e).name();
@@ -466,7 +470,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
                     .add("copyNb", arup.copyNb)
                     .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                     .add("exceptionType", debugType);
-              lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to requeue gone/not owned archive job. Removing from queue.");
+              lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): failed to requeue gone/not owned archive job. Removing from queue.");
             } else {
               // We have an unexpected error. We will handle this with the request-by-request garbage collection.
               log::ScopedParamContainer params(lc);
@@ -475,7 +479,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
                     .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                     .add("exceptionType", debugType)
                     .add("exceptionMessage", e.getMessageValue());
-              lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to requeue archive job with unexpected error. Removing from queue and will re-run individual garbage collection.");
+              lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): failed to requeue archive job with unexpected error. Removing from queue and will re-run individual garbage collection.");
               // We will re-run the individual GC for this one.
               jobsIndividuallyGCed.insert(arup.archiveRequest->getAddressIfSet());
               otherObjects.emplace_back(new GenericObject(arup.archiveRequest->getAddressIfSet(), objectStore));
@@ -491,7 +495,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
           aq.removeJobsAndCommit(requestsToDequeue);
           log::ScopedParamContainer params(lc);
           params.add("archiveQueueObject", aq.getAddressIfSet());
-          lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Cleaned up and re-committed archive queue after error handling.");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Cleaned up and re-committed archive queue after error handling.");
           queueRecommitTime = t.secs(utils::Timer::resetCounter);
         }
       }
@@ -515,7 +519,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
               .add("requestsUpdatePreparationTime", requestsUpdatePreparationTime)
               .add("requestsUpdatingTime", requestsUpdatingTime)
               .add("queueRecommitTime", queueRecommitTime);
-        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Requeued a batch of archive requests.");
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Requeued a batch of archive requests.");
       }
       // We can now forget pool level list. But before that, we can remove the objects 
       // from agent ownership if this was the last reference to it.
@@ -625,7 +629,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
                   .add("vid", tape.first)
                   .add("retreveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
-            lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): requeued retrieve job.");
+            lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
           } catch (cta::exception::Exception & e) {
            // Update did not go through. It could be benign
             std::string debugType=typeid(e).name();
@@ -638,7 +642,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
                     .add("copyNb", rrup.copyNb)
                     .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
                     .add("exceptionType", debugType);
-              lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to requeue gone/not owned retrieve job. Removing from queue.");
+              lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): failed to requeue gone/not owned retrieve job. Removing from queue.");
             } else {
               // We have an unexpected error. Log it, and remove form queue. Not much we can
               // do at this point.
@@ -648,7 +652,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
                     .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
                     .add("exceptionType", debugType)
                     .add("exceptionMessage", e.getMessageValue());
-              lc.log(log::ERR, "In GarbageCollector::cleanupDeadAgent(): failed to requeue retrieve job with unexpected error. Removing from queue and will re-run individual garbage collection.");
+              lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): failed to requeue retrieve job with unexpected error. Removing from queue and will re-run individual garbage collection.");
               // We will re-run the individual GC for this one.
               jobsIndividuallyGCed.insert(rrup.retrieveRequest->getAddressIfSet());
               otherObjects.emplace_back(new GenericObject(rrup.retrieveRequest->getAddressIfSet(), objectStore));
@@ -664,7 +668,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
           rq.removeJobsAndCommit(requestsToDequeue);
           log::ScopedParamContainer params(lc);
           params.add("retreveQueueObject", rq.getAddressIfSet());
-          lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Cleaned up and re-committed retrieve queue after error handling.");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): Cleaned up and re-committed retrieve queue after error handling.");
           queueRecommitTime = t.secs(utils::Timer::resetCounter);
         }
       }
@@ -688,7 +692,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               .add("requestsUpdatePreparationTime", requestsUpdatePreparationTime)
               .add("requestsUpdatingTime", requestsUpdatingTime)
               .add("queueRecommitTime", queueRecommitTime);
-        lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): Requeued a batch of retrieve requests.");
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): Requeued a batch of retrieve requests.");
       }
       // We can now forget pool level list. But before that, we can remove the objects 
       // from agent ownership if this was the last reference to it.
@@ -726,9 +730,9 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(Agent& 
      // Call GenericOpbject's garbage collect method, which in turn will
      // delegate to the object type's garbage collector.
      go->garbageCollectDispatcher(goLock, agent.getAddressIfSet(), agentReference, lc, catalogue);
-     lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): garbage collected owned object.");
+     lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): garbage collected owned object.");
    } else {
-     lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): skipping garbage collection of now gone object.");
+     lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): skipping garbage collection of now gone object.");
    }
    // In all cases, relinquish ownership for this object
    agent.removeFromOwnership(go->getAddressIfSet());

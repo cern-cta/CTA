@@ -459,6 +459,13 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       maxDriveAllowedMap.incCount(j.policy.maxDrivesAllowed);
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
+      // oldestjobcreationtime is initialized to 0 when 
+      if (m_payload.oldestjobcreationtime()) {
+        if ((uint64_t)j.startTime < m_payload.oldestjobcreationtime())
+          m_payload.set_oldestjobcreationtime(j.startTime);
+      } else {
+        m_payload.set_oldestjobcreationtime(j.startTime);
+      }
     }
     // ... update the shard pointer
     auto shardSummary = rqs.getJobsSummary();

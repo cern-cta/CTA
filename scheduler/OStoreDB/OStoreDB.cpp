@@ -454,6 +454,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   // The request is now fully set. As it's multi-owned, we do not set the owner,
   // just to disown it from the agent.
   aReq.setOwner("");
+  auto archiveFile = aReq.getArchiveFile();
   aReq.commit();
   double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   arl.release();
@@ -462,6 +463,10 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   m_agentReference->removeFromOwnership(aReq.getAddressIfSet(), m_objectStore);
   log::ScopedParamContainer params(logContext);
   params.add("jobObject", aReq.getAddressIfSet())
+    .add("fileId", archiveFile.archiveFileID)
+    .add("diskInstance", archiveFile.diskInstance)
+    .add("diskFilePath", archiveFile.diskFileInfo.path)
+    .add("diskFileId", archiveFile.diskFileId)
     .add("creationAndRelockTime", arCreationAndRelock)
     .add("totalQueueingTime", arTotalQueueingTime)
     .add("totalCommitTime", arTotalCommitTime)
@@ -469,7 +474,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
     .add("ownerResetTime", arOwnerResetTime)
     .add("lockReleaseTime", arLockRelease)
     .add("agentOwnershipResetTime", timer.secs());
-  logContext.log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueuing request.");
+  logContext.log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
 }
 
 //------------------------------------------------------------------------------
@@ -623,6 +628,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveRequest& rqst,
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
+  cta::utils::Timer timer;
   // Get the best vid from the cache
   std::set<std::string> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.second.vid);
@@ -647,13 +653,6 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   rReq.initialize();
   rReq.setSchedulerRequest(rqst);
   rReq.setRetrieveFileQueueCriteria(criteria);
-  // Point to the request in the agent
-  m_agentReference->addToOwnership(rReq.getAddressIfSet(), m_objectStore);
-  // Set an arbitrary copy number so we can serialize. Garbage collection we re-choose 
-  // the tape file number and override it in case of problem (and we will set it further).
-  rReq.setActiveCopyNumber(1);
-  rReq.insert();
-  ScopedExclusiveLock rrl(rReq);
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq.getJobs();
   objectstore::RetrieveRequest::JobDump * job = nullptr;
@@ -673,13 +672,28 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   {
     // Add the request to the queue (with a shared access).
     auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(*job, bestVid, rReq, *this, logContext);
+    double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     // The object ownership was set in SharedAdd.
-    rReq.commit();
+    // We need to extract the owner before inserting. After, we would need to hold a lock.
+    auto owner = rReq.getOwner();
+    rReq.insert();
+    double iTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     // The lock on the queue is released here (has to be after the request commit for consistency.
+    sharedLock.reset();
+    double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    log::ScopedParamContainer params(logContext);
+    params.add("vid", bestVid)
+          .add("queueObject", owner)
+          .add("jobObject", rReq.getAddressIfSet())
+          .add("fileId", rReq.getArchiveFile().archiveFileID)
+          .add("diskInstance", rReq.getArchiveFile().diskInstance)
+          .add("diskFilePath", rReq.getArchiveFile().diskFileInfo.path)
+          .add("diskFileId", rReq.getArchiveFile().diskFileId)
+          .add("queueingTime", qTime)
+          .add("insertTime", iTime)
+          .add("queueUnlockTime", qUnlockTime);
+    logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing fnished).");
   }
-  rrl.release();
-  // And relinquish ownership form agent
-  m_agentReference->removeFromOwnership(rReq.getAddressIfSet(), m_objectStore);
   return bestVid;
 }
 
@@ -1995,7 +2009,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       // We now have the queue.
       {
         log::ScopedParamContainer params(logContext);
-        params.add("vid", mountInfo.tapePool)
+        params.add("vid", mountInfo.vid)
               .add("queueObject", rq.getAddressIfSet())
               .add("queueSize", rq.getJobsSummary().files);
         logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): retrieve queue found.");
@@ -2071,7 +2085,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             jobsToDequeue.emplace_back((*j)->m_retrieveRequest.getAddressIfSet());
             // Log the event.
             log::ScopedParamContainer params(logContext);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             logContext.log(log::WARNING, "In RetrieveMount::getNextJobBatch(): skipped job not owned or not present.");
@@ -2082,7 +2096,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2101,7 +2115,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("vid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2149,14 +2163,14 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
+          re.removeRetrieveQueueAndCommit(mountInfo.vid, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): deleted empty queue");
         } catch (cta::exception::Exception &ex) {
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not delete a presumably empty queue");

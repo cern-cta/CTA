@@ -8216,7 +8216,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
   m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName, "Create logical library");
   m_catalogue->createTapePool(m_admin, tapePoolName, nbPartialTapes, true, "Create tape pool");
 
-  const uint32_t nbTapes = 1000;
+  const uint32_t nbTapes = 10;
 
   for(uint32_t i = 0; i < nbTapes; i++) {
     std::ostringstream vid;
@@ -8238,6 +8238,11 @@ TEST_P(cta_catalogue_CatalogueTest, getAllTapes_many_tapes) {
     ASSERT_NE(vidToTapeMap.end(), tapeItor);
 
     ASSERT_EQ(vid.str(), tapeItor->second.vid);
+    ASSERT_EQ(logicalLibraryName, tapeItor->second.logicalLibraryName);
+    ASSERT_EQ(tapePoolName, tapeItor->second.tapePoolName);
+    ASSERT_EQ(capacityInBytes, tapeItor->second.capacityInBytes);
+    ASSERT_EQ(disabledValue, tapeItor->second.disabled);
+    ASSERT_EQ(fullValue, tapeItor->second.full);
     ASSERT_EQ(tapeComment, tapeItor->second.comment);
   }
 }

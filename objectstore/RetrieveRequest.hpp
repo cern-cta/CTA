@@ -66,6 +66,7 @@ public:
   std::list<JobDump> getJobs();
   bool addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc); /**< Returns true is the request is completely failed 
                                                                    (telling wheather we should requeue or not). */
+  std::string statusToString(const serializers::RetrieveJobStatus & status);
   bool finishIfNecessary(log::LogContext & lc);                   /**< Handling of the consequences of a job status change for the entire request.
                                                * This function returns true if the request got finished. */
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);

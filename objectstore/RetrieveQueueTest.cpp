@@ -76,6 +76,8 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     jta.retrieveRequestAddress = address.str();
     jobsToAdd.push_back(jta);
   }
+  // By construction, first job has lowest start time.
+  auto minStartTime=jobsToAdd.front().startTime;
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   { 
     // Try to create the retrieve queue
@@ -119,6 +121,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     ASSERT_NO_THROW(rq.fetch());
     // Pop jobs while we can. They should come out in fseq order as there is
     // no interleaved push and pop.
+    ASSERT_EQ(minStartTime, rq.getJobsSummary().oldestJobStartTime);
     uint64_t nextExpectedFseq=0;
     while (rq.getJobsSummary().files) {
       auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>());
