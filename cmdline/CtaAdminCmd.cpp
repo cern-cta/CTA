@@ -147,7 +147,8 @@ void CtaAdminCmd::send() const
    }
 
    // Set configuration options
-   XrdSsiPb::Config config("/etc/cta/cta-cli.conf", "cta");
+   const std::string config_file = "/etc/cta/cta-cli.conf";
+   XrdSsiPb::Config config(config_file, "cta");
    config.set("resource", "/ctafrontend");
    config.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
    config.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
@@ -161,6 +162,12 @@ void CtaAdminCmd::send() const
    }
    // If fine-grained control over log level is required, use XrdSsiPbLogLevel
    config.getEnv("log", "XrdSsiPbLogLevel");
+
+   // Validate that endpoint was specified in the config file
+   if(!config.getOptionValueStr("endpoint").first) {
+      throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+   }
+
 
    // Obtain a Service Provider
    XrdSsiPbServiceType cta_service(config);
