@@ -23,6 +23,8 @@ find_package(zeromq REQUIRED)
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
+add_library(ctamediachangerprotobuf ${ProtoSources})
 
 set (MEDIACHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
@@ -42,7 +44,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   MessageHeader.cpp
   messages.cpp
   MmcProxy.cpp
-  ${ProtoSources}
   RmcMarshal.cpp
   RmcMarshal.hpp
   RmcMountMsgBody.cpp
@@ -54,7 +55,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   ZmqMsg.cpp
   ZmqSocket.cpp)
 
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
 set_property(TARGET ctamediachanger PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -62,6 +62,7 @@ set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachanger
   ctacommon
+  ctamediachangerprotobuf
   ${PROTOBUF3_LIBRARIES}
   ssl
   zmq)
