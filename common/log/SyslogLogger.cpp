@@ -67,9 +67,7 @@ void SyslogLogger::prepareForFork() {
 //-----------------------------------------------------------------------------
 void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
   // Explicitly ignore the message header as this will be provided by rsyslog
-  std::string truncatedMsg = body;
-
-  syslog(LOG_LOCAL3|INFO, truncatedMsg.c_str());
+  syslog(LOG_LOCAL3|INFO, body.c_str());
 }
 
 } // namespace log
