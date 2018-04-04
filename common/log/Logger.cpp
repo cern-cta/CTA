@@ -32,7 +32,6 @@ namespace log {
 //------------------------------------------------------------------------------
 Logger::Logger(const std::string &programName, const int logMask):
   m_programName(programName), m_logMask(logMask),
-  m_maxMsgLen(determineMaxMsgLen()),
   m_priorityToText(generatePriorityToTextMap()) {}
 
 //------------------------------------------------------------------------------
@@ -111,45 +110,6 @@ std::string Logger::cleanString(const std::string &s,
   }
 
   return result;
-}
-
-//------------------------------------------------------------------------------
-// determineMaxMsgLen
-//------------------------------------------------------------------------------
-size_t Logger::determineMaxMsgLen() {
-  size_t msgSize = 0;
-
-  // Determine the size automatically, this is not guaranteed to work!
-  FILE *const fp = fopen("/etc/rsyslog.conf", "r");
-  if(fp) {
-    char buffer[1024];
-
-    // The /etc/rsyslog.conf file exists so we assume the default message
-    // size of 2K.
-    msgSize = DEFAULT_RSYSLOG_MSGLEN;
-
-    // In rsyslog versions >= 3.21.4, the maximum size of a message became
-    // configurable through the $MaxMessageSize global config directive.
-    // Here we attempt to find out if the user has increased the size!
-    while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-      if(strncasecmp(buffer, "$MaxMessageSize", 15)) {
-        continue; // Option not of interest
-      }
-      msgSize = atol(&buffer[15]);
-    }
-    fclose(fp);
-  }
-
-  // If the /etc/rsyslog.conf file is missing which implies that we are
-  // running on a stock syslogd system, therefore the message size is
-  // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
-
-  // Check that the size of messages falls within acceptable limits
-  if((msgSize >= LOG_MIN_MSGLEN) && (msgSize <= LOG_MAX_LINELEN)) {
-    return msgSize;
-  } else {
-    return LOG_MIN_MSGLEN;
-  }
 }
 
 //------------------------------------------------------------------------------

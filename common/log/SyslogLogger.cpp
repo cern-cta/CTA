@@ -67,8 +67,7 @@ void SyslogLogger::prepareForFork() {
 //-----------------------------------------------------------------------------
 void SyslogLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
   // Explicitly ignore the message header as this will be provided by rsyslog
-  // Truncate the log message if it exceeds the permitted maximum
-  std::string truncatedMsg = body.substr(0, m_maxMsgLen);
+  std::string truncatedMsg = body;
 
   syslog(LOG_LOCAL3|INFO, truncatedMsg.c_str());
 }

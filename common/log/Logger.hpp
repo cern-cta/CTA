@@ -185,11 +185,6 @@ protected:
   std::atomic<int> m_logMask;
 
   /**
-   * The maximum message length that the client syslog server can handle.
-   */
-  const size_t m_maxMsgLen;
-
-  /**
    * Map from syslog integer priority to textual representation.
    */
   const std::map<int, std::string> m_priorityToText;
@@ -200,30 +195,6 @@ protected:
    */
   const std::map<std::string, int> m_configTextToPriority;
   
-  /**
-   * Default size of a syslog message.
-   */
-  static const size_t LOG_MIN_MSGLEN = 1024;
-
-  /**
-   * Default size of a rsyslog message.
-   */
-  static const size_t DEFAULT_RSYSLOG_MSGLEN = 8192;
-
-  /**
-   * Maximum length of a log message.
-   */
-  static const size_t LOG_MAX_LINELEN = 8192;
-
-  /**
-   * Determines the maximum message length that the client syslog server can
-   * handle.
-   *
-   * @return The maximum message length that the client syslog server can
-   * handle.
-   */
-  static size_t determineMaxMsgLen();
-
   /**
    * Generates and returns the mapping between syslog priorities and their
    * textual representations.

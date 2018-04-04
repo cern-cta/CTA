@@ -62,8 +62,8 @@ void FileLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, co
 
   const std::string headerPlusBody = header + body;
 
-  // Prepare the string to print (for size)
-  std::string m = headerPlusBody.substr(0, m_maxMsgLen) + "\n";
+  // Prepare the string to print
+  std::string m = headerPlusBody + "\n";
   
   // enter critical section
   threading::MutexLocker lock(m_mutex);
