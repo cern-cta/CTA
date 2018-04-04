@@ -18,68 +18,48 @@
 
 #pragma once
 
-#include "mediachanger/ZmqMsg.hpp"
+#include "ZmqMsg.hpp"
+
+#include <string>
+#include <zmq.h>
 
 namespace cta {
 namespace mediachanger {
 
 /**
- * A C++ wrapper around a ZMQ socket.
+ * Abstract C++ class that defines the interace of a wrapper around a ZMQ
+ * socket.
  */
 class ZmqSocket {
 public:
-    
   /**
    * Constructor.
-   *
-   * @param zmqContext The ZMQ context.
-   * @param socketType The type of the ZMQ socket.
    */
-  ZmqSocket(void *const zmqContext, const int socketType);
-    
-  /**
-   * Delete copy constructor.
-   */
-  ZmqSocket(const ZmqSocket&) = delete;
+  ZmqSocket();
 
-  /**
-   * Delete move constructor.
-   */
-  ZmqSocket(ZmqSocket&&) = delete;
-
-  /**
-   * Delete copy assignment operator.
-   */
-  ZmqSocket &operator=(const ZmqSocket &) = delete;
-
-  /**
-   * Delete move assignment operator.
-   */
-  ZmqSocket &operator=(ZmqSocket &&) = delete;
-    
   /**
    * Destructor.
    */
-  ~ZmqSocket() throw();
+  virtual ~ZmqSocket() throw() = 0;
     
   /**
    * Closes the ZMQ socket.
    */
-  void close();
+  virtual void close() = 0;
     
   /**
    * Binds the ZMQ socket to the specified endpoint.
    *
    * @param endpoint The endpoint to bind to.
    */
-  void bind(const std::string &endpoint);
+  virtual void bind(const std::string &endpoint) = 0;
     
   /**
    * Connects the socket to the spedicied endpoint.
    *
    * @param endpoint The endpoint to connect to.
    */ 
-  void connect(const std::string &endpoint);
+  virtual void connect(const std::string &endpoint) = 0;
 
   /**
    * Sends the specified ZMQ message over the socket.
@@ -87,7 +67,7 @@ public:
    * @param msg The ZMQ messge to be sent.
    * @param flags See manual page of  zmq_msg_send().
    */
-  void send(ZmqMsg &msg, const int flags = 0);
+  virtual void send(ZmqMsg &msg, const int flags = 0) = 0;
     
   /**
    * Sends the specified ZMQ message over the socket.
@@ -95,7 +75,7 @@ public:
    * @param msg The ZMQ messge to be sent.
    * @param flags See manual page of  zmq_msg_send().
    */
-  void send(zmq_msg_t *const msg, const int flags = 0);
+  virtual void send(zmq_msg_t *const msg, const int flags = 0) = 0;
     
   /**
    * Receives a ZMQ mesage from the socket.
@@ -103,7 +83,7 @@ public:
    * @param msg Output parameter: The received ZMQ messge.
    * @param flags See manual page of  zmq_msg_send().
    */
-  void recv(ZmqMsg &msg, const int flags = 0);
+  virtual void recv(ZmqMsg &msg, const int flags = 0) = 0;
     
   /**
    * Receives a ZMQ mesage from the socket.
@@ -111,21 +91,26 @@ public:
    * @param msg Output parameter: The received ZMQ messge.
    * @param flags See manual page of  zmq_msg_send().
    */
-  void recv(zmq_msg_t *const msg, const int flags = 0);
+  virtual void recv(zmq_msg_t *const msg, const int flags = 0) = 0;
 
   /**
    * Returns the ZMQ socket wrappeed by this class.
    *
    * @return The ZMQ socket wrappeed by this class.
    */
-  void *getZmqSocket() const throw();
+  virtual void *getZmqSocket() const throw() = 0;
 
 private:
 
   /**
-   * The ZMQ socket.
+   * Copy constructor made private to prevent copies.
    */
-  void *m_zmqSocket;
+  ZmqSocket(const ZmqSocket&);
+
+  /**
+   * Assignment operator made private to prevent assignments.
+   */
+  void operator=(const ZmqSocket &);
 
 }; // class ZmqSocket
 
