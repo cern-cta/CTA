@@ -364,6 +364,12 @@ namespace utils {
     const std::string &src) {
     copyString(dst, dstSize, src);
   }
+  
+  /**
+   * Returns the current time, in the local time zone, formated for logging.
+   * @return the foramtted time.
+   */
+  std::string getCurrentLocalTime();
 
 } // namespace utils
 
