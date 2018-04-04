@@ -55,7 +55,7 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   m_log << headerPlusBody << std::endl;
 
   // Uncomment this to get the logs printed to stdout during unit tests.
-  // printf ("%s\n", headerPlusBody.substr(0, m_maxMsgLen).c_str());
+  // printf ("%s\n", headerPlusBody.c_str());
 }
 
 } // namespace log
