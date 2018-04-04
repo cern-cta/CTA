@@ -94,7 +94,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
    auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
    if(!catalogue_numberofconnections.first) {
-      throw exception::Exception("cta.catalogue.numberofconnections is not set in configuration filei " + cfgFn);
+      throw exception::Exception("cta.catalogue.numberofconnections is not set in configuration file " + cfgFn);
    }
    const uint64_t nbArchiveFileListingConns = 2;
 
