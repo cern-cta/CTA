@@ -61,5 +61,5 @@ mgmofs.autosaveconfig true
 mgmofs.nslib /usr/lib64/libEosNsInMemory.so
 
 # Set the endpoint and resources for EOS/CTA Workflows
-mgmofs.protowfhostport ctafrontend:10955
-mgmofs.protowfendpoint /ctafrontend
+mgmofs.protowfendpoint ctafrontend:10955
+mgmofs.protowfresource /ctafrontend
