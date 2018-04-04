@@ -51,8 +51,8 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.fst
 
 # Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
-echo "mgmofs.protowfhostport ctafrontend:10955" >> /etc/xrd.cf.mgm
-echo "mgmofs.protowfendpoint /ctafrontend"  >> /etc/xrd.cf.mgm
+echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
+echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
 
 # prepare eos startup
   # skip systemd for eos initscripts

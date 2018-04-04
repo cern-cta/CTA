@@ -274,8 +274,8 @@ kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user
 # THIS HAS TO BE IMPROVED (DEFINITELY) SO THAT WE CAN ASYNCHRONOUSLY UPDATE THE CONFIGURATION FILES...
 # SYSTEMD IS THE WAY TO GO
 # Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
-#echo "mgmofs.protowfhostport ctafrontend:10955" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
-#echo "mgmofs.protowfendpoint /ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+#echo "mgmofs.protowfendpoint ctafrontend:10955" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
+#echo "mgmofs.protowfresource /ctafrontend" | kubectl --namespace=${instance} exec -i ctaeos -- bash -c "cat >> /etc/xrd.cf.mgm"
 
 
 # allow eos to start
