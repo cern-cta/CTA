@@ -11,14 +11,12 @@ yum-config-manager --enable ceph
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common
 fi
 
-# /etc/cta/cta-frontend-xrootd.conf is now provided by ctafrontend rpm and comes with CI-ready content
+# /etc/cta/cta-frontend-xrootd.conf is now provided by ctafrontend rpm. It comes with CI-ready content,
+# except the objectstore backend path, which we add here:
 
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
-
-echo "ObjectStore BackendPath $OBJECTSTOREURL" > /etc/cta/cta-frontend.conf
-echo "Catalogue NumberOfConnections 10" >>/etc/cta/cta-frontend.conf
-echo "Log URL file:/var/log/cta/cta-frontend.log" >>/etc/cta/cta-frontend.conf
+echo "cta.objectstore.backendpath $OBJECTSTOREURL" >>/etc/cta/cta-frontend-xrootd.conf
 
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh

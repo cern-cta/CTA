@@ -13,7 +13,7 @@ fi
 cat <<EOF > /etc/cta/cta-cli.conf
 # The CTA frontend address in the form <FQDN>:<TCPPort>
 # solved by kubernetes DNS server so KIS...
-ctafrontend:10955
+cta.endpoint ctafrontend:10955
 EOF
 
 # sleep forever but exit immediately when pod is deleted
