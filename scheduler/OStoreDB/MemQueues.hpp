@@ -300,7 +300,8 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
     auto & queue = *ret->m_queue;
     auto & aql = *ret->m_lock;
-    objectstore::Helpers::getLockedAndFetchedQueue<Queue>(queue, aql, *oStoreDB.m_agentReference, queueIndex, logContext);
+    objectstore::Helpers::getLockedAndFetchedQueue<Queue>(queue, aql, 
+            *oStoreDB.m_agentReference, queueIndex, objectstore::QueueType::LiveJobs, logContext);
     double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
     size_t qJobsBefore=queue.dumpJobs().size();
     uint64_t qBytesBefore=0;

@@ -36,7 +36,7 @@ namespace cta { namespace objectstore {
 template <>
 void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const std::string& tapePool, log::LogContext & lc) {
+  const std::string& tapePool, QueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -57,13 +57,13 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool));
+        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool, queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference, lc));
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference, queueType, lc));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -107,7 +107,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeArchiveQueueAndCommit(tapePool, lc);
+          re.removeArchiveQueueAndCommit(tapePool, queueType, lc);
      
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
@@ -154,7 +154,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
 template <>
 void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
   ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
-  const std::string& vid, log::LogContext & lc) {
+  const std::string& vid, QueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -175,13 +175,13 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid));
+        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid, queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid, agentReference));
+        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid, agentReference, queueType, lc));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -225,7 +225,7 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeRetrieveQueueAndCommit(vid, lc);
+          re.removeRetrieveQueueAndCommit(vid, queueType, lc);
      
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
@@ -413,7 +413,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, QueueType::LiveJobs);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;

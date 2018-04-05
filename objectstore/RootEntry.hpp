@@ -20,6 +20,7 @@
 
 #include "objectstore/cta.pb.h"
 
+#include "QueueType.hpp"
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -58,40 +59,55 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   
+  // Queue types and helper functions ==========================================
+private:
+  const ::google::protobuf::RepeatedPtrField< ::cta::objectstore::serializers::ArchiveQueuePointer >& 
+    archiveQueuePointers(QueueType queueType);
+  ::google::protobuf::RepeatedPtrField< ::cta::objectstore::serializers::ArchiveQueuePointer >* 
+    mutableArchiveQueuePointers(QueueType queueType);
+  const ::google::protobuf::RepeatedPtrField< ::cta::objectstore::serializers::RetrieveQueuePointer >& 
+    retrieveQueuePointers(QueueType queueType);
+  ::google::protobuf::RepeatedPtrField< ::cta::objectstore::serializers::RetrieveQueuePointer >* 
+    mutableRetrieveQueuePointers(QueueType queueType);
+public:
+  
   // ArchiveQueue handling  ====================================================
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef, log::LogContext & lc);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef,
+    QueueType queueType, log::LogContext & lc);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
-  void removeArchiveQueueAndCommit(const std::string & tapePool, log::LogContext & lc);
+  void removeArchiveQueueAndCommit(const std::string & tapePool, QueueType queueType, log::LogContext & lc);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the archive queue */
-  void removeMissingArchiveQueueReference(const std::string & tapePool);
-  std::string getArchiveQueueAddress(const std::string & tapePool);
+  void removeMissingArchiveQueueReference(const std::string & tapePool, QueueType queueType);
+  void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress, QueueType queueType);
+  std::string getArchiveQueueAddress(const std::string & tapePool, QueueType queueType);
   struct ArchiveQueueDump {
     std::string tapePool;
     std::string address;
   };
-  std::list<ArchiveQueueDump> dumpArchiveQueues();
+  std::list<ArchiveQueueDump> dumpArchiveQueues(QueueType queueType);
   
   // RetrieveQueue handling ====================================================
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotEmpty);
   /** This function implicitly creates the retrieve queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef);
+  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef,
+    QueueType queueType, log::LogContext & lc);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the retrieve queue */
-  void removeMissingRetrieveQueueReference(const std::string & address);
+  void removeMissingRetrieveQueueReference(const std::string & address, QueueType queueType);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
-  void removeRetrieveQueueAndCommit(const std::string & vid, log::LogContext & lc);
-  std::string getRetrieveQueueAddress(const std::string & vid);
+  void removeRetrieveQueueAndCommit(const std::string & vid, QueueType queueType, log::LogContext & lc);
+  std::string getRetrieveQueueAddress(const std::string & vid, QueueType queueType);
   struct RetrieveQueueDump {
     std::string vid;
     std::string address;
   };
-  std::list<RetrieveQueueDump> dumpRetrieveQueues();
+  std::list<RetrieveQueueDump> dumpRetrieveQueues(QueueType queueType);
   
   // Drive register manipulations ==============================================
   CTA_GENERATE_EXCEPTION_CLASS(DriveRegisterNotEmpty);

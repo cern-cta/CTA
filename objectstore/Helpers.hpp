@@ -23,6 +23,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
+#include "QueueType.hpp"
 #include <string>
 #include <set>
 #include <future>
@@ -55,7 +56,7 @@ public:
   template <class Queue>
   static void getLockedAndFetchedQueue(Queue & queue, 
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
-    const std::string & tapePoolOrVid, log::LogContext & lc);
+    const std::string & tapePoolOrVid, QueueType queueType, log::LogContext & lc);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**

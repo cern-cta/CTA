@@ -785,9 +785,9 @@ void copyString(char *const dst, const size_t dstSize, const std::string &src) {
 //-----------------------------------------------------------------------------
 std::string getCurrentLocalTime() {
   ::timeval tv;
-  gettimeofday(&tv, nullptr);
-  time_t now = (time_t)tv.tv_sec;
-  struct tm * localNow;
+  ::gettimeofday(&tv, nullptr);
+  ::time_t now = (::time_t)tv.tv_sec;
+  struct ::tm * localNow;
   ::time(&now);
   localNow = ::localtime(&now);
   char buff[80];

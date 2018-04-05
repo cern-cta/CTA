@@ -135,7 +135,7 @@ jobFound:;
   // We now need to grab the queue a requeue the request.
   RetrieveQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
-  Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, lc);
+  Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, QueueType::LiveJobs, lc);
   // Enqueue add the job to the queue
   objectstore::MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());

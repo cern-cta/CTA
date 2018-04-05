@@ -97,9 +97,9 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    ASSERT_THROW(re.getArchiveQueueAddress("tapePool1"),
+    ASSERT_THROW(re.getArchiveQueueAddress("tapePool1", cta::objectstore::QueueType::LiveJobs),
       cta::objectstore::RootEntry::NoSuchArchiveQueue);
-    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, lc);
+    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, cta::objectstore::QueueType::LiveJobs, lc);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
@@ -110,7 +110,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, lc);
+    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, cta::objectstore::QueueType::LiveJobs, lc);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {
@@ -118,7 +118,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.removeArchiveQueueAndCommit("tapePool2", lc);
+    re.removeArchiveQueueAndCommit("tapePool2", cta::objectstore::QueueType::LiveJobs, lc);
     ASSERT_FALSE(be.exists(tpAddr2));
   }
   // Unregister the agent
@@ -129,7 +129,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeAgentRegisterAndCommit(lc);
-  re.removeArchiveQueueAndCommit("tapePool1", lc);
+  re.removeArchiveQueueAndCommit("tapePool1", cta::objectstore::QueueType::LiveJobs, lc);
   ASSERT_FALSE(be.exists(tpAddr1));
   re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
