@@ -31,7 +31,7 @@ namespace catalogue {
 CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
   static struct option longopts[] = {
-    {"comment"  , required_argument, NULL, 'c'},
+    {"comment"  , required_argument, NULL, 'm'},
     {"help"     ,       no_argument, NULL, 'h'},
     {"hostname" , required_argument, NULL, 'n'},
     {NULL       ,                 0, NULL,   0}
@@ -42,9 +42,9 @@ CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *con
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":c:hn:", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":m:hn:", longopts, NULL)) != -1) {
     switch(opt) {
-    case 'c':
+    case 'm':
       comment = optarg ? optarg : "";
       break;
     case 'h':
@@ -99,7 +99,7 @@ CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *con
     // Check the number of arguments
   if(nbArgs != 1) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << nbArgs;
+    ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
   }
 
@@ -112,7 +112,7 @@ CreateAdminHostCmdLineArgs::CreateAdminHostCmdLineArgs(const int argc, char *con
 void CreateAdminHostCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-catalogue-admin-host-create databaseConnectionFile -n <hostname> -c <comment> [-h]" << std::endl <<
+    "    cta-catalogue-admin-host-create databaseConnectionFile -n <hostname> -m <comment> [-h]" << std::endl <<
     "Where:" << std::endl <<
     "    databaseConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
@@ -120,7 +120,7 @@ void CreateAdminHostCmdLineArgs::printUsage(std::ostream &os) {
     "Options:" << std::endl <<
     "    -n,--hostname <hostname>" << std::endl <<
     "        The name of the admin host to be created" << std::endl <<
-    "    -c,--comment <comment>" << std::endl <<
+    "    -m,--comment <comment>" << std::endl <<
     "        Comment to describe the creation of the admin host" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<

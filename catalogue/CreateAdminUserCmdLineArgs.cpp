@@ -31,7 +31,7 @@ namespace catalogue {
 CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
   static struct option longopts[] = {
-    {"comment"  , required_argument, NULL, 'c'},
+    {"comment"  , required_argument, NULL, 'm'},
     {"help"     ,       no_argument, NULL, 'h'},
     {"username" , required_argument, NULL, 'u'},
     {NULL       ,                 0, NULL,   0}
@@ -42,9 +42,9 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":c:hu:", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":m:hu:", longopts, NULL)) != -1) {
     switch(opt) {
-    case 'c':
+    case 'm':
       comment = optarg ? optarg : "";
       break;
     case 'h':
@@ -99,7 +99,7 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
     // Check the number of arguments
   if(nbArgs != 1) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << nbArgs;
+    ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
   }
 
@@ -112,7 +112,7 @@ CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char *con
 void CreateAdminUserCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-catalogue-admin-user-create databaseConnectionFile -u <username> -c <comment> [-h]" << std::endl <<
+    "    cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]" << std::endl <<
     "Where:" << std::endl <<
     "    databaseConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
@@ -120,7 +120,7 @@ void CreateAdminUserCmdLineArgs::printUsage(std::ostream &os) {
     "Options:" << std::endl <<
     "    -u,--username <username>" << std::endl <<
     "        The name of the admin user to be created" << std::endl <<
-    "    -c,--comment <comment>" << std::endl <<
+    "    -m,--comment <comment>" << std::endl <<
     "        Comment to describe the creation of the admin user" << std::endl <<
     "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl <<

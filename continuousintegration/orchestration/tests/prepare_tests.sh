@@ -58,11 +58,11 @@ cat ${tempdir}/library-rc.sh
 ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//'`
 
 echo "Preparing CTA configuration for tests"
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname ${ctacliIP} -c "docker cli"
+  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname ${ctacliIP} -m "docker cli"
   # to allow client connecting to dual stack IPv6/IPv4 xrootd server
   # otherwise only use IPv4 by adding '-I v4' to ExecStart line in /etc/systemd/system/cta-frontend.service
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname [::ffff:${ctacliIP}] -c "docker cli"
-  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -c "docker cli"
+  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-host-create /etc/cta/cta-catalogue.conf --hostname [::ffff:${ctacliIP}] -m "docker cli"
+  kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
      --name ${LIBRARYNAME}                                            \
      --comment "ctasystest"                                           

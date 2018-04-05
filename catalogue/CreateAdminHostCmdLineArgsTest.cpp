@@ -116,7 +116,7 @@ TEST_F(cta_catalogue_CreateAdminHostCmdLineArgsTest, hostname_short) {
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = dupString("-n");
   args->argv[3] = dupString("adminHostname");
-  args->argv[4] = dupString("-c");
+  args->argv[4] = dupString("-m");
   args->argv[5] = dupString("comment");
   args->argv[6] = NULL;
 

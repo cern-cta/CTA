@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-admin-user-create \- Create a CTA admin user
 .SH SYNOPSIS
-.BI "cta-catalogue-admin-user-create databaseConnectionFile -u <username> -c <comment> [-h]"
+.BI "cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-admin-user-create\fP is a command-line tool that creates an
@@ -36,7 +36,7 @@ CTA catalogue database.
 \fB\-u, \-\-username <username>
 The name of the admin user to be created.
 .TP
-\fB\-c, \-\-comment <comment>
+\fB\-m, \-\-comment <comment>
 Comment describing the creation of the admin user.
 .TP
 \fB\-h, \-\-help

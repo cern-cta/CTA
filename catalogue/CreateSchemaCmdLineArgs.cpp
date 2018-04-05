@@ -84,7 +84,7 @@ CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char *const *co
   // Check the number of arguments
   if(nbArgs != 1) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: excepted=1 actual=" << nbArgs;
+    ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
   }
 

@@ -116,7 +116,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, username_short) {
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = dupString("-u");
   args->argv[3] = dupString("adminUsername");
-  args->argv[4] = dupString("-c");
+  args->argv[4] = dupString("-m");
   args->argv[5] = dupString("comment");
   args->argv[6] = NULL;
 

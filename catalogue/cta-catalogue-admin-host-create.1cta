@@ -17,7 +17,7 @@
 .SH NAME
 cta-catalogue-admin-host-create \- Create a CTA admin host
 .SH SYNOPSIS
-.BI "cta-catalogue-admin-host-create databaseConnectionFile -n <hostname> -c <comment> [-h]"
+.BI "cta-catalogue-admin-host-create databaseConnectionFile -n <hostname> -m <comment> [-h]"
 
 .SH DESCRIPTION
 \fBcta-catalogue-admin-host-create\fP is a command-line tool that creates an
@@ -36,7 +36,7 @@ CTA catalogue database.
 \fB\-n, \-\-hostname <hostname>
 The name of the admin host to be created.
 .TP
-\fB\-c, \-\-comment <comment>
+\fB\-m, \-\-comment <comment>
 Comment describing the creation of the admin host.
 .TP
 \fB\-h, \-\-help
