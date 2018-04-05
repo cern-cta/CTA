@@ -354,8 +354,8 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
 void RequestMessage::processCREATE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Validate received protobuf
-   checkIfEmptyString(notification.cli().user().username(),  "notification.cli.user.username");
-   checkIfEmptyString(notification.cli().user().groupname(), "notification.cli.user.groupname");
+   checkIsNotEmptyString(notification.cli().user().username(),  "notification.cli.user.username");
+   checkIsNotEmptyString(notification.cli().user().groupname(), "notification.cli.user.groupname");
 
    // Unpack message
    cta::common::dataStructures::UserIdentity originator;
@@ -388,13 +388,13 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Validate received protobuf
-   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
-   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
-   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
-   checkIfEmptyString(notification.wf().instance().url(),      "notification.wf.instance.url");
-   checkIfEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
+   checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
+   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
+   checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
+   checkIsNotEmptyString(notification.wf().instance().url(),      "notification.wf.instance.url");
+   checkIsNotEmptyString(notification.transport().report_url(),   "notification.transport.report_url");
 
    // Unpack message
    cta::common::dataStructures::UserIdentity originator;
@@ -468,12 +468,12 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 void RequestMessage::processPREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Validate received protobuf
-   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
-   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
-   checkIfEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
-   checkIfEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
-   checkIfEmptyString(notification.file().lpath(),             "notification.file.lpath");
-   checkIfEmptyString(notification.transport().dst_url(),      "notification.transport.dst_url");
+   checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIsNotEmptyString(notification.file().owner().username(),  "notification.file.owner.username");
+   checkIsNotEmptyString(notification.file().owner().groupname(), "notification.file.owner.groupname");
+   checkIsNotEmptyString(notification.file().lpath(),             "notification.file.lpath");
+   checkIsNotEmptyString(notification.transport().dst_url(),      "notification.transport.dst_url");
 
    // Unpack message
    cta::common::dataStructures::UserIdentity originator;
@@ -528,8 +528,8 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 void RequestMessage::processDELETE(const cta::eos::Notification &notification, cta::xrd::Response &response)
 {
    // Validate received protobuf
-   checkIfEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
-   checkIfEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+   checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
 
    // Unpack message
    cta::common::dataStructures::UserIdentity originator;
@@ -676,6 +676,8 @@ void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, 
 
    auto &hostname = getRequired(OptionString::HOSTNAME);
    auto &comment  = getRequired(OptionString::COMMENT);
+
+   checkIsFQDN(hostname);
 
    m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
 
@@ -2508,5 +2510,16 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
    }
 }
 
-}} // namespace cta::xrd
 
+
+void RequestMessage::checkIsFQDN(const std::string &hostname) {
+   cta::utils::Regex hostnameRegex("^(([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)|([a-zA-Z0-9]\\.))+[a-zA-Z]{2,63}$");
+
+   auto match = hostnameRegex.exec(hostname);
+
+   if(hostname.length() > 253 || match.empty()) {
+      throw std::runtime_error(hostname + " is not a valid Fully-Qualified Domain Name.");
+   }
+}
+
+}} // namespace cta::xrd

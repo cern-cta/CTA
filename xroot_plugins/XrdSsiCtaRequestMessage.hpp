@@ -280,9 +280,31 @@ private:
    /*!
     * Throw an exception for empty protocol buffer strings
     */
-   void checkIfEmptyString(const std::string &value, const std::string &error_txt) {
+   void checkIsNotEmptyString(const std::string &value, const std::string &error_txt) {
       if(value.empty()) throw XrdSsiPb::PbException("Protocol buffer field " + error_txt + " is an empty string.");
    }
+
+   /*!
+    * Throw an exception for strings which are not a Fully-Qualified Domain Name.
+    *
+    * This is a simple regex check, we don't check that the name is a valid DNS name.
+    *
+    * The regex is based on the hostname rules from this post on StackOverflow:
+    * https://stackoverflow.com/questions/11809631/fully-qualified-domain-name-validation#20204811
+    *
+    * Summary:
+    * - Hostnames are composed of a series of labels concatenated with dots.
+    * - Each label is 1 to 63 characters long, and may contain:
+    *      a-z | 0-9 | -
+    * - Labels cannot start or end with hyphens (RFC 952)
+    * - Labels can start with numbers (RFC 1123)
+    * - Max length of ASCII hostname including dots is 253 characters (not counting trailing dot)
+    *   (RFC 1035 section 2.3.4., see also https://blogs.msdn.microsoft.com/oldnewthing/20120412-00/?p=7873/)
+    * - Underscores are not allowed in hostnames (but are allowed in other DNS types)
+    * - We assume that TLD is at least 2 alphabetic characters
+    * - We want at least 1 level above TLD
+    */
+   void checkIsFQDN(const std::string &hostname);
 
    // Security protocol used to connect
 
