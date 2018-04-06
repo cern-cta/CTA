@@ -913,7 +913,7 @@ void RequestMessage::processDrive_Up(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   std::string cmdlineOutput = setDriveState(getRequired(OptionString::DRIVE), Up);
+   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', Up);
 
    response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -925,7 +925,7 @@ void RequestMessage::processDrive_Down(const cta::admin::AdminCmd &admincmd, cta
 {
    using namespace cta::admin;
 
-   std::string cmdlineOutput = setDriveState(getRequired(OptionString::DRIVE), Down);
+   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', Down);
 
    response.set_message_txt(cmdlineOutput);
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -944,7 +944,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
    bool driveFound = false;
 
    auto driveRegexOpt = getOptional(OptionString::DRIVE, &hasRegex);
-   std::string driveRegexStr = hasRegex ? driveRegexOpt.value() : ".";
+   std::string driveRegexStr = hasRegex ? '^' + driveRegexOpt.value() + '$' : ".";
    utils::Regex driveRegex(driveRegexStr.c_str());
 
    auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
@@ -1043,6 +1043,7 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
    std::stringstream cmdlineOutput;
 
    auto regex = getRequired(OptionString::DRIVE);
+   regex = '^' + regex + '$';
    cta::utils::Regex driveNameRegex(regex.c_str());
    auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
    bool drivesFound = false;
