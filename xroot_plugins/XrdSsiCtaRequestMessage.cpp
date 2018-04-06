@@ -940,12 +940,14 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
    std::stringstream cmdlineOutput;
 
    // Dump all drives unless we specified a drive
-   bool singleDrive = false;
+   bool hasRegex   = false;
    bool driveFound = false;
 
-   auto drive = getOptional(OptionString::DRIVE, &singleDrive);
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
+   auto driveRegexOpt = getOptional(OptionString::DRIVE, &hasRegex);
+   std::string driveRegexStr = hasRegex ? driveRegexOpt.value() : ".";
+   utils::Regex driveRegex(driveRegexStr.c_str());
 
+   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
    if (!driveStates.empty())
    {
       std::vector<std::vector<std::string>> responseTable;
@@ -960,7 +962,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 
       for (auto ds: driveStates)
       {
-         if(singleDrive && drive.value() != ds.driveName) continue;
+         if(!driveRegex.has_match(ds.driveName)) continue;
          driveFound = true;
 
          std::vector<std::string> currentRow;
@@ -1020,8 +1022,8 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
          responseTable.push_back(currentRow);
       }
 
-      if (singleDrive && !driveFound) {
-         throw cta::exception::UserError(std::string("No such drive: ") + drive.value());
+      if (hasRegex && !driveFound) {
+         throw cta::exception::UserError(std::string("No such drive: ") + driveRegexOpt.value());
       }
 
       m_option_bool[OptionBoolean::SHOW_HEADER] = true;
