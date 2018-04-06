@@ -16,7 +16,13 @@ fi
 
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
-echo "cta.objectstore.backendpath $OBJECTSTOREURL" >>/etc/cta/cta-frontend-xrootd.conf
+
+ESCAPEDURL=$(echo ${OBJECTSTOREURL} | sed 's/\//\\\//g')
+sed -i "s/^.*cta.objectstore.backendpath.*$/cta.objectstore.backendpath ${ESCAPEDURL}/" /etc/cta/cta-frontend-xrootd.conf
+
+# Set the ObjectStore URL in the ObjectStore Tools configuration
+
+echo "ObjectStore BackendPath $OBJECTSTOREURL" >/etc/cta/cta-objectstore-tools.conf
 
 /opt/run/bin/init_database.sh
 . /tmp/database-rc.sh
