@@ -51,7 +51,7 @@ int main(int argc, char ** argv) {
       catalogue=std::move(cta::catalogue::CatalogueFactory::create(sl, catalogueLogin, nbConns, nbArchiveFileListingConns));
       objectName = argv[3];
     } else if (2 == argc) {
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
       be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), sl));
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
       const uint64_t nbConns = 1;

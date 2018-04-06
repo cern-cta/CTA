@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
       objectName = argv[2];
     } else if (2 == argc ){
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
       be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), dl));
       objectName = argv[1];
     } else {

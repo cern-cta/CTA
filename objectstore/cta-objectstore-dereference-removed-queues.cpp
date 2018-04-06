@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
     if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], logger).release());
     } else if (1 == argc) {
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-frontend.conf");
+      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
       be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), logger));
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
