@@ -18,6 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/utils/Regex.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
 
@@ -102,6 +103,17 @@ static void assertPathContainsValidChars(const std::string &path) {
 
 namespace cta {
 namespace utils {
+
+//------------------------------------------------------------------------------
+// assertIsFQDN
+//------------------------------------------------------------------------------
+void assertIsFQDN(const std::string &hostname) {
+   const Regex hostnameRegex("^(([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)|([a-zA-Z0-9]\\.))+[a-zA-Z]{2,63}$");
+
+   if(hostname.length() > 253 || !hostnameRegex.has_match(hostname)) {
+      throw Exception(hostname + " is not a valid Fully-Qualified Domain Name.");
+   }
+}
 
 //------------------------------------------------------------------------------
 // assertAbsolutePathSyntax

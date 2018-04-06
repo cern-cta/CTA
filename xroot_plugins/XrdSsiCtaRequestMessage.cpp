@@ -30,7 +30,8 @@ using XrdSsiPb::PbException;
 
 
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
@@ -677,7 +678,7 @@ void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, 
    auto &hostname = getRequired(OptionString::HOSTNAME);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   checkIsFQDN(hostname);
+   utils::assertIsFQDN(hostname);
 
    m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
 
@@ -2507,18 +2508,6 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
          items.push_back(*item_it);
       }
       m_option_str_list.insert(std::make_pair(opt_it->key(), items));
-   }
-}
-
-
-
-void RequestMessage::checkIsFQDN(const std::string &hostname) {
-   cta::utils::Regex hostnameRegex("^(([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\\.)|([a-zA-Z0-9]\\.))+[a-zA-Z]{2,63}$");
-
-   auto match = hostnameRegex.exec(hostname);
-
-   if(hostname.length() > 253 || match.empty()) {
-      throw std::runtime_error(hostname + " is not a valid Fully-Qualified Domain Name.");
    }
 }
 

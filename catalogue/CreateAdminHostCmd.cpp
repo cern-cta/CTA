@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -59,6 +60,9 @@ int CreateAdminHostCmd::exceptionThrowingMain(const int argc, char *const *const
   log::DummyLogger dummyLog("dummy");
   auto catalogue = CatalogueFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
+
+  // Validate that the hostname is a valid Fully-Qualified Domain Name
+  utils::assertIsFQDN(cmdLineArgs.adminHostname);
 
   catalogue->createAdminHost(adminRunningCommand, cmdLineArgs.adminHostname, cmdLineArgs.comment);
   return 0;

@@ -1,4 +1,4 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
  *
@@ -26,8 +26,29 @@
 #include <vector>
 
 namespace cta {
-
 namespace utils {
+
+  /**
+   * Throws an exception if the hostname is not a Fully-Qualified Domain Name (FQDN).
+   *
+   * This is a simple regex check, we don't check that the name is a valid DNS name.
+   *
+   * The regex is based on the hostname rules from this post on StackOverflow:
+   * https://stackoverflow.com/questions/11809631/fully-qualified-domain-name-validation#20204811
+   *
+   * Summary:
+   * - Hostnames are composed of a series of labels concatenated with dots.
+   * - Each label is 1 to 63 characters long, and may contain:
+   *      a-z | 0-9 | -
+   * - Labels cannot start or end with hyphens (RFC 952)
+   * - Labels can start with numbers (RFC 1123)
+   * - Max length of ASCII hostname including dots is 253 characters (not counting trailing dot)
+   *   (RFC 1035 section 2.3.4., see also https://blogs.msdn.microsoft.com/oldnewthing/20120412-00/?p=7873/)
+   * - Underscores are not allowed in hostnames (but are allowed in other DNS types)
+   * - We assume that TLD is at least 2 alphabetic characters
+   * - We want at least 1 level above TLD
+   */
+  void assertIsFQDN(const std::string &hostname);
 
   /**
    * Throws an exception if the specified absolute path constains a
