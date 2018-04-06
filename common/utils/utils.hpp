@@ -29,6 +29,14 @@ namespace cta {
 namespace utils {
 
   /**
+   * Returns true if the hostname is a valid IPv4 or IPv6 address.
+   *
+   * The address is checked against two regular expressions adapted from:
+   * https://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses#17871737
+   */
+  bool isValidIPAddress(const std::string &address);
+
+  /**
    * Throws an exception if the hostname is not a Fully-Qualified Domain Name (FQDN).
    *
    * This is a simple regex check, we don't check that the name is a valid DNS name.

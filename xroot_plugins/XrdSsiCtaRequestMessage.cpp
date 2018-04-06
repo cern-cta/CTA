@@ -678,7 +678,10 @@ void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, 
    auto &hostname = getRequired(OptionString::HOSTNAME);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   utils::assertIsFQDN(hostname);
+   // Validate that the hostname is a valid IPv4 or IPv6 address, or a Fully-Qualified Domain Name
+   if(!utils::isValidIPAddress(hostname)) {
+     utils::assertIsFQDN(hostname);
+   }
 
    m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
 

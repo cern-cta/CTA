@@ -61,8 +61,10 @@ int CreateAdminHostCmd::exceptionThrowingMain(const int argc, char *const *const
   auto catalogue = CatalogueFactory::create(dummyLog, dbLogin, nbDbConns, nbArchiveFileListingDbConns);
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
 
-  // Validate that the hostname is a valid Fully-Qualified Domain Name
-  utils::assertIsFQDN(cmdLineArgs.adminHostname);
+  // Validate that the hostname is a valid IPv4 or IPv6 address, or a Fully-Qualified Domain Name
+  if(!utils::isValidIPAddress(cmdLineArgs.adminHostname)) {
+    utils::assertIsFQDN(cmdLineArgs.adminHostname);
+  }
 
   catalogue->createAdminHost(adminRunningCommand, cmdLineArgs.adminHostname, cmdLineArgs.comment);
   return 0;
