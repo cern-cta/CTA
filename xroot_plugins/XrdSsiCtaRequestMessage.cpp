@@ -343,7 +343,7 @@ void RequestMessage::processOPENW(const cta::eos::Notification &notification, ct
    // Create a log entry
 
    cta::log::ScopedParamContainer params(m_lc);
-   m_lc.log(cta::log::INFO, "In processOPENW(): ignoring OPENW event.");
+   m_lc.log(cta::log::INFO, "In RequestMessage::processOPENW(): ignoring OPENW event.");
 
    // Set response type
 
@@ -374,8 +374,11 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processCREATE(): assigning new archive file ID.");
+   params.add("diskFileId", std::to_string(notification.file().fid()))
+         .add("diskFilePath", notification.file().lpath())
+         .add("archiveFileId", archiveFileId)
+         .add("catalogueTime", t.secs());
+   m_lc.log(cta::log::INFO, "In RequestMessage::processCREATE(): assigning new archive file ID.");
 
    // Set ArchiveFileId in xattrs
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("CTA_ArchiveFileId", std::to_string(archiveFileId)));
@@ -458,7 +461,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processCLOSEW(): queued file for archive.");
+   m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -518,7 +521,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processPREPARE(): queued file for retrieve.");
+   m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -560,7 +563,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
-   m_lc.log(cta::log::INFO, "In processDELETE(): archive file deleted.");
+   m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
