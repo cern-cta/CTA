@@ -3997,9 +3997,9 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
-      storageClassName);
-    const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, diskInstanceName, storageClassName);
+    const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, storageClass);
+    const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -4050,10 +4050,10 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
   const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
+    const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
     auto conn = m_connPool.getConn();
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, diskInstanceName,
-      storageClassName);
-    const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, diskInstanceName, storageClassName);
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, storageClass);
+    const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -4096,10 +4096,39 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 }
 
 //------------------------------------------------------------------------------
+// cachedGetTapeCopyToPoolMap
+//------------------------------------------------------------------------------
+common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
+  const FullyQualifiedStorageClass &storageClass) const {
+  const time_t maxAgeSecs = 10;
+  const time_t now = time(nullptr);
+
+  std::lock_guard<std::mutex> cacheLock(m_tapeCopyToTapePoolCacheMutex);
+  const auto cacheItor = m_tapeCopyToPoolCache.find(storageClass);
+  const bool cacheHit = m_tapeCopyToPoolCache.end() != cacheItor;
+
+  if(cacheHit) {
+    const auto &cachedValue = cacheItor->second;
+    const time_t ageSecs = now - cachedValue.timestamp;
+    if (maxAgeSecs >= ageSecs) {
+      return cachedValue.tapeCopyToPoolMap;
+    } else {
+      const auto &newCachedValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
+      m_tapeCopyToPoolCache[storageClass] = newCachedValue;
+      return newCachedValue.tapeCopyToPoolMap;
+    }
+  } else { // No cache hit
+    const auto &newCachedValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
+    m_tapeCopyToPoolCache[storageClass] = newCachedValue;
+    return newCachedValue.tapeCopyToPoolMap;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(rdbms::Conn &conn,
-  const std::string &diskInstanceName, const std::string &storageClassName) const {
+  const FullyQualifiedStorageClass &storageClass) const {
   try {
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
     const char *const sql =
@@ -4112,8 +4141,8 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       const uint64_t copyNb = rset.columnUint64("COPY_NB");
@@ -4132,8 +4161,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &storageClassName) const {
+uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const {
   try {
     const char *const sql =
       "SELECT "
@@ -4144,8 +4172,8 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
+    stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
+    stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
       throw exception::Exception("Result set of SELECT COUNT(*) is empty");

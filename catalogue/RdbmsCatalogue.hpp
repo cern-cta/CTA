@@ -855,20 +855,57 @@ protected:
   bool hostIsAdmin(rdbms::Conn &conn, const std::string &userName) const;
 
   /**
+   * A fully qualified storage class, in other words the name of the disk
+   * instance and the name of the storage class.
+   */
+  struct FullyQualifiedStorageClass {
+    /**
+     * The name of the disk instance to which the storage class belongs.
+     */
+    std::string diskInstanceName;
+
+    /**
+     * The name of the storage class which is only guaranteed to be unique
+     * within its disk instance.
+     */
+    std::string storageClassName;
+
+    /**
+     * Constructor.
+     *
+     * @param dIN The name of the disk instance to which the storage class
+     * belongs.
+     * @param sN The name of the storage class which is only guaranteed to be
+     * unique within its disk instance.
+     */
+    FullyQualifiedStorageClass(const std::string &d, const std::string &s):
+      diskInstanceName(d), storageClassName(s) {
+    }
+
+    /**
+     * Less than operator.
+     *
+     * @param rhs The argument on the right hand side of the operator.
+     * @return True if this object is less than the argument on the right hand
+     * side of the operator.
+     */
+    bool operator<(const FullyQualifiedStorageClass &rhs) const {
+      return diskInstanceName < rhs.diskInstanceName || storageClassName < rhs.storageClassName;
+    }
+  }; // struct FullyQualifiedStorageClass
+
+  /**
    * Returns the expected number of archive routes for the specified storage
    * class as specified by the call to the createStorageClass() method as
    * opposed to the actual number entered so far using the createArchiveRoute()
    * method.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storagleClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClass The fully qualified storage class, in other words the
+   * name of the disk instance and the name of the storage class.
    * @return The expected number of archive routes.
    */
-  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const std::string &diskInstanceName,
-    const std::string &storageClassNAme) const;
+  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const;
 
   /**
    * Inserts the specified tape file into the Tape table.
@@ -988,21 +1025,32 @@ protected:
   virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) = 0;
 
   /**
+   * Returns a cached version of the mapping from tape copy to tape pool for the
+   * specified storage class.
+   *
+   * This method updates the cache when necessary.
+   *
+   * @param conn The database connection.
+   * @param storageClass The fully qualified storage class, in other words the
+   * name of the disk instance and the name of the storage class.
+   * @return The mapping from tape copy to tape pool for the specified storage
+   * class.
+   */
+  common::dataStructures::TapeCopyToPoolMap getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
+    const FullyQualifiedStorageClass &storageClass) const;
+
+  /**
    * Returns the mapping from tape copy to tape pool for the specified storage
    * class.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the storage
-   * class belongs.
-   * @param storageClassName The name of the storage class which is only
-   * guaranteed to be unique within its disk instance.
+   * @param storageClass The fully qualified storage class, in other words the
+   * name of the disk instance and the name of the storage class.
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
-  common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(
-    rdbms::Conn &conn,
-    const std::string &diskInstanceName,
-    const std::string &storageClassName) const;
+  common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(rdbms::Conn &conn,
+    const FullyQualifiedStorageClass &storageClass) const;
 
   /**
    * Throws an exception if one of the fields of the specified event have not
@@ -1012,6 +1060,55 @@ protected:
    * @param event The evnt to be checked.
    */
   void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
+
+  /**
+   * A timestamped tape copy to tape pool map.
+   */
+  struct TimestampedTapeCopyToPoolMap {
+    /**
+     * The timestamp of when the map was last updated.
+     */
+     time_t timestamp;
+
+     /**
+      * Tha map from tape copy to tape pool.
+      */
+     common::dataStructures::TapeCopyToPoolMap tapeCopyToPoolMap;
+
+     /**
+      * Constructor.
+      */
+      TimestampedTapeCopyToPoolMap(): timestamp(0) {
+      }
+
+     /**
+      * Constructor.
+      *
+      * The timestamp of when the map was last updated.
+      * Tha map from tape copy to tape pool.
+      */
+     TimestampedTapeCopyToPoolMap(const time_t t, const common::dataStructures::TapeCopyToPoolMap &m):
+       timestamp(t),
+       tapeCopyToPoolMap(m) {
+     }
+  }; // struct TimestampedTapeCopyToPoolMap
+
+  /**
+   * The data type for cached versions of tape copy to tape tape pool mappings
+   * for specific storage classes.
+   */
+  typedef std::map<FullyQualifiedStorageClass, TimestampedTapeCopyToPoolMap> StorageClassToTimestampedTapeCopyToPoolMap;
+
+  /**
+   * Mutex protecting m_tapeCopyToPoolCache.
+   */
+  mutable std::mutex m_tapeCopyToTapePoolCacheMutex;
+
+  /**
+   * Cached versions of tape copy to tape tape pool mappings for specific
+   * storage classes.
+   */
+  mutable StorageClassToTimestampedTapeCopyToPoolMap m_tapeCopyToPoolCache;
 
 }; // class RdbmsCatalogue
 
