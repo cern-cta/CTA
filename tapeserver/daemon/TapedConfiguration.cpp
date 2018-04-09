@@ -23,6 +23,18 @@
 namespace cta { namespace tape { namespace daemon {
 
 //------------------------------------------------------------------------------
+// addLogParamForValue
+//------------------------------------------------------------------------------
+template<>
+void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"category", "TPCONFIG Entry"});
+  lc.pushOrReplace({"unitName", m_value.unitName});
+  lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
+  lc.pushOrReplace({"devFilename", m_value.devFilename});
+  lc.pushOrReplace({"librarySlot", m_value.rawLibrarySlot});
+}
+
+//------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
 //------------------------------------------------------------------------------
 TapedConfiguration TapedConfiguration::createFromCtaConf(
