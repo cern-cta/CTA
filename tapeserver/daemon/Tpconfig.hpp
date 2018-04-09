@@ -29,7 +29,7 @@ namespace cta { namespace tape { namespace daemon {
 /**
  * A map of lines parsed from a TPCONFIG file (key is the drive name)
  */
-class Tpconfig: public std::map<std::string, SourcedParameter<TpconfigLine>> {
+class Tpconfig: public std::map<std::string, cta::SourcedParameter<TpconfigLine>> {
 public:
 
   CTA_GENERATE_EXCEPTION_CLASS(InvalidArgument);

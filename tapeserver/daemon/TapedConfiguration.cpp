@@ -22,13 +22,12 @@
 
 #include <algorithm>
 
-namespace cta { namespace tape { namespace daemon {
-
+namespace cta { 
 //------------------------------------------------------------------------------
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"category", "TPCONFIG Entry"});
   lc.pushOrReplace({"unitName", m_value.unitName});
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
@@ -40,7 +39,7 @@ void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
 }
@@ -49,7 +48,7 @@ void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogCon
 // set
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<FetchReportOrFlushLimits>::set(const std::string & value,
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::string & value,
   const std::string & source) {
   // We expect an entry in the form "<size limit>, <file limit>"
   // There should be one and only one comma in the parameter.
@@ -79,6 +78,9 @@ void SourcedParameter<FetchReportOrFlushLimits>::set(const std::string & value,
   m_source = source;
   m_set = true;
 }
+}
+
+namespace cta { namespace tape { namespace daemon {
 
 //------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path

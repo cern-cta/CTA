@@ -24,7 +24,7 @@
 namespace unitTests {
 
 TEST(cta_Daemon, SourcedParameter) {
-  cta::tape::daemon::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits> mountCriteria("unitTest", "mountCriteria");
+  cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits> mountCriteria("unitTest", "mountCriteria");
   mountCriteria.set("12, 34", "Unit test");
   ASSERT_EQ(12, mountCriteria.value().maxBytes);
   ASSERT_EQ(34, mountCriteria.value().maxFiles);

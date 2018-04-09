@@ -22,8 +22,6 @@
 
 
 namespace cta {
-namespace tape {
-namespace daemon {
 
 template<>
 void SourcedParameter<time_t>::set(const std::string & value, const std::string & source) {     
@@ -75,4 +73,4 @@ void SourcedParameter<std::string>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta

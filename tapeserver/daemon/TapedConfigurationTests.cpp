@@ -39,7 +39,7 @@ TEST(cta_Daemon, TapedConfiguration) {
   TempFile emptyTpConfig;
   completeConfFile.stringAppend(emptyTpConfig.path());
   ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
-      cta::tape::daemon::SourcedParameter<uint64_t>::MandatoryParameterNotDefined);
+      cta::SourcedParameter<uint64_t>::MandatoryParameterNotDefined);
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());

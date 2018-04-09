@@ -27,8 +27,6 @@
 
 
 namespace cta {
-namespace tape {
-namespace daemon {
 /**
  * A templated class allowing the tracking of parameter with their source.
  * If the parameter is not set (implicitly defined as the source being
@@ -115,4 +113,4 @@ private:
 
 
 
-}}} // namespace cta::tape::daemon
+} // namespace cta
