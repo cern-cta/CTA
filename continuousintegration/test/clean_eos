@@ -1,0 +1,7 @@
+#!/bin/sh
+
+FILES=$(eos ls /eos/users/test)
+for f in ${FILES}
+do
+  eos rm /eos/users/test/$f
+done

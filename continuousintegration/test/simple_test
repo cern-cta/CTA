@@ -1,0 +1,101 @@
+#!/bin/sh
+
+EOS_MGM_LOG=/var/log/eos/mgm/xrdlog.mgm
+EOS_WFE_LOG=/var/log/eos/mgm/WFE.log
+CTA_FRONTEND_LOG=/home/cta/cta/cta-frontend.log
+
+EOS_TEST_DIR=/eos/users/test
+
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo_start()
+{
+  echo -ne ${RED}$*
+}
+
+echo_end()
+{
+  echo -e $*${NC}
+}
+
+error()
+{
+  echo -ne ${NC}
+  echo $* >&2
+  exit 1
+}
+
+wait_dot()
+{
+  echo -n "." >&2
+  sleep 1
+}
+
+getEOSWFE()
+{
+  for i in {1..15}
+  do
+    LOGLINE=$(grep " $2 " $EOS_MGM_LOG | grep " $1 ")
+    [ $? -ne 0 ] || break
+    wait_dot
+  done
+  [ "${LOGLINE}" != "" ] || error "Event $1 $2 not found in ${EOS_MGM_LOG}"
+}
+
+getEOSDiskID()
+{
+  for i in {1..15}
+  do
+    LOGLINE=$(grep " ${EOS_TEST_DIR}/$1 " $EOS_WFE_LOG | grep CLOSEW)
+    [ $? -ne 0 ] || break
+    wait_dot
+  done
+  [ "${LOGLINE}" != "" ] || error "Event CLOSEW ${EOS_TEST_DIR}/$1 not found in ${EOS_WFE_LOG}"
+  EOS_DISK_ID=$(awk -v DISKFILENAME=$1 'BEGIN{ FS="/" }
+    / msg="scheduled workflow" job="proto: / { DISK_ID = $NF; gsub(/"/, "", DISK_ID); }
+    / CLOSEW / { FNAME = $NF; gsub(/ .*:[0-9]+ $/, "", FNAME);
+       if(DISKFILENAME == FNAME) { print DISK_ID; } }' $EOS_WFE_LOG)
+}
+
+getArchiveID()
+{
+  for i in {1..15}
+  do
+    LOGLINE=$(grep " diskFileID=\"${1}\" " $CTA_FRONTEND_LOG | grep "Queued archive request")
+    [ $? -ne 0 ] || break
+    wait_dot
+  done
+  [ "${LOGLINE}" != "" ] || error "Queued archive request event for diskFileID=\"${1}\" not found in ${CTA_FRONTEND_LOG}"
+  ARCHIVE_FILE_ID=$(echo $LOGLINE | sed 's/^.* fileId="//' | sed 's/".*$//')
+}
+
+FILENAME=file.$$
+
+# Copy small file into EOS
+eos cp /etc/motd ${EOS_TEST_DIR}/${FILENAME}
+
+echo_start "\nWaiting for SYNC::CREATE event."
+getEOSWFE SYNC::CREATE ${EOS_TEST_DIR}/${FILENAME}
+echo_end "done"
+echo -e "$LOGLINE\n"
+
+echo_start "Waiting for CLOSEW event."
+getEOSWFE CLOSEW ${EOS_TEST_DIR}/${FILENAME}
+echo_end "done"
+echo -e "$LOGLINE\n"
+
+echo_start "Checking WFE log for EOS disk ID."
+getEOSDiskID ${FILENAME}
+echo_end "done"
+echo $LOGLINE
+echo_start EOS_DISK_ID=$EOS_DISK_ID
+echo_end '\n'
+
+echo_start "Checking CTA Frontend log for CTA Archive ID."
+getArchiveID $EOS_DISK_ID
+echo_end "done."
+echo $LOGLINE
+echo_start ARCHIVE_FILE_ID=$ARCHIVE_FILE_ID
+echo_end '\n'
+
