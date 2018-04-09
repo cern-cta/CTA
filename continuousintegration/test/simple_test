@@ -6,6 +6,7 @@ CTA_FRONTEND_LOG=/home/cta/cta/cta-frontend.log
 CTA_TAPED_LOG=/var/log/cta/cta-taped.log
 
 EOS_INSTANCE=eosdev
+EOS_RUID=71761
 EOS_TEST_DIR=/eos/users/test
 
 RED='\033[0;31m'
@@ -74,14 +75,27 @@ getArchiveID()
 
 getTapeLog()
 {
+  FILEID=$1
+  shift
   for i in {1..15}
   do
-    LOGLINE=$(grep " fileId=\"${1}\" " $CTA_TAPED_LOG | grep " LVL=\"Info\" ")
-    echo $LOGLINE | grep "Reported to the client a full file archival" >/dev/null
+    LOGLINE=$(grep " fileId=\"${FILEID}\" " $CTA_TAPED_LOG | grep " LVL=\"Info\" ")
+    echo $LOGLINE | grep "$*" >/dev/null
     [ $? -ne 0 ] || break
     wait_dot
   done
   [ "${LOGLINE}" != "" ] || error "Archive request fileID=\"${1}\" not found in ${CTA_TAPED_LOG}"
+}
+
+getFrontendLog()
+{
+  for i in {1..15}
+  do
+    LOGLINE=$(grep " fileId=\"${2}\" " $CTA_FRONTEND_LOG | grep "$1")
+    [ $? -ne 0 ] || break
+    wait_dot
+  done
+  [ "${LOGLINE}" != "" ] || error "Archive request fileID=\"${2}\" event $1 not found in ${CTA_TAPED_LOG}"
 }
 
 ##
@@ -92,6 +106,11 @@ FILENAME=file.$$
 
 # Copy small file into EOS
 eos cp /etc/motd ${EOS_TEST_DIR}/${FILENAME}
+
+echo_start "\nList disk file:"
+echo_end ""
+eos ls -y ${EOS_TEST_DIR}/${FILENAME}
+eos fileinfo ${EOS_TEST_DIR}/${FILENAME}
 
 echo_start "\nWaiting for SYNC::CREATE event."
 getEOSWFE SYNC::CREATE ${EOS_TEST_DIR}/${FILENAME}
@@ -112,19 +131,24 @@ echo_end '\n'
 
 echo_start "Checking CTA Frontend log for CTA Archive ID."
 getArchiveID $EOS_DISK_ID
-echo_end "done."
+echo_end "done"
 echo $LOGLINE
 echo_start ARCHIVE_FILE_ID=$ARCHIVE_FILE_ID
 echo_end '\n'
 
 echo_start "Waiting for file to be archived to tape."
-getTapeLog $ARCHIVE_FILE_ID
-echo_end "done."
+getTapeLog $ARCHIVE_FILE_ID "Reported to the client a full file archival"
+echo_end "done"
 echo -e "$LOGLINE\n"
 
 echo_start "List archived file on tape:"
 echo_end ""
 cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${EOS_DISK_ID} --header
+
+echo_start "\nWaiting for ARCHIVED event."
+getEOSWFE ARCHIVED ${EOS_TEST_DIR}/${FILENAME}
+echo_end "done"
+echo -e "$LOGLINE\n"
 
 echo_start "\nList disk file:"
 echo_end ""
@@ -135,9 +159,22 @@ eos fileinfo ${EOS_TEST_DIR}/${FILENAME}
 ## Retrieval
 ##
 
-echo_start "\nWaiting for PREPARE event."
-getEOSWFE PREPARE ${EOS_TEST_DIR}/${FILENAME}
+XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab sudo xrdfs root://localhost/ prepare -s "${EOS_TEST_DIR}/${FILENAME}?eos.ruid=${EOS_RUID}"
+
+echo_start "\nWaiting for SYNC::PREPARE event."
+getEOSWFE SYNC::PREPARE ${EOS_TEST_DIR}/${FILENAME}
 echo_end "done"
 echo -e "$LOGLINE\n"
+
+echo_start "Checking CTA Frontend log for PREPARE event."
+getFrontendLog "[Rr]etrieve" $ARCHIVE_FILE_ID
+echo_end "done"
+echo -e "$LOGLINE\n"
+
+echo_start "Waiting for file to be retrieved from tape."
+getTapeLog $ARCHIVE_FILE_ID "File successfully transfered to disk"
+echo_end "done"
+echo -e "$LOGLINE\n"
+
 
 
