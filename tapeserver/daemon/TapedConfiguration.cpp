@@ -35,6 +35,15 @@ void SourcedParameter<TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
 }
 
 //------------------------------------------------------------------------------
+// addLogParamForValue
+//------------------------------------------------------------------------------
+template<>
+void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"maxBytes", m_value.maxBytes});
+  lc.pushOrReplace({"maxFiles", m_value.maxFiles});
+}
+
+//------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
 //------------------------------------------------------------------------------
 TapedConfiguration TapedConfiguration::createFromCtaConf(

@@ -108,10 +108,4 @@ void SourcedParameter<std::string>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
-template<>
-void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
-  lc.pushOrReplace({"maxBytes", m_value.maxBytes});
-  lc.pushOrReplace({"maxFiles", m_value.maxFiles});
-}
-
 }}} // namespace cta::tape::daemon
