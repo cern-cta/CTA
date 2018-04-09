@@ -22,7 +22,7 @@
 #include <fstream>
 #include <algorithm>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta { 
   
 ConfigurationFile::ConfigurationFile(const std::string& path) {
   // Try to open the configuration file, throwing an exception if there is a
@@ -61,4 +61,4 @@ ConfigurationFile::ConfigurationFile(const std::string& path) {
   }
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta

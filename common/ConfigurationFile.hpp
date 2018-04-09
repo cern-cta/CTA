@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
 struct ConfigurationFile {
 public:
   ConfigurationFile(const std::string & path);
@@ -31,4 +31,4 @@ public:
   };
   std::map<std::string, std::map<std::string, value_t> > entries;
 };
-}}} // namespace cta::tape::daemon
+} // namespace cta

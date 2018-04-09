@@ -29,7 +29,7 @@ TEST(cta_Daemon, ConfigurationFile) {
   "cat1 key1 val1\n"
   "cat1 #key2 val2\n"
   "cat1 key3 #val3\n");
-  cta::tape::daemon::ConfigurationFile cf(tf.path());
+  cta::ConfigurationFile cf(tf.path());
   ASSERT_EQ(1, cf.entries.size());
   ASSERT_NO_THROW(cf.entries.at("cat1").at("key1"));
   ASSERT_EQ("val1", cf.entries.at("cat1").at("key1").value);
