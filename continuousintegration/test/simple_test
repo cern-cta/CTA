@@ -3,7 +3,9 @@
 EOS_MGM_LOG=/var/log/eos/mgm/xrdlog.mgm
 EOS_WFE_LOG=/var/log/eos/mgm/WFE.log
 CTA_FRONTEND_LOG=/home/cta/cta/cta-frontend.log
+CTA_TAPED_LOG=/var/log/cta/cta-taped.log
 
+EOS_INSTANCE=eosdev
 EOS_TEST_DIR=/eos/users/test
 
 RED='\033[0;31m'
@@ -70,6 +72,22 @@ getArchiveID()
   ARCHIVE_FILE_ID=$(echo $LOGLINE | sed 's/^.* fileId="//' | sed 's/".*$//')
 }
 
+getTapeLog()
+{
+  for i in {1..15}
+  do
+    LOGLINE=$(grep " fileId=\"${1}\" " $CTA_TAPED_LOG | grep " LVL=\"Info\" ")
+    echo $LOGLINE | grep "Reported to the client a full file archival" >/dev/null
+    [ $? -ne 0 ] || break
+    wait_dot
+  done
+  [ "${LOGLINE}" != "" ] || error "Archive request fileID=\"${1}\" not found in ${CTA_TAPED_LOG}"
+}
+
+##
+## Archving
+##
+
 FILENAME=file.$$
 
 # Copy small file into EOS
@@ -98,4 +116,28 @@ echo_end "done."
 echo $LOGLINE
 echo_start ARCHIVE_FILE_ID=$ARCHIVE_FILE_ID
 echo_end '\n'
+
+echo_start "Waiting for file to be archived to tape."
+getTapeLog $ARCHIVE_FILE_ID
+echo_end "done."
+echo -e "$LOGLINE\n"
+
+echo_start "List archived file on tape:"
+echo_end ""
+cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${EOS_DISK_ID} --header
+
+echo_start "\nList disk file:"
+echo_end ""
+eos ls -y ${EOS_TEST_DIR}/${FILENAME}
+eos fileinfo ${EOS_TEST_DIR}/${FILENAME}
+
+##
+## Retrieval
+##
+
+echo_start "\nWaiting for PREPARE event."
+getEOSWFE PREPARE ${EOS_TEST_DIR}/${FILENAME}
+echo_end "done"
+echo -e "$LOGLINE\n"
+
 
