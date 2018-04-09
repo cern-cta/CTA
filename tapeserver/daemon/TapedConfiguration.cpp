@@ -20,6 +20,8 @@
 #include "common/ConfigurationFile.hpp"
 #include "Tpconfig.hpp"
 
+#include <algorithm>
+
 namespace cta { namespace tape { namespace daemon {
 
 //------------------------------------------------------------------------------
@@ -41,6 +43,41 @@ template<>
 void SourcedParameter<FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
+}
+
+//------------------------------------------------------------------------------
+// set
+//------------------------------------------------------------------------------
+template<>
+void SourcedParameter<FetchReportOrFlushLimits>::set(const std::string & value,
+  const std::string & source) {
+  // We expect an entry in the form "<size limit>, <file limit>"
+  // There should be one and only one comma in the parameter.
+  if (1 != std::count(value.begin(), value.end(), ',')) {
+    BadlyFormattedSizeFileLimit ex;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only one) comma expected"
+      << " for category=" << m_category << " key=" << m_key
+      << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  // We can now split the entry
+  std::string bytes, files;
+  size_t commaPos=value.find(',');
+  bytes=value.substr(0, commaPos);
+  files=value.substr(commaPos+1);
+  bytes=utils::trimString(bytes);
+  files=utils::trimString(files);
+  if (!(utils::isValidUInt(bytes)&&utils::isValidUInt(files))) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted integer"
+      << " for category=" << m_category << " key=" << m_key
+      << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  std::istringstream(bytes) >> m_value.maxBytes;
+  std::istringstream(files) >> m_value.maxFiles;
+  m_source = source;
+  m_set = true;
 }
 
 //------------------------------------------------------------------------------
