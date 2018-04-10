@@ -1,150 +1,11 @@
 #!/bin/sh
+#
+# Test archive, retrieval and deletion of a file
 
-# System configuration
-EOS_INSTANCE=eosdev
-EOS_RUID=71761
-EOS_TEST_DIR=/eos/users/test
-
-# Location of log files
-EOS_MGM_LOG=/var/log/eos/mgm/xrdlog.mgm
-CTA_FRONTEND_LOG=/home/cta/cta/cta-frontend.log
-CTA_TAPED_LOG=/var/log/cta/cta-taped.log
-
-# Colours
-NC='\033[0m' # No Color
-RED='\033[0;31m'
-LT_RED='\033[1;31m'
-GREEN='\033[0;32m'
-LT_GREEN='\033[1;32m'
-ORANGE='\033[0;33m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-LT_BLUE='\033[1;34m'
-
-echo_start()
-{
-  echo -ne ${LT_BLUE}$*
-}
-
-echo_end()
-{
-  echo -e $*${NC}
-}
-
-echoc()
-{
-  COLOUR=$1
-  shift
-  echo -e ${COLOUR}$*${NC}
-}
-
-error()
-{
-  echo -ne ${NC}
-  echo $* >&2
-  exit 1
-}
-
-wait_dot()
-{
-  echo -n "." >&2
-  sleep 1
-}
-
-getArchiveFileList()
-{
-  ERRFILE=/tmp/getArchiveFileListErr.$$
-  FILE_LIST=$(cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${1} --header 2>${ERRFILE})
-  [ $? -eq 0 ] || FILE_LIST=$(<${ERRFILE})
-  rm -f ${ERRFILE}
-  echo ${FILE_LIST} | grep --quiet "does not exist"
-  [ $? -eq 0 ] && FILE_LIST="${LT_GREEN}${FILENAME} has been deleted from CTA.${NC}"
-}
-
-getEOSWFE()
-{
-  for i in {1..15}
-  do
-    LOGLINE=$(grep " $2 " $EOS_MGM_LOG | grep " $1 ")
-    [ $? -ne 0 ] || break
-    wait_dot
-  done
-  [ "${LOGLINE}" != "" ] || error "Event $1 $2 not found in ${EOS_MGM_LOG}"
-}
-
-getEOSDiskFileInfo()
-{
-  ERRFILE=/tmp/getEOSDiskFileInfo.$$
-  FILE_LIST=$(eos ls -y ${1} 2>${ERRFILE})
-  ERRINFO=$(<${ERRFILE})
-  rm -f ${ERRFILE}
-
-  if [ "$ERRINFO" = "" ]
-  then
-    COPIES=$(echo ${FILE_LIST} | awk '{ print $1 }')
-    DISK_COPIES=$(echo $COPIES | sed 's/^d//' | sed 's/::t.*$//')
-    TAPE_COPIES=$(echo $COPIES | sed 's/^.*::t//')
-    DISK_FILE_INFO=$(eos fileinfo ${EOS_TEST_DIR}/${FILENAME})
-    EOS_DISK_ID=$(echo ${DISK_FILE_INFO} | grep " Fid: " |\
-                  sed 's/^.*Fid: //' | sed 's/ .*$//')
-  else
-    echo ${ERRINFO} | grep --quiet "Unable to stat"
-    [ $? -eq 0 ] && ERRINFO="${LT_GREEN}${FILENAME} has been deleted from EOS.${NC}"
-  fi
-}
-
-getArchiveID()
-{
-  for i in {1..15}
-  do
-    LOGLINE=$(grep " diskFileID=\"${1}\" " $CTA_FRONTEND_LOG | grep "Queued archive request")
-    [ $? -ne 0 ] || break
-    wait_dot
-  done
-  [ "${LOGLINE}" != "" ] || error "Queued archive request event for diskFileID=\"${1}\" not found in ${CTA_FRONTEND_LOG}"
-  ARCHIVE_FILE_ID=$(echo $LOGLINE | sed 's/^.* fileId="//' | sed 's/".*$//')
-}
-
-getTapeLog()
-{
-  FILEID=$1
-  if [ $# -gt 2 ]
-  then
-    LAST_MSG=$2
-    shift
-  fi
-  CURRENT_MSG=$2
-  for i in {1..15}
-  do
-    LOGLINE=$(grep " fileId=\"${FILEID}\" " $CTA_TAPED_LOG | grep " LVL=\"Info\" ")
-    echo $LOGLINE | grep --quiet "${CURRENT_MSG}"
-    [ $? -ne 0 ] || break
-    wait_dot
-  done
-  [ "${LOGLINE}" != "" ] || error "Archive request fileID=\"${1}\" not found in ${CTA_TAPED_LOG}"
-
-  # If this is the retrieve log, delete the archive log items
-  if [ "${LAST_MSG}" != "" ]
-  then
-    LOGLINE=$(echo -e "${LOGLINE}" | awk -v LAST_MSG="${LAST_MSG}" 'BEGIN { is_retrieve = 0; }
-      is_retrieve { print $0; }
-      $0 ~ LAST_MSG { is_retrieve = 1; }')
-  fi
-}
-
-getFrontendLog()
-{
-  for i in {1..15}
-  do
-    LOGLINE=$(grep " fileId=\"${2}\" " $CTA_FRONTEND_LOG | grep "$1")
-    [ $? -ne 0 ] || break
-    wait_dot
-  done
-  [ "${LOGLINE}" != "" ] || error "Event $1 fileID=\"${2}\" not found in ${CTA_FRONTEND_LOG}"
-}
+. ./test.conf
 
 ##
-## Archving
+## Archive
 ##
 
 FILENAME=file.$$
@@ -155,7 +16,7 @@ eos cp /etc/motd ${EOS_TEST_DIR}/${FILENAME}
 
 echoc $LT_BLUE "\nDisk file info:"
 eos fileinfo ${EOS_TEST_DIR}/${FILENAME}
-getEOSDiskFileInfo ${EOS_TEST_DIR}/${FILENAME}
+getEOSDiskFileInfo ${EOS_TEST_DIR} ${FILENAME}
 echoc $LT_BLUE "EOS Disk ID: $EOS_DISK_ID\nDisk copies: $DISK_COPIES\nTape copies: $TAPE_COPIES\n"
 
 echo_start "\nWaiting for SYNC::CREATE event."
@@ -189,7 +50,7 @@ getEOSWFE ARCHIVED ${EOS_TEST_DIR}/${FILENAME}
 echo_end "done"
 echo -e "$LOGLINE\n"
 
-getEOSDiskFileInfo ${EOS_TEST_DIR}/${FILENAME}
+getEOSDiskFileInfo ${EOS_TEST_DIR} ${FILENAME}
 echoc $LT_BLUE "Disk copies: $DISK_COPIES\nTape copies: $TAPE_COPIES\n"
 
 ##
@@ -215,7 +76,7 @@ getTapeLog $ARCHIVE_FILE_ID 'Reported to the client a full file archival' 'File 
 echo_end "done"
 echo -e "$LOGLINE\n"
 
-getEOSDiskFileInfo ${EOS_TEST_DIR}/${FILENAME}
+getEOSDiskFileInfo ${EOS_TEST_DIR} ${FILENAME}
 echoc $LT_BLUE "Disk copies: $DISK_COPIES\nTape copies: $TAPE_COPIES\n"
 
 echoc $LT_GREEN "Copying file out of EOS..."
@@ -247,7 +108,7 @@ getFrontendLog "delete" $ARCHIVE_FILE_ID
 echo_end "done"
 echo -e "$LOGLINE\n"
 
-getEOSDiskFileInfo ${EOS_TEST_DIR}/${FILENAME}
+getEOSDiskFileInfo ${EOS_TEST_DIR} ${FILENAME}
 echo -e "${ERRINFO}"
 getArchiveFileList ${EOS_DISK_ID}
 echo -e "${FILE_LIST}"
