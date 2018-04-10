@@ -51,6 +51,16 @@ wait_dot()
   sleep 1
 }
 
+getArchiveFileList()
+{
+  ERRFILE=/tmp/getArchiveFileListErr.$$
+  FILE_LIST=$(cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${1} --header 2>${ERRFILE})
+  [ $? -eq 0 ] || FILE_LIST=$(<${ERRFILE})
+  rm -f ${ERRFILE}
+  echo ${FILE_LIST} | grep --quiet "does not exist"
+  [ $? -eq 0 ] && FILE_LIST="${LT_GREEN}${FILENAME} has been deleted from CTA.${NC}"
+}
+
 getEOSWFE()
 {
   for i in {1..15}
@@ -64,12 +74,23 @@ getEOSWFE()
 
 getEOSDiskFileInfo()
 {
-  COPIES=$(eos ls -y ${EOS_TEST_DIR}/${FILENAME} | awk '{ print $1 }')
-  DISK_COPIES=$(echo $COPIES | sed 's/^d//' | sed 's/::t.*$//')
-  TAPE_COPIES=$(echo $COPIES | sed 's/^.*::t//')
-  DISK_FILE_INFO=$(eos fileinfo ${EOS_TEST_DIR}/${FILENAME})
-  EOS_DISK_ID=$(echo ${DISK_FILE_INFO} | grep " Fid: " |\
-                sed 's/^.*Fid: //' | sed 's/ .*$//')
+  ERRFILE=/tmp/getEOSDiskFileInfo.$$
+  FILE_LIST=$(eos ls -y ${1} 2>${ERRFILE})
+  ERRINFO=$(<${ERRFILE})
+  rm -f ${ERRFILE}
+
+  if [ "$ERRINFO" = "" ]
+  then
+    COPIES=$(echo ${FILE_LIST} | awk '{ print $1 }')
+    DISK_COPIES=$(echo $COPIES | sed 's/^d//' | sed 's/::t.*$//')
+    TAPE_COPIES=$(echo $COPIES | sed 's/^.*::t//')
+    DISK_FILE_INFO=$(eos fileinfo ${EOS_TEST_DIR}/${FILENAME})
+    EOS_DISK_ID=$(echo ${DISK_FILE_INFO} | grep " Fid: " |\
+                  sed 's/^.*Fid: //' | sed 's/ .*$//')
+  else
+    echo ${ERRINFO} | grep --quiet "Unable to stat"
+    [ $? -eq 0 ] && ERRINFO="${LT_GREEN}${FILENAME} has been deleted from EOS.${NC}"
+  fi
 }
 
 getArchiveID()
@@ -96,7 +117,7 @@ getTapeLog()
   for i in {1..15}
   do
     LOGLINE=$(grep " fileId=\"${FILEID}\" " $CTA_TAPED_LOG | grep " LVL=\"Info\" ")
-    echo $LOGLINE | grep "${CURRENT_MSG}" >/dev/null
+    echo $LOGLINE | grep --quiet "${CURRENT_MSG}"
     [ $? -ne 0 ] || break
     wait_dot
   done
@@ -119,7 +140,7 @@ getFrontendLog()
     [ $? -ne 0 ] || break
     wait_dot
   done
-  [ "${LOGLINE}" != "" ] || error "Archive request fileID=\"${2}\" event $1 not found in ${CTA_TAPED_LOG}"
+  [ "${LOGLINE}" != "" ] || error "Event $1 fileID=\"${2}\" not found in ${CTA_FRONTEND_LOG}"
 }
 
 ##
@@ -160,7 +181,8 @@ echo_end "done"
 echo -e "$LOGLINE\n"
 
 echoc $LT_BLUE "List archived file on tape:"
-cta-admin af ls --instance ${EOS_INSTANCE} --diskid ${EOS_DISK_ID} --header
+getArchiveFileList ${EOS_DISK_ID}
+echo -e "${FILE_LIST}"
 
 echo_start "\nWaiting for ARCHIVED event."
 getEOSWFE ARCHIVED ${EOS_TEST_DIR}/${FILENAME}
@@ -202,8 +224,30 @@ ls -l /tmp/${FILENAME}
 diff /tmp/${FILENAME} /etc/motd
 if [ $? -eq 0 ]
 then
-  echoc $LT_GREEN "Files match, OK."
+  echoc $LT_GREEN "Files match, OK.\n"
 else
   error "Files differ."
 fi
 rm -f /tmp/${FILENAME}
+
+##
+## Delete
+##
+
+echoc $LT_GREEN "Deleting file from EOS..."
+eos rm ${EOS_TEST_DIR}/${FILENAME}
+
+echo_start "Waiting for SYNC::DELETE event."
+getEOSWFE SYNC::DELETE ${EOS_TEST_DIR}/${FILENAME}
+echo_end "done"
+echo -e "$LOGLINE\n"
+
+echo_start "Checking CTA Frontend log for DELETE event."
+getFrontendLog "delete" $ARCHIVE_FILE_ID
+echo_end "done"
+echo -e "$LOGLINE\n"
+
+getEOSDiskFileInfo ${EOS_TEST_DIR}/${FILENAME}
+echo -e "${ERRINFO}"
+getArchiveFileList ${EOS_DISK_ID}
+echo -e "${FILE_LIST}"
