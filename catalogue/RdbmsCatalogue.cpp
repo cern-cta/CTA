@@ -2964,8 +2964,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
   const std::string &comment) {
   try {
     auto conn = m_connPool.getConn();
-    std::unique_ptr<common::dataStructures::MountPolicy> mountPolicy(
-      getRequesterGroupMountPolicy(conn, diskInstanceName, requesterGroupName));
+    auto mountPolicy = getRequesterGroupMountPolicy(conn, diskInstanceName, requesterGroupName);
     if(nullptr != mountPolicy.get()) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
         " to requester-group " + diskInstanceName + ":" + requesterGroupName +
@@ -3034,7 +3033,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolicy(
+std::unique_ptr<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
   rdbms::Conn &conn,
   const std::string &diskInstanceName,
   const std::string &requesterGroupName) const {
@@ -3094,7 +3093,7 @@ common::dataStructures::MountPolicy *RdbmsCatalogue::getRequesterGroupMountPolic
       policy->lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
       policy->lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
-      return policy.release();
+      return policy;
     } else {
       return nullptr;
     }

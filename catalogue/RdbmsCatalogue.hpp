@@ -802,7 +802,7 @@ protected:
    * guaranteed to be unique within its disk instance.
    * @return The mount policy or nullptr if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterGroupMountPolicy(rdbms::Conn &conn,
+  std::unique_ptr<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn,
     const std::string &diskInstanceName, const std::string &requesterGroupName) const;
 
   /**
