@@ -4072,9 +4072,14 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
+    common::dataStructures::MountPolicy mountPolicy = getCachedRequesterMountPolicy(conn, user);
+    // Requester mount policies overrule requester group mount policies
+    if(!mountPolicy) {
+      mountPolicy =
+    }
+
     const auto mountPolicies = getMountPolicies(conn, diskInstanceName, user.name, user.group);
     // Requester mount policies overrule requester group mount policies
-    common::dataStructures::MountPolicy mountPolicy;
     if(!mountPolicies.requesterMountPolicies.empty()) {
       mountPolicy = mountPolicies.requesterMountPolicies.front();
     } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
