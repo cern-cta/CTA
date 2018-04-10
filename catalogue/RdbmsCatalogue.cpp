@@ -2965,7 +2965,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
   try {
     auto conn = m_connPool.getConn();
     auto mountPolicy = getRequesterGroupMountPolicy(conn, diskInstanceName, requesterGroupName);
-    if(nullptr != mountPolicy.get()) {
+    if(mountPolicy) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
         " to requester-group " + diskInstanceName + ":" + requesterGroupName +
         " because a rule already exists assigning the requester-group to mount-policy " + mountPolicy->name);
@@ -3033,7 +3033,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
   rdbms::Conn &conn,
   const std::string &diskInstanceName,
   const std::string &requesterGroupName) const {
@@ -3073,29 +3073,29 @@ std::unique_ptr<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequeste
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt.executeQuery();
     if(rset.next()) {
-      auto policy = cta::make_unique<common::dataStructures::MountPolicy>();
+      common::dataStructures::MountPolicy policy;
 
-      policy->name = rset.columnString("MOUNT_POLICY_NAME");
+      policy.name = rset.columnString("MOUNT_POLICY_NAME");
 
-      policy->archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
-      policy->archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
 
-      policy->retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
-      policy->retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
 
-      policy->maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
+      policy.maxDrivesAllowed = rset.columnUint64("MAX_DRIVES_ALLOWED");
 
-      policy->comment = rset.columnString("USER_COMMENT");
-      policy->creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      policy->creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-      policy->creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-      policy->lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      policy->lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-      policy->lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+      policy.comment = rset.columnString("USER_COMMENT");
+      policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      policy.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
       return policy;
     } else {
-      return nullptr;
+      return nullopt;
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
