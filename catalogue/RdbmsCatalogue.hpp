@@ -838,7 +838,7 @@ protected:
    * @param conn The database connection.
    * @param group The fully qualified group, in other words the name of the disk
    * instance and the name of the group.
-   * @return The cached mount policy or nullptr if one does not exists.
+   * @return The cached mount policy or nullopt if one does not exists.
    */
   optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
     const Group &group) const;
@@ -850,7 +850,7 @@ protected:
    * @param conn The database connection.
    * @param group The fully qualified group, in other words the name of the disk
    * instance and the name of the group.
-   * @return The mount policy or nullptr if one does not exists.
+   * @return The mount policy or nullopt if one does not exists.
    */
   optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn, const Group &group)
     const;
