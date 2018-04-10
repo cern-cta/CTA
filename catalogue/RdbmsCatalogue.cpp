@@ -2964,11 +2964,15 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
   const std::string &comment) {
   try {
     auto conn = m_connPool.getConn();
-    auto mountPolicy = getRequesterGroupMountPolicy(conn, diskInstanceName, requesterGroupName);
-    if(mountPolicy) {
-      throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-        " to requester-group " + diskInstanceName + ":" + requesterGroupName +
-        " because a rule already exists assigning the requester-group to mount-policy " + mountPolicy->name);
+    {
+      const auto group = Group(diskInstanceName, requesterGroupName);
+      auto mountPolicy = getRequesterGroupMountPolicy(conn, group);
+      if (mountPolicy) {
+        throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
+                                   " to requester-group " + diskInstanceName + ":" + requesterGroupName +
+                                   " because a rule already exists assigning the requester-group to mount-policy " +
+                                   mountPolicy->name);
+      }
     }
     if(!mountPolicyExists(conn, mountPolicyName)) {
       throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
@@ -3031,12 +3035,39 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 }
 
 //------------------------------------------------------------------------------
+// getCachedRequesterGroupMountPolicy
+//------------------------------------------------------------------------------
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
+  const Group &group) const {
+  const time_t maxAgeSecs = 10;
+  const time_t now = time(nullptr);
+
+  std::lock_guard<std::mutex> cacheLock(m_groupMountPolicyCacheMutex);
+  const auto cacheItor = m_groupMountPolicyCache.find(group);
+  const bool cacheHit = m_groupMountPolicyCache.end() != cacheItor;
+
+  if(cacheHit) {
+    const auto &cachedValue = cacheItor->second;
+    const time_t ageSecs = now - cachedValue.timestamp;
+    if (maxAgeSecs >= ageSecs) {
+      return cachedValue.mountPolicy;
+    } else {
+      const auto &newValue = TimestampedMountPolicy(now, getRequesterGroupMountPolicy(conn, group));
+      m_groupMountPolicyCache[group] = newValue;
+      return newValue.mountPolicy;
+    }
+  } else { // No cache hit
+    const auto &newValue = TimestampedMountPolicy(now, getRequesterGroupMountPolicy(conn, group));
+    m_groupMountPolicyCache[group] = newValue;
+    return newValue.mountPolicy;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
 optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
-  rdbms::Conn &conn,
-  const std::string &diskInstanceName,
-  const std::string &requesterGroupName) const {
+  rdbms::Conn &conn, const Group &group) const {
   try {
     const char *const sql =
       "SELECT "
@@ -3069,8 +3100,8 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
         "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    stmt.bindString(":DISK_INSTANCE_NAME", group.diskInstanceName);
+    stmt.bindString(":REQUESTER_GROUP_NAME", group.groupName);
     auto rset = stmt.executeQuery();
     if(rset.next()) {
       common::dataStructures::MountPolicy policy;

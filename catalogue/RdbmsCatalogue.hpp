@@ -792,18 +792,68 @@ protected:
     const std::string &requesterGroupName) const;
 
   /**
-   * Returns the specified requester-group mount-policy or nullptr if one does not
-   * exist.
+    * A fully qualified user group, in other words the name of the disk instance
+    * and the name of the group.
+    */
+  struct Group {
+    /**
+     * The name of the disk instance to which the group name belongs.
+     */
+    std::string diskInstanceName;
+
+    /**
+     * The name of the group which is only guaranteed to be unique within its
+     * disk instance.
+     */
+    std::string groupName;
+
+    /**
+     * Constructor.
+     *
+     * @param d The name of the disk instance to which the group name belongs.
+     * @param g The name of the group which is only guaranteed to be unique
+     * within its disk instance.
+     */
+    Group(const std::string &d, const std::string &g): diskInstanceName(d), groupName(g) {
+    }
+
+    /**
+     * Less than operator.
+     *
+     * @param rhs The argument on the right hand side of the operator.
+     * @return True if this object is less than the argument on the right hand
+     * side of the operator.
+     */
+    bool operator<(const Group &rhs) const {
+      return diskInstanceName < rhs.diskInstanceName || groupName < rhs.groupName;
+    }
+  }; // struct Group
+
+  /**
+   * Returns a cached version of the specified requester-group mount-policy or
+   * nullptr if one does not exist.
+   *
+   * This method updates the cache when necessary.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the
-   * requester group belongs.
-   * @param requesterGroupName The name of the requester group which is only
-   * guaranteed to be unique within its disk instance.
+   * @param group The fully qualified group, in other words the name of the disk
+   * instance and the name of the group.
+   * @return The cached mount policy or nullptr if one does not exists.
+   */
+  optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
+    const Group &group) const;
+
+  /**
+   * Returns the specified requester-group mount-policy or nullptr if one does
+   * not exist.
+   *
+   * @param conn The database connection.
+   * @param group The fully qualified group, in other words the name of the disk
+   * instance and the name of the group.
    * @return The mount policy or nullptr if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn,
-    const std::string &diskInstanceName, const std::string &requesterGroupName) const;
+  optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn, const Group &group)
+    const;
 
   /**
    * Returns the specified tape log information from the specified database
@@ -1167,6 +1217,44 @@ protected:
    * createArchiveRoute() method.
    */
   mutable std::map<StorageClass, TimestampedExpectedNbArchiveRoutes> m_expectedNbArchiveRoutesCache;
+
+  /**
+   * A timestamped mount policy.
+   */
+  struct TimestampedMountPolicy {
+    /**
+     * The timestamp of when the mount policy was updated.
+     */
+    time_t timestamp;
+
+    /**
+     * The mount policy.
+     */
+    optional<common::dataStructures::MountPolicy> mountPolicy;
+
+    /**
+     * Constructor.
+     */
+    TimestampedMountPolicy(): timestamp(0) {
+    }
+
+    /**
+     * Constructor.
+     */
+    TimestampedMountPolicy(const time_t t, optional<common::dataStructures::MountPolicy> m):
+      timestamp(t), mountPolicy(m) {
+    }
+  };
+
+  /**
+   * Mutex protecting m_groupMountPolicyCache.
+   */
+  mutable std::mutex m_groupMountPolicyCacheMutex;
+
+  /**
+   * Cached versions of mount policies for specific user groups.
+   */
+  mutable std::map<Group, TimestampedMountPolicy> m_groupMountPolicyCache;
 
 }; // class RdbmsCatalogue
 
