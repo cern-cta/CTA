@@ -4026,9 +4026,9 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
-    const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
-    const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
+    const auto storageClass = StorageClass(diskInstanceName, storageClassName);
+    const auto copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
+    const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -4044,8 +4044,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-      user.group);
+    const auto mountPolicies = getMountPolicies(conn, diskInstanceName, user.name, user.group);
     // Requester mount policies overrule requester group mount policies
     common::dataStructures::MountPolicy mountPolicy;
     if(!mountPolicies.requesterMountPolicies.empty()) {
