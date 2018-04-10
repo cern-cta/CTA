@@ -3997,7 +3997,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     auto conn = m_connPool.getConn();
-    const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
+    const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
     const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
 
@@ -4050,7 +4050,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
   const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
-    const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
+    const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
     auto conn = m_connPool.getConn();
     const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
     const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
@@ -4099,7 +4099,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 // getCachedTapeCopyToPoolMap
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
-  const FullyQualifiedStorageClass &storageClass) const {
+  const StorageClass &storageClass) const {
   const time_t maxAgeSecs = 10;
   const time_t now = time(nullptr);
 
@@ -4128,7 +4128,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoo
 // getTapeCopyToPoolMap
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(rdbms::Conn &conn,
-  const FullyQualifiedStorageClass &storageClass) const {
+  const StorageClass &storageClass) const {
   try {
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
     const char *const sql =
@@ -4161,7 +4161,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 //------------------------------------------------------------------------------
 // getCachedExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const {
+uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const {
   const time_t maxAgeSecs = 10;
   const time_t now = time(nullptr);
 
@@ -4189,7 +4189,7 @@ uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, con
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const {
+uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const {
   try {
     const char *const sql =
       "SELECT "

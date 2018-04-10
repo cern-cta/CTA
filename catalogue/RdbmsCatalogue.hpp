@@ -858,7 +858,7 @@ protected:
    * A fully qualified storage class, in other words the name of the disk
    * instance and the name of the storage class.
    */
-  struct FullyQualifiedStorageClass {
+  struct StorageClass {
     /**
      * The name of the disk instance to which the storage class belongs.
      */
@@ -878,8 +878,7 @@ protected:
      * @param sN The name of the storage class which is only guaranteed to be
      * unique within its disk instance.
      */
-    FullyQualifiedStorageClass(const std::string &d, const std::string &s):
-      diskInstanceName(d), storageClassName(s) {
+    StorageClass(const std::string &d, const std::string &s): diskInstanceName(d), storageClassName(s) {
     }
 
     /**
@@ -889,10 +888,10 @@ protected:
      * @return True if this object is less than the argument on the right hand
      * side of the operator.
      */
-    bool operator<(const FullyQualifiedStorageClass &rhs) const {
+    bool operator<(const StorageClass &rhs) const {
       return diskInstanceName < rhs.diskInstanceName || storageClassName < rhs.storageClassName;
     }
-  }; // struct FullyQualifiedStorageClass
+  }; // struct StorageClass
 
   /**
    * Returns a cached version of the expected number of archive routes for the
@@ -907,7 +906,7 @@ protected:
    * name of the disk instance and the name of the storage class.
    * @return The expected number of archive routes.
    */
-  uint64_t getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const;
+  uint64_t getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const;
 
   /**
    * Returns the expected number of archive routes for the specified storage
@@ -920,7 +919,7 @@ protected:
    * name of the disk instance and the name of the storage class.
    * @return The expected number of archive routes.
    */
-  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const;
+  uint64_t getExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const;
 
   /**
    * Inserts the specified tape file into the Tape table.
@@ -1052,7 +1051,7 @@ protected:
    * class.
    */
   common::dataStructures::TapeCopyToPoolMap getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
-    const FullyQualifiedStorageClass &storageClass) const;
+    const StorageClass &storageClass) const;
 
   /**
    * Returns the mapping from tape copy to tape pool for the specified storage
@@ -1065,7 +1064,7 @@ protected:
    * class.
    */
   common::dataStructures::TapeCopyToPoolMap getTapeCopyToPoolMap(rdbms::Conn &conn,
-    const FullyQualifiedStorageClass &storageClass) const;
+    const StorageClass &storageClass) const;
 
   /**
    * Throws an exception if one of the fields of the specified event have not
@@ -1112,7 +1111,7 @@ protected:
    * The data type for cached versions of tape copy to tape tape pool mappings
    * for specific storage classes.
    */
-  typedef std::map<FullyQualifiedStorageClass, TimestampedTapeCopyToPoolMap> StorageClassToTimestampedTapeCopyToPoolMap;
+  typedef std::map<StorageClass, TimestampedTapeCopyToPoolMap> StorageClassToTimestampedTapeCopyToPoolMap;
 
   /**
    * Mutex protecting m_tapeCopyToPoolCache.
@@ -1167,7 +1166,7 @@ protected:
    * method as opposed to the actual number entered so far using the
    * createArchiveRoute() method.
    */
-  mutable std::map<FullyQualifiedStorageClass, TimestampedExpectedNbArchiveRoutes> m_expectedNbArchiveRoutesCache;
+  mutable std::map<StorageClass, TimestampedExpectedNbArchiveRoutes> m_expectedNbArchiveRoutesCache;
 
 }; // class RdbmsCatalogue
 
