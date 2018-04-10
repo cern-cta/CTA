@@ -2801,8 +2801,9 @@ void RdbmsCatalogue::createRequesterMountRule(
   const std::string &requesterName,
   const std::string &comment) {
   try {
+    const auto user = User(diskInstanceName, requesterName);
     auto conn = m_connPool.getConn();
-    const auto mountPolicy = getRequesterMountPolicy(conn, diskInstanceName, requesterName);
+    const auto mountPolicy = getRequesterMountPolicy(conn, user);
     if(mountPolicy) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
         " to requester " + diskInstanceName + ":" + requesterName +
@@ -3263,12 +3264,39 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 }
 
 //------------------------------------------------------------------------------
+// getCachedRequesterMountPolicy
+//------------------------------------------------------------------------------
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(rdbms::Conn &conn,
+  const User &user) const {
+  const time_t maxAgeSecs = 10;
+  const time_t now = time(nullptr);
+
+  std::lock_guard<std::mutex> cacheLock(m_userMountPolicyCacheMutex);
+  const auto cacheItor = m_userMountPolicyCache.find(user);
+  const bool cacheHit = m_userMountPolicyCache.end() != cacheItor;
+
+  if(cacheHit) {
+    const auto &cachedValue = cacheItor->second;
+    const time_t ageSecs = now - cachedValue.timestamp;
+    if (maxAgeSecs >= ageSecs) {
+      return cachedValue.mountPolicy;
+    } else {
+      const auto &newValue = TimestampedMountPolicy(now, getRequesterMountPolicy(conn, user));
+      m_userMountPolicyCache[user] = newValue;
+      return newValue.mountPolicy;
+    }
+  } else { // No cache hit
+    const auto &newValue = TimestampedMountPolicy(now, getRequesterMountPolicy(conn, user));
+    m_userMountPolicyCache[user] = newValue;
+    return newValue.mountPolicy;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getRequesterMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountPolicy(
-  rdbms::Conn &conn,
-  const std::string &diskInstanceName,
-  const std::string &requesterName) const {
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountPolicy(rdbms::Conn &conn,
+  const User &user) const {
   try {
     const char *const sql =
       "SELECT "
@@ -3301,8 +3329,8 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
         "REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":DISK_INSTANCE_NAME", user.diskInstanceName);
+    stmt.bindString(":REQUESTER_NAME", user.username);
     auto rset = stmt.executeQuery();
     if(rset.next()) {
       common::dataStructures::MountPolicy policy;

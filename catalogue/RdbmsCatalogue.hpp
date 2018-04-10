@@ -764,19 +764,65 @@ protected:
     const std::string &requesterName) const;
 
   /**
-   * Returns the specified requester mount-policy or nullptr if one does not exist.
+    * A fully qualified user, in other words the name of the disk instance and
+    * the name of the group.
+    */
+  struct User {
+    /**
+     * The name of the disk instance to which the user name belongs.
+     */
+    std::string diskInstanceName;
+
+    /**
+     * The name of the user which is only guaranteed to be unique within its
+     * disk instance.
+     */
+    std::string username;
+
+    /**
+     * Constructor.
+     *
+     * @param d The name of the disk instance to which the group name belongs.
+     * @param u The name of the group which is only guaranteed to be unique
+     * within its disk instance.
+     */
+    User(const std::string &d, const std::string &u): diskInstanceName(d), username(u) {
+    }
+
+    /**
+     * Less than operator.
+     *
+     * @param rhs The argument on the right hand side of the operator.
+     * @return True if this object is less than the argument on the right hand
+     * side of the operator.
+     */
+    bool operator<(const User &rhs) const {
+      return diskInstanceName < rhs.diskInstanceName || username < rhs.username;
+    }
+  }; // struct User
+
+  /**
+   * Returns a cached version of the specified requester mount-policy or nullopt
+   * if one does not exist.
    *
    * @param conn The database connection.
-   * @param diskInstanceName The name of the disk instance to which the
-   * requester belongs.
-   * @param requesterName The name of the requester which is only guaranteed to
-   * be unique within its disk instance.
+   * @param user The fully qualified user, in other words the name of the disk
+   * instance and the name of the group.
    * @return The mount policy or nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(
-    rdbms::Conn &conn,
-    const std::string &diskInstanceName,
-    const std::string &requesterName) const;
+  optional<common::dataStructures::MountPolicy> getCachedRequesterMountPolicy(rdbms::Conn &conn, const User &user)
+    const;
+
+  /**
+   * Returns the specified requester mount-policy or nullopt if one does not
+   * exist.
+   *
+   * @param conn The database connection.
+   * @param user The fully qualified user, in other words the name of the disk
+   * instance and the name of the group.
+   * @return The mount policy or nullopt if one does not exists.
+   */
+  optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(rdbms::Conn &conn, const User &user) const;
 
   /**
    * Returns true if the specified requester-group mount-rule exists.
@@ -1255,6 +1301,16 @@ protected:
    * Cached versions of mount policies for specific user groups.
    */
   mutable std::map<Group, TimestampedMountPolicy> m_groupMountPolicyCache;
+
+  /**
+   * Mutex protecting m_userMountPolicyCache.
+   */
+  mutable std::mutex m_userMountPolicyCacheMutex;
+
+  /**
+   * Cached versions of mount policies for specific users.
+   */
+  mutable std::map<User, TimestampedMountPolicy> m_userMountPolicyCache;
 
 }; // class RdbmsCatalogue
 
