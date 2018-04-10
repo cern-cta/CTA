@@ -771,9 +771,9 @@ protected:
    * requester belongs.
    * @param requesterName The name of the requester which is only guaranteed to
    * be unique within its disk instance.
-   * @return The mount policy or nullptr if one does not exists.
+   * @return The mount policy or nullopt if one does not exists.
    */
-  common::dataStructures::MountPolicy *getRequesterMountPolicy(
+  optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(
     rdbms::Conn &conn,
     const std::string &diskInstanceName,
     const std::string &requesterName) const;
