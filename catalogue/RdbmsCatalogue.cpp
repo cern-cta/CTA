@@ -3998,7 +3998,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
   try {
     auto conn = m_connPool.getConn();
     const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, storageClass);
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
     const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, storageClass);
 
     // Check that the number of archive routes is correct
@@ -4052,7 +4052,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
   try {
     const FullyQualifiedStorageClass storageClass = FullyQualifiedStorageClass(diskInstanceName, storageClassName);
     auto conn = m_connPool.getConn();
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getTapeCopyToPoolMap(conn, storageClass);
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
     const uint64_t expectedNbRoutes = getExpectedNbArchiveRoutes(conn, storageClass);
 
     // Check that the number of archive routes is correct
@@ -4096,7 +4096,7 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 }
 
 //------------------------------------------------------------------------------
-// cachedGetTapeCopyToPoolMap
+// getCachedTapeCopyToPoolMap
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
   const FullyQualifiedStorageClass &storageClass) const {
