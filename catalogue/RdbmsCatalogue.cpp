@@ -2965,7 +2965,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
     auto conn = m_connPool.getConn();
     {
       const auto group = Group(diskInstanceName, requesterGroupName);
-      auto mountPolicy = getRequesterGroupMountPolicy(conn, group);
+      const auto mountPolicy = getRequesterGroupMountPolicy(conn, group);
       if (mountPolicy) {
         throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
                                    " to requester-group " + diskInstanceName + ":" + requesterGroupName +
