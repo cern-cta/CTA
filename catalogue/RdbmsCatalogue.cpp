@@ -4072,24 +4072,18 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
-    common::dataStructures::MountPolicy mountPolicy = getCachedRequesterMountPolicy(conn, user);
-    // Requester mount policies overrule requester group mount policies
+    auto mountPolicy = getCachedRequesterMountPolicy(conn, User(diskInstanceName, user.name));
+    // Only consider the requester's group if there is no user mount policy
     if(!mountPolicy) {
-      mountPolicy =
-    }
+      const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(conn, Group(diskInstanceName, user.group));
 
-    const auto mountPolicies = getMountPolicies(conn, diskInstanceName, user.name, user.group);
-    // Requester mount policies overrule requester group mount policies
-    if(!mountPolicies.requesterMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
-    } else {
-      exception::UserError ue;
-      ue.getMessage() << "No mount rules for the requester or their group:"
-        " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
-        user.group;
-      throw ue;
+      if(!groupMountPolicy) {
+        exception::UserError ue;
+        ue.getMessage() << "No mount rules for the requester or their group:"
+          " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
+          user.group;
+        throw ue;
+      }
     }
 
     // Now that we have found both the archive routes and the mount policy it's
