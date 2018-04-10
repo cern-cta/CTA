@@ -4113,14 +4113,14 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoo
     if (maxAgeSecs >= ageSecs) {
       return cachedValue.tapeCopyToPoolMap;
     } else {
-      const auto &newCachedValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
-      m_tapeCopyToPoolCache[storageClass] = newCachedValue;
-      return newCachedValue.tapeCopyToPoolMap;
+      const auto &newValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
+      m_tapeCopyToPoolCache[storageClass] = newValue;
+      return newValue.tapeCopyToPoolMap;
     }
   } else { // No cache hit
-    const auto &newCachedValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
-    m_tapeCopyToPoolCache[storageClass] = newCachedValue;
-    return newCachedValue.tapeCopyToPoolMap;
+    const auto &newValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
+    m_tapeCopyToPoolCache[storageClass] = newValue;
+    return newValue.tapeCopyToPoolMap;
   }
 }
 
@@ -4155,6 +4155,34 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// getCachedExpectedNbArchiveRoutes
+//------------------------------------------------------------------------------
+uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const {
+  const time_t maxAgeSecs = 10;
+  const time_t now = time(nullptr);
+
+  std::lock_guard<std::mutex> cacheLock(m_expectedNbArchiveRoutesCacheMutex);
+  const auto cacheItor = m_expectedNbArchiveRoutesCache.find(storageClass);
+  const bool cacheHit = m_expectedNbArchiveRoutesCache.end() != cacheItor;
+
+  if(cacheHit) {
+    const auto &cachedValue = cacheItor->second;
+    const time_t ageSecs = now - cachedValue.timestamp;
+    if (maxAgeSecs >= ageSecs) {
+      return cachedValue.expectedNbArchiveRoutes;
+    } else {
+      const auto &newValue = TimestampedExpectedNbArchiveRoutes(now, getExpectedNbArchiveRoutes(conn, storageClass));
+      m_expectedNbArchiveRoutesCache[storageClass] = newValue;
+      return newValue.expectedNbArchiveRoutes;
+    }
+  } else { // No cache hit
+    const auto &newValue = TimestampedExpectedNbArchiveRoutes(now, getExpectedNbArchiveRoutes(conn, storageClass));
+    m_expectedNbArchiveRoutesCache[storageClass] = newValue;
+    return newValue.expectedNbArchiveRoutes;
   }
 }
 

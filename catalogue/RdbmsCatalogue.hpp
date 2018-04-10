@@ -895,6 +895,21 @@ protected:
   }; // struct FullyQualifiedStorageClass
 
   /**
+   * Returns a cached version of the expected number of archive routes for the
+   * specified storage class as specified by the call to the
+   * createStorageClass() method as opposed to the actual number entered so far
+   * using the createArchiveRoute() method.
+   *
+   * This method updates the cache when necessary.
+   *
+   * @param conn The database connection.
+   * @param storageClass The fully qualified storage class, in other words the
+   * name of the disk instance and the name of the storage class.
+   * @return The expected number of archive routes.
+   */
+  uint64_t getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const FullyQualifiedStorageClass &storageClass) const;
+
+  /**
    * Returns the expected number of archive routes for the specified storage
    * class as specified by the call to the createStorageClass() method as
    * opposed to the actual number entered so far using the createArchiveRoute()
@@ -1068,18 +1083,18 @@ protected:
     /**
      * The timestamp of when the map was last updated.
      */
-     time_t timestamp;
+    time_t timestamp;
 
-     /**
-      * Tha map from tape copy to tape pool.
-      */
-     common::dataStructures::TapeCopyToPoolMap tapeCopyToPoolMap;
+    /**
+     * Tha map from tape copy to tape pool.
+     */
+    common::dataStructures::TapeCopyToPoolMap tapeCopyToPoolMap;
 
-     /**
-      * Constructor.
-      */
-      TimestampedTapeCopyToPoolMap(): timestamp(0) {
-      }
+    /**
+     * Constructor.
+     */
+     TimestampedTapeCopyToPoolMap(): timestamp(0) {
+     }
 
      /**
       * Constructor.
@@ -1109,6 +1124,50 @@ protected:
    * storage classes.
    */
   mutable StorageClassToTimestampedTapeCopyToPoolMap m_tapeCopyToPoolCache;
+
+  /**
+   * A timestamped expected number of archive routes.
+   */
+  struct TimestampedExpectedNbArchiveRoutes {
+    /**
+     * The timestamp of when the expected number of archive routes was updated.
+     */
+    time_t timestamp;
+
+    /**
+     * The expected number of archive routes.
+     */
+    uint64_t expectedNbArchiveRoutes;
+
+    /**
+     * Constructor.
+     */
+    TimestampedExpectedNbArchiveRoutes(): timestamp(0), expectedNbArchiveRoutes(0) {
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param t The timestamp of when the expected number of archive routes was
+     * updated.
+     * @param e The expected number of archive routes.
+     */
+    TimestampedExpectedNbArchiveRoutes(const time_t t, const uint64_t e): timestamp(t), expectedNbArchiveRoutes(e) {
+    }
+  };
+
+  /**
+   * Mutex protecting m_tapeCopyToPoolCache.
+   */
+  mutable std::mutex m_expectedNbArchiveRoutesCacheMutex;
+
+  /**
+   * Cached versions of the expected number of archive routes for specific
+   * storage classes as specified by the call to the createStorageClass()
+   * method as opposed to the actual number entered so far using the
+   * createArchiveRoute() method.
+   */
+  mutable std::map<FullyQualifiedStorageClass, TimestampedExpectedNbArchiveRoutes> m_expectedNbArchiveRoutesCache;
 
 }; // class RdbmsCatalogue
 
