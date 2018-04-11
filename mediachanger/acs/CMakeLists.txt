@@ -22,51 +22,46 @@
 # Rules to build and install acsd
 ################################################################################
 
-##add_library(
-  #castorAcsDaemon 
- ## Acs.cpp
+#find_package(Protobuf3 REQUIRED)
+#file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
+#PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+#include_directories (${PROTOBUF3_INCLUDE_DIRS})
+
+#PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto )
+add_subdirectory(daemon)
+#add_library(CtaAcsDaemon
+ # Acs.cpp
   #AcsDaemon.cpp
   #AcsDaemonConfig.cpp
   #AcsDaemonMain.cpp
   #AcsDismountTape.cpp
   #AcsForceDismountTape.cpp
- ## AcsImpl.cpp
+  #AcsImpl.cpp
   #AcsLibraryInteraction.cpp
   #AcsMessageHandler.cpp
   #AcsMountTapeReadOnly.cpp
   #AcsMountTapeReadWrite.cpp
-  #AcsPendingRequests.cpp
   #AcsRequest.cpp
   #AcsRequestDismountTape.cpp
-##)
-#add_dependencies(castorAcsDaemon castormessagesprotobuf)
+   #${ProtoSources}
+#)
+#add_dependencies(ctaAcsDaemon ctamediachangerprotobuf)
 
+#add_executable(CtaAcsDaemon ${ACS_SOURCE_FILES})
 #target_link_libraries(castorAcsDaemon castortapereactor)
-#set_target_properties (castorAcsDaemon PROPERTIES
-#  COMPILE_FLAGS -I/usr/include/CDK
-#  COMPILE_DEFINITIONS LINUX)
+#target_link_libraries(CtaAcsDaemon ctacommon
+ # ctacommon
+  #ctareactor 
+  #ctamediachanger 
+  #ctamediachangerprotobuf
+ # ctamediachangeracsdaemonprotobuf 
+ # zmq
+ # ${STK_LIBRARIES})
 
+#set_target_properties (CtaAcsDaemon PROPERTIES
+ #COMPILE_FLAGS -I/usr/include/CDK
+ #COMPILE_DEFINITIONS LINUX)
 
-#add_executable(acsd AcsDaemon.cpp)
-#set_target_properties (acsd PROPERTIES
-#  COMPILE_FLAGS -I/usr/include/CDK
-#  COMPILE_DEFINITIONS LINUX)
-
-#target_link_libraries(
-  #acsd
-  #castorAcsDaemon
-  #castortapereactor
-  #castorcommon
-  #castorserver
- # castormessages
-  #zmq
-  #${STK_LIBRARIES})
-
-#install (TARGETS acsd DESTINATION /usr/bin})
-#CastorInstallAdmManPage (acsd)
-#CastorInstallLogrotate (castor-acs-server)
-#CastorInstallSysconfigExample (acsd)
-#CastorInstallInitScript (acsd)
 
 ################################################################################
 # Rules to build and install castor-tape-acs-dismount

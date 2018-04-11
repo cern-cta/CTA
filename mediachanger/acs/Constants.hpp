@@ -19,7 +19,7 @@
 #pragma once
 
 namespace cta     {
-namespace acs        {
+//namespace acs        {
 
 /**
  * The default TCP/IP port on which the CASTOR ACS daemon listens for incoming Zmq
@@ -57,6 +57,6 @@ enum RequestState {
   ACS_REQUEST_FAILED,
   ACS_REQUEST_TO_DELETE};
 
-} // namespace acs
+//} // namespace acs
 } // namespace cta
 
