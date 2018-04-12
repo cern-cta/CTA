@@ -314,6 +314,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case Workflow::PREPARE:
                processPREPARE(request.notification(), response);
                break;
+            case Workflow::ABORT_PREPARE:
+               processABORT_PREPARE(request.notification(), response);
+               break;
             case Workflow::DELETE:
                processDELETE (request.notification(), response);
                break;
@@ -522,6 +525,50 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    cta::log::ScopedParamContainer params(m_lc);
    params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
+
+   // Set response type
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response)
+{
+   // Validate received protobuf
+   checkIsNotEmptyString(notification.cli().user().username(),    "notification.cli.user.username");
+   checkIsNotEmptyString(notification.cli().user().groupname(),   "notification.cli.user.groupname");
+
+   // Unpack message
+   cta::common::dataStructures::UserIdentity originator;
+   originator.name   = notification.cli().user().username();
+   originator.group  = notification.cli().user().groupname();
+
+   cta::common::dataStructures::DeleteArchiveRequest request;
+   request.requester = originator;
+
+   cta::utils::Timer t;
+
+   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
+   // converted to a valid uint64_t
+   const auto archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
+   if(notification.file().xattr().end() == archiveFileIdItor) {
+     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_ArchiveFileId");
+   }
+   const std::string archiveFileIdStr = archiveFileIdItor->second;
+   if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
+   {
+      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+   }
+
+#if 0
+   // Queue the request
+   m_scheduler.queueAbortRetrieve(m_cliIdentity.username, request, m_lc);
+#endif
+
+   // Create a log entry
+   cta::log::ScopedParamContainer params(m_lc);
+   params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
+   m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): not implemented, no action taken.");
 
    // Set response type
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

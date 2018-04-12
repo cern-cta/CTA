@@ -52,7 +52,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 
 //! Usage exception
 
-const std::runtime_error Usage("Usage: cta-wfe-test archive|retrieve|deletearchive [options] [--stderr]");
+const std::runtime_error Usage("Usage: cta-wfe-test archive|retrieve|abort|deletearchive [options] [--stderr]");
 
 
 
@@ -186,6 +186,10 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
    else if(wf_command == "retrieve")
    {
       notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
+   }
+   else if(wf_command == "abort")
+   {
+      notification.mutable_wf()->set_event(cta::eos::Workflow::ABORT_PREPARE);
    }
    else if(wf_command == "deletearchive")
    {

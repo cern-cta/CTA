@@ -63,11 +63,12 @@ private:
     */
    typedef void notification_event_t(const cta::eos::Notification &notification, cta::xrd::Response &response);
 
-   notification_event_t processOPENW;        //!< Ignore OPENW event
-   notification_event_t processCREATE;       //!< New archive file ID event
-   notification_event_t processCLOSEW;       //!< Archive file event
-   notification_event_t processPREPARE;      //!< Retrieve file event
-   notification_event_t processDELETE;       //!< Delete file event
+   notification_event_t processOPENW;            //!< Ignore OPENW event
+   notification_event_t processCREATE;           //!< New archive file ID event
+   notification_event_t processCLOSEW;           //!< Archive file event
+   notification_event_t processPREPARE;          //!< Retrieve file event
+   notification_event_t processABORT_PREPARE;    //!< Abort retrieve file event
+   notification_event_t processDELETE;           //!< Delete file event
 
    /*!
     * Process AdminCmd events
