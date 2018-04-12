@@ -25,8 +25,9 @@
 #include "common/log/SyslogLogger.hpp"
 //#include "common/processCap/ProcessCap.hpp"
 #include "../Constants.hpp"
-//#include "AcsDaemon.hpp"
+#include "AcsDaemon.hpp"
 //#include "AcsDaemonConfig.hpp"
+#include "mediachanger/reactor/ZMQReactor.hpp"
 #include "AcsdConfiguration.hpp"
 //#include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
@@ -81,20 +82,22 @@ int main(const int argc, char **const argv) {
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(cta::log::Logger &log, const int argc, char **const argv) {
   
+
+ cta::mediachanger::reactor::ZMQReactor reactor(log);
+
  const cta::mediachanger::acs::daemon::AcsdConfiguration config = cta::mediachanger::acs::daemon::AcsdConfiguration::createFromCtaConf("/etc/cta/acsd.conf",log);
 
-/* 
+ 
   // Create the main acsd object
-  acs::AcsDaemon daemon(
+  cta::mediachanger::acs::daemon::AcsDaemon daemon(
     argc,
     argv,
-    std::cout,
-    std::cerr,
+    log,
     reactor,
     config);
 
   // Run the acsd daemon
-  return daemon.main();
-*/
+ // return daemon.main();
+
 return 0;
 }

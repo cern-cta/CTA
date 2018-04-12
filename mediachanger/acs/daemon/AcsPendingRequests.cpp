@@ -23,9 +23,9 @@
 
 #include "AcsPendingRequests.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
-#include "mediachanger/acs/daemon/AcsDismountTape.hpp"
+/////#include "mediachanger/acs/daemon/AcsDismountTape.hpp"
 //#include "castor/acs/AcsRequestDismountTape.hpp"
-#include "AcsRequestDismountTape.hpp"
+//////#include "AcsRequestDismountTape.hpp"
 #include "common/Constants.hpp"
 //#include "messages/Constants.hpp"
 #include "mediachanger/Constants.hpp"
@@ -38,7 +38,6 @@
 // constructor
 //-----------------------------------------------------------------------------
 cta::mediachanger::acs::daemon::AcsPendingRequests::AcsPendingRequests(
- // const AcsDaemonConfig &castorConf):
   const AcsdConfiguration &ctaConf):
   m_ctaConf(ctaConf),
   m_lastTimeResponseUsed(0) {
@@ -47,14 +46,14 @@ cta::mediachanger::acs::daemon::AcsPendingRequests::AcsPendingRequests(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() throw() {
+/*cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() throw() {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();  itor++) {
     AcsRequest *const acsRequest = *itor;
     delete acsRequest;
   }
 }
-
+*/
 //-----------------------------------------------------------------------------
 // tick
 //-----------------------------------------------------------------------------

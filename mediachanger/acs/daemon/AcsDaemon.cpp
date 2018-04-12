@@ -24,7 +24,7 @@
 #include "common/Constants.hpp"
 #include "AcsDaemon.hpp"
 #include "AcsdConfiguration.hpp"
-#include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
+/////#include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
 #include "AcsPendingRequests.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include <iostream>
-
 
 //------------------------------------------------------------------------------
 // constructor
@@ -64,8 +63,7 @@ AcsDaemon::AcsDaemon(
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
-//std::string cta::acs::AcsDaemon::getHostName() const  {
-std::string AcsDaemon::getHostName() const  {
+std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     cta::exception::Exception ex;
@@ -91,6 +89,7 @@ AcsDaemon::~AcsDaemon() throw() {
 //------------------------------------------------------------------------------
 // destroyZmqContext
 //------------------------------------------------------------------------------
+
 void AcsDaemon::destroyZmqContext() throw() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
@@ -107,7 +106,7 @@ void AcsDaemon::destroyZmqContext() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int AcsDaemon::main() throw() {
+/*int AcsDaemon::main() throw() {
   try {
 
     exceptionThrowingMain(m_argc, m_argv);
@@ -126,15 +125,17 @@ int AcsDaemon::main() throw() {
 
   return 0;
 }
-
+*/
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
+
+/*
 void AcsDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
  // parseCommandLine(argc, argv);
-/*
+
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
   setDumpable();
@@ -143,13 +144,14 @@ void AcsDaemon::exceptionThrowingMain(
   initZmqContext();
  // setUpReactor();  
  // mainEventLoop();
-*/
-}
 
+}
+*/
 //------------------------------------------------------------------------------
 // logStartOfDaemon
 //------------------------------------------------------------------------------
-void AcsDaemon::logStartOfDaemon(
+/*
+ * void AcsDaemon::logStartOfDaemon(
   const int argc, const char *const *const argv) throw() {
   const std::string concatenatedArgs = argvToString(argc, argv);
   std::ostringstream msg;
@@ -159,11 +161,12 @@ void AcsDaemon::logStartOfDaemon(
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
 }
-
+*/
 //------------------------------------------------------------------------------
 // argvToString
 //------------------------------------------------------------------------------
-std::string AcsDaemon::argvToString(
+/*
+ * *std::string AcsDaemon::argvToString(
   const int argc, const char *const *const argv) throw() {
   std::string str;
 
@@ -176,10 +179,11 @@ std::string AcsDaemon::argvToString(
   }
   return str;
 }
-
+*/
 //------------------------------------------------------------------------------
 // setDumpable
 //------------------------------------------------------------------------------
+/*
 void AcsDaemon::setDumpable() {
   cta::utils::setDumpableProcessAttribute(true);
   const bool dumpable = cta::utils::getDumpableProcessAttribute();
@@ -192,11 +196,11 @@ void AcsDaemon::setDumpable() {
     throw ex;
   }
 }
-
+*/
 //------------------------------------------------------------------------------
 // blockSignals
 //------------------------------------------------------------------------------
-void AcsDaemon::blockSignals() const {
+/*void AcsDaemon::blockSignals() const {
   sigset_t sigs;
   sigemptyset(&sigs);
   // The signals that should not asynchronously disturb the daemon
@@ -218,11 +222,12 @@ void AcsDaemon::blockSignals() const {
     sigprocmask(SIG_BLOCK, &sigs, NULL),
     "Failed to block signals: sigprocmask() failed");
 }
-
+*/
 //------------------------------------------------------------------------------
 // initZmqContext
 //------------------------------------------------------------------------------
-void AcsDaemon::initZmqContext() {
+/*
+ * void AcsDaemon::initZmqContext() {
   const int sizeOfIOThreadPoolForZMQ = 1;
   m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == m_zmqContext) {
@@ -231,18 +236,18 @@ void AcsDaemon::initZmqContext() {
     throw ex;
   }
 }
-
+*/
 //------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
-void AcsDaemon::setUpReactor() {
+/*void AcsDaemon::setUpReactor() {
   createAndRegisterAcsMessageHandler();
 }
-
+*/
 //------------------------------------------------------------------------------
 // createAndRegisterAcsMessageHandler
 //------------------------------------------------------------------------------
-void AcsDaemon::createAndRegisterAcsMessageHandler()  {
+/*void AcsDaemon::createAndRegisterAcsMessageHandler()  {
   try {
     std::unique_ptr<AcsMessageHandler> handler;
     try {
@@ -265,19 +270,19 @@ void AcsDaemon::createAndRegisterAcsMessageHandler()  {
     throw ex;
   }
 }
-
+*/
 //------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
-void AcsDaemon::mainEventLoop() {
+/*void AcsDaemon::mainEventLoop() {
   while(handleEvents()) {
   }
 }
-
+*/
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
-bool AcsDaemon::handleEvents() { 
+/*bool AcsDaemon::handleEvents() { 
   try {
     const int timeout = 100; // 100 milliseconds
     m_reactor.handleEvents(timeout);
@@ -324,20 +329,21 @@ bool AcsDaemon::handleEvents() {
   
   return handlePendingSignals();
 }
+*/
 //------------------------------------------------------------------------------
 // handlePendingRequests
 //------------------------------------------------------------------------------
-void AcsDaemon::handlePendingRequests() {
+/*void AcsDaemon::handlePendingRequests() {
   m_acsPendingRequests.tick(); 
   m_acsPendingRequests.handleCompletedRequests();
   m_acsPendingRequests.handleFailedRequests();
   m_acsPendingRequests.handleToDeleteRequests();
 }
-
+*/
 //------------------------------------------------------------------------------
 // handlePendingSignals
 //------------------------------------------------------------------------------
-bool AcsDaemon::handlePendingSignals() throw() {
+/*bool AcsDaemon::handlePendingSignals() throw() {
   bool continueMainEventLoop = true;
   int sig = 0;
   sigset_t allSignals;
@@ -366,5 +372,5 @@ bool AcsDaemon::handlePendingSignals() throw() {
   }
 
   return continueMainEventLoop;
-}
+}*/
 }}}}

@@ -29,8 +29,8 @@
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "mediachanger/acs/AcsRequest.hpp"
-#include "mediachanger/acs/AcsImpl.hpp"
-#include "mediachanger/messages.hpp"
+/////#include "mediachanger/acs/AcsImpl.hpp"
+/////#include "mediachanger/messages.hpp"
 #include "mediachanger/Frame.hpp"
 #include "mediachanger/ZmqMsg.hpp"
 #include "mediachanger/ZmqSocket.hpp"
@@ -60,7 +60,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsPendingRequests() throw();
+//////  ~AcsPendingRequests() throw();
 
   /**
    * Notifies the AcsPendingRequests that it should perform any time related 
@@ -182,12 +182,12 @@ private:
   /**
    * Type for the list of the ACS requests.
    */
-////  typedef std::list<AcsRequest *> RequestList;
+  typedef std::list<AcsRequest *> RequestList;
   
   /**
    * The list for the ACS requests.
    */
-/////  RequestList m_acsRequestList;
+  RequestList m_acsRequestList;
   
   /**
    * The ACLS C-API wrapper.
@@ -197,7 +197,7 @@ private:
   /**
    * The time when the last ACS response command was used.
    */ 
-/////  time_t m_lastTimeResponseUsed;
+  time_t m_lastTimeResponseUsed;
   
 }; // class AcsPendingRequests
 

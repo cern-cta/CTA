@@ -63,7 +63,6 @@ public:
     //std::ostream &stdErr,
     log::Logger& log,
     cta::mediachanger::reactor::ZMQReactor &reactor,
-    //reactor::ZMQReactor &reactor,
     const AcsdConfiguration &config);
 
   /**
@@ -76,7 +75,7 @@ public:
    *
    * @return The return code of the process.
    */
-  int main() throw();
+/////  int main() throw();
   
 protected:
 
@@ -91,12 +90,12 @@ protected:
    * @param argc The number of command-line arguments.
    * @param argv The array of command-line arguments.
    */
-  void exceptionThrowingMain(const int argc, char **const argv);
+//////  void exceptionThrowingMain(const int argc, char **const argv);
 
   /**
    * Logs the start of the daemon.
    */
-  void logStartOfDaemon(const int argc, const char *const *const argv) throw();
+/////  void logStartOfDaemon(const int argc, const char *const *const argv) throw();
 
   /**
    * Creates a string that contains the specified command-line arguments
@@ -105,8 +104,8 @@ protected:
    * @param argc The number of command-line arguments.
    * @param argv The array of command-line arguments.
    */
-  std::string argvToString(const int argc, const char *const *const argv)
-    throw();
+  //////std::string argvToString(const int argc, const char *const *const argv)
+   /// throw();
 
   /**
    * Idempotent method that destroys the ZMQ context.
@@ -116,51 +115,51 @@ protected:
   /**
    * Sets the dumpable attribute of the current process to true.
    */
-  void setDumpable();
+/////  void setDumpable();
 
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
    */
-  void blockSignals() const;
+/////  void blockSignals() const;
   
   /**
    * Initialises the ZMQ context.
    */
-  void initZmqContext();
+//////  void initZmqContext();
   /**
    * Sets up the reactor.
    */
-  void setUpReactor();
+/////  void setUpReactor();
  
   /**
    * Creates the handler to handle messages for the acs Zmq requests.
    */
-  void createAndRegisterAcsMessageHandler();
+////  void createAndRegisterAcsMessageHandler();
   
   /**
    * The main event loop of the daemon.
    */
-  void mainEventLoop();
+/////  void mainEventLoop();
 
   /**
    * Handles any pending events.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleEvents();
+/////  bool handleEvents();
 
   /**
    * Handles any pending signals.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handlePendingSignals() throw();
+/////  bool handlePendingSignals() throw();
   
   /**
    * Handles any pending Acs requests.
    *
    */
-  void handlePendingRequests();
+/////  void handlePendingRequests();
 
   /**
    * The argc of main().
@@ -178,7 +177,6 @@ protected:
    * of the CASTOR ACS daemon.
    */
   cta::mediachanger::reactor::ZMQReactor &m_reactor;
-  //reactor::ZMQReactor &m_reactor;
 
   /**
    * The program name of the daemon.
