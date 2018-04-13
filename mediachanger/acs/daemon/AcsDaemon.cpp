@@ -24,18 +24,20 @@
 #include "common/Constants.hpp"
 #include "AcsDaemon.hpp"
 #include "AcsdConfiguration.hpp"
-/////#include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
-#include "AcsPendingRequests.hpp"
+#include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
+//#include "AcsPendingRequests.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/threading/Daemon.hpp"
+#include "mediachanger/acs/AcsQueryVolumeCmdLine.hpp"
 #include <memory>
 #include <signal.h>
 #include <unistd.h>
 
+#include <getopt.h>
 #include <iostream>
 
 //------------------------------------------------------------------------------
@@ -80,7 +82,7 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-AcsDaemon::~AcsDaemon() throw() {  
+  AcsDaemon::~AcsDaemon() throw() {  
   m_reactor.clear();  
   destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
@@ -90,7 +92,7 @@ AcsDaemon::~AcsDaemon() throw() {
 // destroyZmqContext
 //------------------------------------------------------------------------------
 
-void AcsDaemon::destroyZmqContext() throw() {
+  void AcsDaemon::destroyZmqContext() throw() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
       cta::exception::Exception ex;
@@ -106,7 +108,8 @@ void AcsDaemon::destroyZmqContext() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-/*int AcsDaemon::main() throw() {
+int AcsDaemon::main() throw() {
+    
   try {
 
     exceptionThrowingMain(m_argc, m_argv);
@@ -125,33 +128,50 @@ void AcsDaemon::destroyZmqContext() throw() {
 
   return 0;
 }
-*/
+
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 
-/*
 void AcsDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
- // parseCommandLine(argc, argv);
+  ////parseCommandLine(argc, argv);
+  
+/*static struct option longopts[] = {
+    {"debug"    , 0, NULL, 'd'},
+    {"help"     , 0, NULL, 'h'},
+    {"readonly" , 0, NULL, 'r'},
+    {NULL       , 0, NULL, 0}
+  };
 
-  const bool runAsStagerSuperuser = true;
-  daemonizeIfNotRunInForeground(runAsStagerSuperuser);
-  setDumpable();
+  // Prevent getopt() from printing an error message if it does not recognize
+  // an option character
+  opterr = 0;
 
-  blockSignals();
-  initZmqContext();
- // setUpReactor();  
+  int opt = 0;
+  while((opt = getopt_long(argc, argv, ":dhr", longopts, NULL)) != -1) {
+   cta::mediachanger::acs::AcsQueryVolumeCmdLine:: processOption(opt);
+  }
+*/
+
+ const std::string runAsStagerSuperuser = "ACSD";
+ const std::string runAsStagerSupergroup = "CTA";
+ daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
+ setDumpable();
+
+ blockSignals();
+ initZmqContext();
+  //setUpReactor();  
  // mainEventLoop();
 
 }
-*/
+
 //------------------------------------------------------------------------------
 // logStartOfDaemon
 //------------------------------------------------------------------------------
-/*
- * void AcsDaemon::logStartOfDaemon(
+
+  void AcsDaemon::logStartOfDaemon(
   const int argc, const char *const *const argv) throw() {
   const std::string concatenatedArgs = argvToString(argc, argv);
   std::ostringstream msg;
@@ -161,12 +181,12 @@ void AcsDaemon::exceptionThrowingMain(
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
 }
-*/
+
 //------------------------------------------------------------------------------
 // argvToString
 //------------------------------------------------------------------------------
-/*
- * *std::string AcsDaemon::argvToString(
+
+  std::string AcsDaemon::argvToString(
   const int argc, const char *const *const argv) throw() {
   std::string str;
 
@@ -179,11 +199,10 @@ void AcsDaemon::exceptionThrowingMain(
   }
   return str;
 }
-*/
+
 //------------------------------------------------------------------------------
 // setDumpable
 //------------------------------------------------------------------------------
-/*
 void AcsDaemon::setDumpable() {
   cta::utils::setDumpableProcessAttribute(true);
   const bool dumpable = cta::utils::getDumpableProcessAttribute();
@@ -196,11 +215,11 @@ void AcsDaemon::setDumpable() {
     throw ex;
   }
 }
-*/
+
 //------------------------------------------------------------------------------
 // blockSignals
 //------------------------------------------------------------------------------
-/*void AcsDaemon::blockSignals() const {
+void AcsDaemon::blockSignals() const {
   sigset_t sigs;
   sigemptyset(&sigs);
   // The signals that should not asynchronously disturb the daemon
@@ -222,12 +241,12 @@ void AcsDaemon::setDumpable() {
     sigprocmask(SIG_BLOCK, &sigs, NULL),
     "Failed to block signals: sigprocmask() failed");
 }
-*/
+
 //------------------------------------------------------------------------------
 // initZmqContext
 //------------------------------------------------------------------------------
-/*
- * void AcsDaemon::initZmqContext() {
+
+  void AcsDaemon::initZmqContext() {
   const int sizeOfIOThreadPoolForZMQ = 1;
   m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
   if(NULL == m_zmqContext) {
@@ -236,7 +255,7 @@ void AcsDaemon::setDumpable() {
     throw ex;
   }
 }
-*/
+
 //------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
@@ -277,8 +296,8 @@ void AcsDaemon::setDumpable() {
 /*void AcsDaemon::mainEventLoop() {
   while(handleEvents()) {
   }
-}
-*/
+}*/
+
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
@@ -343,7 +362,8 @@ void AcsDaemon::setDumpable() {
 //------------------------------------------------------------------------------
 // handlePendingSignals
 //------------------------------------------------------------------------------
-/*bool AcsDaemon::handlePendingSignals() throw() {
+/**
+bool AcsDaemon::handlePendingSignals() throw() {
   bool continueMainEventLoop = true;
   int sig = 0;
   sigset_t allSignals;
@@ -372,5 +392,38 @@ void AcsDaemon::setDumpable() {
   }
 
   return continueMainEventLoop;
-}*/
+}
+**/
+//------------------------------------------------------------------------------
+// processOption
+//------------------------------------------------------------------------------
+/*void AcsDaemon::processOption(const int opt) {
+  switch(opt) {
+  case 'd':
+    debug = true;
+    break;
+  case 'h':
+    help = true;
+    break;
+  case 'q':
+    queryInterval = parseQueryInterval(optarg);
+    break;
+  case 't':
+    timeout = parseTimeout(optarg);
+    break;
+  case ':':
+    return handleMissingParameter(optopt);
+  case '?':
+    return handleUnknownOption(optopt);
+  default:
+    {
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+        "getopt_long returned the following unknown value: 0x" <<
+        std::hex << (int)opt;
+      throw ex;
+    }
+  } // switch(opt)
+}
+*/
 }}}}

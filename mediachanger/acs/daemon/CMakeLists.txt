@@ -1,39 +1,34 @@
 cmake_minimum_required (VERSION 2.6)
 
-#find_package(Protobuf3 REQUIRED)
+find_package(Protobuf3 REQUIRED)
 find_package(openssl REQUIRED)
 find_package(zeromq REQUIRED)
 
 #file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 #PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
-#include_directories (${PROTOBUF3_INCLUDE_DIRS})
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 #add_library(ctamediachangeracsdaemonprotobuf ${ProtoSources})
 
-#include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
-#PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
+PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
-#SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
+SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 
-#include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
-#add_subdirectory(reactor)
 set (ACS_DAEMON_SRC_FILES
-#  AcsDaemon.cpp
+  AcsDaemon.cpp
   AcsDaemonMain.cpp
   AcsdConfiguration.cpp
- # TpconfigLine.cpp)
- # AcsPendingRequests.cpp
- # AcsDismountTape.cpp
- # AcsMessageHandler.cpp
- # AcsMountTapeReadWrite.cpp 
- # AcsMountTapeReadOnly.cpp
- # AcsRequestDismountTape.cpp
- # AcsLibraryInteraction.cpp
+  AcsPendingRequests.cpp
+  #AcsDismountTape.cpp
+  #AcsMessageHandler.cpp
+  #AcsMountTapeReadWrite.cpp 
+  #AcsMountTapeReadOnly.cpp
+  #AcsRequest.cpp
+  #AcsRequestDismountTape.cpp
+  #AcsLibraryInteraction.cpp
 )
 add_executable (cta-acsd ${ACS_DAEMON_SRC_FILES})
-#add_executable(cta-acsd AcsDaemon.cpp AcsDaemonMain.cpp AcsdConfiguration.cpp AcsPendingRequests.cpp AcsDismountTape.cpp)
 
 set_target_properties (cta-acsd PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
@@ -42,11 +37,13 @@ set_target_properties (cta-acsd PROPERTIES
 target_link_libraries(
   cta-acsd
   ctacommon
- # ctareactor 
+  ctareactor 
   ctamediachanger 
+ # ctamediachangeracsdaemonprotobuf 
   zmq
   ${STK_LIBRARIES})
 
 install (FILES cta.conf
  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+

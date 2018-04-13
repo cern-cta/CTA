@@ -60,7 +60,7 @@ int main(const int argc, char **const argv) {
       ex.getMessage().str() << std::endl;
     return 1;
   } 
-  int programRc = 1; // Be pessimistic
+  int programRc = 1; 
   try {
     programRc = exceptionThrowingMain(logger, argc, argv) ;
   } catch(cta::exception::Exception &ex) {
@@ -97,7 +97,7 @@ static int exceptionThrowingMain(cta::log::Logger &log, const int argc, char **c
     config);
 
   // Run the acsd daemon
- // return daemon.main();
+  //return daemon.main();
 
 return 0;
 }
