@@ -49,4 +49,7 @@ echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 10 -d /eos/ctaeos/preprod -v -r || exit 1
 
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 exit 0
