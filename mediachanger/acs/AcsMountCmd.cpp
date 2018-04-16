@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsMountCmd::AcsMountCmd(
+cta::mediachanger::acs::AcsMountCmd::AcsMountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs) {
@@ -34,14 +34,14 @@ cta::acs::AcsMountCmd::AcsMountCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsMountCmd::~AcsMountCmd() throw() {
+cta::mediachanger::acs::AcsMountCmd::~AcsMountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int cta::acs::AcsMountCmd::exceptionThrowingMain(const int argc,
+int cta::mediachanger::acs::AcsMountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
   try {
     m_cmdLine = AcsMountCmdLine(argc, argv);
@@ -77,7 +77,7 @@ int cta::acs::AcsMountCmd::exceptionThrowingMain(const int argc,
 //------------------------------------------------------------------------------
 // syncMount
 //------------------------------------------------------------------------------
-void cta::acs::AcsMountCmd::syncMount() {
+void cta::mediachanger::acs::AcsMountCmd::syncMount() {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -97,7 +97,7 @@ void cta::acs::AcsMountCmd::syncMount() {
 //------------------------------------------------------------------------------
 // sendMountRequest
 //------------------------------------------------------------------------------
-void cta::acs::AcsMountCmd::sendMountRequest(const SEQ_NO seqNumber) {
+void cta::mediachanger::acs::AcsMountCmd::sendMountRequest(const SEQ_NO seqNumber) {
   const LOCKID lockId = 0; // No lock
   const BOOLEAN bypass = FALSE;
 
@@ -119,7 +119,7 @@ void cta::acs::AcsMountCmd::sendMountRequest(const SEQ_NO seqNumber) {
 //------------------------------------------------------------------------------
 // processMountResponse
 //------------------------------------------------------------------------------
-void cta::acs::AcsMountCmd::processMountResponse(
+void cta::mediachanger::acs::AcsMountCmd::processMountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
    {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;

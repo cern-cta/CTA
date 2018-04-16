@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::CmdLineTool::CmdLineTool(std::istream &inStream,
+cta::mediachanger::acs::CmdLineTool::CmdLineTool(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream) throw():
   m_in(inStream), m_out(outStream), m_err(errStream), m_debugBuf(outStream),
   m_dbg(&m_debugBuf) {
@@ -30,12 +30,12 @@ cta::acs::CmdLineTool::CmdLineTool(std::istream &inStream,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::CmdLineTool::~CmdLineTool() throw() {
+cta::mediachanger::acs::CmdLineTool::~CmdLineTool() throw() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string cta::acs::CmdLineTool::bool2Str(const bool value) const throw() {
+std::string cta::mediachanger::acs::CmdLineTool::bool2Str(const bool value) const throw() {
   return value ? "TRUE" : "FALSE";
 }

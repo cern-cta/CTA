@@ -27,13 +27,13 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::Acs::~Acs() throw() {
+cta::mediachanger::acs::Acs::~Acs() throw() {
 }
 
 //------------------------------------------------------------------------------
 // str2DriveId
 //------------------------------------------------------------------------------
-DRIVEID cta::acs::Acs::str2DriveId(const std::string &str) {
+DRIVEID cta::mediachanger::acs::Acs::str2DriveId(const std::string &str) {
   std::vector<std::string> components;
   cta::utils::splitString(str, ':', components);
 
@@ -112,7 +112,7 @@ DRIVEID cta::acs::Acs::str2DriveId(const std::string &str) {
 //------------------------------------------------------------------------------
 // onlyContainsNumerals
 //------------------------------------------------------------------------------
-bool cta::acs::Acs::onlyContainsNumerals(const std::string &str) throw() {
+bool cta::mediachanger::acs::Acs::onlyContainsNumerals(const std::string &str) throw() {
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
     itor++) {
     if(*itor < '0' || *itor  > '9') {
@@ -125,7 +125,7 @@ bool cta::acs::Acs::onlyContainsNumerals(const std::string &str) throw() {
 //------------------------------------------------------------------------------
 // alpd2DriveId
 //------------------------------------------------------------------------------
-DRIVEID cta::acs::Acs::alpd2DriveId(const uint32_t acs,
+DRIVEID cta::mediachanger::acs::Acs::alpd2DriveId(const uint32_t acs,
   const uint32_t lsm, const uint32_t panel, const uint32_t drive) throw () {
   
   DRIVEID driveId;
@@ -140,7 +140,7 @@ DRIVEID cta::acs::Acs::alpd2DriveId(const uint32_t acs,
 //------------------------------------------------------------------------------
 // str2Volid
 //------------------------------------------------------------------------------
-VOLID cta::acs::Acs::str2Volid(const std::string &str) {
+VOLID cta::mediachanger::acs::Acs::str2Volid(const std::string &str) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() << "Failed to convert string to volume identifier"
@@ -158,7 +158,7 @@ VOLID cta::acs::Acs::str2Volid(const std::string &str) {
 //------------------------------------------------------------------------------
 // driveId2Str
 //------------------------------------------------------------------------------
-std::string cta::acs::Acs::driveId2Str(const DRIVEID &driveId) throw() {
+std::string cta::mediachanger::acs::Acs::driveId2Str(const DRIVEID &driveId) throw() {
   std::ostringstream oss;
   oss << std::setfill('0') <<
     std::setw(3) << (int32_t)driveId.panel_id.lsm_id.acs << ":" <<

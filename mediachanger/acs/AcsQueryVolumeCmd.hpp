@@ -28,6 +28,7 @@
 #include <stdint.h>
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -115,4 +116,5 @@ private:
 }; // class AcsQueryVolumeCmd
 
 } // namespace acs
+} // namepsace mediachanger
 } // namespace cta

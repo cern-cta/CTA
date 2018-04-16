@@ -21,6 +21,7 @@
 #include "Acs.hpp"
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -114,4 +115,5 @@ public:
 }; // class AcsImpl
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta

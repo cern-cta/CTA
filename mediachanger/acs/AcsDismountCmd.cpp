@@ -23,7 +23,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsDismountCmd::AcsDismountCmd(
+cta::mediachanger::acs::AcsDismountCmd::AcsDismountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs) {
@@ -32,14 +32,14 @@ cta::acs::AcsDismountCmd::AcsDismountCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsDismountCmd::~AcsDismountCmd() throw() {
+cta::mediachanger::acs::AcsDismountCmd::~AcsDismountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int cta::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
+int cta::mediachanger::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
   try {
     m_cmdLine = AcsDismountCmdLine(argc, argv);
@@ -74,7 +74,7 @@ int cta::acs::AcsDismountCmd::exceptionThrowingMain(const int argc,
 //------------------------------------------------------------------------------
 // syncDismount
 //------------------------------------------------------------------------------
-void cta::acs::AcsDismountCmd::syncDismount() {
+void cta::mediachanger::acs::AcsDismountCmd::syncDismount() {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -94,7 +94,7 @@ void cta::acs::AcsDismountCmd::syncDismount() {
 //------------------------------------------------------------------------------
 // sendDismountRequest
 //------------------------------------------------------------------------------
-void cta::acs::AcsDismountCmd::sendDismountRequest(
+void cta::mediachanger::acs::AcsDismountCmd::sendDismountRequest(
   const SEQ_NO seqNumber) {
   const LOCKID lockId = 0; // No lock
 
@@ -115,7 +115,7 @@ void cta::acs::AcsDismountCmd::sendDismountRequest(
 //------------------------------------------------------------------------------
 // processDismountResponse
 //------------------------------------------------------------------------------
-void cta::acs::AcsDismountCmd::processDismountResponse(
+void cta::mediachanger::acs::AcsDismountCmd::processDismountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) {
   const ACS_DISMOUNT_RESPONSE *const msg = (ACS_DISMOUNT_RESPONSE *)buf;
 

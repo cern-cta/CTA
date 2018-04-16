@@ -25,6 +25,7 @@
 #include <string>
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -89,4 +90,5 @@ protected:
 }; // class CmdLineTool
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta

@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
+cta::mediachanger::acs::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs) {
@@ -36,14 +36,14 @@ cta::acs::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
+cta::mediachanger::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int cta::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
+int cta::mediachanger::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
   char *const *const argv) {
   try {
     m_cmdLine = AcsQueryVolumeCmdLine(argc, argv);
@@ -75,7 +75,7 @@ int cta::acs::AcsQueryVolumeCmd::exceptionThrowingMain(const int argc,
 //------------------------------------------------------------------------------
 // syncQueryVolume
 //------------------------------------------------------------------------------
-void cta::acs::AcsQueryVolumeCmd::syncQueryVolume() {
+void cta::mediachanger::acs::AcsQueryVolumeCmd::syncQueryVolume() {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -95,7 +95,7 @@ void cta::acs::AcsQueryVolumeCmd::syncQueryVolume() {
 //------------------------------------------------------------------------------
 // sendQueryVolumeRequest
 //------------------------------------------------------------------------------
-void cta::acs::AcsQueryVolumeCmd::sendQueryVolumeRequest(
+void cta::mediachanger::acs::AcsQueryVolumeCmd::sendQueryVolumeRequest(
   const SEQ_NO seqNumber)  {
   VOLID volIds[MAX_ID];
 
@@ -119,7 +119,7 @@ void cta::acs::AcsQueryVolumeCmd::sendQueryVolumeRequest(
 //------------------------------------------------------------------------------
 // processQueryResponse
 //------------------------------------------------------------------------------
-void cta::acs::AcsQueryVolumeCmd::processQueryResponse(
+void cta::mediachanger::acs::AcsQueryVolumeCmd::processQueryResponse(
   std::ostream &os,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) {
 
@@ -157,7 +157,7 @@ void cta::acs::AcsQueryVolumeCmd::processQueryResponse(
 //------------------------------------------------------------------------------
 // writeVolumeStatus
 //------------------------------------------------------------------------------
-void cta::acs::AcsQueryVolumeCmd::writeVolumeStatus(
+void cta::mediachanger::acs::AcsQueryVolumeCmd::writeVolumeStatus(
   std::ostream &os, const QU_VOL_STATUS &s) throw() {
   os << "Volume identifier: " << s.vol_id.external_label << std::endl;
   os << "Media type (media_types.dat): " << (int)s.media_type << std::endl;
