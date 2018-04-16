@@ -50,7 +50,11 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_log(log),
   m_connPool(login, nbConns),
   m_archiveFileListingConnPool(login, nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect) {
+  m_maxTriesToConnect(maxTriesToConnect),
+  m_tapeCopyToPoolCache(10),
+  m_groupMountPolicyCache(10),
+  m_userMountPolicyCache(10),
+  m_expectedNbArchiveRoutesCache(10) {
 }
 
 //------------------------------------------------------------------------------
@@ -3039,28 +3043,8 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
   const Group &group) const {
-  const time_t maxAgeSecs = 10;
-  const time_t now = time(nullptr);
-
-  std::lock_guard<std::mutex> cacheLock(m_groupMountPolicyCacheMutex);
-  const auto cacheItor = m_groupMountPolicyCache.find(group);
-  const bool cacheHit = m_groupMountPolicyCache.end() != cacheItor;
-
-  if(cacheHit) {
-    const auto &cachedValue = cacheItor->second;
-    const time_t ageSecs = now - cachedValue.timestamp;
-    if (maxAgeSecs >= ageSecs) {
-      return cachedValue.mountPolicy;
-    } else {
-      const auto &newValue = TimestampedMountPolicy(now, getRequesterGroupMountPolicy(conn, group));
-      m_groupMountPolicyCache[group] = newValue;
-      return newValue.mountPolicy;
-    }
-  } else { // No cache hit
-    const auto &newValue = TimestampedMountPolicy(now, getRequesterGroupMountPolicy(conn, group));
-    m_groupMountPolicyCache[group] = newValue;
-    return newValue.mountPolicy;
-  }
+  auto getNonCachedValue = [&] {return getRequesterGroupMountPolicy(conn, group);};
+  return m_groupMountPolicyCache.getCachedValue(group, getNonCachedValue);
 }
 
 //------------------------------------------------------------------------------
@@ -3268,28 +3252,8 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 //------------------------------------------------------------------------------
 optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(rdbms::Conn &conn,
   const User &user) const {
-  const time_t maxAgeSecs = 10;
-  const time_t now = time(nullptr);
-
-  std::lock_guard<std::mutex> cacheLock(m_userMountPolicyCacheMutex);
-  const auto cacheItor = m_userMountPolicyCache.find(user);
-  const bool cacheHit = m_userMountPolicyCache.end() != cacheItor;
-
-  if(cacheHit) {
-    const auto &cachedValue = cacheItor->second;
-    const time_t ageSecs = now - cachedValue.timestamp;
-    if (maxAgeSecs >= ageSecs) {
-      return cachedValue.mountPolicy;
-    } else {
-      const auto &newValue = TimestampedMountPolicy(now, getRequesterMountPolicy(conn, user));
-      m_userMountPolicyCache[user] = newValue;
-      return newValue.mountPolicy;
-    }
-  } else { // No cache hit
-    const auto &newValue = TimestampedMountPolicy(now, getRequesterMountPolicy(conn, user));
-    m_userMountPolicyCache[user] = newValue;
-    return newValue.mountPolicy;
-  }
+  auto getNonCachedValue = [&] {return getRequesterMountPolicy(conn, user);};
+  return m_userMountPolicyCache.getCachedValue(user, getNonCachedValue);
 }
 
 //------------------------------------------------------------------------------
@@ -4155,28 +4119,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
   const StorageClass &storageClass) const {
-  const time_t maxAgeSecs = 10;
-  const time_t now = time(nullptr);
-
-  std::lock_guard<std::mutex> cacheLock(m_tapeCopyToTapePoolCacheMutex);
-  const auto cacheItor = m_tapeCopyToPoolCache.find(storageClass);
-  const bool cacheHit = m_tapeCopyToPoolCache.end() != cacheItor;
-
-  if(cacheHit) {
-    const auto &cachedValue = cacheItor->second;
-    const time_t ageSecs = now - cachedValue.timestamp;
-    if (maxAgeSecs >= ageSecs) {
-      return cachedValue.tapeCopyToPoolMap;
-    } else {
-      const auto &newValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
-      m_tapeCopyToPoolCache[storageClass] = newValue;
-      return newValue.tapeCopyToPoolMap;
-    }
-  } else { // No cache hit
-    const auto &newValue = TimestampedTapeCopyToPoolMap(now, getTapeCopyToPoolMap(conn, storageClass));
-    m_tapeCopyToPoolCache[storageClass] = newValue;
-    return newValue.tapeCopyToPoolMap;
-  }
+  auto getNonCachedValue = [&] {return getTapeCopyToPoolMap(conn, storageClass);};
+  return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
 }
 
 //------------------------------------------------------------------------------
@@ -4217,29 +4161,10 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 // getCachedExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
 uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const {
-  const time_t maxAgeSecs = 10;
-  const time_t now = time(nullptr);
-
-  std::lock_guard<std::mutex> cacheLock(m_expectedNbArchiveRoutesCacheMutex);
-  const auto cacheItor = m_expectedNbArchiveRoutesCache.find(storageClass);
-  const bool cacheHit = m_expectedNbArchiveRoutesCache.end() != cacheItor;
-
-  if(cacheHit) {
-    const auto &cachedValue = cacheItor->second;
-    const time_t ageSecs = now - cachedValue.timestamp;
-    if (maxAgeSecs >= ageSecs) {
-      return cachedValue.expectedNbArchiveRoutes;
-    } else {
-      const auto &newValue = TimestampedExpectedNbArchiveRoutes(now, getExpectedNbArchiveRoutes(conn, storageClass));
-      m_expectedNbArchiveRoutesCache[storageClass] = newValue;
-      return newValue.expectedNbArchiveRoutes;
-    }
-  } else { // No cache hit
-    const auto &newValue = TimestampedExpectedNbArchiveRoutes(now, getExpectedNbArchiveRoutes(conn, storageClass));
-    m_expectedNbArchiveRoutesCache[storageClass] = newValue;
-    return newValue.expectedNbArchiveRoutes;
-  }
+  auto getNonCachedValue = [&] {return getExpectedNbArchiveRoutes(conn, storageClass);};
+  return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
 }
+
 
 //------------------------------------------------------------------------------
 // getExpectedNbArchiveRoutes
