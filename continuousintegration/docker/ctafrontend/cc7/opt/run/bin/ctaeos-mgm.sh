@@ -197,9 +197,9 @@ fi
   # enable eos workflow engine
   eos space config default space.wfe=on
   # set the thread-pool size of concurrently running workflows
-  #eos space config default space.wfe.ntx=10
+  eos space config default space.wfe.ntx=10
   # set interval in which the WFE engine is running
-  #eos space config default space.wfe.interval=1
+  eos space config default space.wfe.interval=1
 
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
