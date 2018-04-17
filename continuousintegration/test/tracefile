@@ -28,19 +28,19 @@ get_mgm_times()
 
 get_cta_time()
 {
-  awk -vPATTERN="$1" '
+  awk -vPATTERN="$*" '
     $0 ~ PATTERN {
        gsub("^Apr ", "1804")
-       gsub("catalogueTime=\"", "")
-       gsub("\"$", "")
-       print $1 " " $2 " " $NF
+       #gsub("catalogueTime=\"", "")
+       #gsub("\"$", "")
+       #print $1 " " $2 " " $NF
+       print $1 " " $2
+       exit
   }'
 }
 
 get_frontend_times()
 {
-  #TIME_FE_CREATE=$(cat cta-frontend-processWFE.log | get_cta_time diskFileId=\"$1\")
-
   TMP_RESULT=$(grep "fileId=\"$2\"" cta-frontend-processWFE.log)
 
   TIME_FE_CREATE=$(echo -e "${TMP_RESULT}" | get_cta_time CREATE)
@@ -50,25 +50,21 @@ get_frontend_times()
 
 get_taped_times()
 {
-echo ""
-#  TMP_RESULT=$(grep "fileId=\"$1\"" cta-taped-fileId.log)
+  TMP_RESULT=$(grep "fileId=\"$1\"" cta-taped-events.log)
 
-#  echo -e "${TMP_RESULT}"
-
-#2000139 Created tasks for migrating a file
-#1000154 Created tasks for recalling a file
-#2000173 File successfully read from disk
-#1000068 File successfully read from tape
-#1000082 File successfully transfered to disk
-#2000189 File successfully transmitted to drive
-#2000248 In ArchiveMount::getNextJobBatch(): popped one job
-#1000144 In RetrieveMount::getNextJobBatch(): popped one job
-#2000181 Opened disk file for read
-#1000081 Opened disk file for writing
-#1000148 Recall task created
-#1000136 Reported to the client a full file archival
-#1000057 Successfully positioned for reading
-
+  TIME_TS_ARCHIVE_POP=$(echo -e "${TMP_RESULT}" | get_cta_time "In ArchiveMount::getNextJobBatch")
+  TIME_TS_ARCHIVE_TASKS=$(echo -e "${TMP_RESULT}" | get_cta_time "Created tasks for migrating a file")
+  TIME_TS_ARCHIVE_OPEN=$(echo -e "${TMP_RESULT}" | get_cta_time "Opened disk file for read")
+  TIME_TS_ARCHIVE_READ=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully read from disk")
+  TIME_TS_ARCHIVE_DONE=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully transmitted to drive")
+  TIME_TS_ARCHIVE_REPORT=$(echo -e "${TMP_RESULT}" | get_cta_time "Reported to the client a full file archival")
+  TIME_TS_RETRIEVE_POP=$(echo -e "${TMP_RESULT}" | get_cta_time "In RetrieveMount::getNextJobBatch")
+  TIME_TS_RETRIEVE_TASK=$(echo -e "${TMP_RESULT}" | get_cta_time "Recall task created")
+  TIME_TS_RETRIEVE_TASKS=$(echo -e "${TMP_RESULT}" | get_cta_time "Created tasks for recalling a file")
+  TIME_TS_RETRIEVE_POSITION=$(echo -e "${TMP_RESULT}" | get_cta_time "Successfully positioned for reading")
+  TIME_TS_RETRIEVE_READ=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully read from tape")
+  TIME_TS_RETRIEVE_OPEN=$(echo -e "${TMP_RESULT}" | get_cta_time "Opened disk file for writing")
+  TIME_TS_RETRIEVE_DONE=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully transfered to disk")
 }
 
 get_times()
@@ -79,14 +75,27 @@ get_times()
   get_taped_times $ARCHIVE_ID
 
   echo fileId=$FILE_ID archiveID=$ARCHIVE_ID
-  echo $TIME_CREATE
-  echo $TIME_FE_CREATE
-  echo $TIME_CLOSEW
-  echo $TIME_FE_CLOSEW
-  echo $TIME_ARCHIVED
-  echo $TIME_PREPARE
-  echo $TIME_FE_PREPARE
-  echo $TIME_RETRIEVED
+  echo create $TIME_CREATE
+  echo fe_create $TIME_FE_CREATE
+  echo closew $TIME_CLOSEW
+  echo fe_closew $TIME_FE_CLOSEW
+  echo pop $TIME_TS_ARCHIVE_POP
+  echo tasks $TIME_TS_ARCHIVE_TASKS
+  echo open $TIME_TS_ARCHIVE_OPEN
+  echo read $TIME_TS_ARCHIVE_READ
+  echo done $TIME_TS_ARCHIVE_DONE
+  echo report $TIME_TS_ARCHIVE_REPORT
+  echo archived $TIME_ARCHIVED
+  echo prepare $TIME_PREPARE
+  echo fe_prepare $TIME_FE_PREPARE
+  echo pop $TIME_TS_RETRIEVE_POP
+  echo task $TIME_TS_RETRIEVE_TASK
+  echo tasks $TIME_TS_RETRIEVE_TASKS
+  echo position $TIME_TS_RETRIEVE_POSITION
+  echo read $TIME_TS_RETRIEVE_READ
+  echo open $TIME_TS_RETRIEVE_OPEN
+  echo done $TIME_TS_RETRIEVE_DONE
+  echo retrieved $TIME_RETRIEVED
 }
 
 get_times /eos/dev/userfiles/testdir/group_1
