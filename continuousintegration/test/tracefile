@@ -1,29 +1,26 @@
 #!/bin/sh
 
+TMP_FILE=/tmp/tracefile.$$
+
 get_ids()
 {
-  IDS=$(grep -1 "^$1 " filenameToLogIds.txt)
-  FILE_ID=$(echo $IDS | awk '{ print $2 }')
-  ARCHIVE_ID=$(echo $IDS | awk '{ print $3 }')
+  IDS=$(grep -m1 "^$1 " filenameToLogIds.txt)
+  FILE_ID=$(echo $IDS | cut -d' ' -f2)
+  ARCHIVE_ID=$(echo $IDS | cut -d' ' -f3)
 }
 
 get_mgm_time()
 {
-  MGM_TIME=$(grep " $1 " xrdlog.mgm.${2}.${3} | sed 's/ func=DoIt.*$//' | sed 's/time=//')
+  grep -m1 " $1 " xrdlog.mgm.${2}.${3} | sed 's/ func=DoIt.*$//' | sed 's/time=//'
 }
 
 get_mgm_times()
 {
-  get_mgm_time $1 default ARCHIVED
-  TIME_ARCHIVED=$MGM_TIME
-  get_mgm_time $1 default CLOSEW
-  TIME_CLOSEW=$MGM_TIME
-  get_mgm_time $1 default SYNC::CREATE
-  TIME_CREATE=$MGM_TIME
-  get_mgm_time $1 default SYNC::PREPARE
-  TIME_PREPARE=$MGM_TIME
-  get_mgm_time $1 retrieve_written CLOSEW
-  TIME_RETRIEVED=$MGM_TIME
+  TIME_ARCHIVED=$(get_mgm_time $1 default ARCHIVED)
+  TIME_CLOSEW=$(get_mgm_time $1 default CLOSEW)
+  TIME_CREATE=$(get_mgm_time $1 default SYNC::CREATE)
+  TIME_PREPARE=$(get_mgm_time $1 default SYNC::PREPARE)
+  TIME_RETRIEVED=$(get_mgm_time $1 retrieve_written CLOSEW)
 }
 
 get_cta_time()
@@ -31,40 +28,38 @@ get_cta_time()
   awk -vPATTERN="$*" '
     $0 ~ PATTERN {
        gsub("^Apr ", "1804")
-       #gsub("catalogueTime=\"", "")
-       #gsub("\"$", "")
-       #print $1 " " $2 " " $NF
        print $1 " " $2
-       exit
-  }'
+       #exit
+  }' ${TMP_FILE}
 }
 
 get_frontend_times()
 {
-  TMP_RESULT=$(grep "fileId=\"$2\"" cta-frontend-processWFE.log)
+  grep "fileId=\"$1\"" cta-frontend-processWFE.log >${TMP_FILE}
 
-  TIME_FE_CREATE=$(echo -e "${TMP_RESULT}" | get_cta_time CREATE)
-  TIME_FE_CLOSEW=$(echo -e "${TMP_RESULT}" | get_cta_time CLOSEW)
-  TIME_FE_PREPARE=$(echo -e "${TMP_RESULT}" | get_cta_time PREPARE)
+  TIME_FE_CREATE=$(get_cta_time CREATE)
+  TIME_FE_CLOSEW=$(get_cta_time CLOSEW)
+  TIME_FE_PREPARE=$(get_cta_time PREPARE)
 }
 
 get_taped_times()
 {
-  TMP_RESULT=$(grep "fileId=\"$1\"" cta-taped-events.log)
+  grep -m 11 "fileId=\"$1\"" cta-taped-archive.log >${TMP_FILE}
+  TIME_TS_ARCHIVE_POP=$(get_cta_time "In ArchiveMount::getNextJobBatch")
+  TIME_TS_ARCHIVE_TASKS=$(get_cta_time "Created tasks for migrating a file")
+  TIME_TS_ARCHIVE_OPEN=$(get_cta_time "Opened disk file for read")
+  TIME_TS_ARCHIVE_READ=$(get_cta_time "File successfully read from disk")
+  TIME_TS_ARCHIVE_DONE=$(get_cta_time "File successfully transmitted to drive")
+  TIME_TS_ARCHIVE_REPORT=$(get_cta_time "Reported to the client a full file archival")
 
-  TIME_TS_ARCHIVE_POP=$(echo -e "${TMP_RESULT}" | get_cta_time "In ArchiveMount::getNextJobBatch")
-  TIME_TS_ARCHIVE_TASKS=$(echo -e "${TMP_RESULT}" | get_cta_time "Created tasks for migrating a file")
-  TIME_TS_ARCHIVE_OPEN=$(echo -e "${TMP_RESULT}" | get_cta_time "Opened disk file for read")
-  TIME_TS_ARCHIVE_READ=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully read from disk")
-  TIME_TS_ARCHIVE_DONE=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully transmitted to drive")
-  TIME_TS_ARCHIVE_REPORT=$(echo -e "${TMP_RESULT}" | get_cta_time "Reported to the client a full file archival")
-  TIME_TS_RETRIEVE_POP=$(echo -e "${TMP_RESULT}" | get_cta_time "In RetrieveMount::getNextJobBatch")
-  TIME_TS_RETRIEVE_TASK=$(echo -e "${TMP_RESULT}" | get_cta_time "Recall task created")
-  TIME_TS_RETRIEVE_TASKS=$(echo -e "${TMP_RESULT}" | get_cta_time "Created tasks for recalling a file")
-  TIME_TS_RETRIEVE_POSITION=$(echo -e "${TMP_RESULT}" | get_cta_time "Successfully positioned for reading")
-  TIME_TS_RETRIEVE_READ=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully read from tape")
-  TIME_TS_RETRIEVE_OPEN=$(echo -e "${TMP_RESULT}" | get_cta_time "Opened disk file for writing")
-  TIME_TS_RETRIEVE_DONE=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully transfered to disk")
+  grep -m 7 "fileId=\"$1\"" cta-taped-retrieve.log >${TMP_FILE}
+  TIME_TS_RETRIEVE_POP=$(get_cta_time "In RetrieveMount::getNextJobBatch")
+  TIME_TS_RETRIEVE_TASK=$(get_cta_time "Recall task created")
+  TIME_TS_RETRIEVE_TASKS=$(get_cta_time "Created tasks for recalling a file")
+  TIME_TS_RETRIEVE_POSITION=$(get_cta_time "Successfully positioned for reading")
+  TIME_TS_RETRIEVE_READ=$(get_cta_time "File successfully read from tape")
+  TIME_TS_RETRIEVE_OPEN=$(get_cta_time "Opened disk file for writing")
+  TIME_TS_RETRIEVE_DONE=$(get_cta_time "File successfully transfered to disk")
 }
 
 get_time()
@@ -81,7 +76,7 @@ get_times()
 {
   get_ids $1
   get_mgm_times $1
-  get_frontend_times $FILE_ID $ARCHIVE_ID
+  get_frontend_times $ARCHIVE_ID
   get_taped_times $ARCHIVE_ID
 
   echo -n "$ARCHIVE_ID $FILE_ID "
@@ -110,7 +105,7 @@ get_times()
   echo    "$(get_time $ABS_TIME_START $TIME_RETRIEVED);"
 }
 
-FILE_NUM=999999
+FILE_NUM=1
 
 echo "cta_times = ["
 
@@ -123,3 +118,4 @@ done
 
 echo "];"
 
+rm -f ${TMP_FILE}
