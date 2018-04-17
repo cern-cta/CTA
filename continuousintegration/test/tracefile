@@ -1,0 +1,93 @@
+#!/bin/sh
+
+get_ids()
+{
+  IDS=$(grep -1 "^$1 " filenameToLogIds.txt)
+  FILE_ID=$(echo $IDS | awk '{ print $2 }')
+  ARCHIVE_ID=$(echo $IDS | awk '{ print $3 }')
+}
+
+get_mgm_time()
+{
+  MGM_TIME=$(grep " $1 " xrdlog.mgm.${2}.${3} | sed 's/ func=DoIt.*$//' | sed 's/time=//')
+}
+
+get_mgm_times()
+{
+  get_mgm_time $1 default ARCHIVED
+  TIME_ARCHIVED=$MGM_TIME
+  get_mgm_time $1 default CLOSEW
+  TIME_CLOSEW=$MGM_TIME
+  get_mgm_time $1 default SYNC::CREATE
+  TIME_CREATE=$MGM_TIME
+  get_mgm_time $1 default SYNC::PREPARE
+  TIME_PREPARE=$MGM_TIME
+  get_mgm_time $1 retrieve_written CLOSEW
+  TIME_RETRIEVED=$MGM_TIME
+}
+
+get_cta_time()
+{
+  awk -vPATTERN="$1" '
+    $0 ~ PATTERN {
+       gsub("^Apr ", "1804")
+       gsub("catalogueTime=\"", "")
+       gsub("\"$", "")
+       print $1 " " $2 " " $NF
+  }'
+}
+
+get_frontend_times()
+{
+  #TIME_FE_CREATE=$(cat cta-frontend-processWFE.log | get_cta_time diskFileId=\"$1\")
+
+  TMP_RESULT=$(grep "fileId=\"$2\"" cta-frontend-processWFE.log)
+
+  TIME_FE_CREATE=$(echo -e "${TMP_RESULT}" | get_cta_time CREATE)
+  TIME_FE_CLOSEW=$(echo -e "${TMP_RESULT}" | get_cta_time CLOSEW)
+  TIME_FE_PREPARE=$(echo -e "${TMP_RESULT}" | get_cta_time PREPARE)
+}
+
+get_taped_times()
+{
+echo ""
+#  TMP_RESULT=$(grep "fileId=\"$1\"" cta-taped-fileId.log)
+
+#  echo -e "${TMP_RESULT}"
+
+#2000139 Created tasks for migrating a file
+#1000154 Created tasks for recalling a file
+#2000173 File successfully read from disk
+#1000068 File successfully read from tape
+#1000082 File successfully transfered to disk
+#2000189 File successfully transmitted to drive
+#2000248 In ArchiveMount::getNextJobBatch(): popped one job
+#1000144 In RetrieveMount::getNextJobBatch(): popped one job
+#2000181 Opened disk file for read
+#1000081 Opened disk file for writing
+#1000148 Recall task created
+#1000136 Reported to the client a full file archival
+#1000057 Successfully positioned for reading
+
+}
+
+get_times()
+{
+  get_ids $1
+  get_mgm_times $1
+  get_frontend_times $FILE_ID $ARCHIVE_ID
+  get_taped_times $ARCHIVE_ID
+
+  echo fileId=$FILE_ID archiveID=$ARCHIVE_ID
+  echo $TIME_CREATE
+  echo $TIME_FE_CREATE
+  echo $TIME_CLOSEW
+  echo $TIME_FE_CLOSEW
+  echo $TIME_ARCHIVED
+  echo $TIME_PREPARE
+  echo $TIME_FE_PREPARE
+  echo $TIME_RETRIEVED
+}
+
+get_times /eos/dev/userfiles/testdir/group_1
+get_times /eos/dev/userfiles/testdir/group_1000000
