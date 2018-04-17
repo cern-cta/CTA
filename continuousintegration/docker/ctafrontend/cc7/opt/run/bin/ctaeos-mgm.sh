@@ -194,8 +194,7 @@ fi
 
 # test EOS
 # eos slow behind us and we need to give it time to be ready
-# 5 secs is not enough
-  sleep 20
+  sleep 5
   eos -b node ls
   xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
 
