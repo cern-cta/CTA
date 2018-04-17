@@ -67,6 +67,16 @@ get_taped_times()
   TIME_TS_RETRIEVE_DONE=$(echo -e "${TMP_RESULT}" | get_cta_time "File successfully transfered to disk")
 }
 
+get_time()
+{
+  OFFSET_SECS=$1
+  ABS_DAYS=$((${2}-180413))
+  ABS_HOURS=$(echo $3 | cut -d: -f1)
+  ABS_MINS=$(echo $3 | cut -d: -f2)
+  ABS_SECS=$(echo $3 | cut -d: -f3)
+  echo $((((${ABS_DAYS}*24 + ${ABS_HOURS})*60 + ${ABS_MINS})*60 + ${ABS_SECS}))
+}
+
 get_times()
 {
   get_ids $1
@@ -74,29 +84,42 @@ get_times()
   get_frontend_times $FILE_ID $ARCHIVE_ID
   get_taped_times $ARCHIVE_ID
 
-  echo fileId=$FILE_ID archiveID=$ARCHIVE_ID
-  echo create $TIME_CREATE
-  echo fe_create $TIME_FE_CREATE
-  echo closew $TIME_CLOSEW
-  echo fe_closew $TIME_FE_CLOSEW
-  echo pop $TIME_TS_ARCHIVE_POP
-  echo tasks $TIME_TS_ARCHIVE_TASKS
-  echo open $TIME_TS_ARCHIVE_OPEN
-  echo read $TIME_TS_ARCHIVE_READ
-  echo done $TIME_TS_ARCHIVE_DONE
-  echo report $TIME_TS_ARCHIVE_REPORT
-  echo archived $TIME_ARCHIVED
-  echo prepare $TIME_PREPARE
-  echo fe_prepare $TIME_FE_PREPARE
-  echo pop $TIME_TS_RETRIEVE_POP
-  echo task $TIME_TS_RETRIEVE_TASK
-  echo tasks $TIME_TS_RETRIEVE_TASKS
-  echo position $TIME_TS_RETRIEVE_POSITION
-  echo read $TIME_TS_RETRIEVE_READ
-  echo open $TIME_TS_RETRIEVE_OPEN
-  echo done $TIME_TS_RETRIEVE_DONE
-  echo retrieved $TIME_RETRIEVED
+  echo -n "$ARCHIVE_ID $FILE_ID "
+
+  ABS_TIME_START=$(get_time 0 $TIME_CREATE)
+  echo -n "$(get_time $ABS_TIME_START $TIME_FE_CREATE) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_CLOSEW) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_FE_CLOSEW) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_POP) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_TASKS) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_OPEN) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_READ) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_DONE) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_REPORT) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_ARCHIVED) "
+
+  ABS_TIME_START=$(get_time 0 $TIME_PREPARE)
+  echo -n "$(get_time $ABS_TIME_START $TIME_FE_PREPARE) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_POP) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASK) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASKS) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_POSITION) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_READ) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_OPEN) "
+  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_DONE) "
+  echo    "$(get_time $ABS_TIME_START $TIME_RETRIEVED);"
 }
 
-get_times /eos/dev/userfiles/testdir/group_1
-get_times /eos/dev/userfiles/testdir/group_1000000
+FILE_NUM=999999
+
+echo "cta_times = ["
+
+while :
+do
+  get_times /eos/dev/userfiles/testdir/group_${FILE_NUM}
+  FILE_NUM=$((${FILE_NUM}+1))
+  [ $FILE_NUM -le 1000000 ] || break
+done
+
+echo "];"
+
