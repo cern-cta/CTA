@@ -97,7 +97,7 @@ static int exceptionThrowingMain(cta::log::Logger &log, const int argc, char **c
     config);
 
   // Run the acsd daemon
-  //return daemon.main();
+  return daemon.main();
 
 return 0;
 }

@@ -32,6 +32,7 @@
 #include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
+#include <getopt.h>
 
 namespace cta {   
 namespace mediachanger {   
@@ -202,6 +203,14 @@ protected:
    * The object to handle requests to the CASTOR ACS daemon.
    */
   AcsPendingRequests m_acsPendingRequests;
+
+private:
+ 
+  /**
+   * Flag indicating whether the server should run in foreground or background
+   * mode.
+   */
+  bool m_foreground;
 
 }; // class AcsDaemon
 

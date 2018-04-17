@@ -32,7 +32,6 @@
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/threading/Daemon.hpp"
-#include "mediachanger/acs/AcsQueryVolumeCmdLine.hpp"
 #include <memory>
 #include <signal.h>
 #include <unistd.h>
@@ -62,9 +61,11 @@ AcsDaemon::AcsDaemon(
   m_config(config),
   m_acsPendingRequests(config) {
 }
+
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
+
 std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
@@ -128,7 +129,6 @@ int AcsDaemon::main() throw() {
 
   return 0;
 }
-
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
@@ -138,23 +138,53 @@ void AcsDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   ////parseCommandLine(argc, argv);
   
-/*static struct option longopts[] = {
-    {"debug"    , 0, NULL, 'd'},
-    {"help"     , 0, NULL, 'h'},
-    {"readonly" , 0, NULL, 'r'},
-    {NULL       , 0, NULL, 0}
+  bool foreground = false;                  ///< Prevents daemonisation
+  std::string configFileLocation = "/etc/cta/cta-acsd.conf";   ///< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
+  bool helpRequested = false;               ///< Help requested: will print out help and exit.
+ // bool logToStdout =false;
+  static struct option longopts[] = {
+    // { .name, .has_args, .flag, .val } (see getopt.h))
+    { "foreground", no_argument, NULL, 'f' },
+    { "config", required_argument, NULL, 'c' },
+    { "help", no_argument, NULL, 'h' },
+    { NULL, 0, NULL, '\0' }
   };
 
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
-  opterr = 0;
-
-  int opt = 0;
-  while((opt = getopt_long(argc, argv, ":dhr", longopts, NULL)) != -1) {
-   cta::mediachanger::acs::AcsQueryVolumeCmdLine:: processOption(opt);
+  char c;
+  // Reset getopt's global variables to make sure we start fresh
+  optind=0;
+  // Prevent getopt from printing out errors on stdout
+  opterr=0;
+  // We ask getopt to not reshuffle argv ('+')
+  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, NULL)) != -1) {
+     m_log(LOG_INFO, "Usage: [options]\n");
+    switch (c) {
+    case 'f':
+      foreground = true;
+      m_foreground = foreground;
+      break;
+    case 'c':
+      configFileLocation = optarg;
+      break;
+    case 'h':
+      helpRequested = true;
+    std::cout<<"Usage: "<<m_programName<<" [options]\n"
+    "where options can be:\n"
+    "--foreground            or -f         Remain in the Foreground\n"
+    "--config <config-file>  or -c         Configuration file\n"
+    "--help                  or -h         Print this help and exit\n";
+      break;
+    default:
+      break;
+    }
   }
-*/
 
+  //Convert the command line into set of parameters for logging.
+  std::list<cta::log::Param> ret;
+  ret.push_back({"foreground", foreground});
+  ret.push_back({"configFileLocation", configFileLocation});
+  ret.push_back({"helpRequested", helpRequested});
+ 
  const std::string runAsStagerSuperuser = "ACSD";
  const std::string runAsStagerSupergroup = "CTA";
  daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
@@ -394,36 +424,5 @@ bool AcsDaemon::handlePendingSignals() throw() {
   return continueMainEventLoop;
 }
 **/
-//------------------------------------------------------------------------------
-// processOption
-//------------------------------------------------------------------------------
-/*void AcsDaemon::processOption(const int opt) {
-  switch(opt) {
-  case 'd':
-    debug = true;
-    break;
-  case 'h':
-    help = true;
-    break;
-  case 'q':
-    queryInterval = parseQueryInterval(optarg);
-    break;
-  case 't':
-    timeout = parseTimeout(optarg);
-    break;
-  case ':':
-    return handleMissingParameter(optopt);
-  case '?':
-    return handleUnknownOption(optopt);
-  default:
-    {
-      cta::exception::Exception ex;
-      ex.getMessage() <<
-        "getopt_long returned the following unknown value: 0x" <<
-        std::hex << (int)opt;
-      throw ex;
-    }
-  } // switch(opt)
-}
-*/
+
 }}}}
