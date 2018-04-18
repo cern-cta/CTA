@@ -3041,9 +3041,12 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getCachedRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
-  const Group &group) const {
-  auto getNonCachedValue = [&] {return getRequesterGroupMountPolicy(conn, group);};
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
+  const {
+  auto getNonCachedValue = [&] {
+    auto conn = m_connPool.getConn();
+    return getRequesterGroupMountPolicy(conn, group);
+  };
   return m_groupMountPolicyCache.getCachedValue(group, getNonCachedValue);
 }
 
@@ -3250,9 +3253,11 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 //------------------------------------------------------------------------------
 // getCachedRequesterMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(rdbms::Conn &conn,
-  const User &user) const {
-  auto getNonCachedValue = [&] {return getRequesterMountPolicy(conn, user);};
+optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
+  auto getNonCachedValue = [&] {
+    auto conn = m_connPool.getConn();
+    return getRequesterMountPolicy(conn, user);
+  };
   return m_userMountPolicyCache.getCachedValue(user, getNonCachedValue);
 }
 
@@ -4017,10 +4022,9 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
 uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
-    auto conn = m_connPool.getConn();
     const auto storageClass = StorageClass(diskInstanceName, storageClassName);
-    const auto copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
-    const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
+    const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
+    const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -4036,10 +4040,10 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
-    auto mountPolicy = getCachedRequesterMountPolicy(conn, User(diskInstanceName, user.name));
+    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
     // Only consider the requester's group if there is no user mount policy
     if(!mountPolicy) {
-      const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(conn, Group(diskInstanceName, user.group));
+      const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
 
       if(!groupMountPolicy) {
         exception::UserError ue;
@@ -4052,7 +4056,10 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
 
     // Now that we have found both the archive routes and the mount policy it's
     // safe to consume an archive file identifier
-    return getNextArchiveFileId(conn);
+    {
+      auto conn = m_connPool.getConn();
+      return getNextArchiveFileId(conn);
+    }
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &ue) {
@@ -4070,9 +4077,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
   const std::string &storageClassName, const common::dataStructures::UserIdentity &user) {
   try {
     const StorageClass storageClass = StorageClass(diskInstanceName, storageClassName);
-    auto conn = m_connPool.getConn();
-    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(conn, storageClass);
-    const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(conn, storageClass);
+    const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass);
+    const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass);
 
     // Check that the number of archive routes is correct
     if(copyToPoolMap.empty()) {
@@ -4088,6 +4094,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
       throw ue;
     }
 
+    // TO DO
+    auto conn = m_connPool.getConn();
     const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
       user.group);
     // Requester mount policies overrule requester group mount policies
@@ -4117,9 +4125,12 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 //------------------------------------------------------------------------------
 // getCachedTapeCopyToPoolMap
 //------------------------------------------------------------------------------
-common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
-  const StorageClass &storageClass) const {
-  auto getNonCachedValue = [&] {return getTapeCopyToPoolMap(conn, storageClass);};
+common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(const StorageClass &storageClass)
+  const {
+  auto getNonCachedValue = [&] {
+    auto conn = m_connPool.getConn();
+    return getTapeCopyToPoolMap(conn, storageClass);
+  };
   return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
 }
 
@@ -4160,8 +4171,11 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 //------------------------------------------------------------------------------
 // getCachedExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
-uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const {
-  auto getNonCachedValue = [&] {return getExpectedNbArchiveRoutes(conn, storageClass);};
+uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(const StorageClass &storageClass) const {
+  auto getNonCachedValue = [&] {
+    auto conn = m_connPool.getConn();
+    return getExpectedNbArchiveRoutes(conn, storageClass);
+  };
   return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
 }
 

@@ -806,13 +806,11 @@ protected:
    * Returns a cached version of the specified requester mount-policy or nullopt
    * if one does not exist.
    *
-   * @param conn The database connection.
    * @param user The fully qualified user, in other words the name of the disk
    * instance and the name of the group.
    * @return The mount policy or nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterMountPolicy(rdbms::Conn &conn, const User &user)
-    const;
+  optional<common::dataStructures::MountPolicy> getCachedRequesterMountPolicy(const User &user) const;
 
   /**
    * Returns the specified requester mount-policy or nullopt if one does not
@@ -882,13 +880,11 @@ protected:
    *
    * This method updates the cache when necessary.
    *
-   * @param conn The database connection.
    * @param group The fully qualified group, in other words the name of the disk
    * instance and the name of the group.
    * @return The cached mount policy or nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(rdbms::Conn &conn,
-    const Group &group) const;
+  optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(const Group &group) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does
@@ -998,12 +994,11 @@ protected:
    *
    * This method updates the cache when necessary.
    *
-   * @param conn The database connection.
    * @param storageClass The fully qualified storage class, in other words the
    * name of the disk instance and the name of the storage class.
    * @return The expected number of archive routes.
    */
-  uint64_t getCachedExpectedNbArchiveRoutes(rdbms::Conn &conn, const StorageClass &storageClass) const;
+  uint64_t getCachedExpectedNbArchiveRoutes(const StorageClass &storageClass) const;
 
   /**
    * Returns the expected number of archive routes for the specified storage
@@ -1141,14 +1136,12 @@ protected:
    *
    * This method updates the cache when necessary.
    *
-   * @param conn The database connection.
    * @param storageClass The fully qualified storage class, in other words the
    * name of the disk instance and the name of the storage class.
    * @return The mapping from tape copy to tape pool for the specified storage
    * class.
    */
-  common::dataStructures::TapeCopyToPoolMap getCachedTapeCopyToPoolMap(rdbms::Conn &conn,
-    const StorageClass &storageClass) const;
+  common::dataStructures::TapeCopyToPoolMap getCachedTapeCopyToPoolMap(const StorageClass &storageClass) const;
 
   /**
    * Returns the mapping from tape copy to tape pool for the specified storage
