@@ -20,6 +20,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
+#include "catalogue/TimeBasedCache.hpp"
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -1172,89 +1173,20 @@ protected:
   void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
 
   /**
-   * A timestamped tape copy to tape pool map.
-   */
-  struct TimestampedTapeCopyToPoolMap {
-    /**
-     * The timestamp of when the map was last updated.
-     */
-    time_t timestamp;
-
-    /**
-     * Tha map from tape copy to tape pool.
-     */
-    common::dataStructures::TapeCopyToPoolMap tapeCopyToPoolMap;
-
-    /**
-     * Constructor.
-     */
-     TimestampedTapeCopyToPoolMap(): timestamp(0) {
-     }
-
-     /**
-      * Constructor.
-      *
-      * The timestamp of when the map was last updated.
-      * Tha map from tape copy to tape pool.
-      */
-     TimestampedTapeCopyToPoolMap(const time_t t, const common::dataStructures::TapeCopyToPoolMap &m):
-       timestamp(t),
-       tapeCopyToPoolMap(m) {
-     }
-  }; // struct TimestampedTapeCopyToPoolMap
-
-  /**
-   * The data type for cached versions of tape copy to tape tape pool mappings
-   * for specific storage classes.
-   */
-  typedef std::map<StorageClass, TimestampedTapeCopyToPoolMap> StorageClassToTimestampedTapeCopyToPoolMap;
-
-  /**
-   * Mutex protecting m_tapeCopyToPoolCache.
-   */
-  mutable std::mutex m_tapeCopyToTapePoolCacheMutex;
-
-  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
-  mutable StorageClassToTimestampedTapeCopyToPoolMap m_tapeCopyToPoolCache;
+  mutable TimeBasedCache<StorageClass, common::dataStructures::TapeCopyToPoolMap> m_tapeCopyToPoolCache;
 
   /**
-   * A timestamped expected number of archive routes.
+   * Cached versions of mount policies for specific user groups.
    */
-  struct TimestampedExpectedNbArchiveRoutes {
-    /**
-     * The timestamp of when the expected number of archive routes was updated.
-     */
-    time_t timestamp;
-
-    /**
-     * The expected number of archive routes.
-     */
-    uint64_t expectedNbArchiveRoutes;
-
-    /**
-     * Constructor.
-     */
-    TimestampedExpectedNbArchiveRoutes(): timestamp(0), expectedNbArchiveRoutes(0) {
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param t The timestamp of when the expected number of archive routes was
-     * updated.
-     * @param e The expected number of archive routes.
-     */
-    TimestampedExpectedNbArchiveRoutes(const time_t t, const uint64_t e): timestamp(t), expectedNbArchiveRoutes(e) {
-    }
-  };
+  mutable TimeBasedCache<Group, optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache;
 
   /**
-   * Mutex protecting m_tapeCopyToPoolCache.
+   * Cached versions of mount policies for specific users.
    */
-  mutable std::mutex m_expectedNbArchiveRoutesCacheMutex;
+  mutable TimeBasedCache<User, optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
 
   /**
    * Cached versions of the expected number of archive routes for specific
@@ -1262,55 +1194,7 @@ protected:
    * method as opposed to the actual number entered so far using the
    * createArchiveRoute() method.
    */
-  mutable std::map<StorageClass, TimestampedExpectedNbArchiveRoutes> m_expectedNbArchiveRoutesCache;
-
-  /**
-   * A timestamped mount policy.
-   */
-  struct TimestampedMountPolicy {
-    /**
-     * The timestamp of when the mount policy was updated.
-     */
-    time_t timestamp;
-
-    /**
-     * The mount policy.
-     */
-    optional<common::dataStructures::MountPolicy> mountPolicy;
-
-    /**
-     * Constructor.
-     */
-    TimestampedMountPolicy(): timestamp(0) {
-    }
-
-    /**
-     * Constructor.
-     */
-    TimestampedMountPolicy(const time_t t, optional<common::dataStructures::MountPolicy> m):
-      timestamp(t), mountPolicy(m) {
-    }
-  };
-
-  /**
-   * Mutex protecting m_groupMountPolicyCache.
-   */
-  mutable std::mutex m_groupMountPolicyCacheMutex;
-
-  /**
-   * Cached versions of mount policies for specific user groups.
-   */
-  mutable std::map<Group, TimestampedMountPolicy> m_groupMountPolicyCache;
-
-  /**
-   * Mutex protecting m_userMountPolicyCache.
-   */
-  mutable std::mutex m_userMountPolicyCacheMutex;
-
-  /**
-   * Cached versions of mount policies for specific users.
-   */
-  mutable std::map<User, TimestampedMountPolicy> m_userMountPolicyCache;
+  mutable TimeBasedCache<StorageClass, uint64_t> m_expectedNbArchiveRoutesCache;
 
 }; // class RdbmsCatalogue
 
