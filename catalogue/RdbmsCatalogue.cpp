@@ -4094,25 +4094,20 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
       throw ue;
     }
 
-    // TO DO
-    auto conn = m_connPool.getConn();
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-      user.group);
-    // Requester mount policies overrule requester group mount policies
-    common::dataStructures::MountPolicy mountPolicy;
-    if(!mountPolicies.requesterMountPolicies.empty()) {
-       mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
-       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
-    } else {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot archive file because there are no mount rules for the requester or their group:"
-        " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
-        user.group;
-      throw ue;
+    // Get the mount policy - user mount policies overrule group ones
+    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    if(!mountPolicy) {
+      mountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+
+      if(!mountPolicy) {
+        exception::UserError ue;
+        ue.getMessage() << "No mount rules for the requester or their group: storageClass=" << storageClassName <<
+          " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+        throw ue;
+      }
     }
 
-    return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, mountPolicy);
+    return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *mountPolicy);
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
