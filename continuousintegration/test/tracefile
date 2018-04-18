@@ -64,12 +64,14 @@ get_taped_times()
 
 get_time()
 {
-  OFFSET_SECS=$1
-  ABS_DAYS=$((${2}-180413))
-  ABS_HOURS=$(echo $3 | cut -d: -f1)
-  ABS_MINS=$(echo $3 | cut -d: -f2)
-  ABS_SECS=$(echo $3 | cut -d: -f3)
-  echo $((((${ABS_DAYS}*24 + ${ABS_HOURS})*60 + ${ABS_MINS})*60 + ${ABS_SECS}))
+  awk -vOFFSET_SECS=${1} -vABS_DAYS=${2} -vABS_TIME=${3} 'BEGIN{
+    ABS_DAYS -= 180413
+    ABS_HOURS = substr(ABS_TIME,1,2)
+    ABS_MINS  = substr(ABS_TIME,4,2)
+    ABS_SECS  = substr(ABS_TIME,7,2)
+    TIME_SECS = (((ABS_DAYS*24) + ABS_HOURS)*60 + ABS_MINS)*60 + ABS_SECS
+    print TIME_SECS-OFFSET_SECS
+  }'
 }
 
 get_times()
