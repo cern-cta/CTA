@@ -379,7 +379,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    cta::log::ScopedParamContainer params(m_lc);
    params.add("diskFileId", std::to_string(notification.file().fid()))
          .add("diskFilePath", notification.file().lpath())
-         .add("archiveFileId", archiveFileId)
+         .add("fileId", archiveFileId)
          .add("catalogueTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processCREATE(): assigning new archive file ID.");
 
