@@ -44,22 +44,21 @@ get_frontend_times()
 
 get_taped_times()
 {
-  grep -m 11 "fileId=\"$1\"" cta-taped-archive.log >${TMP_FILE}
-  TIME_TS_ARCHIVE_POP=$(get_cta_time "In ArchiveMount::getNextJobBatch")
-  TIME_TS_ARCHIVE_TASKS=$(get_cta_time "Created tasks for migrating a file")
-  TIME_TS_ARCHIVE_OPEN=$(get_cta_time "Opened disk file for read")
-  TIME_TS_ARCHIVE_READ=$(get_cta_time "File successfully read from disk")
-  TIME_TS_ARCHIVE_DONE=$(get_cta_time "File successfully transmitted to drive")
-  TIME_TS_ARCHIVE_REPORT=$(get_cta_time "Reported to the client a full file archival")
-
-  grep -m 7 "fileId=\"$1\"" cta-taped-retrieve.log >${TMP_FILE}
-  TIME_TS_RETRIEVE_POP=$(get_cta_time "In RetrieveMount::getNextJobBatch")
-  TIME_TS_RETRIEVE_TASK=$(get_cta_time "Recall task created")
-  TIME_TS_RETRIEVE_TASKS=$(get_cta_time "Created tasks for recalling a file")
-  TIME_TS_RETRIEVE_POSITION=$(get_cta_time "Successfully positioned for reading")
-  TIME_TS_RETRIEVE_READ=$(get_cta_time "File successfully read from tape")
-  TIME_TS_RETRIEVE_OPEN=$(get_cta_time "Opened disk file for writing")
-  TIME_TS_RETRIEVE_DONE=$(get_cta_time "File successfully transfered to disk")
+  # 18 for 2 archive copies + 1 retrieve
+  TMP_RESULTS=$(grep -m18 "^$1 " cta-taped-events.log)
+  TIME_TS_ARCHIVE_POP=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 A_POP" | cut -d' ' -f3)
+  TIME_TS_ARCHIVE_TASKS=$(echo -e "${TMP_RESULTS}" | grep "^$1 A_TSS" | cut -d' ' -f3)
+  TIME_TS_ARCHIVE_OPEN=$(echo -e "${TMP_RESULTS}" | grep "^$1 A_OPN" | cut -d' ' -f3)
+  TIME_TS_ARCHIVE_READ=$(echo -e "${TMP_RESULTS}" | grep "^$1 A_RED" | cut -d' ' -f3)
+  TIME_TS_ARCHIVE_DONE=$(echo -e "${TMP_RESULTS}" | grep "^$1 A_DNE" | cut -d' ' -f3)
+  TIME_TS_ARCHIVE_REPORT=$(echo -e "${TMP_RESULTS}" | grep "^$1 A_RPT" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_POP=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_POP" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_TASK=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_TSK" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_TASKS=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_RCL" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_POSITION=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_POS" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_READ=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_RED" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_OPEN=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_OPN" | cut -d' ' -f3)
+  TIME_TS_RETRIEVE_DONE=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_TRF" | cut -d' ' -f3)
 }
 
 get_time()
@@ -72,6 +71,11 @@ get_time()
     TIME_SECS = (((ABS_DAYS*24) + ABS_HOURS)*60 + ABS_MINS)*60 + ABS_SECS
     print TIME_SECS-OFFSET_SECS
   }'
+}
+
+get_offset_time()
+{
+  echo $(($2-$1))
 }
 
 get_times()
@@ -87,27 +91,27 @@ get_times()
   echo -n "$(get_time $ABS_TIME_START $TIME_FE_CREATE) "
   echo -n "$(get_time $ABS_TIME_START $TIME_CLOSEW) "
   echo -n "$(get_time $ABS_TIME_START $TIME_FE_CLOSEW) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_POP) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_TASKS) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_OPEN) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_READ) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_DONE) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_ARCHIVE_REPORT) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_POP) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_TASKS) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_OPEN) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_READ) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_DONE) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_REPORT) "
   echo -n "$(get_time $ABS_TIME_START $TIME_ARCHIVED) "
 
   ABS_TIME_START=$(get_time 0 $TIME_PREPARE)
   echo -n "$(get_time $ABS_TIME_START $TIME_FE_PREPARE) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_POP) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASK) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASKS) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_POSITION) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_READ) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_OPEN) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_TS_RETRIEVE_DONE) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_POP) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASK) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASKS) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_POSITION) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_READ) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_OPEN) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_DONE) "
   echo    "$(get_time $ABS_TIME_START $TIME_RETRIEVED);"
 }
 
-FILE_NUM=1
+FILE_NUM=1000000
 
 echo "cta_times = ["
 
