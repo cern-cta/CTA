@@ -20,6 +20,37 @@ echoc()
   echo -ne "${COLOUR}$*${NC}"
 }
 
+process_mgm_log()
+{
+  echoc $LT_BLUE "Extracting log messages from xrdlog.mgm..."
+
+  DATE_OFFSET=$(head -1 xrdlog.mgm-20180414 | awk '{ print $1 }')
+
+  awk -vDATE_OFFSET="$DATE_OFFSET" '
+    function processLine(pattern, event, logline) {
+      gsub("time=.*" pattern, "", logline)
+      split(logline,logarray)
+      DAYS=logarray[1]-DATE_OFFSET
+      HOURS=substr(logarray[2],1,2)
+      MINS=substr(logarray[2],4,2)
+      SECS=substr(logarray[2],7,2)
+      timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
+      print logarray[3],event,timesecs
+    }
+
+    / default ARCHIVED /        { processLine("ARCHIVED", "ARC", $0) }
+    / default CLOSEW /          { processLine("CLOSEW", "CLO", $0) }
+    / default SYNC::CREATE /    { processLine("CREATE", "CRE", $0) }
+    / default SYNC::PREPARE /   { processLine("PREPARE", "PRE", $0) }
+    / retrieve_written CLOSEW / { processLine("CLOSEW", "RWC", $0) }
+  ' xrdlog.mgm-20180414 xrdlog.mgm-20180415 >xrdmgm.log.$$
+
+  echoc $LT_BLUE "done.\nSorting..."
+  sort -n xrdmgm.log.$$ >xrdmgm-events.log
+  echoc $LT_BLUE "done.\n"
+  rm -f xrdmgm.log.$$
+}
+
 process_frontend_log()
 {
   echoc $LT_BLUE "Extracting archive log messages from cta-frontend..."
@@ -95,7 +126,7 @@ process_taped_log()
   rm -f cta-taped.log.$$
 }
 
-
+process_mgm_log
 #process_frontend_log
 #process_taped_log
 

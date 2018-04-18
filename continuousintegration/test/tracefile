@@ -1,7 +1,5 @@
 #!/bin/sh
 
-TMP_FILE=/tmp/tracefile.$$
-
 get_ids()
 {
   IDS=$(grep -m1 "^$1 " filenameToLogIds.txt)
@@ -9,37 +7,24 @@ get_ids()
   ARCHIVE_ID=$(echo $IDS | cut -d' ' -f3)
 }
 
-get_mgm_time()
-{
-  grep -m1 " $1 " xrdlog.mgm.${2}.${3} | sed 's/ func=DoIt.*$//' | sed 's/time=//'
-}
-
 get_mgm_times()
 {
-  TIME_ARCHIVED=$(get_mgm_time $1 default ARCHIVED)
-  TIME_CLOSEW=$(get_mgm_time $1 default CLOSEW)
-  TIME_CREATE=$(get_mgm_time $1 default SYNC::CREATE)
-  TIME_PREPARE=$(get_mgm_time $1 default SYNC::PREPARE)
-  TIME_RETRIEVED=$(get_mgm_time $1 retrieve_written CLOSEW)
-}
+  TMP_RESULTS=$(grep -m5 "^$1 " xrdmgm-events.log)
 
-get_cta_time()
-{
-  awk -vPATTERN="$*" '
-    $0 ~ PATTERN {
-       gsub("^Apr ", "1804")
-       print $1 " " $2
-       #exit
-  }' ${TMP_FILE}
+  TIME_ARCHIVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ARC" | cut -d' ' -f3)
+  TIME_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLO" | cut -d' ' -f3)
+  TIME_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
+  TIME_PREPARE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 PRE" | cut -d' ' -f3)
+  TIME_RETRIEVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RWC" | cut -d' ' -f3)
 }
 
 get_frontend_times()
 {
-  grep "fileId=\"$1\"" cta-frontend-processWFE.log >${TMP_FILE}
+  TMP_RESULTS=$(grep -m3 "^$1 " cta-frontend-events.log)
 
-  TIME_FE_CREATE=$(get_cta_time CREATE)
-  TIME_FE_CLOSEW=$(get_cta_time CLOSEW)
-  TIME_FE_PREPARE=$(get_cta_time PREPARE)
+  TIME_FE_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
+  TIME_FE_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLW" | cut -d' ' -f3)
+  TIME_FE_PREPARE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 PRE" | cut -d' ' -f3)
 }
 
 get_taped_times()
@@ -61,18 +46,6 @@ get_taped_times()
   TIME_TS_RETRIEVE_DONE=$(echo -e "${TMP_RESULTS}" | grep "^$1 R_TRF" | cut -d' ' -f3)
 }
 
-get_time()
-{
-  awk -vOFFSET_SECS=${1} -vABS_DAYS=${2} -vABS_TIME=${3} 'BEGIN{
-    ABS_DAYS -= 180413
-    ABS_HOURS = substr(ABS_TIME,1,2)
-    ABS_MINS  = substr(ABS_TIME,4,2)
-    ABS_SECS  = substr(ABS_TIME,7,2)
-    TIME_SECS = (((ABS_DAYS*24) + ABS_HOURS)*60 + ABS_MINS)*60 + ABS_SECS
-    print TIME_SECS-OFFSET_SECS
-  }'
-}
-
 get_offset_time()
 {
   echo $(($2-$1))
@@ -87,20 +60,20 @@ get_times()
 
   echo -n "$ARCHIVE_ID $FILE_ID "
 
-  ABS_TIME_START=$(get_time 0 $TIME_CREATE)
-  echo -n "$(get_time $ABS_TIME_START $TIME_FE_CREATE) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_CLOSEW) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_FE_CLOSEW) "
+  ABS_TIME_START=$(get_offset_time 0 $TIME_CREATE)
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_FE_CREATE) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_CLOSEW) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_FE_CLOSEW) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_POP) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_TASKS) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_OPEN) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_READ) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_DONE) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_ARCHIVE_REPORT) "
-  echo -n "$(get_time $ABS_TIME_START $TIME_ARCHIVED) "
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_ARCHIVED) "
 
-  ABS_TIME_START=$(get_time 0 $TIME_PREPARE)
-  echo -n "$(get_time $ABS_TIME_START $TIME_FE_PREPARE) "
+  ABS_TIME_START=$(get_offset_time 0 $TIME_PREPARE)
+  echo -n "$(get_offset_time $ABS_TIME_START $TIME_FE_PREPARE) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_POP) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASK) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_TASKS) "
@@ -108,7 +81,7 @@ get_times()
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_READ) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_OPEN) "
   echo -n "$(get_offset_time $ABS_TIME_START $TIME_TS_RETRIEVE_DONE) "
-  echo    "$(get_time $ABS_TIME_START $TIME_RETRIEVED);"
+  echo    "$(get_offset_time $ABS_TIME_START $TIME_RETRIEVED);"
 }
 
 FILE_NUM=1000000
@@ -124,4 +97,3 @@ done
 
 echo "];"
 
-rm -f ${TMP_FILE}
