@@ -366,13 +366,14 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    originator.name  = notification.cli().user().username();
    originator.group = notification.cli().user().groupname();
 
-   cta::utils::Timer t;
-
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
      throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
    }
    const std::string storageClass = storageClassItor->second;
+
+   cta::utils::Timer t;
+
    const uint64_t archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, originator, m_lc);
 
    // Create a log entry
@@ -380,7 +381,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
    params.add("diskFileId", std::to_string(notification.file().fid()))
          .add("diskFilePath", notification.file().lpath())
          .add("fileId", archiveFileId)
-         .add("catalogueTime", t.secs());
+         .add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processCREATE(): assigning new archive file ID.");
 
    // Set ArchiveFileId in xattrs
@@ -416,8 +417,6 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // Recovery blob is deprecated. EOS will fill in metadata fields in the protocol buffer
    // and we need to decide what will be stored in the database.
    diskFileInfo.recoveryBlob = "deprecated";
-
-   cta::utils::Timer t;
 
    std::string checksumtype(notification.file().cks().type());
    if(checksumtype == "adler") checksumtype = "ADLER32";   // replace this with an enum!
@@ -458,12 +457,14 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
+   cta::utils::Timer t;
+
    // Queue the request
    m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", archiveFileId).add("catalogueTime", t.secs());
+   params.add("fileId", archiveFileId).add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processCLOSEW(): queued file for archive.");
 
    // Set response type
@@ -504,7 +505,6 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    request.creationLog.username = m_cliIdentity.username;
    request.creationLog.time     = time(nullptr);
 
-   cta::utils::Timer t;
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -518,12 +518,14 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
+   cta::utils::Timer t;
+
    // Queue the request
    m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
+   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processPREPARE(): queued file for retrieve.");
 
    // Set response type
@@ -546,7 +548,6 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    cta::common::dataStructures::DeleteArchiveRequest request;
    request.requester = originator;
 
-   cta::utils::Timer t;
 
    // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
    // converted to a valid uint64_t
@@ -565,9 +566,11 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    m_scheduler.queueAbortRetrieve(m_cliIdentity.username, request, m_lc);
 #endif
 
+   cta::utils::Timer t;
+
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
+   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processABORT_PREPARE(): not implemented, no action taken.");
 
    // Set response type
@@ -609,7 +612,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("catalogueTime", t.secs());
+   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs());
    m_lc.log(cta::log::INFO, "In RequestMessage::processDELETE(): archive file deleted.");
 
    // Set response type
@@ -643,7 +646,7 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
 
    // Add the log message
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("catalogueTime", t.secs());
+   params.add("adminTime", t.secs());
    m_lc.log(cta::log::INFO, log_msg);
 }
 
