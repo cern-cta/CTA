@@ -20,6 +20,7 @@ set (ACS_DAEMON_SRC_FILES
   AcsDaemonMain.cpp
   AcsdConfiguration.cpp
   AcsPendingRequests.cpp
+  AcsdCmdLine.cpp
   #AcsDismountTape.cpp
   #AcsMessageHandler.cpp
   #AcsMountTapeReadWrite.cpp 
@@ -43,7 +44,12 @@ target_link_libraries(
   zmq
   ${STK_LIBRARIES})
 
-install (FILES cta.conf
- DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
- PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+add_library (ctamediachangeracsdaemonunittests SHARED AcsdCmdLineTest.cpp AcsdCmdLine.cpp)
+set_property(TARGET ctamediachangeracsdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamediachangeracsdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_link_libraries (ctamediachangeracsdaemonunittests
+ ctamediachangerunittests)
+
+install (TARGETS ctamediachangeracsdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

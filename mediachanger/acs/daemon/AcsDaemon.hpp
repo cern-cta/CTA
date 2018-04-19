@@ -28,7 +28,7 @@
 #include "AcsPendingRequests.hpp"
 #include "common/Constants.hpp"
 #include "common/log/SyslogLogger.hpp"
-
+#include "AcsdCmdLine.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
@@ -60,8 +60,6 @@ public:
   AcsDaemon(
     const int argc,
     char **const argv,
-    //std::ostream &stdOut,
-    //std::ostream &stdErr,
     log::Logger& log,
     cta::mediachanger::reactor::ZMQReactor &reactor,
     const AcsdConfiguration &config);
@@ -214,7 +212,7 @@ private:
 
 }; // class AcsDaemon
 
-}
-}
+} // namespace daemon
 } // namespace acs
-} // namespace castor
+} // namespace mediachanger
+} // namespace cta

@@ -26,7 +26,7 @@
 //#include "common/processCap/ProcessCap.hpp"
 #include "../Constants.hpp"
 #include "AcsDaemon.hpp"
-//#include "AcsDaemonConfig.hpp"
+#include "AcsdCmdLine.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
 #include "AcsdConfiguration.hpp"
 //#include "common/utils/utils.hpp"

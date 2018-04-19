@@ -26,6 +26,7 @@
 #include "AcsdConfiguration.hpp"
 #include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
 //#include "AcsPendingRequests.hpp"
+#include "mediachanger/acs/daemon/AcsdCmdLine.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
 #include "common/exception/Exception.hpp"
@@ -71,7 +72,6 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to get host name: "<<ex.getMessage().str();
-    //cta::log::write(LOG_ERR, ex.getMessage().str());  
     m_log(LOG_ERR, ex.getMessage().str());  
     throw ex;
   }
@@ -136,54 +136,7 @@ int AcsDaemon::main() throw() {
 void AcsDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
-  ////parseCommandLine(argc, argv);
-  
-  bool foreground = false;                  ///< Prevents daemonisation
-  std::string configFileLocation = "/etc/cta/cta-acsd.conf";   ///< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
-  bool helpRequested = false;               ///< Help requested: will print out help and exit.
- // bool logToStdout =false;
-  static struct option longopts[] = {
-    // { .name, .has_args, .flag, .val } (see getopt.h))
-    { "foreground", no_argument, NULL, 'f' },
-    { "config", required_argument, NULL, 'c' },
-    { "help", no_argument, NULL, 'h' },
-    { NULL, 0, NULL, '\0' }
-  };
-
-  char c;
-  // Reset getopt's global variables to make sure we start fresh
-  optind=0;
-  // Prevent getopt from printing out errors on stdout
-  opterr=0;
-  // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, NULL)) != -1) {
-     m_log(LOG_INFO, "Usage: [options]\n");
-    switch (c) {
-    case 'f':
-      foreground = true;
-      m_foreground = foreground;
-      break;
-    case 'c':
-      configFileLocation = optarg;
-      break;
-    case 'h':
-      helpRequested = true;
-    std::cout<<"Usage: "<<m_programName<<" [options]\n"
-    "where options can be:\n"
-    "--foreground            or -f         Remain in the Foreground\n"
-    "--config <config-file>  or -c         Configuration file\n"
-    "--help                  or -h         Print this help and exit\n";
-      break;
-    default:
-      break;
-    }
-  }
-
-  //Convert the command line into set of parameters for logging.
-  std::list<cta::log::Param> ret;
-  ret.push_back({"foreground", foreground});
-  ret.push_back({"configFileLocation", configFileLocation});
-  ret.push_back({"helpRequested", helpRequested});
+  AcsdCmdLine(argc,argv); //parse command line
  
  const std::string runAsStagerSuperuser = "ACSD";
  const std::string runAsStagerSupergroup = "CTA";
