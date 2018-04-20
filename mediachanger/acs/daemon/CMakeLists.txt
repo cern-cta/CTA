@@ -39,7 +39,8 @@ target_link_libraries(
   cta-acsd
   ctacommon
   ctareactor 
-  ctamediachanger 
+ CtaAcsDaemon
+ ctamediachanger 
  # ctamediachangeracsdaemonprotobuf 
   zmq
   ${STK_LIBRARIES})

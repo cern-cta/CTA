@@ -25,7 +25,7 @@
 #include "AcsDaemon.hpp"
 #include "AcsdConfiguration.hpp"
 #include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
-//#include "AcsPendingRequests.hpp"
+#include "AcsPendingRequests.hpp"
 #include "mediachanger/acs/daemon/AcsdCmdLine.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
@@ -60,7 +60,7 @@ AcsDaemon::AcsDaemon(
   m_hostName(getHostName()),  
   m_zmqContext(NULL),
   m_config(config),
-  m_acsPendingRequests(config) {
+  m_acsPendingRequests(config,log) {
 }
 
 //------------------------------------------------------------------------------
@@ -272,19 +272,19 @@ void AcsDaemon::blockSignals() const {
     throw ex;
   }
 }
-*/
+
 //------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
-/*void AcsDaemon::mainEventLoop() {
+void AcsDaemon::mainEventLoop() {
   while(handleEvents()) {
   }
-}*/
+}
 
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
-/*bool AcsDaemon::handleEvents() { 
+bool AcsDaemon::handleEvents() { 
   try {
     const int timeout = 100; // 100 milliseconds
     m_reactor.handleEvents(timeout);
@@ -331,21 +331,21 @@ void AcsDaemon::blockSignals() const {
   
   return handlePendingSignals();
 }
-*/
+
 //------------------------------------------------------------------------------
 // handlePendingRequests
 //------------------------------------------------------------------------------
-/*void AcsDaemon::handlePendingRequests() {
+void AcsDaemon::handlePendingRequests() {
   m_acsPendingRequests.tick(); 
   m_acsPendingRequests.handleCompletedRequests();
   m_acsPendingRequests.handleFailedRequests();
   m_acsPendingRequests.handleToDeleteRequests();
 }
-*/
+
 //------------------------------------------------------------------------------
 // handlePendingSignals
 //------------------------------------------------------------------------------
-/**
+
 bool AcsDaemon::handlePendingSignals() throw() {
   bool continueMainEventLoop = true;
   int sig = 0;
@@ -376,6 +376,6 @@ bool AcsDaemon::handlePendingSignals() throw() {
 
   return continueMainEventLoop;
 }
-**/
+*/
 
 }}}}

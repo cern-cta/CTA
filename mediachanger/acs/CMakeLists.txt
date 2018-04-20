@@ -22,45 +22,41 @@
 # Rules to build and install acsd
 ################################################################################
 
-#find_package(Protobuf3 REQUIRED)
+find_package(Protobuf3 REQUIRED)
 #file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 #PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
-#include_directories (${PROTOBUF3_INCLUDE_DIRS})
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
 #PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto )
 add_subdirectory(daemon)
-#add_library(CtaAcsDaemon
- # Acs.cpp
-  #AcsDaemon.cpp
-  #AcsDaemonConfig.cpp
-  #AcsDaemonMain.cpp
+add_library(CtaAcsDaemon
+  Acs.cpp
   #AcsDismountTape.cpp
   #AcsForceDismountTape.cpp
-  #AcsImpl.cpp
+  AcsImpl.cpp
   #AcsLibraryInteraction.cpp
   #AcsMessageHandler.cpp
   #AcsMountTapeReadOnly.cpp
   #AcsMountTapeReadWrite.cpp
-  #AcsRequest.cpp
+  AcsRequest.cpp
   #AcsRequestDismountTape.cpp
    #${ProtoSources}
-#)
+)
 #add_dependencies(ctaAcsDaemon ctamediachangerprotobuf)
 
 #add_executable(CtaAcsDaemon ${ACS_SOURCE_FILES})
-#target_link_libraries(castorAcsDaemon castortapereactor)
-#target_link_libraries(CtaAcsDaemon ctacommon
- # ctacommon
-  #ctareactor 
-  #ctamediachanger 
+target_link_libraries(CtaAcsDaemon 
+  ctacommon
+  ctareactor 
+  ctamediachanger 
   #ctamediachangerprotobuf
  # ctamediachangeracsdaemonprotobuf 
- # zmq
- # ${STK_LIBRARIES})
+  zmq
+  ${STK_LIBRARIES})
 
-#set_target_properties (CtaAcsDaemon PROPERTIES
- #COMPILE_FLAGS -I/usr/include/CDK
- #COMPILE_DEFINITIONS LINUX)
+set_target_properties (CtaAcsDaemon PROPERTIES
+ COMPILE_FLAGS -I/usr/include/CDK
+ COMPILE_DEFINITIONS LINUX)
 
 
 ################################################################################

@@ -23,8 +23,8 @@
 
 #include "AcsRequest.hpp"
 #include "mediachanger/messages.hpp"
-#include "mediachanger/acs/ReturnValue.pb.h"
-#include "mediachanger/acs/Exception.pb.h"
+#include "mediachanger/ReturnValue.pb.h"
+#include "mediachanger/Exception.pb.h"
 #include "common/utils/utils.hpp"
 
 //-----------------------------------------------------------------------------
@@ -128,7 +128,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::createReturnValueFr
     cta::mediachanger::computeSHA1Base64(frame.body));
   frame.header.set_bodysignature("PIPO");
 
-  cta::mediachanger::acs::ReturnValue body;
+  cta::mediachanger::ReturnValue body;
   body.set_value(value);
   frame.serializeProtocolBufferIntoBody(body);
 
@@ -147,7 +147,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::
   frame.header.set_bodyhashvalue(mediachanger::computeSHA1Base64(frame.body));
   frame.header.set_bodysignature("PIPO");
 
-  cta::mediachanger::acs::Exception body;
+  cta::mediachanger::Exception body;
   body.set_code(code);
   body.set_message(msg);
   frame.serializeProtocolBufferIntoBody(body);

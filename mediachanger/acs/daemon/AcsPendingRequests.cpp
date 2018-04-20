@@ -23,6 +23,7 @@
 
 #include "AcsPendingRequests.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
+#include "mediachanger/acs/AcsRequest.hpp"
 /////#include "mediachanger/acs/daemon/AcsDismountTape.hpp"
 //#include "castor/acs/AcsRequestDismountTape.hpp"
 //////#include "AcsRequestDismountTape.hpp"
@@ -38,31 +39,32 @@
 // constructor
 //-----------------------------------------------------------------------------
 cta::mediachanger::acs::daemon::AcsPendingRequests::AcsPendingRequests(
-  const AcsdConfiguration &ctaConf):
+  const AcsdConfiguration &ctaConf, cta::log::Logger &l):
   m_ctaConf(ctaConf),
+  m_log(l),
   m_lastTimeResponseUsed(0) {
 }
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-/*cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() throw() {
+cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() throw() {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();  itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     delete acsRequest;
   }
 }
-*/
+
 //-----------------------------------------------------------------------------
 // tick
 //-----------------------------------------------------------------------------
-/*
- * void cta::mediachanger::acs::daemon::AcsPendingRequests::tick() {
+
+  void cta::mediachanger::acs::daemon::AcsPendingRequests::tick() {
   bool haveRunningRequests = false;
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     acsRequest->tick();
     if(acsRequest->isRunning()) {
       haveRunningRequests = true;
@@ -85,7 +87,7 @@ cta::mediachanger::acs::daemon::AcsPendingRequests::AcsPendingRequests(
       ACS_RESPONSE_TYPE responseType = RT_NONE;
       ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
-      log::write(LOG_DEBUG,
+      m_log(LOG_DEBUG,
         "AcsPendingRequests::tick() Calling Acs::response()");
 
       const STATUS responseStatus = m_acs.response(responseTimeout,
@@ -107,12 +109,12 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::setRequestResponse(
   const ALIGNED_BYTES *const responseMsg) {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if ( responseSeqNumber == acsRequest->getSeqNo()) {
       std::stringstream dbgMsg;
       dbgMsg << "AcsPendingRequests::setRequestResponse responseType=" <<
         responseType << " " << acsRequest->str();
-      log::write(LOG_DEBUG, dbgMsg.str());      
+      m_log(LOG_DEBUG, dbgMsg.str());      
       acsRequest->setResponse(responseType, responseMsg);      
     }
   }
@@ -124,7 +126,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::setRequestResponse(
 void cta::mediachanger::acs::daemon::AcsPendingRequests::handleCompletedRequests() {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if (acsRequest->isCompleted()) {
       std::list<log::Param> params = {log::Param("TPVID", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
@@ -133,7 +135,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleCompletedRequests
         log::Param("drive", acsRequest->getDrive()),
         log::Param("sender identity", acsRequest->getIdentity())
       };
-      log::write(LOG_INFO,"Tape successfully dismounted",params);
+      m_log(LOG_INFO,"Tape successfully dismounted",params);
       acsRequest->sendReplayToClientOnce();
       acsRequest->setStateToDelete();
     }
@@ -146,7 +148,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleCompletedRequests
 void cta::mediachanger::acs::daemon::AcsPendingRequests::handleFailedRequests() {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if (acsRequest->isFailed()) {
       std::list<log::Param> params = {log::Param("TPVID", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
@@ -155,7 +157,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleFailedRequests() 
         log::Param("drive", acsRequest->getDrive()),
         log::Param("sender identity", acsRequest->getIdentity())
       };    
-      log::write(LOG_INFO,"Dismount tape failed", params);
+      m_log(LOG_INFO,"Dismount tape failed", params);
       acsRequest->sendReplayToClientOnce();
       acsRequest->setStateToDelete();
     }
@@ -168,16 +170,16 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleFailedRequests() 
 void cta::mediachanger::acs::daemon::AcsPendingRequests::handleToDeleteRequests() {
   for(RequestList::iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if (acsRequest->isToDelete()) {
-      log::write(LOG_DEBUG,"AcsPendingRequests::handleToDeleteRequests " +
+      m_log(LOG_DEBUG,"AcsPendingRequests::handleToDeleteRequests " +
         acsRequest->str());     
       delete acsRequest;
       itor=m_acsRequestList.erase(itor);      
     }    
   }
 }
-
+/*
 //-----------------------------------------------------------------------------
 // checkAndAddRequest
 //-----------------------------------------------------------------------------
@@ -188,7 +190,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequest(
     log::Param("sender identity", 
       utils::hexDump(address.getData(), address.size()))
   };
-  log::write(LOG_DEBUG, "AcsPendingRequests::checkAndAddRequest", params);
+  m_log(LOG_DEBUG, "AcsPendingRequests::checkAndAddRequest", params);
 
   const mediachanger::MsgType msgType = (mediachanger::MsgType)rqst.header.msgtype();
   switch(msgType) {
@@ -222,7 +224,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequest(
 void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequestDismountTape(
   mediachanger::ZmqMsg &address,  mediachanger::ZmqMsg &empty,
   const mediachanger::Frame &rqst, mediachanger::ZmqSocketST &socket) {
-  log::write(LOG_DEBUG, 
+  m_log(LOG_DEBUG, 
     "AcsPendingRequests::checkAndAddRequestDismountTape");
     
   mediachanger::AcsDismountTape rqstBody;
@@ -244,14 +246,14 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequestDismo
     log::Param("sender identity", 
       utils::hexDump(address.getData(), address.size()))
   };
-  log::write(LOG_INFO, "Dismount tape", params);
+  m_log(LOG_INFO, "Dismount tape", params);
    
   const SEQ_NO seqNo = getSequenceNumber();
   std::list<log::Param> seqParam = {log::Param("seqNumber", seqNo)};
-  log::write(LOG_DEBUG, "ACS sequence number", seqParam);  
+  m_log(LOG_DEBUG, "ACS sequence number", seqParam);  
 
   try {
-    AcsRequest * acsRequestDismountTape = 
+    cta::mediachanger::acs::AcsRequest * acsRequestDismountTape = 
       new AcsRequestDismountTape(vid, acs, lsm, panel, drive, 
       //new AcsRequestDismountTape AcsRequestDismountTape(vid, acs, lsm, panel, drive, 
         m_ctaConf, socket, address, empty, seqNo);
@@ -262,7 +264,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequestDismo
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to add dismount request: "
       << ne.getMessage().str();
-    log::write(LOG_ERR, ex.getMessage().str());  
+    m_log(LOG_ERR, ex.getMessage().str());  
     throw ex;  
   }
 }
@@ -275,7 +277,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkRequest(const std:
   const uint32_t drive) const {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if (acs == acsRequest->getAcs() && lsm == acsRequest->getLsm() &&
       panel == acsRequest->getPanel() && drive == acsRequest->getDrive()) {   
       cta::exception::Exception ex;
@@ -303,7 +305,7 @@ SEQ_NO cta::mediachanger::acs::daemon::AcsPendingRequests::getSequenceNumber() c
   
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();itor++) {
-    AcsRequest *const acsRequest = *itor;
+    cta::mediachanger::acs::AcsRequest *const acsRequest = *itor;
     if (maxSeqNo < acsRequest->getSeqNo()) {
       maxSeqNo = acsRequest->getSeqNo();
     }
@@ -331,6 +333,6 @@ SEQ_NO cta::mediachanger::acs::daemon::AcsPendingRequests::getSequenceNumber() c
   ex.getMessage() << "Failed to get sequence number for ACS"
     ": allocated minimum seqNo=\""<<minSeqNo<<"\""<<
     " allocated maximum seqNo=\""<<maxSeqNo<<"\"";
-  log::write(LOG_ERR, ex.getMessage().str());  
+  m_log(LOG_ERR, ex.getMessage().str());  
   throw ex;   
 }*/

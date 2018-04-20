@@ -55,12 +55,12 @@ public:
    *
    * @param castorConf The configuration for the CASTOR ACS daemon.
    */
-  AcsPendingRequests(const AcsdConfiguration &ctaConf);
+  AcsPendingRequests(const AcsdConfiguration &ctaConf, cta::log::Logger &);
   
   /**
    * Destructor.
    */
-//////  ~AcsPendingRequests() throw();
+  ~AcsPendingRequests() throw();
 
   /**
    * Notifies the AcsPendingRequests that it should perform any time related 
@@ -68,7 +68,7 @@ public:
    *
    * This method does not have to be called at any time precise interval.
    */
- ////// void tick();
+  void tick();
 
   /**
    * Requests to the CASTOR ACS daemon might have several states.
@@ -92,17 +92,17 @@ public:
   /**
    * Handles successfully completed requests.
    */
- ///// void handleCompletedRequests();
+  void handleCompletedRequests();
   
   /**
    * Handles failed requests.
    */
- ////// void handleFailedRequests();
+  void handleFailedRequests();
   
   /**
    * Performs cleanup for deleted requests.
    */
- ///// void handleToDeleteRequests();
+  void handleToDeleteRequests();
   
   /**
    * Performs general checks for the incoming requests and calls next checker 
@@ -154,9 +154,9 @@ public:
    * @param responseType The type of the response message.
    * @param responseMsg  The response message
    */ 
- ///// void setRequestResponse(const SEQ_NO responseSeqNumber,
- /////   const ACS_RESPONSE_TYPE responseType, 
- //////   const  ALIGNED_BYTES *const responseMsg);
+   void setRequestResponse(const SEQ_NO responseSeqNumber,
+   const ACS_RESPONSE_TYPE responseType, 
+   const  ALIGNED_BYTES *const responseMsg);
     
   /**
    * Performs checks for the request before adding it to the ACS requests list.
@@ -179,6 +179,7 @@ private:
    */
   const AcsdConfiguration m_ctaConf;
   
+  log::Logger &m_log;
   /**
    * Type for the list of the ACS requests.
    */
@@ -192,7 +193,7 @@ private:
   /**
    * The ACLS C-API wrapper.
    */  
-/////  AcsImpl m_acs;
+  AcsImpl m_acs;
   
   /**
    * The time when the last ACS response command was used.
