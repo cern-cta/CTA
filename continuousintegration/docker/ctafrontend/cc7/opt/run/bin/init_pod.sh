@@ -46,8 +46,7 @@ if [[ -n ${BUILDTREE_BASE} ]]; then
 
   # cta:cta needed for ctafrontend and taped but adding it inconditionally in buildtree
   echo "Adding cta user and group"
-  /usr/bin/getent group cta || /usr/sbin/groupadd cta
-  /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g cta cta
+  /usr/bin/getent passwd cta || /usr/sbin/useradd -s /bin/nologin -c "CTA system account" -g tape cta
   ## The following is not working as one cannot refresh groups in current shell...
   # echo 'Adding cta in tape group (grant access to /dev/sg* /dev/st* /dev/nst* devices'
   # /usr/sbin/usermod -a -G tape cta
