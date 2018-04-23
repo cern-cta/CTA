@@ -121,6 +121,7 @@ ctageneric_docker:
   except:
     - tags
   stage: build:dockerimage
+  retry: 1
   tags:
     - docker-image-build
   script:
