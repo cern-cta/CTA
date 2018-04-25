@@ -22,18 +22,17 @@
 #pragma once
 
 
-#include "common/log/Logger.hpp"
+//#include "common/log/Logger.hpp"
 #include "mediachanger/acs/Constants.hpp"
 #include "mediachanger/Frame.hpp"
 //#include "mediachanger/ZmqSocketST.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
 #include "AcsDaemon.hpp"
-//#include "daemon/AcsDaemonConfig.hpp"
 #include "AcsdConfiguration.hpp"
 #include "AcsPendingRequests.hpp"
-
-
+#include "common/log/SyslogLogger.hpp"
+#include "mediachanger/reactor/ZMQPollEventHandler.hpp"
 namespace cta     {
 namespace mediachanger      {
 namespace acs     {
@@ -49,19 +48,19 @@ public:
   /**
    * Constructor.
    *
-   * @param reactor The reactor to which new CASTOR ACS daemon connection 
+   * @param reactor The reactor to which new CTA ACS daemon connection 
    * handlers are to be registered.
    * @param hostName   The name of the host.
    * @param zmqContext The ZMQ context.
-   * @param castorConf The configuration for the CASTOR ACS daemon.
-   * @param acsPendingRequests The object to handle requests to the CASTOR ACS
+   * @param ctaConf The configuration for the CTA ACS daemon.
+   * @param acsPendingRequests The object to handle requests to the CTA ACS
    * daemon.
    */
   AcsMessageHandler(
+    log::Logger &log,
     cta::mediachanger::reactor::ZMQReactor &reactor,
-    const std::string &hostName,
-    cta::log::Logger &log,
     void *const zmqContext,
+    const std::string &hostName,
     const AcsdConfiguration &ctaConf,
     AcsPendingRequests &acsPendingRequests);
 
@@ -157,6 +156,7 @@ private:
    */
   cta::mediachanger::Frame handleAcsForceDismountTape(const cta::mediachanger::Frame &rqst);
   
+  log::Logger &m_log;
   /**
    * The reactor to which new CASTOR ACS daemon connection handlers are to
    * be registered.
@@ -174,7 +174,6 @@ private:
   const std::string m_hostName;
   
 
-  log::Logger &m_log;
   /**
    * The configuration parameters for the CASTOR ACS daemon.
    */
@@ -183,7 +182,7 @@ private:
   /**
    * The object to handle requests to the CASTOR ACS daemon.
    */
-  acs::daemon::AcsPendingRequests &m_acsPendingRequests;
+  AcsPendingRequests &m_acsPendingRequests;
   
 }; // class AcsMessageHandler
 

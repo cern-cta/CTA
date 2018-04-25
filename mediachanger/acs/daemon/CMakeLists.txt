@@ -21,11 +21,12 @@ set (ACS_DAEMON_SRC_FILES
   AcsdConfiguration.cpp
   AcsPendingRequests.cpp
   AcsdCmdLine.cpp
-  #AcsDismountTape.cpp
-  #AcsMessageHandler.cpp
-  #AcsMountTapeReadWrite.cpp 
-  #AcsMountTapeReadOnly.cpp
-  #AcsRequest.cpp
+  AcsDismountTape.cpp
+  AcsMessageHandler.cpp
+  AcsMountTapeReadWrite.cpp 
+  AcsMountTapeReadOnly.cpp
+  AcsForceDismountTape.cpp
+  Constants.cpp
   #AcsRequestDismountTape.cpp
   #AcsLibraryInteraction.cpp
 )

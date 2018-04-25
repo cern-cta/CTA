@@ -48,7 +48,7 @@ namespace cta { namespace mediachanger { namespace acs { namespace daemon {
 AcsDaemon::AcsDaemon(
   const int argc,
   char **const argv,
-  cta::log::Logger& log,  
+  cta::log::Logger& log,
   cta::mediachanger::reactor::ZMQReactor &reactor,
   const AcsdConfiguration &config):
   cta::server::Daemon(log),
@@ -140,12 +140,12 @@ void AcsDaemon::exceptionThrowingMain(
  
  const std::string runAsStagerSuperuser = "ACSD";
  const std::string runAsStagerSupergroup = "CTA";
- daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
+ //daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
  setDumpable();
 
  blockSignals();
  initZmqContext();
-  //setUpReactor();  
+ setUpReactor();  
  // mainEventLoop();
 
 }
@@ -242,24 +242,24 @@ void AcsDaemon::blockSignals() const {
 //------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
-/*void AcsDaemon::setUpReactor() {
+void AcsDaemon::setUpReactor() {
   createAndRegisterAcsMessageHandler();
 }
-*/
+
 //------------------------------------------------------------------------------
 // createAndRegisterAcsMessageHandler
 //------------------------------------------------------------------------------
-/*void AcsDaemon::createAndRegisterAcsMessageHandler()  {
+void AcsDaemon::createAndRegisterAcsMessageHandler()  {
   try {
     std::unique_ptr<AcsMessageHandler> handler;
     try {
-      handler.reset(new AcsMessageHandler(m_reactor, m_hostName, m_log, m_zmqContext,
-        m_config, m_acsPendingRequests));
+      handler.reset(new AcsMessageHandler(m_log, m_reactor, m_zmqContext, m_hostName,
+        m_config,  m_acsPendingRequests));   //create event handler for communicating with the acs daemon
     } catch(std::bad_alloc &ba) {
       cta::exception::BadAlloc ex;
       ex.getMessage() <<
         "Failed to create event handler for communicating with "
-        "the CASTOR ACS daemon: " << ba.what();
+        "the CTA ACS daemon: " << ba.what();
       throw ex;
     }
     m_reactor.registerHandler(handler.get());
@@ -272,7 +272,7 @@ void AcsDaemon::blockSignals() const {
     throw ex;
   }
 }
-
+/*
 //------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------

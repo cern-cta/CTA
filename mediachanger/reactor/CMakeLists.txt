@@ -27,7 +27,7 @@ set (REACTOR_SRC_FILES
  # PollEventHandler.cpp
  # PollReactor.cpp
  # PollReactorImpl.cpp
- # ZMQPollEventHandler.cpp
+  ZMQPollEventHandler.cpp
   ZMQReactor.cpp)
 add_library (ctareactor ${REACTOR_SRC_FILES})
 set_target_properties (ctareactor PROPERTIES

@@ -34,11 +34,11 @@ add_library(CtaAcsDaemon
   #AcsDismountTape.cpp
   #AcsForceDismountTape.cpp
   AcsImpl.cpp
-  #AcsLibraryInteraction.cpp
   #AcsMessageHandler.cpp
   #AcsMountTapeReadOnly.cpp
   #AcsMountTapeReadWrite.cpp
   AcsRequest.cpp
+  AcsLibraryInteraction.cpp
   #AcsRequestDismountTape.cpp
    #${ProtoSources}
 )

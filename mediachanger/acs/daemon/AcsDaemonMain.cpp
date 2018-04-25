@@ -56,7 +56,7 @@ int main(const int argc, char **const argv) {
     logger(LOG_INFO, "started ACSD in CTA");
   } catch(cta::exception::Exception &ex) {
     std::cerr <<
-      "Failed to instantiate object representing CASTOR logging system: " <<
+      "Failed to instantiate object representing CTA logging system: " <<
       ex.getMessage().str() << std::endl;
     return 1;
   } 

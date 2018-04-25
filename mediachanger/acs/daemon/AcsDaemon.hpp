@@ -128,12 +128,12 @@ protected:
   /**
    * Sets up the reactor.
    */
-//////  void setUpReactor();
+  void setUpReactor();
  
   /**
    * Creates the handler to handle messages for the acs Zmq requests.
    */
-/////  void createAndRegisterAcsMessageHandler();
+  void createAndRegisterAcsMessageHandler();
   
   /**
    * The main event loop of the daemon.

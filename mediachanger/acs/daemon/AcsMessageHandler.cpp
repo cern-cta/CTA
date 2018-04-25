@@ -19,7 +19,10 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "mediachanger/acs/Constants.hpp"
+#include "common/Constants.hpp"
+//#include "messages/Constants.hpp"
+#include "mediachanger/acs/daemon/Constants.hpp"
+//#include "mediachanger/acs/Constants.hpp"
 #include "AcsMessageHandler.hpp"
 #include "AcsDismountTape.hpp"
 #include "AcsForceDismountTape.hpp"
@@ -28,44 +31,46 @@
 #include "mediachanger/acs/Acs.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
 #include "common/log/log.hpp"
+#include "common/log/SyslogLogger.hpp"
 #include "mediachanger/messages.hpp"
-#include "mediachanger/acs/ReturnValue.pb.h"
-#include "mediachanger/acs/AcsMountTapeReadOnly.pb.h"
-#include "mediachanger/acs/AcsMountTapeReadWrite.pb.h"
-#include "mediachanger/acs/AcsDismountTape.pb.h"
-#include "mediachanger/acs/AcsForceDismountTape.pb.h"
-#include "mediachanger/acs/Exception.pb.h"
+#include "mediachanger/ReturnValue.pb.h"
+#include "mediachanger/AcsMountTapeReadOnly.pb.h"
+#include "mediachanger/AcsMountTapeReadWrite.pb.h"
+#include "mediachanger/AcsDismountTape.pb.h"
+#include "mediachanger/AcsForceDismountTape.pb.h"
+#include "mediachanger/Exception.pb.h"
+#include "mediachanger/reactor/ZMQPollEventHandler.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
 //#include "mediachanger/ZmqSocketST.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 #include "errno.h"
 
-#include <sstream>
+#include <iostream>
+//#include <sstream>
 #include <unistd.h>
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::daemon::AcsMessageHandler::AcsMessageHandler(
-  cta::mediachanger::reactor::ZMQReactor &reactor,
-  const std::string &hostName,
-  void *const zmqContext,
-  const AcsdConfiguration &ctaConf,
   cta::log::Logger &log,
+  cta::mediachanger::reactor::ZMQReactor &reactor,
+  void *const zmqContext,
+  const std::string &hostName,
+  const AcsdConfiguration &ctaConf,
   AcsPendingRequests &acsPendingRequests):
+  m_log(log),
   m_reactor(reactor),
   m_socket(zmqContext, ZMQ_ROUTER),
   m_hostName(hostName),
   m_ctaConf(ctaConf),
-  m_log(log),
   m_acsPendingRequests(acsPendingRequests) { 
 
   std::ostringstream endpoint;
-  endpoint << "tcp://127.0.0.1:" << m_ctaConf.port;
+  endpoint << "tcp://127.0.0.1:" << m_ctaConf.port.value();
   
   try {
     m_socket.bind(endpoint.str().c_str());
     std::list<log::Param> params = {log::Param("endpoint", endpoint.str())};
-    //log::write(LOG_INFO, "Bound the ZMQ socket of the AcsMessageHandler",
     m_log(LOG_INFO, "Bound the ZMQ socket of the AcsMessageHandler",
       params);
   } catch(cta::exception::Exception &ne){
@@ -128,8 +133,6 @@ bool cta::mediachanger::acs::daemon::AcsMessageHandler::handleEvent(
   } catch(cta::exception::Exception &ex) {
     std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "AcsMessageHandler failed to handle event", params);
-    //m_log(LOG_ERR, ex.getMessage().str());
-    //log::write(LOG_ERR, "AcsMessageHandler failed to handle event", params);
     return false; // Give up and stay registered with the reactor
   }
   std::list<log::Param> params = {
@@ -215,7 +218,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   dispatchMsgHandler(const cta::mediachanger::Frame &rqst) {
   m_log(LOG_DEBUG, "AcsMessageHandler dispatching message handler");
   
-  const cta::mediachanger::MsgType msgType = (cta::mediachanger::MsgType)rqst.header.msgtype();
+  const cta::mediachanger::acs::daemon::MsgType msgType = (cta::mediachanger::acs::daemon::MsgType)rqst.header.msgtype();
   switch(msgType) {
   case cta::mediachanger::MSG_TYPE_ACSMOUNTTAPEREADONLY:
     return handleAcsMountTapeReadOnly(rqst);
@@ -231,7 +234,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
 
   default:
     {
-      const std::string msgTypeStr = cta::mediachanger::msgTypeToString(msgType);
+      const std::string msgTypeStr = cta::mediachanger::acs::daemon::msgTypeToString(msgType);
       cta::exception::Exception ex;
       ex.getMessage() << "Failed to dispatch message handler"
         ": Unexpected request type: msgType=" << msgType << " msgTypeStr=" <<
@@ -249,7 +252,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   m_log(LOG_DEBUG, "Handling AcsMountTapeReadOnly message");
 
   try {
-    cta::mediachanger::acs::daemon::AcsMountTapeReadOnly rqstBody;
+    cta::mediachanger::AcsMountTapeReadOnly rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
     
     const std::string vid = rqstBody.vid();
@@ -259,21 +262,21 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t drive  = rqstBody.drive();
     
     std::list<log::Param> params = {log::Param("TPVID", vid),
-      m_log("acs", acs);
-      m_log("lsm", lsm);
-      m_log("panel", panel);
-      m_log("drive", drive);
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
     m_log(LOG_INFO, "Mount tape for read-only access", params);
 
     cta::mediachanger::acs::AcsImpl acsWrapper;
     cta::mediachanger::acs::daemon::AcsMountTapeReadOnly acsMountTapeReadOnly(vid, acs, lsm, 
-      panel, drive, acsWrapper, m_ctaConf);
+      panel, drive, acsWrapper, m_log, m_ctaConf);
     try {
       acsMountTapeReadOnly.execute();
       m_log(LOG_INFO,"Tape successfully mounted for read-only access", params);
     } catch (cta::exception::Exception &ne) {
       m_log(LOG_ERR,"Tape mount for read-only access failed: "
-        + ne.getMessage().str(), vid);  
+        + ne.getMessage().str(), params);  
       throw;  
     }     
     const cta::mediachanger::Frame reply = createReturnValueFrame(0);
@@ -294,7 +297,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   m_log(LOG_DEBUG, "Handling AcsMountTapeReadWrite message");
 
   try {
-    cta::mediachanger::acs::daemon::AcsMountTapeReadWrite rqstBody;
+    cta::mediachanger::AcsMountTapeReadWrite rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
      
     const std::string vid = rqstBody.vid();
@@ -303,22 +306,22 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    //std::list<log::Param> params = {log::Param("TPVID", vid),
-      m_log("acs", acs);
-      m_log("lsm", lsm);
-      m_log("panel", panel);
-      m_log("drive", drive);
-    m_log(LOG_INFO, "Mount tape for read/write access");
+    std::list<log::Param> params = {log::Param("TPVID", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
+    m_log(LOG_INFO, "Mount tape for read/write access",params);
 
     cta::mediachanger::acs::AcsImpl acsWrapper;
-    cta::mediachanger::acs::AcsMountTapeReadWrite acsMountTapeReadWrite(vid, acs,
-      lsm, panel, drive, acsWrapper, m_ctaConf);
+    cta::mediachanger::acs::daemon::AcsMountTapeReadWrite acsMountTapeReadWrite(vid, acs,
+      lsm, panel, drive, acsWrapper, m_log, m_ctaConf);
     try {
       acsMountTapeReadWrite.execute();   
-      m_log(LOG_INFO,"Tape successfully mounted for read/write access", vid);
+      m_log(LOG_INFO,"Tape successfully mounted for read/write access", params);
     } catch (cta::exception::Exception &ne) {
       m_log(LOG_ERR,"Tape mount for read/write access failed: "
-        + ne.getMessage().str(), vid);  
+        + ne.getMessage().str(), params);  
       throw;  
     }     
     const cta::mediachanger::Frame reply = createReturnValueFrame(0);
@@ -334,12 +337,12 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
 //------------------------------------------------------------------------------
 // handleAcsDismountTape
 //------------------------------------------------------------------------------
-cta::mediachanger::Frame mediachanger::acs::daemon::AcsMessageHandler::
+cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   handleAcsDismountTape(const cta::mediachanger::Frame& rqst) {
-  log(LOG_DEBUG, "Handling AcsDismountTape message");
+  m_log(LOG_DEBUG, "Handling AcsDismountTape message");
 
   try {
-    cta::mediachanger::acs::daemon::AcsDismountTape rqstBody;
+    cta::mediachanger::AcsDismountTape rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     const std::string vid = rqstBody.vid();
@@ -349,15 +352,15 @@ cta::mediachanger::Frame mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t drive  = rqstBody.drive();
     
     std::list<log::Param> params = {log::Param("TPVID", vid),
-      m_log("acs", acs);
-      m_log("lsm", lsm);
-      m_log("panel", panel);
-      m_log("drive", drive);
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
     m_log(LOG_INFO, "Dismount tape",params);
 
     cta::mediachanger::acs::AcsImpl acsWrapper;
     cta::mediachanger::acs::daemon::AcsDismountTape acsDismountTape(vid, acs, lsm, panel, drive,
-      acsWrapper, m_ctaConf);
+      acsWrapper, m_log, m_ctaConf);
     try {
       acsDismountTape.execute();
       m_log(LOG_INFO,"Tape successfully dismounted", params);
@@ -388,7 +391,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   m_log(LOG_DEBUG, "Handling AcsDismountTape message");
 
   try {
-    cta::mediachanger::acs::daemon::AcsForceDismountTape rqstBody;
+    cta::mediachanger::AcsForceDismountTape rqstBody;
     rqst.parseBodyIntoProtocolBuffer(rqstBody);
 
     const std::string vid = rqstBody.vid();
@@ -397,23 +400,23 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
 
-    //std::list<log::Param> params = {log::Param("TPVID", vid),
-      m_log("acs", acs),
-      m_log("lsm", lsm),
-      m_log("panel", panel),
-      m_log("drive", drive);
-   // m_log(LOG_INFO, "Force dismount tape", params);
-    m_log(LOG_INFO, "Force dismount tape",vid);
+    std::list<log::Param> params = {log::Param("TPVID", vid),
+      log::Param("acs", acs),
+      log::Param("lsm", lsm),
+      log::Param("panel", panel),
+      log::Param("drive", drive)};
+    m_log(LOG_INFO, "Force dismount tape", params);
+   // m_log(LOG_INFO, "Force dismount tape",vid);
 
     cta::mediachanger::acs::AcsImpl acsWrapper;
-    cta::mediachanger::acs::AcsForceDismountTape acsForceDismountTape(vid, acs, lsm,
-      panel, drive, acsWrapper, m_ctaConf);
+    cta::mediachanger::acs::daemon::AcsForceDismountTape acsForceDismountTape(vid, acs, lsm,
+      panel, drive, acsWrapper, m_log, m_ctaConf);
     try {
       acsForceDismountTape.execute();
-      m_log(LOG_INFO,"Tape successfully force dismounted", vid);
+      m_log(LOG_INFO,"Tape successfully force dismounted", params);
     } catch (cta::exception::Exception &ne) {
       m_log(LOG_ERR,"Tape force dismount failed: "+ne.getMessage().str(),
-        vid);
+        params);
       throw;
     }
     const cta::mediachanger::Frame reply = createReturnValueFrame(0);
@@ -443,7 +446,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   frame.header.set_bodyhashvalue(cta::mediachanger::computeSHA1Base64(frame.body));
   frame.header.set_bodysignature("PIPO");
 
-  cta::mediachanger::acs::ReturnValue body;
+  cta::mediachanger::ReturnValue body;
   body.set_value(value);
   frame.serializeProtocolBufferIntoBody(body);
 
@@ -462,7 +465,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
   frame.header.set_bodyhashvalue(cta::mediachanger::computeSHA1Base64(frame.body));
   frame.header.set_bodysignature("PIPO");
 
-  cta::mediachanger::acs::Exception body;
+  cta::mediachanger::Exception body;
   body.set_code(code);
   body.set_message(msg);
   frame.serializeProtocolBufferIntoBody(body);

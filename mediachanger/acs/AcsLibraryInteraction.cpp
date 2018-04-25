@@ -18,28 +18,28 @@
  */
 
 #include "AcsLibraryInteraction.hpp"
-#include "../../log.hpp"
+#include "common/log/log.hpp"
 
 #include <stdlib.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsLibraryInteraction::AcsLibraryInteraction(
-  Acs &acs) throw(): m_acs(acs) {
+cta::mediachanger::acs::AcsLibraryInteraction::AcsLibraryInteraction(
+  Acs &acs, cta::log::Logger& log) throw(): m_acs(acs), m_log(log) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsLibraryInteraction::~AcsLibraryInteraction() throw() {
+cta::mediachanger::acs::AcsLibraryInteraction::~AcsLibraryInteraction() throw() {
 }
 
 
 //------------------------------------------------------------------------------
 // requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void cta::acs::AcsLibraryInteraction::requestResponsesUntilFinal(
+void cta::mediachanger::acs::AcsLibraryInteraction::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
   const int queryInterval, const int timeout) const
@@ -56,7 +56,7 @@ void cta::acs::AcsLibraryInteraction::requestResponsesUntilFinal(
     elapsedTime += time(NULL) - startTime;
 
     if(RT_ACKNOWLEDGE == responseType) {
-      log::write(LOG_DEBUG,"Received RT_ACKNOWLEDGE");
+      m_log(LOG_DEBUG,"Received RT_ACKNOWLEDGE");
     }
 
     if(elapsedTime >= timeout) {
@@ -66,13 +66,13 @@ void cta::acs::AcsLibraryInteraction::requestResponsesUntilFinal(
     }
   } while(RT_FINAL != responseType);
 
-  log::write(LOG_DEBUG,"Received RT_FINAL");
+  m_log(LOG_DEBUG,"Received RT_FINAL");
 }
 
 //------------------------------------------------------------------------------
 // requestResponse
 //------------------------------------------------------------------------------
-ACS_RESPONSE_TYPE cta::acs::AcsLibraryInteraction::requestResponse(
+ACS_RESPONSE_TYPE cta::mediachanger::acs::AcsLibraryInteraction::requestResponse(
   const int timeout, const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) const
    {
@@ -82,7 +82,7 @@ ACS_RESPONSE_TYPE cta::acs::AcsLibraryInteraction::requestResponse(
 
   std::stringstream dbgMsg;
   dbgMsg << "Calling Acs::response() for requestSeqNumber=" << requestSeqNumber;
-  log::write(LOG_DEBUG, dbgMsg.str());
+  m_log(LOG_DEBUG, dbgMsg.str());
   
   const STATUS s = m_acs.response(timeout, responseSeqNumber, reqId,
     responseType, buf);
@@ -91,7 +91,7 @@ ACS_RESPONSE_TYPE cta::acs::AcsLibraryInteraction::requestResponse(
   dbgMsg << "Acs::response() for requestSeqNumber=" << requestSeqNumber <<
     " returned responseSeqNumber=" << responseSeqNumber << " and status " << 
     acs_status(s);          
-  log::write(LOG_DEBUG,dbgMsg.str());
+  m_log(LOG_DEBUG,dbgMsg.str());
   
   switch(s) {
   case STATUS_SUCCESS:
@@ -109,7 +109,7 @@ ACS_RESPONSE_TYPE cta::acs::AcsLibraryInteraction::requestResponse(
 //------------------------------------------------------------------------------
 // checkSeqNumber
 //------------------------------------------------------------------------------
-void cta::acs::AcsLibraryInteraction::checkResponseSeqNumber(
+void cta::mediachanger::acs::AcsLibraryInteraction::checkResponseSeqNumber(
   const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber) const
    {
   if(requestSeqNumber != responseSeqNumber) {
@@ -123,7 +123,7 @@ void cta::acs::AcsLibraryInteraction::checkResponseSeqNumber(
 //------------------------------------------------------------------------------
 // volumeStatusAsString
 //------------------------------------------------------------------------------
-std::string cta::acs::AcsLibraryInteraction::volumeStatusAsString(
+std::string cta::mediachanger::acs::AcsLibraryInteraction::volumeStatusAsString(
   const QU_VOL_STATUS &s) const throw() {
   
   std::ostringstream os;
