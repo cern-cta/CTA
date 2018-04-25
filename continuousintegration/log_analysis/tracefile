@@ -11,22 +11,23 @@ check_results()
 {
   NUM_EXPECTED=$1
   NUM_RECEIVED=$(cut -d' ' -f2 | sort | uniq | wc -l)
-  [ $NUM_EXPECTED -eq $NUM_RECEIVED ] && return 1
-  return 0
+  [ $NUM_EXPECTED -eq $NUM_RECEIVED ] && return 0
+  return 1
 }
 
 get_mgm_times()
 {
-  #TMP_RESULTS=$(grep -m5 "^$1 " xrdmgm-events.log)
-  TMP_RESULTS=$(grep "^$1 " xrdmgm-events.log)
+  TMP_RESULTS=$(grep -m7 "^$1 " xrdmgm-events.log)
 
-  echo -e "${TMP_RESULTS}" | check_results 5
-  [ $? -eq 0 ] && TMP_RESULTS=$(grep "^$1 " xrdmgm-events.log)
+  echo -e "${TMP_RESULTS}" | check_results 7
+  [ $? -ne 0 ] && TMP_RESULTS=$(grep "^$1 " xrdmgm-events.log)
 
-  TIME_ARCHIVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ARC" | cut -d' ' -f3)
-  TIME_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLO" | cut -d' ' -f3)
   TIME_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
+  TIME_ACOMMIT=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ACO" | cut -d' ' -f3)
+  TIME_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLO" | cut -d' ' -f3)
+  TIME_ARCHIVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ARC" | cut -d' ' -f3)
   TIME_PREPARE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 PRE" | cut -d' ' -f3)
+  TIME_RCOMMIT=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RCO" | cut -d' ' -f3)
   TIME_RETRIEVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RWC" | cut -d' ' -f3)
 }
 
@@ -35,7 +36,7 @@ get_frontend_times()
   TMP_RESULTS=$(grep -m3 "^$1 " cta-frontend-events.log)
 
   echo -e "${TMP_RESULTS}" | check_results 3
-  [ $? -eq 0 ] && TMP_RESULTS=$(grep "^$1 " cta-frontend-events.log)
+  [ $? -ne 0 ] && TMP_RESULTS=$(grep "^$1 " cta-frontend-events.log)
 
   TIME_FE_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
   TIME_FE_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLW" | cut -d' ' -f3)
@@ -44,11 +45,13 @@ get_frontend_times()
 
 get_taped_times()
 {
-  # 5+5+1 messages for 2 archive copies + 7 messages for retrieve = 18 messages total
-  TMP_RESULTS=$(grep -m18 "^$1 " cta-taped-events.log)
+  # 1 archive copy: 5+1 messages
+  # 2 archive copies: 5+5+1 messages
+  # retrieve: 7 messages
+  TMP_RESULTS=$(grep -m13 "^$1 " cta-taped-events.log)
 
   echo -e "${TMP_RESULTS}" | check_results 13
-  [ $? -eq 0 ] && TMP_RESULTS=$(grep "^$1 " cta-taped-events.log)
+  [ $? -ne 0 ] && TMP_RESULTS=$(grep "^$1 " cta-taped-events.log)
 
   TIME_TS_ARCHIVE_POP=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 A_POP" | cut -d' ' -f3)
   TIME_TS_ARCHIVE_TASKS=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 A_TSS" | cut -d' ' -f3)
@@ -80,7 +83,8 @@ get_times()
   echo -n "$ARCHIVE_ID $FILE_ID "
 
   echo -n "$(get_offset_time $TIME_CREATE $TIME_FE_CREATE) "
-  echo -n "$(get_offset_time $TIME_FE_CREATE $TIME_CLOSEW) "
+  echo -n "$(get_offset_time $TIME_FE_CREATE $TIME_ACOMMIT) "
+  echo -n "$(get_offset_time $TIME_ACOMMIT $TIME_CLOSEW) "
   echo -n "$(get_offset_time $TIME_CLOSEW $TIME_FE_CLOSEW) "
   echo -n "$(get_offset_time $TIME_FE_CLOSEW $TIME_TS_ARCHIVE_POP) "
   echo -n "$(get_offset_time $TIME_TS_ARCHIVE_POP $TIME_TS_ARCHIVE_TASKS) "
@@ -98,7 +102,8 @@ get_times()
   echo -n "$(get_offset_time $TIME_TS_RETRIEVE_POSITION $TIME_TS_RETRIEVE_READ) "
   echo -n "$(get_offset_time $TIME_TS_RETRIEVE_READ $TIME_TS_RETRIEVE_OPEN) "
   echo -n "$(get_offset_time $TIME_TS_RETRIEVE_OPEN $TIME_TS_RETRIEVE_DONE) "
-  echo    "$(get_offset_time $TIME_TS_RETRIEVE_DONE $TIME_RETRIEVED);"
+  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_DONE $TIME_RCOMMIT);"
+  echo    "$(get_offset_time $TIME_RCOMMIT $TIME_RETRIEVED);"
 }
 
 FILE_NUM_START=${1:-1}

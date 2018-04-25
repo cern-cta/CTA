@@ -2,6 +2,11 @@
 #
 # Preprocess logfiles for more efficient data extraction
 
+# Logfile names
+MGM_LOG=xrdlog.mgm
+FRONTEND_LOG=cta-frontend.log
+TAPED_LOG=cta-taped.log
+
 # Colours
 NC='\033[0m' # No colour
 RED='\033[0;31m'
@@ -13,6 +18,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 LT_BLUE='\033[1;34m'
 
+error()
+{
+  echo -e "${RED}$*${NC}" >&2
+  exit 1
+}
+
 echoc()
 {
   COLOUR=$1
@@ -22,11 +33,13 @@ echoc()
 
 process_mgm_log()
 {
-  echoc $LT_BLUE "Extracting log messages from xrdlog.mgm..."
+  [ -r ${MGM_LOG} ] || error "Can't open ${MGM_LOG}"
 
-  DATE_OFFSET=$(head -1 xrdlog.mgm-20180414 | awk '{ print $1 }')
+  echoc $LT_BLUE "Extracting log messages from ${MGM_LOG}..."
 
-  awk -vDATE_OFFSET="$DATE_OFFSET" '
+  DATE_OFFSET=$(head -1 ${MGM_LOG} | awk '{ print $1 }')
+
+  awk -vDATE_OFFSET="$DATE_OFFSET" 'BEGIN { COMMIT_EVENT="ACO" }
     function processLine(pattern, event, logline) {
       gsub("time=.*" pattern, "", logline)
       split(logline,logarray)
@@ -41,9 +54,10 @@ process_mgm_log()
     / default ARCHIVED /        { processLine("ARCHIVED", "ARC", $0) }
     / default CLOSEW /          { processLine("CLOSEW", "CLO", $0) }
     / default SYNC::CREATE /    { processLine("CREATE", "CRE", $0) }
-    / default SYNC::PREPARE /   { processLine("PREPARE", "PRE", $0) }
+    / default SYNC::PREPARE /   { processLine("PREPARE", "PRE", $0); COMMIT_EVENT="RCO" }
     / retrieve_written CLOSEW / { processLine("CLOSEW", "RWC", $0) }
-  ' xrdlog.mgm-20180414 xrdlog.mgm-20180415 >xrdmgm.log.$$
+    / subcmd=commit /           { processLine("subcmd=commit path=", COMMIT_EVENT, $0) }
+  ' ${MGM_LOG} >xrdmgm.log.$$
 
   echoc $LT_BLUE "done.\nSorting..."
   sort -n xrdmgm.log.$$ >xrdmgm-events.log
@@ -53,10 +67,12 @@ process_mgm_log()
 
 process_frontend_log()
 {
+  [ -r ${FRONTEND_LOG} ] || error "Can't open ${FRONTEND_LOG}"
+
   echoc $LT_BLUE "Extracting archive log messages from cta-frontend..."
 
-  FE_HOSTNAME=$(head -1 cta-frontend.log | awk '{ print $4 }')
-  DATE_OFFSET=$(head -1 cta-frontend.log | awk '{ gsub("^Apr ", "201804"); print $1 }')
+  FE_HOSTNAME=$(head -1 ${FRONTEND_LOG} | awk '{ print $4 }')
+  DATE_OFFSET=$(head -1 ${FRONTEND_LOG} | awk '{ gsub("^Apr ", "201804"); print $1 }')
 
   awk -vFE_HOSTNAME="$FE_HOSTNAME" -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
@@ -69,14 +85,15 @@ process_frontend_log()
       HOURS=substr(logarray[2],1,2)
       MINS=substr(logarray[2],4,2)
       SECS=substr(logarray[2],7,2)
+      MSECS=substr(logarray[2],10)
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
-      print logarray[3],event,timesecs
+      print logarray[3],event,timesecs "." MSECS
     }
 
     /CREATE/ { processLine("CRE", $0) }
     /CLOSEW/ { processLine("CLW", $0) }
     /PREPARE/ { processLine("PRE", $0) }
-  ' cta-frontend.log >cta-frontend.log.$$
+  ' ${FRONTEND_LOG} >cta-frontend.log.$$
 
   echoc $LT_BLUE "done.\nSorting..."
   sort -n cta-frontend.log.$$ >cta-frontend-events.log
@@ -86,10 +103,12 @@ process_frontend_log()
 
 process_taped_log()
 {
+  [ -r ${TAPED_LOG} ] || error "Can't open ${TAPED_LOG}"
+
   echoc $LT_BLUE "Extracting archive log messages from cta-taped..."
 
-  TAPED_HOSTNAME=$(head -1 cta-taped.log | awk '{ print $4 }')
-  DATE_OFFSET=$(head -1 cta-taped.log | awk '{ gsub("^Apr ", "201804"); print $1 }')
+  TAPED_HOSTNAME=$(head -1 ${TAPED_LOG} | awk '{ print $4 }')
+  DATE_OFFSET=$(head -1 ${TAPED_LOG} | awk '{ gsub("^Apr ", "201804"); print $1 }')
 
   awk -vTAPED_HOSTNAME="$TAPED_HOSTNAME" -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
@@ -101,8 +120,9 @@ process_taped_log()
       HOURS=substr(logarray[2],1,2)
       MINS=substr(logarray[2],4,2)
       SECS=substr(logarray[2],7,2)
+      MSECS=substr(logarray[2],10)
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
-      print logarray[3],event,timesecs
+      print logarray[3],event,timesecs "." MSECS
     }
 
     /In ArchiveMount::getNextJobBatch\(\): popped one job/    { processLine("A_POP", $0) }
@@ -118,7 +138,7 @@ process_taped_log()
     /File successfully read from tape/                        { processLine("R_RED", $0) }
     /Opened disk file for writing/                            { processLine("R_OPN", $0) }
     /File successfully transfered to disk/                    { processLine("R_TRF", $0) }
-  ' cta-taped.log >cta-taped.log.$$
+  ' ${TAPED_LOG} >cta-taped.log.$$
 
   echoc $LT_BLUE "done.\nSorting..."
   sort -n cta-taped.log.$$ >cta-taped-events.log
