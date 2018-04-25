@@ -136,11 +136,11 @@ int AcsDaemon::main() throw() {
 void AcsDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
-  AcsdCmdLine(argc,argv); //parse command line
- 
- const std::string runAsStagerSuperuser = "ACSD";
- const std::string runAsStagerSupergroup = "CTA";
- //daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
+  AcsdCmdLine Commandline(argc,argv); //parse command line
+  setCommandLineHasBeenParsed(Commandline.foreground);
+ const std::string runAsStagerSuperuser = m_config.daemonUserName.value();;
+ const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();;
+ daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
  setDumpable();
 
  blockSignals();

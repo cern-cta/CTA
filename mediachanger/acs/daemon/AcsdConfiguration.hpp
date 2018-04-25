@@ -50,7 +50,10 @@ struct AcsdConfiguration {
     "acsd", "QueryInterval", (long unsigned int)ACS_QUERY_INTERVAL, "Compile time default"};
   SourcedParameter<uint64_t> CmdTimeout{
     "acsd", "CmdTimeout",(long unsigned int) ACS_CMD_TIMEOUT, "Compile time default"};
- 
+  SourcedParameter<std::string> daemonUserName{
+    "acsd", "DaemonUserName", "cta", "Compile time default"};
+  SourcedParameter<std::string> daemonGroupName{
+    "acsd", "DaemonGroupName", "tape", "Compile time default"};
 private:
   /** A private dummy logger which will simplify the implementation of the 
    * functions (just unconditionally log things). */

@@ -34,11 +34,15 @@ cta::mediachanger::acs::daemon::AcsdConfiguration cta::mediachanger::acs::daemon
   ret.port.setFromConfigurationFile(cf, generalConfigPath);
   ret.QueryInterval.setFromConfigurationFile(cf, generalConfigPath);
   ret.CmdTimeout.setFromConfigurationFile(cf, generalConfigPath);
+  ret.daemonUserName.setFromConfigurationFile(cf, generalConfigPath);
+  ret.daemonGroupName.setFromConfigurationFile(cf, generalConfigPath);
 
   // If we get here, the configuration file is good enough to be logged.
   ret.port.log(log);
   ret.QueryInterval.log(log);
   ret.CmdTimeout.log(log);
+  ret.daemonUserName.log(log);
+  ret.daemonGroupName.log(log);
   
   return ret;
 }
