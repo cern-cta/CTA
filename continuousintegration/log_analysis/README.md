@@ -1,3 +1,4 @@
-# Additional Tests
+# Log Analysis
 
-This directory is for developing test scripts which can be added into CI/pre-production at a later stage.
+The scripts in this directory are for post-processing of logfiles from CI runs or production runs to
+create statistics for analysis and visualisation.
