@@ -368,9 +368,12 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    const auto storageClassItor = notification.file().xattr().find("CTA_StorageClass");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named CTA_StorageClass");
+     throw PbException(std::string(__FUNCTION__) + ": CTA_StorageClass extended attribute is not set");
    }
    const std::string storageClass = storageClassItor->second;
+   if(storageClass.empty()) {
+     throw PbException(std::string(__FUNCTION__) + ": CTA_StorageClass extended attribute is set to an empty string");
+   }
 
    cta::utils::Timer t;
 
