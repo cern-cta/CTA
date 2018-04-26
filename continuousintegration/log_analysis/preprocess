@@ -33,11 +33,7 @@ echoc()
 
 process_mgm_log()
 {
-  [ -r ${MGM_LOG} ] || error "Can't open ${MGM_LOG}"
-
   echoc $LT_BLUE "Extracting log messages from ${MGM_LOG}..."
-
-  DATE_OFFSET=$(head -1 ${MGM_LOG} | awk '{ print $1 }')
 
   awk -vDATE_OFFSET="$DATE_OFFSET" 'BEGIN { COMMIT_EVENT="ACO" }
     function processLine(pattern, event, logline) {
@@ -72,11 +68,10 @@ process_frontend_log()
   echoc $LT_BLUE "Extracting archive log messages from cta-frontend..."
 
   FE_HOSTNAME=$(head -1 ${FRONTEND_LOG} | awk '{ print $4 }')
-  DATE_OFFSET=$(head -1 ${FRONTEND_LOG} | awk '{ gsub("^Apr ", "201804"); print $1 }')
 
   awk -vFE_HOSTNAME="$FE_HOSTNAME" -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
-      gsub("^Apr ", "201804", logline)
+      gsub("^Apr ", "1804", logline)
       gsub("archiveFileId", "fileId", logline)
       gsub(FE_HOSTNAME " .* fileId=\"", "", logline)
       gsub("\".*$", "", logline)
@@ -101,6 +96,20 @@ process_frontend_log()
   rm -f cta-frontend.log.$$
 }
 
+process_file_ids()
+{
+  [ -r ${FRONTEND_LOG} ] || error "Can't open ${FRONTEND_LOG}"
+
+  echoc $LT_BLUE "Extracting disk IDs and archive IDs from cta-frontend..."
+  grep processCREATE cta-frontend.log |\
+  sed 's/^.*diskFileId="//' |\
+  sed 's/" diskFilePath="/ /' |\
+  sed 's/" fileId="/ /' |\
+  sed 's/".*$//' |\
+  awk '{ print $2 " " $1 " " $3 }' >filenameToLogIds.txt
+  echoc $LT_BLUE "done.\n"
+}
+
 process_taped_log()
 {
   [ -r ${TAPED_LOG} ] || error "Can't open ${TAPED_LOG}"
@@ -108,11 +117,10 @@ process_taped_log()
   echoc $LT_BLUE "Extracting archive log messages from cta-taped..."
 
   TAPED_HOSTNAME=$(head -1 ${TAPED_LOG} | awk '{ print $4 }')
-  DATE_OFFSET=$(head -1 ${TAPED_LOG} | awk '{ gsub("^Apr ", "201804"); print $1 }')
 
   awk -vTAPED_HOSTNAME="$TAPED_HOSTNAME" -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
-      gsub("^Apr ", "201804", logline)
+      gsub("^Apr ", "1804", logline)
       gsub(TAPED_HOSTNAME " .* fileId=\"", "", logline)
       gsub("\".*$", "", logline)
       split(logline,logarray)
@@ -146,7 +154,13 @@ process_taped_log()
   rm -f cta-taped.log.$$
 }
 
-process_mgm_log
-#process_frontend_log
-#process_taped_log
+# Get date offset value
+[ -r ${MGM_LOG} ] || error "Can't open ${MGM_LOG}"
+DATE_OFFSET=$(head -1 ${MGM_LOG} | awk '{ print $1 }')
 
+# Process log data
+
+#process_mgm_log
+process_frontend_log
+#process_file_ids
+process_taped_log
