@@ -23,14 +23,12 @@
 
 #pragma once
 
-//#include "daemon/AcsdConfiguration.hpp"
 #include "AcsdConfiguration.hpp"
-//#include "daemon/AcsDaemonConfig.hpp"
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "mediachanger/acs/AcsRequest.hpp"
-/////#include "mediachanger/acs/AcsImpl.hpp"
-/////#include "mediachanger/messages.hpp"
+#include "mediachanger/acs/AcsImpl.hpp"
+#include "mediachanger/messages.hpp"
 #include "mediachanger/Frame.hpp"
 #include "mediachanger/ZmqMsg.hpp"
 #include "mediachanger/ZmqSocket.hpp"
@@ -113,16 +111,11 @@ public:
    * @param rqst    ZMQ message with CASTOR frame.
    * @param socket  ZMQ socket to use.
    */
-/*
- *  void checkAndAddRequest(messages::ZmqMsg &address,
-    messages::ZmqMsg &empty,
-    const messages::Frame &rqst,
-    messages::ZmqSocketST &socket);
-  */
-  ///// void checkAndAddRequest(mediachanger::ZmqMsg &address,
-  /////  mediachanger::ZmqMsg &empty,
-  /////  const mediachanger:: Frame &rqst,
-   ///// mediachanger::ZmqSocketST &socket);
+
+   void checkAndAddRequest(mediachanger::ZmqMsg &address,
+    mediachanger::ZmqMsg &empty,
+    const mediachanger:: Frame &rqst,
+    mediachanger::ZmqSocketST &socket);
   
 /**
    * Performs dismount specific checks for the incoming request and add it to 
@@ -133,10 +126,10 @@ public:
    * @param rqst    ZMQ message with CASTOR frame.
    * @param socket  ZMQ socket to use.
    */
- ///// void checkAndAddRequestDismountTape(mediachanger::ZmqMsg &address,
-/////    mediachanger::ZmqMsg &empty,
-/////    const mediachanger::Frame &rqst,
-/////    mediachanger::ZmqSocketST &socket);
+  void checkAndAddRequestDismountTape(mediachanger::ZmqMsg &address,
+    mediachanger::ZmqMsg &empty,
+    const mediachanger::Frame &rqst,
+    mediachanger::ZmqSocketST &socket);
   
   /**
    * Find and return free sequence number for the ACS request.
@@ -144,7 +137,7 @@ public:
    * @return The value of free sequence number for the ACS request. Throws
    * exception if the is no free sequence number.
    */
-/////  SEQ_NO getSequenceNumber() const;
+  SEQ_NO getSequenceNumber() const;
 
   /**
    * Sets the type of the response and the response message in the ACS request
@@ -168,8 +161,8 @@ public:
    * @param panel   The panel value of the ACS request.
    * @param drive   The drive value of the ACS request.
    */ 
-/////  void checkRequest(const std::string &vid, const uint32_t acs, 
-/////    const uint32_t lsm, const uint32_t panel, const uint32_t drive) const ;
+  void checkRequest(const std::string &vid, const uint32_t acs, 
+    const uint32_t lsm, const uint32_t panel, const uint32_t drive) const ;
   
 private:
 

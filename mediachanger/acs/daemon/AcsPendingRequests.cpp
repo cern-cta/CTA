@@ -24,13 +24,12 @@
 #include "AcsPendingRequests.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
 #include "mediachanger/acs/AcsRequest.hpp"
-/////#include "mediachanger/acs/daemon/AcsDismountTape.hpp"
-//#include "castor/acs/AcsRequestDismountTape.hpp"
-//////#include "AcsRequestDismountTape.hpp"
+#include "mediachanger/acs/daemon/AcsDismountTape.hpp"
+#include "AcsRequestDismountTape.hpp"
 #include "common/Constants.hpp"
 //#include "messages/Constants.hpp"
 #include "mediachanger/Constants.hpp"
-//#include "mediachanger/acs/Constants.hpp"
+#include "mediachanger/acs/daemon/Constants.hpp"
 #include "common/log/log.hpp"
 #include "mediachanger/messages.hpp"
 #include "mediachanger/Frame.hpp"
@@ -179,7 +178,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleToDeleteRequests(
     }    
   }
 }
-/*
+
 //-----------------------------------------------------------------------------
 // checkAndAddRequest
 //-----------------------------------------------------------------------------
@@ -192,7 +191,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequest(
   };
   m_log(LOG_DEBUG, "AcsPendingRequests::checkAndAddRequest", params);
 
-  const mediachanger::MsgType msgType = (mediachanger::MsgType)rqst.header.msgtype();
+  const cta::mediachanger::acs::daemon::MsgType msgType = (cta::mediachanger::acs::daemon::MsgType)rqst.header.msgtype();
   switch(msgType) {
   case mediachanger::MSG_TYPE_ACSMOUNTTAPEREADONLY:
   case mediachanger::MSG_TYPE_ACSMOUNTTAPEREADWRITE:
@@ -208,7 +207,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequest(
     break;
   default:
     {
-      const std::string msgTypeStr = (std::string)mediachanger::msgTypeToString(msgType);
+      const std::string msgTypeStr = cta::mediachanger::acs::daemon::msgTypeToString(msgType);
       cta::exception::Exception ex;
       ex.getMessage() << "Failed to check request"
         ": Unexpected request type: msgType=" << msgType << " msgTypeStr=" <<
@@ -256,7 +255,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequestDismo
     cta::mediachanger::acs::AcsRequest * acsRequestDismountTape = 
       new AcsRequestDismountTape(vid, acs, lsm, panel, drive, 
       //new AcsRequestDismountTape AcsRequestDismountTape(vid, acs, lsm, panel, drive, 
-        m_ctaConf, socket, address, empty, seqNo);
+        m_ctaConf, socket, address, empty, m_log, seqNo);
     
     acsRequestDismountTape->setStateToExecute(); 
     m_acsRequestList.push_back(acsRequestDismountTape); 
@@ -335,4 +334,4 @@ SEQ_NO cta::mediachanger::acs::daemon::AcsPendingRequests::getSequenceNumber() c
     " allocated maximum seqNo=\""<<maxSeqNo<<"\"";
   m_log(LOG_ERR, ex.getMessage().str());  
   throw ex;   
-}*/
+}

@@ -27,8 +27,7 @@ set (ACS_DAEMON_SRC_FILES
   AcsMountTapeReadOnly.cpp
   AcsForceDismountTape.cpp
   Constants.cpp
-  #AcsRequestDismountTape.cpp
-  #AcsLibraryInteraction.cpp
+  AcsRequestDismountTape.cpp
 )
 add_executable (cta-acsd ${ACS_DAEMON_SRC_FILES})
 

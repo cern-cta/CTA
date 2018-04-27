@@ -112,9 +112,7 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
 int AcsDaemon::main() throw() {
     
   try {
-
     exceptionThrowingMain(m_argc, m_argv);
-
   } catch (cta::exception::Exception &ex) {
     // Write the error to standard error
     std::cerr << std::endl << "Aborting: " << ex.getMessage().str() << std::endl
@@ -138,15 +136,15 @@ void AcsDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   AcsdCmdLine Commandline(argc,argv); //parse command line
   setCommandLineHasBeenParsed(Commandline.foreground);
- const std::string runAsStagerSuperuser = m_config.daemonUserName.value();;
- const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();;
- daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
- setDumpable();
+  const std::string runAsStagerSuperuser = m_config.daemonUserName.value();;
+  const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();;
+  daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
+  setDumpable();
 
- blockSignals();
- initZmqContext();
- setUpReactor();  
- // mainEventLoop();
+  blockSignals();
+  initZmqContext();
+  setUpReactor();  
+  mainEventLoop();
 
 }
 
@@ -272,7 +270,7 @@ void AcsDaemon::createAndRegisterAcsMessageHandler()  {
     throw ex;
   }
 }
-/*
+
 //------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
@@ -373,9 +371,9 @@ bool AcsDaemon::handlePendingSignals() throw() {
       break;
     }
   }
-
+       
   return continueMainEventLoop;
 }
-*/
+
 
 }}}}

@@ -147,7 +147,7 @@ bool cta::mediachanger::acs::daemon::AcsMessageHandler::handleEvent(
   /*bool exceptionOccurred = false;*/
   
   try {
-    //m_acsPendingRequests.checkAndAddRequest(address, empty, rqst, m_socket);
+    m_acsPendingRequests.checkAndAddRequest(address, empty, rqst, m_socket);
     // if there are any problems we need to send the replay to the client.
     
     reply = dispatchMsgHandler(rqst);
@@ -177,7 +177,7 @@ bool cta::mediachanger::acs::daemon::AcsMessageHandler::handleEvent(
       cta::mediachanger::sendFrame(m_socket, reply);    
     } catch(castor::exception::Exception &ex) {
       std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-      log::write(LOG_ERR, "AcsMessageHandler failed to send reply to client", params);
+      m_log(LOG_ERR, "AcsMessageHandler failed to send reply to client", params);
     }
   }
 */

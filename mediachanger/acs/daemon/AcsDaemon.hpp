@@ -138,27 +138,27 @@ protected:
   /**
    * The main event loop of the daemon.
    */
-/////  void mainEventLoop();
+  void mainEventLoop();
 
   /**
    * Handles any pending events.
    *
    * @return True if the main event loop should continue, else false.
    */
-///////  bool handleEvents();
+  bool handleEvents();
 
   /**
    * Handles any pending signals.
    *
    * @return True if the main event loop should continue, else false.
    */
-//////  bool handlePendingSignals() throw();
+  bool handlePendingSignals() throw();
   
   /**
    * Handles any pending Acs requests.
    *
    */
-//////  void handlePendingRequests();
+  void handlePendingRequests();
 
   /**
    * The argc of main().
