@@ -16,7 +16,8 @@ get_filename()
 
 get_ids()
 {
-  IDS=$(grep -m1 "^$1 " filenameToLogIds.txt)
+  IDS=$(sed "$1q;d" filenameToLogIds.txt)
+  FILENAME=$(echo $IDS | cut -d' ' -f1)
   FILE_ID=$(echo $IDS | cut -d' ' -f2)
   ARCHIVE_ID=$(echo $IDS | cut -d' ' -f3)
 }
@@ -90,7 +91,7 @@ get_offset_time()
 get_times()
 {
   get_ids $1
-  get_mgm_times $1
+  get_mgm_times $FILENAME
   get_frontend_times $ARCHIVE_ID
   get_taped_times $ARCHIVE_ID
 
@@ -131,8 +132,8 @@ get_times()
 #  echo    "$(get_offset_time $TIME_MGM_RCOMMIT $TIME_MGM_RETRIEVED);"
 }
 
-FILE_NUM_START=${1:-0}
-FILE_NUM_END=${2:-9099999}
+FILE_NUM_START=${1:-1}
+FILE_NUM_END=${2:-1000000}
 
 FILENAME_PREFIX=
 
