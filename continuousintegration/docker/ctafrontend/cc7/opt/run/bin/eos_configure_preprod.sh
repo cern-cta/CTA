@@ -9,7 +9,7 @@ eos attr set CTA_StorageClass=ctaStorageClass ${PREPROD_DIR}
 eos attr set CTA_TapeFsId=65535 ${PREPROD_DIR}
 
 eos attr set sys.workflow.sync::create.default="proto" ${PREPROD_DIR}
-eos attr set sys.workflow.closew.default="proto" ${PREPROD_DIR}
+eos attr set sys.workflow.sync::closew.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.archived.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.sync::prepare.default="proto" ${PREPROD_DIR}
 eos attr set sys.workflow.closew.retrieve_written="proto" ${PREPROD_DIR}
