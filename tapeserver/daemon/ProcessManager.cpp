@@ -277,6 +277,8 @@ void ProcessManager::runEventLoop() {
   const int eventSlotCount = 5;
   ::epoll_event ee[eventSlotCount];
   int receivedEvents = ::epoll_wait(m_epollFd, ee, eventSlotCount, nextTimeoutMs);
+  // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
+  if (-1 == receivedEvents && EINTR == errno) receivedEvents = 0;
   cta::exception::Errnum::throwOnMinusOne(receivedEvents, 
       "In ProcessManager::run(): failed to ::epoll_wait()");
   for (int i=0; i< receivedEvents; i++) {
