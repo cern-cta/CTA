@@ -340,10 +340,6 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid) {
   }
 }
 
-void RootEntry::removeArchiveQueueIfAddressMatchesAndCommit(const std::string& tapePool, const std::string& archiveQueueAddress) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
 auto RootEntry::dumpRetrieveQueues() -> std::list<RetrieveQueueDump> {
   checkPayloadReadable();
   std::list<RetrieveQueueDump> ret;

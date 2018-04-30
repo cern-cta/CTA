@@ -70,7 +70,6 @@ public:
   void removeArchiveQueueAndCommit(const std::string & tapePool, log::LogContext & lc);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the archive queue */
   void removeMissingArchiveQueueReference(const std::string & tapePool);
-  void removeArchiveQueueIfAddressMatchesAndCommit(const std::string & tapePool, const std::string & archiveQueueAddress);
   std::string getArchiveQueueAddress(const std::string & tapePool);
   struct ArchiveQueueDump {
     std::string tapePool;
