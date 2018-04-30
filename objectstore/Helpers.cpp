@@ -46,6 +46,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
     double rootFetchNoLockTime = 0;
     double rootRelockExclusiveTime = 0;
     double rootUnlockExclusiveTime = 0;
+    double rootQueueDereferenceTime = 0;
     double rootRefetchTime = 0;
     double addOrGetQueueandCommitTime = 0;
     double queueLockTime = 0;
@@ -92,6 +93,30 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       // We hence allow ourselves to retry a couple times.
       // We also need to make sure the lock on the queue is released (it is in
       // an object and hence not scoped).
+      // We should also deal with the case where a queue was deleted but left 
+      // referenced in the root entry. We will try to clean up if necessary.
+      // Failing to do this, we will spin and exhaust all of our retries.
+      // We will do this if this is not the first attempt (i.e. failing again
+      // in a retry).
+      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+        // The queue has been proven to not exist. Let's make sure we de-reference
+        // it form the root entry.
+        RootEntry re(be);
+        ScopedExclusiveLock rexl(re);
+        rootRelockExclusiveTime += t.secs(utils::Timer::resetCounter);
+        re.fetch();
+        rootRefetchTime += t.secs(utils::Timer::resetCounter);
+        try {
+          re.removeArchiveQueueAndCommit(tapePool, lc);
+     
+          rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
+          log::ScopedParamContainer params(lc);
+          params.add("tapepool", tapePool)
+                .add("queueObject", archiveQueue.getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from root entry.");
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+      }
       if (archiveQueueLock.isLocked()) archiveQueueLock.release();
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
@@ -99,6 +124,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
             .add("queueObject", archiveQueue.getAddressIfSet())
             .add("rootFetchNoLockTime", rootFetchNoLockTime)
             .add("rootRefetchTime", rootRefetchTime)
+            .add("rootQueueDereferenceTime", rootQueueDereferenceTime)
             .add("addOrGetQueueandCommitTime", addOrGetQueueandCommitTime)
             .add("rootUnlockExclusiveTime", rootUnlockExclusiveTime)
             .add("queueLockTime", queueLockTime)
@@ -138,6 +164,7 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
     double rootFetchNoLockTime = 0;
     double rootRelockExclusiveTime = 0;
     double rootUnlockExclusiveTime = 0;
+    double rootQueueDereferenceTime = 0;
     double rootRefetchTime = 0;
     double addOrGetQueueandCommitTime = 0;
     double queueLockTime = 0;
@@ -184,6 +211,30 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
       // We hence allow ourselves to retry a couple times.
       // We also need to make sure the lock on the queue is released (it is in
       // an object and hence not scoped).
+      // We should also deal with the case where a queue was deleted but left 
+      // referenced in the root entry. We will try to clean up if necessary.
+      // Failing to do this, we will spin and exhaust all of our retries.
+      // We will do this if this is not the first attempt (i.e. failing again
+      // in a retry).
+      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+        // The queue has been proven to not exist. Let's make sure we de-reference
+        // it form the root entry.
+        RootEntry re(be);
+        ScopedExclusiveLock rexl(re);
+        rootRelockExclusiveTime += t.secs(utils::Timer::resetCounter);
+        re.fetch();
+        rootRefetchTime += t.secs(utils::Timer::resetCounter);
+        try {
+          re.removeRetrieveQueueAndCommit(vid, lc);
+     
+          rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
+          log::ScopedParamContainer params(lc);
+          params.add("vid", vid)
+                .add("queueObject", retrieveQueue.getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from root entry.");
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+      }
       if (retrieveQueueLock.isLocked()) retrieveQueueLock.release();
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i+1)
@@ -191,6 +242,7 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
             .add("queueObject", retrieveQueue.getAddressIfSet())
             .add("rootFetchNoLockTime", rootFetchNoLockTime)
             .add("rootRefetchTime", rootRefetchTime)
+            .add("rootQueueDereferenceTime", rootQueueDereferenceTime)
             .add("addOrGetQueueandCommitTime", addOrGetQueueandCommitTime)
             .add("rootUnlockExclusiveTime", rootUnlockExclusiveTime)
             .add("queueLockTime", queueLockTime)

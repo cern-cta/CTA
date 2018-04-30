@@ -184,6 +184,11 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, log::Lo
     serializers::removeOccurences(m_payload.mutable_archivequeuepointers(), tapePool);
     // We commit for safety and symmetry with the add operation
     commit();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("tapePool", tapePool);
+      lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
+    }
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
     throw NoSuchArchiveQueue("In RootEntry::removeArchiveQueueAndCommit(): trying to remove non-existing archive queue");
@@ -313,6 +318,11 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, log::LogCon
     serializers::removeOccurences(m_payload.mutable_retrievequeuepointers(), vid);
     // We commit for safety and symmetry with the add operation
     commit();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("vid", vid);
+      lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
+    }
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
     throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
