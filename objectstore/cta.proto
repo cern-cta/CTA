@@ -342,6 +342,7 @@ message SchedulerRetrieveRequest {
   required string dstURL = 9102;
   required DiskFileInfo diskfileinfo = 9103;
   required EntryLog entrylog = 9106;
+  required string retrieveerrorreporturl = 9110;
 }
 
 message RetrieveJob {

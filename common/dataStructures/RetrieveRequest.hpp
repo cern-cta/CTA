@@ -45,6 +45,7 @@ struct RetrieveRequest {
   UserIdentity requester;
   uint64_t archiveFileID;
   std::string dstURL;
+  std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
 

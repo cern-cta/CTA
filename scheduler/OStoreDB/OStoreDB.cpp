@@ -1974,7 +1974,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       rqAddress = rqp.address;
     }
     if (!rqAddress.size()) break;
-    // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
+    // try and lock the retrieve queue. Any failure from here on means the end of the getting jobs.
     objectstore::RetrieveQueue rq(rqAddress, m_oStoreDB.m_objectStore);
     objectstore::ScopedExclusiveLock rqLock;
     findQueueTime += t.secs(utils::Timer::resetCounter);
@@ -2442,6 +2442,17 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
     m_jobOwned = false;
     return;
   }
+  {
+    auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", archiveFile.archiveFileID)
+          .add("copyNb", tapeFile.copyNb)
+          .add("retriesWithinMount", retryStatus.retriesWithinMount)
+          .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
+          .add("totalRetries", retryStatus.totalRetries)
+          .add("maxTotalRetries", retryStatus.maxTotalRetries);
+    lc.log(log::INFO, "OStoreDB::ArchiveJob::fail(): increased the error count for retrieve job.");
+  }
   // The job still has a chance, return it to its original tape pool's queue
   objectstore::ArchiveQueue aq(m_oStoreDB.m_objectStore);
   objectstore::ScopedExclusiveLock aqlock;
@@ -2528,7 +2539,7 @@ OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, OStoreDB & oSt
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::fail()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
+bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
   // Lock the retrieve request. Fail the job.
@@ -2544,7 +2555,17 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     log::ScopedParamContainer params(logContext);
     params.add("object", m_retrieveRequest.getAddressIfSet());
     logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
-    return;
+    return true;
+  } else {
+    auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+    log::ScopedParamContainer params(logContext);
+    params.add("fileId", archiveFile.archiveFileID)
+         .add("copyNb", selectedCopyNb)
+         .add("retriesWithinMount", retryStatus.retriesWithinMount)
+         .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
+         .add("totalRetries", retryStatus.totalRetries)
+         .add("maxTotalRetries", retryStatus.maxTotalRetries);
+    logContext.log(log::INFO, "OStoreDB::RetrieveJob::fail(): increased the error count for retrieve job.");
   }
   // The job still has a chance, requeue is to the best tape.
   // Get the best vid from the cache
@@ -2595,6 +2616,7 @@ void OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
   rrl.release();
   // And relinquish ownership form agent
   m_oStoreDB.m_agentReference->removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
+  return false;
 }
 
 //------------------------------------------------------------------------------

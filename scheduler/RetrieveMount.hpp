@@ -23,6 +23,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "eos/DiskReporterFactory.hpp"
 
 #include <memory>
 #include <queue>
@@ -143,6 +144,15 @@ namespace cta {
      */
     virtual void waitAndFinishSettingJobsBatchRetrieved(std::queue<std::unique_ptr<cta::RetrieveJob> > & successfulRetrieveJobs, cta::log::LogContext &logContext);
     
+    
+    /**
+     * Creates a disk reporter for the retrieve job (this is a wrapper).
+     * @param URL: report address
+     * @param reporterState void promise to be set when the report is done asynchronously.
+     * @return pointer to the reporter created.
+     */
+    eos::DiskReporter * createDiskReporter(std::string & URL, std::promise<void> &reporterState);
+    
     /**
      * Destructor.
      */
@@ -170,6 +180,8 @@ namespace cta {
      */
     bool m_diskRunning;
     
+    /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
+    eos::DiskReporterFactory m_reporterFactory;
     
 
   }; // class RetrieveMount

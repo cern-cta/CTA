@@ -182,6 +182,7 @@ void Scheduler::queueRetrieve(
      .add("diskFileGroup", request.diskFileInfo.group)
      .add("diskFileRecoveryBlob", postEllipsis(request.diskFileInfo.recoveryBlob, 20))
      .add("dstURL", request.dstURL)
+     .add("errorReportURL", request.errorReportURL)
      .add("creationHost", request.creationLog.host)
      .add("creationTime", request.creationLog.time)
      .add("creationUser", request.creationLog.username)

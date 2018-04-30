@@ -87,10 +87,10 @@ bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
 bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
     uint64_t mountId, log::LogContext & lc) {
   checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures 
   // (and return the job status: failed (true) or to be retried (false))
-  for (auto & j: *jl) {
+  for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
+    auto &j=*m_payload.mutable_jobs(i);
     if (j.copynb() == copyNumber) {
       if (j.lastmountwithfailure() == mountId) {
         j.set_retrieswithinmount(j.retrieswithinmount() + 1);
@@ -102,16 +102,31 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::AJS_Failed);
-      finishIfNecessary(lc);
+      if (!finishIfNecessary(lc)) commit();
       return true;
     } else {
       j.set_status(serializers::AJS_PendingMount);
+      commit();
       return false;
     }
   }
   throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
+ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto &j: m_payload.jobs()) {
+    if (copyNumber == j.copynb()) {
+      RetryStatus ret;
+      ret.retriesWithinMount = j.retrieswithinmount();
+      ret.maxRetriesWithinMount = j.maxretrieswithinmount();
+      ret.totalRetries = j.totalretries();
+      ret.maxTotalRetries = j.maxtotalretries();
+      return ret;
+    }
+  }
+  throw cta::exception::Exception("In ArchiveRequest::getRetryStatus(): job not found()");
+}
 
 void cta::objectstore::ArchiveRequest::setAllJobsLinkingToArchiveQueue() {
   checkPayloadWritable();

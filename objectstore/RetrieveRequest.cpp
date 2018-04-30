@@ -215,6 +215,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
   sr->mutable_requester()->set_group(retrieveRequest.requester.group);
   sr->set_archivefileid(retrieveRequest.archiveFileID);
   sr->set_dsturl(retrieveRequest.dstURL);
+  sr->set_retrieveerrorreporturl(retrieveRequest.errorReportURL);
   DiskFileInfoSerDeser dfisd(retrieveRequest.diskFileInfo);
   dfisd.serialize(*sr->mutable_diskfileinfo());
   objectstore::EntryLogSerDeser el(retrieveRequest.creationLog);
@@ -233,6 +234,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   objectstore::EntryLogSerDeser el(ret.creationLog);
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.dstURL = m_payload.schedulerrequest().dsturl();
+  ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   objectstore::DiskFileInfoSerDeser dfisd;
   dfisd.deserialize(m_payload.schedulerrequest().diskfileinfo());
   ret.diskFileInfo = dfisd;
@@ -314,11 +316,11 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc) {
   checkPayloadWritable();
-  auto * jl = m_payload.mutable_jobs();
   // Find the job and update the number of failures
   // (and return the full request status: failed (true) or to be retried (false))
   // The request will go through a full requeueing if retried (in caller).
-  for (auto j: *jl) {
+  for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
+    auto &j=*m_payload.mutable_jobs(i);
     if (j.copynb() == copyNumber) {
       if (j.lastmountwithfailure() == mountId) {
         j.set_retrieswithinmount(j.retrieswithinmount() + 1);
@@ -330,15 +332,40 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId, log::
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::RJS_Failed);
-      return finishIfNecessary(lc);
+      bool ret=finishIfNecessary(lc);
+      if (!ret) commit();
+      return ret;
     } else {
       j.set_status(serializers::RJS_Pending);
+      commit();
       return false;
     }
   }
   throw NoSuchJob ("In RetrieveRequest::addJobFailure(): could not find job");
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getRetryStatus()
+//------------------------------------------------------------------------------
+RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint16_t copyNumber) {
+  checkPayloadReadable();
+  for (auto &j: m_payload.jobs()) {
+    if (copyNumber == j.copynb()) {
+      RetryStatus ret;
+      ret.retriesWithinMount = j.retrieswithinmount();
+      ret.maxRetriesWithinMount = j.maxretrieswithinmount();
+      ret.totalRetries = j.totalretries();
+      ret.maxTotalRetries = j.maxtotalretries();
+      return ret;
+    }
+  }
+  throw cta::exception::Exception("In RetrieveRequest::getRetryStatus(): job not found()");
+}
+
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::statusToString()
+//------------------------------------------------------------------------------
 std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) {
   switch(status) {
   case serializers::RetrieveJobStatus::RJS_Complete:
@@ -446,6 +473,7 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
             retRef.m_retieveRequest.diskFileInfo = dfi;
             retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
             retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
             retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
             objectstore::ArchiveFileSerDeser af;

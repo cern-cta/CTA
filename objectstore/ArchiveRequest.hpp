@@ -49,6 +49,13 @@ public:
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
   bool addJobFailure(uint16_t copyNumber, uint64_t sessionId, log::LogContext &lc); //< returns true the job is failed
+  struct RetryStatus {
+    uint64_t retriesWithinMount = 0;
+    uint64_t maxRetriesWithinMount = 0;
+    uint64_t totalRetries = 0;
+    uint64_t maxTotalRetries = 0;
+  };
+  RetryStatus getRetryStatus(uint16_t copyNumber);
   serializers::ArchiveJobStatus getJobStatus(uint16_t copyNumber);
   std::string statusToString(const serializers::ArchiveJobStatus & status);
   bool finishIfNecessary(log::LogContext & lc);/**< Handling of the consequences of a job status change for the entire request.

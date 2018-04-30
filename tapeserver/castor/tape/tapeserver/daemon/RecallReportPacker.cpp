@@ -201,8 +201,12 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
   parent.m_errorHappened=true;
-  parent.m_lc.log(cta::log::ERR,m_failedRetrieveJob->failureMessage);
-  m_failedRetrieveJob->failed(parent.m_lc);
+  {
+    cta::log::ScopedParamContainer params(parent.m_lc);
+    params.add("errorMessage", m_failedRetrieveJob->failureMessage);
+    parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): processing error message");
+  }
+  m_failedRetrieveJob->failed(m_failedRetrieveJob->failureMessage, parent.m_lc);
 }
 
 //------------------------------------------------------------------------------

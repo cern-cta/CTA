@@ -17,6 +17,11 @@
  */
 
 #include "scheduler/RetrieveJob.hpp"
+#include "common/Timer.hpp"
+#include "eos/DiskReporter.hpp"
+#include "RetrieveMount.hpp"
+#include <cryptopp/base64.h>
+#include <future>
 
 //------------------------------------------------------------------------------
 // destructor
@@ -56,8 +61,40 @@ void cta::RetrieveJob::checkComplete() {
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::failed(log::LogContext &lc) {
-  m_dbJob->fail(lc);
+void cta::RetrieveJob::failed(const std::string & errorReport, log::LogContext &lc) {
+  if (m_dbJob->fail(lc)) {
+    std::string base64ErrorReport;
+    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+    const bool noNewLineInBase64Output = false;
+    CryptoPP::StringSource ss1(errorReport, true, 
+        new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+    std::string fullReportURL = m_dbJob->retrieveRequest.errorReportURL + base64ErrorReport;
+    // That's all job's already done.
+    std::promise<void> reporterState;
+    utils::Timer t;
+    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
+    reporter->asyncReportArchiveFullyComplete();
+    try {
+      reporterState.get_future().get();
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
+            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
+            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
+            .add("errorReport", errorReport)
+            .add("reportTime", t.secs());
+      lc.log(log::INFO, "In RetrieveJob::failed(): reported error to client.");
+    } catch (cta::exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
+            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
+            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
+            .add("errorReport", errorReport)
+            .add("exceptionMsg", ex.getMessageValue())
+            .add("reportTime", t.secs());
+      lc.log(log::ERR, "In RetrieveJob::failed(): failed to report error to client.");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

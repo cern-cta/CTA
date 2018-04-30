@@ -329,7 +329,7 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
-    virtual void fail(log::LogContext &) = 0;
+    virtual bool fail(log::LogContext &) = 0; ///< Returns true if this failure is final (we will not retry).
     virtual ~RetrieveJob() {}
   };
 

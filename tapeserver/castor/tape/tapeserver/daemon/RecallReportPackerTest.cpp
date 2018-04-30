@@ -58,7 +58,7 @@ protected:
     
     virtual void checkComplete() override {}
     
-    virtual void failed(cta::log::LogContext &) override {
+    virtual void failed(const std::string & errorReport, cta::log::LogContext &) override {
       failuresRef++;
     }
     

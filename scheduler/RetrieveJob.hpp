@@ -92,7 +92,7 @@ public:
    * should already be recorded in the object beforehand. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed(cta::log::LogContext &);
+  virtual void failed(const std::string & errorReport, cta::log::LogContext &);
   
   /**
    * Helper function returning a reference to the currently selected tape file.

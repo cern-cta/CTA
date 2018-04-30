@@ -503,6 +503,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    cta::common::dataStructures::RetrieveRequest request;
    request.requester            = originator;
    request.dstURL               = notification.transport().dst_url();
+   request.errorReportURL       = notification.transport().error_report_url();
    request.diskFileInfo         = diskFileInfo;
    request.creationLog.host     = m_cliIdentity.host;
    request.creationLog.username = m_cliIdentity.username;

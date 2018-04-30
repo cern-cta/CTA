@@ -156,6 +156,13 @@ void cta::RetrieveMount::waitAndFinishSettingJobsBatchRetrieved(std::queue<std::
   }
 }
 
+//------------------------------------------------------------------------------
+// createDiskReporter()
+//------------------------------------------------------------------------------
+cta::eos::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL, 
+    std::promise<void>& reporterState) {
+  return m_reporterFactory.createDiskReporter(URL, reporterState);
+}
 
 //------------------------------------------------------------------------------
 // tapeComplete()

@@ -190,7 +190,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
-    virtual void fail(log::LogContext &) override;
+    virtual bool fail(log::LogContext &) override; ///< Returns true if this failure is final (we will not retry).
     virtual ~RetrieveJob() override;
   private:
     RetrieveJob(const std::string &, OStoreDB &, RetrieveMount &);
