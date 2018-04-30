@@ -72,13 +72,12 @@ process_frontend_log()
 
   awk -vDATE_OFFSET="$DATE_OFFSET" -vTEST_RUN=${TEST_RUN} '
     function processLine(event, logline) {
-print logline
       sub(" .* fileId=\"", " ", logline)
       sub("\".*$", "", logline)
       sub("^20", "", logline)
       sub("T", " ", logline)
       gsub("-", "", logline)
-print logline
+      gsub("+[0-9:]* ", " ", logline)
       split(logline,logarray)
       DAYS=logarray[1]-DATE_OFFSET
       HOURS=substr(logarray[2],1,2)
@@ -94,8 +93,7 @@ print logline
     /CREATE/ { processLine("CRE", $0) }
     /CLOSEW/ { processLine("CLW", $0) }
     /PREPARE/ { processLine("PRE", $0) }
-  ' ${FRONTEND_LOG} |less
-#  ' ${FRONTEND_LOG} >cta-frontend.log.$$
+  ' ${FRONTEND_LOG} >cta-frontend.log.$$
 
   echoc $LT_BLUE "done.\nSorting..."
   sort -n cta-frontend.log.$$ >cta-frontend-events.log
@@ -123,13 +121,14 @@ process_taped_log()
 {
   echoc $LT_BLUE "Extracting archive log messages from cta-taped..."
 
-  TAPED_HOSTNAME=$(head -1 ${TAPED_LOG} | awk '{ print $4 }')
-
-  awk -vTAPED_HOSTNAME="$TAPED_HOSTNAME" -vDATE_OFFSET="$DATE_OFFSET" '
+  awk -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
-      gsub("^Apr ", "1804", logline)
-      gsub(TAPED_HOSTNAME " .* fileId=\"", "", logline)
-      gsub("\".*$", "", logline)
+      sub(" .* fileId=\"", " ", logline)
+      sub("\".*$", "", logline)
+      sub("^20", "", logline)
+      sub("T", " ", logline)
+      gsub("-", "", logline)
+      gsub("+[0-9:]* ", " ", logline)
       split(logline,logarray)
       DAYS=logarray[1]-DATE_OFFSET
       HOURS=substr(logarray[2],1,2)
