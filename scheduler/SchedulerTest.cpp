@@ -573,6 +573,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.requester = requester;
     request.srcURL="srcURL";
     request.storageClass=s_storageClassName;
+    request.archiveErrorReportURL="null:";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }

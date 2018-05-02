@@ -328,6 +328,7 @@ message ArchiveRequest {
   required string diskfileid = 9050;
   required string diskinstance = 9055;
   required string archivereporturl = 9057;
+  required string archiveerrorreporturl = 9058;
   required uint64 filesize = 9060;
   required User requester = 9070;
   required string srcurl = 9080;

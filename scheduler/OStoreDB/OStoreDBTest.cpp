@@ -203,6 +203,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       aReq.setArchiveFile(aFile);
       aReq.setMountPolicy(mountPolicy);
       aReq.setArchiveReportURL("");
+      aReq.setArchiveErrorReportURL("");
       aReq.setRequester(requester);
       aReq.setSrcURL("");
       aReq.setEntryLog(entryLog);

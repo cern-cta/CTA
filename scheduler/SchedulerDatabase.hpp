@@ -176,9 +176,10 @@ public:
   public:
     std::string srcURL;
     std::string archiveReportURL;
+    std::string errorReportURL;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    virtual void fail(log::LogContext & lc) = 0;
+    virtual bool fail(log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };

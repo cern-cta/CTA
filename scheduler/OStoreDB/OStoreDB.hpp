@@ -143,7 +143,7 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    void fail(log::LogContext & lc) override;
+    bool fail(log::LogContext & lc) override;
   private:
     void asyncSucceed();
     bool waitAsyncSucceed();

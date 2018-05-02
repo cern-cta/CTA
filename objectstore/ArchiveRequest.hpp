@@ -75,6 +75,7 @@ public:
     const common::dataStructures::ArchiveFile & getArchiveFile();
     const std::string & getSrcURL();
     const std::string & getArchiveReportURL();
+    const std::string & getArchiveErrorReportURL();
     struct TimingsReport {
       double lockFetchTime = 0;
       double processTime = 0;
@@ -87,6 +88,7 @@ public:
     common::dataStructures::ArchiveFile m_archiveFile;
     std::string m_srcURL;
     std::string m_archiveReportURL;
+    std::string m_archiveErrorReportURL;
     utils::Timer m_timer;
     TimingsReport m_timingReport;
   };
@@ -118,6 +120,9 @@ public:
   
   void setArchiveReportURL(const std::string &URL);
   std::string getArchiveReportURL();
+  
+  void setArchiveErrorReportURL(const std::string &URL);
+  std::string getArchiveErrorReportURL();
 
   void setRequester(const cta::common::dataStructures::UserIdentity &requester);
   cta::common::dataStructures::UserIdentity getRequester();

@@ -20,6 +20,7 @@
 #include "scheduler/ArchiveMount.hpp"
 #include "eos/DiskReporterFactory.hpp"
 #include <limits>
+#include <cryptopp/base64.h>
 
 //------------------------------------------------------------------------------
 // destructor
@@ -115,7 +116,40 @@ std::string cta::ArchiveJob::reportURL() {
 // failed
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::failed(const cta::exception::Exception &ex,  log::LogContext & lc) {
-  m_dbJob->fail(lc);
+  if (m_dbJob->fail(lc)) {
+    std::string base64ErrorReport;
+    // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+    const bool noNewLineInBase64Output = false;
+    CryptoPP::StringSource ss1(ex.getMessageValue(), true, 
+        new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+    std::string fullReportURL = m_dbJob->errorReportURL + base64ErrorReport;
+    // That's all job's already done.
+    std::promise<void> reporterState;
+    utils::Timer t;
+    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
+    reporter->asyncReportArchiveFullyComplete();
+    try {
+      reporterState.get_future().get();
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
+            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
+            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
+            .add("fullReportURL", fullReportURL)
+            .add("errorReport", ex.getMessageValue())
+            .add("reportTime", t.secs());
+      lc.log(log::INFO, "In ArchiveJob::failed(): reported error to client.");
+    } catch (cta::exception::Exception & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", m_dbJob->archiveFile.archiveFileID)
+            .add("diskInstance", m_dbJob->archiveFile.diskInstance)
+            .add("diskFileId", m_dbJob->archiveFile.diskFileId)
+            .add("errorReport", ex.getMessageValue())
+            .add("exceptionMsg", ex.getMessageValue())
+            .add("reportTime", t.secs());
+      lc.log(log::ERR, "In ArchiveJob::failed(): failed to report error to client.");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

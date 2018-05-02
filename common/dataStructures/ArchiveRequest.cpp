@@ -42,6 +42,7 @@ bool ArchiveRequest::operator==(const ArchiveRequest &rhs) const {
       && storageClass==rhs.storageClass
       && diskFileInfo==rhs.diskFileInfo
       && archiveReportURL==rhs.archiveReportURL
+      && archiveErrorReportURL == rhs.archiveErrorReportURL
       && creationLog==rhs.creationLog;
 }
 
@@ -65,6 +66,7 @@ std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj) {
      << " storageClass=" << obj.storageClass
      << " diskFileInfo=" << obj.diskFileInfo
      << " archiveReportURL=" << obj.archiveReportURL
+     << " archiveErrorReportURL=" << obj.archiveErrorReportURL
      << " creationLog=" << obj.creationLog << ")";
   return os;
 }

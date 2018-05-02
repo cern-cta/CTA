@@ -380,6 +380,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq.setArchiveFile(aFile);
   aReq.setMountPolicy(criteria.mountPolicy);
   aReq.setArchiveReportURL(request.archiveReportURL);
+  aReq.setArchiveErrorReportURL(request.archiveErrorReportURL);
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
@@ -1685,6 +1686,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           (*j)->archiveFile = (*ju)->getArchiveFile();
           (*j)->srcURL = (*ju)->getSrcURL();
           (*j)->archiveReportURL = (*ju)->getArchiveReportURL();
+          (*j)->errorReportURL = (*ju)->getArchiveErrorReportURL();
           (*j)->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           (*j)->tapeFile.vid = mountInfo.vid;
           (*j)->tapeFile.blockId =
@@ -2427,7 +2429,7 @@ std::set<cta::SchedulerDatabase::ArchiveJob*> OStoreDB::ArchiveMount::setJobBatc
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
+bool OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
@@ -2440,7 +2442,11 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
     // In any case, we can forget it.
     m_oStoreDB.m_agentReference->removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
     m_jobOwned = false;
-    return;
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", archiveFile.archiveFileID)
+          .add("copyNb", tapeFile.copyNb);
+    lc.log(log::INFO, "OStoreDB::ArchiveJob::fail(): retries exhausted after error: the job will not be retried.");
+    return true;
   }
   {
     auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -2473,7 +2479,7 @@ void OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
       // We just have to remove the ownership from the agent and we're done.
       m_oStoreDB.m_agentReference->removeFromOwnership(m_archiveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
       m_jobOwned = false;
-      return;
+      return false;
     }
   }
   throw NoSuchJob("In OStoreDB::ArchiveJob::fail(): could not find the job in the request object");

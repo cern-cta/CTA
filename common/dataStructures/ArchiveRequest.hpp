@@ -58,6 +58,7 @@ struct ArchiveRequest {
   std::string storageClass;
   DiskFileInfo diskFileInfo;
   std::string archiveReportURL;
+  std::string archiveErrorReportURL;
   EntryLog creationLog;
 
 }; // struct ArchiveRequest

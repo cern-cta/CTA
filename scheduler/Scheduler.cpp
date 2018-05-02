@@ -147,6 +147,7 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
      .add("checksumValue", request.checksumValue)
      .add("checksumType", request.checksumType)
      .add("archiveReportURL", midEllipsis(request.archiveReportURL, 50, 15))
+     .add("archiveErrorReportURL", midEllipsis(request.archiveErrorReportURL, 50, 15))
      .add("creationHost", request.creationLog.host)
      .add("creationTime", request.creationLog.time)
      .add("creationUser", request.creationLog.username)

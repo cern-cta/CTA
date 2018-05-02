@@ -197,6 +197,21 @@ std::string ArchiveRequest::getArchiveReportURL() {
   return m_payload.archivereporturl();
 }
 
+//------------------------------------------------------------------------------
+// setArchiveErrorReportURL
+//------------------------------------------------------------------------------
+void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
+  checkPayloadWritable();
+  m_payload.set_archiveerrorreporturl(URL);
+}
+
+//------------------------------------------------------------------------------
+// getArchiveErrorReportURL
+//------------------------------------------------------------------------------
+std::string ArchiveRequest::getArchiveErrorReportURL() {
+  checkPayloadReadable();
+  return m_payload.archiveerrorreporturl();
+}
 
 //------------------------------------------------------------------------------
 // setMountPolicy
@@ -480,6 +495,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
             retRef.m_archiveFile.reconciliationTime = payload.reconcilationtime();
             retRef.m_archiveFile.storageClass = payload.storageclass();
             retRef.m_archiveReportURL = payload.archivereporturl();
+            retRef.m_archiveErrorReportURL = payload.archiveerrorreporturl();
             retRef.m_srcURL = payload.srcurl();
             oh.set_payload(payload.SerializePartialAsString());
             retRef.m_timingReport.processTime = retRef.m_timer.secs(utils::Timer::resetCounter);
@@ -509,6 +525,10 @@ const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater:
 
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
   return m_archiveReportURL;
+}
+
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() {
+  return m_archiveErrorReportURL;
 }
 
 const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {

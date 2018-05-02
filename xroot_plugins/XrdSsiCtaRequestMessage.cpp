@@ -442,6 +442,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    request.srcURL               = notification.wf().instance().url();
    request.storageClass         = storageClassItor->second;
    request.archiveReportURL     = notification.transport().report_url();
+   request.archiveErrorReportURL = notification.transport().error_report_url();
    request.creationLog.host     = m_cliIdentity.host;
    request.creationLog.username = m_cliIdentity.username;
    request.creationLog.time     = time(nullptr);
