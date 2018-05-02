@@ -197,16 +197,11 @@ std::string Logger::createMsgHeader(
 
   struct tm localTime;
   localtime_r(&(timeStamp.tv_sec), &localTime);
-  len += strftime(buf, bufLen, "%Y-%m-%dT%T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06ld",
+  len += strftime(buf, bufLen, "%b %e %T", &localTime);
+  len += snprintf(buf + len, bufLen - len, ".%06ld ",
     (unsigned long)timeStamp.tv_usec);
-  len += strftime(buf + len, bufLen - len, "%z: ", &localTime);
-  // dirty trick to have the proper timezone format (':' between hh and mm)
-  buf[len-2] = buf[len-3];
-  buf[len-3] = buf[len-4];
-  buf[len-4] = ':';
   buf[sizeof(buf) - 1] = '\0';
-  os << buf << programName << "[" << pid << "]: ";
+  os << buf << programName << ": ";
   return os.str();
 }
 
