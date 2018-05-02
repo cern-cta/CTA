@@ -76,7 +76,7 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
       cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
    } catch(cta::exception::Exception &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
-      m_metadata.set_message_txt(ex.what());
+      m_metadata.set_message_txt(ex.getMessageValue());
       cta_service_ptr->getLogContext().log(cta::log::ERR, ErrorFunction + "RSP_ERR_CTA: " + ex.what());
    } catch(std::runtime_error &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
