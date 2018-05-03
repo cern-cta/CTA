@@ -40,7 +40,7 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
   
-  cta::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
@@ -62,7 +62,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
   
-  cta::log::StringLogger log("castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
   
   castor::messages::TapeserverProxyDummy dummyInitialProcess;

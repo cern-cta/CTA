@@ -29,11 +29,13 @@ namespace unitTests {
 class cta_threading_DaemonTest : public ::testing::Test {
 protected:
 
+  const std::string m_hostName;
   const std::string m_programName;
   int m_argc;
   char **m_argv;
 
   cta_threading_DaemonTest() :
+    m_hostName("dummy"),
     m_programName("testdaemon"),
     m_argc(0),
     m_argv(NULL) {
@@ -54,7 +56,7 @@ protected:
 };
 
 TEST_F(cta_threading_DaemonTest, getForegroundBeforeParseCommandLine) {
-  cta::log::DummyLogger log(m_programName);
+  cta::log::DummyLogger log(m_hostName, m_programName);
   cta::server::Daemon daemon(log);
   
   ASSERT_THROW(daemon.getForeground(), cta::server::Daemon::CommandLineNotParsed);

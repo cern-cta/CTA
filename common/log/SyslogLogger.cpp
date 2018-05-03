@@ -43,8 +43,8 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SyslogLogger::SyslogLogger(const std::string &programName, const int logMask):
-  Logger(programName, logMask) {
+SyslogLogger::SyslogLogger(const std::string &hostName, const std::string &programName, const int logMask):
+  Logger(hostName, programName, logMask) {
   const int option = 0;
   const int facility = 0;
   openlog(m_programName.c_str(), option, facility);

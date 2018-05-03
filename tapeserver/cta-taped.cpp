@@ -214,12 +214,13 @@ int main(const int argc, char **const argv) {
   // Try to instantiate the logging system API
   std::unique_ptr<log::Logger> logPtr;
   try {
+    const std::string shortHostName = utils::getShortHostname();
     if (commandLine->logToStdout) {
-      logPtr.reset(new log::StdoutLogger("cta-taped"));
+      logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
     } else if (commandLine->logToFile) {
-      logPtr.reset(new log::FileLogger("cta-taped", commandLine->logFilePath, log::DEBUG));
+      logPtr.reset(new log::FileLogger(shortHostName, "cta-taped", commandLine->logFilePath, log::DEBUG));
     } else {
-      logPtr.reset(new log::SyslogLogger("cta-taped", log::DEBUG));
+      logPtr.reset(new log::SyslogLogger(shortHostName, "cta-taped", log::DEBUG));
     }
   } catch(exception::Exception &ex) {
     std::cerr <<

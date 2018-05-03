@@ -33,11 +33,12 @@ public:
   /**
    * Constructor
    *
+   * @param hostName The name of the host to be prepended to every log mesage.
    * @param programName The name of the program to be prepended to every log
    * message.
    * @param logMask The log mask.
    */
-  StringLogger(const std::string &programName, const int logMask);
+  StringLogger(const std::string &hostName, const std::string &programName, const int logMask);
 
   /**
    * Destructor.

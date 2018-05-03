@@ -28,7 +28,7 @@ namespace unitTests {
   
 TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
@@ -56,7 +56,7 @@ TEST(ObjectStore, RetrieveQueueBasicAccess) {
 
 TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());

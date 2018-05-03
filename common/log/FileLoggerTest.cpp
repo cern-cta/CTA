@@ -29,7 +29,7 @@ namespace unitTests {
   TEST(cta_log_FileLogger, basicTest) {
     std::string jat = "Just a test";
     TempFile tf;
-    FileLogger fl("cta_log_StringLogger", tf.path(), DEBUG);
+    FileLogger fl("dummy", "cta_log_StringLogger", tf.path(), DEBUG);
     fl(INFO, jat);
     std::ifstream ifs(tf.path());
     std::stringstream res;

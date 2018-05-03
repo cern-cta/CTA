@@ -39,7 +39,7 @@ namespace unitTests {
   class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
   public:
     castor_tape_tapeserver_daemon_MigrationReportPackerTest():
-      m_dummyLog("dummy") {
+      m_dummyLog("dummy", "dummy") {
     }
 
   protected:
@@ -184,7 +184,7 @@ namespace unitTests {
     job2->tapeFile.checksumType="md5";
     job2->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6";
     
-    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
     cta::log::LogContext lc(log);
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
@@ -227,7 +227,7 @@ namespace unitTests {
       job3.reset(mockJob.release());
     }
     
-    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();
@@ -356,7 +356,7 @@ namespace unitTests {
     migratedNullFile->tapeFile.checksumType="md5";
     migratedFileSmall->tapeFile.checksumValue="b170288bf1f61b26a648358866f4d6c6"; 
     
-    cta::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
     cta::log::LogContext lc(log);  
     tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
     mrp.startThreads();

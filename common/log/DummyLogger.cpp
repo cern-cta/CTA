@@ -24,8 +24,8 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DummyLogger::DummyLogger(const std::string &programName):
-  Logger(programName, DEBUG) {
+DummyLogger::DummyLogger(const std::string &hostName, const std::string &programName):
+  Logger(hostName, programName, DEBUG) {
 }
 
 //------------------------------------------------------------------------------

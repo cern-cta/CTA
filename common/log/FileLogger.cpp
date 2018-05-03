@@ -30,9 +30,9 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-FileLogger::FileLogger(const std::string &programName, const std::string &filePath,
+FileLogger::FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath,
   const int logMask):
-  Logger(programName, logMask) {
+  Logger(hostName, programName, logMask) {
   m_fd = ::open(filePath.c_str(), O_APPEND | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
   cta::exception::Errnum::throwOnMinusOne(m_fd, 
       std::string("In FileLogger::FileLogger(): failed to open log file: ") + filePath);

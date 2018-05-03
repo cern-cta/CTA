@@ -21,17 +21,19 @@
  * it will be garbage collected.
  */
 
+#include "Agent.hpp"
+#include "AgentReference.hpp"
+#include "ArchiveRequest.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
-#include "AgentReference.hpp"
-#include "Agent.hpp"
-#include "RootEntry.hpp"
-#include "ArchiveRequest.hpp"
-#include "RetrieveRequest.hpp"
-#include "GenericObject.hpp"
-#include "common/log/StringLogger.hpp"
-#include "common/Configuration.hpp"
 #include "catalogue/CatalogueFactory.hpp"
+#include "common/Configuration.hpp"
+#include "common/log/StringLogger.hpp"
+#include "common/utils/utils.hpp"
+#include "GenericObject.hpp"
+#include "RetrieveRequest.hpp"
+#include "RootEntry.hpp"
+
 #include <iostream>
 #include <stdexcept>
 #include <bits/unique_ptr.h>
@@ -40,7 +42,7 @@ int main(int argc, char ** argv) {
   try {
     std::unique_ptr<cta::objectstore::Backend> be;
     std::unique_ptr<cta::catalogue::Catalogue> catalogue;
-    cta::log::StringLogger sl("cta-objectstore-collect-orphaned", cta::log::DEBUG);
+    cta::log::StringLogger sl(cta::utils::getShortHostname(), "cta-objectstore-collect-orphaned", cta::log::DEBUG);
     cta::log::LogContext lc(sl);
     std::string objectName;
     if (4 == argc) {

@@ -70,7 +70,9 @@ int main(const int argc, char *const *const argv) {
 static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta;
 
-  log::StdoutLogger log(mediachanger::DismountCmdLine::getProgramName());
+  const std::string hostName = utils::getShortHostname();
+  const std::string programName = mediachanger::DismountCmdLine::getProgramName();
+  log::StdoutLogger log(hostName, programName);
   mediachanger::MediaChangerFacade mc(log);
   
   mediachanger::DismountCmd cmd(std::cin, std::cout, std::cerr, mc);

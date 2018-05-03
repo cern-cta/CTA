@@ -98,7 +98,7 @@ namespace unitTests{
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
     using ::testing::_;
     
-    cta::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
+    cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
     cta::log::LogContext lc(log);
     
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());

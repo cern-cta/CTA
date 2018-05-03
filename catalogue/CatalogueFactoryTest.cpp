@@ -29,7 +29,7 @@ namespace unitTests {
 class cta_catalogue_CatalogueFactoryTest : public ::testing::Test {
 public:
   cta_catalogue_CatalogueFactoryTest():
-    m_dummyLog("dummy") {
+    m_dummyLog("dummy", "dummy") {
     m_localAdmin.username = "local_admin_user";
     m_localAdmin.host = "local_admin_host";
 

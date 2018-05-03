@@ -26,9 +26,9 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StringLogger::StringLogger(const std::string &programName,
+StringLogger::StringLogger(const std::string &hostName, const std::string &programName,
   const int logMask):
-  Logger(programName, logMask) {}
+  Logger(hostName, programName, logMask) {}
 
 //------------------------------------------------------------------------------
 // destructor

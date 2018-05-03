@@ -33,11 +33,12 @@ public:
   /**
    * Constructor
    *
+   * @param hostName The name of the host to be prepended to every log message.
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  TestingSyslogLogger(const std::string &programName):
-    SyslogLogger(programName,DEBUG)  {
+  TestingSyslogLogger(const std::string &hostName, const std::string &programName):
+    SyslogLogger(hostName, programName, DEBUG)  {
   }
 
   using SyslogLogger::cleanString;

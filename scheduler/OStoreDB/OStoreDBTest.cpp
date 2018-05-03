@@ -113,7 +113,7 @@ private:
 
 TEST_P(OStoreDBTest, getBatchArchiveJob) {
   using namespace cta::objectstore;
-  cta::log::StringLogger logger("OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
   OStoreDBWrapperInterface & osdbi = getDb();
@@ -180,7 +180,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
 
 TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   using namespace cta::objectstore;
-  cta::log::StringLogger logger("OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
   OStoreDBWrapperInterface & osdbi = getDb();

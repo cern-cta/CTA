@@ -22,21 +22,23 @@
  * the path the backend store and exit
  */
 
-#include "common/Configuration.hpp"
+#include "Agent.hpp"
+#include "AgentRegister.hpp"
 #include "BackendFactory.hpp"
+#include "BackendVFS.hpp"
+#include "common/Configuration.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/LogContext.hpp"
-#include "BackendVFS.hpp"
-#include "Agent.hpp"
+#include "common/utils/utils.hpp"
 #include "RootEntry.hpp"
-#include "AgentRegister.hpp"
 #include "SerializersExceptions.hpp"
+
 #include <iostream>
 #include <stdexcept>
 
 int main(int argc, char ** argv) {
   try {
-    cta::log::StdoutLogger logger("cta-objectstore-unfollow-agent");
+    cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-unfollow-agent");
     std::string agentName;
     std::unique_ptr<cta::objectstore::Backend> be;
     if (3 == argc) {

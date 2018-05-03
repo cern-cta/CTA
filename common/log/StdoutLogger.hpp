@@ -32,10 +32,11 @@ public:
   /**
    * Constructor
    *
+   * @param hostName The name of the host to be prepended to every log message.
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  StdoutLogger(const std::string &programName);
+  StdoutLogger(const std::string &hostName, const std::string &programName);
 
   /**
    * Destructor.

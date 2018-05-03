@@ -18,15 +18,16 @@
 
 #pragma once
 
-#include <XrdSsi/XrdSsiProvider.hh>
-
 #include "common/Configuration.hpp"
+#include "common/utils/utils.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "objectstore/AgentHeartbeatThread.hpp"
+#include "XrdSsiPbLog.hpp"
 
+#include <XrdSsi/XrdSsiProvider.hh>
 
 
 /*!

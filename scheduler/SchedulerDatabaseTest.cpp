@@ -134,9 +134,9 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_use
 TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("");
+  cta::log::DummyLogger dl("", "");
 #else
-  cta::log::StdoutLogger dl("");
+  cta::log::StdoutLogger dl("", "");
 #endif
   cta::log::LogContext lc(dl);
 

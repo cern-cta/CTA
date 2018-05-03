@@ -33,12 +33,13 @@ public:
   /**
    * Constructor
    *
+   * @param hostName The host name to be prepended to every log message.
    * @param programName The name of the program to be prepended to every log
    * message.
    * @param filePath path to the log file.
    * @param logMask The log mask.
    */
-  FileLogger(const std::string &programName, const std::string &filePath,
+  FileLogger(const std::string &hostName, const std::string &programName, const std::string &filePath,
     const int logMask);
 
   /**

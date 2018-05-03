@@ -88,7 +88,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
     job2.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy","castor_tape_tapeserver_RecallReportPackerNominal",cta::log::DEBUG);
   cta::log::LogContext lc(log);
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
@@ -138,7 +138,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
     job3.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy","castor_tape_tapeserver_RecallReportPackerBadBadEnd",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);

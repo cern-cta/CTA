@@ -28,7 +28,7 @@ using cta::tape::daemon::SignalHandler;
 using cta::tape::daemon::SubprocessHandler;
 
 TEST(cta_Daemon, SignalHandlerShutdown) {
-  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);
   {
@@ -48,7 +48,7 @@ TEST(cta_Daemon, SignalHandlerShutdown) {
 }
 
 TEST(cta_Daemon, SignalHandlerKill) {
-  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);
   {
@@ -71,7 +71,7 @@ TEST(cta_Daemon, SignalHandlerKill) {
 }
 
 TEST(cta_Daemon, SignalHandlerSigChild) {
-  cta::log::StringLogger dlog("unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
   cta::tape::daemon::ProcessManager pm(lc);
   {

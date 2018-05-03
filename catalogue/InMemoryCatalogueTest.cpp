@@ -36,7 +36,7 @@ protected:
 TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDatabases) {
   using namespace cta;
 
-  log::DummyLogger dummyLog("dummy");
+  log::DummyLogger dummyLog("dummy", "dummy");
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
   const uint32_t maxTriesToConnect = 1;

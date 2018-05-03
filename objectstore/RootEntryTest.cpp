@@ -31,7 +31,7 @@ namespace unitTests {
 
 TEST(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   { 
     // Try to create the root entry
@@ -53,7 +53,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock (re);
     // Create an agent
-    cta::log::DummyLogger dl("dummyLogger");
+    cta::log::DummyLogger dl("dummy", "dummyLogger");
     cta::objectstore::AgentReference agentRef("unitTest", dl);
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
@@ -77,7 +77,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -145,7 +145,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -201,7 +201,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl); 
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
@@ -251,7 +251,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   }
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
-  cta::log::DummyLogger dl("dummyLogger");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);

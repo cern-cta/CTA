@@ -22,18 +22,20 @@
  * the path the backend store and exit
  */
 
-#include "BackendVFS.hpp"
-#include "BackendFactory.hpp"
-#include "RootEntry.hpp"
 #include "Agent.hpp"
 #include "AgentReference.hpp"
+#include "BackendVFS.hpp"
+#include "BackendFactory.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/utils/utils.hpp"
+#include "RootEntry.hpp"
+
 #include <iostream>
 #include <stdexcept>
 
 int main(int argc, char ** argv) {
   try {
-    cta::log::StdoutLogger logger("cta-objectstore-initialize");
+    cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-initialize");
     cta::log::LogContext lc(logger);
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {

@@ -30,8 +30,8 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(const std::string &programName, const int logMask):
-  m_programName(programName), m_logMask(logMask),
+Logger::Logger(const std::string &hostName, const std::string &programName, const int logMask):
+  m_hostName(hostName), m_programName(programName), m_logMask(logMask),
   m_priorityToText(generatePriorityToTextMap()) {}
 
 //------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ void Logger::operator() (
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  const std::string header = createMsgHeader(timeStamp, m_programName, pid);
+  const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
   const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
@@ -188,6 +188,7 @@ void Logger::setLogMask(const int logMask) {
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgHeader(
   const struct timeval &timeStamp,
+  const std::string &hostName,
   const std::string &programName,
   const int pid) {
   std::ostringstream os;
@@ -201,7 +202,7 @@ std::string Logger::createMsgHeader(
   len += snprintf(buf + len, bufLen - len, ".%06ld ",
     (unsigned long)timeStamp.tv_usec);
   buf[sizeof(buf) - 1] = '\0';
-  os << buf << programName << ": ";
+  os << buf << hostName << " " << programName << ": ";
   return os.str();
 }
 

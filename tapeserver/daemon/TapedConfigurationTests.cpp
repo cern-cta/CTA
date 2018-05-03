@@ -49,7 +49,7 @@ TEST(cta_Daemon, TapedConfiguration) {
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
-  cta::log::StdoutLogger log("unitTests");
+  cta::log::StdoutLogger log("dummy","unitTests");
   TempFile completeConfFile;
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"

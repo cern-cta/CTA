@@ -40,7 +40,7 @@ namespace unitTests {
 // constructor
 //------------------------------------------------------------------------------
 cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
-  m_dummyLog("dummy") {
+  m_dummyLog("dummy", "dummy") {
   m_localAdmin.username = "local_admin_user";
   m_localAdmin.host = "local_admin_host";
 

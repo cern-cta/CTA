@@ -16,24 +16,21 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <XrdSsiPbConfig.hpp>
-#include <XrdSsiPbAlert.hpp>
-#include <XrdSsiPbService.hpp>
-#include <cta_frontend.pb.h>
-
-#include <version.h>
-#include <common/make_unique.hpp>
-#include <common/log/Logger.hpp>
-#include <common/log/SyslogLogger.hpp>
-#include <common/log/StdoutLogger.hpp>
-#include <common/log/FileLogger.hpp>
-#include <rdbms/Login.hpp>
-#include <catalogue/CatalogueFactory.hpp>
-#include <objectstore/BackendVFS.hpp>
-
+#include "cta_frontend.pb.h"
+#include "catalogue/CatalogueFactory.hpp"
+#include "common/make_unique.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/SyslogLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/log/FileLogger.hpp"
+#include "common/utils/utils.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "rdbms/Login.hpp"
+#include "version.h"
 #include "XrdSsiCtaServiceProvider.hpp"
-
-
+#include "XrdSsiPbAlert.hpp"
+#include "XrdSsiPbConfig.hpp"
+#include "XrdSsiPbService.hpp"
 
 /*!
  * Global pointer to the Service Provider object.
@@ -72,13 +69,14 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    try {
       auto loggerURL = config.getOptionValueStr("cta.log.url");
       if(!loggerURL.first) loggerURL.second = "syslog:";
+      const auto shortHostname = utils::getShortHostname();
 
       if (loggerURL.second == "syslog:") {
-         m_log.reset(new log::SyslogLogger("cta-frontend", log::DEBUG));
+         m_log.reset(new log::SyslogLogger(shortHostname, "cta-frontend", log::DEBUG));
       } else if (loggerURL.second == "stdout:") {
-         m_log.reset(new log::StdoutLogger("cta-frontend"));
+         m_log.reset(new log::StdoutLogger(shortHostname, "cta-frontend"));
       } else if (loggerURL.second.substr(0, 5) == "file:") {
-         m_log.reset(new log::FileLogger("cta-frontend", loggerURL.second.substr(5), log::DEBUG));
+         m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", loggerURL.second.substr(5), log::DEBUG));
       } else {
          throw exception::Exception(std::string("Unknown log URL: ") + loggerURL.second);
       }

@@ -89,11 +89,12 @@ public:
   /**
    * Constructor
    *
+   * @param hostName The name of the host to be prepended to every log
    * @param programName The name of the program to be prepended to every log
    * @param logMask The log mask.
    * message.
    */
-  Logger(const std::string &programName, const int logMask);
+  Logger(const std::string &hostName, const std::string &programName, const int logMask);
 
   /**
    * Destructor.
@@ -158,6 +159,11 @@ public:
 protected:
 
   /**
+   * The name of the host to be prepended to every log message.
+   */
+  const std::string m_hostName;
+
+  /**
    * The name of the program to be prepended to every log message.
    */
   const std::string m_programName;
@@ -218,12 +224,14 @@ private:
    * this method.
    *
    * @param timeStamp The time stamp of the message.
+   * @param hostName The name of the host.
    * @param programName the program name of the log message.
    * @param pid The process ID of the process logging the message.
    * @return The message header.
    */
   static std::string createMsgHeader(
     const struct timeval &timeStamp,
+    const std::string &hostName,
     const std::string &programName,
     const int pid);
 

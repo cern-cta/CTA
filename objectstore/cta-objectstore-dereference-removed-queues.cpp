@@ -22,20 +22,22 @@
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
 
+#include "Agent.hpp"
+#include "AgentRegister.hpp"
+#include "BackendFactory.hpp"
+#include "BackendVFS.hpp"
 #include "common/Configuration.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/LogContext.hpp"
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
-#include "Agent.hpp"
+#include "common/utils/utils.hpp"
 #include "RootEntry.hpp"
-#include "AgentRegister.hpp"
+
 #include <iostream>
 #include <stdexcept>
 
 int main(int argc, char ** argv) {
   try {
-    cta::log::StdoutLogger logger("cta-objectstore-dereference-removed-queues");
+    cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-dereference-removed-queues");
     std::unique_ptr<cta::objectstore::Backend> be;
     if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], logger).release());

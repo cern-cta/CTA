@@ -70,7 +70,7 @@ struct SchedulerTestParam {
 class SchedulerTest: public ::testing::TestWithParam<SchedulerTestParam> {
 public:
 
-  SchedulerTest(): m_dummyLog("dummy") {
+  SchedulerTest(): m_dummyLog("dummy", "dummy") {
   }
 
   class FailedToGetCatalogue: public std::exception {
@@ -262,7 +262,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
 
-  log::DummyLogger dl("");
+  log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
@@ -366,9 +366,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
   
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("unitTest");
+  log::StdoutLogger dl("dummy", "unitTest");
 #else
-  log::DummyLogger dl("");
+  log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
   
@@ -542,9 +542,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   auto &catalogue = getCatalogue();
   
 #ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("unitTest");
+  log::StdoutLogger dl("dummy", "unitTest");
 #else
-  log::DummyLogger dl("");
+  log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
   
@@ -630,7 +630,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
   
   Scheduler &scheduler = getScheduler();
   
-  log::DummyLogger dl("");
+  log::DummyLogger dl("", "");
   log::LogContext lc(dl);
 
   {
@@ -661,7 +661,7 @@ TEST_P(SchedulerTest, showqueues) {
   
   Scheduler &scheduler = getScheduler();
   
-  log::DummyLogger dl("");
+  log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
   uint64_t archiveFileId __attribute__((unused));

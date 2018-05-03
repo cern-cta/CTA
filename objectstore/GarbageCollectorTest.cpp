@@ -43,7 +43,7 @@ namespace unitTests {
 
 TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // We will need a log object 
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
   // Here we check for the ability to detect dead (but empty agents)
@@ -96,7 +96,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
 
 TEST(ObjectStore, GarbageCollectorRegister) {
   // We will need a log object 
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
   cta::catalogue::DummyCatalogue catalogue;
   // Here we check that can successfully call agentRegister's garbage collector
@@ -155,7 +155,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
 
 TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   // We will need a log object 
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -215,7 +215,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
 
 TEST(ObjectStore, GarbageCollectorDriveRegister) {
   // We will need a log object 
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue catalogue;
@@ -276,9 +276,9 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
 TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // We will need a log object 
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
@@ -475,9 +475,9 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
 TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("unitTest");
+  cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
-  cta::log::DummyLogger dl("unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue

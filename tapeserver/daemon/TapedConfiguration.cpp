@@ -154,6 +154,6 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
 //------------------------------------------------------------------------------
 // GlobalConfiguration::gDummyLogger (static member)
 //------------------------------------------------------------------------------
-cta::log::DummyLogger TapedConfiguration::gDummyLogger("");
+cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
 }}} // namespace cta::tape::daemon

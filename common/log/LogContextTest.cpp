@@ -26,7 +26,7 @@ using namespace cta::log;
 
 namespace unitTests {
   TEST(cta_log_LogContextTest, additionScopedRemove) {
-    DummyLogger dl("cta_log_LogContextTest");
+    DummyLogger dl("dummy", "cta_log_LogContextTest");
     LogContext lc(dl);
     lc.pushOrReplace(Param("MigrationRequestId", 123));
     ASSERT_EQ(1U, lc.size());
@@ -50,7 +50,7 @@ namespace unitTests {
   }
   
   TEST(cta_log_LogContextTest, paramsFound) {
-    StringLogger sl ("cta_log_LogContextTest", DEBUG);
+    StringLogger sl ("dummy", "cta_log_LogContextTest", DEBUG);
     LogContext lc(sl);
     lc.pushOrReplace(Param("MigrationRequestId", 123));
     lc.log(INFO, "First log");
