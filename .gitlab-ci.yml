@@ -16,6 +16,7 @@ before_script:
 
 cta_srpm:
   stage: build:srpm
+  retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - yum install -y gcc-c++ cmake make rpm-build
@@ -36,6 +37,7 @@ cta_rpm:
   except:
     - tags
   stage: build:rpm
+  retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
@@ -62,6 +64,7 @@ cta_tagged_rpm:
   only:
     - tags
   stage: build:rpm
+  retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
@@ -101,6 +104,7 @@ cta_valgrind:
   except:
     - tags
   stage: test
+  retry: 1
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
