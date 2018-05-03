@@ -59,8 +59,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
     yum-config-manager --enable castor \
   && \
     yum install -y\
-      eos-client \
-      eos-server \
       xrootd \
       xrootd-client \
       xrootd-debuginfo \
