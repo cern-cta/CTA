@@ -70,7 +70,7 @@ process_frontend_log()
 {
   echoc $LT_BLUE "Extracting archive log messages from cta-frontend..."
 
-  awk -vDATE_OFFSET="$DATE_OFFSET" -vTEST_RUN=${TEST_RUN} '
+  awk -vDATE_OFFSET="$DATE_OFFSET" '
     function processLine(event, logline) {
       sub(" .* fileId=\"", " ", logline)
       sub("\".*$", "", logline)
@@ -87,8 +87,6 @@ process_frontend_log()
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
       print logarray[3],event,timesecs "." MSECS
     }
-
-    $0 !~ TEST_RUN { next }
 
     /CREATE/ { processLine("CRE", $0) }
     /CLOSEW/ { processLine("CLW", $0) }

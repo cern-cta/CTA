@@ -1,22 +1,33 @@
-#!/bin/sh
+#!/bin/bash
+
+# Colours
+NC='\033[0m' # No colour
+RED='\033[0;31m'
+LT_RED='\033[1;31m'
+GREEN='\033[0;32m'
+LT_GREEN='\033[1;32m'
+ORANGE='\033[0;33m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+LT_BLUE='\033[1;34m'
 
 error()
 {
-  echo "$*" >&2
+  echo -e "${RED}$*${NC}" >&2
   exit 1
 }
 
-get_filename()
+echoc()
 {
-  awk -vFILENAME=${1} -vFILENAME_PREFIX=${FILENAME_PREFIX} 'BEGIN {
-    FILENAME="00000000" FILENAME
-    print FILENAME_PREFIX substr(FILENAME, length(FILENAME)-7)
-  }'
+  COLOUR=$1
+  shift
+  echo -ne "${COLOUR}$*${NC}" >&2
 }
 
 get_ids()
 {
-  IDS=$(grep -m1 "^$1 " filenameToLogIds.txt)
+  IDS=$(sed "$1q;d" filenameToLogIds.txt)
+  FILENAME=$(echo $IDS | cut -d' ' -f1)
   FILE_ID=$(echo $IDS | cut -d' ' -f2)
   ARCHIVE_ID=$(echo $IDS | cut -d' ' -f3)
 }
@@ -31,9 +42,9 @@ check_results()
 
 get_mgm_times()
 {
-  TMP_RESULTS=$(grep -m6 "^$1 " xrdmgm-events.log)
+  TMP_RESULTS=$(grep -m7 "^$1 " xrdmgm-events.log)
 
-  echo -e "${TMP_RESULTS}" | check_results 6
+  echo -e "${TMP_RESULTS}" | check_results 7
   [ $? -ne 0 ] && TMP_RESULTS=$(grep "^$1 " xrdmgm-events.log)
 
   TIME_MGM_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
@@ -42,7 +53,7 @@ get_mgm_times()
   TIME_MGM_ARCHIVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ARC" | cut -d' ' -f3)
   TIME_MGM_PREPARE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 PRE" | cut -d' ' -f3)
   TIME_MGM_RCOMMIT=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RCO" | cut -d' ' -f3)
-  #TIME_MGM_RETRIEVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RWC" | cut -d' ' -f3)
+  TIME_MGM_RETRIEVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RWC" | cut -d' ' -f3)
 }
 
 get_frontend_times()
@@ -90,66 +101,67 @@ get_offset_time()
 get_times()
 {
   get_ids $1
-  get_mgm_times $1
-  get_frontend_times $ARCHIVE_ID
-  get_taped_times $ARCHIVE_ID
+  get_mgm_times ${FILENAME}
+  get_frontend_times ${ARCHIVE_ID}
+  get_taped_times ${ARCHIVE_ID}
 
-  echo -n "$ARCHIVE_ID $FILE_ID "
+  echo -n "${ARCHIVE_ID},"
+  echo -n "${FILE_ID},"
 
-# For debugging
-#  echo $TIME_MGM_CREATE $TIME_FE_CREATE $TIME_MGM_ACOMMIT $TIME_MGM_CLOSEW $TIME_FE_CLOSEW $TIME_TS_ARCHIVE_POP \
-#       $TIME_TS_ARCHIVE_TASKS $TIME_TS_ARCHIVE_OPEN $TIME_TS_ARCHIVE_READ $TIME_TS_ARCHIVE_DONE $TIME_TS_ARCHIVE_REPORT \
-#       $TIME_MGM_ARCHIVED
-#  echo $TIME_MGM_PREPARE $TIME_FE_PREPARE $TIME_TS_RETRIEVE_POP $TIME_TS_RETRIEVE_TASK $TIME_TS_RETRIEVE_TASKS \
-#       $TIME_TS_RETRIEVE_POSITION $TIME_TS_RETRIEVE_READ $TIME_TS_RETRIEVE_OPEN $TIME_TS_RETRIEVE_DONE \
-#       $TIME_MGM_RCOMMIT $TIME_MGM_RETRIEVED
+  # Note: MGM events have second precision. CTA events have microsecond precision
 
-  # MGM events have second precision. CTA events have microsecond precision
+  echo -n "${TIME_MGM_CREATE},"
+  echo -n "${TIME_FE_CREATE},"
+  echo -n "${TIME_MGM_ACOMMIT},"
+  echo -n "${TIME_MGM_CLOSEW},"
+  echo -n "${TIME_FE_CLOSEW},"
+  echo -n "${TIME_TS_ARCHIVE_POP},"
+  echo -n "${TIME_TS_ARCHIVE_TASKS},"
+  echo -n "${TIME_TS_ARCHIVE_OPEN},"
+  echo -n "${TIME_TS_ARCHIVE_READ},"
+  echo -n "${TIME_TS_ARCHIVE_DONE},"
+  echo -n "${TIME_TS_ARCHIVE_REPORT},"
+  echo -n "${TIME_MGM_ARCHIVED},"
 
-  echo -n "$(get_offset_time $TIME_MGM_CREATE $TIME_FE_CREATE) "
-  echo -n "$(get_offset_time $TIME_MGM_CREATE $TIME_MGM_ACOMMIT) "
-  echo -n "$(get_offset_time $TIME_MGM_ACOMMIT $TIME_MGM_CLOSEW) "
-  echo -n "$(get_offset_time $TIME_FE_CREATE $TIME_FE_CLOSEW) "
-  echo -n "$(get_offset_time $TIME_FE_CLOSEW $TIME_TS_ARCHIVE_POP) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_POP $TIME_TS_ARCHIVE_TASKS) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_TASKS $TIME_TS_ARCHIVE_OPEN) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_OPEN $TIME_TS_ARCHIVE_READ) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_READ $TIME_TS_ARCHIVE_DONE) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_DONE $TIME_TS_ARCHIVE_REPORT) "
-  echo -n "$(get_offset_time $TIME_TS_ARCHIVE_REPORT $TIME_MGM_ARCHIVED) "
-
-  echo -n "$(get_offset_time $TIME_MGM_PREPARE $TIME_FE_PREPARE) "
-  echo -n "$(get_offset_time $TIME_FE_PREPARE $TIME_TS_RETRIEVE_POP) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_POP $TIME_TS_RETRIEVE_TASK) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_TASK $TIME_TS_RETRIEVE_TASKS) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_TASKS $TIME_TS_RETRIEVE_POSITION) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_POSITION $TIME_TS_RETRIEVE_READ) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_READ $TIME_TS_RETRIEVE_OPEN) "
-  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_OPEN $TIME_TS_RETRIEVE_DONE) "
-  echo    "$(get_offset_time $TIME_TS_RETRIEVE_DONE $TIME_MGM_RCOMMIT);"
-#  echo -n "$(get_offset_time $TIME_TS_RETRIEVE_DONE $TIME_MGM_RCOMMIT) "
-#  echo    "$(get_offset_time $TIME_MGM_RCOMMIT $TIME_MGM_RETRIEVED);"
+  echo -n "${TIME_MGM_PREPARE},"
+  echo -n "${TIME_FE_PREPARE},"
+  echo -n "${TIME_TS_RETRIEVE_POP},"
+  echo -n "${TIME_TS_RETRIEVE_TASK},"
+  echo -n "${TIME_TS_RETRIEVE_TASKS},"
+  echo -n "${TIME_TS_RETRIEVE_POSITION},"
+  echo -n "${TIME_TS_RETRIEVE_READ},"
+  echo -n "${TIME_TS_RETRIEVE_OPEN},"
+  echo -n "${TIME_TS_RETRIEVE_DONE},"
+  echo -n "${TIME_MGM_RCOMMIT},"
+  echo    "${TIME_MGM_RETRIEVED}"
 }
 
-FILE_NUM_START=${1:-0}
-FILE_NUM_END=${2:-9099999}
-
-FILENAME_PREFIX=
+FILE_NUM_START=1
+FILE_NUM_END=$(wc -l filenameToLogIds.txt | cut -d' ' -f1)
 
 [ -r filenameToLogIds.txt ] || error "Can't open filenameToLogIds.txt"
 [ -r xrdmgm-events.log ] || error "Can't open xrdmgm-events.log"
 [ -r cta-frontend-events.log ] || error "Can't open cta-frontend-events.log"
 [ -r cta-taped-events.log ] || error "Can't open cta-taped-events.log"
 
-echo "cta_times = ["
+echoc $LT_BLUE "Creating CSV from events..."
 
+# Print CSV header
+echo -n "Archive File ID,Disk File ID,MGM CREATE,FE CREATE,MGM commit,MGM CLOSEW,FE CLOSEW,"
+echo -n "TS Archive Pop,TS Archive Tasks,TS Archive Open,TS Archive Read,TS Archive Done,"
+echo -n "TS Archive Report,MGM ARCHIVED,MGM PREPARE,FE PREPARE,TS Retrieve Pop,TS Retrieve Task,"
+echo -n "TS Retrieve Tasks,TS Retrieve Position,TS Retrieve Read,TS Retrieve Open,TS Retrieve Done,"
+echo    "MGM commit,MGM RETRIEVED"
+
+# Print CSV data
 FILE_NUM=${FILE_NUM_START}
 while :
 do
+  [ "$FILE_NUM" == "$((${FILE_NUM}/100))00" ] && echoc $LT_BLUE "${FILE_NUM}..."
   get_times ${FILE_NUM}
   FILE_NUM=$((${FILE_NUM}+1))
   [ $FILE_NUM -le $FILE_NUM_END ] || break
 done
 
-echo "];"
+echoc $LT_BLUE "done.\n"
 
