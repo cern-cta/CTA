@@ -30,3 +30,7 @@ fstofs.quotainterval 10
 fstofs.metalog /var/eos/md/
 #fstofs.trace client
 ###########################################################
+
+# Set the endpoint and resources for EOS/CTA Workflows
+fstofs.protowfendpoint ctafrontend:10955
+fstofs.protowfresource /ctafrontend
