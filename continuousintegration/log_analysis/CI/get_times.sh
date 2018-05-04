@@ -44,12 +44,12 @@ get_mgm_times()
 {
   TMP_RESULTS=$(grep -m7 "^$1 " xrdmgm-events.log)
 
-  echo -e "${TMP_RESULTS}" | check_results 7
+  echo -e "${TMP_RESULTS}" | check_results 6
   [ $? -ne 0 ] && TMP_RESULTS=$(grep "^$1 " xrdmgm-events.log)
 
   TIME_MGM_CREATE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CRE" | cut -d' ' -f3)
   TIME_MGM_ACOMMIT=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ACO" | cut -d' ' -f3)
-  TIME_MGM_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLO" | cut -d' ' -f3)
+#  TIME_MGM_CLOSEW=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 CLO" | cut -d' ' -f3)
   TIME_MGM_ARCHIVED=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 ARC" | cut -d' ' -f3)
   TIME_MGM_PREPARE=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 PRE" | cut -d' ' -f3)
   TIME_MGM_RCOMMIT=$(echo -e "${TMP_RESULTS}" | grep -m1 "^$1 RCO" | cut -d' ' -f3)
@@ -113,7 +113,7 @@ get_times()
   echo -n "${TIME_MGM_CREATE},"
   echo -n "${TIME_FE_CREATE},"
   echo -n "${TIME_MGM_ACOMMIT},"
-  echo -n "${TIME_MGM_CLOSEW},"
+#  echo -n "${TIME_MGM_CLOSEW},"
   echo -n "${TIME_FE_CLOSEW},"
   echo -n "${TIME_TS_ARCHIVE_POP},"
   echo -n "${TIME_TS_ARCHIVE_TASKS},"
@@ -147,7 +147,7 @@ FILE_NUM_END=$(wc -l filenameToLogIds.txt | cut -d' ' -f1)
 echoc $LT_BLUE "Creating CSV from events..."
 
 # Print CSV header
-echo -n "Archive File ID,Disk File ID,MGM CREATE,FE CREATE,MGM commit,MGM CLOSEW,FE CLOSEW,"
+echo -n "Archive File ID,Disk File ID,MGM CREATE,FE CREATE,MGM commit,FE CLOSEW,"
 echo -n "TS Archive Pop,TS Archive Tasks,TS Archive Open,TS Archive Read,TS Archive Done,"
 echo -n "TS Archive Report,MGM ARCHIVED,MGM PREPARE,FE PREPARE,TS Retrieve Pop,TS Retrieve Task,"
 echo -n "TS Retrieve Tasks,TS Retrieve Position,TS Retrieve Read,TS Retrieve Open,TS Retrieve Done,"

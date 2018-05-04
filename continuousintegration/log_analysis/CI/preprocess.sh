@@ -39,15 +39,16 @@ process_mgm_log()
 
   awk -vDATE_OFFSET="$DATE_OFFSET" -vTEST_RUN=${TEST_RUN} 'BEGIN { COMMIT_EVENT="ACO" }
     function processLine(pattern, event, logline) {
-      gsub("time=.*" pattern, "", logline)
+      gsub("func=.*" pattern, "", logline)
       split(logline,logarray)
       DAYS=logarray[1]-DATE_OFFSET
       HOURS=substr(logarray[2],1,2)
       MINS=substr(logarray[2],4,2)
       SECS=substr(logarray[2],7,2)
+      MSECS=substr(logarray[3], index(logarray[3], "."), 7)
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
-      gsub("^.*" TEST_RUN "/", "", logarray[3])
-      print logarray[3],event,timesecs
+      gsub("^.*" TEST_RUN "/", "", logarray[4])
+      print logarray[4],event,timesecs MSECS
     }
 
     $0 !~ TEST_RUN { next }

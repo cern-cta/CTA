@@ -38,7 +38,7 @@ convert_abs_rel()
   awk 'BEGIN { FS=","; SKIPHEADER=1; }
     function rel(arg1, arg2) { return arg2-arg1; }
     SKIPHEADER==1 {
-      printf "Archive File ID,Disk File ID,FE CREATE,MGM commit,MGM CLOSEW,TS Archive Pop,TS Archive Tasks,"
+      printf "Archive File ID,Disk File ID,FE CREATE,MGM commit,FE CLOSEW,TS Archive Pop,TS Archive Tasks,"
       printf "TS Archive Open,TS Archive Read,TS Archive Done,TS Archive Report,MGM ARCHIVED,FE PREPARE,"
       printf "TS Retrieve Pop,TS Retrieve Task,TS Retrieve Tasks,TS Retrieve Position,TS Retrieve Read,"
       printf "TS Retrieve Open,TS Retrieve Done,MGM commit,MGM RETRIEVED\n"
@@ -50,33 +50,31 @@ convert_abs_rel()
       TIME_MGM_CREATE=$3
       TIME_FE_CREATE=$4
       TIME_MGM_ACOMMIT=$5
-      TIME_MGM_CLOSEW=$6
-      TIME_FE_CLOSEW=$7
-      TIME_TS_ARCHIVE_POP=$8
-      TIME_TS_ARCHIVE_TASKS=$9
-      TIME_TS_ARCHIVE_OPEN=$10
-      TIME_TS_ARCHIVE_READ=$11
-      TIME_TS_ARCHIVE_DONE=$12
-      TIME_TS_ARCHIVE_REPORT=$13
-      TIME_MGM_ARCHIVED=$14
-      TIME_MGM_PREPARE=$15
-      TIME_FE_PREPARE=$16
-      TIME_TS_RETRIEVE_POP=$17
-      TIME_TS_RETRIEVE_TASK=$18
-      TIME_TS_RETRIEVE_TASKS=$19
-      TIME_TS_RETRIEVE_POSITION=$20
-      TIME_TS_RETRIEVE_READ=$21
-      TIME_TS_RETRIEVE_OPEN=$22
-      TIME_TS_RETRIEVE_DONE=$23
-      TIME_MGM_RCOMMIT=$24
-      TIME_MGM_RETRIEVED=$25
+      TIME_FE_CLOSEW=$6
+      TIME_TS_ARCHIVE_POP=$7
+      TIME_TS_ARCHIVE_TASKS=$8
+      TIME_TS_ARCHIVE_OPEN=$9
+      TIME_TS_ARCHIVE_READ=$10
+      TIME_TS_ARCHIVE_DONE=$11
+      TIME_TS_ARCHIVE_REPORT=$12
+      TIME_MGM_ARCHIVED=$13
+      TIME_MGM_PREPARE=$14
+      TIME_FE_PREPARE=$15
+      TIME_TS_RETRIEVE_POP=$16
+      TIME_TS_RETRIEVE_TASK=$17
+      TIME_TS_RETRIEVE_TASKS=$18
+      TIME_TS_RETRIEVE_POSITION=$19
+      TIME_TS_RETRIEVE_READ=$20
+      TIME_TS_RETRIEVE_OPEN=$21
+      TIME_TS_RETRIEVE_DONE=$22
+      TIME_MGM_RCOMMIT=$23
+      TIME_MGM_RETRIEVED=$24
 
       printf "%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n",
         ARCHIVE_ID,FILE_ID,
         rel(TIME_MGM_CREATE,TIME_FE_CREATE),
-        rel(TIME_MGM_CREATE,TIME_MGM_ACOMMIT),
-        rel(TIME_MGM_ACOMMIT,TIME_MGM_CLOSEW),
-        rel(TIME_MGM_CLOSEW,TIME_FE_CLOSEW),
+        rel(TIME_FE_CREATE,TIME_MGM_ACOMMIT),
+        rel(TIME_MGM_ACOMMIT,TIME_FE_CLOSEW),
         rel(TIME_FE_CLOSEW,TIME_TS_ARCHIVE_POP),
         rel(TIME_TS_ARCHIVE_POP,TIME_TS_ARCHIVE_TASKS),
         rel(TIME_TS_ARCHIVE_TASKS,TIME_TS_ARCHIVE_OPEN),
