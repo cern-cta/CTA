@@ -70,22 +70,32 @@ process_frontend_log()
 {
   echoc $LT_BLUE "Extracting archive log messages from cta-frontend..."
 
-  awk -vDATE_OFFSET="$DATE_OFFSET" '
+  awk -vDATE_OFFSET="$DATE_OFFSET" -vYEAR=$(date +%y) '
     function processLine(event, logline) {
-      sub(" .* fileId=\"", " ", logline)
-      sub("\".*$", "", logline)
-      sub("^20", "", logline)
-      sub("T", " ", logline)
-      gsub("-", "", logline)
-      gsub("+[0-9:]* ", " ", logline)
-      split(logline,logarray)
-      DAYS=logarray[1]-DATE_OFFSET
-      HOURS=substr(logarray[2],1,2)
-      MINS=substr(logarray[2],4,2)
-      SECS=substr(logarray[2],7,2)
-      MSECS=substr(logarray[2],10)
+      sub("^Jan ", YEAR "01", logline)
+      sub("^Feb ", YEAR "02", logline)
+      sub("^Mar ", YEAR "03", logline)
+      sub("^Apr ", YEAR "04", logline)
+      sub("^May ", YEAR "05", logline)
+      sub("^Jun ", YEAR "06", logline)
+      sub("^Jul ", YEAR "07", logline)
+      sub("^Aug ", YEAR "08", logline)
+      sub("^Sep ", YEAR "09", logline)
+      sub("^Oct ", YEAR "10", logline)
+      sub("^Nov ", YEAR "11", logline)
+      sub("^Dec ", YEAR "12", logline)
+      DATE=substr(logline,1,6)
+      gsub(" ", "0", DATE)
+      DAYS=DATE-DATE_OFFSET
+      HOURS=substr(logline,8,2)
+      MINS=substr(logline,11,2)
+      SECS=substr(logline,14,2)
+      MSECS=substr(logline,17,6)
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
-      print logarray[3],event,timesecs "." MSECS
+      FILEID_LOC=index(logline, " fileId=\"")
+      FILEID=substr(logline,FILEID_LOC+9)
+      FILEID=substr(FILEID,1,index(FILEID, "\"")-1)
+      print FILEID,event,timesecs "." MSECS
     }
 
     /CREATE/ { processLine("CRE", $0) }
@@ -102,8 +112,8 @@ process_frontend_log()
 process_file_ids()
 {
   echoc $LT_BLUE "Extracting disk IDs and archive IDs from cta-frontend..."
-  grep ${TEST_RUN} ${FRONTEND_LOG} |\
-  grep processCREATE |\
+  grep -F ${TEST_RUN} ${FRONTEND_LOG} |\
+  grep -F processCREATE |\
   sed 's/^.*diskFileId="//' |\
   sed 's/" diskFilePath="/ /' |\
   sed 's/" fileId="/ /' |\
@@ -119,22 +129,32 @@ process_taped_log()
 {
   echoc $LT_BLUE "Extracting archive log messages from cta-taped..."
 
-  awk -vDATE_OFFSET="$DATE_OFFSET" '
+  awk -vDATE_OFFSET="$DATE_OFFSET" -vYEAR=$(date +%y) '
     function processLine(event, logline) {
-      sub(" .* fileId=\"", " ", logline)
-      sub("\".*$", "", logline)
-      sub("^20", "", logline)
-      sub("T", " ", logline)
-      gsub("-", "", logline)
-      gsub("+[0-9:]* ", " ", logline)
-      split(logline,logarray)
-      DAYS=logarray[1]-DATE_OFFSET
-      HOURS=substr(logarray[2],1,2)
-      MINS=substr(logarray[2],4,2)
-      SECS=substr(logarray[2],7,2)
-      MSECS=substr(logarray[2],10)
+      sub("^Jan ", YEAR "01", logline)
+      sub("^Feb ", YEAR "02", logline)
+      sub("^Mar ", YEAR "03", logline)
+      sub("^Apr ", YEAR "04", logline)
+      sub("^May ", YEAR "05", logline)
+      sub("^Jun ", YEAR "06", logline)
+      sub("^Jul ", YEAR "07", logline)
+      sub("^Aug ", YEAR "08", logline)
+      sub("^Sep ", YEAR "09", logline)
+      sub("^Oct ", YEAR "10", logline)
+      sub("^Nov ", YEAR "11", logline)
+      sub("^Dec ", YEAR "12", logline)
+      DATE=substr(logline,1,6)
+      gsub(" ", "0", DATE)
+      DAYS=DATE-DATE_OFFSET
+      HOURS=substr(logline,8,2)
+      MINS=substr(logline,11,2)
+      SECS=substr(logline,14,2)
+      MSECS=substr(logline,17,6)
       timesecs=((DAYS*24 + HOURS)*60 + MINS)*60 + SECS
-      print logarray[3],event,timesecs "." MSECS
+      FILEID_LOC=index(logline, " fileId=\"")
+      FILEID=substr(logline,FILEID_LOC+9)
+      FILEID=substr(FILEID,1,index(FILEID, "\"")-1)
+      print FILEID,event,timesecs "." MSECS
     }
 
     /In ArchiveMount::getNextJobBatch\(\): popped one job/    { processLine("A_POP", $0) }

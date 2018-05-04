@@ -21,7 +21,9 @@ TAPED_LOG=${ARTEFACT_HOME}/tpsrv01/taped/cta/cta-taped.log
 EOS_PATH=$(grep "Creating test dir in eos:" ${ARTEFACT_HOME}/systests.sh.log | cut -d' ' -f6)
 
 # Create temporary working directory
-TMPDIR=/tmp/$(basename ${0}).$$
+#TMPDIR=/tmp/$(basename ${0}).$$
+TMPDIR=/tmp/logevents
+rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}
 cd ${TMPDIR}
 
