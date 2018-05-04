@@ -171,7 +171,26 @@ auto RetrieveQueueShard::getJobsSummary() -> JobsSummary {
   return ret;
 }
 
-uint64_t RetrieveQueueShard::addJob(RetrieveQueue::JobToAdd& jobToAdd) {
+void RetrieveQueueShard::addJobsBatch(JobsToAddSet& jobsToAdd) {
+  checkPayloadWritable();
+  // Decide on the best algorithm. In place insertion implies 2*k*(N/2) copies
+  // as we move the inserted job in place by swaps from the end (N/2 on average).
+  // On the other hand, insertion through memory implies 2N+3k copies, N to copy
+  // to a set, k copies to create the second set, k copies again during merge
+  // and then N+k copies to copy the merged set into payload.
+  size_t N=m_payload.retrievejobs_size();
+  size_t k=jobsToAdd.size();
+  if (k*N > 2*N+3*k)
+    addJobsThroughCopy(jobsToAdd);
+  else
+    addJobsInPlace(jobsToAdd);
+}
+
+void RetrieveQueueShard::addJobsInPlace(JobsToAddSet& jobsToAdd) {
+  for (auto &j: jobsToAdd) addJob(j);
+}
+
+void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
   checkPayloadWritable();
   auto * j = m_payload.add_retrievejobs();
   j->set_address(jobToAdd.retrieveRequestAddress);
@@ -182,7 +201,6 @@ uint64_t RetrieveQueueShard::addJob(RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
   j->set_priority(jobToAdd.policy.retrievePriority);
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
-  j->set_starttime(jobToAdd.startTime);
   m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize()+jobToAdd.fileSize);
   // Sort the shard
   size_t jobIndex = m_payload.retrievejobs_size() - 1;
@@ -190,8 +208,43 @@ uint64_t RetrieveQueueShard::addJob(RetrieveQueue::JobToAdd& jobToAdd) {
     m_payload.mutable_retrievejobs()->SwapElements(jobIndex-1, jobIndex);
     jobIndex--;
   }
-  return m_payload.retrievejobs_size();
 }
+
+void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
+  checkPayloadWritable();
+  SerializedJobsToAddSet jobsMap;
+  SerializedJobsToAddSet serializedJobsToAdd;
+  SerializedJobsToAddSet::iterator i = jobsMap.begin();
+  // Copy the request pointers in memory (in an ordered multi set)
+  for (auto &j: m_payload.retrievejobs())
+    // As the queue is already sorted, we hit at the right
+    // location (in-order insertion).
+    i = jobsMap.insert(i, j);
+  // Create a serialized version of the jobs to add.
+  i = serializedJobsToAdd.begin();
+  uint64_t totalSize = m_payload.retrievejobstotalsize();
+  for (auto &jobToAdd: jobsToAdd) {
+    serializers::RetrieveJobPointer rjp;
+    rjp.set_address(jobToAdd.retrieveRequestAddress);
+    rjp.set_size(jobToAdd.fileSize);
+    rjp.set_copynb(jobToAdd.copyNb);
+    rjp.set_fseq(jobToAdd.fSeq);
+    rjp.set_starttime(jobToAdd.startTime);
+    rjp.set_maxdrivesallowed(jobToAdd.policy.maxDrivesAllowed);
+    rjp.set_priority(jobToAdd.policy.retrievePriority);
+    rjp.set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
+    i = serializedJobsToAdd.insert(i, rjp);
+    totalSize+=jobToAdd.fileSize;
+  }
+  // Let STL do the heavy lifting of in-order insertion.
+  jobsMap.insert(serializedJobsToAdd.begin(), serializedJobsToAdd.end());
+  // Recreate the shard from the in-memory image (it's already sorted).
+  m_payload.mutable_retrievejobs()->Clear();
+  for (auto &j: jobsMap)
+    *m_payload.add_retrievejobs() = j;
+  m_payload.set_retrievejobstotalsize(totalSize);
+}
+
 
 
 

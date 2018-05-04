@@ -62,7 +62,8 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   std::mt19937 gen((std::random_device())());
   // Create 1000 jobs references.
   std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
-  for (size_t i=0; i<1000; i++) {
+  const size_t totalJobs = 1000, shardSize=25, batchSize=10;
+  for (size_t i=0; i<totalJobs; i++) {
     cta::objectstore::RetrieveQueue::JobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
@@ -84,7 +85,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     rq.initialize("V12345");
     // Set a small shard size to validate multi shard behaviors
-    rq.setShardSize(20);
+    rq.setShardSize(shardSize);
     rq.insert();
   }
   {
@@ -93,7 +94,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
       std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
-      for (size_t i=0; i<15; i++) {
+      for (size_t i=0; i<batchSize; i++) {
         if (jobsToAddNow.size()) {
           auto j=std::next(jobsToAddNow.begin(), (std::uniform_int_distribution<size_t>(0, jobsToAddNow.size() -1))(gen));
           jobsBatch.emplace_back(*j);
@@ -106,12 +107,11 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
       rq.addJobsAndCommit(jobsBatch, agentRef, lc);
     }
     // Check the shard count is not too high. Due to random insertion, we might
-    // have some efficiencies, but we expect at least an average 5 jobs per shard
-    // (less than 500 shards).
+    // have some efficiencies, but we expect at least half full shards).
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    ASSERT_LT(rq.getShardCount(), 100);
+    ASSERT_LT(rq.getShardCount(), totalJobs / shardSize * 2);
   }
   {
     // Try to read back
@@ -143,7 +143,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
       }
       rq.removeJobsAndCommit(jobsToDelete);
     }
-    ASSERT_EQ(nextExpectedFseq, 1000);
+    ASSERT_EQ(nextExpectedFseq, totalJobs);
   }
 
   // Delete the root entry

@@ -420,12 +420,14 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
         auto jobsFromSource=rqsSplitFrom.dumpJobsToAdd();
         std::list<std::string> jobsToTransferAddresses;
         for (auto &j: jobsFromSource) {
+          RetrieveQueueShard::JobsToAddSet jtas;
           if (j.fSeq >= shard.minFseq && j.fSeq <= shard.maxFseq) {
-            rqs.addJob(j);
+            jtas.insert(j);
             addedJobs++;
             addedBytes+=j.fileSize;
             jobsToTransferAddresses.emplace_back(j.retrieveRequestAddress);
           }
+          rqs.addJobsBatch(jtas);
         }
         auto removalResult = rqsSplitFrom.removeJobs(jobsToTransferAddresses);
         transferedInSplitBytes += removalResult.bytesRemoved;
@@ -452,8 +454,9 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       shardPointer=m_payload.mutable_retrievequeueshards(shard.shardIndex);
     }
     // ... add the jobs to the shard (in memory)
+    RetrieveQueueShard::JobsToAddSet jtas;
     for (auto j:shard.jobsToAdd) {
-      rqs.addJob(j);
+      jtas.insert(j);
       addedJobs++;
       addedBytes+=j.fileSize;
       maxDriveAllowedMap.incCount(j.policy.maxDrivesAllowed);
@@ -467,6 +470,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
         m_payload.set_oldestjobcreationtime(j.startTime);
       }
     }
+    rqs.addJobsBatch(jtas);
     // ... update the shard pointer
     auto shardSummary = rqs.getJobsSummary();
     shardPointer->set_maxfseq(shardSummary.maxFseq);
