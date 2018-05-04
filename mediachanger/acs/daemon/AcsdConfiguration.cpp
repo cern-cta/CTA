@@ -50,5 +50,5 @@ cta::mediachanger::acs::daemon::AcsdConfiguration cta::mediachanger::acs::daemon
 //------------------------------------------------------------------------------
 // GlobalConfiguration::gDummyLogger (static member)
 //------------------------------------------------------------------------------
-cta::log::DummyLogger cta::mediachanger::acs::daemon::AcsdConfiguration::gDummyLogger("");
+cta::log::DummyLogger cta::mediachanger::acs::daemon::AcsdConfiguration::gDummyLogger("","");
 
