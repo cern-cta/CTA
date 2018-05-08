@@ -1,6 +1,6 @@
 /*!
  * @project        The CERN Tape Archive (CTA)
- * @brief          CTA Frontend Archive File Ls stream implementation
+ * @brief          CTA Frontend List Pending Files stream implementation
  * @copyright      Copyright 2017 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -26,20 +26,23 @@
 namespace cta { namespace xrd {
 
 /*!
- * Stream object which implements "af ls" command.
+ * Stream object which implements "lpa" and "lpr" commands
  */
-class ArchiveFileLsStream : public XrdSsiStream
+class ListPendingStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor) :
+   enum ListStreamType { LIST_ARCHIVES, LIST_RETRIEVES };
+
+   ListPendingStream(enum ListStreamType listStreamType, bool is_extended,
+cta::catalogue::ArchiveFileItor archiveFileItor) :
       XrdSsiStream(XrdSsiStream::isActive),
       m_archiveFileItor(std::move(archiveFileItor))
    {
-      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveFileLsStream() constructor");
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ListPendingStream() constructor");
    }
 
-   virtual ~ArchiveFileLsStream() {
-      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~ArchiveFileLsStream() destructor");
+   virtual ~ListPendingStream() {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~ListPendingStream() destructor");
    }
 
    /*!
@@ -134,7 +137,7 @@ public:
 private:
    catalogue::ArchiveFileItor m_archiveFileItor;
 
-   static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
+   static constexpr const char* const LOG_SUFFIX  = "ListPendingStream";    //!< Identifier for log messages
 };
 
 }} // namespace cta::xrd

@@ -98,8 +98,6 @@ private:
    admincmd_t processGroupMountRule_Ch;
    admincmd_t processGroupMountRule_Rm;
    admincmd_t processGroupMountRule_Ls;
-   admincmd_t processListPendingArchives;
-   admincmd_t processListPendingRetrieves;
    admincmd_t processLogicalLibrary_Add;
    admincmd_t processLogicalLibrary_Ch;
    admincmd_t processLogicalLibrary_Rm;
@@ -141,24 +139,26 @@ private:
    admincmd_t processVerify_Err;
 
    /*!
+    * Process AdminCmd events which can return a stream response
+    *
+    * @param[in]     admincmd        CTA Admin command request message
+    * @param[out]    response        Response protocol buffer message. This is used for response
+    *                                headers or for summary responses.
+    * @param[out]    stream          Reference to Response stream message pointer
+    */
+   typedef void admincmdstream_t(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
+
+   admincmdstream_t processArchiveFile_Ls;
+   admincmdstream_t processListPendingArchives;
+   admincmd_t processListPendingRetrieves; // TODO: convert to stream format
+
+   /*!
     * Log an admin command
     *
     * @param[in]    admincmd    CTA Admin command request message
     * @param[in]    t           CTA Catalogue timer
     */
    void logAdminCmd(const std::string &function, const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t);
-
-   /*!
-    * "af ls" command
-    *
-    * This is a special case as it can return a protocol buffer (for the summary) or a stream (for
-    * the full listing)
-    *
-    * @param[in]     admincmd        CTA Admin command request message
-    * @param[out]    response        Response protocol buffer message
-    * @param[out]    stream          Reference to Response stream message pointer
-    */
-   void processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream);
 
    /*!
     * Drive state enum

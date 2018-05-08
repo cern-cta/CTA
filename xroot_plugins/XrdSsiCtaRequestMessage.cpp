@@ -18,7 +18,7 @@
 
 #include <iomanip> // for setw
 
-#include "common/utils/utils.hpp"
+#include <common/utils/utils.hpp>
 #include <common/utils/Regex.hpp>
 
 #include <XrdSsiPbException.hpp>
@@ -26,12 +26,19 @@ using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaArchiveFileLs.hpp"
+//#include "XrdCtaListPendingStream.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
 
 
 namespace cta {
 namespace xrd {
+
+// Codes to change colours for console output (when sending a response to cta-admin)
+const char* const TEXT_RED    = "\x1b[31;1m";
+const char* const TEXT_NORMAL = "\x1b[0m\n";
+
+
 
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
@@ -156,7 +163,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processGroupMountRule_Ls(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGARCHIVES, AdminCmd::SUBCMD_NONE):
-               processListPendingArchives(request.admincmd(), response);
+               processListPendingArchives(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE):
                processListPendingRetrieves(request.admincmd(), response);
@@ -851,9 +858,6 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
 
       // Send the column headers in the metadata
       if(has_flag(OptionBoolean::SHOW_HEADER)) {
-         const char* const TEXT_RED    = "\x1b[31;1m";
-         const char* const TEXT_NORMAL = "\x1b[0m\n";
-
          cmdlineOutput << TEXT_RED <<
          std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' ' <<
          std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' ' <<
@@ -1222,14 +1226,53 @@ void RequestMessage::processGroupMountRule_Ls(const cta::admin::AdminCmd &adminc
 
 
 
-void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
 
    std::stringstream cmdlineOutput;
-   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > result;
 
+   // Search filter criteria
    auto tapepool = getOptional(OptionString::TAPE_POOL);
+
+#if 0
+   // Create a XrdSsi stream object to return the results
+   if(tapepool) {
+      stream = new ListPendingStream(ListPendingStream::LIST_ARCHIVES, has_flag(OptionBoolean::EXTENDED),
+                                     m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc));
+   } else {
+      stream = new ListPendingStream(ListPendingStream::LIST_ARCHIVES, has_flag(OptionBoolean::EXTENDED),
+                                     m_scheduler.getPendingArchiveJobs(m_lc));
+   }
+#endif
+
+   // Send the column headers in the metadata
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
+      if(has_flag(OptionBoolean::EXTENDED)) {
+         cmdlineOutput << TEXT_RED
+         << std::setfill(' ') << std::setw(18) << std::right << "tapepool"       << ' '
+         << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+         << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
+         << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
+         << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
+         << std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' '
+         << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
+         << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
+         << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
+         << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
+         << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+         <<                                                     "path"           << TEXT_NORMAL;
+      } else {
+         cmdlineOutput << TEXT_RED
+         << std::setfill(' ') << std::setw(18) << std::right << "tapepool"    << ' '
+         << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
+         << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+         << TEXT_NORMAL;
+      }
+   }
+
+#if 1
+   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>> result;
 
    if(tapepool) {
       std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
@@ -1240,14 +1283,10 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
    if(!result.empty())
    {
+      std::vector<std::vector<std::string>> responseTable;
+
       if(has_flag(OptionBoolean::EXTENDED))
       {
-         std::vector<std::vector<std::string>> responseTable;
-         std::vector<std::string> header = {
-            "tapepool","id","storage class","copy no.","disk id","instance","checksum type",
-            "checksum value","size","user","group","path"
-         };
-         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
          for(auto it = result.cbegin(); it != result.cend(); it++) {
             for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
             {
@@ -1267,11 +1306,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
                responseTable.push_back(currentRow);
             }
          }
-         cmdlineOutput << formatResponse(responseTable);
       } else {
-         std::vector<std::vector<std::string>> responseTable;
-         std::vector<std::string> header = { "tapepool","total files","total size" };
-         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
          for(auto it = result.cbegin(); it != result.cend(); it++) {
             std::vector<std::string> currentRow;
             currentRow.push_back(it->first);
@@ -1283,9 +1318,11 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
             currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
             responseTable.push_back(currentRow);
          }
-         cmdlineOutput << formatResponse(responseTable);
       }
+
+      cmdlineOutput << formatResponse(responseTable);
    }
+#endif
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
