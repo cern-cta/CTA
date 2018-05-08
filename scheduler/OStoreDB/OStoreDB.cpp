@@ -516,6 +516,17 @@ std::list<objectstore::RootEntry::ArchiveQueueDump> OStoreDB::getArchiveQueues()
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getArchiveQueueJobs()
+//------------------------------------------------------------------------------
+std::list<objectstore::ArchiveQueue::JobDump> OStoreDB::getArchiveQueueJobs(const std::string &address) const
+{
+   objectstore::ArchiveQueue osaq(address, m_objectStore);
+   ScopedSharedLock ostpl(osaq);   // released when it goes out of scope
+   osaq.fetch();
+   return osaq.dumpJobs();
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobList()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
@@ -523,11 +534,8 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
    std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-   objectstore::ArchiveQueue osaq(it->address, m_objectStore);
-   ScopedSharedLock ostpl(osaq);
-   osaq.fetch();
-   auto arl = osaq.dumpJobs();
-   ostpl.release();
+   auto arl = getArchiveQueueJobs(it->address);
+
    for(auto ar=arl.begin(); ar!=arl.end(); ar++) {
       objectstore::ArchiveRequest osar(ar->address, m_objectStore);
       ScopedSharedLock osarl(osar);
