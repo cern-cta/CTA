@@ -19,7 +19,6 @@
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
-#include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
@@ -507,15 +506,26 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getArchiveQueues()
+//------------------------------------------------------------------------------
+std::list<objectstore::RootEntry::ArchiveQueueDump> OStoreDB::getArchiveQueues() const {
+   objectstore::RootEntry re(m_objectStore);
+   objectstore::ScopedSharedLock rel(re);
+   re.fetch();
+   auto tpl = re.dumpArchiveQueues();
+   rel.release();
+
+   return tpl;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
   OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  auto tpl = re.dumpArchiveQueues();
-  rel.release();
+
+  auto tpl = getArchiveQueues();
+
   for (auto & tpp:tpl) {
     if (tpp.tapePool != tapePoolName) continue;
     std::list<cta::common::dataStructures::ArchiveJob> ret;
@@ -566,11 +576,9 @@ std::list<cta::common::dataStructures::ArchiveJob>
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
   OStoreDB::getArchiveJobs() const {
-  objectstore::RootEntry re(m_objectStore);
-  objectstore::ScopedSharedLock rel(re);
-  re.fetch();
-  auto tpl = re.dumpArchiveQueues();
-  rel.release();
+
+  auto tpl = getArchiveQueues();
+
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > ret;
   for (auto & tpp:tpl) {
     objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);

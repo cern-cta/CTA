@@ -26,6 +26,7 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RootEntry.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
@@ -280,6 +281,9 @@ public:
    * information.
    */
 private:
+  /** Returns the current list of archive queues */
+  std::list<objectstore::RootEntry::ArchiveQueueDump> getArchiveQueues() const;
+
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
     common::dataStructures::DriveStatus status;
