@@ -516,22 +516,19 @@ std::list<objectstore::RootEntry::ArchiveQueueDump> OStoreDB::getArchiveQueues()
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getArchiveJobs()
+// OStoreDB::getArchiveJobList()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
-  OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
+   OStoreDB::getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it) const
+{
+   std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-  auto tpl = getArchiveQueues();
-
-  for (auto & tpp:tpl) {
-    if (tpp.tapePool != tapePoolName) continue;
-    std::list<cta::common::dataStructures::ArchiveJob> ret;
-    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
-    ScopedSharedLock ostpl(osaq);
-    osaq.fetch();
-    auto arl = osaq.dumpJobs();
-    ostpl.release();
-    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+   objectstore::ArchiveQueue osaq(it->address, m_objectStore);
+   ScopedSharedLock ostpl(osaq);
+   osaq.fetch();
+   auto arl = osaq.dumpJobs();
+   ostpl.release();
+   for(auto ar=arl.begin(); ar!=arl.end(); ar++) {
       objectstore::ArchiveRequest osar(ar->address, m_objectStore);
       ScopedSharedLock osarl(osar);
       osar.fetch();
@@ -540,7 +537,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       uint16_t copynb;
       bool copyndFound=false;
       for (auto & j:osar.dumpJobs()) {
-        if (j.tapePool == tpp.tapePool) {
+        if (j.tapePool == it->tapePool) {
           copynb = j.copyNb;
           copyndFound = true;
           break;
@@ -550,7 +547,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.push_back(cta::common::dataStructures::ArchiveJob());
       ret.back().archiveFileID = osar.getArchiveFile().archiveFileID;
       ret.back().copyNumber = copynb;
-      ret.back().tapePool = tpp.tapePool;
+      ret.back().tapePool = it->tapePool;
       ret.back().request.checksumType = osar.getArchiveFile().checksumType;
       ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
       ret.back().request.creationLog = osar.getEntryLog();
@@ -562,61 +559,40 @@ std::list<cta::common::dataStructures::ArchiveJob>
       ret.back().request.srcURL = osar.getSrcURL();
       ret.back().request.archiveReportURL = osar.getArchiveReportURL();
       ret.back().request.storageClass = osar.getArchiveFile().storageClass;
-    }
-    return ret;
-  }
-  return std::list<cta::common::dataStructures::ArchiveJob>();
+   }
+   return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobs()
+//------------------------------------------------------------------------------
+std::list<cta::common::dataStructures::ArchiveJob>
+   OStoreDB::getArchiveJobs(const std::string &tapePoolName) const
+{
+   auto tpl = getArchiveQueues();
+
+   for(auto it = tpl.begin(); it != tpl.end(); ++it) {
+      if(it->tapePool == tapePoolName) return getArchiveJobList(it);
+   }
+
+   return std::list<cta::common::dataStructures::ArchiveJob>();
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
-  OStoreDB::getArchiveJobs() const {
+   OStoreDB::getArchiveJobs() const {
 
-  auto tpl = getArchiveQueues();
+   auto tpl = getArchiveQueues();
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > ret;
-  for (auto & tpp:tpl) {
-    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
-    ScopedSharedLock ostpl(osaq);
-    osaq.fetch();
-    auto arl = osaq.dumpJobs();
-    ostpl.release();
-    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
-      objectstore::ArchiveRequest osar(ar->address, m_objectStore);
-      ScopedSharedLock osarl(osar);
-      osar.fetch();
-      // Find which copy number is for this tape pool.
-      // skip the request if not found
-      uint16_t copynb;
-      bool copyndFound=false;
-      for (auto & j:osar.dumpJobs()) {
-        if (j.tapePool == tpp.tapePool) {
-          copynb = j.copyNb;
-          copyndFound = true;
-          break;
-        }
-      }
-      if (!copyndFound) continue;
-      ret[tpp.tapePool].push_back(cta::common::dataStructures::ArchiveJob());
-      ret[tpp.tapePool].back().archiveFileID = osar.getArchiveFile().archiveFileID;
-      ret[tpp.tapePool].back().copyNumber = copynb;
-      ret[tpp.tapePool].back().tapePool = tpp.tapePool;
-      ret[tpp.tapePool].back().request.checksumType = osar.getArchiveFile().checksumType;
-      ret[tpp.tapePool].back().request.checksumValue = osar.getArchiveFile().checksumValue;
-      ret[tpp.tapePool].back().request.creationLog = osar.getEntryLog();
-      ret[tpp.tapePool].back().request.diskFileID = osar.getArchiveFile().diskFileId;
-      ret[tpp.tapePool].back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
-      ret[tpp.tapePool].back().request.fileSize = osar.getArchiveFile().fileSize;
-      ret[tpp.tapePool].back().instanceName = osar.getArchiveFile().diskInstance;
-      ret[tpp.tapePool].back().request.requester = osar.getRequester();
-      ret[tpp.tapePool].back().request.srcURL = osar.getSrcURL();
-      ret[tpp.tapePool].back().request.archiveReportURL = osar.getArchiveReportURL();
-      ret[tpp.tapePool].back().request.storageClass = osar.getArchiveFile().storageClass;
-    }
-  }
-  return ret;
+   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
+
+   for(auto it = tpl.begin(); it != tpl.end(); ++it) {
+      ret[it->tapePool] = getArchiveJobList(it);
+   }
+
+   return ret;
 }
 
 //------------------------------------------------------------------------------

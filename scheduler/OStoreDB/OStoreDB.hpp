@@ -284,6 +284,9 @@ private:
   /** Returns the current list of archive queues */
   std::list<objectstore::RootEntry::ArchiveQueueDump> getArchiveQueues() const;
 
+  /** Returns a list of archive jobs in the specified archive queue */
+  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it) const;
+
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
     common::dataStructures::DriveStatus status;
