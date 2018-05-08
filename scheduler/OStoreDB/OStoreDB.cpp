@@ -510,12 +510,9 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 //------------------------------------------------------------------------------
 std::list<objectstore::RootEntry::ArchiveQueueDump> OStoreDB::getArchiveQueues() const {
    objectstore::RootEntry re(m_objectStore);
-   objectstore::ScopedSharedLock rel(re);
+   objectstore::ScopedSharedLock rel(re);   // released when it goes out of scope
    re.fetch();
-   auto tpl = re.dumpArchiveQueues();
-   rel.release();
-
-   return tpl;
+   return re.dumpArchiveQueues();
 }
 
 //------------------------------------------------------------------------------
