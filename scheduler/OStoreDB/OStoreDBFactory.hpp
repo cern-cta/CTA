@@ -76,6 +76,10 @@ public:
   
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
+  void waitSubthreadsComplete() override {
+    m_OStoreDB.waitSubthreadsComplete();
+  }
+  
   void ping() override {
     m_OStoreDB.ping();
   }

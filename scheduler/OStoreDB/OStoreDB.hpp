@@ -58,6 +58,8 @@ private:
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /*============ Sub thread handling, mostly for unit tests =================*/
+  void waitSubthreadsComplete() override;
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 
@@ -354,6 +356,7 @@ private:
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
+  std::atomic<uint64_t> m_threadCounter; ///< This counter ensures destruction happens after the last thread completed.
 };
   
 }

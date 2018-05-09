@@ -132,6 +132,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     afqc.mountPolicy.maxDrivesAllowed = 1;
     osdbi.queueArchive("testInstance", ar, afqc, lc);
   }
+  osdbi.waitSubthreadsComplete();
   // Delete the first job from the queue, change owner of second.
   // They will be automatically skipped when getting jobs
   std::string aqAddr;

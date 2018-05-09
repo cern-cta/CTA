@@ -267,6 +267,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
 
   {
     auto rqsts = scheduler.getPendingArchiveJobs(lc);
@@ -400,6 +401,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
@@ -577,6 +579,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   
   // Create the environment for the migration to happen (library + tape) 
     const std::string libraryComment = "Library comment";
@@ -692,6 +695,7 @@ TEST_P(SchedulerTest, showqueues) {
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   
   // get the queues from scheduler
   auto queuesSummary = scheduler.getQueuesAndMountSummaries(lc);
