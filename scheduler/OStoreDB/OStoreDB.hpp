@@ -288,8 +288,8 @@ private:
   std::list<objectstore::ArchiveQueue::JobDump> getArchiveQueueJobs(const std::string &address) const;
 
   /** Obtain the list of archive jobs from the specified archive queue */
-  void getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it,
-     std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
+  void getArchiveJobList(std::list<objectstore::ArchiveQueue::JobDump>::const_iterator ar,
+     const std::string &tapePool, std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
 
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
