@@ -529,11 +529,8 @@ std::list<objectstore::ArchiveQueue::JobDump> OStoreDB::getArchiveQueueJobs(cons
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobList()
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveJob>
-   OStoreDB::getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it) const
+void OStoreDB::getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it, std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const
 {
-   std::list<cta::common::dataStructures::ArchiveJob> ret;
-
    auto arl = getArchiveQueueJobs(it->address);
 
    for(auto ar=arl.begin(); ar!=arl.end(); ar++) {
@@ -552,23 +549,22 @@ std::list<cta::common::dataStructures::ArchiveJob>
         }
       }
       if (!copyndFound) continue;
-      ret.push_back(cta::common::dataStructures::ArchiveJob());
-      ret.back().archiveFileID = osar.getArchiveFile().archiveFileID;
-      ret.back().copyNumber = copynb;
-      ret.back().tapePool = it->tapePool;
-      ret.back().request.checksumType = osar.getArchiveFile().checksumType;
-      ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
-      ret.back().request.creationLog = osar.getEntryLog();
-      ret.back().request.diskFileID = osar.getArchiveFile().diskFileId;
-      ret.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
-      ret.back().request.fileSize = osar.getArchiveFile().fileSize;
-      ret.back().instanceName = osar.getArchiveFile().diskInstance;
-      ret.back().request.requester = osar.getRequester();
-      ret.back().request.srcURL = osar.getSrcURL();
-      ret.back().request.archiveReportURL = osar.getArchiveReportURL();
-      ret.back().request.storageClass = osar.getArchiveFile().storageClass;
+      archiveJobList.push_back(cta::common::dataStructures::ArchiveJob());
+      archiveJobList.back().archiveFileID = osar.getArchiveFile().archiveFileID;
+      archiveJobList.back().copyNumber = copynb;
+      archiveJobList.back().tapePool = it->tapePool;
+      archiveJobList.back().request.checksumType = osar.getArchiveFile().checksumType;
+      archiveJobList.back().request.checksumValue = osar.getArchiveFile().checksumValue;
+      archiveJobList.back().request.creationLog = osar.getEntryLog();
+      archiveJobList.back().request.diskFileID = osar.getArchiveFile().diskFileId;
+      archiveJobList.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
+      archiveJobList.back().request.fileSize = osar.getArchiveFile().fileSize;
+      archiveJobList.back().instanceName = osar.getArchiveFile().diskInstance;
+      archiveJobList.back().request.requester = osar.getRequester();
+      archiveJobList.back().request.srcURL = osar.getSrcURL();
+      archiveJobList.back().request.archiveReportURL = osar.getArchiveReportURL();
+      archiveJobList.back().request.storageClass = osar.getArchiveFile().storageClass;
    }
-   return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -577,13 +573,18 @@ std::list<cta::common::dataStructures::ArchiveJob>
 std::list<cta::common::dataStructures::ArchiveJob>
    OStoreDB::getArchiveJobs(const std::string &tapePoolName) const
 {
+   std::list<cta::common::dataStructures::ArchiveJob> ret;
+
    auto tpl = getArchiveQueues();
 
    for(auto it = tpl.begin(); it != tpl.end(); ++it) {
-      if(it->tapePool == tapePoolName) return getArchiveJobList(it);
+      if(it->tapePool == tapePoolName) {
+         getArchiveJobList(it, ret);
+         break;
+      }
    }
 
-   return std::list<cta::common::dataStructures::ArchiveJob>();
+   return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -597,7 +598,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
    std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
    for(auto it = tpl.begin(); it != tpl.end(); ++it) {
-      ret[it->tapePool] = getArchiveJobList(it);
+      getArchiveJobList(it, ret[it->tapePool]);
    }
 
    return ret;

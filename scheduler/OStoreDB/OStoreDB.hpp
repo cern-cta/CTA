@@ -287,8 +287,9 @@ private:
   /** Returns a list of archive jobs in the specified archive queue */
   std::list<objectstore::ArchiveQueue::JobDump> getArchiveQueueJobs(const std::string &address) const;
 
-  /** Returns a cooked list of archive jobs in the specified archive queue */
-  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it) const;
+  /** Obtain the list of archive jobs from the specified archive queue */
+  void getArchiveJobList(std::list<objectstore::RootEntry::ArchiveQueueDump>::const_iterator it,
+     std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
 
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
