@@ -53,14 +53,17 @@ template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
    QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
-   bool end() const;
-   const std::string &tapePool() { return m_jobQueuesQueueIt->tapePool; }
+   bool end();
+   const std::string &tapePool() const { return m_jobQueuesQueueIt->tapePool; }
 private:
-   objectstore::Backend                               &m_objectStore;
-   std::string                                         m_tapePoolName;
-   typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;
-   typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;
-   typename std::list<JobQueue>::const_iterator        m_jobQueueIt;
+   void getQueueJobs();
+
+   objectstore::Backend                                           &m_objectStore;         // Reference to ObjectStore Backend
+   bool                                                            m_onlyThisTapePool;    // true if a tapePoolName parameter was passed to the constructor
+   typename std::list<JobQueuesQueue>                              m_jobQueuesQueue;      // list of Archive or Retrieve Job Queues
+   typename std::list<JobQueuesQueue>::const_iterator              m_jobQueuesQueueIt;    // iterator across m_jobQueuesQueue
+   typename std::list<typename JobQueue::JobDump>                  m_jobQueue;            // list of Archive or Retrieve Jobs
+   typename std::list<typename JobQueue::JobDump>::const_iterator  m_jobQueueIt;          // iterator across m_jobQueue
 };
   
 class OStoreDB: public SchedulerDatabase {
@@ -301,7 +304,7 @@ public:
    */
 private:
   /** Obtain the list of archive jobs from the specified archive queue */
-  void getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump> &q_it,
+  void getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> &q_it,
      std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
 
   /** Collection of smaller scale parts of reportDriveStatus */

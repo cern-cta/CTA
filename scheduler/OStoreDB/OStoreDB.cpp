@@ -509,38 +509,80 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 // QueueItor::QueueItor
 //------------------------------------------------------------------------------
 template<>
-QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>::
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
    m_objectStore(objectStore),
-   m_tapePoolName(tapePoolName)
+   m_onlyThisTapePool(!tapePoolName.empty())
 {
    objectstore::RootEntry re(m_objectStore);
    objectstore::ScopedSharedLock rel(re);
       re.fetch();
       m_jobQueuesQueue = re.dumpArchiveQueues();
    rel.release();
+
+   // Find the first queue
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
+
+   // If we specified a tape pool, advance to the correct queue
+   if(m_onlyThisTapePool) {
+      for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
+         if(m_jobQueuesQueueIt->tapePool == tapePoolName) { 
+            break;
+         }
+      }
+   }
+
+   // Find the first job in the queue
+   if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
+      getQueueJobs();
+   }
 }
 
-#if 0
 //------------------------------------------------------------------------------
-// OStoreDB::getArchiveQueueJobs()
+// QueueItor::getQueueJobs
 //------------------------------------------------------------------------------
-std::list<objectstore::ArchiveQueue::JobDump> OStoreDB::getArchiveQueueJobs(const std::string &address) const
+template<typename JobQueuesQueue, typename JobQueue>
+void QueueItor<JobQueuesQueue, JobQueue>::
+getQueueJobs()
 {
-   objectstore::ArchiveQueue osaq(address, m_objectStore);
-   ScopedSharedLock ostpl(osaq);   // released when it goes out of scope
-   osaq.fetch();
-   return osaq.dumpJobs();
+   JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
+   ScopedSharedLock ostpl(osaq);
+      osaq.fetch();
+      m_jobQueue = osaq.dumpJobs();
+   ostpl.release();
+   m_jobQueueIt = m_jobQueue.begin();
 }
-#endif
+
+//------------------------------------------------------------------------------
+// QueueItor::end
+//------------------------------------------------------------------------------
+template<>
+bool QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
+end() {
+   // Case 1: no more queues
+   if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) return true;
+
+   // Case 2: we are in a queue and haven't reached the end of it
+   if(m_jobQueueIt != m_jobQueue.end()) return false;
+
+   // Case 3: we have reached the end of the current queue and this is the only queue we care about
+   if(m_onlyThisTapePool) return true;
+
+   // Case 4: we have reached the end of the current queue, try to advance to the next queue
+   for(++m_jobQueuesQueueIt; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
+      getQueueJobs();
+      if(m_jobQueueIt != m_jobQueue.end()) break;
+   }
+   return m_jobQueueIt == m_jobQueue.end();
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobList()
 //------------------------------------------------------------------------------
-void OStoreDB::getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump> &q_it,
+void OStoreDB::getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> &q_it,
    std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const
 {
+#if 0
    objectstore::ArchiveRequest osar(ar->address, m_objectStore);
    ScopedSharedLock osarl(osar);
    osar.fetch();
@@ -571,6 +613,7 @@ void OStoreDB::getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueD
    archiveJobList.back().request.srcURL = osar.getSrcURL();
    archiveJobList.back().request.archiveReportURL = osar.getArchiveReportURL();
    archiveJobList.back().request.storageClass = osar.getArchiveFile().storageClass;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -581,7 +624,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
    std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>
+   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
       q_it(m_objectStore, tapePoolName);
 
    while(!q_it.end()) {
@@ -613,7 +656,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
 
    std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
-   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>
+   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
       q_it(m_objectStore);
 
    while(!q_it.end()) {
