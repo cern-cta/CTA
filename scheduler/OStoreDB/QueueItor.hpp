@@ -32,7 +32,7 @@ template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
    //! Constructor
-   QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
+   QueueItor(objectstore::Backend &objectStore, const std::string &queue_id = "");
 
    //! Increment iterator
    void operator++() { ++m_jobQueueIt; }
@@ -49,7 +49,7 @@ private:
    void getQueueJobs();
 
    objectstore::Backend                                           &m_objectStore;         // Reference to ObjectStore Backend
-   bool                                                            m_onlyThisTapePool;    // true if a tapePoolName parameter was passed to the constructor
+   bool                                                            m_onlyThisQueueId;     // true if a queue_id parameter was passed to the constructor
    typename std::list<JobQueuesQueue>                              m_jobQueuesQueue;      // list of Archive or Retrieve Job Queues
    typename std::list<JobQueuesQueue>::const_iterator              m_jobQueuesQueueIt;    // iterator across m_jobQueuesQueue
    typename std::list<typename JobQueue::JobDump>                  m_jobQueue;            // list of Archive or Retrieve Jobs
@@ -72,7 +72,7 @@ bool QueueItor<JobQueuesQueue, JobQueue>::end()
    if(m_jobQueueIt != m_jobQueue.end()) return false;
 
    // Case 3: we have reached the end of the current queue and this is the only queue we care about
-   if(m_onlyThisTapePool) return true;
+   if(m_onlyThisQueueId) return true;
 
    // Case 4: we have reached the end of the current queue, try to advance to the next queue
    for(++m_jobQueuesQueueIt; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {

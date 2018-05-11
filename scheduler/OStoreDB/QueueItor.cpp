@@ -83,9 +83,9 @@ getJob() const
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
+QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_objectStore(objectStore),
-   m_onlyThisTapePool(!tapePoolName.empty())
+   m_onlyThisQueueId(!queue_id.empty())
 {
    objectstore::RootEntry re(m_objectStore);
    objectstore::ScopedSharedLock rel(re);
@@ -97,9 +97,9 @@ QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
 
    // If we specified a tape pool, advance to the correct queue
-   if(m_onlyThisTapePool) {
+   if(m_onlyThisQueueId) {
       for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-         if(m_jobQueuesQueueIt->tapePool == tapePoolName) { 
+         if(m_jobQueuesQueueIt->tapePool == queue_id) { 
             break;
          }
       }
@@ -155,10 +155,9 @@ getJob() const
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
+QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_objectStore(objectStore),
-   m_onlyThisTapePool(false) // not implemented, needs a way to get vid from tapePool
-   //m_onlyThisTapePool(!tapePoolName.empty())
+   m_onlyThisQueueId(!queue_id.empty())
 {
    objectstore::RootEntry re(m_objectStore);
    objectstore::ScopedSharedLock rel(re);
@@ -171,9 +170,9 @@ QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
 
 #if 0
    // If we specified a tape pool, advance to the correct queue
-   if(m_onlyThisTapePool) {
+   if(m_onlyThisQueueId) {
       for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-         if(m_jobQueuesQueueIt->tapePool == tapePoolName) { 
+         if(m_jobQueuesQueueIt->tapePool == queue_id) { 
             break;
          }
       }
