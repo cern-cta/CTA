@@ -506,15 +506,23 @@ OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getArchiveQueues()
+// QueueItor::QueueItor
 //------------------------------------------------------------------------------
-std::list<objectstore::RootEntry::ArchiveQueueDump> OStoreDB::getArchiveQueues() const {
+template<>
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>::
+QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
+   m_objectStore(objectStore),
+   m_tapePoolName(tapePoolName)
+{
    objectstore::RootEntry re(m_objectStore);
-   objectstore::ScopedSharedLock rel(re);   // released when it goes out of scope
-   re.fetch();
-   return re.dumpArchiveQueues();
+   objectstore::ScopedSharedLock rel(re);
+      re.fetch();
+      m_jobQueuesQueue = re.dumpArchiveQueues();
+   rel.release();
+   m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveQueueJobs()
 //------------------------------------------------------------------------------
@@ -525,11 +533,13 @@ std::list<objectstore::ArchiveQueue::JobDump> OStoreDB::getArchiveQueueJobs(cons
    osaq.fetch();
    return osaq.dumpJobs();
 }
+#endif
 
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobList()
 //------------------------------------------------------------------------------
-void OStoreDB::getArchiveJobList(std::list<objectstore::ArchiveQueue::JobDump>::const_iterator ar, const std::string &tapePool, std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const
+void OStoreDB::getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump> &q_it,
+   std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const
 {
    objectstore::ArchiveRequest osar(ar->address, m_objectStore);
    ScopedSharedLock osarl(osar);
@@ -539,7 +549,7 @@ void OStoreDB::getArchiveJobList(std::list<objectstore::ArchiveQueue::JobDump>::
    uint16_t copynb;
    bool copyndFound=false;
    for (auto & j:osar.dumpJobs()) {
-      if (j.tapePool == tapePool) {
+      if (j.tapePool == q_it.tapePool()) {
          copynb = j.copyNb;
          copyndFound = true;
          break;
@@ -549,7 +559,7 @@ void OStoreDB::getArchiveJobList(std::list<objectstore::ArchiveQueue::JobDump>::
    archiveJobList.push_back(cta::common::dataStructures::ArchiveJob());
    archiveJobList.back().archiveFileID = osar.getArchiveFile().archiveFileID;
    archiveJobList.back().copyNumber = copynb;
-   archiveJobList.back().tapePool = tapePool;
+   archiveJobList.back().tapePool = q_it.tapePool();
    archiveJobList.back().request.checksumType = osar.getArchiveFile().checksumType;
    archiveJobList.back().request.checksumValue = osar.getArchiveFile().checksumValue;
    archiveJobList.back().request.creationLog = osar.getEntryLog();
@@ -571,7 +581,15 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
    std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-   auto tpl = getArchiveQueues();
+   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>
+      q_it(m_objectStore, tapePoolName);
+
+   while(!q_it.end()) {
+      getArchiveJobList(q_it, ret);
+   }
+
+#if 0
+   auto tpl = q_it.m_jobQueuesQueue;
 
    for(auto it = tpl.begin(); it != tpl.end(); ++it) {
       if(it->tapePool == tapePoolName) {
@@ -583,7 +601,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
          break;
       }
    }
-
+#endif
    return ret;
 }
 
@@ -593,9 +611,17 @@ std::list<cta::common::dataStructures::ArchiveJob>
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
    OStoreDB::getArchiveJobs() const {
 
-   auto tpl = getArchiveQueues();
-
    std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
+
+   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump>
+      q_it(m_objectStore);
+
+   while(!q_it.end()) {
+      getArchiveJobList(q_it, ret[q_it.tapePool()]);
+   }
+
+#if 0
+   auto tpl = q_it.m_jobQueuesQueue;
 
    for(auto it = tpl.begin(); it != tpl.end(); ++it) {
       auto arl = getArchiveQueueJobs(it->address);
@@ -604,7 +630,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
          getArchiveJobList(ar, it->tapePool, ret[it->tapePool]);
       }
    }
-
+#endif
    return ret;
 }
 

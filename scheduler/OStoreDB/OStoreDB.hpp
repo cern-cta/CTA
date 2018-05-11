@@ -43,6 +43,25 @@ namespace ostoredb {
   template <class, class>
   class MemQueue;
 }
+
+/*!
+ * Iterator class for Archive/Retrieve job queues
+ *
+ * Allows asynchronous access to job queues for streaming responses
+ */
+template<typename JobQueuesQueue, typename JobQueue>
+class QueueItor {
+public:
+   QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
+   bool end() const;
+   const std::string &tapePool() { return m_jobQueuesQueueIt->tapePool; }
+private:
+   objectstore::Backend                               &m_objectStore;
+   std::string                                         m_tapePoolName;
+   typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;
+   typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;
+   typename std::list<JobQueue>::const_iterator        m_jobQueueIt;
+};
   
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
@@ -281,15 +300,9 @@ public:
    * information.
    */
 private:
-  /** Returns the current list of archive queues */
-  std::list<objectstore::RootEntry::ArchiveQueueDump> getArchiveQueues() const;
-
-  /** Returns a list of archive jobs in the specified archive queue */
-  std::list<objectstore::ArchiveQueue::JobDump> getArchiveQueueJobs(const std::string &address) const;
-
   /** Obtain the list of archive jobs from the specified archive queue */
-  void getArchiveJobList(std::list<objectstore::ArchiveQueue::JobDump>::const_iterator ar,
-     const std::string &tapePool, std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
+  void getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue::JobDump> &q_it,
+     std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
 
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
