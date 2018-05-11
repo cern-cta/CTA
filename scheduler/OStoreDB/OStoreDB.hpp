@@ -26,7 +26,6 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
-#include "objectstore/RootEntry.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
@@ -43,7 +42,7 @@ namespace ostoredb {
   template <class, class>
   class MemQueue;
 }
-
+  
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
   friend class cta::ostoredb::MemQueue;
