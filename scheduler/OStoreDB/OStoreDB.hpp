@@ -29,6 +29,8 @@
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Thread.hpp"
 
 namespace cta {
   
@@ -58,7 +60,22 @@ private:
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
-  /*============ Sub thread handling, mostly for unit tests =================*/
+  /*============ Thread pool for queueing bottom halfs ======================*/
+private:
+  typedef std::function<void()> EnqueueingTask;
+  cta::threading::BlockingQueue<EnqueueingTask*> m_enqueueingTasksQueue;
+  class EnqueueingWorkerThread: private cta::threading::Thread {
+  public:
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq): 
+      m_enqueueingTasksQueue(etq) {}
+    void start() { cta::threading::Thread::start(); }
+    void wait() { cta::threading::Thread::wait(); }
+  private:
+    void run() override;
+    cta::threading::BlockingQueue<EnqueueingTask*> & m_enqueueingTasksQueue;
+  };
+  std::vector<EnqueueingWorkerThread *> m_enqueueingWorkerThreads;
+public:
   void waitSubthreadsComplete() override;
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;

@@ -658,7 +658,7 @@ void BackendRados::RadosWorkerThreadAndContext::run() {
       j->execute();
     } else {
       break;
-}
+    }
   }
 }
 

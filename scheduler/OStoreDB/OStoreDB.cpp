@@ -50,13 +50,24 @@ using namespace objectstore;
 // OStoreDB::OStoreDB()
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
-  m_objectStore(be), m_catalogue(catalogue), m_logger(logger), m_threadCounter(0) {}
+  m_objectStore(be), m_catalogue(catalogue), m_logger(logger), m_threadCounter(0) {
+  for (size_t i=0; i<500; i++) {
+    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.back()->start();
+  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::~OStoreDB()
 //------------------------------------------------------------------------------
 OStoreDB::~OStoreDB() throw() {
   while (m_threadCounter) sleep(1);
+  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
+  for (auto &t: m_enqueueingWorkerThreads) {
+    t->wait();
+    delete t;
+    t=nullptr;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -80,6 +91,18 @@ void OStoreDB::assertAgentAddressSet() {
 void OStoreDB::waitSubthreadsComplete() {
   while (m_threadCounter) std::this_thread::yield();
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::EnqueueingWorkerThread::run()
+//------------------------------------------------------------------------------
+void OStoreDB::EnqueueingWorkerThread::run() {
+  while (true) {
+    std::unique_ptr<EnqueueingTask> et(m_enqueueingTasksQueue.pop());
+    if (!et.get()) break;
+    (*et)();
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::ping()
@@ -412,7 +435,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   // The request is now safe in the object store. We can now return to the caller and fire (and forget) a thread
   // complete the bottom half of it.
   m_threadCounter++;
-  std::thread([aReq, this]{
+  m_enqueueingTasksQueue.push(new EnqueueingTask([aReq, this]{
     // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
     auto scopedCounterDecrement = [this](void *){ 
       m_threadCounter--; 
@@ -497,7 +520,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
           .add("lockReleaseTime", arLockRelease)
           .add("agentOwnershipResetTime", timer.secs());
     logContext.log(log::INFO, "In OStoreDB::queueArchive_bottomHalf(): Finished enqueueing request.");
-  }).detach();
+  }));
   
 }
 
