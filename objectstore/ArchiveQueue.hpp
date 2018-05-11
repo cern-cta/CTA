@@ -37,6 +37,9 @@ class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::Arc
   // TODO: rename tapepoolname field to tapepool (including in probuf)
   
 public:
+  // Trait to specify the type of jobs associated with this type of queue
+  typedef cta::common::dataStructures::ArchiveJob job_t;
+
   // Constructor
   ArchiveQueue(const std::string & address, Backend & os);
   

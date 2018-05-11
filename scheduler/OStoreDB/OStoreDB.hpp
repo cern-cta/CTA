@@ -53,8 +53,10 @@ template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
    QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
-   bool end();
    const std::string &tapePool() const { return m_jobQueuesQueueIt->tapePool; }
+   void operator++() { ++m_jobQueueIt; }
+   bool end();
+   std::pair<bool,typename JobQueue::job_t> getJob();
 private:
    void getQueueJobs();
 
@@ -303,10 +305,6 @@ public:
    * information.
    */
 private:
-  /** Obtain the list of archive jobs from the specified archive queue */
-  void getArchiveJobList(QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> &q_it,
-     std::list<cta::common::dataStructures::ArchiveJob> &archiveJobList) const;
-
   /** Collection of smaller scale parts of reportDriveStatus */
   struct ReportDriveStatusInputs {
     common::dataStructures::DriveStatus status;
