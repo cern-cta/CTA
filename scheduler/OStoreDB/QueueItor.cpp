@@ -17,25 +17,21 @@
  */
 
 #include "QueueItor.hpp"
-#include "objectstore/RootEntry.hpp"
-#include "objectstore/ObjectOps.hpp"
-#include "objectstore/ArchiveQueue.hpp"
+#include <objectstore/RootEntry.hpp>
+#include <objectstore/ArchiveQueue.hpp>
+#include <objectstore/RetrieveQueue.hpp>
 
 namespace cta {
 
 //------------------------------------------------------------------------------
-// QueueItor::getQueueJobs
+// QueueItor::qid (Archive specialisation)
 //------------------------------------------------------------------------------
-template<typename JobQueuesQueue, typename JobQueue>
-void QueueItor<JobQueuesQueue, JobQueue>::
-getQueueJobs()
+template<>
+const std::string&
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
+qid() const
 {
-   JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
-   objectstore::ScopedSharedLock ostpl(osaq);
-      osaq.fetch();
-      m_jobQueue = osaq.dumpJobs();
-   ostpl.release();
-   m_jobQueueIt = m_jobQueue.begin();
+   return m_jobQueuesQueueIt->tapePool;
 }
 
 //------------------------------------------------------------------------------
@@ -44,38 +40,41 @@ getQueueJobs()
 template<>
 std::pair<bool,objectstore::ArchiveQueue::job_t>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-getJob()
+getJob() const
 {
    auto job = cta::common::dataStructures::ArchiveJob();
-   objectstore::ArchiveRequest osar(m_jobQueueIt->address, m_objectStore);
-   objectstore::ScopedSharedLock osarl(osar);
-   osar.fetch();
 
-   // Find the copy number for this tape pool
-   for(auto &j:osar.dumpJobs()) {
-      if(j.tapePool == m_jobQueuesQueueIt->tapePool) {
-         job.tapePool                 = j.tapePool;
-         job.copyNumber               = j.copyNb;
-         job.archiveFileID            = osar.getArchiveFile().archiveFileID;
-         job.request.checksumType     = osar.getArchiveFile().checksumType;
-         job.request.checksumValue    = osar.getArchiveFile().checksumValue;
-         job.request.creationLog      = osar.getEntryLog();
-         job.request.diskFileID       = osar.getArchiveFile().diskFileId;
-         job.request.diskFileInfo     = osar.getArchiveFile().diskFileInfo;
-         job.request.fileSize         = osar.getArchiveFile().fileSize;
-         job.instanceName             = osar.getArchiveFile().diskInstance;
-         job.request.requester        = osar.getRequester();
-         job.request.srcURL           = osar.getSrcURL();
-         job.request.archiveReportURL = osar.getArchiveReportURL();
-         job.request.storageClass     = osar.getArchiveFile().storageClass;
-         osarl.release();
+   try {
+      objectstore::ArchiveRequest osar(m_jobQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock osarl(osar);
+      osar.fetch();
 
-         return std::make_pair(true, job);
+      // Find the copy number for this tape pool
+      for(auto &j:osar.dumpJobs()) {
+         if(j.tapePool == m_jobQueuesQueueIt->tapePool) {
+            job.tapePool                 = j.tapePool;
+            job.copyNumber               = j.copyNb;
+            job.archiveFileID            = osar.getArchiveFile().archiveFileID;
+            job.request.checksumType     = osar.getArchiveFile().checksumType;
+            job.request.checksumValue    = osar.getArchiveFile().checksumValue;
+            job.request.creationLog      = osar.getEntryLog();
+            job.request.diskFileID       = osar.getArchiveFile().diskFileId;
+            job.request.diskFileInfo     = osar.getArchiveFile().diskFileInfo;
+            job.request.fileSize         = osar.getArchiveFile().fileSize;
+            job.instanceName             = osar.getArchiveFile().diskInstance;
+            job.request.requester        = osar.getRequester();
+            job.request.srcURL           = osar.getSrcURL();
+            job.request.archiveReportURL = osar.getArchiveReportURL();
+            job.request.storageClass     = osar.getArchiveFile().storageClass;
+            osarl.release();
+
+            return std::make_pair(true, job);
+         }
       }
-   }
+      osarl.release();
+   } catch(...) {}
 
    // Skip the request if copy number is not found
-   osarl.release();
    return std::make_pair(false, job);
 }
 
@@ -105,6 +104,81 @@ QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
          }
       }
    }
+
+   // Find the first job in the queue
+   if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
+      getQueueJobs();
+   }
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::qid (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+const std::string&
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+qid() const
+{
+   return m_jobQueuesQueueIt->vid;
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::QueueItor (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+std::pair<bool,objectstore::RetrieveQueue::job_t>
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+getJob() const
+{
+   auto job = cta::common::dataStructures::RetrieveJob();
+
+   // This implementation gives imperfect consistency and is racy.
+   // We tolerate that the queue is gone.
+   try {
+      objectstore::RetrieveRequest rr(m_jobQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock rrl(rr);
+      rr.fetch();
+      job.request=rr.getSchedulerRequest();
+      for(auto &tf: rr.getArchiveFile().tapeFiles) {
+         job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
+         job.tapeCopies[tf.second.vid].second = tf.second;
+      }
+
+      return std::make_pair(true, job);
+   } catch (...) {
+      return std::make_pair(false, job);
+   }
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::QueueItor (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName) :
+   m_objectStore(objectStore),
+   m_onlyThisTapePool(false) // not implemented, needs a way to get vid from tapePool
+   //m_onlyThisTapePool(!tapePoolName.empty())
+{
+   objectstore::RootEntry re(m_objectStore);
+   objectstore::ScopedSharedLock rel(re);
+      re.fetch();
+      m_jobQueuesQueue = re.dumpRetrieveQueues();
+   rel.release();
+
+   // Find the first queue
+   m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
+
+#if 0
+   // If we specified a tape pool, advance to the correct queue
+   if(m_onlyThisTapePool) {
+      for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
+         if(m_jobQueuesQueueIt->tapePool == tapePoolName) { 
+            break;
+         }
+      }
+   }
+#endif
 
    // Find the first job in the queue
    if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {

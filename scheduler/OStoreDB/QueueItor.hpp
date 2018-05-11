@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "objectstore/Backend.hpp"
+#include <objectstore/Backend.hpp>
+#include <objectstore/ObjectOps.hpp>
 
 namespace cta {
 
@@ -30,11 +31,20 @@ namespace cta {
 template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
+   //! Constructor
    QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
-   const std::string &tapePool() const { return m_jobQueuesQueueIt->tapePool; }
+
+   //! Increment iterator
    void operator++() { ++m_jobQueueIt; }
+
+   //! Check iterator is valid
    bool end();
-   std::pair<bool,typename JobQueue::job_t> getJob();
+
+   //! Queue ID (returns tapepool for archives/vid for retrieves)
+   const std::string &qid() const;
+
+   //! Get the current job, bool is set to true if the data retrieved is valid
+   std::pair<bool,typename JobQueue::job_t> getJob() const;
 private:
    void getQueueJobs();
 
@@ -72,4 +82,25 @@ bool QueueItor<JobQueuesQueue, JobQueue>::end()
    return m_jobQueueIt == m_jobQueue.end();
 }
 
+/*!
+ * Get the list of jobs in the queue
+ */
+template<typename JobQueuesQueue, typename JobQueue>
+void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
+{
+   // Behaviour is racy: it's possible that the queue can disappear before we read it.
+   // In this case, we ignore the error and move on.
+   try {
+      JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock ostpl(osaq);
+         osaq.fetch();
+         m_jobQueue = osaq.dumpJobs();
+      ostpl.release();
+      m_jobQueueIt = m_jobQueue.begin();
+   } catch(...) {
+      // Force an increment to the next queue
+      m_jobQueueIt = m_jobQueue.end();
+   }
 }
+
+} // namespace cta

@@ -20,6 +20,7 @@
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
@@ -538,7 +539,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
 
    for( ; !q_it.end(); ++q_it) {
       auto job = q_it.getJob();
-      if(job.first) ret[q_it.tapePool()].push_back(job.second);
+      if(job.first) ret[q_it.qid()].push_back(job.second);
    }
 
    return ret;
@@ -695,48 +696,45 @@ void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdent
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(const std::string& tapePoolName) const {
+std::list<cta::common::dataStructures::RetrieveJob>
+OStoreDB::getRetrieveJobs(const std::string &tapePoolName) const
+{
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+
+  // To implement this method, uncomment the code below, and provide a way to get the vid from the
+  // tapePool in the QueueItor constructor
+#if 0
+   std::list<cta::common::dataStructures::RetrieveJob> ret;
+
+   QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
+      q_it(m_objectStore, tapePoolName);
+
+   for( ; !q_it.end() ; ++q_it) {
+      auto job = q_it.getJob();
+      if(job.first) ret.push_back(job.second);
+   }
+
+   return ret;
+#endif
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB::getRetrieveJobs() const {
-  // We will walk all the tapes to get the jobs.
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > ret;
-  RootEntry re(m_objectStore);
-  ScopedSharedLock rel(re);
-  re.fetch();
-  auto rql=re.dumpRetrieveQueues();
-  rel.release();
-  for (auto & rqp: rql) {
-    // This implementation gives imperfect consistency. Do we need better? (If so, TODO: improve).
-    // This implementation is racy, so we tolerate that the queue is gone.
-    try {
-      RetrieveQueue rq(rqp.address, m_objectStore);
-      ScopedSharedLock rql(rq);
-      rq.fetch();
-      for (auto & j: rq.dumpJobs()) {
-        ret[rqp.vid].push_back(common::dataStructures::RetrieveJob());
-        try {
-          auto & jd=ret[rqp.vid].back();
-          RetrieveRequest rr(j.address, m_objectStore);
-          ScopedSharedLock rrl(rr);
-          rr.fetch();
-          jd.request=rr.getSchedulerRequest();
-          for (auto & tf: rr.getArchiveFile().tapeFiles) {
-            jd.tapeCopies[tf.second.vid].first=tf.second.copyNb;
-            jd.tapeCopies[tf.second.vid].second=tf.second;
-          }
-        } catch (...) {
-          ret[rqp.vid].pop_back();
-        }
-            
-      }
-    } catch (...) {}
-  }
-  return ret;
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>>
+OStoreDB::getRetrieveJobs() const
+{
+   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
+
+   QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
+      q_it(m_objectStore);
+
+   for( ; !q_it.end(); ++q_it) {
+      auto job = q_it.getJob();
+      if(job.first) ret[q_it.qid()].push_back(job.second);
+   }
+
+   return ret;
 }
 
 //------------------------------------------------------------------------------

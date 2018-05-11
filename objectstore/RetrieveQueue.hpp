@@ -31,6 +31,9 @@ class GenericObject;
 
 class RetrieveQueue: public ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t> {
 public:
+  // Trait to specify the type of jobs associated with this type of queue
+  typedef common::dataStructures::RetrieveJob job_t;
+
   RetrieveQueue(const std::string & address, Backend & os);
   // Undefined object constructor
   RetrieveQueue(Backend & os);
