@@ -44,30 +44,6 @@ namespace ostoredb {
   class MemQueue;
 }
 
-/*!
- * Iterator class for Archive/Retrieve job queues
- *
- * Allows asynchronous access to job queues for streaming responses
- */
-template<typename JobQueuesQueue, typename JobQueue>
-class QueueItor {
-public:
-   QueueItor(objectstore::Backend &objectStore, const std::string &tapePoolName = "");
-   const std::string &tapePool() const { return m_jobQueuesQueueIt->tapePool; }
-   void operator++() { ++m_jobQueueIt; }
-   bool end();
-   std::pair<bool,typename JobQueue::job_t> getJob();
-private:
-   void getQueueJobs();
-
-   objectstore::Backend                                           &m_objectStore;         // Reference to ObjectStore Backend
-   bool                                                            m_onlyThisTapePool;    // true if a tapePoolName parameter was passed to the constructor
-   typename std::list<JobQueuesQueue>                              m_jobQueuesQueue;      // list of Archive or Retrieve Job Queues
-   typename std::list<JobQueuesQueue>::const_iterator              m_jobQueuesQueueIt;    // iterator across m_jobQueuesQueue
-   typename std::list<typename JobQueue::JobDump>                  m_jobQueue;            // list of Archive or Retrieve Jobs
-   typename std::list<typename JobQueue::JobDump>::const_iterator  m_jobQueueIt;          // iterator across m_jobQueue
-};
-  
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
   friend class cta::ostoredb::MemQueue;
