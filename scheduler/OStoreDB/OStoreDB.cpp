@@ -696,16 +696,16 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   vidFound:
   // In order to post the job, construct it first in memory.
-  objectstore::RetrieveRequest rReq(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
-  rReq.initialize();
-  rReq.setSchedulerRequest(rqst);
-  rReq.setRetrieveFileQueueCriteria(criteria);
+  auto rReq = std::make_shared<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+  rReq->initialize();
+  rReq->setSchedulerRequest(rqst);
+  rReq->setRetrieveFileQueueCriteria(criteria);
   // Find the job corresponding to the vid (and check we indeed have one).
-  auto jobs = rReq.getJobs();
-  objectstore::RetrieveRequest::JobDump * job = nullptr;
+  auto jobs = rReq->getJobs();
+  objectstore::RetrieveRequest::JobDump job;
   for (auto & j:jobs) {
     if (j.copyNb == bestCopyNb) {
-      job = &j;
+      job = j;
       goto jobFound;
     }
   }
@@ -717,29 +717,41 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   jobFound:
   {
-    // Add the request to the queue (with a shared access).
-    auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(*job, bestVid, rReq, *this, logContext);
-    double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    // The object ownership was set in SharedAdd.
-    // We need to extract the owner before inserting. After, we would need to hold a lock.
-    auto owner = rReq.getOwner();
-    rReq.insert();
-    double iTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    // The lock on the queue is released here (has to be after the request commit for consistency.
-    sharedLock.reset();
-    double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    log::ScopedParamContainer params(logContext);
-    params.add("vid", bestVid)
-          .add("queueObject", owner)
-          .add("jobObject", rReq.getAddressIfSet())
-          .add("fileId", rReq.getArchiveFile().archiveFileID)
-          .add("diskInstance", rReq.getArchiveFile().diskInstance)
-          .add("diskFilePath", rReq.getArchiveFile().diskFileInfo.path)
-          .add("diskFileId", rReq.getArchiveFile().diskFileId)
-          .add("queueingTime", qTime)
-          .add("insertTime", iTime)
-          .add("queueUnlockTime", qUnlockTime);
-    logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing fnished).");
+    m_threadCounter++;
+    m_enqueueingTasksQueue.push(new EnqueueingTask([rReq, job, bestVid, this]{
+      // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
+      auto scopedCounterDecrement = [this](void *){ 
+        m_threadCounter--; 
+      };
+      // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
+      std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
+      log::LogContext logContext(m_logger);
+      utils::Timer timer;
+      // Add the request to the queue (with a shared access).
+      auto nonConstJob = job;
+      auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, bestVid, *rReq, *this, logContext);
+      double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      // The object ownership was set in SharedAdd.
+      // We need to extract the owner before inserting. After, we would need to hold a lock.
+      auto owner = rReq->getOwner();
+      rReq->insert();
+      double iTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      // The lock on the queue is released here (has to be after the request commit for consistency.
+      sharedLock.reset();
+      double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      log::ScopedParamContainer params(logContext);
+      params.add("vid", bestVid)
+            .add("queueObject", owner)
+            .add("jobObject", rReq->getAddressIfSet())
+            .add("fileId", rReq->getArchiveFile().archiveFileID)
+            .add("diskInstance", rReq->getArchiveFile().diskInstance)
+            .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
+            .add("diskFileId", rReq->getArchiveFile().diskFileId)
+            .add("queueingTime", qTime)
+            .add("insertTime", iTime)
+            .add("queueUnlockTime", qUnlockTime);
+      logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
+    }));
   }
   return bestVid;
 }
