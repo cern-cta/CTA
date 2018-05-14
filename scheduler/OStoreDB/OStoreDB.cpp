@@ -717,7 +717,28 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   jobFound:
   {
+    // We are ready to enqueue the request. Let's make the data safe and do the rest behind the scenes.
+    // Reference the request in the process's agent.
+    double vidSelectionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    m_agentReference->addToOwnership(rReq->getAddressIfSet(), m_objectStore);
+    double agentReferencingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    rReq->setOwner(m_agentReference->getAgentAddress());
+    // "Select" an arbitrary copy number. This is needed to serialize the object.
+    rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
+    rReq->insert();
+    double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     m_threadCounter++;
+    // Prepare the logs to avoid multithread access on the object.
+    log::ScopedParamContainer params(logContext);
+    params.add("vid", bestVid)
+          .add("jobObject", rReq->getAddressIfSet())
+          .add("fileId", rReq->getArchiveFile().archiveFileID)
+          .add("diskInstance", rReq->getArchiveFile().diskInstance)
+          .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
+          .add("diskFileId", rReq->getArchiveFile().diskFileId)
+          .add("vidSelectionTime", vidSelectionTime)
+          .add("agentReferencingTime", agentReferencingTime)
+          .add("insertionTime", insertionTime);
     m_enqueueingTasksQueue.push(new EnqueueingTask([rReq, job, bestVid, this]{
       // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
       auto scopedCounterDecrement = [this](void *){ 
@@ -729,16 +750,21 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
       utils::Timer timer;
       // Add the request to the queue (with a shared access).
       auto nonConstJob = job;
+      objectstore::ScopedExclusiveLock rReqL(*rReq);
+      double rLockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      rReq->fetch();
       auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, bestVid, *rReq, *this, logContext);
       double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       // The object ownership was set in SharedAdd.
       // We need to extract the owner before inserting. After, we would need to hold a lock.
       auto owner = rReq->getOwner();
-      rReq->insert();
-      double iTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      rReq->commit();
+      double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       // The lock on the queue is released here (has to be after the request commit for consistency.
       sharedLock.reset();
       double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      rReqL.release();
+      double rUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
       params.add("vid", bestVid)
             .add("queueObject", owner)
@@ -747,11 +773,18 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
             .add("diskInstance", rReq->getArchiveFile().diskInstance)
             .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
             .add("diskFileId", rReq->getArchiveFile().diskFileId)
+            .add("requestLockTime", rLockTime)
             .add("queueingTime", qTime)
-            .add("insertTime", iTime)
-            .add("queueUnlockTime", qUnlockTime);
+            .add("commitTime", cTime)
+            .add("queueUnlockTime", qUnlockTime)
+            .add("requestUnlockTime", rUnlockTime)
+            .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime);
       logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
     }));
+    double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    params.add("taskPostingTime", taskPostingTime)
+          .add("totalTime", vidSelectionTime + agentReferencingTime + insertionTime + taskPostingTime);
+    logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): recorded job for queueing (enqueueing posted to thread pool).");  
   }
   return bestVid;
 }
