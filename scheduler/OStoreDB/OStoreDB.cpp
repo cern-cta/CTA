@@ -18,27 +18,27 @@
 
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
+//#include "common/dataStructures/SecurityIdentity.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
-#include "objectstore/ArchiveRequest.hpp"
-#include "objectstore/RetrieveRequest.hpp"
+//#include "objectstore/ArchiveRequest.hpp"
+//#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/Helpers.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/admin/AdminHost.hpp"
-#include "common/admin/AdminUser.hpp"
-#include "common/archiveRoutes/ArchiveRoute.hpp"
-#include "common/utils/utils.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "common/TapePool.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include <algorithm>
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
-#include <stdexcept>
-#include <set>
-#include <iostream>
+//#include "common/exception/Exception.hpp"
+//#include "common/admin/AdminHost.hpp"
+//#include "common/admin/AdminUser.hpp"
+//#include "common/archiveRoutes/ArchiveRoute.hpp"
+//#include "common/utils/utils.hpp"
+//#include "scheduler/LogicalLibrary.hpp"
+//#include "common/TapePool.hpp"
+//#include "common/dataStructures/MountPolicy.hpp"
+//#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+//#include <algorithm>
+//#include <stdlib.h>     /* srand, rand */
+//#include <time.h>       /* time */
+//#include <stdexcept>
+//#include <set>
+//#include <iostream>
 
 namespace cta {  
 using namespace objectstore;

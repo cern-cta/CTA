@@ -1238,9 +1238,8 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    auto tapepool = getOptional(OptionString::TAPE_POOL);
 
    // Create a XrdSsi stream object to return the results
-   //stream = new ListPendingQueue<SchedulerDatabase::ArchiveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
-                   m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : "");
-//);
+   stream = new ListPendingQueue<OStoreDB::ArchiveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
+      m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : ""));
 
    // Send the column headers in the metadata
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
