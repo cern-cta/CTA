@@ -19,6 +19,9 @@
 #pragma once
 
 #include "scheduler/SchedulerDatabase.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveRequest.hpp"
@@ -29,14 +32,9 @@
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
+#include "QueueItor.hpp"
 
 namespace cta {
-  
-namespace objectstore {
-  class Backend;
-  class Agent;
-  class RootEntry;
-}
 
 namespace ostoredb {
   template <class, class>
@@ -230,9 +228,11 @@ public:
     friend class OStoreDB;
   };
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
   
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
+
+  QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> getArchiveJobItor() const;
 
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
@@ -356,4 +356,4 @@ private:
   objectstore::AgentReference *m_agentReference = nullptr;
 };
   
-}
+} // namespace cta

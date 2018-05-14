@@ -16,13 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "QueueItor.hpp"
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
-#include "objectstore/RootEntry.hpp"
-#include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
 #include "objectstore/ArchiveRequest.hpp"
@@ -530,8 +526,8 @@ std::list<cta::common::dataStructures::ArchiveJob>
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
-   OStoreDB::getArchiveJobs() const {
-
+   OStoreDB::getArchiveJobs() const
+{
    std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
    QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
@@ -543,6 +539,18 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
    }
 
    return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getArchiveJobItor()
+//------------------------------------------------------------------------------
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
+   OStoreDB::getArchiveJobItor() const
+{
+   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
+      q_it(m_objectStore);
+
+   return q_it;
 }
 
 //------------------------------------------------------------------------------
