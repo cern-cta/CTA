@@ -34,6 +34,7 @@ class ListPendingQueue : public XrdSsiStream
 public:
    ListPendingQueue(bool is_extended, QueueItor_t queueItor) :
       XrdSsiStream(XrdSsiStream::isActive),
+      m_isExtended(is_extended),
       m_queueItor(std::move(queueItor))
    {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ListPendingQueue() constructor");
@@ -62,14 +63,13 @@ public:
     *                 last = true:  No more data remains.
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
-#if 0
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
       XrdSsiPb::OStreamBuffer<cta::xrd::Data> *streambuf;
 
       try {
-         if(!m_archiveFileItor.hasMore()) {
+         if(m_queueItor.end()) {
             // Nothing more to send, close the stream
             last = true;
             return nullptr;
@@ -77,13 +77,15 @@ public:
 
          streambuf = new XrdSsiPb::OStreamBuffer<cta::xrd::Data>(dlen);
 
-         for(bool is_buffer_full = false; m_archiveFileItor.hasMore() && !is_buffer_full; )
+         for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
          {
-            const cta::common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
+            auto job = m_queueItor.getJob();
 
-            for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
-               cta::xrd::Data record;
+            if(!job.first) continue;
 
+            cta::xrd::Data record = fillRecord(job.second);
+
+#if 0
                // Copy number
                record.mutable_af_ls_item()->set_copy_nb(jt->first);
 
@@ -106,6 +108,7 @@ public:
                tf->set_vid(jt->second.vid);
                tf->set_f_seq(jt->second.fSeq);
                tf->set_block_id(jt->second.blockId);
+#endif
 
                // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
                // enough data to send to the client. The actual buffer size is double the block size,
@@ -113,7 +116,6 @@ public:
                // will be sent on the next iteration. If we exceed the hard limit of double the block
                // size, Push() will throw an exception.
                is_buffer_full = streambuf->Push(record);
-            }
          }
          dlen = streambuf->Size();
          XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
@@ -132,9 +134,66 @@ public:
       }
       return streambuf;
    }
+
+#if 0
+   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>> result;
+
+   if(tapepool) {
+      std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
+      if(!list.empty()) result[tapepool.value()] = list;
+   } else {
+     result = m_scheduler.getPendingArchiveJobs(m_lc);
+   }
+
+   if(!result.empty())
+   {
+      std::vector<std::vector<std::string>> responseTable;
+
+      if(has_flag(OptionBoolean::EXTENDED))
+      {
+         for(auto it = result.cbegin(); it != result.cend(); it++) {
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+               std::vector<std::string> currentRow;
+               currentRow.push_back(it->first);
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID)));
+               currentRow.push_back(jt->request.storageClass);
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber)));
+               currentRow.push_back(jt->request.diskFileID);
+               currentRow.push_back(jt->instanceName);
+               currentRow.push_back(jt->request.checksumType);
+               currentRow.push_back(jt->request.checksumValue);         
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize)));
+               currentRow.push_back(jt->request.requester.name);
+               currentRow.push_back(jt->request.requester.group);
+               currentRow.push_back(jt->request.diskFileInfo.path);
+               responseTable.push_back(currentRow);
+            }
+         }
+      } else {
+         for(auto it = result.cbegin(); it != result.cend(); it++) {
+            std::vector<std::string> currentRow;
+            currentRow.push_back(it->first);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
+            uint64_t size = 0;
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
+               size += jt->request.fileSize;
+            }
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
+            responseTable.push_back(currentRow);
+         }
+      }
+
+      cmdlineOutput << formatResponse(responseTable);
+   }
 #endif
 
+
 private:
+   cta::xrd::Data fillRecord(const cta::common::dataStructures::ArchiveJob &job);
+   cta::xrd::Data fillRecord(const cta::common::dataStructures::RetrieveJob &job);
+
+   bool        m_isExtended;
    QueueItor_t m_queueItor;
 
    static constexpr const char* const LOG_SUFFIX  = "ListPendingQueue";    //!< Identifier for log messages

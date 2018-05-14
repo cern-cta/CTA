@@ -1266,59 +1266,6 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
       }
    }
 
-#if 0
-   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>> result;
-
-   if(tapepool) {
-      std::list<cta::common::dataStructures::ArchiveJob> list = m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc);
-      if(!list.empty()) result[tapepool.value()] = list;
-   } else {
-     result = m_scheduler.getPendingArchiveJobs(m_lc);
-   }
-
-   if(!result.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-
-      if(has_flag(OptionBoolean::EXTENDED))
-      {
-         for(auto it = result.cbegin(); it != result.cend(); it++) {
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-               std::vector<std::string> currentRow;
-               currentRow.push_back(it->first);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID)));
-               currentRow.push_back(jt->request.storageClass);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber)));
-               currentRow.push_back(jt->request.diskFileID);
-               currentRow.push_back(jt->instanceName);
-               currentRow.push_back(jt->request.checksumType);
-               currentRow.push_back(jt->request.checksumValue);         
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize)));
-               currentRow.push_back(jt->request.requester.name);
-               currentRow.push_back(jt->request.requester.group);
-               currentRow.push_back(jt->request.diskFileInfo.path);
-               responseTable.push_back(currentRow);
-            }
-         }
-      } else {
-         for(auto it = result.cbegin(); it != result.cend(); it++) {
-            std::vector<std::string> currentRow;
-            currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
-            uint64_t size = 0;
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-               size += jt->request.fileSize;
-            }
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
-            responseTable.push_back(currentRow);
-         }
-      }
-
-      cmdlineOutput << formatResponse(responseTable);
-   }
-#endif
-
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
