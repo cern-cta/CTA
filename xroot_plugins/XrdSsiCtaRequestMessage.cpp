@@ -20,13 +20,15 @@
 
 #include <common/utils/utils.hpp>
 #include <common/utils/Regex.hpp>
+//#include <objectstore/ArchiveQueue.hpp>
+//#include <scheduler/QueueItor.hpp>
 
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;
 
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaArchiveFileLs.hpp"
-//#include "XrdCtaListPendingStream.hpp"
+#include "XrdCtaListPendingQueue.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
 
@@ -1235,16 +1237,10 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    // Search filter criteria
    auto tapepool = getOptional(OptionString::TAPE_POOL);
 
-#if 0
    // Create a XrdSsi stream object to return the results
-   if(tapepool) {
-      stream = new ListPendingStream(ListPendingStream::LIST_ARCHIVES, has_flag(OptionBoolean::EXTENDED),
-                                     m_scheduler.getPendingArchiveJobs(tapepool.value(), m_lc));
-   } else {
-      stream = new ListPendingStream(ListPendingStream::LIST_ARCHIVES, has_flag(OptionBoolean::EXTENDED),
-                                     m_scheduler.getPendingArchiveJobs(m_lc));
-   }
-#endif
+   //stream = new ListPendingQueue<SchedulerDatabase::ArchiveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
+                   m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : "");
+//);
 
    // Send the column headers in the metadata
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
@@ -1271,7 +1267,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
       }
    }
 
-#if 1
+#if 0
    std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>> result;
 
    if(tapepool) {

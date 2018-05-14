@@ -511,8 +511,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 {
    std::list<cta::common::dataStructures::ArchiveJob> ret;
 
-   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
-      q_it(m_objectStore, tapePoolName);
+   ArchiveQueueItor_t q_it(m_objectStore, tapePoolName);
 
    for( ; !q_it.end() ; ++q_it) {
       auto job = q_it.getJob();
@@ -525,13 +524,12 @@ std::list<cta::common::dataStructures::ArchiveJob>
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
    OStoreDB::getArchiveJobs() const
 {
    std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
 
-   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
-      q_it(m_objectStore);
+   ArchiveQueueItor_t q_it(m_objectStore);
 
    for( ; !q_it.end(); ++q_it) {
       auto job = q_it.getJob();
@@ -544,11 +542,9 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobItor()
 //------------------------------------------------------------------------------
-QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
-   OStoreDB::getArchiveJobItor() const
+OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tapePoolName) const
 {
-   QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>
-      q_it(m_objectStore);
+   ArchiveQueueItor_t q_it(m_objectStore, tapePoolName);
 
    return q_it;
 }
@@ -734,8 +730,7 @@ OStoreDB::getRetrieveJobs() const
 {
    std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
 
-   QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
-      q_it(m_objectStore);
+   RetrieveQueueItor_t q_it(m_objectStore);
 
    for( ; !q_it.end(); ++q_it) {
       auto job = q_it.getJob();

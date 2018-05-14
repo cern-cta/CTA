@@ -232,7 +232,8 @@ public:
   
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
-  QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> getArchiveJobItor() const;
+  typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
+  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName) const;
 
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
@@ -253,8 +254,10 @@ public:
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > getRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
 
+  typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
+  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
   
   /* === Drive state handling  ============================================== */
   /**

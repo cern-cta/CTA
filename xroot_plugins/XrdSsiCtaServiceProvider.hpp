@@ -72,6 +72,11 @@ public:
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
 
    /*!
+    * Get a reference to the ObjectStore for this Service
+    */
+   cta::OStoreDBWithAgent &getSchedDb() const { return *m_scheddb; }
+
+   /*!
     * Get a reference to the Catalogue for this Service
     */
    cta::catalogue::Catalogue &getCatalogue() const { return *m_catalogue; }

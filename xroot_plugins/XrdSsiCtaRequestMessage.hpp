@@ -34,6 +34,7 @@ class RequestMessage
 {
 public:
    RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
+      m_scheddb  (service->getSchedDb()),
       m_catalogue(service->getCatalogue()),
       m_scheduler(service->getScheduler()),
       m_lc       (service->getLogContext()) {
@@ -298,6 +299,7 @@ private:
 
    Protocol                                              m_protocol;           //!< The protocol the client used to connect
    cta::common::dataStructures::SecurityIdentity         m_cliIdentity;        //!< Client identity: username/host
+   cta::OStoreDBWithAgent                               &m_scheddb;            //!< Reference to CTA ObjectStore
    cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
    cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
    cta::log::LogContext                                  m_lc;                 //!< CTA Log Context
