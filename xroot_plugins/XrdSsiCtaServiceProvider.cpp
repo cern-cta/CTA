@@ -106,6 +106,10 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    m_backend = std::move(cta::objectstore::BackendFactory::createBackend(objectstore_backendpath.second, *m_log));
    m_backendPopulator = cta::make_unique<cta::objectstore::BackendPopulator>(*m_backend, "Frontend", cta::log::LogContext(*m_log));
    m_scheddb = cta::make_unique<cta::OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), *m_catalogue, *m_log);
+   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
+   if (threadPoolSize.first) {
+     m_scheddb->setThreadNumber(threadPoolSize.second);
+   }
 
    // Initialise the Scheduler
    m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);

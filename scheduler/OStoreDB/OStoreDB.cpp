@@ -51,7 +51,7 @@ using namespace objectstore;
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
   m_objectStore(be), m_catalogue(catalogue), m_logger(logger), m_threadCounter(0) {
-  for (size_t i=0; i<500; i++) {
+  for (size_t i=0; i<10; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
     m_enqueueingWorkerThreads.back()->start();
   }
@@ -90,6 +90,25 @@ void OStoreDB::assertAgentAddressSet() {
 //------------------------------------------------------------------------------
 void OStoreDB::waitSubthreadsComplete() {
   while (m_threadCounter) std::this_thread::yield();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::waitSubthreadsComplete()
+//------------------------------------------------------------------------------
+void OStoreDB::setThreadNumber(uint64_t threadNumber) {
+  // Clear all threads.
+  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
+  for (auto &t: m_enqueueingWorkerThreads) {
+    t->wait();
+    delete t;
+    t=nullptr;
+  }
+  m_enqueueingWorkerThreads.clear();
+  // Create the new ones.
+  for (size_t i=0; i<threadNumber; i++) {
+    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.back()->start();
+  }
 }
 
 //------------------------------------------------------------------------------

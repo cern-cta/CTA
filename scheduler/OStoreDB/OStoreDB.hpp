@@ -77,6 +77,7 @@ private:
   std::vector<EnqueueingWorkerThread *> m_enqueueingWorkerThreads;
 public:
   void waitSubthreadsComplete() override;
+  void setThreadNumber(uint64_t threadNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 
