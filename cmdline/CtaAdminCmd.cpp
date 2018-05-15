@@ -53,25 +53,35 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 template<>
 void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 {
-   const cta::admin::ArchiveFileLsItem &af_ls_item = record.af_ls_item();
+   using namespace cta::xrd;
+   using namespace cta::admin;
 
-   Log::DumpProtobuf(Log::PROTOBUF, &af_ls_item);
+   Log::DumpProtobuf(Log::PROTOBUF, &record);
 
-   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().archive_id()    << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.copy_nb()            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().vid()           << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.tf().f_seq()         << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.tf().block_id()      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().disk_instance() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_ls_item.af().disk_id()       << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_ls_item.af().size()          << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().cs().type()     << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << af_ls_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().storage_class() << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().owner()    << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_ls_item.af().df().group()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_ls_item.af().creation_time() << ' '
-             << af_ls_item.af().df().path() << std::endl;
+   switch(record.data_case())
+   {
+      case Data::kAfItemFieldNumber : switch(record.af_item().type())
+      {
+         case ArchiveFileItem::ARCHIVEFILE_LS:
+            CtaAdminCmd::printAfLsItem(record.af_item());
+            break;
+         case ArchiveFileItem::LISTPENDINGARCHIVES:
+         case ArchiveFileItem::LISTPENDINGRETRIEVES:
+         default:
+            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
+      }
+
+      case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
+      {
+         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:
+         case ArchiveFileSummaryItem::LISTPENDINGRETRIEVES:
+         default:
+            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
+      }
+
+      default:
+         throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+   }
 }
 
 } // namespace XrdSsiPb
@@ -180,12 +190,22 @@ void CtaAdminCmd::send() const
    switch(response.type())
    {
       using namespace cta::xrd;
+      using namespace cta::admin;
 
-      case Response::RSP_SUCCESS:         std::cout << response.message_txt(); break;
-      case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
+      case Response::RSP_SUCCESS:
+         // Print message text
+         std::cout << response.message_txt();
+         // Print streaming response header
+         switch(response.show_header()) {
+            case HeaderType::ARCHIVEFILE_LS: printAfLsHeader(); break;
+            case HeaderType::NONE:
+            default:                         break;
+         }
+         break;
+      case Response::RSP_ERR_PROTOBUF:       throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_USER:
-      case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
-      default:                            throw XrdSsiPb::PbException("Invalid response type.");
+      case Response::RSP_ERR_CTA:            throw std::runtime_error(response.message_txt());
+      default:                               throw XrdSsiPb::PbException("Invalid response type.");
    }
 
    // If there is a Data/Stream payload, wait until it has been processed before exiting
@@ -335,6 +355,53 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    }
 
    throw std::runtime_error(help.str());
+}
+
+
+
+// static methods (for printing stream results)
+
+void CtaAdminCmd::printAfLsHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "block id"       << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "owner"          << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "creation time"  << ' '
+                                                                 << "path"
+             << TEXT_NORMAL << std::endl;
+}
+
+
+
+void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
+{
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.tf().block_id()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
+                                                                 << af_item.af().df().path()
+             << std::endl;
 }
 
 }} // namespace cta::admin

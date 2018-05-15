@@ -427,6 +427,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
     
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
@@ -620,6 +621,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
@@ -825,6 +827,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       }
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
     
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
@@ -998,6 +1001,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
     
   // 7) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "manual");
@@ -1142,7 +1146,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
-
+  scheduler.waitSchedulerDbSubthreadsComplete();
+    
   // 7) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -1272,6 +1277,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -1416,6 +1422,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       sourceFiles.clear();
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -1554,6 +1561,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -1706,6 +1714,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
     }
   }
+  scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
   cta::common::dataStructures::DriveInfo driveInfo;

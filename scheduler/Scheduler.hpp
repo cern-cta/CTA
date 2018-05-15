@@ -86,6 +86,11 @@ public:
    * Lets the exception through in case of failure.
    */
   void ping(log::LogContext & lc);
+  
+  /**
+   * Waits for all scheduler db threads to complete (mostly for unit tests).
+   */
+  void waitSchedulerDbSubthreadsComplete();
 
   /**
    * Checks the specified archival could take place and returns a new and

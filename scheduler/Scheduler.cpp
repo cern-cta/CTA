@@ -69,6 +69,13 @@ void Scheduler::ping(log::LogContext & lc) {
 }
 
 //------------------------------------------------------------------------------
+// waitSchedulerDbThreads
+//------------------------------------------------------------------------------
+void Scheduler::waitSchedulerDbSubthreadsComplete() {
+  m_db.waitSubthreadsComplete();
+}
+
+//------------------------------------------------------------------------------
 // authorizeAdmin
 //------------------------------------------------------------------------------
 void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc){

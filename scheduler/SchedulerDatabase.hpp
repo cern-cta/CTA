@@ -87,6 +87,10 @@ public:
    */
   virtual ~SchedulerDatabase() throw() = 0;
   
+  
+  /*============ Sub thread handling, mostly for unit tests =================*/
+  virtual void waitSubthreadsComplete() = 0;
+  
   /*============ Basic IO check: validate object store access ===============*/
   /**
    * Validates that the scheduler database is accessible. A trivial operation

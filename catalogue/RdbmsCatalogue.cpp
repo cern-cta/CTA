@@ -22,6 +22,7 @@
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/TapeFile.hpp"
+#include "common/exception/DatabaseConstraintViolation.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -119,6 +120,8 @@ void RdbmsCatalogue::createAdminUser(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch (exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -142,6 +145,12 @@ bool RdbmsCatalogue::adminUserExists(rdbms::Conn &conn, const std::string adminU
     stmt.bindString(":ADMIN_USER_NAME", adminUsername);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -163,6 +172,8 @@ void RdbmsCatalogue::deleteAdminUser(const std::string &username) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch (exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -214,6 +225,10 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
     return admins;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -248,10 +263,12 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -311,6 +328,8 @@ void RdbmsCatalogue::createAdminHost(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -334,6 +353,12 @@ bool RdbmsCatalogue::adminHostExists(rdbms::Conn &conn, const std::string adminH
     stmt.bindString(":ADMIN_HOST_NAME", adminHost);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -355,6 +380,8 @@ void RdbmsCatalogue::deleteAdminHost(const std::string &hostName) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -406,6 +433,10 @@ std::list<common::dataStructures::AdminHost> RdbmsCatalogue::getAdminHosts() con
     return hosts;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -440,10 +471,12 @@ void RdbmsCatalogue::modifyAdminHostComment(const common::dataStructures::Securi
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -508,6 +541,8 @@ void RdbmsCatalogue::createStorageClass(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -535,6 +570,12 @@ bool RdbmsCatalogue::storageClassExists(rdbms::Conn &conn, const std::string &di
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -564,9 +605,11 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &diskInstanceName, con
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -619,7 +662,11 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
     return storageClasses;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -656,10 +703,12 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -695,10 +744,12 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -767,9 +818,11 @@ void RdbmsCatalogue::createTapePool(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -783,6 +836,10 @@ bool RdbmsCatalogue::tapePoolExists(const std::string &tapePoolName) const {
     return tapePoolExists(conn, tapePoolName);
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -804,6 +861,12 @@ bool RdbmsCatalogue::tapePoolExists(rdbms::Conn &conn, const std::string &tapePo
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -825,6 +888,12 @@ bool RdbmsCatalogue::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archi
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -850,6 +919,12 @@ bool RdbmsCatalogue::diskFileIdExists(rdbms::Conn &conn, const std::string &disk
     stmt.bindString(":DISK_FILE_ID", diskFileId);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -875,6 +950,12 @@ bool RdbmsCatalogue::diskFilePathExists(rdbms::Conn &conn, const std::string &di
     stmt.bindString(":DISK_FILE_PATH", diskFilePath);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -900,6 +981,12 @@ bool RdbmsCatalogue::diskFileUserExists(rdbms::Conn &conn, const std::string &di
     stmt.bindString(":DISK_FILE_USER", diskFileUser);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -925,6 +1012,12 @@ bool RdbmsCatalogue::diskFileGroupExists(rdbms::Conn &conn, const std::string &d
     stmt.bindString(":DISK_FILE_GROUP", diskFileGroup);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -953,6 +1046,12 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &di
     stmt.bindUint64(":COPY_NB", copyNb);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -974,6 +1073,8 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1050,7 +1151,11 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     return pools;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1084,10 +1189,12 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1120,10 +1227,12 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1156,10 +1265,12 @@ void RdbmsCatalogue::setTapePoolEncryption(const common::dataStructures::Securit
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -1247,9 +1358,11 @@ void RdbmsCatalogue::createArchiveRoute(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1282,6 +1395,8 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, con
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1339,7 +1454,11 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
     return routes;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1381,6 +1500,8 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1425,6 +1546,8 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1488,6 +1611,8 @@ void RdbmsCatalogue::createLogicalLibrary(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch(std::exception &ex) {
@@ -1511,6 +1636,12 @@ bool RdbmsCatalogue::logicalLibraryExists(rdbms::Conn &conn, const std::string &
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1532,6 +1663,8 @@ void RdbmsCatalogue::deleteLogicalLibrary(const std::string &name) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1583,7 +1716,11 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
     return libs;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1617,6 +1754,8 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1714,9 +1853,11 @@ void RdbmsCatalogue::createTape(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1730,6 +1871,10 @@ bool RdbmsCatalogue::tapeExists(const std::string &vid) const {
     return tapeExists(conn, vid);
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1751,6 +1896,12 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -1772,6 +1923,8 @@ void RdbmsCatalogue::deleteTape(const std::string &vid) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -1788,7 +1941,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(const TapeSearc
     return getTapes(conn, searchCriteria);
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -1923,7 +2080,13 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     }
 
     return tapes;
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2029,7 +2192,11 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     return vidToTapeMap;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2110,7 +2277,11 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
     return vidToTapeMap;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2168,6 +2339,8 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     conn.commit();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2203,7 +2376,13 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
     tapeLog.time = time.value();
 
     return tapeLog;
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2237,6 +2416,8 @@ void RdbmsCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2273,6 +2454,8 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2309,6 +2492,8 @@ void RdbmsCatalogue::modifyTapeCapacityInBytes(const common::dataStructures::Sec
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2345,6 +2530,8 @@ void RdbmsCatalogue::modifyTapeEncryptionKey(const common::dataStructures::Secur
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2376,6 +2563,8 @@ void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::st
     }
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + "failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2407,6 +2596,8 @@ void RdbmsCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::s
     }
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + "failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2443,6 +2634,8 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2470,6 +2663,10 @@ void RdbmsCatalogue::noSpaceLeftOnTape(const std::string &vid) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -2504,6 +2701,8 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2540,6 +2739,8 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2579,6 +2780,8 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2618,6 +2821,8 @@ void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2657,6 +2862,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2696,6 +2903,8 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -2788,9 +2997,11 @@ void RdbmsCatalogue::createMountPolicy(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2867,9 +3078,11 @@ void RdbmsCatalogue::createRequesterMountRule(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2922,7 +3135,11 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsCatalogue::getRequest
     return rules;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -2950,6 +3167,8 @@ void RdbmsCatalogue::deleteRequesterMountRule(const std::string &diskInstanceNam
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3031,9 +3250,11 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
     stmt.executeNonQuery();
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3043,11 +3264,21 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
   const {
-  auto getNonCachedValue = [&] {
-    auto conn = m_connPool.getConn();
-    return getRequesterGroupMountPolicy(conn, group);
-  };
-  return m_groupMountPolicyCache.getCachedValue(group, getNonCachedValue);
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getRequesterGroupMountPolicy(conn, group);
+    };
+    return m_groupMountPolicyCache.getCachedValue(group, getNonCachedValue);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3115,7 +3346,13 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
     } else {
       return nullopt;
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3169,7 +3406,11 @@ std::list<common::dataStructures::RequesterGroupMountRule> RdbmsCatalogue::getRe
     return rules;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3198,6 +3439,8 @@ void RdbmsCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstan
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3221,6 +3464,12 @@ bool RdbmsCatalogue::mountPolicyExists(rdbms::Conn &conn, const std::string &mou
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3245,6 +3494,12 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
     stmt.bindString(":REQUESTER_NAME", requesterName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3254,11 +3509,21 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 // getCachedRequesterMountPolicy
 //------------------------------------------------------------------------------
 optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
-  auto getNonCachedValue = [&] {
-    auto conn = m_connPool.getConn();
-    return getRequesterMountPolicy(conn, user);
-  };
-  return m_userMountPolicyCache.getCachedValue(user, getNonCachedValue);
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getRequesterMountPolicy(conn, user);
+    };
+    return m_userMountPolicyCache.getCachedValue(user, getNonCachedValue);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3329,7 +3594,13 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
     } else {
       return nullopt;
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3354,6 +3625,12 @@ bool RdbmsCatalogue::requesterGroupMountRuleExists(rdbms::Conn &conn, const std:
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     auto rset = stmt.executeQuery();
     return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -3375,6 +3652,8 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -3445,7 +3724,11 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies(
     return policies;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3479,10 +3762,12 @@ void RdbmsCatalogue::modifyMountPolicyArchivePriority(const common::dataStructur
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3515,10 +3800,12 @@ void RdbmsCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStr
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3551,10 +3838,12 @@ void RdbmsCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructu
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3587,10 +3876,12 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3623,10 +3914,12 @@ void RdbmsCatalogue::modifyMountPolicyMaxDrivesAllowed(const common::dataStructu
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3659,10 +3952,12 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
     }
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -3671,58 +3966,68 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::AutocommitMode autocommitMode,
   const ArchiveFileRow &row) {
-  if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
-    throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
-      " does not exist");
+  try {
+    if(!storageClassExists(conn, row.diskInstance, row.storageClassName)) {
+      throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
+        " does not exist");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "INSERT INTO ARCHIVE_FILE("
+        "ARCHIVE_FILE_ID,"
+        "DISK_INSTANCE_NAME,"
+        "DISK_FILE_ID,"
+        "DISK_FILE_PATH,"
+        "DISK_FILE_USER,"
+        "DISK_FILE_GROUP,"
+        "DISK_FILE_RECOVERY_BLOB,"
+        "SIZE_IN_BYTES,"
+        "CHECKSUM_TYPE,"
+        "CHECKSUM_VALUE,"
+        "STORAGE_CLASS_NAME,"
+        "CREATION_TIME,"
+        "RECONCILIATION_TIME)"
+      "VALUES("
+        ":ARCHIVE_FILE_ID,"
+        ":DISK_INSTANCE_NAME,"
+        ":DISK_FILE_ID,"
+        ":DISK_FILE_PATH,"
+        ":DISK_FILE_USER,"
+        ":DISK_FILE_GROUP,"
+        ":DISK_FILE_RECOVERY_BLOB,"
+        ":SIZE_IN_BYTES,"
+        ":CHECKSUM_TYPE,"
+        ":CHECKSUM_VALUE,"
+        ":STORAGE_CLASS_NAME,"
+        ":CREATION_TIME,"
+        ":RECONCILIATION_TIME)";
+    auto stmt = conn.createStmt(sql, autocommitMode);
+
+    stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
+    stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
+    stmt.bindString(":DISK_FILE_ID", row.diskFileId);
+    stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
+    stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
+    stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
+    stmt.bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
+    stmt.bindUint64(":SIZE_IN_BYTES", row.size);
+    stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
+    stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
+    stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
+    stmt.bindUint64(":CREATION_TIME", now);
+    stmt.bindUint64(":RECONCILIATION_TIME", now);
+
+    stmt.executeNonQuery();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
-
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "INSERT INTO ARCHIVE_FILE("
-      "ARCHIVE_FILE_ID,"
-      "DISK_INSTANCE_NAME,"
-      "DISK_FILE_ID,"
-      "DISK_FILE_PATH,"
-      "DISK_FILE_USER,"
-      "DISK_FILE_GROUP,"
-      "DISK_FILE_RECOVERY_BLOB,"
-      "SIZE_IN_BYTES,"
-      "CHECKSUM_TYPE,"
-      "CHECKSUM_VALUE,"
-      "STORAGE_CLASS_NAME,"
-      "CREATION_TIME,"
-      "RECONCILIATION_TIME)"
-    "VALUES("
-      ":ARCHIVE_FILE_ID,"
-      ":DISK_INSTANCE_NAME,"
-      ":DISK_FILE_ID,"
-      ":DISK_FILE_PATH,"
-      ":DISK_FILE_USER,"
-      ":DISK_FILE_GROUP,"
-      ":DISK_FILE_RECOVERY_BLOB,"
-      ":SIZE_IN_BYTES,"
-      ":CHECKSUM_TYPE,"
-      ":CHECKSUM_VALUE,"
-      ":STORAGE_CLASS_NAME,"
-      ":CREATION_TIME,"
-      ":RECONCILIATION_TIME)";
-  auto stmt = conn.createStmt(sql, autocommitMode);
-
-  stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
-  stmt.bindString(":DISK_INSTANCE_NAME", row.diskInstance);
-  stmt.bindString(":DISK_FILE_ID", row.diskFileId);
-  stmt.bindString(":DISK_FILE_PATH", row.diskFilePath);
-  stmt.bindString(":DISK_FILE_USER", row.diskFileUser);
-  stmt.bindString(":DISK_FILE_GROUP", row.diskFileGroup);
-  stmt.bindString(":DISK_FILE_RECOVERY_BLOB", row.diskFileRecoveryBlob);
-  stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-  stmt.bindString(":CHECKSUM_TYPE", row.checksumType);
-  stmt.bindString(":CHECKSUM_VALUE", row.checksumValue);
-  stmt.bindString(":STORAGE_CLASS_NAME", row.storageClassName);
-  stmt.bindUint64(":CREATION_TIME", now);
-  stmt.bindUint64(":RECONCILIATION_TIME", now);
-
-  stmt.executeNonQuery();
 }
 
 //------------------------------------------------------------------------------
@@ -3823,7 +4128,11 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
     return ArchiveFileItor(impl);
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3955,7 +4264,11 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     return summary;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -3978,7 +4291,11 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileById(const uin
     return *archiveFile;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4009,6 +4326,8 @@ void RdbmsCatalogue::tapeLabelled(const std::string &vid, const std::string &dri
     }
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
   } catch (exception::Exception &ex) {
@@ -4062,9 +4381,11 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
     }
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &ue) {
     throw exception::UserError(std::string("Cannot allocate a new archive file: ") + ue.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4110,9 +4431,11 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
     return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *mountPolicy);
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4122,11 +4445,21 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 //------------------------------------------------------------------------------
 common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoolMap(const StorageClass &storageClass)
   const {
-  auto getNonCachedValue = [&] {
-    auto conn = m_connPool.getConn();
-    return getTapeCopyToPoolMap(conn, storageClass);
-  };
-  return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getTapeCopyToPoolMap(conn, storageClass);
+    };
+    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -4158,7 +4491,11 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     return copyToPoolMap;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4167,11 +4504,19 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
 // getCachedExpectedNbArchiveRoutes
 //------------------------------------------------------------------------------
 uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(const StorageClass &storageClass) const {
-  auto getNonCachedValue = [&] {
-    auto conn = m_connPool.getConn();
-    return getExpectedNbArchiveRoutes(conn, storageClass);
-  };
-  return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
+  try {
+    auto getNonCachedValue = [&] {
+      auto conn = m_connPool.getConn();
+      return getExpectedNbArchiveRoutes(conn, storageClass);
+    };
+    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 
@@ -4196,7 +4541,13 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const Sto
       throw exception::Exception("Result set of SELECT COUNT(*) is empty");
     }
     return rset.columnUint64("NB_ROUTES");
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4228,8 +4579,14 @@ void RdbmsCatalogue::updateTape(
     stmt.bindString(":LAST_WRITE_DRIVE", tapeDrive);
     stmt.bindUint64(":LAST_WRITE_TIME", now);
     stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) +  " failed: " + ex.getMessage().str());
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
@@ -4292,9 +4649,11 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     return criteria;
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4352,9 +4711,11 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     return criteria;
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4456,7 +4817,13 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
     }
 
     return policies;
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4470,9 +4837,11 @@ bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &adm
     return userIsAdmin(conn, admin.username) && hostIsAdmin(conn, admin.host);
   } catch(exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
   } catch(exception::UserError &) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4481,34 +4850,54 @@ bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &adm
 // userIsAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::userIsAdmin(rdbms::Conn &conn, const std::string &userName) const {
-  const char *const sql =
-    "SELECT "
-      "ADMIN_USER_NAME AS ADMIN_USER_NAME "
-    "FROM "
-      "ADMIN_USER "
-    "WHERE "
-      "ADMIN_USER_NAME = :ADMIN_USER_NAME";
-  auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-  stmt.bindString(":ADMIN_USER_NAME", userName);
-  auto rset = stmt.executeQuery();
-  return rset.next();
+  try {
+    const char *const sql =
+      "SELECT "
+        "ADMIN_USER_NAME AS ADMIN_USER_NAME "
+      "FROM "
+        "ADMIN_USER "
+      "WHERE "
+        "ADMIN_USER_NAME = :ADMIN_USER_NAME";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    stmt.bindString(":ADMIN_USER_NAME", userName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
 // hostIsAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::hostIsAdmin(rdbms::Conn &conn, const std::string &hostName) const {
-  const char *const sql =
-    "SELECT "
-      "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
-    "FROM "
-      "ADMIN_HOST "
-    "WHERE "
-      "ADMIN_HOST_NAME = :ADMIN_HOST_NAME";
-  auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-  stmt.bindString(":ADMIN_HOST_NAME", hostName);
-  auto rset = stmt.executeQuery();
-  return rset.next();
+  try {
+    const char *const sql =
+      "SELECT "
+        "ADMIN_HOST_NAME AS ADMIN_HOST_NAME "
+      "FROM "
+        "ADMIN_HOST "
+      "WHERE "
+        "ADMIN_HOST_NAME = :ADMIN_HOST_NAME";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    stmt.bindString(":ADMIN_HOST_NAME", hostName);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -4549,9 +4938,13 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       tapes.push_back(tape);
     }
     return tapes;
-  } catch(exception::LostDatabaseConnection &le) {
+  } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
-  } catch(exception::Exception &ex) {
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4594,7 +4987,13 @@ void RdbmsCatalogue::insertTapeFile(
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
 
     stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4622,7 +5021,13 @@ void RdbmsCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, 
     stmt.bindString(":VID", vid);
     stmt.bindUint64(":LAST_FSEQ", lastFSeq);
     stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4647,7 +5052,13 @@ uint64_t RdbmsCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &v
     } else {
       throw exception::Exception(std::string("No such tape with vid=") + vid);
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4727,7 +5138,13 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     }
 
     return archiveFile;
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4810,7 +5227,13 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     }
 
     return archiveFile;
-  } catch(exception::Exception &ex) {
+  } catch (exception::LostDatabaseConnection &le) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch (exception::DatabaseConstraintViolation &de) {
+    throw exception::DatabaseConstraintViolation(std::string(__FUNCTION__) + " failed: " + de.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
+  } catch (exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -4847,7 +5270,7 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
     if(0 == event.compressedSize) throw exception::Exception("compressedSize is 0");
     if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception &ex) {
     throw exception::Exception(callingFunc + " failed: TapeFileWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }

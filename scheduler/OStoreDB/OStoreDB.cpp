@@ -47,12 +47,25 @@ using namespace objectstore;
 // OStoreDB::OStoreDB()
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
-  m_objectStore(be), m_catalogue(catalogue), m_logger(logger) {}
+  m_objectStore(be), m_catalogue(catalogue), m_logger(logger), m_threadCounter(0) {
+  for (size_t i=0; i<10; i++) {
+    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.back()->start();
+  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::~OStoreDB()
 //------------------------------------------------------------------------------
-OStoreDB::~OStoreDB() throw() {}
+OStoreDB::~OStoreDB() throw() {
+  while (m_threadCounter) sleep(1);
+  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
+  for (auto &t: m_enqueueingWorkerThreads) {
+    t->wait();
+    delete t;
+    t=nullptr;
+  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::setAgentReference()
@@ -68,6 +81,44 @@ void OStoreDB::assertAgentAddressSet() {
   if (!m_agentReference)
     throw AgentNotSet("In OStoreDB::assertAgentSet: Agent address not set");
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::waitSubthreadsComplete()
+//------------------------------------------------------------------------------
+void OStoreDB::waitSubthreadsComplete() {
+  while (m_threadCounter) std::this_thread::yield();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::waitSubthreadsComplete()
+//------------------------------------------------------------------------------
+void OStoreDB::setThreadNumber(uint64_t threadNumber) {
+  // Clear all threads.
+  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
+  for (auto &t: m_enqueueingWorkerThreads) {
+    t->wait();
+    delete t;
+    t=nullptr;
+  }
+  m_enqueueingWorkerThreads.clear();
+  // Create the new ones.
+  for (size_t i=0; i<threadNumber; i++) {
+    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.back()->start();
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::EnqueueingWorkerThread::run()
+//------------------------------------------------------------------------------
+void OStoreDB::EnqueueingWorkerThread::run() {
+  while (true) {
+    std::unique_ptr<EnqueueingTask> et(m_enqueueingTasksQueue.pop());
+    if (!et.get()) break;
+    (*et)();
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::ping()
@@ -359,8 +410,8 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   assertAgentAddressSet();
   cta::utils::Timer timer;
   // Construct the archive request object in memory
-  cta::objectstore::ArchiveRequest aReq(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
-  aReq.initialize();
+  auto aReq = std::make_shared<cta::objectstore::ArchiveRequest> (m_agentReference->nextId("ArchiveRequest"), m_objectStore);
+  aReq->initialize();
   // Summarize all as an archiveFile
   cta::common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = criteria.fileId;
@@ -374,18 +425,18 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aFile.diskInstance = instanceName;
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
-  aReq.setArchiveFile(aFile);
-  aReq.setMountPolicy(criteria.mountPolicy);
-  aReq.setArchiveReportURL(request.archiveReportURL);
-  aReq.setArchiveErrorReportURL(request.archiveErrorReportURL);
-  aReq.setRequester(request.requester);
-  aReq.setSrcURL(request.srcURL);
-  aReq.setEntryLog(request.creationLog);
+  aReq->setArchiveFile(aFile);
+  aReq->setMountPolicy(criteria.mountPolicy);
+  aReq->setArchiveReportURL(request.archiveReportURL);
+  aReq->setArchiveErrorReportURL(request.archiveErrorReportURL);
+  aReq->setRequester(request.requester);
+  aReq->setSrcURL(request.srcURL);
+  aReq->setEntryLog(request.creationLog);
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto & copy:criteria.copyToPoolMap) {
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    aReq.addJob(copy.first, copy.second, "archive queue address to be set later", hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    aReq->addJob(copy.first, copy.second, m_agentReference->getAgentAddress(), hardcodedRetriesWithinMount, hardcodedTotalRetries);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy.first;
     jl.back().tapePool = copy.second;
@@ -394,85 +445,99 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
     throw ArchiveRequestHasNoCopies("In OStoreDB::queue: the archive to file request has no copy");
   }
   // We create the object here
-  m_agentReference->addToOwnership(aReq.getAddressIfSet(), m_objectStore);
-  aReq.setOwner(m_agentReference->getAgentAddress());
-  aReq.insert();
-  ScopedExclusiveLock arl(aReq);
-  double arCreationAndRelock = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  double arTotalQueueingTime = 0;
-  double arTotalCommitTime = 0;
-  double arTotalQueueUnlockTime = 0;
-  // We can now enqueue the requests
-  std::list<std::string> linkedTapePools;
-  std::string currentTapepool;
-  try {
-    for (auto &j: aReq.dumpJobs()) {
-      currentTapepool = j.tapePool;
-      // The shared lock will be released automatically at the end of this scope.
-      // The queueing implicitly sets the job owner as the queue (as should be). The queue should not
-      // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
-      // stale and the job would be dereferenced from the queue.
-      auto shareLock = ostoredb::MemArchiveQueue::sharedAddToQueue(j, j.tapePool, aReq, *this, logContext);
-      double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-      arTotalQueueingTime += qTime;
-      aReq.commit();
-      double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-      arTotalCommitTime += cTime;
-      // Now we can let go off the queue.
-      shareLock.reset();
-      double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-      arTotalQueueUnlockTime += qUnlockTime;
-      linkedTapePools.push_back(j.owner);
+  m_agentReference->addToOwnership(aReq->getAddressIfSet(), m_objectStore);
+  aReq->setOwner(m_agentReference->getAgentAddress());
+  aReq->insert();
+  // The request is now safe in the object store. We can now return to the caller and fire (and forget) a thread
+  // complete the bottom half of it.
+  m_threadCounter++;
+  m_enqueueingTasksQueue.push(new EnqueueingTask([aReq, this]{
+    // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
+    auto scopedCounterDecrement = [this](void *){ 
+      m_threadCounter--; 
+    };
+    // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
+    std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
+    log::LogContext logContext(m_logger);
+    utils::Timer timer;
+    ScopedExclusiveLock arl(*aReq);
+    double arRelockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    double arTotalQueueingTime = 0;
+    double arTotalCommitTime = 0;
+    double arTotalQueueUnlockTime = 0;
+    // We can now enqueue the requests
+    std::list<std::string> linkedTapePools;
+    std::string currentTapepool;
+    try {
+      for (auto &j: aReq->dumpJobs()) {
+        currentTapepool = j.tapePool;
+        // The shared lock will be released automatically at the end of this scope.
+        // The queueing implicitly sets the job owner as the queue (as should be). The queue should not
+        // be unlocked before we commit the archive request (otherwise, the pointer could be seen as
+        // stale and the job would be dereferenced from the queue.
+        auto shareLock = ostoredb::MemArchiveQueue::sharedAddToQueue(j, j.tapePool, *aReq, *this, logContext);
+        double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        arTotalQueueingTime += qTime;
+        aReq->commit();
+        double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        arTotalCommitTime += cTime;
+        // Now we can let go off the queue.
+        shareLock.reset();
+        double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+        arTotalQueueUnlockTime += qUnlockTime;
+        linkedTapePools.push_back(j.owner);
+        log::ScopedParamContainer params(logContext);
+        params.add("tapepool", j.tapePool)
+              .add("queueObject", j.owner)
+              .add("jobObject", aReq->getAddressIfSet())
+              .add("queueingTime", qTime)
+              .add("commitTime", cTime)
+              .add("queueUnlockTime", qUnlockTime);
+        logContext.log(log::INFO, "In OStoreDB::queueArchive_bottomHalf(): added job to queue");
+      }
+    } catch (NoSuchArchiveQueue &ex) {
+      // Unlink the request from already connected tape pools
+      for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
+        objectstore::ArchiveQueue aq(*tpa, m_objectStore);
+        ScopedExclusiveLock aql(aq);
+        aq.fetch();
+        aq.removeJobsAndCommit({aReq->getAddressIfSet()});
+      }
+      aReq->remove();
       log::ScopedParamContainer params(logContext);
-      params.add("tapepool", j.tapePool)
-            .add("queueObject", j.owner)
-            .add("jobObject", aReq.getAddressIfSet())
-            .add("queueingTime", qTime)
-            .add("commitTime", cTime)
-            .add("queueUnlockTime", qUnlockTime);
-      logContext.log(log::INFO, "In OStoreDB::queueArchive(): added job to queue");
+      params.add("tapepool", currentTapepool)
+            .add("archiveRequestObject", aReq->getAddressIfSet())
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("jobObject", aReq->getAddressIfSet());
+      logContext.log(log::ERR, "In OStoreDB::queueArchive_bottomHalf(): failed to enqueue job");
+      return;
     }
-  } catch (NoSuchArchiveQueue &ex) {
-    // Unlink the request from already connected tape pools
-    for (auto tpa=linkedTapePools.begin(); tpa!=linkedTapePools.end(); tpa++) {
-      objectstore::ArchiveQueue aq(*tpa, m_objectStore);
-      ScopedExclusiveLock aql(aq);
-      aq.fetch();
-      aq.removeJobsAndCommit({aReq.getAddressIfSet()});
-    }
-    aReq.remove();
+    // The request is now fully set. As it's multi-owned, we do not set the owner,
+    // just to disown it from the agent.
+    aReq->setOwner("");
+    auto archiveFile = aReq->getArchiveFile();
+    aReq->commit();
+    double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    arl.release();
+    double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // And remove reference from the agent
+    m_agentReference->removeFromOwnership(aReq->getAddressIfSet(), m_objectStore);
     log::ScopedParamContainer params(logContext);
-    params.add("tapepool", currentTapepool)
-          .add("archiveRequestObject", aReq.getAddressIfSet())
-          .add("exceptionMessage", ex.getMessageValue())
-          .add("jobObject", aReq.getAddressIfSet());
-    logContext.log(log::INFO, "In OStoreDB::queueArchive(): failed to enqueue job");
-    throw;
-  }
-  // The request is now fully set. As it's multi-owned, we do not set the owner,
-  // just to disown it from the agent.
-  aReq.setOwner("");
-  auto archiveFile = aReq.getArchiveFile();
-  aReq.commit();
-  double arOwnerResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  arl.release();
-  double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  // And remove reference from the agent
-  m_agentReference->removeFromOwnership(aReq.getAddressIfSet(), m_objectStore);
-  log::ScopedParamContainer params(logContext);
-  params.add("jobObject", aReq.getAddressIfSet())
-    .add("fileId", archiveFile.archiveFileID)
-    .add("diskInstance", archiveFile.diskInstance)
-    .add("diskFilePath", archiveFile.diskFileInfo.path)
-    .add("diskFileId", archiveFile.diskFileId)
-    .add("creationAndRelockTime", arCreationAndRelock)
-    .add("totalQueueingTime", arTotalQueueingTime)
-    .add("totalCommitTime", arTotalCommitTime)
-    .add("totalQueueUnlockTime", arTotalQueueUnlockTime)
-    .add("ownerResetTime", arOwnerResetTime)
-    .add("lockReleaseTime", arLockRelease)
-    .add("agentOwnershipResetTime", timer.secs());
-  logContext.log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
+    params.add("jobObject", aReq->getAddressIfSet())
+          .add("fileId", archiveFile.archiveFileID)
+          .add("diskInstance", archiveFile.diskInstance)
+          .add("diskFilePath", archiveFile.diskFileInfo.path)
+          .add("diskFileId", archiveFile.diskFileId)
+          .add("creationAndRelockTime", arRelockTime)
+          .add("totalQueueingTime", arTotalQueueingTime)
+          .add("totalCommitTime", arTotalCommitTime)
+          .add("totalQueueUnlockTime", arTotalQueueUnlockTime)
+          .add("ownerResetTime", arOwnerResetTime)
+          .add("lockReleaseTime", arLockRelease)
+          .add("agentOwnershipResetTime", timer.secs());
+    logContext.log(log::INFO, "In OStoreDB::queueArchive_bottomHalf(): Finished enqueueing request.");
+  }));
+  
 }
 
 //------------------------------------------------------------------------------
@@ -585,16 +650,16 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   vidFound:
   // In order to post the job, construct it first in memory.
-  objectstore::RetrieveRequest rReq(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
-  rReq.initialize();
-  rReq.setSchedulerRequest(rqst);
-  rReq.setRetrieveFileQueueCriteria(criteria);
+  auto rReq = std::make_shared<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+  rReq->initialize();
+  rReq->setSchedulerRequest(rqst);
+  rReq->setRetrieveFileQueueCriteria(criteria);
   // Find the job corresponding to the vid (and check we indeed have one).
-  auto jobs = rReq.getJobs();
-  objectstore::RetrieveRequest::JobDump * job = nullptr;
+  auto jobs = rReq->getJobs();
+  objectstore::RetrieveRequest::JobDump job;
   for (auto & j:jobs) {
     if (j.copyNb == bestCopyNb) {
-      job = &j;
+      job = j;
       goto jobFound;
     }
   }
@@ -606,29 +671,74 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   jobFound:
   {
-    // Add the request to the queue (with a shared access).
-    auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(*job, bestVid, rReq, *this, logContext);
-    double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    // The object ownership was set in SharedAdd.
-    // We need to extract the owner before inserting. After, we would need to hold a lock.
-    auto owner = rReq.getOwner();
-    rReq.insert();
-    double iTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    // The lock on the queue is released here (has to be after the request commit for consistency.
-    sharedLock.reset();
-    double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // We are ready to enqueue the request. Let's make the data safe and do the rest behind the scenes.
+    // Reference the request in the process's agent.
+    double vidSelectionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    m_agentReference->addToOwnership(rReq->getAddressIfSet(), m_objectStore);
+    double agentReferencingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    rReq->setOwner(m_agentReference->getAgentAddress());
+    // "Select" an arbitrary copy number. This is needed to serialize the object.
+    rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
+    rReq->insert();
+    double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    m_threadCounter++;
+    // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
     params.add("vid", bestVid)
-          .add("queueObject", owner)
-          .add("jobObject", rReq.getAddressIfSet())
-          .add("fileId", rReq.getArchiveFile().archiveFileID)
-          .add("diskInstance", rReq.getArchiveFile().diskInstance)
-          .add("diskFilePath", rReq.getArchiveFile().diskFileInfo.path)
-          .add("diskFileId", rReq.getArchiveFile().diskFileId)
-          .add("queueingTime", qTime)
-          .add("insertTime", iTime)
-          .add("queueUnlockTime", qUnlockTime);
-    logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing fnished).");
+          .add("jobObject", rReq->getAddressIfSet())
+          .add("fileId", rReq->getArchiveFile().archiveFileID)
+          .add("diskInstance", rReq->getArchiveFile().diskInstance)
+          .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
+          .add("diskFileId", rReq->getArchiveFile().diskFileId)
+          .add("vidSelectionTime", vidSelectionTime)
+          .add("agentReferencingTime", agentReferencingTime)
+          .add("insertionTime", insertionTime);
+    m_enqueueingTasksQueue.push(new EnqueueingTask([rReq, job, bestVid, this]{
+      // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
+      auto scopedCounterDecrement = [this](void *){ 
+        m_threadCounter--; 
+      };
+      // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
+      std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
+      log::LogContext logContext(m_logger);
+      utils::Timer timer;
+      // Add the request to the queue (with a shared access).
+      auto nonConstJob = job;
+      objectstore::ScopedExclusiveLock rReqL(*rReq);
+      double rLockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      rReq->fetch();
+      auto sharedLock = ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, bestVid, *rReq, *this, logContext);
+      double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      // The object ownership was set in SharedAdd.
+      // We need to extract the owner before inserting. After, we would need to hold a lock.
+      auto owner = rReq->getOwner();
+      rReq->commit();
+      double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      // The lock on the queue is released here (has to be after the request commit for consistency.
+      sharedLock.reset();
+      double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      rReqL.release();
+      double rUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      log::ScopedParamContainer params(logContext);
+      params.add("vid", bestVid)
+            .add("queueObject", owner)
+            .add("jobObject", rReq->getAddressIfSet())
+            .add("fileId", rReq->getArchiveFile().archiveFileID)
+            .add("diskInstance", rReq->getArchiveFile().diskInstance)
+            .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
+            .add("diskFileId", rReq->getArchiveFile().diskFileId)
+            .add("requestLockTime", rLockTime)
+            .add("queueingTime", qTime)
+            .add("commitTime", cTime)
+            .add("queueUnlockTime", qUnlockTime)
+            .add("requestUnlockTime", rUnlockTime)
+            .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime);
+      logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
+    }));
+    double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    params.add("taskPostingTime", taskPostingTime)
+          .add("totalTime", vidSelectionTime + agentReferencingTime + insertionTime + taskPostingTime);
+    logContext.log(log::INFO, "In OStoreDB::queueRetrieve(): recorded job for queueing (enqueueing posted to thread pool).");  
   }
   return bestVid;
 }

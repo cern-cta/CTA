@@ -22,16 +22,18 @@
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/RetrieveQueue.hpp"
-//#include "objectstore/Agent.hpp"
+#include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
-//#include "objectstore/ArchiveRequest.hpp"
-//#include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/ArchiveRequest.hpp"
-//#include "objectstore/DriveRegister.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
-//#include "catalogue/Catalogue.hpp"
-//#include "common/log/Logger.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "common/log/Logger.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Thread.hpp"
 #include "QueueItor.hpp"
 
 namespace cta {
@@ -56,6 +58,24 @@ private:
 public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /*============ Thread pool for queueing bottom halfs ======================*/
+private:
+  typedef std::function<void()> EnqueueingTask;
+  cta::threading::BlockingQueue<EnqueueingTask*> m_enqueueingTasksQueue;
+  class EnqueueingWorkerThread: private cta::threading::Thread {
+  public:
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq): 
+      m_enqueueingTasksQueue(etq) {}
+    void start() { cta::threading::Thread::start(); }
+    void wait() { cta::threading::Thread::wait(); }
+  private:
+    void run() override;
+    cta::threading::BlockingQueue<EnqueueingTask*> & m_enqueueingTasksQueue;
+  };
+  std::vector<EnqueueingWorkerThread *> m_enqueueingWorkerThreads;
+public:
+  void waitSubthreadsComplete() override;
+  void setThreadNumber(uint64_t threadNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 
@@ -357,6 +377,7 @@ private:
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
+  std::atomic<uint64_t> m_threadCounter; ///< This counter ensures destruction happens after the last thread completed.
 };
   
 } // namespace cta

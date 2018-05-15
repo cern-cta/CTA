@@ -34,6 +34,16 @@ public:
     */
    void send() const;
 
+   /*!
+    * Print header for stream responses from "af ls" command
+    */
+   static void printAfLsHeader();
+
+   /*!
+    * Handle stream responses for "af ls" command
+    */
+   static void printAfLsItem(const cta::admin::ArchiveFileItem &af_item);
+
 private:
    /*!
     * Parse the options for a specific command/subcommand
@@ -60,16 +70,17 @@ private:
     */
    int GetRequestTimeout() const;
 
-   /*
-    * Member variables
-    */
-   const std::string StreamBufferSize      = "1024";            //!< Buffer size for Data/Stream Responses
-   const std::string DefaultRequestTimeout = "10";              //!< Default Request Timeout. Can be overridden by
-                                                                //!< XRD_REQUESTTIMEOUT environment variable.
+   // Member variables
 
-   std::string       m_execname;    //!< Executable name of this program
-   cta::xrd::Request m_request;     //!< Protocol Buffer for the command and parameters
+   const std::string StreamBufferSize      = "1024";    //!< Buffer size for Data/Stream Responses
+   const std::string DefaultRequestTimeout = "10";      //!< Default Request Timeout. Can be overridden by
+                                                        //!< XRD_REQUESTTIMEOUT environment variable.
 
+   std::string       m_execname;                        //!< Executable name of this program
+   cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
+
+   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
+   static constexpr const char* const TEXT_NORMAL = "\x1b[0m\n";      //!< Terminal formatting code for normal text
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };
 
