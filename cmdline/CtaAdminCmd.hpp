@@ -82,7 +82,7 @@ private:
    cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
 
    static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
-   static constexpr const char* const TEXT_NORMAL = "\x1b[0m\n";      //!< Terminal formatting code for normal text
+   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };
 
