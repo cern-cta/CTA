@@ -83,10 +83,10 @@ public:
                cta::xrd::Data record;
 
                // Copy number
-               record.mutable_af_ls_item()->set_copy_nb(jt->first);
+               record.mutable_af_item()->set_copy_nb(jt->first);
 
                // Archive file
-               auto af = record.mutable_af_ls_item()->mutable_af();
+               auto af = record.mutable_af_item()->mutable_af();
                af->set_archive_id(archiveFile.archiveFileID);
                af->set_disk_instance(archiveFile.diskInstance);
                af->set_disk_id(archiveFile.diskFileId);
@@ -100,7 +100,7 @@ public:
                af->set_creation_time(archiveFile.creationTime);
 
                // Tape file
-               auto tf = record.mutable_af_ls_item()->mutable_tf();
+               auto tf = record.mutable_af_item()->mutable_tf();
                tf->set_vid(jt->second.vid);
                tf->set_f_seq(jt->second.fSeq);
                tf->set_block_id(jt->second.blockId);
