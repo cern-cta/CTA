@@ -34,6 +34,11 @@ public:
     */
    void send() const;
 
+   /*!
+    * Handle stream responses for "af ls" command
+    */
+   static void printAfLsItem(const cta::admin::ArchiveFileItem &af_item);
+
 private:
    /*!
     * Parse the options for a specific command/subcommand

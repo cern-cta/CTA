@@ -82,6 +82,9 @@ public:
             for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
                cta::xrd::Data record;
 
+               // Response type
+               record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::ARCHIVEFILE_LS);
+
                // Copy number
                record.mutable_af_item()->set_copy_nb(jt->first);
 

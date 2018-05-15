@@ -53,25 +53,36 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 template<>
 void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 {
-   const cta::admin::ArchiveFileItem &af_item = record.af_item();
+   using namespace cta::xrd;
+   using namespace cta::admin;
 
-   Log::DumpProtobuf(Log::PROTOBUF, &af_item);
+   Log::DumpProtobuf(Log::PROTOBUF, &record);
 
-   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.tf().block_id()      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
-             << af_item.af().df().path() << std::endl;
+   switch(record.data_case())
+   {
+      case Data::kAfItemFieldNumber : switch(record.af_item().type())
+      {
+         case ArchiveFileItem::ARCHIVEFILE_LS:
+            CtaAdminCmd::printAfLsItem(record.af_item());
+            break;
+         case ArchiveFileItem::LISTPENDINGARCHIVES:
+         case ArchiveFileItem::LISTPENDINGRETRIEVES:
+         default:
+            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
+      }
+
+      case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
+      {
+         case ArchiveFileItem::ARCHIVEFILE_LS:
+         case ArchiveFileItem::LISTPENDINGARCHIVES:
+         case ArchiveFileItem::LISTPENDINGRETRIEVES:
+         default:
+            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
+      }
+
+      default:
+         throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+   }
 }
 
 } // namespace XrdSsiPb
@@ -335,6 +346,27 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    }
 
    throw std::runtime_error(help.str());
+}
+
+
+
+void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
+{
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.tf().block_id()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
+             << af_item.af().df().path() << std::endl;
 }
 
 }} // namespace cta::admin
