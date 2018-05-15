@@ -52,7 +52,7 @@ void GenericObject::getHeaderFromObjectData(const std::string& objData) {
     throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") + 
             m_header.InitializationErrorString() + 
             " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
-            objDataBase64 + "\"");
+            objDataBase64 + "\" name=" + m_name + "\"");
   }
   m_headerInterpreted = true;
 }
