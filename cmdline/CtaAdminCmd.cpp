@@ -62,10 +62,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    {
       case Data::kAfItemFieldNumber : switch(record.af_item().type())
       {
-         case ArchiveFileItem::ARCHIVEFILE_LS:
-            CtaAdminCmd::printAfLsItem(record.af_item());
-            break;
-         case ArchiveFileItem::LISTPENDINGARCHIVES:
+         case ArchiveFileItem::ARCHIVEFILE_LS:          CtaAdminCmd::printAfLsItem(record.af_item()); break;
+         case ArchiveFileItem::LISTPENDINGARCHIVES:     CtaAdminCmd::printLpaItem(record.af_item()); break;
          case ArchiveFileItem::LISTPENDINGRETRIEVES:
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
@@ -73,7 +71,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
       case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
       {
-         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:
+         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaSummaryItem(record.af_summary_item()); break;
          case ArchiveFileSummaryItem::LISTPENDINGRETRIEVES:
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
@@ -197,15 +195,17 @@ void CtaAdminCmd::send() const
          std::cout << response.message_txt();
          // Print streaming response header
          switch(response.show_header()) {
-            case HeaderType::ARCHIVEFILE_LS: printAfLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS:              printAfLsHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES:         printLpaHeader(); break;
+            case HeaderType::LISTPENDINGARCHIVES_SUMMARY: printLpaSummaryHeader(); break;
             case HeaderType::NONE:
-            default:                         break;
+            default:                                      break;
          }
          break;
-      case Response::RSP_ERR_PROTOBUF:       throw XrdSsiPb::PbException(response.message_txt());
+      case Response::RSP_ERR_PROTOBUF:                    throw XrdSsiPb::PbException(response.message_txt());
       case Response::RSP_ERR_USER:
-      case Response::RSP_ERR_CTA:            throw std::runtime_error(response.message_txt());
-      default:                               throw XrdSsiPb::PbException("Invalid response type.");
+      case Response::RSP_ERR_CTA:                         throw std::runtime_error(response.message_txt());
+      default:                                            throw XrdSsiPb::PbException("Invalid response type.");
    }
 
    // If there is a Data/Stream payload, wait until it has been processed before exiting
@@ -402,6 +402,65 @@ void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
              << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
                                                                  << af_item.af().df().path()
              << std::endl;
+}
+
+
+
+void CtaAdminCmd::printLpaHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(18) << std::right << "tapepool"       << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+             <<                                                     "path"
+             << TEXT_NORMAL << std::endl;
+}
+
+
+
+void CtaAdminCmd::printLpaItem(const cta::admin::ArchiveFileItem &af_item)
+{
+   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.tf().block_id()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
+                                                                 << af_item.af().df().path()
+             << std::endl;
+}
+
+
+
+void CtaAdminCmd::printLpaSummaryHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(18) << std::right << "tapepool"    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+
+
+void CtaAdminCmd::printLpaSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+{
 }
 
 }} // namespace cta::admin

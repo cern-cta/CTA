@@ -130,14 +130,17 @@ Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::strin
 {
    Data record;
 
+   // Response type
+   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGARCHIVES);
+
    // Tapepool
-   record.mutable_af_ls_item()->set_tapepool(tapepool);
+   record.mutable_af_item()->set_tapepool(tapepool);
 
    // Copy number
-   record.mutable_af_ls_item()->set_copy_nb(job.copyNumber);
+   record.mutable_af_item()->set_copy_nb(job.copyNumber);
 
    // Archive file
-   auto af = record.mutable_af_ls_item()->mutable_af();
+   auto af = record.mutable_af_item()->mutable_af();
    af->set_archive_id(job.archiveFileID);
    af->set_disk_instance(job.instanceName);
    af->set_disk_id(job.request.diskFileID);
@@ -150,41 +153,6 @@ Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::strin
    af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
 #if 0
-   if(m_isExtended)
-   {
-
-   } else {
-      auto lpa = record.mutable_lpa_summary();
-      lpa->set_
-   }
-#endif
-#if 0
-               // Copy number
-               record.mutable_af_ls_item()->set_copy_nb(jt->first);
-
-               // Archive file
-               auto af = record.mutable_af_ls_item()->mutable_af();
-               af->set_archive_id(archiveFile.archiveFileID);
-               af->set_disk_instance(archiveFile.diskInstance);
-               af->set_disk_id(archiveFile.diskFileId);
-               af->set_size(archiveFile.fileSize);
-               af->mutable_cs()->set_type(archiveFile.checksumType);
-               af->mutable_cs()->set_value(archiveFile.checksumValue);
-               af->set_storage_class(archiveFile.storageClass);
-               af->mutable_df()->set_owner(archiveFile.diskFileInfo.owner);
-               af->mutable_df()->set_group(archiveFile.diskFileInfo.group);
-               af->mutable_df()->set_path(archiveFile.diskFileInfo.path);
-               af->set_creation_time(archiveFile.creationTime);
-
-               // Tape file
-               auto tf = record.mutable_af_ls_item()->mutable_tf();
-               tf->set_vid(jt->second.vid);
-               tf->set_f_seq(jt->second.fSeq);
-               tf->set_block_id(jt->second.blockId);
-#endif
-#if 0
-   std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>> result;
-
       if(has_flag(OptionBoolean::EXTENDED))
       {
          for(auto it = result.cbegin(); it != result.cend(); it++) {

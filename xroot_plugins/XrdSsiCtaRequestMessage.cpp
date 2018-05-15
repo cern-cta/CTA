@@ -1216,8 +1216,6 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
-
    // Search filter criteria
    auto tapepool = getOptional(OptionString::TAPE_POOL);
 
@@ -1225,32 +1223,15 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    stream = new ListPendingQueue<OStoreDB::ArchiveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
       m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : ""));
 
-   // Send the column headers in the metadata
+   // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
       if(has_flag(OptionBoolean::EXTENDED)) {
-         cmdlineOutput << TEXT_RED
-         << std::setfill(' ') << std::setw(18) << std::right << "tapepool"       << ' '
-         << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
-         << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
-         << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
-         << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
-         << std::setfill(' ') << std::setw(8)  << std::right << "instance"       << ' '
-         << std::setfill(' ') << std::setw(13) << std::right << "checksum type"  << ' '
-         << std::setfill(' ') << std::setw(14) << std::right << "checksum value" << ' '
-         << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
-         << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
-         << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
-         <<                                                     "path"           << TEXT_NORMAL;
+         response.set_show_header(HeaderType::LISTPENDINGARCHIVES);
       } else {
-         cmdlineOutput << TEXT_RED
-         << std::setfill(' ') << std::setw(18) << std::right << "tapepool"    << ' '
-         << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
-         << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
-         << TEXT_NORMAL;
+         response.set_show_header(HeaderType::LISTPENDINGARCHIVES_SUMMARY);
       }
    }
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

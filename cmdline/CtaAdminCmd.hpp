@@ -34,15 +34,17 @@ public:
     */
    void send() const;
 
-   /*!
-    * Print header for stream responses from "af ls" command
-    */
-   static void printAfLsHeader();
+   // Static methods to format streaming responses
 
-   /*!
-    * Handle stream responses for "af ls" command
-    */
-   static void printAfLsItem(const cta::admin::ArchiveFileItem &af_item);
+   // "archivefile ls" command
+   static void printAfLsHeader();
+   static void printAfLsItem(const ArchiveFileItem &af_item);
+
+   // "listpendingarchives" command
+   static void printLpaHeader();
+   static void printLpaItem(const ArchiveFileItem &af_item);
+   static void printLpaSummaryHeader();
+   static void printLpaSummaryItem(const ArchiveFileSummaryItem &af_summary_item);
 
 private:
    /*!
