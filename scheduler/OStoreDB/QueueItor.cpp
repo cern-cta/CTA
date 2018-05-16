@@ -106,7 +106,8 @@ template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_objectStore(objectStore),
-   m_onlyThisQueueId(!queue_id.empty())
+   m_onlyThisQueueId(!queue_id.empty()),
+   m_jobQueueIt(m_jobQueue.begin())
 {
    objectstore::RootEntry re(m_objectStore);
    objectstore::ScopedSharedLock rel(re);
@@ -114,7 +115,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
       m_jobQueuesQueue = re.dumpArchiveQueues();
    rel.release();
 
-   // Find the first queue
+   // Set queue iterator to the first queue in the list
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
 
    // If we specified a tape pool, advance to the correct queue

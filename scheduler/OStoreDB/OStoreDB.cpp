@@ -578,7 +578,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 
    ArchiveQueueItor_t q_it(m_objectStore, tapePoolName);
 
-   for( ; !q_it.end() ; ++q_it) {
+   for( ; q_it.is_valid() ; ++q_it) {
       auto job = q_it.getJob();
       if(job.first) ret.push_back(job.second);
    }
@@ -596,7 +596,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
 
    ArchiveQueueItor_t q_it(m_objectStore);
 
-   for( ; !q_it.end(); ++q_it) {
+   for( ; q_it.is_valid(); ++q_it) {
       auto job = q_it.getJob();
       if(job.first) ret[q_it.qid()].push_back(job.second);
    }
@@ -821,7 +821,7 @@ OStoreDB::getRetrieveJobs(const std::string &tapePoolName) const
    QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
       q_it(m_objectStore, tapePoolName);
 
-   for( ; !q_it.end() ; ++q_it) {
+   for( ; q_it.is_valid() ; ++q_it) {
       auto job = q_it.getJob();
       if(job.first) ret.push_back(job.second);
    }
@@ -840,7 +840,7 @@ OStoreDB::getRetrieveJobs() const
 
    RetrieveQueueItor_t q_it(m_objectStore);
 
-   for( ; !q_it.end(); ++q_it) {
+   for( ; q_it.is_valid(); ++q_it) {
       auto job = q_it.getJob();
       if(job.first) ret[q_it.qid()].push_back(job.second);
    }

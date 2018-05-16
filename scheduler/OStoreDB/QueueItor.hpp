@@ -34,27 +34,62 @@ public:
    //! Constructor
    QueueItor(objectstore::Backend &objectStore, const std::string &queue_id = "");
 
-   //! Increment iterator
-   void operator++() { ++m_jobQueueIt; }
+   /*!
+    * Increment iterator
+    *
+    * If we try to increment an empty queue or increment past the end of a queue, move to the first
+    * item of the next queue.
+    */
+   void operator++() {
+      if(m_jobQueueIt != m_jobQueue.end()) {
+         ++m_jobQueueIt;
+      }
+      if(m_jobQueueIt == m_jobQueue.end() && !m_onlyThisQueueId) {
+         ++m_jobQueuesQueueIt;
+         getQueueJobs();
+      }
+   }
 
    /*!
-    * Ensures that the QueueItor points to a valid object, returning true if there
+    * Ensures that the QueueItor points to a valid object, returning false if there
     * are no further objects.
     *
     * If we have reached the end of a job queue, attempts to advance to the next
     * queue and rechecks validity.
     *
-    * @retval true if we have passed the last item in the last queue
-    * @retval false if internal iterators point to a valid object
+    * @retval true  if internal iterators point to a valid object
+    * @retval false if we have advanced past the last valid job
     */
-   bool end();
+   bool is_valid() {
+      // Case 1: no more queues
+      if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) return false;
+
+      // Case 2: we are in a queue and haven't reached the end of it
+      if(m_jobQueueIt != m_jobQueue.end()) return true;
+
+      // Case 3: we have reached the end of the current queue and this is the only queue we care about
+      if(m_onlyThisQueueId) return false;
+
+      // Case 4: we have reached the end of the current queue, try to advance to the next queue
+      for(++m_jobQueuesQueueIt; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
+         getQueueJobs();
+         if(m_jobQueueIt != m_jobQueue.end()) break;
+      }
+      return m_jobQueueIt != m_jobQueue.end();
+   }
 
    /*!
-    * Check if the QueueItor points to the last item of the current queue
-    *
-    * This is used to allow iterating over queues one-at-a-time to create a summary.
+    * True if we have passed the end of the current queue
     */
-   bool isLastItem() const { return m_jobQueueIt == m_jobQueue.end() || m_jobQueueIt == --m_jobQueue.end(); }
+   bool endq() const { return m_jobQueueIt == m_jobQueue.end(); }
+
+   /*!
+    * True if we have passed the end of the last queue
+    */
+   bool end() const {
+      return m_jobQueuesQueueIt == m_jobQueuesQueue.end() ||
+             (m_onlyThisQueueId && endq());
+   }
 
    //! Queue ID (returns tapepool for archives/vid for retrieves)
    const std::string &qid() const;
@@ -72,30 +107,5 @@ private:
    typename std::list<typename JobQueue::JobDump>                  m_jobQueue;            // list of Archive or Retrieve Jobs
    typename std::list<typename JobQueue::JobDump>::const_iterator  m_jobQueueIt;          // iterator across m_jobQueue
 };
-
-
-
-//------------------------------------------------------------------------------
-// QueueItor::end
-//------------------------------------------------------------------------------
-template<typename JobQueuesQueue, typename JobQueue>
-bool QueueItor<JobQueuesQueue, JobQueue>::end()
-{
-   // Case 1: no more queues
-   if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) return true;
-
-   // Case 2: we are in a queue and haven't reached the end of it
-   if(m_jobQueueIt != m_jobQueue.end()) return false;
-
-   // Case 3: we have reached the end of the current queue and this is the only queue we care about
-   if(m_onlyThisQueueId) return true;
-
-   // Case 4: we have reached the end of the current queue, try to advance to the next queue
-   for(++m_jobQueuesQueueIt; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-      getQueueJobs();
-      if(m_jobQueueIt != m_jobQueue.end()) break;
-   }
-   return m_jobQueueIt == m_jobQueue.end();
-}
 
 } // namespace cta

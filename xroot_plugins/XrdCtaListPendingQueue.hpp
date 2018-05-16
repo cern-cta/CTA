@@ -69,48 +69,57 @@ public:
       XrdSsiPb::OStreamBuffer<Data> *streambuf;
 
       try {
-         if(m_queueItor.end()) {
-            // Nothing more to send, close the stream
+         // If there is nothing more to send, close the stream
+         if(m_queueItor.end() ||
+            (m_isExtended && !m_queueItor.is_valid()))
+         {
             last = true;
             return nullptr;
          }
 
+         // Fill the buffer
+
          streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
+         Data record;
 
-         for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
-         {
-            Data record;
+         if(m_isExtended) {
+            // Detailed listing of all queued files
 
-            if(m_isExtended) {
-               // One record on the stream = one file
+            for(bool is_buffer_full = false; m_queueItor.is_valid() && !is_buffer_full; ++m_queueItor)
+            {
                auto job = m_queueItor.getJob();
                if(!job.first) continue;
                record = fillRecord(m_queueItor.qid(), job.second);
-            } else {
-               // One record on the stream = summary of the current queue
+
+               // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
+               // enough data to send to the client. The actual buffer size is double the block size,
+               // so we can keep writing a few additional records after is_buffer_full is true. These
+               // will be sent on the next iteration. If we exceed the hard limit of double the block
+               // size, Push() will throw an exception.
+               is_buffer_full = streambuf->Push(record);
+            }
+         } else {
+            // Summary by tapepool or vid
+
+            for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; )
+            {
                uint64_t total_files = 0;
                uint64_t total_size = 0;
 
-               for(auto job = m_queueItor.getJob(); ; ++m_queueItor) {
+               for( ; !m_queueItor.endq(); ++m_queueItor) {
+                  auto job = m_queueItor.getJob();
                   if(job.first) {
                      ++total_files;
                      total_size += job.second.request.fileSize;
                   }
-                  // Break before incrementing the queueItor if we are on the last item. m_queueItor
-                  // is incremented in the outer loop, so we don't want to increment twice.
-                  if(m_queueItor.isLastItem()) break;
                }
 
                record = fillRecord(m_queueItor.qid(), total_files, total_size);
-            }
 
-            // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
-            // enough data to send to the client. The actual buffer size is double the block size,
-            // so we can keep writing a few additional records after is_buffer_full is true. These
-            // will be sent on the next iteration. If we exceed the hard limit of double the block
-            // size, Push() will throw an exception.
-            is_buffer_full = streambuf->Push(record);
+               is_buffer_full = streambuf->Push(record);
+            }
          }
+
          dlen = streambuf->Size();
          XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
       } catch(exception::Exception &ex) {
