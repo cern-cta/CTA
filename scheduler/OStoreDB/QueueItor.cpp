@@ -180,7 +180,8 @@ template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_objectStore(objectStore),
-   m_onlyThisQueueId(!queue_id.empty())
+   m_onlyThisQueueId(!queue_id.empty()),
+   m_jobQueueIt(m_jobQueue.begin())
 {
    objectstore::RootEntry re(m_objectStore);
    objectstore::ScopedSharedLock rel(re);
