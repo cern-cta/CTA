@@ -24,6 +24,27 @@
 namespace cta {
 
 //------------------------------------------------------------------------------
+// QueueItor::getQueueJobs (Archive specialisation)
+//------------------------------------------------------------------------------
+template<typename JobQueuesQueue, typename JobQueue>
+void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
+{
+   // Behaviour is racy: it's possible that the queue can disappear before we read it.
+   // In this case, we ignore the error and move on.
+   try {
+      JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock ostpl(osaq);
+         osaq.fetch();
+         m_jobQueue = osaq.dumpJobs();
+      ostpl.release();
+      m_jobQueueIt = m_jobQueue.begin();
+   } catch(...) {
+      // Force an increment to the next queue
+      m_jobQueueIt = m_jobQueue.end();
+   }
+}
+
+//------------------------------------------------------------------------------
 // QueueItor::qid (Archive specialisation)
 //------------------------------------------------------------------------------
 template<>

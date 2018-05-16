@@ -37,8 +37,24 @@ public:
    //! Increment iterator
    void operator++() { ++m_jobQueueIt; }
 
-   //! Check iterator is valid
+   /*!
+    * Ensures that the QueueItor points to a valid object, returning true if there
+    * are no further objects.
+    *
+    * If we have reached the end of a job queue, attempts to advance to the next
+    * queue and rechecks validity.
+    *
+    * @retval true if we have passed the last item in the last queue
+    * @retval false if internal iterators point to a valid object
+    */
    bool end();
+
+   /*!
+    * Check if the QueueItor points to the last item of the current queue
+    *
+    * This is used to allow iterating over queues one-at-a-time to create a summary.
+    */
+   bool isLastItem() const { return m_jobQueueIt == --m_jobQueue.end(); }
 
    //! Queue ID (returns tapepool for archives/vid for retrieves)
    const std::string &qid() const;
@@ -46,6 +62,7 @@ public:
    //! Get the current job, bool is set to true if the data retrieved is valid
    std::pair<bool,typename JobQueue::job_t> getJob() const;
 private:
+   //!  Get the list of jobs in the queue
    void getQueueJobs();
 
    objectstore::Backend                                           &m_objectStore;         // Reference to ObjectStore Backend
@@ -56,12 +73,11 @@ private:
    typename std::list<typename JobQueue::JobDump>::const_iterator  m_jobQueueIt;          // iterator across m_jobQueue
 };
 
-/*!
- * Check if the QueueItor points to a valid object
- *
- * @retval false if internal iterators point to a valid object
- * @retval true if we have passed the last item in the last queue
- */
+
+
+//------------------------------------------------------------------------------
+// QueueItor::end
+//------------------------------------------------------------------------------
 template<typename JobQueuesQueue, typename JobQueue>
 bool QueueItor<JobQueuesQueue, JobQueue>::end()
 {
@@ -80,27 +96,6 @@ bool QueueItor<JobQueuesQueue, JobQueue>::end()
       if(m_jobQueueIt != m_jobQueue.end()) break;
    }
    return m_jobQueueIt == m_jobQueue.end();
-}
-
-/*!
- * Get the list of jobs in the queue
- */
-template<typename JobQueuesQueue, typename JobQueue>
-void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
-{
-   // Behaviour is racy: it's possible that the queue can disappear before we read it.
-   // In this case, we ignore the error and move on.
-   try {
-      JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
-      objectstore::ScopedSharedLock ostpl(osaq);
-         osaq.fetch();
-         m_jobQueue = osaq.dumpJobs();
-      ostpl.release();
-      m_jobQueueIt = m_jobQueue.begin();
-   } catch(...) {
-      // Force an increment to the next queue
-      m_jobQueueIt = m_jobQueue.end();
-   }
 }
 
 } // namespace cta

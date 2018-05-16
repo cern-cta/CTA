@@ -79,11 +79,30 @@ public:
 
          for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
          {
-            auto job = m_queueItor.getJob();
+            Data record;
 
-            if(!job.first) continue;
+            if(m_isExtended) {
+               // One record on the stream = one file
+               auto job = m_queueItor.getJob();
+               if(!job.first) continue;
+               record = fillRecord(m_queueItor.qid(), job.second);
+            } else {
+               // One record on the stream = summary of the current queue
+               uint64_t total_files = 0;
+               uint64_t total_size = 0;
 
-            Data record = fillRecord(m_queueItor.qid(), job.second);
+               for(auto job = m_queueItor.getJob(); ; ++m_queueItor) {
+                  if(job.first) {
+                     ++total_files;
+                     total_size += job.second.request.fileSize;
+                  }
+                  // Break before incrementing the queueItor if we are on the last item. m_queueItor
+                  // is incremented in the outer loop, so we don't want to increment twice.
+                  if(m_queueItor.isLastItem()) break;
+               }
+
+               record = fillRecord(m_queueItor.qid(), total_files, total_size);
+            }
 
             // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
             // enough data to send to the client. The actual buffer size is double the block size,
@@ -117,6 +136,8 @@ private:
    typedef decltype(m_queueItor.getJob().second) data_t;                   //!< Infer data type from template type
 
    Data fillRecord(const std::string &tape_id, const data_t &job);         //!< Convert data to protobuf
+   Data fillRecord(const std::string &tape_id,
+      const uint64_t &total_files, const uint64_t &total_size);            //!< Convert summary to protobuf
 
    static constexpr const char* const LOG_SUFFIX  = "ListPendingQueue";    //!< Identifier for log messages
 };
@@ -126,7 +147,8 @@ private:
 // Template specialisations for Archive and Retrieve Queue types
 
 template<>
-Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::string &tapepool, const common::dataStructures::ArchiveJob &job)
+Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::string &tapepool,
+   const common::dataStructures::ArchiveJob &job)
 {
    Data record;
 
@@ -152,42 +174,24 @@ Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::strin
    af->mutable_df()->set_group(job.request.requester.group);
    af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
-#if 0
-      if(has_flag(OptionBoolean::EXTENDED))
-      {
-         for(auto it = result.cbegin(); it != result.cend(); it++) {
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-               std::vector<std::string> currentRow;
-               currentRow.push_back(it->first);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->archiveFileID)));
-               currentRow.push_back(jt->request.storageClass);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->copyNumber)));
-               currentRow.push_back(jt->request.diskFileID);
-               currentRow.push_back(jt->instanceName);
-               currentRow.push_back(jt->request.checksumType);
-               currentRow.push_back(jt->request.checksumValue);         
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.fileSize)));
-               currentRow.push_back(jt->request.requester.name);
-               currentRow.push_back(jt->request.requester.group);
-               currentRow.push_back(jt->request.diskFileInfo.path);
-               responseTable.push_back(currentRow);
-            }
-         }
-      } else {
-         for(auto it = result.cbegin(); it != result.cend(); it++) {
-            std::vector<std::string> currentRow;
-            currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
-            uint64_t size = 0;
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++) {
-               size += jt->request.fileSize;
-            }
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
-            responseTable.push_back(currentRow);
-         }
-      }
-#endif
+   return record;
+}
+
+template<>
+Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::string &tapepool,
+   const uint64_t &total_files, const uint64_t &total_size)
+{
+   Data record;
+
+   // Response type
+   record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::LISTPENDINGARCHIVES);
+
+   // Tapepool
+   record.mutable_af_summary_item()->set_tapepool(tapepool);
+
+   // Summary statistics
+   record.mutable_af_summary_item()->set_total_files(total_files);
+   record.mutable_af_summary_item()->set_total_size(total_size);
 
    return record;
 }
