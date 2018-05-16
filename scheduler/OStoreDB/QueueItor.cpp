@@ -24,7 +24,7 @@
 namespace cta {
 
 //------------------------------------------------------------------------------
-// QueueItor::getQueueJobs (Archive specialisation)
+// QueueItor::getQueueJobs
 //------------------------------------------------------------------------------
 template<typename JobQueuesQueue, typename JobQueue>
 void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
@@ -56,7 +56,7 @@ qid() const
 }
 
 //------------------------------------------------------------------------------
-// QueueItor::QueueItor (Archive specialisation)
+// QueueItor::getJob (Archive specialisation)
 //------------------------------------------------------------------------------
 template<>
 std::pair<bool,objectstore::ArchiveQueue::job_t>
@@ -120,9 +120,10 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    // If we specified a tape pool, advance to the correct queue
    if(m_onlyThisQueueId) {
       for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-         if(m_jobQueuesQueueIt->tapePool == queue_id) { 
-            break;
-         }
+         if(m_jobQueuesQueueIt->tapePool == queue_id) break;
+      }
+      if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
+         throw cta::exception::UserError("TapePool " + queue_id + " not found.");
       }
    }
 

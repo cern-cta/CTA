@@ -609,9 +609,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>>
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tapePoolName) const
 {
-   ArchiveQueueItor_t q_it(m_objectStore, tapePoolName);
-
-   return q_it;
+   return ArchiveQueueItor_t(m_objectStore, tapePoolName);
 }
 
 //------------------------------------------------------------------------------

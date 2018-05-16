@@ -61,7 +61,7 @@ public:
     *                 last = true:  No more data remains.
     *                 last = false: A fatal error occurred, eRef has the reason.
     */
-   virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) {
+   virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
       XrdSsiPb::OStreamBuffer<cta::xrd::Data> *streambuf;

@@ -54,7 +54,7 @@ public:
     *
     * This is used to allow iterating over queues one-at-a-time to create a summary.
     */
-   bool isLastItem() const { return m_jobQueueIt == --m_jobQueue.end(); }
+   bool isLastItem() const { return m_jobQueueIt == m_jobQueue.end() || m_jobQueueIt == --m_jobQueue.end(); }
 
    //! Queue ID (returns tapepool for archives/vid for retrieves)
    const std::string &qid() const;
