@@ -374,7 +374,7 @@ private:
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
-  std::atomic<uint64_t> m_threadCounter; ///< This counter ensures destruction happens after the last thread completed.
+  std::atomic<uint64_t> m_taskQueueSize; ///< This counter ensures destruction happens after the last thread completed.
 };
   
 }
