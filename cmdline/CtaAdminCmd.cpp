@@ -56,8 +56,6 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    using namespace cta::xrd;
    using namespace cta::admin;
 
-   Log::DumpProtobuf(Log::PROTOBUF, &record);
-
    switch(record.data_case())
    {
       case Data::kAfItemFieldNumber : switch(record.af_item().type())
@@ -460,6 +458,10 @@ void CtaAdminCmd::printLpaSummaryHeader()
 
 void CtaAdminCmd::printLpaSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
 {
+   std::cout << std::setfill(' ') << std::setw(18) << std::right << af_summary_item.tapepool()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
+             << std::endl;
 }
 
 }} // namespace cta::admin
