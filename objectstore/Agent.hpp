@@ -117,6 +117,10 @@ private:
 public:
   std::list<std::string> getOwnershipList();
   
+  std::set<std::string> getOwnershipSet();
+  
+  void resetOwnership(const std::set<std::string>& ownershipSet);
+  
   size_t getOwnershipListSize();
   
   std::string dump();

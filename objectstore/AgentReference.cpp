@@ -184,19 +184,37 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       double agentFetchTime = t.secs(utils::Timer::resetCounter);
       size_t agentOwnershipSizeBefore = ag.getOwnershipListSize();
       size_t operationsCount = q->queue.size() + 1;
+      bool ownershipModification = false;
+      // First, determine if any action is an ownership modification
+      if (action->op == AgentOperation::Add || action->op == AgentOperation::Remove)
+        ownershipModification = true;
+      if (!ownershipModification) {
+        for (auto &a: q->queue) {
+          if (a->op == AgentOperation::Add || a->op == AgentOperation::Remove) {
+            ownershipModification = true;
+            break;
+          }
+        }
+      }
+      std::set<std::string> ownershipSet;
+      // If necessary, we will dump the ownership list into a set, manipulate it in memory,
+      // and then recreate it.
+      if (ownershipModification) ownershipSet = ag.getOwnershipSet();
       // First we apply our own modification
-      appyAction(*action, ag, lc);
+      appyAction(*action, ag, ownershipSet, lc);
       // Then those of other threads
       for (auto a: q->queue) {
         threading::MutexLocker ml(a->mutex);
-        appyAction(*a, ag, lc);
+        appyAction(*a, ag, ownershipSet, lc);
       }
+      // Record the new ownership if needed.
+      if (ownershipModification) ag.resetOwnership(ownershipSet);
       size_t agentOwnershipSizeAfter = ag.getOwnershipListSize();
       double agentUpdateTime = t.secs(utils::Timer::resetCounter);
       // and commit
       ag.commit();
       double agentCommitTime = t.secs(utils::Timer::resetCounter);
-      {
+      if (ownershipModification) {
         log::ScopedParamContainer params(lc);
         params.add("agentOwnershipSizeBefore", agentOwnershipSizeBefore)
               .add("agentOwnershipSizeAfter", agentOwnershipSizeAfter)
@@ -233,11 +251,12 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
   }
 }
 
-void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::LogContext &lc) {
+void AgentReference::appyAction(Action& action, objectstore::Agent& agent, 
+    std::set<std::string> & ownershipSet, log::LogContext &lc) {
   switch (action.op) {
   case AgentOperation::Add:
   {
-    agent.addToOwnership(action.objectAddress);
+    ownershipSet.insert(action.objectAddress);
     log::ScopedParamContainer params(lc);
     params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
@@ -245,7 +264,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent, log::
   }
   case AgentOperation::Remove:
   {
-    agent.removeFromOwnership(action.objectAddress);
+    ownershipSet.erase(action.objectAddress);
     log::ScopedParamContainer params(lc);
     params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");

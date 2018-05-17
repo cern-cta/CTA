@@ -28,6 +28,7 @@
 #include <string>
 #include <future>
 #include <list>
+#include <set>
 
 namespace cta { namespace objectstore {
 
@@ -142,10 +143,12 @@ private:
   
   /**
    * Helper function applying the action to the already fetched agent.
+   * Ownership operations are done on the pre-extracted ownershipSet.
    * @param action
    * @param agent
    */
-  void appyAction(Action &action, objectstore::Agent & agent, log::LogContext &lc);
+  void appyAction(Action& action, objectstore::Agent& agent, 
+    std::set<std::string> & ownershipSet, log::LogContext &lc);
   
   /**
    * The global function actually doing the job: creates a queue if needed, add
