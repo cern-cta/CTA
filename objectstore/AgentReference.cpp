@@ -177,8 +177,13 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params(lc);
       params.add("agentObject", m_agentAddress);
+      utils::Timer t;
       objectstore::ScopedExclusiveLock agl(ag);
+      double agentLockTime = t.secs(utils::Timer::resetCounter);
       ag.fetch();
+      double agentFetchTime = t.secs(utils::Timer::resetCounter);
+      size_t agentOwnershipSizeBefore = ag.getOwnershipListSize();
+      size_t operationsCount = q->queue.size() + 1;
       // First we apply our own modification
       appyAction(*action, ag, lc);
       // Then those of other threads
@@ -186,8 +191,22 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
         threading::MutexLocker ml(a->mutex);
         appyAction(*a, ag, lc);
       }
+      size_t agentOwnershipSizeAfter = ag.getOwnershipListSize();
+      double agentUpdateTime = t.secs(utils::Timer::resetCounter);
       // and commit
       ag.commit();
+      double agentCommitTime = t.secs(utils::Timer::resetCounter);
+      {
+        log::ScopedParamContainer params(lc);
+        params.add("agentOwnershipSizeBefore", agentOwnershipSizeBefore)
+              .add("agentOwnershipSizeAfter", agentOwnershipSizeAfter)
+              .add("operationsCount", operationsCount)
+              .add("agentLockTime", agentLockTime)
+              .add("agentFetchTime", agentFetchTime)
+              .add("agentUpdateTime", agentUpdateTime)
+              .add("agentCommitTime", agentCommitTime);
+        lc.log(log::INFO, "In AgentReference::queueAndExecuteAction(): executed a batch of actions.");
+      }
       // We avoid global log (with a count) as we would get one for each heartbeat.
     } catch (...) {
       // Something wend wrong: , we release the next batch of changes

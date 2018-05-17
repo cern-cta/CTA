@@ -117,6 +117,8 @@ private:
 public:
   std::list<std::string> getOwnershipList();
   
+  size_t getOwnershipListSize();
+  
   std::string dump();
   
   void bumpHeartbeat();

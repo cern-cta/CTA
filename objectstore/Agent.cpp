@@ -181,6 +181,12 @@ std::list<std::string>
   return ret;
 }
 
+size_t cta::objectstore::Agent::getOwnershipListSize() {
+  checkPayloadReadable();
+  return m_payload.ownedobjects_size();
+}
+
+
 void cta::objectstore::Agent::bumpHeartbeat() {
   checkPayloadWritable();
   auto heartbeat=m_payload.heartbeat()+1;
