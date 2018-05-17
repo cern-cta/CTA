@@ -242,7 +242,7 @@ Data ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fillRecord(const std::stri
    Data record;
 
    // Response type
-   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGARCHIVES);
+   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
 
    // Tapepool
    record.mutable_af_item()->set_vid(vid);
