@@ -101,7 +101,7 @@ public:
          } else {
             // Summary by tapepool or vid
 
-            for(bool is_buffer_full = false; !(is_buffer_full || m_queueItor.end()); )
+            for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
             {
                uint64_t total_files = 0;
                uint64_t total_size = 0;

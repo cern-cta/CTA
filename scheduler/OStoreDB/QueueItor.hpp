@@ -37,14 +37,13 @@ public:
    /*!
     * Increment iterator
     *
-    * If we try to increment an empty queue or increment past the end of a queue, move to the first
-    * item of the next queue.
+    * Increments to the end of the current job queue. Incrementing again moves to the next queue,
+    * except when we are limited to one tapepool/vid.
     */
    void operator++() {
       if(m_jobQueueIt != m_jobQueue.end()) {
          ++m_jobQueueIt;
-      }
-      if(m_jobQueueIt == m_jobQueue.end() && !m_onlyThisQueueId) {
+      } else if(!m_onlyThisQueueId) {
          ++m_jobQueuesQueueIt;
          if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
             getQueueJobs();
