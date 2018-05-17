@@ -75,6 +75,10 @@ private:
     cta::threading::BlockingQueue<EnqueueingTask*> & m_enqueueingTasksQueue;
   };
   std::vector<EnqueueingWorkerThread *> m_enqueueingWorkerThreads;
+  std::atomic<uint64_t> m_taskQueueSize; ///< This counter ensures destruction happens after the last thread completed.
+  /// Delay introduced before posting to the task queue when it becomes too long.
+  void delayIfNecessary(log::LogContext &lc);
+  cta::threading::Semaphore m_taskPostingSemaphore;
 public:
   void waitSubthreadsComplete() override;
   void setThreadNumber(uint64_t threadNumber);
@@ -374,7 +378,6 @@ private:
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
   objectstore::AgentReference *m_agentReference = nullptr;
-  std::atomic<uint64_t> m_taskQueueSize; ///< This counter ensures destruction happens after the last thread completed.
 };
   
 }
