@@ -455,20 +455,21 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   // The request is now safe in the object store. We can now return to the caller and fire (and forget) a thread
   // complete the bottom half of it.
-  uint64_t taskQueueSize = ++m_taskQueueSize;
+  m_taskQueueSize++;
+  uint64_t taskQueueSize = m_taskQueueSize;
   // Prepare the logs to avoid multithread access on the object.
   log::ScopedParamContainer params(logContext);
   params.add("jobObject", aReq->getAddressIfSet())
-        .add("fileId", aReq->getArchiveFile().archiveFileID)
-        .add("diskInstance", aReq->getArchiveFile().diskInstance)
-        .add("diskFilePath", aReq->getArchiveFile().diskFileInfo.path)
-        .add("diskFileId", aReq->getArchiveFile().diskFileId)
+        .add("fileId", aFile.archiveFileID)
+        .add("diskInstance", aFile.diskInstance)
+        .add("diskFilePath", aFile.diskFileInfo.path)
+        .add("diskFileId", aFile.diskFileId)
         .add("agentReferencingTime", agentReferencingTime)
         .add("insertionTime", insertionTime);
   m_enqueueingTasksQueue.push(new EnqueueingTask([aReq, this]{
     // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
     auto scopedCounterDecrement = [this](void *){ 
-      m_taskQueueSize--; 
+      m_taskQueueSize--;
     };
     // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
     std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void *)1, scopedCounterDecrement);
@@ -761,7 +762,8 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     rReq->setActiveCopyNumber(criteria.archiveFile.tapeFiles.begin()->second.copyNb);
     rReq->insert();
     double insertionTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-    uint64_t taskQueueSize = ++m_taskQueueSize;
+    m_taskQueueSize++;
+    uint64_t taskQueueSize = m_taskQueueSize;
     // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
     params.add("vid", bestVid)
