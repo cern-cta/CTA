@@ -137,7 +137,7 @@ void OStoreDB::delayIfNecessary(log::LogContext& lc) {
     double delayInt;
     ::timespec ts;
     ts.tv_nsec = std::modf(delay, &delayInt) * 1000 * 1000 *1000;
-    ts.tv_nsec = delayInt;
+    ts.tv_sec = delayInt;
     nanosleep(&ts, nullptr);
     sleepDelay = t.secs(utils::Timer::resetCounter);
     delayInserted = true;
