@@ -382,8 +382,6 @@ void CtaAdminCmd::printAfLsHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-
-
 void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
 {
    std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
@@ -404,8 +402,6 @@ void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
              << std::endl;
 }
 
-
-
 void CtaAdminCmd::printLpaHeader()
 {
    std::cout << TEXT_RED
@@ -424,8 +420,6 @@ void CtaAdminCmd::printLpaHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-
-
 void CtaAdminCmd::printLpaItem(const cta::admin::ArchiveFileItem &af_item)
 {
    std::cout << std::setfill(' ') << std::setw(18) << std::right << af_item.tapepool()           << ' '
@@ -443,8 +437,6 @@ void CtaAdminCmd::printLpaItem(const cta::admin::ArchiveFileItem &af_item)
              << std::endl;
 }
 
-
-
 void CtaAdminCmd::printLpaSummaryHeader()
 {
    std::cout << TEXT_RED
@@ -454,14 +446,44 @@ void CtaAdminCmd::printLpaSummaryHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-
-
 void CtaAdminCmd::printLpaSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
 {
    std::cout << std::setfill(' ') << std::setw(18) << std::right << af_summary_item.tapepool()    << ' '
              << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
              << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
              << std::endl;
+}
+
+void CtaAdminCmd::printLprHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(13) << std::right << "vid"            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << "block id"       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+             <<                                                     "path"
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::printLprItem(const cta::admin::ArchiveFileItem &af_item)
+{
+}
+
+void CtaAdminCmd::printLprSummaryHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(13) << std::right << "vid"         << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::printLprSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+{
 }
 
 }} // namespace cta::admin

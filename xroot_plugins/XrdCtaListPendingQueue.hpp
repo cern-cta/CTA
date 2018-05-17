@@ -110,7 +110,7 @@ public:
                   auto job = m_queueItor.getJob();
                   if(job.first) {
                      ++total_files;
-                     total_size += job.second.request.fileSize;
+                     total_size += fileSize(job.second);
                   }
                }
 
@@ -148,12 +148,13 @@ private:
    Data fillRecord(const std::string &tape_id,
       const uint64_t &total_files, const uint64_t &total_size);            //!< Convert summary to protobuf
 
+   static uint64_t fileSize(const data_t &job);                            //!< Obtain file size from queue item
    static constexpr const char* const LOG_SUFFIX  = "ListPendingQueue";    //!< Identifier for log messages
 };
 
 
 
-// Template specialisations for Archive and Retrieve Queue types
+// Template specialisations for Archive Queue types
 
 template<>
 Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::string &tapepool,
@@ -203,6 +204,115 @@ Data ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fillRecord(const std::strin
    record.mutable_af_summary_item()->set_total_size(total_size);
 
    return record;
+}
+
+template<>
+uint64_t ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fileSize(const data_t &job) {
+   return job.request.fileSize;
+}
+
+
+
+// Template specialisations for Retrieve Queue types
+
+template<>
+Data ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fillRecord(const std::string &vid,
+   const common::dataStructures::RetrieveJob &job)
+{
+
+#if 0
+   if(vid) {
+      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
+      if(!list.empty()) result[vid.value()] = list;
+   } else {
+      result = m_scheduler.getPendingRetrieveJobs(m_lc);
+   }
+
+         for(auto it = result.cbegin(); it != result.cend(); it++)
+         {
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+               currentRow.push_back(jt->request.requester.name);
+               currentRow.push_back(jt->request.requester.group);
+               currentRow.push_back(jt->request.diskFileInfo.path);
+               responseTable.push_back(currentRow);
+            }
+         }
+#endif
+   Data record;
+
+   // Response type
+   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGARCHIVES);
+
+   // Tapepool
+   record.mutable_af_item()->set_vid(vid);
+
+   // Retrieve file
+   auto af = record.mutable_af_item()->mutable_af();
+   af->set_archive_id(job.request.archiveFileID);
+#if 0
+               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId))));
+               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize)));
+   af->set_disk_instance(job.instanceName);
+   af->set_disk_id(job.request.diskFileID);
+   af->set_size(job.request.fileSize);
+   af->mutable_cs()->set_type(job.request.checksumType);
+   af->mutable_cs()->set_value(job.request.checksumValue);         
+   af->set_storage_class(job.request.storageClass);
+#endif
+   af->mutable_df()->set_owner(job.request.requester.name);
+   af->mutable_df()->set_group(job.request.requester.group);
+   af->mutable_df()->set_path(job.request.diskFileInfo.path);
+
+   return record;
+}
+
+template<>
+Data ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fillRecord(const std::string &tapepool,
+   const uint64_t &total_files, const uint64_t &total_size)
+{
+#if 0
+         for(auto it = result.cbegin(); it != result.cend(); it++)
+         {
+            std::vector<std::string> currentRow;
+            currentRow.push_back(it->first);
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
+            uint64_t size = 0;
+            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
+            {
+            }
+            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
+            responseTable.push_back(currentRow);
+         }
+      }
+      cmdlineOutput << formatResponse(responseTable);
+#endif
+   Data record;
+
+   // Response type
+   record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::LISTPENDINGRETRIEVES);
+
+   // Tapepool
+   record.mutable_af_summary_item()->set_tapepool(tapepool);
+
+   // Summary statistics
+   record.mutable_af_summary_item()->set_total_files(total_files);
+   record.mutable_af_summary_item()->set_total_size(total_size);
+
+   return record;
+}
+
+template<>
+uint64_t ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fileSize(const data_t &job) {
+#if 0
+               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
+               size += file.fileSize;
+   return job.request.fileSize;
+#endif
+   return 0;
 }
 
 }} // namespace cta::xrd

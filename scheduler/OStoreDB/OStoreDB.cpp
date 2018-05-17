@@ -849,6 +849,15 @@ OStoreDB::getRetrieveJobs() const
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getRetrieveJobItor()
+//------------------------------------------------------------------------------
+OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vid) const
+{
+   return RetrieveQueueItor_t(m_objectStore, vid);
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::getDriveStates()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates(log::LogContext & lc) const {

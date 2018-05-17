@@ -168,7 +168,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processListPendingArchives(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LISTPENDINGRETRIEVES, AdminCmd::SUBCMD_NONE):
-               processListPendingRetrieves(request.admincmd(), response);
+               processListPendingRetrieves(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
                processLogicalLibrary_Add(request.admincmd(), response);
@@ -1216,7 +1216,7 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 {
    using namespace cta::admin;
 
-   // Search filter criteria
+   // Filter criteria
    auto tapepool = getOptional(OptionString::TAPE_POOL);
 
    // Create a XrdSsi stream object to return the results
@@ -1237,70 +1237,26 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
 
 
-void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
-
-   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > result;
-
+   // Filter criteria
    auto vid = getOptional(OptionString::VID);
 
-   if(vid) {
-      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
-      if(!list.empty()) result[vid.value()] = list;
-   } else {
-      result = m_scheduler.getPendingRetrieveJobs(m_lc);
-   }
+   // Create a XrdSsi stream object to return the results
+   stream = new ListPendingQueue<OStoreDB::RetrieveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
+      m_scheddb.getRetrieveJobItor(vid ? vid.value() : ""));
 
-   if(!result.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
       if(has_flag(OptionBoolean::EXTENDED)) {
-         std::vector<std::string> header = {"vid","id","copy no.","fseq","block id","size","user","group","path"};
-         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-         for(auto it = result.cbegin(); it != result.cend(); it++)
-         {
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-               std::vector<std::string> currentRow;
-               currentRow.push_back(it->first);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(jt->request.archiveFileID)));
-               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq))));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId))));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize)));
-               currentRow.push_back(jt->request.requester.name);
-               currentRow.push_back(jt->request.requester.group);
-               currentRow.push_back(jt->request.diskFileInfo.path);
-               responseTable.push_back(currentRow);
-            }
-         }
+         response.set_show_header(HeaderType::LISTPENDINGRETRIEVES);
       } else {
-         std::vector<std::string> header = {"vid","total files","total size"};
-         if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-         for(auto it = result.cbegin(); it != result.cend(); it++)
-         {
-            std::vector<std::string> currentRow;
-            currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
-            uint64_t size = 0;
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               size += file.fileSize;
-            }
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
-            responseTable.push_back(currentRow);
-         }
+         response.set_show_header(HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
       }
-      cmdlineOutput << formatResponse(responseTable);
    }
 
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

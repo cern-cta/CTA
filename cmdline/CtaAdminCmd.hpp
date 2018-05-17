@@ -46,6 +46,12 @@ public:
    static void printLpaSummaryHeader();
    static void printLpaSummaryItem(const ArchiveFileSummaryItem &af_summary_item);
 
+   // "listpendingretrieves" command
+   static void printLprHeader();
+   static void printLprItem(const ArchiveFileItem &af_item);
+   static void printLprSummaryHeader();
+   static void printLprSummaryItem(const ArchiveFileSummaryItem &af_summary_item);
+
 private:
    /*!
     * Parse the options for a specific command/subcommand

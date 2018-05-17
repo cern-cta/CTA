@@ -151,7 +151,7 @@ private:
 
    admincmdstream_t processArchiveFile_Ls;
    admincmdstream_t processListPendingArchives;
-   admincmd_t processListPendingRetrieves; // TODO: convert to stream format
+   admincmdstream_t processListPendingRetrieves;
 
    /*!
     * Log an admin command
