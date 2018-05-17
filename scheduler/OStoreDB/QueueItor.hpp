@@ -46,7 +46,9 @@ public:
       }
       if(m_jobQueueIt == m_jobQueue.end() && !m_onlyThisQueueId) {
          ++m_jobQueuesQueueIt;
-         getQueueJobs();
+         if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
+            getQueueJobs();
+         }
       }
    }
 
@@ -79,16 +81,15 @@ public:
    }
 
    /*!
-    * True if we have passed the end of the current queue
+    * True if we are at the end of the current queue
     */
    bool endq() const { return m_jobQueueIt == m_jobQueue.end(); }
 
    /*!
-    * True if we have passed the end of the last queue
+    * True if we are at the end of the last queue
     */
    bool end() const {
-      return m_jobQueuesQueueIt == m_jobQueuesQueue.end() ||
-             (m_onlyThisQueueId && endq());
+      return m_jobQueuesQueueIt == m_jobQueuesQueue.end() || (m_onlyThisQueueId && endq());
    }
 
    //! Queue ID (returns tapepool for archives/vid for retrieves)
