@@ -815,7 +815,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
             .add("queueUnlockTime", qUnlockTime)
             .add("requestUnlockTime", rUnlockTime)
             .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime);
-      logContext.log(log::INFO, "In OStoreDB::queueRetrieve()_bottomHalf(): added job to queue (enqueueing finished).");
+      logContext.log(log::INFO, "In OStoreDB::queueRetrieve_bottomHalf(): added job to queue (enqueueing finished).");
     }));
     double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     params.add("taskPostingTime", taskPostingTime)
