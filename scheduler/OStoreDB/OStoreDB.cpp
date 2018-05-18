@@ -572,6 +572,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
     double arLockRelease = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     // And remove reference from the agent
     m_agentReference->removeFromOwnership(aReq->getAddressIfSet(), m_objectStore);
+    double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
     log::ScopedParamContainer params(logContext);
     params.add("jobObject", aReq->getAddressIfSet())
           .add("fileId", archiveFile.archiveFileID)
@@ -584,7 +585,10 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
           .add("totalQueueUnlockTime", arTotalQueueUnlockTime)
           .add("ownerResetTime", arOwnerResetTime)
           .add("lockReleaseTime", arLockRelease)
-          .add("agentOwnershipResetTime", timer.secs());
+          .add("agentOwnershipResetTime", agOwnershipResetTime)
+          .add("totalTime", arRelockTime + arTotalQueueingTime + arTotalCommitTime
+             + arTotalQueueUnlockTime + arOwnerResetTime + arLockRelease 
+             + agOwnershipResetTime);
     logContext.log(log::INFO, "In OStoreDB::queueArchive_bottomHalf(): Finished enqueueing request.");
   }));
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
@@ -838,6 +842,9 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
       double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       rReqL.release();
       double rUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+      // And remove reference from the agent
+      m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
+      double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
       params.add("vid", bestVid)
             .add("queueObject", owner)
@@ -851,7 +858,9 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
             .add("commitTime", cTime)
             .add("queueUnlockTime", qUnlockTime)
             .add("requestUnlockTime", rUnlockTime)
-            .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime);
+            .add("agentOwnershipResetTime", agOwnershipResetTime)
+            .add("totalTime", rLockTime + qTime + cTime + qUnlockTime 
+                + rUnlockTime + agOwnershipResetTime);
       logContext.log(log::INFO, "In OStoreDB::queueRetrieve_bottomHalf(): added job to queue (enqueueing finished).");
     }));
     double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
