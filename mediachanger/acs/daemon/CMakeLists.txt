@@ -45,6 +45,12 @@ target_link_libraries(
   zmq
   ${STK_LIBRARIES})
 
+install (TARGETS cta-acsd DESTINATION /usr/bin)
+install (FILES cta-acsd.1cta DESTINATION /usr/share/man/man1)
+install (FILES cta-acsd.logrotate DESTINATION /etc/logrotate.d RENAME cta-acsd)
+install (FILES cta-acsd.sysconfig DESTINATION /etc/sysconfig RENAME cta-acsd)
+install (FILES cta-acsd.service DESTINATION /etc/systemd/system)
+
 add_library (ctamediachangeracsdaemonunittests SHARED AcsdCmdLineTest.cpp AcsdCmdLine.cpp)
 set_property(TARGET ctamediachangeracsdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctamediachangeracsdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

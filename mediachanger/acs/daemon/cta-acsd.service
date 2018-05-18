@@ -1,0 +1,13 @@
+[Unit]
+Description=CERN Tape Archive (CTA) acsd daemon
+After=syslog.target network-online.target
+
+[Service]
+EnvironmentFile=-/etc/sysconfig/cta-acsd
+ExecStart=/usr/bin/cta-acsd ${CTA_ACSD_OPTIONS}
+LimitCORE=infinity
+Type=forking
+Restart=no
+
+[Install]
+WantedBy=default.target
