@@ -70,6 +70,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
       }
+      break;
 
       case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
       {
@@ -78,6 +79,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
       }
+      break;
 
       default:
          throw std::runtime_error("Received invalid stream data from CTA Frontend.");
