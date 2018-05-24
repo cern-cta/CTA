@@ -82,6 +82,7 @@ private:
 public:
   void waitSubthreadsComplete() override;
   void setThreadNumber(uint64_t threadNumber);
+  void setBootomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 

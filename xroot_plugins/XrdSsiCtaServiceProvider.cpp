@@ -110,10 +110,10 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
    if (threadPoolSize.first) {
      m_scheddb->setThreadNumber(threadPoolSize.second);
    }
+   m_scheddb->setThreadNumber(25000);
 
    // Initialise the Scheduler
    m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
-
    try {
       // If the backend is a VFS, make sure we don't delete it on exit
       dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
