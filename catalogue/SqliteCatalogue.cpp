@@ -303,6 +303,39 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 }
 
 //------------------------------------------------------------------------------
+// getNextStorageClassId
+//------------------------------------------------------------------------------
+uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
+  // The SQLite implemenation of getNextStorageClassId() serializes access to
+  // the SQLite database in order to avoid busy errors
+  threading::MutexLocker locker(m_mutex);
+
+  rdbms::AutoRollback autoRollback(conn);
+
+  conn.executeNonQuery("UPDATE STORAGE_CLASS_ID SET ID = ID + 1", rdbms::AutocommitMode::OFF);
+  uint64_t storageClassId = 0;
+  {
+    const char *const sql =
+      "SELECT "
+        "ID AS ID "
+      "FROM "
+        "STORAGE_CLASS_ID";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      throw exception::Exception("STORAGE_CLASS_ID table is empty");
+    }
+    storageClassId = rset.columnUint64("ID");
+    if(rset.next()) {
+      throw exception::Exception("Found more than one ID counter in the STORAGE_CLASS_ID table");
+    }
+  }
+  conn.commit();
+
+  return storageClassId;
+}
+
+//------------------------------------------------------------------------------
 // selectTapeForUpdate
 //------------------------------------------------------------------------------
 common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::AutocommitMode autocommitMode,

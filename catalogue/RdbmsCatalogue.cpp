@@ -461,9 +461,11 @@ void RdbmsCatalogue::createStorageClass(
       throw exception::UserError(std::string("Cannot create storage class ") + storageClass.diskInstance + ":" +
         storageClass.name + " because it already exists");
     }
+    const uint64_t storageClassId = getNextStorageClassId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO STORAGE_CLASS("
+        "STORAGE_CLASS_ID,"
         "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "NB_COPIES,"
@@ -478,6 +480,7 @@ void RdbmsCatalogue::createStorageClass(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "VALUES("
+        ":STORAGE_CLASS_ID,"
         ":DISK_INSTANCE_NAME,"
         ":STORAGE_CLASS_NAME,"
         ":NB_COPIES,"
@@ -493,6 +496,7 @@ void RdbmsCatalogue::createStorageClass(
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
 
+    stmt.bindUint64(":STORAGE_CLASS_ID", storageClassId);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstance);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.name);
     stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
@@ -1218,6 +1222,7 @@ void RdbmsCatalogue::createArchiveRoute(
 
     const char *const sql =
       "INSERT INTO ARCHIVE_ROUTE("
+        "STORAGE_CLASS_ID,"
         "DISK_INSTANCE_NAME,"
         "STORAGE_CLASS_NAME,"
         "COPY_NB,"
@@ -1232,9 +1237,10 @@ void RdbmsCatalogue::createArchiveRoute(
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-      "VALUES("
-        ":DISK_INSTANCE_NAME,"
-        ":STORAGE_CLASS_NAME,"
+      "SELECT "
+        "STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         ":COPY_NB,"
         ":TAPE_POOL_NAME,"
 
@@ -1246,7 +1252,12 @@ void RdbmsCatalogue::createArchiveRoute(
 
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
+        ":LAST_UPDATE_TIME "
+      "FROM "
+        "STORAGE_CLASS "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -3726,12 +3737,12 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::Autocommi
         "SIZE_IN_BYTES,"
         "CHECKSUM_TYPE,"
         "CHECKSUM_VALUE,"
-        "STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME)"
-      "VALUES("
+      "SELECT "
         ":ARCHIVE_FILE_ID,"
-        ":DISK_INSTANCE_NAME,"
+        "DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
         ":DISK_FILE_USER,"
@@ -3740,9 +3751,14 @@ void RdbmsCatalogue::insertArchiveFile(rdbms::Conn &conn, const rdbms::Autocommi
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_TYPE,"
         ":CHECKSUM_VALUE,"
-        ":STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS_ID,"
         ":CREATION_TIME,"
-        ":RECONCILIATION_TIME)";
+        ":RECONCILIATION_TIME "
+      "FROM "
+        "STORAGE_CLASS "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, autocommitMode);
 
     stmt.bindUint64(":ARCHIVE_FILE_ID", row.archiveFileId);
@@ -3886,6 +3902,8 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
         "COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES "
       "FROM "
         "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "INNER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "INNER JOIN TAPE ON "
@@ -3938,7 +3956,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     }
     if(searchCriteria.storageClass) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+      sql += "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.vid) {
@@ -4761,7 +4779,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
@@ -4772,6 +4790,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
@@ -4845,7 +4865,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
@@ -4856,6 +4876,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "

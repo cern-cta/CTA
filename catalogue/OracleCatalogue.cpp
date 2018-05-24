@@ -175,7 +175,7 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
@@ -186,6 +186,8 @@ void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
@@ -366,7 +368,7 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
@@ -377,6 +379,8 @@ void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
       "FROM "
         "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
@@ -516,6 +520,31 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
     }
 
     return rset.columnUint64("ARCHIVE_FILE_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getNextStorageClassId
+//------------------------------------------------------------------------------
+uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID "
+      "FROM "
+        "DUAL";
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception(std::string("Result set is unexpectedly empty"));
+    }
+
+    return rset.columnUint64("STORAGE_CLASS_ID");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -864,12 +893,12 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "SIZE_IN_BYTES,"
         "CHECKSUM_TYPE,"
         "CHECKSUM_VALUE,"
-        "STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS_ID,"
         "CREATION_TIME,"
         "RECONCILIATION_TIME)"
-      "VALUES("
+      "SELECT "
         ":ARCHIVE_FILE_ID,"
-        ":DISK_INSTANCE_NAME,"
+        "DISK_INSTANCE_NAME,"
         ":DISK_FILE_ID,"
         ":DISK_FILE_PATH,"
         ":DISK_FILE_USER,"
@@ -878,9 +907,14 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         ":SIZE_IN_BYTES,"
         ":CHECKSUM_TYPE,"
         ":CHECKSUM_VALUE,"
-        ":STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS_ID,"
         ":CREATION_TIME,"
-        ":RECONCILIATION_TIME)";
+        ":RECONCILIATION_TIME "
+      "FROM "
+        "STORAGE_CLASS "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, autocommitMode);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt->setBatchErrorMode(true);

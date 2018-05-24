@@ -118,6 +118,20 @@ public:
   uint64_t getNextArchiveFileId(rdbms::Conn &conn) override;
 
   /**
+   * Returns a unique storage class ID that can be used by a new storage class
+   * within the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique archive ID that can be used by a new archive file within
+   * within the catalogue.
+   */
+  uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
+
+  /**
    * Notifies the catalogue that the specified files have been written to tape.
    *
    * @param events The tape file written events.
