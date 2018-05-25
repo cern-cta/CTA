@@ -458,7 +458,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
   auto * mutexForHelgrindAddr = mutexForHelgrind.release();
   // Construct the archive request object in memory
-  auto aReq = std::make_shared<cta::objectstore::ArchiveRequest> (m_agentReference->nextId("ArchiveRequest"), m_objectStore);
+  auto aReq = cta::make_unique<cta::objectstore::ArchiveRequest> (m_agentReference->nextId("ArchiveRequest"), m_objectStore);
   aReq->initialize();
   // Summarize all as an archiveFile
   cta::common::dataStructures::ArchiveFile aFile;
@@ -512,9 +512,11 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
         .add("agentReferencingTime", agentReferencingTime)
         .add("insertionTime", insertionTime);
   delayIfNecessary(logContext);
-  auto * et = new EnqueueingTask([aReq, mutexForHelgrindAddr, this]{
+  auto * aReqPtr = aReq.release();
+  auto * et = new EnqueueingTask([aReqPtr, mutexForHelgrindAddr, this]{
     std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
     cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+    std::unique_ptr<cta::objectstore::ArchiveRequest> aReq(aReqPtr);
     // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
     auto scopedCounterDecrement = [this](void *){ 
       m_taskQueueSize--;
@@ -790,7 +792,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
   }
   vidFound:
   // In order to post the job, construct it first in memory.
-  auto rReq = std::make_shared<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+  auto rReq = cta::make_unique<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
   rReq->setRetrieveFileQueueCriteria(criteria);
@@ -835,8 +837,10 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
           .add("agentReferencingTime", agentReferencingTime)
           .add("insertionTime", insertionTime);
     delayIfNecessary(logContext);
-    auto * et = new EnqueueingTask([rReq, job, bestVid, mutexForHelgrindAddr, this]{
+    auto rReqPtr = rReq.release();
+    auto * et = new EnqueueingTask([rReqPtr, job, bestVid, mutexForHelgrindAddr, this]{
       std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
+      std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
       cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
       // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
       auto scopedCounterDecrement = [this](void *){ 
