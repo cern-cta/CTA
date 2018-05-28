@@ -131,8 +131,8 @@ void AcsDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   AcsdCmdLine Commandline(argc,argv); //parse command line
   setCommandLineHasBeenParsed(Commandline.foreground);
-  const std::string runAsStagerSuperuser = m_config.daemonUserName.value();;
-  const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();;
+  const std::string runAsStagerSuperuser = m_config.daemonUserName.value();
+  const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();
   daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);
   setDumpable();
 

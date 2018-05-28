@@ -81,7 +81,7 @@ static int exceptionThrowingMain(cta::log::Logger &log, const int argc, char **c
 
  cta::mediachanger::reactor::ZMQReactor reactor(log);
 
- const cta::mediachanger::acs::daemon::AcsdConfiguration config = cta::mediachanger::acs::daemon::AcsdConfiguration::createFromCtaConf("/etc/cta/acsd.conf",log);
+ const cta::mediachanger::acs::daemon::AcsdConfiguration config = cta::mediachanger::acs::daemon::AcsdConfiguration::createFromCtaConf("/etc/cta/cta-acsd.conf",log);
 
  
   // Create the main acsd object

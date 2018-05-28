@@ -4,10 +4,7 @@ find_package(Protobuf3 REQUIRED)
 find_package(openssl REQUIRED)
 find_package(zeromq REQUIRED)
 
-#file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
-#PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
-#add_library(ctamediachangeracsdaemonprotobuf ${ProtoSources})
 
 
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
@@ -41,12 +38,13 @@ target_link_libraries(
   ctareactor 
  CtaAcsDaemon
  ctamediachanger 
- # ctamediachangeracsdaemonprotobuf 
   zmq
   ${STK_LIBRARIES})
 
+set_property (TARGET cta-acsd APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+install (FILES cta-acsd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (TARGETS cta-acsd DESTINATION /usr/bin)
-install (FILES cta-acsd.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-acsd.logrotate DESTINATION /etc/logrotate.d RENAME cta-acsd)
 install (FILES cta-acsd.sysconfig DESTINATION /etc/sysconfig RENAME cta-acsd)
 install (FILES cta-acsd.service DESTINATION /etc/systemd/system)
@@ -59,4 +57,6 @@ target_link_libraries (ctamediachangeracsdaemonunittests
  ctamediachangerunittests)
 
 install (TARGETS ctamediachangeracsdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+
 
