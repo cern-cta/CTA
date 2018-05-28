@@ -112,7 +112,10 @@ void OStoreDB::setThreadNumber(uint64_t threadNumber) {
   }
 }
 
-void OStoreDB::setBootomHalfQueueSize(uint64_t tasksNumber) {
+//------------------------------------------------------------------------------
+// OStoreDB::setBottomHalfQueueSize()
+//------------------------------------------------------------------------------
+void OStoreDB::setBottomHalfQueueSize(uint64_t tasksNumber) {
   // 5 is the default queue size.
   m_taskPostingSemaphore.release(tasksNumber - 5);
 }
