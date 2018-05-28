@@ -594,3 +594,48 @@
    fun:__gthread_create
    ...
 }
+
+{
+   OStoreDBThreadpool
+   Helgrind:Race
+   ...
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+   fun:start_thread
+   fun:clone
+}
+
+{
+   futureDestructor
+   Helgrind:Race
+   ...
+   fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
+   fun:_ZNSt14__basic_futureIvED1Ev
+   ...
+}
+
+{
+   PromiseDestructor
+   Helgrind:Race
+   ...
+   fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
+   fun:_ZNSt7promiseIvED1Ev
+   ...
+}
+
+{
+   SharedPtr<Promise<void>>destructor.
+   Helgrind:Race
+   ...
+   fun:_ZNSt10shared_ptrISt7promiseIvEED1Ev
+   ...
+}
+
+{
+   SharedPtr<cta::objectstore::AgentReference::ActionQueue>destructor.
+   Helgrind:Race
+   ...
+   fun:_ZNSt10shared_ptrIN3cta11objectstore14AgentReference11ActionQueueEED1Ev
+   ...
+}

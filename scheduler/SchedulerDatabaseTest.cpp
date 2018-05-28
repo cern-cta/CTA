@@ -190,6 +190,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   for (auto &j: jobInsertions) { j.wait(); }
   jobInsertions.clear();
   lambdas.clear();
+  db.waitSubthreadsComplete();
   
   // Then load all archive jobs into memory
   // Create mount.

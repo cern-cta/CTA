@@ -181,6 +181,27 @@ std::list<std::string>
   return ret;
 }
 
+std::set<std::string> cta::objectstore::Agent::getOwnershipSet() {
+  checkPayloadReadable();
+  std::set<std::string> ret;
+  for (const auto &oo: m_payload.ownedobjects())
+    ret.insert(oo);
+  return ret;
+}
+
+void cta::objectstore::Agent::resetOwnership(const std::set<std::string>& ownershipSet) {
+  checkPayloadWritable();
+  m_payload.mutable_ownedobjects()->Clear();
+  for (const auto &oo: ownershipSet)
+    *m_payload.mutable_ownedobjects()->Add() = oo;
+}
+
+size_t cta::objectstore::Agent::getOwnershipListSize() {
+  checkPayloadReadable();
+  return m_payload.ownedobjects_size();
+}
+
+
 void cta::objectstore::Agent::bumpHeartbeat() {
   checkPayloadWritable();
   auto heartbeat=m_payload.heartbeat()+1;

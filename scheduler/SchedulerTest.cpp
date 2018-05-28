@@ -493,8 +493,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  scheduler.waitSchedulerDbSubthreadsComplete();
 
   // Check that the retrieve request is queued
   {

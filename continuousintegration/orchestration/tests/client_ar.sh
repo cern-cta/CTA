@@ -152,38 +152,30 @@ echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/TEST_FILE_NAME
 
-
+TO_BE_RETRIEVED=${ARCHIVED}
+RETRIEVING=${TO_BE_RETRIEVED}
+RETRIEVED=0
 # Wait for the copy to appear on disk
+echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
-while test 0 != $(grep -c tapeonly$ ${STATUS_FILE}); do
-  echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
+while test 0 != ${RETRIEVING}; do
+  echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
-    echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
+    echo "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
     break
   fi
 
-  echo "$(grep -c retrieved$ ${STATUS_FILE})/${TAPEONLY} retrieved"
+  RETRIEVED=0
+  RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))  
 
-  # generating EOS batch script
-  grep tapeonly$ ${STATUS_FILE} | sed -e 's/ .*$//' | sed -e "s;^;file info ${EOS_DIR}/;" > ${EOS_BATCHFILE}
+  RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
 
-  # Updating all files statuses
-  eos --batch root://${EOSINSTANCE} ${EOS_BATCHFILE} | egrep '^ *File|nodrain.*online' | while read line; do
-    if echo $line | grep -q File; then
-      filename=$(basename $(echo $line | awk '{print $2}' | sed -e "s/'//g"))
-    elif echo $line | grep -q nodrain; then
-      # file is back on disk
-      sed -i ${STATUS_FILE} -e "s/${filename} tapeonly/${filename} retrieved/"
-    fi
-  done
-
+  echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved"
 done
-
-RETRIEVED=$(grep -c retrieved$ ${STATUS_FILE})
 
 echo "###"
 echo "${RETRIEVED}/${TAPEONLY} retrieved files"

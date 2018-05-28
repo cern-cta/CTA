@@ -5,7 +5,6 @@ After=network-online.target
 [Service]
 ExecStart=/usr/bin/xrootd -l /var/log/cta-frontend-xrootd.log -c /etc/cta/cta-frontend-xrootd.conf -k fifo -n cta
 User=cta
-Group=cta
 Type=simple
 Restart=no
 LimitCORE=infinity

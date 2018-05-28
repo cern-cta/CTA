@@ -177,11 +177,13 @@ endif (${COMPILE_PACKAGING} STREQUAL "1")
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
 configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
 set(VALGRIND valgrind)
-set(VALGRIND_OPTS "--track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000")
+set(VALGRIND_OPTS --track-fds=yes --leak-check=full --demangle=yes --gen-suppressions=all --show-reachable=yes --error-exitcode=1 --max-threads=1000)
 set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=tests/valgrind.suppr)
+string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 
-set(HELGRIND_OPTS "-v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000")
+set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
 set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=tests/helgrind.suppr)
+string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
 
 IF(NOT DEFINED PackageOnly)
   add_subdirectory(tests)
@@ -190,25 +192,29 @@ ENDIF(NOT DEFINED PackageOnly)
 add_custom_target(fullunittests
   tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS} tests/cta-unitTests
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS} tests/cta-unitTests-multiProcess
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
   
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
 add_custom_target(valgrind
-  ${VALGRIND} ${VALGRIND_OPTS} tests/cta-unitTests
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
+  echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
+  COMMAND echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
 
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr
   COMMENT "Running unit tests with memory leak detection" VERBATIM)
 
 add_custom_target(helgrind
-  ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS} tests/cta-unitTests-multiProcess
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
+  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
   
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection" VERBATIM)
