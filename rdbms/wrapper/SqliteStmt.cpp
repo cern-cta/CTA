@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -266,9 +267,12 @@ void SqliteStmt::executeNonQuery() {
     std::ostringstream msg;
     msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
 
-    if(SQLITE_CONSTRAINT == stepRc) {
+    switch(stepRc) {
+    case SQLITE_CONSTRAINT_PRIMARYKEY:
+      throw exception::DatabasePrimaryKeyError(msg.str());
+    case SQLITE_CONSTRAINT:
       throw exception::DatabaseConstraintError(msg.str());
-    } else {
+    default:
       throw exception::Exception(msg.str());
     }
   }

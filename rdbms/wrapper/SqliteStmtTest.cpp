@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -401,7 +402,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         ":COL1);";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
     stmt->bindUint64(":COL1", 1);
-    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabaseConstraintError);
+    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabasePrimaryKeyError);
   }
 }
 
@@ -448,7 +449,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
     stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
-    ASSERT_THROW(rset->next(), exception::DatabaseConstraintError);
+    ASSERT_THROW(rset->next(), exception::DatabasePrimaryKeyError);
   }
 }
 

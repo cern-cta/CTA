@@ -23,6 +23,7 @@
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
 #include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -483,7 +484,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
       row.diskFileGroup = event.diskFileGroup;
       row.diskFileRecoveryBlob = event.diskFileRecoveryBlob;
       insertArchiveFile(conn, autocommitMode, row);
-    } catch(exception::DatabaseConstraintError &) {
+    } catch(exception::DatabasePrimaryKeyError &) {
       // Ignore this error
     } catch(...) {
       throw;

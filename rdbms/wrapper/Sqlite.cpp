@@ -83,6 +83,8 @@ std::string Sqlite::rcToStr(const int rc) {
       return "TEXT or BLOCK too big";
     case SQLITE_ERROR:
       return "Generic error";
+    case SQLITE_CONSTRAINT_PRIMARYKEY:
+      return "Primary key error";
     default: {
       std::ostringstream oss;
       oss << "Unknown SQLite return code " << rc;
