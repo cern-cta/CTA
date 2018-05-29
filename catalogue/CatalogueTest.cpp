@@ -97,9 +97,16 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
+      // The iterator returned from m_catalogue->getArchiveFiles() will lock an
+      // SQLite file database, so copy all of its results into a list in order
+      // to release the lock before moving on to deleting database rows
       auto itor = m_catalogue->getArchiveFiles();
+      std::list<common::dataStructures::ArchiveFile> archiveFiles;
       while(itor.hasMore()) {
-        const auto archiveFile = itor.next();
+        archiveFiles.push_back(itor.next());
+      }
+
+      for(const auto &archiveFile: archiveFiles) {
         log::LogContext dummyLc(m_dummyLog);
         m_catalogue->deleteArchiveFile(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
       }
