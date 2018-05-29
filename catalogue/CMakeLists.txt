@@ -34,6 +34,7 @@ set (CATALOGUE_LIB_SRC_FILES
   OracleCatalogue.cpp
   SqliteCatalogueSchema.cpp
   TapeFileWritten.cpp
+  TapePool.cpp
   RdbmsArchiveFileItorImpl.cpp
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
