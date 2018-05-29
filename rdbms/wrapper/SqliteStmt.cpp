@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintViolation.hpp"
+#include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -267,7 +267,7 @@ void SqliteStmt::executeNonQuery() {
     msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
 
     if(SQLITE_CONSTRAINT == stepRc) {
-      throw exception::DatabaseConstraintViolation(msg.str());
+      throw exception::DatabaseConstraintError(msg.str());
     } else {
       throw exception::Exception(msg.str());
     }

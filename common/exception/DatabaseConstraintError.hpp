@@ -16,23 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintViolation.hpp"
+#pragma once
 
-namespace cta {
+#include "common/exception/Exception.hpp"
+
+#include <string>
+
+
+namespace cta    {
 namespace exception {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-DatabaseConstraintViolation::DatabaseConstraintViolation(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+/**
+ * A database constraint error.
+ */
+class DatabaseConstraintError : public cta::exception::Exception {
+public:
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-DatabaseConstraintViolation::~DatabaseConstraintViolation() noexcept {
-}
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  DatabaseConstraintError(const std::string &context = "", const bool embedBacktrace = true);
+
+  /**
+   * Empty Destructor, explicitely non-throwing (needed for std::exception
+   * inheritance)
+   */
+  ~DatabaseConstraintError() noexcept override;
+  
+}; // class DatabaseConstraintError
 
 } // namespace exception
 } // namespace cta

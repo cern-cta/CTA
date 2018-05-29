@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintViolation.hpp"
+#include "common/exception/DatabaseConstraintError.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
@@ -401,7 +401,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
         ":COL1);";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
     stmt->bindUint64(":COL1", 1);
-    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabaseConstraintViolation);
+    ASSERT_THROW(stmt->executeNonQuery(), exception::DatabaseConstraintError);
   }
 }
 
@@ -448,7 +448,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
     stmt->bindUint64(":COL1", 1);
     auto rset = stmt->executeQuery();
-    ASSERT_THROW(rset->next(), exception::DatabaseConstraintViolation);
+    ASSERT_THROW(rset->next(), exception::DatabaseConstraintError);
   }
 }
 

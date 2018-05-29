@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintViolation.hpp"
+#include "common/exception/DatabaseConstraintError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "rdbms/NullDbValue.hpp"
@@ -156,7 +156,7 @@ bool SqliteRset::next() {
       Sqlite::rcToStr(stepRc);
 
     if(SQLITE_CONSTRAINT == stepRc) {
-      throw exception::DatabaseConstraintViolation(msg.str());
+      throw exception::DatabaseConstraintError(msg.str());
     } else {
       throw exception::Exception(msg.str());
     }
