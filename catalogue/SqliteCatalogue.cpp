@@ -495,7 +495,7 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
     if(nullptr == archiveFile) {
       // This should never happen
       exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: Failed to find archive file: archiveFilId=" << event.archiveFileId;
+      ex.getMessage() << "Failed to find archive file: archiveFileId=" << event.archiveFileId;
       throw ex;
     }
 
@@ -505,22 +505,22 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
 
     if(archiveFile->fileSize != event.size) {
       catalogue::FileSizeMismatch ex;
-      ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << archiveFile->fileSize <<
-        ", actual=" << event.size << ": " << fileContext.str();
+      ex.getMessage() << "File size mismatch: expected=" << archiveFile->fileSize << ", actual=" << event.size << ": "
+        << fileContext.str();
       throw ex;
     }
 
     if(archiveFile->checksumType != event.checksumType) {
       catalogue::ChecksumTypeMismatch ex;
-      ex.getMessage() << __FUNCTION__ << ": Checksum type mismatch: expected=" << archiveFile->checksumType <<
-        ", actual=" << event.checksumType << ": " << fileContext.str();
+      ex.getMessage() << "Checksum type mismatch: expected=" << archiveFile->checksumType << ", actual=" <<
+        event.checksumType << ": " << fileContext.str();
       throw ex;
     }
 
     if(archiveFile->checksumValue != event.checksumValue) {
       catalogue::ChecksumValueMismatch ex;
-      ex.getMessage() << __FUNCTION__ << ": Checksum value mismatch: expected=" << archiveFile->checksumValue <<
-        ", actual=" << event.checksumValue << ": " << fileContext.str();
+      ex.getMessage() << "Checksum value mismatch: expected=" << archiveFile->checksumValue << ", actual=" <<
+        event.checksumValue << ": " << fileContext.str();
       throw ex;
     }
 
