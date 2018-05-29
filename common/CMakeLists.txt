@@ -80,6 +80,7 @@ set (COMMON_LIB_SRC_FILES
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
   exception/DatabaseConstraintError.cpp  
+  exception/DatabasePrimaryKeyError.cpp  
   exception/DismountFailed.cpp  
   exception/Errnum.cpp
   exception/Exception.cpp
