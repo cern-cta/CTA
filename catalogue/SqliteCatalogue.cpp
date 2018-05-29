@@ -171,6 +171,8 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -251,6 +253,8 @@ void SqliteCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInsta
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::INFO, "Archive file deleted from CTA catalogue");
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -289,6 +293,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
     conn.commit();
 
     return archiveFileId;
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -384,6 +390,8 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Autocommit
     tape.lastModificationLog = updateLog;
 
     return tape;
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -443,6 +451,8 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     for(const auto &event : events) {
       fileWrittenToTape(rdbms::AutocommitMode::ON, conn, event);
     }
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -523,6 +533,8 @@ void SqliteCatalogue::fileWrittenToTape(const rdbms::AutocommitMode autocommitMo
     tapeFile.copyNb         = event.copyNb;
     tapeFile.creationTime   = now;
     insertTapeFile(conn, autocommitMode, tapeFile, event.archiveFileId);
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
