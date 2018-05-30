@@ -299,7 +299,7 @@ kubectl --namespace=${instance} exec ctacli klist
 
 
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
-for ((i=0; i<300; i++)); do
+for ((i=0; i<450; i++)); do
   echo -n "."
   [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
