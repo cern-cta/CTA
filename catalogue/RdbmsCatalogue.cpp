@@ -962,15 +962,16 @@ bool RdbmsCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &di
   try {
     const char *const sql =
       "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "COPY_NB AS COPY_NB "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
+        "ARCHIVE_ROUTE.COPY_NB AS COPY_NB "
       "FROM "
         "ARCHIVE_ROUTE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
-        "COPY_NB = :COPY_NB";
+        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "ARCHIVE_ROUTE.COPY_NB = :COPY_NB";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
@@ -1223,8 +1224,6 @@ void RdbmsCatalogue::createArchiveRoute(
     const char *const sql =
       "INSERT INTO ARCHIVE_ROUTE("
         "STORAGE_CLASS_ID,"
-        "DISK_INSTANCE_NAME,"
-        "STORAGE_CLASS_NAME,"
         "COPY_NB,"
         "TAPE_POOL_NAME,"
 
@@ -1238,9 +1237,7 @@ void RdbmsCatalogue::createArchiveRoute(
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
       "SELECT "
-        "STORAGE_CLASS_ID AS STORAGE_CLASS_ID,"
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS_ID,"
         ":COPY_NB,"
         ":TAPE_POOL_NAME,"
 
@@ -1294,8 +1291,14 @@ void RdbmsCatalogue::deleteArchiveRoute(const std::string &diskInstanceName, con
       "DELETE FROM "
         "ARCHIVE_ROUTE "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "STORAGE_CLASS_ID = ("
+          "SELECT "
+            "STORAGE_CLASS_ID "
+          "FROM "
+            "STORAGE_CLASS "
+          "WHERE "
+            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+            "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
@@ -1326,22 +1329,24 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsCatalogue::getArchiveRoutes
     std::list<common::dataStructures::ArchiveRoute> routes;
     const char *const sql =
       "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "COPY_NB AS COPY_NB,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "STORAGE_CLASS.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"
+        "ARCHIVE_ROUTE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "ARCHIVE_ROUTE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "ARCHIVE_ROUTE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "ARCHIVE_ROUTE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "ARCHIVE_ROUTE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "ARCHIVE_ROUTE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "ARCHIVE_ROUTE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "ARCHIVE_ROUTE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "ARCHIVE_ROUTE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "ORDER BY "
         "DISK_INSTANCE_NAME, STORAGE_CLASS_NAME, COPY_NB";
     auto conn = m_connPool.getConn();
@@ -1389,8 +1394,14 @@ void RdbmsCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "STORAGE_CLASS_ID = ("
+          "SELECT "
+            "STORAGE_CLASS_ID "
+          "FROM "
+            "STORAGE_CLASS "
+          "WHERE "
+            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+            "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
@@ -1432,8 +1443,14 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME AND "
+        "STORAGE_CLASS_ID = ("
+          "SELECT "
+            "STORAGE_CLASS_ID "
+          "FROM "
+            "STORAGE_CLASS "
+          "WHERE "
+            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+            "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME) AND "
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
@@ -4207,13 +4224,15 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getTapeCopyToPoolMap(r
     common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
     const char *const sql =
       "SELECT "
-        "COPY_NB AS COPY_NB,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME "
+        "ARCHIVE_ROUTE.COPY_NB AS COPY_NB,"
+        "ARCHIVE_ROUTE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
       "FROM "
         "ARCHIVE_ROUTE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
@@ -4263,9 +4282,11 @@ uint64_t RdbmsCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn, const Sto
         "COUNT(*) AS NB_ROUTES "
       "FROM "
         "ARCHIVE_ROUTE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+        "STORAGE_CLASS.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindString(":DISK_INSTANCE_NAME", storageClass.diskInstanceName);
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
