@@ -16,6 +16,7 @@ set (ACS_DAEMON_SRC_FILES
   AcsDaemon.cpp
   AcsDaemonMain.cpp
   AcsdConfiguration.cpp
+  AcsRequest.cpp
   AcsPendingRequests.cpp
   AcsdCmdLine.cpp
   AcsDismountTape.cpp
@@ -36,8 +37,8 @@ target_link_libraries(
   cta-acsd
   ctacommon
   ctareactor 
- CtaAcsDaemon
- ctamediachanger 
+  cta-acs
+  ctamediachanger 
   zmq
   ${STK_LIBRARIES})
 

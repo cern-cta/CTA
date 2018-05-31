@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::AcsRequest::AcsRequest(cta::mediachanger::ZmqSocketST &socket,
+cta::mediachanger::acs::daemon::AcsRequest::AcsRequest(cta::mediachanger::ZmqSocketST &socket,
   cta::mediachanger::ZmqMsg &address,  cta::mediachanger::ZmqMsg &empty,
   const SEQ_NO seqNo, const std::string vid, const uint32_t acs,
   const uint32_t lsm, const uint32_t panel, const uint32_t drive):
@@ -50,7 +50,7 @@ cta::mediachanger::acs::AcsRequest::AcsRequest(cta::mediachanger::ZmqSocketST &s
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::AcsRequest::~AcsRequest() {
+cta::mediachanger::acs::daemon::AcsRequest::~AcsRequest() {
     zmq_msg_close(&m_addressMsg);
     zmq_msg_close(&m_emptyMsg);  
 }
@@ -58,7 +58,7 @@ cta::mediachanger::acs::AcsRequest::~AcsRequest() {
 //-----------------------------------------------------------------------------
 // isToExecute
 //-----------------------------------------------------------------------------
-bool cta::mediachanger::acs::AcsRequest::isToExecute() const throw () {
+bool cta::mediachanger::acs::daemon::AcsRequest::isToExecute() const throw () {
   if (ACS_REQUEST_TO_EXECUTE == m_state) {
     return true;
   } else {
@@ -69,7 +69,7 @@ bool cta::mediachanger::acs::AcsRequest::isToExecute() const throw () {
 //-----------------------------------------------------------------------------
 // isRunning
 //-----------------------------------------------------------------------------
-bool cta::mediachanger::acs::AcsRequest::isRunning() const  throw () {
+bool cta::mediachanger::acs::daemon::AcsRequest::isRunning() const  throw () {
   if (ACS_REQUEST_IS_RUNNING == m_state) {
     return true;
   } else {
@@ -80,7 +80,7 @@ bool cta::mediachanger::acs::AcsRequest::isRunning() const  throw () {
 //-----------------------------------------------------------------------------
 // isCompleted
 //-----------------------------------------------------------------------------
-bool cta::mediachanger::acs::AcsRequest::isCompleted() const throw () {
+bool cta::mediachanger::acs::daemon::AcsRequest::isCompleted() const throw () {
   if (ACS_REQUEST_COMPLETED == m_state) {
     return true;
   } else {
@@ -91,7 +91,7 @@ bool cta::mediachanger::acs::AcsRequest::isCompleted() const throw () {
 //-----------------------------------------------------------------------------
 // isFailed
 //-----------------------------------------------------------------------------
-bool cta::mediachanger::acs::AcsRequest::isFailed() const  throw () {
+bool cta::mediachanger::acs::daemon::AcsRequest::isFailed() const  throw () {
   if (ACS_REQUEST_FAILED == m_state) {
     return true;
   } else {
@@ -102,7 +102,7 @@ bool cta::mediachanger::acs::AcsRequest::isFailed() const  throw () {
 //-----------------------------------------------------------------------------
 // isToDelete
 //-----------------------------------------------------------------------------
-bool cta::mediachanger::acs::AcsRequest::isToDelete() const  throw () {
+bool cta::mediachanger::acs::daemon::AcsRequest::isToDelete() const  throw () {
   if (ACS_REQUEST_TO_DELETE == m_state) {
     return true;
   } else {
@@ -113,7 +113,7 @@ bool cta::mediachanger::acs::AcsRequest::isToDelete() const  throw () {
 //------------------------------------------------------------------------------
 // createReturnValueFrame
 //------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::createReturnValueFrame(
+cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsRequest::createReturnValueFrame(
   const int value) {
   cta::mediachanger::Frame frame;
 
@@ -133,7 +133,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::createReturnValueFr
 //------------------------------------------------------------------------------
 // createExceptionFrame
 //------------------------------------------------------------------------------
-cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::
+cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsRequest::
   createExceptionFrame(const int code, const std::string& msg) {
   cta::mediachanger::Frame frame;
 
@@ -154,7 +154,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::AcsRequest::
 //-----------------------------------------------------------------------------
 // sendReplayToClientOnce
 //-----------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::sendReplayToClientOnce() {
+void cta::mediachanger::acs::daemon::AcsRequest::sendReplayToClientOnce() {
   if(m_isReplaySent) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to send second replay to the client";
@@ -170,14 +170,14 @@ void cta::mediachanger::acs::AcsRequest::sendReplayToClientOnce() {
 //-----------------------------------------------------------------------------
 // getIdentity
 //-----------------------------------------------------------------------------
-std::string cta::mediachanger::acs::AcsRequest::getIdentity() const throw() {
+std::string cta::mediachanger::acs::daemon::AcsRequest::getIdentity() const throw() {
   return m_identity;
 }
 
 //-----------------------------------------------------------------------------
 // str
 //-----------------------------------------------------------------------------
-std::string cta::mediachanger::acs::AcsRequest::str() const {
+std::string cta::mediachanger::acs::daemon::AcsRequest::str() const {
   std::ostringstream oss;
   oss << "vid=" << m_vid << " acs=" << m_acs << " lsm=" << m_lsm << " panel=" <<
     m_panel << " drive=" << m_drive << " identity=" << getIdentity();
@@ -187,35 +187,35 @@ std::string cta::mediachanger::acs::AcsRequest::str() const {
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-const std::string &cta::mediachanger::acs::AcsRequest::getVid() const throw () {
+const std::string &cta::mediachanger::acs::daemon::AcsRequest::getVid() const throw () {
   return m_vid;
 }
 
 //------------------------------------------------------------------------------
 // getAcs
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::acs::AcsRequest::getAcs() const throw () {
+uint32_t cta::mediachanger::acs::daemon::AcsRequest::getAcs() const throw () {
   return m_acs;
 }
 
 //------------------------------------------------------------------------------
 // getLsm
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::acs::AcsRequest::getLsm() const throw () {
+uint32_t cta::mediachanger::acs::daemon::AcsRequest::getLsm() const throw () {
   return m_lsm;
 }
 
 //------------------------------------------------------------------------------
 // getPanel
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::acs::AcsRequest::getPanel() const throw () {
+uint32_t cta::mediachanger::acs::daemon::AcsRequest::getPanel() const throw () {
   return m_panel;
 }
 
 //------------------------------------------------------------------------------
 // getDrive
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::acs::AcsRequest::getDrive() const throw () {
+uint32_t cta::mediachanger::acs::daemon::AcsRequest::getDrive() const throw () {
   return m_drive;
 }
 
@@ -223,14 +223,14 @@ uint32_t cta::mediachanger::acs::AcsRequest::getDrive() const throw () {
 //------------------------------------------------------------------------------
 // getSeqNo
 //------------------------------------------------------------------------------
-SEQ_NO cta::mediachanger::acs::AcsRequest::getSeqNo() const throw () {
+SEQ_NO cta::mediachanger::acs::daemon::AcsRequest::getSeqNo() const throw () {
   return m_seqNo; 
 }
 
 //------------------------------------------------------------------------------
 // setResponse
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setResponse(
+void cta::mediachanger::acs::daemon::AcsRequest::setResponse(
   const ACS_RESPONSE_TYPE responseType, 
   const ALIGNED_BYTES *const responseMsg) throw () {
   m_responseType = responseType;
@@ -240,7 +240,7 @@ void cta::mediachanger::acs::AcsRequest::setResponse(
 //------------------------------------------------------------------------------
 // setStateFailed
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setStateFailed(const int code,
+void cta::mediachanger::acs::daemon::AcsRequest::setStateFailed(const int code,
   const std::string& msg) {
   m_reply = createExceptionFrame(code, msg);
   m_state = ACS_REQUEST_FAILED;
@@ -249,7 +249,7 @@ void cta::mediachanger::acs::AcsRequest::setStateFailed(const int code,
 //------------------------------------------------------------------------------
 // setStateCompleted
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setStateCompleted() {
+void cta::mediachanger::acs::daemon::AcsRequest::setStateCompleted() {
   m_reply = createReturnValueFrame(0);
   m_state = ACS_REQUEST_COMPLETED;       
 }
@@ -257,7 +257,7 @@ void cta::mediachanger::acs::AcsRequest::setStateCompleted() {
 //------------------------------------------------------------------------------
 // setStateIsRunning
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setStateIsRunning() {
+void cta::mediachanger::acs::daemon::AcsRequest::setStateIsRunning() {
   if (isToExecute()) {
     m_state = ACS_REQUEST_IS_RUNNING;
   } else {
@@ -271,13 +271,13 @@ void cta::mediachanger::acs::AcsRequest::setStateIsRunning() {
 //------------------------------------------------------------------------------
 // setStateToExecute
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setStateToExecute() throw() {
+void cta::mediachanger::acs::daemon::AcsRequest::setStateToExecute() throw() {
   m_state = ACS_REQUEST_TO_EXECUTE;       
 }
 
 //------------------------------------------------------------------------------
 // setStateToDelete
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::AcsRequest::setStateToDelete() throw() {
+void cta::mediachanger::acs::daemon::AcsRequest::setStateToDelete() throw() {
   m_state = ACS_REQUEST_TO_DELETE;       
 }

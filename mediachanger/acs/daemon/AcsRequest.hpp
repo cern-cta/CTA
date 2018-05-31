@@ -23,13 +23,14 @@
 #include "mediachanger/messages.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 #include "mediachanger/ZmqSocketST.hpp"
-#include "AcsImpl.hpp"
+#include "mediachanger/acs/AcsImpl.hpp"
 #include "common/exception/Exception.hpp"
 #include <time.h>
 
 namespace cta     {
 namespace mediachanger        {
 namespace acs     {
+namespace daemon	{
   
   
 /**
@@ -310,6 +311,7 @@ protected:
   
 }; // class AcsRequest
 
+} // namepsace daemon
 } // namespace acs
 } // namespace mediachanger
 } // namespace cta

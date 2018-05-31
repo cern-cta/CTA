@@ -21,7 +21,7 @@
 #include "mediachanger/acs/daemon/AcsdConfiguration.hpp"
 #include "mediachanger/acs/daemon/AcsDismountTape.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
-#include "mediachanger/acs/AcsRequest.hpp"
+#include "mediachanger/acs/daemon/AcsRequest.hpp"
 
 namespace cta     {
 namespace mediachanger     {
@@ -31,7 +31,7 @@ namespace daemon       {
  * Concrete class providing a dismount tape implementation of an AcsRequest 
  * abstract class.
  */
-class AcsRequestDismountTape: public cta::mediachanger::acs::AcsRequest {
+class AcsRequestDismountTape: public AcsRequest {
 public:
 
   /**

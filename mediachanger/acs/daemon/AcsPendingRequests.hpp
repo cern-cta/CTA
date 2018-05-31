@@ -21,7 +21,7 @@
 #include "AcsdConfiguration.hpp"
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
-#include "mediachanger/acs/AcsRequest.hpp"
+#include "mediachanger/acs/daemon/AcsRequest.hpp"
 #include "mediachanger/acs/AcsImpl.hpp"
 #include "mediachanger/messages.hpp"
 #include "mediachanger/Frame.hpp"
