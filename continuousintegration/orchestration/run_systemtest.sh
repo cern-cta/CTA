@@ -165,7 +165,7 @@ function execute_log {
 }
 
 # create instance timeout after 10 minutes
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 600
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 1000
 
 # launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds
 cd $(dirname ${systemtest_script})
