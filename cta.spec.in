@@ -212,6 +212,7 @@ Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
+Requires: make
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
