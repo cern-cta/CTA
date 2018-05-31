@@ -42,7 +42,7 @@ public:
    * @param lsm     The lsm value of the ACS request.
    * @param panel   The panel value of the ACS request.
    * @param drive   The drive value of the ACS request.
-   * @param castorConf The configuration for the CASTOR ACS daemon.
+   * @param ctaConf The configuration for the CTA ACS daemon.
    * @param socket  ZMQ socket to use.
    * @param address ZMQ message with client address.
    * @param empty   ZMQ empty message.
@@ -62,7 +62,7 @@ public:
     const SEQ_NO seqNo);
   
   /**
-   * Perform any time related actions with the request to CASTOR ACS daemon.
+   * Perform any time related actions with the request to CTA ACS daemon.
    *
    * This method does not have to be called at any time precise interval.
    */
@@ -81,7 +81,7 @@ public:
 private:
   
   /**
-   * The CASTOR configuration parameters for the CASTOR ACS daemon.
+   * The CTA configuration parameters for the CTA ACS daemon.
    */
   const AcsdConfiguration m_ctaConf;
   

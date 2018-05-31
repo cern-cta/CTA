@@ -19,7 +19,7 @@
 #pragma once
 
 #include "mediachanger/acs/Acs.hpp"
-#include "AcsdConfiguration.hpp"
+#include "mediachanger/acs/daemon/AcsdConfiguration.hpp"
 #include "mediachanger/acs/AcsLibraryInteraction.hpp"
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
@@ -95,7 +95,7 @@ protected:
   void sendForceDismountRequest(const SEQ_NO seqNumber) const;
  
   /**
-   * Throws castor::exception::DismountFailed if the mount was not
+   * Throws cta::exception::DismountFailed if the mount was not
    * successful.
    *
    * @param buf The mount-response message.
@@ -121,7 +121,7 @@ protected:
   log::Logger &m_log;
 
   /**
-   * The configuration parameters for the CASTOR ACS daemon.
+   * The configuration parameters for the CTA ACS daemon.
    */
   const AcsdConfiguration m_ctaConf;
 

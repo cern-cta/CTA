@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "AcsdConfiguration.hpp"
+#include "mediachanger/acs/daemon/AcsdConfiguration.hpp"
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "mediachanger/acs/daemon/AcsRequest.hpp"
@@ -38,7 +38,7 @@ namespace daemon        {
    
 /**
  * Class responsible for keeping track of the Acs requests  controlled by
- * the CASTOR ACS daemon.
+ * the CTA ACS daemon.
  */
 class AcsPendingRequests {
 public:
@@ -46,7 +46,7 @@ public:
   /**
    * Constructor.
    *
-   * @param castorConf The configuration for the CASTOR ACS daemon.
+   * @param ctaConf The configuration for the CTA ACS daemon.
    */
   AcsPendingRequests(const AcsdConfiguration &ctaConf, cta::log::Logger &);
   
@@ -64,7 +64,7 @@ public:
   void tick();
 
   /**
-   * Requests to the CASTOR ACS daemon might have several states.
+   * Requests to the CTA ACS daemon might have several states.
    * 
    *  ACS_REQUEST_TO_EXECUTE - is initial state. When request arrives from a 
    *    client it is set to be asynchronous executed to ACS Library.
@@ -103,7 +103,7 @@ public:
    * 
    * @param address ZMQ message with client address.
    * @param empty   ZMQ empty message.
-   * @param rqst    ZMQ message with CASTOR frame.
+   * @param rqst    ZMQ message with CTA frame.
    * @param socket  ZMQ socket to use.
    */
 
@@ -118,7 +118,7 @@ public:
    * 
    * @param address ZMQ message with client address.
    * @param empty   ZMQ empty message.
-   * @param rqst    ZMQ message with CASTOR frame.
+   * @param rqst    ZMQ message with CTA frame.
    * @param socket  ZMQ socket to use.
    */
   void checkAndAddRequestDismountTape(mediachanger::ZmqMsg &address,
@@ -162,8 +162,8 @@ public:
 private:
 
   /**
-   * The object representing castor configuration parameters for 
-   * the CASTOR ACS daemon.
+   * The object representing cta configuration parameters for 
+   * the CTA ACS daemon.
    */
   const AcsdConfiguration m_ctaConf;
   

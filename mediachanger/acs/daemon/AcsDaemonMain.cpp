@@ -18,8 +18,7 @@
 
 #include "common/log/log.hpp"
 #include "common/log/SyslogLogger.hpp"
-//#include "common/processCap/ProcessCap.hpp"
-#include "../Constants.hpp"
+#include "mediachanger/acs/Constants.hpp"
 #include "AcsDaemon.hpp"
 #include "AcsdCmdLine.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"

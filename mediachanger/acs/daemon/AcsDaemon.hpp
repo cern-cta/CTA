@@ -35,7 +35,7 @@ namespace acs {
 namespace daemon {
 
 /**
- * CASTOR ACS daemon responsible for mounting and dismounting tapes for ACS.
+ * CTA ACS daemon responsible for mounting and dismounting tapes for ACS.
  */
 class AcsDaemon : public server::Daemon {
 
@@ -48,8 +48,8 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param reactor The reactor responsible for dispatching the I/O requests to
-   * the CASTOR ACS daemon.
-   * @param config The CASTOR configuration parameters used by the CASTOR ACS
+   * the CTA ACS daemon.
+   * @param config The CTA configuration parameters used by the CTA ACS
    * daemon.
    */
   AcsDaemon(
@@ -168,7 +168,7 @@ protected:
   log::Logger &m_log;
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers
-   * of the CASTOR ACS daemon.
+   * of the CTA ACS daemon.
    */
   cta::mediachanger::reactor::ZMQReactor &m_reactor;
 
@@ -188,12 +188,12 @@ protected:
   void *m_zmqContext;
   
   /**
-   * The CASTOR configuration parameters used by the CASTOR ACS daemon.
+   * The CTA configuration parameters used by the CTA ACS daemon.
    */
   const AcsdConfiguration m_config;
   
   /**
-   * The object to handle requests to the CASTOR ACS daemon.
+   * The object to handle requests to the CTA ACS daemon.
    */
   AcsPendingRequests m_acsPendingRequests;
 

@@ -18,11 +18,8 @@
 
 #pragma once
 
-
-//#include "common/log/Logger.hpp"
 #include "mediachanger/acs/Constants.hpp"
 #include "mediachanger/Frame.hpp"
-//#include "mediachanger/ZmqSocketST.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
 #include "AcsDaemon.hpp"
@@ -30,6 +27,7 @@
 #include "AcsPendingRequests.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "mediachanger/reactor/ZMQPollEventHandler.hpp"
+
 namespace cta     {
 namespace mediachanger      {
 namespace acs     {
@@ -155,7 +153,7 @@ private:
   
   log::Logger &m_log;
   /**
-   * The reactor to which new CASTOR ACS daemon connection handlers are to
+   * The reactor to which new CTA ACS daemon connection handlers are to
    * be registered.
    */
   cta::mediachanger::reactor::ZMQReactor &m_reactor;
@@ -166,18 +164,18 @@ private:
   cta::mediachanger::ZmqSocketST m_socket;
  
   /**
-   * The name of the host on which CASTOR ACS daemon is running.
+   * The name of the host on which CTA ACS daemon is running.
    */
   const std::string m_hostName;
   
 
   /**
-   * The configuration parameters for the CASTOR ACS daemon.
+   * The configuration parameters for the CTA ACS daemon.
    */
   const acs::daemon::AcsdConfiguration m_ctaConf;
   
   /**
-   * The object to handle requests to the CASTOR ACS daemon.
+   * The object to handle requests to the CTA ACS daemon.
    */
   AcsPendingRequests &m_acsPendingRequests;
   

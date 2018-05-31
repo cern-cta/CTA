@@ -23,7 +23,6 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-//cta::mediachanger::acs::daemon::acs::daemon::AcsDismountTape::AcsDismountTape(
 cta::mediachanger::acs::daemon::AcsDismountTape::AcsDismountTape(
   const std::string &vid,
   const uint32_t acs,
@@ -45,7 +44,6 @@ cta::mediachanger::acs::daemon::AcsDismountTape::AcsDismountTape(
 // execute
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::daemon::AcsDismountTape::execute() const {
-//void cta::mediachanger::acs::daemon::AcsDismountTape::execute() const {
   syncDismount();
 }
 
@@ -53,7 +51,6 @@ void cta::mediachanger::acs::daemon::AcsDismountTape::execute() const {
 // asyncExecute
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::daemon::AcsDismountTape::asyncExecute(const SEQ_NO seqNo) const {
-//void cta::mediachanger::acs::daemon::AcsDismountTape::asyncExecute(const SEQ_NO seqNo) const {
   asyncDismount(seqNo);
 }
 
@@ -61,7 +58,6 @@ void cta::mediachanger::acs::daemon::AcsDismountTape::asyncExecute(const SEQ_NO 
 //------------------------------------------------------------------------------
 // syncDismount
 //------------------------------------------------------------------------------
-//void cta::mediachanger::acs::daemon::AcsDismountTape::syncDismount() const {
 void cta::mediachanger::acs::daemon::AcsDismountTape::syncDismount() const {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];

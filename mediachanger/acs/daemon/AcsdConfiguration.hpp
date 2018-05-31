@@ -24,7 +24,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"
-#include "../../../tapeserver/daemon/FetchReportOrFlushLimits.hpp"
 #include "Tpconfig.hpp"
 #include "mediachanger/acs/Constants.hpp"
 #include "common/ConfigurationFile.hpp"
@@ -59,7 +58,7 @@ private:
    * functions (just unconditionally log things). */
   static cta::log::DummyLogger gDummyLogger;
 } ;
-}
-}
-}
-} // namespace cta::mediachanger::acs::daemon
+} // namespace daemon
+} // namespace acs
+} // namespace mediachanger
+} // namespace cta

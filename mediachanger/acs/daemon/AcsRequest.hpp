@@ -64,7 +64,7 @@ public:
   virtual ~AcsRequest() = 0;
 
   /**
-   * Perform any time related actions with the request to CASTOR ACS daemon.
+   * Perform any time related actions with the request to CTA ACS daemon.
    *
    * This method does not have to be called at any time precise interval.
    */

@@ -93,7 +93,7 @@ protected:
   void sendDismountRequest(const SEQ_NO seqNumber) const;
  
   /**
-   * Throws castor::exception::DismountFailed if the mount was not
+   * Throws cta::exception::DismountFailed if the mount was not
    * successful.
    *
    * @param buf The mount-response message.
@@ -118,7 +118,7 @@ protected:
 
   log::Logger &m_log;
   /**
-   * The configuration parameters for the CASTOR ACS daemon.
+   * The configuration parameters for the CTA ACS daemon.
    */
   const mediachanger::acs::daemon::AcsdConfiguration m_ctaConf;
 

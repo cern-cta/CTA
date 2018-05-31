@@ -130,7 +130,7 @@ protected:
   log::Logger& m_log;
 
   /**
-   * The configuration parameters for the CASTOR ACS daemon.
+   * The configuration parameters for the CTA ACS daemon.
    */
   const AcsdConfiguration m_ctaConf;
   

@@ -17,9 +17,7 @@
  */
 
 #include "common/Constants.hpp"
-//#include "messages/Constants.hpp"
 #include "mediachanger/acs/daemon/Constants.hpp"
-//#include "mediachanger/acs/Constants.hpp"
 #include "AcsMessageHandler.hpp"
 #include "AcsDismountTape.hpp"
 #include "AcsForceDismountTape.hpp"
@@ -38,13 +36,12 @@
 #include "mediachanger/Exception.pb.h"
 #include "mediachanger/reactor/ZMQPollEventHandler.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
-//#include "mediachanger/ZmqSocketST.hpp"
 #include "mediachanger/ZmqSocket.hpp"
 #include "errno.h"
 
 #include <iostream>
-//#include <sstream>
 #include <unistd.h>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -141,43 +138,20 @@ bool cta::mediachanger::acs::daemon::AcsMessageHandler::handleEvent(
   // From this point on any exception thrown should be converted into an
   // Exception message and sent back to the client 
   cta::mediachanger::Frame reply;
-  /*bool exceptionOccurred = false;*/
   
   try {
-    ///////m_acsPendingRequests.checkAndAddRequest(address, empty, rqst, m_socket);
     // if there are any problems we need to send the replay to the client.
-    
     reply = dispatchMsgHandler(rqst);
   } catch(cta::exception::Exception &ex) {
-    reply = createExceptionFrame(ECANCELED, ex.getMessage().str()); //TBD we have to get rid of code inside the Exception
-    /*exceptionOccurred=true;*/
+    reply = createExceptionFrame(ECANCELED, ex.getMessage().str()); 
     m_log(LOG_ERR, ex.getMessage().str());
   } catch(std::exception &se) {
-    reply = createExceptionFrame(ECANCELED, se.what());  //TBD
-    /*exceptionOccurred=true;*/
+    reply = createExceptionFrame(ECANCELED, se.what());
     m_log(LOG_ERR, se.what());
   } catch(...) {
-    reply = createExceptionFrame(ECANCELED, "Caught an unknown exception");  //TBD
-    /*exceptionOccurred=true;*/
+    reply = createExceptionFrame(ECANCELED, "Caught an unknown exception"); 
     m_log(LOG_ERR, "Caught an unknown exception");
   }
-
-/*
-  if (exceptionOccurred) {
-    // Send the reply to the client if we were not able to add request to the
-    // list
-    try {
-      //we need to prepend our frames the same way we received them
-      // ie identity + empty frames 
-      m_socket.send(address,ZMQ_SNDMORE);
-      m_socket.send(empty,ZMQ_SNDMORE);
-      cta::mediachanger::sendFrame(m_socket, reply);    
-    } catch(castor::exception::Exception &ex) {
-      std::list<log::Param> params = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "AcsMessageHandler failed to send reply to client", params);
-    }
-  }
-*/
 
   // Send the reply to the client
   try {
@@ -403,7 +377,6 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
       log::Param("panel", panel),
       log::Param("drive", drive)};
     m_log(LOG_INFO, "Force dismount tape", params);
-   // m_log(LOG_INFO, "Force dismount tape",vid);
 
     cta::mediachanger::acs::AcsImpl acsWrapper;
     cta::mediachanger::acs::daemon::AcsForceDismountTape acsForceDismountTape(vid, acs, lsm,
