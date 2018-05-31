@@ -181,7 +181,7 @@ set(VALGRIND_OPTS --track-fds=yes --leak-check=full --demangle=yes --gen-suppres
 set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=tests/valgrind.suppr)
 string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 
-set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=30000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
+set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
 set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=tests/helgrind.suppr)
 string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
 
