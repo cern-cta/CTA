@@ -1,20 +1,6 @@
 #!/bin/bash
 # exit from the script on any error.
 set -e
-/usr/bin/cta-unitTests
 
-/usr/bin/cta-unitTests-multiProcess
+make -f /usr/share/cta-@CTA_VERSION@/parallelTestsMakefile -j 4
 
-valgrind @VALGRIND_OPTS_STR@ --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr     \
-  /usr/bin/cta-unitTests
-
-valgrind --tool=helgrind @HELGRIND_OPTS_STR@                                                         \
-  --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr                                \
-  /usr/bin/cta-unitTests
-
-valgrind @VALGRIND_OPTS_STR@ --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr     \
-  --child-silent-after-fork=yes /usr/bin/cta-unitTests-multiProcess
-
-valgrind --tool=helgrind @HELGRIND_OPTS_STR@                                                         \
-  --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr                                \
-  /usr/bin/cta-unitTests-multiProcess

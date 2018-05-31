@@ -242,6 +242,7 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
+%attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
