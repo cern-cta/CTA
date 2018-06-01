@@ -24,10 +24,11 @@
 namespace cta {
 
 //------------------------------------------------------------------------------
-// QueueItor::getQueueJobs
+// QueueItor::getQueueJobs (generic)
 //------------------------------------------------------------------------------
 template<typename JobQueuesQueue, typename JobQueue>
-void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
+void QueueItor<JobQueuesQueue, JobQueue>::
+getQueueJobs()
 {
    // Behaviour is racy: it's possible that the queue can disappear before we read it.
    // In this case, we ignore the error and move on.
@@ -41,6 +42,41 @@ void QueueItor<JobQueuesQueue, JobQueue>::getQueueJobs()
    } catch(...) {
       // Force an increment to the next queue
       m_jobQueueIt = m_jobQueue.end();
+   }
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::QueueItor (Archive specialisation)
+//------------------------------------------------------------------------------
+template<>
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
+QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
+   m_objectStore(objectStore),
+   m_onlyThisQueueId(!queue_id.empty()),
+   m_jobQueueIt(m_jobQueue.begin())
+{
+   objectstore::RootEntry re(m_objectStore);
+   objectstore::ScopedSharedLock rel(re);
+      re.fetch();
+      m_jobQueuesQueue = re.dumpArchiveQueues();
+   rel.release();
+
+   // Set queue iterator to the first queue in the list
+   m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
+
+   // If we specified a tape pool, advance to the correct queue
+   if(m_onlyThisQueueId) {
+      for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
+         if(m_jobQueuesQueueIt->tapePool == queue_id) break;
+      }
+      if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
+         throw cta::exception::UserError("TapePool " + queue_id + " not found.");
+      }
+   }
+
+   // Find the first job in the queue
+   if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
+      getQueueJobs();
    }
 }
 
@@ -100,80 +136,6 @@ getJob() const
 }
 
 //------------------------------------------------------------------------------
-// QueueItor::QueueItor (Archive specialisation)
-//------------------------------------------------------------------------------
-template<>
-QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
-   m_objectStore(objectStore),
-   m_onlyThisQueueId(!queue_id.empty()),
-   m_jobQueueIt(m_jobQueue.begin())
-{
-   objectstore::RootEntry re(m_objectStore);
-   objectstore::ScopedSharedLock rel(re);
-      re.fetch();
-      m_jobQueuesQueue = re.dumpArchiveQueues();
-   rel.release();
-
-   // Set queue iterator to the first queue in the list
-   m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
-
-   // If we specified a tape pool, advance to the correct queue
-   if(m_onlyThisQueueId) {
-      for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-         if(m_jobQueuesQueueIt->tapePool == queue_id) break;
-      }
-      if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
-         throw cta::exception::UserError("TapePool " + queue_id + " not found.");
-      }
-   }
-
-   // Find the first job in the queue
-   if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
-      getQueueJobs();
-   }
-}
-
-//------------------------------------------------------------------------------
-// QueueItor::qid (Retrieve specialisation)
-//------------------------------------------------------------------------------
-template<>
-const std::string&
-QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-qid() const
-{
-   return m_jobQueuesQueueIt->vid;
-}
-
-//------------------------------------------------------------------------------
-// QueueItor::QueueItor (Retrieve specialisation)
-//------------------------------------------------------------------------------
-template<>
-std::pair<bool,objectstore::RetrieveQueue::job_t>
-QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-getJob() const
-{
-   auto job = cta::common::dataStructures::RetrieveJob();
-
-   // This implementation gives imperfect consistency and is racy.
-   // We tolerate that the queue is gone.
-   try {
-      objectstore::RetrieveRequest rr(m_jobQueueIt->address, m_objectStore);
-      objectstore::ScopedSharedLock rrl(rr);
-      rr.fetch();
-      job.request=rr.getSchedulerRequest();
-      for(auto &tf: rr.getArchiveFile().tapeFiles) {
-         job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
-         job.tapeCopies[tf.second.vid].second = tf.second;
-      }
-
-      return std::make_pair(true, job);
-   } catch (...) {
-      return std::make_pair(false, job);
-   }
-}
-
-//------------------------------------------------------------------------------
 // QueueItor::QueueItor (Retrieve specialisation)
 //------------------------------------------------------------------------------
 template<>
@@ -209,5 +171,43 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    }
 }
 
-} // namespace cta
+//------------------------------------------------------------------------------
+// QueueItor::qid (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+const std::string&
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+qid() const
+{
+   return m_jobQueuesQueueIt->vid;
+}
 
+//------------------------------------------------------------------------------
+// QueueItor::getJob (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+std::pair<bool,objectstore::RetrieveQueue::job_t>
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+getJob() const
+{
+   auto job = cta::common::dataStructures::RetrieveJob();
+
+   // This implementation gives imperfect consistency and is racy.
+   // We tolerate that the queue is gone.
+   try {
+      objectstore::RetrieveRequest rr(m_jobQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock rrl(rr);
+      rr.fetch();
+      job.request=rr.getSchedulerRequest();
+      for(auto &tf: rr.getArchiveFile().tapeFiles) {
+         job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
+         job.tapeCopies[tf.second.vid].second = tf.second;
+      }
+
+      return std::make_pair(true, job);
+   } catch (...) {
+      return std::make_pair(false, job);
+   }
+}
+
+} // namespace cta
