@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <objectstore/Backend.hpp>
 #include <objectstore/ObjectOps.hpp>
 
@@ -33,6 +35,44 @@ class QueueItor {
 public:
    //! Constructor
    QueueItor(objectstore::Backend &objectStore, const std::string &queue_id = "");
+
+   // Default copy constructor is deleted in favour of move constructor
+
+   //! Move constructor
+   QueueItor(QueueItor &&rhs) :
+      m_objectStore(std::move(rhs).m_objectStore),
+      m_onlyThisQueueId(std::move(rhs).m_onlyThisQueueId),
+      m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
+      m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
+      m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
+      m_jobQueueIt(std::move(rhs).m_jobQueueIt)
+   {
+std::cerr << "Called Move constructor:" << std::endl;
+
+      // Compiler optimisation allows empty lists to be copied instead of moved. In this case we need
+      // to explicitly set the iterators.
+
+      if(m_jobQueuesQueue.size() == 0) {
+         m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
+      }
+
+      if(m_jobQueue.size() == 0) {
+         m_jobQueueIt = m_jobQueue.begin();
+      }
+
+std::cerr << "m_jobQueuesQueueIt = " << &(*m_jobQueuesQueueIt) << std::endl;
+std::cerr << "m_jobQueuesQueue.size() = " << m_jobQueuesQueue.size() << std::endl;
+std::cerr << "m_jobQueuesQueue.begin() = " << &(*m_jobQueuesQueue.begin()) << std::endl;
+std::cerr << "m_jobQueuesQueue.end() = " << &(*m_jobQueuesQueue.end()) << std::endl;
+
+std::cerr << "m_jobQueueIt = " << &(*m_jobQueueIt) << std::endl;
+std::cerr << "m_jobQueue.size() = " << m_jobQueue.size() << std::endl;
+std::cerr << "m_jobQueue.begin() = " << &(*m_jobQueue.begin()) << std::endl;
+std::cerr << "m_jobQueue.end() = " << &(*m_jobQueue.end()) << std::endl;
+   }
+
+   //! No assignment constructor
+   QueueItor operator=(QueueItor &rhs) = delete;
 
    /*!
     * Increment iterator
