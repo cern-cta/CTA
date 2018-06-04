@@ -253,12 +253,16 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
       // Response type
       record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
 
-      // Tapepool
+      // VID
       record.mutable_af_item()->set_vid(tape_it->first);
+
+      // Copy number
+      record.mutable_af_item()->set_copy_nb(tape_it->second.first);
 
       // Retrieve file
       auto af = record.mutable_af_item()->mutable_af();
       af->set_archive_id(job.request.archiveFileID);
+      af->set_size(tape_it->second.second.compressedSize);
 #if 0
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
                currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
