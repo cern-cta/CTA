@@ -78,16 +78,6 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
       getQueueJobs();
    }
-
-std::cerr << "m_jobQueuesQueueIt = " << &(*m_jobQueuesQueueIt) << std::endl;
-std::cerr << "m_jobQueuesQueue.size() = " << m_jobQueuesQueue.size() << std::endl;
-std::cerr << "m_jobQueuesQueue.begin() = " << &(*m_jobQueuesQueue.begin()) << std::endl;
-std::cerr << "m_jobQueuesQueue.end() = " << &(*m_jobQueuesQueue.end()) << std::endl;
-
-std::cerr << "m_jobQueueIt = " << &(*m_jobQueueIt) << std::endl;
-std::cerr << "m_jobQueue.size() = " << m_jobQueue.size() << std::endl;
-std::cerr << "m_jobQueue.begin() = " << &(*m_jobQueue.begin()) << std::endl;
-std::cerr << "m_jobQueue.end() = " << &(*m_jobQueue.end()) << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -179,16 +169,6 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
       getQueueJobs();
    }
-
-std::cerr << "m_jobQueuesQueueIt = " << &(*m_jobQueuesQueueIt) << std::endl;
-std::cerr << "m_jobQueuesQueue.size() = " << m_jobQueuesQueue.size() << std::endl;
-std::cerr << "m_jobQueuesQueue.begin() = " << &(*m_jobQueuesQueue.begin()) << std::endl;
-std::cerr << "m_jobQueuesQueue.end() = " << &(*m_jobQueuesQueue.end()) << std::endl;
-
-std::cerr << "m_jobQueueIt = " << &(*m_jobQueueIt) << std::endl;
-std::cerr << "m_jobQueue.size() = " << m_jobQueue.size() << std::endl;
-std::cerr << "m_jobQueue.begin() = " << &(*m_jobQueue.begin()) << std::endl;
-std::cerr << "m_jobQueue.end() = " << &(*m_jobQueue.end()) << std::endl;
 }
 
 //------------------------------------------------------------------------------

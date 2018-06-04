@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <objectstore/Backend.hpp>
 #include <objectstore/ObjectOps.hpp>
 
@@ -47,28 +45,16 @@ public:
       m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
       m_jobQueueIt(std::move(rhs).m_jobQueueIt)
    {
-std::cerr << "Called Move constructor:" << std::endl;
+      // The move constructor works for all queue members, including begin(), but not for end() which
+      // does not point to an actual object! In the case where the iterator points to end(), including
+      // the case of an empty queue, we need to explicitly set it.
 
-      // Compiler optimisation allows empty lists to be copied instead of moved. In this case we need
-      // to explicitly set the iterators.
-
-      if(m_jobQueuesQueue.size() == 0) {
-         m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
+      if(m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
+         m_jobQueuesQueueIt = m_jobQueuesQueue.end();
       }
-
-      if(m_jobQueue.size() == 0) {
-         m_jobQueueIt = m_jobQueue.begin();
+      if(m_jobQueueIt == rhs.m_jobQueue.end()) {
+         m_jobQueueIt = m_jobQueue.end();
       }
-
-std::cerr << "m_jobQueuesQueueIt = " << &(*m_jobQueuesQueueIt) << std::endl;
-std::cerr << "m_jobQueuesQueue.size() = " << m_jobQueuesQueue.size() << std::endl;
-std::cerr << "m_jobQueuesQueue.begin() = " << &(*m_jobQueuesQueue.begin()) << std::endl;
-std::cerr << "m_jobQueuesQueue.end() = " << &(*m_jobQueuesQueue.end()) << std::endl;
-
-std::cerr << "m_jobQueueIt = " << &(*m_jobQueueIt) << std::endl;
-std::cerr << "m_jobQueue.size() = " << m_jobQueue.size() << std::endl;
-std::cerr << "m_jobQueue.begin() = " << &(*m_jobQueue.begin()) << std::endl;
-std::cerr << "m_jobQueue.end() = " << &(*m_jobQueue.end()) << std::endl;
    }
 
    //! No assignment constructor
