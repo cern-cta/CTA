@@ -1220,7 +1220,8 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
    auto tapepool = getOptional(OptionString::TAPE_POOL);
 
    // Create a XrdSsi stream object to return the results
-   stream = new ListPendingQueue<OStoreDB::ArchiveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
+   stream = new ListPendingQueue<OStoreDB::ArchiveQueueItor_t>(m_catalogue,
+      has_flag(OptionBoolean::EXTENDED),
       m_scheddb.getArchiveJobItor(tapepool ? tapepool.value() : ""));
 
    // Should the client display column headers?
@@ -1245,7 +1246,8 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
    auto vid = getOptional(OptionString::VID);
 
    // Create a XrdSsi stream object to return the results
-   stream = new ListPendingQueue<OStoreDB::RetrieveQueueItor_t>(has_flag(OptionBoolean::EXTENDED),
+   stream = new ListPendingQueue<OStoreDB::RetrieveQueueItor_t>(m_catalogue,
+      has_flag(OptionBoolean::EXTENDED),
       m_scheddb.getRetrieveJobItor(vid ? vid.value() : ""));
 
    // Should the client display column headers?

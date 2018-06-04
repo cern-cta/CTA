@@ -32,8 +32,9 @@ template<typename QueueItor_t>
 class ListPendingQueue : public XrdSsiStream
 {
 public:
-   ListPendingQueue(bool is_extended, QueueItor_t queueItor) :
+   ListPendingQueue(cta::catalogue::Catalogue &catalogue, bool is_extended, QueueItor_t queueItor) :
       XrdSsiStream(XrdSsiStream::isActive),
+      m_catalogue(catalogue),
       m_isExtended(is_extended),
       m_queueItor(std::move(queueItor))
    {
@@ -136,24 +137,30 @@ public:
    }
 
 private:
-   bool        m_isExtended;
-   QueueItor_t m_queueItor;
+   cta::catalogue::Catalogue &m_catalogue;                                 //!< Reference to CTA Catalogue
+   bool                       m_isExtended;                                //!< Summary or extended listing?
+   QueueItor_t                m_queueItor;                                 //!< Archive/Retrieve Queue Iterator
 
    typedef decltype(m_queueItor.getJob().second) data_t;                   //!< Infer data type from template type
 
+   uint64_t fileSize(const data_t &job);                                   //!< Obtain file size from queue item
    bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,               //!< Convert data to protobufs and put on stream
       const std::string &tape_id, const data_t &job);
    bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,               //!< Convert summary to protobufs and put on stream
       const std::string &tape_id, const uint64_t &total_files,
       const uint64_t &total_size);
 
-   static uint64_t fileSize(const data_t &job);                            //!< Obtain file size from queue item
    static constexpr const char* const LOG_SUFFIX  = "ListPendingQueue";    //!< Identifier for log messages
 };
 
 
 
 // Template specialisations for Archive Queue types
+
+template<>
+uint64_t ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fileSize(const data_t &job) {
+   return job.request.fileSize;
+}
 
 template<>
 bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,
@@ -205,14 +212,14 @@ bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStrea
    return streambuf->Push(record);
 }
 
-template<>
-uint64_t ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::fileSize(const data_t &job) {
-   return job.request.fileSize;
-}
-
 
 
 // Template specialisations for Retrieve Queue types
+
+template<>
+uint64_t ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fileSize(const data_t &job) {
+   return m_catalogue.getArchiveFileById(job.request.archiveFileID).fileSize;
+}
 
 template<>
 bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,
@@ -247,11 +254,8 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
       // Archive file
       auto af = record.mutable_af_item()->mutable_af();
       af->set_archive_id(job.request.archiveFileID);
-      af->set_size(tape_it->second.second.compressedSize);
-#if 0
-               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize)));
-#endif
+      //af->set_size(tape_it->second.second.compressedSize);
+      af->set_size(fileSize(job));
       af->mutable_df()->set_owner(job.request.requester.name);
       af->mutable_df()->set_group(job.request.requester.group);
       af->mutable_df()->set_path(job.request.diskFileInfo.path);
@@ -301,16 +305,6 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
    record.mutable_af_summary_item()->set_total_size(total_size);
 
    return streambuf->Push(record);
-}
-
-template<>
-uint64_t ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fileSize(const data_t &job) {
-#if 0
-               cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               size += file.fileSize;
-   return job.request.fileSize;
-#endif
-   return 0;
 }
 
 }} // namespace cta::xrd
