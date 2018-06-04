@@ -238,17 +238,27 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
             }
          }
 #endif
-   Data record;
 
-   // Response type
-   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
+   bool is_buffer_full = false;
 
-   // Tapepool
-   record.mutable_af_item()->set_vid(vid);
+   // Write one record per tape copy
 
-   // Retrieve file
-   auto af = record.mutable_af_item()->mutable_af();
-   af->set_archive_id(job.request.archiveFileID);
+   for(auto tape_it = job.tapeCopies.begin(); tape_it != job.tapeCopies.end(); ++tape_it)
+   {
+      // If we are filtering by vid, skip the ones we are not interested in
+      if(!vid.empty() && vid != tape_it->first) continue;
+
+      Data record;
+
+      // Response type
+      record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
+
+      // Tapepool
+      record.mutable_af_item()->set_vid(tape_it->first);
+
+      // Retrieve file
+      auto af = record.mutable_af_item()->mutable_af();
+      af->set_archive_id(job.request.archiveFileID);
 #if 0
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
                currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
@@ -262,11 +272,14 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
    af->mutable_cs()->set_value(job.request.checksumValue);         
    af->set_storage_class(job.request.storageClass);
 #endif
-   af->mutable_df()->set_owner(job.request.requester.name);
-   af->mutable_df()->set_group(job.request.requester.group);
-   af->mutable_df()->set_path(job.request.diskFileInfo.path);
+      af->mutable_df()->set_owner(job.request.requester.name);
+      af->mutable_df()->set_group(job.request.requester.group);
+      af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
-   return streambuf->Push(record);
+      is_buffer_full = streambuf->Push(record);
+   }
+
+   return is_buffer_full;
 }
 
 template<>
