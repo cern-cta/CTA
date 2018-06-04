@@ -218,7 +218,6 @@ template<>
 bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,
    const std::string &vid, const common::dataStructures::RetrieveJob &job)
 {
-
 #if 0
    if(vid) {
       std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
@@ -226,17 +225,6 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
    } else {
       result = m_scheduler.getPendingRetrieveJobs(m_lc);
    }
-
-         for(auto it = result.cbegin(); it != result.cend(); it++)
-         {
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-               currentRow.push_back(jt->request.requester.name);
-               currentRow.push_back(jt->request.requester.group);
-               currentRow.push_back(jt->request.diskFileInfo.path);
-               responseTable.push_back(currentRow);
-            }
-         }
 #endif
 
    bool is_buffer_full = false;
@@ -253,32 +241,26 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
       // Response type
       record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
 
-      // VID
-      record.mutable_af_item()->set_vid(tape_it->first);
-
       // Copy number
       record.mutable_af_item()->set_copy_nb(tape_it->second.first);
 
-      // Retrieve file
+      // Archive file
       auto af = record.mutable_af_item()->mutable_af();
       af->set_archive_id(job.request.archiveFileID);
       af->set_size(tape_it->second.second.compressedSize);
 #if 0
                cta::common::dataStructures::ArchiveFile file = m_catalogue.getArchiveFileById(jt->request.archiveFileID);
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).first))));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.fSeq))));
-               currentRow.push_back(std::to_string(static_cast<unsigned long long>((jt->tapeCopies.at(it->first).second.blockId))));
                currentRow.push_back(std::to_string(static_cast<unsigned long long>(file.fileSize)));
-   af->set_disk_instance(job.instanceName);
-   af->set_disk_id(job.request.diskFileID);
-   af->set_size(job.request.fileSize);
-   af->mutable_cs()->set_type(job.request.checksumType);
-   af->mutable_cs()->set_value(job.request.checksumValue);         
-   af->set_storage_class(job.request.storageClass);
 #endif
       af->mutable_df()->set_owner(job.request.requester.name);
       af->mutable_df()->set_group(job.request.requester.group);
       af->mutable_df()->set_path(job.request.diskFileInfo.path);
+
+      // Tape file
+      auto tf = record.mutable_af_item()->mutable_tf();
+      tf->set_vid(tape_it->first);
+      tf->set_f_seq(tape_it->second.second.fSeq);
+      tf->set_block_id(tape_it->second.second.blockId);
 
       is_buffer_full = streambuf->Push(record);
    }

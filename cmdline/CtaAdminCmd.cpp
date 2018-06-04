@@ -473,11 +473,11 @@ void CtaAdminCmd::printLprHeader()
 
 void CtaAdminCmd::printLprItem(const cta::admin::ArchiveFileItem &af_item)
 {
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_item.vid()             << ' '
+   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_item.tf().vid()        << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()         << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"                    << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << "block id"                << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()      << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << af_item.tf().block_id()   << ' '
              << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()       << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner() << ' '
              << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group() << ' '
