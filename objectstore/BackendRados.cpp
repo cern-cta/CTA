@@ -546,6 +546,118 @@ void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lo
   }
 }
 
+BackendRados::RadosLockTimingLogger BackendRados::g_RadosLockTimingLogger;
+
+void BackendRados::RadosLockTimingLogger::Measurements::addAttempt(double latency, double waitTime, double latencyMultiplier) { 
+  totalLatency += latency;
+  totalWaitTime += waitTime;
+  totalLatencyMultiplier += latencyMultiplier;
+  if (attempts) {
+    minLatency = std::min(minLatency, latency);
+    maxLatency = std::max(maxLatency, latency);
+    minWaitTime = std::min(minWaitTime, latency);
+    maxWaitTime = std::max(maxWaitTime, latency);
+    minLatencyMultiplier = std::min(minLatencyMultiplier, latency);
+    maxLatencyMultiplier = std::max(maxLatencyMultiplier, latency);
+  } else {
+    minLatency = maxLatency = latency;
+    minWaitTime = maxWaitTime = waitTime;
+    minLatencyMultiplier = maxLatencyMultiplier = latencyMultiplier;
+  }
+  attempts++;
+  waitCount++;
+}
+
+void BackendRados::RadosLockTimingLogger::Measurements::addSuccess(double latency, double time) {
+  if (attempts) {
+    minLatency = std::min(minLatency, latency);
+    maxLatency = std::max(maxLatency, latency);
+  } else {
+    minLatency = maxLatency = latency;
+  }
+  totalTime = time;
+  attempts++;
+  BackendRados::g_RadosLockTimingLogger.addMeasurements(*this);
+}
+
+
+void BackendRados::RadosLockTimingLogger::addMeasurements(const Measurements& measurements) {
+  threading::MutexLocker ml(m_mutex);
+  if (m_measurements.totalCalls) {
+    m_measurements.minAttempts = std::min(measurements.attempts, m_measurements.minAttempts);
+    m_measurements.maxAttempts = std::max(measurements.attempts, m_measurements.maxAttempts);
+    m_measurements.minTotalTime = std::min(measurements.totalTime, m_measurements.minTotalTime);
+    m_measurements.maxTotalTime = std::max(measurements.totalTime, m_measurements.maxTotalTime);
+  } else {
+    m_measurements.minAttempts = measurements.attempts;
+    m_measurements.maxAttempts = measurements.attempts;
+    m_measurements.minTotalTime = measurements.totalTime;
+    m_measurements.maxTotalTime = measurements.totalTime;
+  }
+  if (measurements.waitCount) {
+    if (m_measurements.waitCount) {
+      m_measurements.minLatency = std::min(measurements.minLatency, m_measurements.minLatency);
+      m_measurements.maxLatency = std::max(measurements.maxLatency, m_measurements.maxLatency);
+      m_measurements.minWaitTime = std::min(measurements.minWaitTime, m_measurements.minWaitTime);
+      m_measurements.maxWaitTime = std::max(measurements.maxWaitTime, m_measurements.maxWaitTime);
+      m_measurements.minLatencyMultiplier = std::min(measurements.minLatencyMultiplier, m_measurements.minLatencyMultiplier);
+      m_measurements.maxLatencyMultiplier = std::max(measurements.maxLatencyMultiplier, m_measurements.maxLatencyMultiplier);
+    } else {
+      m_measurements.minLatency = measurements.minLatency;
+      m_measurements.maxLatency = measurements.maxLatency;
+      m_measurements.minWaitTime = measurements.minWaitTime;
+      m_measurements.maxWaitTime = measurements.maxWaitTime;
+      m_measurements.minLatencyMultiplier = measurements.minLatencyMultiplier;
+      m_measurements.maxLatencyMultiplier = measurements.maxLatencyMultiplier;
+    }
+  }
+  m_measurements.totalCalls++;
+  m_measurements.attempts += measurements.attempts;
+  m_measurements.waitCount += measurements.waitCount;
+  m_measurements.totalTime += measurements.totalTime;
+  m_measurements.totalLatency += measurements.totalLatency;
+  m_measurements.totalWaitTime += measurements.totalWaitTime;
+  m_measurements.totalLatencyMultiplier += measurements.totalLatencyMultiplier;
+  m_measurements.totalWaitTime += measurements.totalWaitTime;
+  if (m_timer.secs() > 60) {
+    logIfNeeded();
+  }
+}
+
+void BackendRados::RadosLockTimingLogger::logIfNeeded() {
+  if (m_measurements.totalCalls) {
+    {
+      std::ofstream logFile(RADOS_LOCK_PERFORMANCE_LOGGING_FILE, std::ofstream::app);
+      std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      std::string date=std::ctime(&end_time);
+      // Chomp newline in the end
+      date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
+      logFile << date 
+          << " totalCalls=" << m_measurements.totalCalls
+          << " averageAttempts=" << 1.0 * m_measurements.attempts / m_measurements.totalCalls
+          << " waitCount=" << m_measurements.waitCount
+          << " minAttempts=" << m_measurements.minAttempts
+          << " maxAttempts=" << m_measurements.maxAttempts
+          << " averageTotalTime=" << m_measurements.totalTime / m_measurements.totalCalls
+          << " minTotalTime=" << m_measurements.minTotalTime
+          << " maxTotalTime=" << m_measurements.maxTotalTime
+          << " averageLatency=" << (m_measurements.waitCount? m_measurements.totalLatency / m_measurements.waitCount : 0)
+          << " minLatency=" << m_measurements.minLatency
+          << " maxLatency=" << m_measurements.maxLatency
+          << " averageLatencyMultiplier=" << (m_measurements.waitCount? m_measurements.totalLatencyMultiplier / m_measurements.waitCount : 0)
+          << " minLatencyMultiplier=" << m_measurements.minLatencyMultiplier
+          << " maxLatencyMultiplier=" << m_measurements.maxLatencyMultiplier
+          << " samplingTime=" << m_timer.secs(utils::Timer::resetCounter) <<  std::endl;
+    }
+    m_measurements = CumulatedMesurements();
+  }
+}
+
+BackendRados::RadosLockTimingLogger::~RadosLockTimingLogger() {
+  threading::MutexLocker ml(m_mutex);
+  logIfNeeded();
+}
+
 void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType lockType,
     const std::string& clientId, librados::IoCtx & radosCtx) {
   // In Rados, locking a non-existing object will create it. This is not our intended
@@ -560,12 +672,14 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
   // (betweend and 50-150%)
   size_t backoff=1;
   utils::Timer t, timeoutTimer;
+  RadosLockTimingLogger::Measurements timingMeasurements;
   while (true) {
     TIMESTAMPEDPRINT(lockType==LockType::Shared?"Pre-lock (shared)":"Pre-lock (exclusive)");
     RadosTimeoutLogger rtl;
     if (lockType==LockType::Shared) {
       cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {
         rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &tv, 0);
+        timingMeasurements.addSuccess(t.secs(), timeoutTimer.secs());
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_shared()");
       rtl.logIfNeeded("In BackendRados::lockBackoff(): radosCtx.lock_shared()", name);
@@ -588,6 +702,7 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     }
     timespec ts;
     auto wait=t.usecs(utils::Timer::resetCounter)*backoff++/c_backoffFraction;
+    auto latencyUsecs = wait;
     wait = std::min(wait, c_maxWait);
     if (backoff>c_maxBackoff) backoff=1;
     // We need to get a random number [50, 150]
@@ -598,6 +713,7 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
     ts.tv_sec = wait/(1000*1000);
     ts.tv_nsec = (wait % (1000*1000)) * 1000;
     nanosleep(&ts, nullptr);
+    timingMeasurements.addAttempt(1.0 * latencyUsecs / 1000 / 1000, 1.0 * wait / 1000 /1000, 1.0 * randFactor / 100);
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
       std::string("In ObjectStoreRados::lock(), failed to librados::IoCtx::") + 
