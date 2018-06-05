@@ -570,11 +570,12 @@ void BackendRados::RadosLockTimingLogger::Measurements::addAttempt(double latenc
 
 void BackendRados::RadosLockTimingLogger::Measurements::addSuccess(double latency, double time) {
   if (attempts) {
-    minLatency = std::min(minLatency, latency);
-    maxLatency = std::max(maxLatency, latency);
+    minLatency = std::min(minLatency, time);
+    maxLatency = std::max(maxLatency, time);
   } else {
-    minLatency = maxLatency = latency;
+    minLatency = maxLatency = time;
   }
+  totalLatency += time;
   totalTime = time;
   attempts++;
   BackendRados::g_RadosLockTimingLogger.addMeasurements(*this);
@@ -588,23 +589,23 @@ void BackendRados::RadosLockTimingLogger::addMeasurements(const Measurements& me
     m_measurements.maxAttempts = std::max(measurements.attempts, m_measurements.maxAttempts);
     m_measurements.minTotalTime = std::min(measurements.totalTime, m_measurements.minTotalTime);
     m_measurements.maxTotalTime = std::max(measurements.totalTime, m_measurements.maxTotalTime);
+    m_measurements.minLatency = std::min(measurements.minLatency, m_measurements.minLatency);
+    m_measurements.maxLatency = std::max(measurements.maxLatency, m_measurements.maxLatency);
   } else {
     m_measurements.minAttempts = measurements.attempts;
     m_measurements.maxAttempts = measurements.attempts;
     m_measurements.minTotalTime = measurements.totalTime;
     m_measurements.maxTotalTime = measurements.totalTime;
+    m_measurements.minLatency = measurements.minLatency;
+    m_measurements.maxLatency = measurements.maxLatency;
   }
   if (measurements.waitCount) {
     if (m_measurements.waitCount) {
-      m_measurements.minLatency = std::min(measurements.minLatency, m_measurements.minLatency);
-      m_measurements.maxLatency = std::max(measurements.maxLatency, m_measurements.maxLatency);
       m_measurements.minWaitTime = std::min(measurements.minWaitTime, m_measurements.minWaitTime);
       m_measurements.maxWaitTime = std::max(measurements.maxWaitTime, m_measurements.maxWaitTime);
       m_measurements.minLatencyMultiplier = std::min(measurements.minLatencyMultiplier, m_measurements.minLatencyMultiplier);
       m_measurements.maxLatencyMultiplier = std::max(measurements.maxLatencyMultiplier, m_measurements.maxLatencyMultiplier);
     } else {
-      m_measurements.minLatency = measurements.minLatency;
-      m_measurements.maxLatency = measurements.maxLatency;
       m_measurements.minWaitTime = measurements.minWaitTime;
       m_measurements.maxWaitTime = measurements.maxWaitTime;
       m_measurements.minLatencyMultiplier = measurements.minLatencyMultiplier;
@@ -641,7 +642,7 @@ void BackendRados::RadosLockTimingLogger::logIfNeeded() {
           << " averageTotalTime=" << m_measurements.totalTime / m_measurements.totalCalls
           << " minTotalTime=" << m_measurements.minTotalTime
           << " maxTotalTime=" << m_measurements.maxTotalTime
-          << " averageLatency=" << (m_measurements.waitCount? m_measurements.totalLatency / m_measurements.waitCount : 0)
+          << " averageLatency=" << (m_measurements.attempts? m_measurements.totalLatency / m_measurements.attempts : 0)
           << " minLatency=" << m_measurements.minLatency
           << " maxLatency=" << m_measurements.maxLatency
           << " averageLatencyMultiplier=" << (m_measurements.waitCount? m_measurements.totalLatencyMultiplier / m_measurements.waitCount : 0)
