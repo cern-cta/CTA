@@ -20,8 +20,6 @@
 
 #include <common/utils/utils.hpp>
 #include <common/utils/Regex.hpp>
-//#include <objectstore/ArchiveQueue.hpp>
-//#include <scheduler/QueueItor.hpp>
 
 #include <XrdSsiPbException.hpp>
 using XrdSsiPb::PbException;

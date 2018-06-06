@@ -225,22 +225,16 @@ template<>
 bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,
    const std::string &vid, const common::dataStructures::RetrieveJob &job)
 {
-#if 0
-   if(vid) {
-      std::list<cta::common::dataStructures::RetrieveJob> list = m_scheduler.getPendingRetrieveJobs(vid.value(), m_lc);
-      if(!list.empty()) result[vid.value()] = list;
-   } else {
-      result = m_scheduler.getPendingRetrieveJobs(m_lc);
-   }
-#endif
-
    bool is_buffer_full = false;
 
    // Write one record per tape copy
 
    for(auto tape_it = job.tapeCopies.begin(); tape_it != job.tapeCopies.end(); ++tape_it)
    {
-      // If we are filtering by vid, skip the ones we are not interested in
+      // If we are filtering by vid, skip the ones we are not interested in.
+      //
+      // Do we actually need to do this or are we guaranteed that the vid field is the same for all
+      // objects in the same queue?
       if(!vid.empty() && vid != tape_it->first) continue;
 
       Data record;
@@ -276,22 +270,6 @@ template<>
 bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,
    const std::string &vid, const uint64_t &total_files, const uint64_t &total_size)
 {
-#if 0
-         for(auto it = result.cbegin(); it != result.cend(); it++)
-         {
-            std::vector<std::string> currentRow;
-            currentRow.push_back(it->first);
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->second.size())));
-            uint64_t size = 0;
-            for(auto jt = it->second.cbegin(); jt != it->second.cend(); jt++)
-            {
-            }
-            currentRow.push_back(std::to_string(static_cast<unsigned long long>(size)));
-            responseTable.push_back(currentRow);
-         }
-      }
-      cmdlineOutput << formatResponse(responseTable);
-#endif
    Data record;
 
    // Response type

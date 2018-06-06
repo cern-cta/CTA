@@ -906,21 +906,8 @@ OStoreDB::getRetrieveJobs(const std::string &tapePoolName) const
 {
   throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
 
-  // To implement this method, uncomment the code below, and provide a way to get the vid from the
-  // tapePool in the QueueItor constructor
-#if 0
-   std::list<cta::common::dataStructures::RetrieveJob> ret;
-
-   QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
-      q_it(m_objectStore, tapePoolName);
-
-   for( ; q_it.is_valid() ; ++q_it) {
-      auto job = q_it.getJob();
-      if(job.first) ret.push_back(job.second);
-   }
-
-   return ret;
-#endif
+  // To implement this method, needs a way to get a list of vids in the tapepool, then
+  // create a QueueItor object for each vid...
 }
 
 //------------------------------------------------------------------------------

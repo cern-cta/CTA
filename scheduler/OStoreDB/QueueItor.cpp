@@ -157,16 +157,14 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    // Find the first queue
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
 
-#if 0
-   // If we specified a tape pool, advance to the correct queue
+   // If we specified a volume ID, advance to the correct queue
    if(m_onlyThisQueueId) {
       for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-         if(m_jobQueuesQueueIt->tapePool == queue_id) { 
+         if(m_jobQueuesQueueIt->vid == queue_id) { 
             break;
          }
       }
    }
-#endif
 
    // Find the first job in the queue
    if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
