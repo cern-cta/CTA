@@ -34,10 +34,11 @@ getQueueJobs()
    // In this case, we ignore the error and move on.
    try {
       JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
-      objectstore::ScopedSharedLock ostpl(osaq);
+      {
+         objectstore::ScopedSharedLock ostpl(osaq);
          osaq.fetch();
          m_jobQueue = osaq.dumpJobs();
-      ostpl.release();
+      }
       m_jobQueueIt = m_jobQueue.begin();
    } catch(...) {
       // Force an increment to the next queue
@@ -56,10 +57,11 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_jobQueueIt(m_jobQueue.begin())
 {
    objectstore::RootEntry re(m_objectStore);
-   objectstore::ScopedSharedLock rel(re);
+   {
+      objectstore::ScopedSharedLock rel(re);
       re.fetch();
       m_jobQueuesQueue = re.dumpArchiveQueues();
-   rel.release();
+   }
 
    // Set queue iterator to the first queue in the list
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
@@ -146,10 +148,11 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
    m_jobQueueIt(m_jobQueue.begin())
 {
    objectstore::RootEntry re(m_objectStore);
-   objectstore::ScopedSharedLock rel(re);
+   {
+      objectstore::ScopedSharedLock rel(re);
       re.fetch();
       m_jobQueuesQueue = re.dumpRetrieveQueues();
-   rel.release();
+   }
 
    // Find the first queue
    m_jobQueuesQueueIt = m_jobQueuesQueue.begin();
