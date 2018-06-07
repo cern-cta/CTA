@@ -151,7 +151,7 @@ private:
    */
   void updateJobsCache();
 
-  const int JOB_CACHE_SIZE = 100;                                                        //! Maximum number of jobs to asynchronously fetch from the queue at once
+  const size_t JOB_CACHE_SIZE = 100;                                                     //! Maximum number of jobs to asynchronously fetch from the queue at once
 
   objectstore::Backend                                           &m_objectStore;         //! Reference to ObjectStore Backend
   bool                                                            m_onlyThisQueueId;     //! true if a queue_id parameter was passed to the constructor

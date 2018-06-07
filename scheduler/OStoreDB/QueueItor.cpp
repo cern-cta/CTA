@@ -44,6 +44,9 @@ getQueueJobs()
     // Force an increment to the next queue
     m_jobQueueIt = m_jobQueue.end();
   }
+
+  // Grab the first batch of jobs from the current queue
+  updateJobsCache();
 }
 
 //auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
@@ -120,6 +123,16 @@ QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 qid() const
 {
   return m_jobQueuesQueueIt->tapePool;
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::updateJobsCache (Archive specialisation)
+//------------------------------------------------------------------------------
+template<>
+void
+QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
+updateJobsCache()
+{
 }
 
 //------------------------------------------------------------------------------
@@ -213,6 +226,47 @@ QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
 qid() const
 {
   return m_jobQueuesQueueIt->vid;
+}
+
+//------------------------------------------------------------------------------
+// QueueItor::getJob (Retrieve specialisation)
+//------------------------------------------------------------------------------
+template<>
+void
+QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
+updateJobsCache()
+{
+  // Get a chunk of retrieve jobs from the current retrieve queue
+
+  decltype(m_jobQueue)                 jobQueueChunk;
+
+  auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
+  auto jobQueueIt = m_jobQueue.begin();
+
+  for(size_t i = 0; i <= chunksize; ++i, ++jobQueueIt) ;
+
+  jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueIt);
+
+  // Populate the jobs cache from the retrieve jobs
+
+  for(auto &j: jobQueueChunk) {
+    auto job = cta::common::dataStructures::RetrieveJob();
+
+    try {
+      objectstore::RetrieveRequest rr(j.address, m_objectStore);
+      objectstore::ScopedSharedLock rrl(rr);
+      rr.fetch();
+      job.request = rr.getSchedulerRequest();
+      for(auto &tf: rr.getArchiveFile().tapeFiles) {
+        job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
+        job.tapeCopies[tf.second.vid].second = tf.second;
+      }
+
+      m_jobsCache.push_back(job);
+    } catch(...) {
+      // This implementation gives imperfect consistency and is racy. If the queue has gone, move on.
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
