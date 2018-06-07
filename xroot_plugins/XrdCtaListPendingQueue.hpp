@@ -96,7 +96,8 @@ public:
             {
                auto job = m_queueItor.getJob();
                if(!job.first) continue;
-               is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), job.second);
+               //is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), job.second);
+               is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), *m_queueItor);
             }
          } else {
             // Summary by tapepool or vid

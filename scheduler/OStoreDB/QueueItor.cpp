@@ -30,6 +30,7 @@ template<typename JobQueuesQueue, typename JobQueue>
 void QueueItor<JobQueuesQueue, JobQueue>::
 getQueueJobs()
 {
+std::cerr << "getQueueJobs()" << std::endl;
   // Behaviour is racy: it's possible that the queue can disappear before we read it.
   // In this case, we ignore the error and move on.
   try {
@@ -88,6 +89,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_onlyThisQueueId(!queue_id.empty()),
   m_jobQueueIt(m_jobQueue.begin())
 {
+std::cerr << "ArchiveQueueItor constructor" << std::endl;
   objectstore::RootEntry re(m_objectStore);
   {
     objectstore::ScopedSharedLock rel(re);
@@ -122,6 +124,7 @@ const std::string&
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 qid() const
 {
+std::cerr << "ArchiveQueueItor qid()" << std::endl;
   return m_jobQueuesQueueIt->tapePool;
 }
 
@@ -133,6 +136,7 @@ void
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 updateJobsCache()
 {
+std::cerr << "ArchiveQueue updateJobsCache()" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -143,6 +147,7 @@ std::pair<bool,objectstore::ArchiveQueue::job_t>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 getJob() const
 {
+std::cerr << "ArchiveQueueItor getJob()" << std::endl;
   auto job = cta::common::dataStructures::ArchiveJob();
 
   try {
@@ -189,6 +194,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_onlyThisQueueId(!queue_id.empty()),
   m_jobQueueIt(m_jobQueue.begin())
 {
+std::cerr << "RetrieveQueueItor constructor" << std::endl;
   objectstore::RootEntry re(m_objectStore);
   {
     objectstore::ScopedSharedLock rel(re);
@@ -225,6 +231,7 @@ const std::string&
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 qid() const
 {
+std::cerr << "RetrieveQueueItor qid()" << std::endl;
   return m_jobQueuesQueueIt->vid;
 }
 
@@ -236,16 +243,18 @@ void
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 updateJobsCache()
 {
+std::cerr << "RetrieveQueue updateJobsCache()" << std::endl;
   // Get a chunk of retrieve jobs from the current retrieve queue
 
-  decltype(m_jobQueue)                 jobQueueChunk;
+  decltype(m_jobQueue) jobQueueChunk;
 
   auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
   auto jobQueueIt = m_jobQueue.begin();
-
-  for(size_t i = 0; i <= chunksize; ++i, ++jobQueueIt) ;
+  std::advance(jobQueueIt, chunksize);
 
   jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueIt);
+// temp hack
+m_jobQueueIt = m_jobQueue.begin();
 
   // Populate the jobs cache from the retrieve jobs
 
@@ -277,6 +286,7 @@ std::pair<bool,objectstore::RetrieveQueue::job_t>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 getJob() const
 {
+std::cerr << "RetrieveQueueItor getJob()" << std::endl;
   auto job = cta::common::dataStructures::RetrieveJob();
 
   // This implementation gives imperfect consistency and is racy.

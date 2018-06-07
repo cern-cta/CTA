@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include <objectstore/Backend.hpp>
 #include <objectstore/ObjectOps.hpp>
 
@@ -52,8 +54,10 @@ public:
     m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
     m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
     m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
-    m_jobQueueIt(std::move(rhs).m_jobQueueIt)
+    m_jobQueueIt(std::move(rhs).m_jobQueueIt),
+    m_jobsCache(std::move(rhs).m_jobsCache)
   {
+std::cerr << "QueueItor move constructor" << std::endl;
     // The move constructor works for all queue members, including begin(), but not for end() which
     // does not point to an actual object! In the case where the iterator points to end(), including
     // the case of an empty queue, we need to explicitly set it.
@@ -73,6 +77,18 @@ public:
    * except when we are limited to one tapepool/vid.
    */
   void operator++() {
+std::cerr << "QueueItor inc++" << std::endl;
+
+    // Are there still jobs in the cache?
+    if(m_jobsCache.size() > 0) {
+      m_jobsCache.pop_front();
+    }
+
+    // If the cache is empty, refresh it
+    if(m_jobsCache.empty()) {
+      updateJobsCache();
+    }
+#if 0
     if(m_jobQueueIt != m_jobQueue.end()) {
       ++m_jobQueueIt;
     } else if(!m_onlyThisQueueId) {
@@ -81,6 +97,7 @@ public:
         getQueueJobs();
       }
     }
+#endif
   }
 
   /*!
@@ -94,6 +111,7 @@ public:
    * @retval false if we have advanced past the last valid job
    */
   bool is_valid() {
+std::cerr << "QueueItor is_valid()" << std::endl;
     // Case 1: no more queues
     if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) return false;
 
@@ -114,12 +132,17 @@ public:
   /*!
    * True if we are at the end of the current queue
    */
-  bool endq() const { return m_jobQueueIt == m_jobQueue.end(); }
+  bool endq() const {
+std::cerr << "QueueItor endq()" << std::endl;
+ if(!m_jobsCache.empty()) return false;
+ return m_jobQueueIt == m_jobQueue.end(); }
 
   /*!
    * True if we are at the end of the last queue
    */
   bool end() const {
+std::cerr << "QueueItor end()" << std::endl;
+    if(!m_jobsCache.empty()) return false;
     return m_jobQueuesQueueIt == m_jobQueuesQueue.end() || (m_onlyThisQueueId && endq());
   }
 
@@ -131,7 +154,8 @@ public:
   /*!
    * Dereference the QueueItor
    */
-  typename JobQueue::job_t &operator*() const {
+  const typename JobQueue::job_t &operator*() const {
+std::cerr << "QueueItor operator*" << std::endl;
      return m_jobsCache.front();
   }
 
