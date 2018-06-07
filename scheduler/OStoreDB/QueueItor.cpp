@@ -33,11 +33,11 @@ getQueueJobs()
   // Behaviour is racy: it's possible that the queue can disappear before we read it.
   // In this case, we ignore the error and move on.
   try {
-    JobQueue osaq(m_jobQueuesQueueIt->address, m_objectStore);
+    JobQueue osq(m_jobQueuesQueueIt->address, m_objectStore);
     {
-      objectstore::ScopedSharedLock ostpl(osaq);
-      osaq.fetch();
-      m_jobQueue = osaq.dumpJobs();
+      objectstore::ScopedSharedLock ostpl(osq);
+      osq.fetch();
+      m_jobQueue = osq.dumpJobs();
     }
     m_jobQueueIt = m_jobQueue.begin();
   } catch(...) {
@@ -72,7 +72,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
       if(m_jobQueuesQueueIt->tapePool == queue_id) break;
     }
     if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
-      throw cta::exception::UserError("TapePool " + queue_id + " not found.");
+      throw cta::exception::UserError("Archive queue for TapePool " + queue_id + " not found.");
     }
   }
 
@@ -163,6 +163,9 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
       if(m_jobQueuesQueueIt->vid == queue_id) { 
         break;
       }
+    }
+    if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) {
+      throw cta::exception::UserError("Retrieve queue for Volume ID " + queue_id + " not found.");
     }
   }
 
