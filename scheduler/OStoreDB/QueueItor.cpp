@@ -46,6 +46,35 @@ getQueueJobs()
   }
 }
 
+//auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
+  //checkPayloadReadable();
+  // Go read the shards in parallel...
+  // std::list<JobDump> ret;
+  // std::list<ArchiveQueueShard> shards;
+  // std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  // for (auto & sa: m_payload.archivequeueshards()) {
+  // shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+  // shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
+  // }
+  // auto s = shards.begin();
+  // auto sf = shardsFetchers.begin();
+  // while (s != shards.end()) {
+  // try {
+  // (*sf)->wait();
+  // } catch (Backend::NoSuchObject & ex) {
+  // // We are possibly in read only mode, so we cannot rebuild.
+  // // Just skip this shard.
+  // goto nextShard;
+  // }
+  // for (auto & j: s->dumpJobs()) {
+  // ret.emplace_back(JobDump{j.size, j.address, j.copyNb});
+  // }
+  // nextShard:
+  // s++; sf++;
+  // }
+  // return ret;
+  // }
+
 //------------------------------------------------------------------------------
 // QueueItor::QueueItor (Archive specialisation)
 //------------------------------------------------------------------------------
