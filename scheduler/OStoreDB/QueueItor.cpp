@@ -26,8 +26,8 @@ namespace cta {
 //------------------------------------------------------------------------------
 // QueueItor::getJobQueue (generic)
 //------------------------------------------------------------------------------
-template<typename JobQueuesQueue, typename JobQueue>
-void QueueItor<JobQueuesQueue, JobQueue>::
+template<typename JobQueuesQueue, typename JobQueue> void
+QueueItor<JobQueuesQueue, JobQueue>::
 getJobQueue()
 {
 std::cerr << "getJobQueue()" << std::endl;
@@ -85,72 +85,57 @@ std::cerr << "ArchiveQueueItor constructor" << std::endl;
 //------------------------------------------------------------------------------
 // QueueItor::qid (Archive specialisation)
 //------------------------------------------------------------------------------
-template<>
-const std::string&
+template<> const std::string&
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 qid() const
 {
-std::cerr << "ArchiveQueueItor qid()" << std::endl;
   return m_jobQueuesQueueIt->tapePool;
 }
 
 //------------------------------------------------------------------------------
 // QueueItor::updateJobCache (Archive specialisation)
 //------------------------------------------------------------------------------
-template<>
-void
+template<> void
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-updateJobCache()
+getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
-std::cerr << "ArchiveQueue updateJobCache()" << std::endl;
-}
+std::cerr << "ArchiveQueue getQueueJobs()" << std::endl;
+  // Populate the jobs cache from the retrieve jobs
 
-#if 0
-//------------------------------------------------------------------------------
-// QueueItor::getJob (Archive specialisation)
-//------------------------------------------------------------------------------
-template<>
-std::pair<bool,objectstore::ArchiveQueue::job_t>
-QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-getJob() const
-{
-std::cerr << "ArchiveQueueItor getJob()" << std::endl;
-  auto job = cta::common::dataStructures::ArchiveJob();
+  for(auto &j: jobQueueChunk) {
+    try {
+      auto job = cta::common::dataStructures::ArchiveJob();
 
-  try {
-    objectstore::ArchiveRequest osar(m_jobQueueIt->address, m_objectStore);
-    objectstore::ScopedSharedLock osarl(osar);
-    osar.fetch();
+      objectstore::ArchiveRequest osar(j.address, m_objectStore);
+      objectstore::ScopedSharedLock osarl(osar);
+      osar.fetch();
 
-    // Find the copy number for this tape pool
-    for(auto &j:osar.dumpJobs()) {
-      if(j.tapePool == m_jobQueuesQueueIt->tapePool) {
-        job.tapePool                 = j.tapePool;
-        job.copyNumber               = j.copyNb;
-        job.archiveFileID            = osar.getArchiveFile().archiveFileID;
-        job.request.checksumType     = osar.getArchiveFile().checksumType;
-        job.request.checksumValue    = osar.getArchiveFile().checksumValue;
-        job.request.creationLog      = osar.getEntryLog();
-        job.request.diskFileID       = osar.getArchiveFile().diskFileId;
-        job.request.diskFileInfo     = osar.getArchiveFile().diskFileInfo;
-        job.request.fileSize         = osar.getArchiveFile().fileSize;
-        job.instanceName             = osar.getArchiveFile().diskInstance;
-        job.request.requester        = osar.getRequester();
-        job.request.srcURL           = osar.getSrcURL();
-        job.request.archiveReportURL = osar.getArchiveReportURL();
-        job.request.storageClass     = osar.getArchiveFile().storageClass;
-        osarl.release();
+      // Find the copy number for this tape pool
+      for(auto &j:osar.dumpJobs()) {
+        if(j.tapePool == m_jobQueuesQueueIt->tapePool) {
+          job.tapePool                 = j.tapePool;
+          job.copyNumber               = j.copyNb;
+          job.archiveFileID            = osar.getArchiveFile().archiveFileID;
+          job.request.checksumType     = osar.getArchiveFile().checksumType;
+          job.request.checksumValue    = osar.getArchiveFile().checksumValue;
+          job.request.creationLog      = osar.getEntryLog();
+          job.request.diskFileID       = osar.getArchiveFile().diskFileId;
+          job.request.diskFileInfo     = osar.getArchiveFile().diskFileInfo;
+          job.request.fileSize         = osar.getArchiveFile().fileSize;
+          job.instanceName             = osar.getArchiveFile().diskInstance;
+          job.request.requester        = osar.getRequester();
+          job.request.srcURL           = osar.getSrcURL();
+          job.request.archiveReportURL = osar.getArchiveReportURL();
+          job.request.storageClass     = osar.getArchiveFile().storageClass;
 
-        return std::make_pair(true, job);
+          m_jobCache.push_back(job);
+        }
       }
+    } catch(...) {
+      // This implementation gives imperfect consistency and is racy. If the queue has gone, move on.
     }
-    osarl.release();
-  } catch(...) {}
-
-  // Skip the request if copy number is not found
-  return std::make_pair(false, job);
+  }
 }
-#endif
 
 //------------------------------------------------------------------------------
 // QueueItor::QueueItor (Retrieve specialisation)
@@ -192,60 +177,41 @@ std::cerr << "RetrieveQueueItor constructor" << std::endl;
 //------------------------------------------------------------------------------
 // QueueItor::qid (Retrieve specialisation)
 //------------------------------------------------------------------------------
-template<>
-const std::string&
+template<> const std::string&
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 qid() const
 {
-std::cerr << "RetrieveQueueItor qid()" << std::endl;
   return m_jobQueuesQueueIt->vid;
 }
 
 //------------------------------------------------------------------------------
-// QueueItor::updateJobCache (Retrieve specialisation)
+// QueueItor::getQueueJobs (Retrieve specialisation)
 //------------------------------------------------------------------------------
-template<>
-void
+template<> void
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-updateJobCache()
+getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
-std::cerr << "RetrieveQueue updateJobCache(): jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
+std::cerr << "RetrieveQueue getQueueJobs()" << std::endl;
+  // Populate the jobs cache from the retrieve jobs
 
-  while(!m_jobQueue.empty() && m_jobCache.empty())
-  {
-    // Get a chunk of retrieve jobs from the current retrieve queue
+  for(auto &j: jobQueueChunk) {
+    try {
+      auto job = cta::common::dataStructures::RetrieveJob();
 
-    auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
-    auto jobQueueChunkEnd = m_jobQueue.begin();
-    std::advance(jobQueueChunkEnd, chunksize);
-
-    decltype(m_jobQueue) jobQueueChunk;
-    jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueChunkEnd);
-std::cerr << "RetrieveQueue updateJobCache(): jobQueueChunk has " << jobQueueChunk.size() << " entries, jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
-
-    // Populate the jobs cache from the retrieve jobs
-
-    for(auto &j: jobQueueChunk) {
-      try {
-        auto job = cta::common::dataStructures::RetrieveJob();
-
-        objectstore::RetrieveRequest rr(j.address, m_objectStore);
-        objectstore::ScopedSharedLock rrl(rr);
-        rr.fetch();
-        job.request = rr.getSchedulerRequest();
-        for(auto &tf: rr.getArchiveFile().tapeFiles) {
-          job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
-          job.tapeCopies[tf.second.vid].second = tf.second;
-        }
-
-        m_jobCache.push_back(job);
-      } catch(...) {
-        // This implementation gives imperfect consistency and is racy. If the queue has gone, move on.
+      objectstore::RetrieveRequest rr(j.address, m_objectStore);
+      objectstore::ScopedSharedLock rrl(rr);
+      rr.fetch();
+      job.request = rr.getSchedulerRequest();
+      for(auto &tf: rr.getArchiveFile().tapeFiles) {
+        job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
+        job.tapeCopies[tf.second.vid].second = tf.second;
       }
+
+      m_jobCache.push_back(job);
+    } catch(...) {
+      // This implementation gives imperfect consistency and is racy. If the queue has gone, move on.
     }
   }
-
-std::cerr << "RetrieveQueue updateJobCache(): jobCache updated with " << m_jobCache.size() << " entries." << std::endl;
 }
 
 //auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {

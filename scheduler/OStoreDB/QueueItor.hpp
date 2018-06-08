@@ -33,6 +33,8 @@ namespace cta {
 template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
+  typedef typename std::list<typename JobQueue::JobDump> jobQueue_t;
+
   /*!
    * Default constructor
    */
@@ -119,6 +121,16 @@ std::cerr << "QueueItor operator*" << std::endl;
 
 private:
   /*!
+   * Get the list of jobs in the job queue
+   */
+  void getJobQueue();
+
+  /*!
+   * Get a chunk of queue jobs from the objectstore
+   */
+  void getQueueJobs(const jobQueue_t &jobQueueChunk);
+
+  /*!
    * Advance to the next job queue
    */
   void nextJobQueue()
@@ -133,14 +145,26 @@ std::cerr << "QueueItor nextJobQueue()" << std::endl;
   }
 
   /*!
-   * Get the list of jobs in the job queue
-   */
-  void getJobQueue();
-
-  /*!
    * Update the cache of queue jobs
    */
-  void updateJobCache();
+  void updateJobCache()
+  {
+std::cerr << "RetrieveQueue updateJobCache(): jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
+    while(!m_jobQueue.empty() && m_jobCache.empty())
+    {
+      // Get a chunk of retrieve jobs from the current retrieve queue
+
+      auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
+      auto jobQueueChunkEnd = m_jobQueue.begin();
+      std::advance(jobQueueChunkEnd, chunksize);
+
+      jobQueue_t jobQueueChunk;
+      jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueChunkEnd);
+std::cerr << "RetrieveQueue updateJobCache(): jobQueueChunk has " << jobQueueChunk.size() << " entries, jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
+      getQueueJobs(jobQueueChunk);
+    }
+std::cerr << "RetrieveQueue updateJobCache(): jobCache updated with " << m_jobCache.size() << " entries." << std::endl;
+  }
 
   //! Maximum number of jobs to asynchronously fetch from the queue at once
   const size_t JOB_CACHE_SIZE = 111;
@@ -151,7 +175,7 @@ std::cerr << "QueueItor nextJobQueue()" << std::endl;
 
   typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;      //!< list of Archive or Retrieve Job Queues
   typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;    //!< iterator across m_jobQueuesQueue
-  typename std::list<typename JobQueue::JobDump>      m_jobQueue;            //!< list of Archive or Retrieve Jobs
+  jobQueue_t                                          m_jobQueue;            //!< list of Archive or Retrieve Jobs
   typename std::list<typename JobQueue::job_t>        m_jobCache;            //!< local cache of queue jobs
 };
 
