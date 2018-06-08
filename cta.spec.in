@@ -186,6 +186,7 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: oracle-instantclient12.2-basic
 Requires: librados2 = %{radosVersion}
+Requires: zeromq
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
