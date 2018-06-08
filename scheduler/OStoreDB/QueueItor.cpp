@@ -117,6 +117,103 @@ std::cerr << "ArchiveQueue getQueueJobs() : fetching " << jobQueueChunk.size() <
   }
 }
 
+#if 0
+  OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpArchiveQueues(QueueType::LiveJobs);
+  rel.release();
+  for (auto & tpp:tpl) {
+    if (tpp.tapePool != tapePoolName) continue;
+    std::list<cta::common::dataStructures::ArchiveJob> ret;
+    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
+    ScopedSharedLock ostpl(osaq);
+    osaq.fetch();
+    auto arl = osaq.dumpJobs();
+    ostpl.release();
+    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+      objectstore::ArchiveRequest osar(ar->address, m_objectStore);
+      ScopedSharedLock osarl(osar);
+      osar.fetch();
+      // Find which copy number is for this tape pool.
+      // skip the request if not found
+      uint16_t copynb;
+      bool copyndFound=false;
+      for (auto & j:osar.dumpJobs()) {
+        if (j.tapePool == tpp.tapePool) {
+          copynb = j.copyNb;
+          copyndFound = true;
+          break;
+        }
+      }
+      if (!copyndFound) continue;
+      ret.push_back(cta::common::dataStructures::ArchiveJob());
+      ret.back().archiveFileID = osar.getArchiveFile().archiveFileID;
+      ret.back().copyNumber = copynb;
+      ret.back().tapePool = tpp.tapePool;
+      ret.back().request.checksumType = osar.getArchiveFile().checksumType;
+      ret.back().request.checksumValue = osar.getArchiveFile().checksumValue;
+      ret.back().request.creationLog = osar.getEntryLog();
+      ret.back().request.diskFileID = osar.getArchiveFile().diskFileId;
+      ret.back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
+      ret.back().request.fileSize = osar.getArchiveFile().fileSize;
+      ret.back().instanceName = osar.getArchiveFile().diskInstance;
+      ret.back().request.requester = osar.getRequester();
+      ret.back().request.srcURL = osar.getSrcURL();
+      ret.back().request.archiveReportURL = osar.getArchiveReportURL();
+      ret.back().request.storageClass = osar.getArchiveFile().storageClass;
+    }
+#endif
+#if 0
+std::map<std::string, std::list<common::dataStructures::ArchiveJob> >
+  OStoreDB::getArchiveJobs() const {
+  objectstore::RootEntry re(m_objectStore);
+  objectstore::ScopedSharedLock rel(re);
+  re.fetch();
+  auto tpl = re.dumpArchiveQueues(QueueType::LiveJobs);
+  rel.release();
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > ret;
+  for (auto & tpp:tpl) {
+    objectstore::ArchiveQueue osaq(tpp.address, m_objectStore);
+    ScopedSharedLock ostpl(osaq);
+    osaq.fetch();
+    auto arl = osaq.dumpJobs();
+    ostpl.release();
+    for (auto ar=arl.begin(); ar!=arl.end(); ar++) {
+      objectstore::ArchiveRequest osar(ar->address, m_objectStore);
+      ScopedSharedLock osarl(osar);
+      osar.fetch();
+      // Find which copy number is for this tape pool.
+      // skip the request if not found
+      uint16_t copynb;
+      bool copyndFound=false;
+      for (auto & j:osar.dumpJobs()) {
+        if (j.tapePool == tpp.tapePool) {
+          copynb = j.copyNb;
+          copyndFound = true;
+          break;
+        }
+      }
+      if (!copyndFound) continue;
+      ret[tpp.tapePool].push_back(cta::common::dataStructures::ArchiveJob());
+      ret[tpp.tapePool].back().archiveFileID = osar.getArchiveFile().archiveFileID;
+      ret[tpp.tapePool].back().copyNumber = copynb;
+      ret[tpp.tapePool].back().tapePool = tpp.tapePool;
+      ret[tpp.tapePool].back().request.checksumType = osar.getArchiveFile().checksumType;
+      ret[tpp.tapePool].back().request.checksumValue = osar.getArchiveFile().checksumValue;
+      ret[tpp.tapePool].back().request.creationLog = osar.getEntryLog();
+      ret[tpp.tapePool].back().request.diskFileID = osar.getArchiveFile().diskFileId;
+      ret[tpp.tapePool].back().request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
+      ret[tpp.tapePool].back().request.fileSize = osar.getArchiveFile().fileSize;
+      ret[tpp.tapePool].back().instanceName = osar.getArchiveFile().diskInstance;
+      ret[tpp.tapePool].back().request.requester = osar.getRequester();
+      ret[tpp.tapePool].back().request.srcURL = osar.getSrcURL();
+      ret[tpp.tapePool].back().request.archiveReportURL = osar.getArchiveReportURL();
+      ret[tpp.tapePool].back().request.storageClass = osar.getArchiveFile().storageClass;
+    }
+#endif
+
 //------------------------------------------------------------------------------
 // QueueItor::QueueItor (Retrieve specialisation)
 //------------------------------------------------------------------------------
@@ -223,6 +320,41 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   }
   return ret;
   }
+#endif
+#if 0
+std::map<std::string, std::list<common::dataStructures::RetrieveJob> > OStoreDB::getRetrieveJobs() const {
+  // We will walk all the tapes to get the jobs.
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > ret;
+  RootEntry re(m_objectStore);
+  ScopedSharedLock rel(re);
+  re.fetch();
+  auto rql=re.dumpRetrieveQueues(QueueType::LiveJobs);
+  rel.release();
+  for (auto & rqp: rql) {
+    // This implementation gives imperfect consistency. Do we need better? (If so, TODO: improve).
+    // This implementation is racy, so we tolerate that the queue is gone.
+    try {
+      RetrieveQueue rq(rqp.address, m_objectStore);
+      ScopedSharedLock rql(rq);
+      rq.fetch();
+      for (auto & j: rq.dumpJobs()) {
+        ret[rqp.vid].push_back(common::dataStructures::RetrieveJob());
+        try {
+          auto & jd=ret[rqp.vid].back();
+          RetrieveRequest rr(j.address, m_objectStore);
+          ScopedSharedLock rrl(rr);
+          rr.fetch();
+          jd.request=rr.getSchedulerRequest();
+          for (auto & tf: rr.getArchiveFile().tapeFiles) {
+            jd.tapeCopies[tf.second.vid].first=tf.second.copyNb;
+            jd.tapeCopies[tf.second.vid].second=tf.second;
+          }
+        } catch (...) {
+          ret[rqp.vid].pop_back();
+        }
+            
+      }
+    } catch (...) {}
 #endif
 
 } // namespace cta

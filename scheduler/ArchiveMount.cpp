@@ -155,7 +155,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
             .add("files", files)
             .add("bytes", bytes)
             .add("catalogueTime", catalogueTime);
-      logContext.log(cta::log::DEBUG,"Catalog updated for batch of jobs");   
+      logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");   
     }
     
     // Now get the db mount to mark the jobs as successful.

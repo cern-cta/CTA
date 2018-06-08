@@ -172,15 +172,15 @@ private:
       void execute(MigrationReportPacker& reportPacker) override;
   };
   class ReportError : public Report {
-    const cta::exception::Exception m_ex;
+    const std::string m_failureLog;
     
     /**
      * The failed archive job to be reported immediately
      */
     std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
   public:
-    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception &ex):
-    m_ex(ex), m_failedArchiveJob(std::move(failedArchiveJob)){}
+    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string &failureLog):
+    m_failureLog(failureLog), m_failedArchiveJob(std::move(failedArchiveJob)){}
     
     void execute(MigrationReportPacker& reportPacker) override;
   };

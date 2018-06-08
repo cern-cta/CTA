@@ -64,7 +64,8 @@ public:
   AsyncJobDeleter * asyncDeleteJob();
   JobDump getJob(uint16_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint16_t copyNumber, uint64_t mountId, log::LogContext & lc); /**< Returns true is the request is completely failed 
+  bool addJobFailure(uint16_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 
+                                                                  /**< Returns true is the request is completely failed 
                                                                    (telling wheather we should requeue or not). */
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
@@ -73,6 +74,7 @@ public:
     uint64_t maxTotalRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
+  std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   bool finishIfNecessary(log::LogContext & lc);                   /**< Handling of the consequences of a job status change for the entire request.
                                                * This function returns true if the request got finished. */

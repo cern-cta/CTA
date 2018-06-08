@@ -109,7 +109,10 @@ void OStoreDB::setThreadNumber(uint64_t threadNumber) {
   }
 }
 
-void OStoreDB::setBootomHalfQueueSize(uint64_t tasksNumber) {
+//------------------------------------------------------------------------------
+// OStoreDB::setBottomHalfQueueSize()
+//------------------------------------------------------------------------------
+void OStoreDB::setBottomHalfQueueSize(uint64_t tasksNumber) {
   // 5 is the default queue size.
   m_taskPostingSemaphore.release(tasksNumber - 5);
 }
@@ -178,7 +181,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     log::LogContext & logContext) {
   utils::Timer t, t2;
   // Walk the archive queues for statistics
-  for (auto & aqp: re.dumpArchiveQueues()) {
+  for (auto & aqp: re.dumpArchiveQueues(QueueType::LiveJobs)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) poolName = aqp.tapePool;
@@ -223,7 +226,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     logContext.log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched an archive queue.");
   }
   // Walk the retrieve queues for statistics
-  for (auto & rqp: re.dumpRetrieveQueues()) {
+  for (auto & rqp: re.dumpRetrieveQueues(QueueType::LiveJobs)) {
     RetrieveQueue rqueue(rqp.address, m_objectStore);
     // debug utility variable
     std::string __attribute__((__unused__)) vid = rqp.vid;
@@ -389,28 +392,28 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
   ScopedExclusiveLock rel(re);
   re.fetch();
   try {
-    auto archiveQueueList = re.dumpArchiveQueues();
+    auto archiveQueueList = re.dumpArchiveQueues(QueueType::LiveJobs);
     for (auto & a: archiveQueueList) {
       ArchiveQueue aq(a.address, m_objectStore);
       ScopedSharedLock aql(aq);
       aq.fetch();
       if (!aq.getJobsSummary().jobs) {
         aql.release();
-        re.removeArchiveQueueAndCommit(a.tapePool, lc);
+        re.removeArchiveQueueAndCommit(a.tapePool, QueueType::LiveJobs, lc);
         log::ScopedParamContainer params(lc);
         params.add("tapePool", a.tapePool)
               .add("queueObject", a.address);
         lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty archive queue.");
       }
     }
-    auto retrieveQeueueList = re.dumpRetrieveQueues();
+    auto retrieveQeueueList = re.dumpRetrieveQueues(QueueType::LiveJobs);
     for (auto & r:retrieveQeueueList) {
       RetrieveQueue rq(r.address, m_objectStore);
       ScopedSharedLock rql(rq);
       rq.fetch();
       if (!rq.getJobsSummary().files) {
         rql.release();
-        re.removeRetrieveQueueAndCommit(r.vid, lc);
+        re.removeRetrieveQueueAndCommit(r.vid, QueueType::LiveJobs, lc);
         log::ScopedParamContainer params(lc);
         params.add("vid", r.vid)
               .add("queueObject", r.address);
@@ -1710,7 +1713,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
     objectstore::RootEntry re(m_oStoreDB.m_objectStore);
     re.fetchNoLock();
     std::string aqAddress;
-    auto aql = re.dumpArchiveQueues();
+    auto aql = re.dumpArchiveQueues(QueueType::LiveJobs);
     for (auto & aqp : aql) {
     if (aqp.tapePool == mountInfo.tapePool)
       aqAddress = aqp.address;
@@ -1732,7 +1735,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
+          re.removeArchiveQueueAndCommit(mountInfo.tapePool, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
@@ -1925,7 +1928,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeArchiveQueueAndCommit(mountInfo.tapePool, logContext);
+          re.removeArchiveQueueAndCommit(mountInfo.tapePool, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("tapepool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
@@ -2135,7 +2138,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
     objectstore::RootEntry re(m_oStoreDB.m_objectStore);
     re.fetchNoLock();
     std::string rqAddress;
-    auto rql = re.dumpRetrieveQueues();
+    auto rql = re.dumpRetrieveQueues(QueueType::LiveJobs);
     for (auto & rqp : rql) {
     if (rqp.vid == mountInfo.vid)
       rqAddress = rqp.address;
@@ -2157,7 +2160,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
         ScopedExclusiveLock rexl(re);
         re.fetch();
         try {
-          re.removeRetrieveQueueAndCommit(mountInfo.vid, logContext);
+          re.removeRetrieveQueueAndCommit(mountInfo.vid, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
@@ -2332,7 +2335,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           // The queue should be removed as it is empty.
           ScopedExclusiveLock rexl(re);
           re.fetch();
-          re.removeRetrieveQueueAndCommit(mountInfo.vid, logContext);
+          re.removeRetrieveQueueAndCommit(mountInfo.vid, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
           params.add("vid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
@@ -2616,14 +2619,14 @@ std::set<cta::SchedulerDatabase::ArchiveJob*> OStoreDB::ArchiveMount::setJobBatc
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::fail()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
+bool OStoreDB::ArchiveJob::fail(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::fail: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, lc)) {
+  if (m_archiveRequest.addJobFailure(tapeFile.copyNb, m_mountId, failureReason, lc)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2649,7 +2652,8 @@ bool OStoreDB::ArchiveJob::fail(log::LogContext & lc) {
   // The job still has a chance, return it to its original tape pool's queue
   objectstore::ArchiveQueue aq(m_oStoreDB.m_objectStore);
   objectstore::ScopedExclusiveLock aqlock;
-  objectstore::Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aqlock, *m_oStoreDB.m_agentReference, m_tapePool, lc);
+  objectstore::Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aqlock, 
+      *m_oStoreDB.m_agentReference, m_tapePool, objectstore::QueueType::LiveJobs, lc);
   // Find the right job
   auto jl = m_archiveRequest.dumpJobs();
   for (auto & j:jl) {
@@ -2732,14 +2736,14 @@ OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, OStoreDB & oSt
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::fail()
 //------------------------------------------------------------------------------
-bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
+bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogContext& logContext) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
   // Add a job failure. If the job is failed, we will delete it.
-  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, logContext)) {
+  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, failureReason, logContext)) {
     // The job will not be retried. Either another jobs for the same request is 
     // queued and keeps the request referenced or the request has been deleted.
     // In any case, we can forget it.
@@ -2747,6 +2751,10 @@ bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     m_jobOwned = false;
     log::ScopedParamContainer params(logContext);
     params.add("object", m_retrieveRequest.getAddressIfSet());
+    size_t failureNumber=0;
+    for (auto failure: m_retrieveRequest.getFailures()) {
+      params.add(std::string("failure")+std::to_string(failureNumber++), failure);
+    }
     logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
     return true;
   } else {
@@ -2792,9 +2800,10 @@ bool OStoreDB::RetrieveJob::fail(log::LogContext &logContext) {
     // Add the request to the queue.
     objectstore::RetrieveQueue rq(m_oStoreDB.m_objectStore);
     objectstore::ScopedExclusiveLock rql;
-    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, *m_oStoreDB.m_agentReference, bestVid, logContext);
+    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, 
+        *m_oStoreDB.m_agentReference, bestVid, objectstore::QueueType::LiveJobs, logContext);
     auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-    auto & af=rfqc.archiveFile;
+    auto & af = rfqc.archiveFile;
     auto & tf = af.tapeFiles.at(bestCopyNb);
     auto sr = m_retrieveRequest.getSchedulerRequest();
     std::list<objectstore::RetrieveQueue::JobToAdd> jta;

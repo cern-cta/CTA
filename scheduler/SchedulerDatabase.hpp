@@ -183,7 +183,7 @@ public:
     std::string errorReportURL;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    virtual bool fail(log::LogContext & lc) = 0;
+    virtual bool fail(const std::string & failureReason, log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
@@ -334,7 +334,7 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
-    virtual bool fail(log::LogContext &) = 0; ///< Returns true if this failure is final (we will not retry).
+    virtual bool fail(const std::string & failureReason, log::LogContext &) = 0;
     virtual ~RetrieveJob() {}
   };
 

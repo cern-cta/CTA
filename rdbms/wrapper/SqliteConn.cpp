@@ -44,6 +44,9 @@ SqliteConn::SqliteConn(const std::string &filename):
       throw exception::Exception(msg);
     }
 
+    // Enable extended result codes
+    sqlite3_extended_result_codes(m_sqliteConn, 1);
+
     // Give SQLite upto 120 seconds to avoid a busy error
     sqlite3_busy_timeout(m_sqliteConn, 120000);
 

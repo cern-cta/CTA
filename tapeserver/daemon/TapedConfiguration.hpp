@@ -72,13 +72,13 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   /// The fetch size for archive requests 
   cta::SourcedParameter<FetchReportOrFlushLimits> archiveFetchBytesFiles{
-    "taped", "ArchiveFetchBytesFiles", {80L*1000*1000*1000, 500}, "Compile time default"};
+    "taped", "ArchiveFetchBytesFiles", {80L*1000*1000*1000, 4000}, "Compile time default"};
   /// The flush to tape criteria for archiving
   cta::SourcedParameter<FetchReportOrFlushLimits> archiveFlushBytesFiles{
     "taped", "ArchiveFlushBytesFiles", {32L*1000*1000*1000, 200}, "Compile time default"};
   /// The fetch and report size for retrieve requests 
   cta::SourcedParameter<FetchReportOrFlushLimits> retrieveFetchBytesFiles{
-    "taped", "RetrieveFetchBytesFiles", {80L*1000*1000*1000, 500}, "Compile time default"};
+    "taped", "RetrieveFetchBytesFiles", {80L*1000*1000*1000, 4000}, "Compile time default"};
   //----------------------------------------------------------------------------
   // Scheduling limits
   //----------------------------------------------------------------------------

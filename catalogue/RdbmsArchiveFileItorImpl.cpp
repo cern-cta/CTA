@@ -20,6 +20,7 @@
 #include "catalogue/RdbmsArchiveFileItorImpl.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -98,7 +99,7 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
         "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
         "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
         "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "ARCHIVE_FILE.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
         "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
         "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
         "TAPE_FILE.VID AS VID,"
@@ -108,11 +109,13 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
         "TAPE_FILE.COPY_NB AS COPY_NB,"
         "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
         "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
-        "FROM "
+      "FROM "
         "ARCHIVE_FILE "
-        "LEFT OUTER JOIN TAPE_FILE ON "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-        "LEFT OUTER JOIN TAPE ON "
+      "LEFT OUTER JOIN TAPE ON "
         "TAPE_FILE.VID = TAPE.VID";
 
     const bool thereIsAtLeastOneSearchCriteria =
@@ -164,7 +167,7 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     }
     if(searchCriteria.storageClass) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "ARCHIVE_FILE.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+      sql += "STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.vid) {
@@ -233,10 +236,11 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     m_rset = m_stmt.executeQuery();
 
     m_rsetIsEmpty = !m_rset.next();
-  } catch (exception::LostDatabaseConnection &le) {
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
+  } catch(exception::UserError &) {
+    throw;
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
 }
 
@@ -268,54 +272,61 @@ bool RdbmsArchiveFileItorImpl::hasMore() {
 // next
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile RdbmsArchiveFileItorImpl::next() {
-  if(!m_hasMoreHasBeenCalled) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: hasMore() must be called before next()");
-  }
-  m_hasMoreHasBeenCalled = false;
+  try {
+    if(!m_hasMoreHasBeenCalled) {
+      throw exception::Exception("hasMore() must be called before next()");
+    }
+    m_hasMoreHasBeenCalled = false;
 
-  // If there are no more rows in the result set
-  if(m_rsetIsEmpty) {
-    // There must be an ArchiveFile object currently under construction
-    if(nullptr == m_archiveFileBuilder.getArchiveFile()) {
-      throw exception::Exception(std::string(__FUNCTION__) +
-        " failed: next() was called with no more rows in the result set and no ArchiveFile object under construction");
+    // If there are no more rows in the result set
+    if(m_rsetIsEmpty) {
+      // There must be an ArchiveFile object currently under construction
+      if(nullptr == m_archiveFileBuilder.getArchiveFile()) {
+        throw exception::Exception("next() was called with no more rows in the result set and no ArchiveFile object"
+          " under construction");
+      }
+
+      // Return the ArchiveFile object that must now be complete and clear the
+      // ArchiveFile builder
+      auto tmp = *m_archiveFileBuilder.getArchiveFile();
+      m_archiveFileBuilder.clear();
+      return tmp;
     }
 
-    // Return the ArchiveFile object that must now be complete and clear the
-    // ArchiveFile builder
-    auto tmp = *m_archiveFileBuilder.getArchiveFile();
-    m_archiveFileBuilder.clear();
-    return tmp;
-  }
+    while(true) {
+      auto archiveFile = populateArchiveFile(m_rset);
 
-  while(true) {
-    auto archiveFile = populateArchiveFile(m_rset);
+      auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
 
-    auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
+      m_rsetIsEmpty = !m_rset.next();
 
-    m_rsetIsEmpty = !m_rset.next();
+      // If the ArchiveFile object under construction is complete
+      if (nullptr != completeArchiveFile.get()) {
 
-    // If the ArchiveFile object under construction is complete
-    if (nullptr != completeArchiveFile.get()) {
+        return *completeArchiveFile;
 
-      return *completeArchiveFile;
+      // The ArchiveFile object under construction is not complete
+      } else {
+        if(m_rsetIsEmpty) {
+          // There must be an ArchiveFile object currently under construction
+          if (nullptr == m_archiveFileBuilder.getArchiveFile()) {
+            throw exception::Exception("next() was called with no more rows in the result set and no ArchiveFile object"
+              " under construction");
+          }
 
-    // The ArchiveFile object under construction is not complete
-    } else {
-      if(m_rsetIsEmpty) {
-        // There must be an ArchiveFile object currently under construction
-        if (nullptr == m_archiveFileBuilder.getArchiveFile()) {
-          throw exception::Exception(std::string(__FUNCTION__) + " failed:"
-            " next() was called with no more rows in the result set and no ArchiveFile object under construction");
+          // Return the ArchiveFile object that must now be complete and clear the
+          // ArchiveFile builder
+          auto tmp = *m_archiveFileBuilder.getArchiveFile();
+          m_archiveFileBuilder.clear();
+          return tmp;
         }
-
-        // Return the ArchiveFile object that must now be complete and clear the
-        // ArchiveFile builder
-        auto tmp = *m_archiveFileBuilder.getArchiveFile();
-        m_archiveFileBuilder.clear();
-        return tmp;
       }
     }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
 }
 

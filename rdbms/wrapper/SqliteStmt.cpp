@@ -16,7 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/DatabaseConstraintViolation.hpp"
+#include "common/exception/DatabaseConstraintError.hpp"
+#include "common/exception/DatabasePrimaryKeyError.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -266,9 +267,12 @@ void SqliteStmt::executeNonQuery() {
     std::ostringstream msg;
     msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
 
-    if(SQLITE_CONSTRAINT == stepRc) {
-      throw exception::DatabaseConstraintViolation(msg.str());
-    } else {
+    switch(stepRc) {
+    case SQLITE_CONSTRAINT_PRIMARYKEY:
+      throw exception::DatabasePrimaryKeyError(msg.str());
+    case SQLITE_CONSTRAINT:
+      throw exception::DatabaseConstraintError(msg.str());
+    default:
       throw exception::Exception(msg.str());
     }
   }

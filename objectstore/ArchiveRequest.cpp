@@ -85,7 +85,7 @@ bool cta::objectstore::ArchiveRequest::setJobSuccessful(uint16_t copyNumber) {
 }
 
 bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
-    uint64_t mountId, log::LogContext & lc) {
+    uint64_t mountId, const std::string & failureReason, log::LogContext & lc) {
   checkPayloadWritable();
   // Find the job and update the number of failures 
   // (and return the job status: failed (true) or to be retried (false))
@@ -99,6 +99,7 @@ bool cta::objectstore::ArchiveRequest::addJobFailure(uint16_t copyNumber,
         j.set_lastmountwithfailure(mountId);
       }
       j.set_totalretries(j.totalretries() + 1);
+      * j.mutable_failurelogs()->Add() = failureReason;
     }
     if (j.totalretries() >= j.maxtotalretries()) {
       j.set_status(serializers::AJS_Failed);
@@ -336,7 +337,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock aql;
-        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), lc);
+        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), QueueType::LiveJobs, lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -617,8 +618,12 @@ bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   for (auto & j: jl)
     if (!finishedStatuses.count(j.status()))
       return false;
-  remove();
   log::ScopedParamContainer params(lc);
+  size_t failureNumber = 0;
+  for (auto failure: getFailures()) {
+    params.add(std::string("failure")+std::to_string(failureNumber), failure);
+  }
+  remove();
   params.add("archiveRequestObject", getAddressIfSet());
   for (auto & j: jl) {
     params.add(std::string("statusForCopyNb")+std::to_string(j.copynb()), statusToString(j.status()));
@@ -636,6 +641,18 @@ std::string ArchiveRequest::dump() {
   google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
   return headerDump;
 }
+
+std::list<std::string> ArchiveRequest::getFailures() {
+  checkPayloadReadable();
+  std::list<std::string> ret;
+  for (auto &j: m_payload.jobs()) {
+    for (auto &f: j.failurelogs()) {
+      ret.push_back(f);
+    }
+  }
+  return ret;
+}
+
 
 }} // namespace cta::objectstore
 

@@ -46,6 +46,8 @@
 #include <syscall.h>
 #endif //RADOS_SLOW_CALLS_LOGGING
 
+#define RADOS_LOCK_PERFORMANCE_LOGGING_FILE "/var/tmp/cta-rados-locking.log"
+
 namespace cta { namespace objectstore {
 /**
  * An implementation of the object store primitives, using Rados.
@@ -157,6 +159,44 @@ private:
     static cta::threading::Mutex g_mutex;
     #endif //RADOS_SLOW_CALLS_LOGGING
   };
+  
+  /**
+   * A class for logging lock timings and performance
+   */
+  class RadosLockTimingLogger {
+  public:
+    struct Measurements {
+      size_t attempts = 0;
+      size_t waitCount = 0;
+      double totalTime = 0;
+      double totalLatency = 0;
+      double minLatency = 0;
+      double maxLatency = 0;
+      double totalWaitTime = 0;
+      double minWaitTime = 0;
+      double maxWaitTime = 0;
+      double totalLatencyMultiplier = 0;
+      double minLatencyMultiplier = 0;
+      double maxLatencyMultiplier = 0;
+      void addSuccess (double latency, double time);
+      void addAttempt(double latency, double waitTime, double latencyMultiplier); 
+   };
+    void addMeasurements(const Measurements & measurements);
+    void logIfNeeded();
+    ~RadosLockTimingLogger();
+  private:
+    struct CumulatedMesurements: public Measurements {
+      size_t totalCalls = 0;
+      size_t minAttempts = 0;
+      size_t maxAttempts = 0;
+      double minTotalTime = 0;
+      double maxTotalTime = 0;
+    };
+    CumulatedMesurements m_measurements;
+    threading::Mutex m_mutex;
+    utils::Timer m_timer;
+  };
+  static RadosLockTimingLogger g_RadosLockTimingLogger;
 
   /**
    * A class handling the watch part when waiting for a lock.

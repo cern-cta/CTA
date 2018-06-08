@@ -186,6 +186,7 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: oracle-instantclient12.2-basic
 Requires: librados2 = %{radosVersion}
+Requires: zeromq
 %description -n cta-lib
 CERN Tape Archive:
 The shared libraries
@@ -212,6 +213,7 @@ Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
+Requires: make
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives
@@ -242,6 +244,7 @@ Unit tests and system tests with virtual tape drives
 %{_bindir}/cta-systemTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
+%attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools

@@ -397,7 +397,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       // Get the archive queue and add references to the jobs in it.
       ArchiveQueue aq(objectStore);
       ScopedExclusiveLock aql;
-      Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, tapepool.first, lc);
+      Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, tapepool.first, QueueType::LiveJobs, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=aq.getJobsSummary();
       filesBefore=jobsSummary.jobs;
@@ -568,7 +568,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, tape.first, lc);
+      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, tape.first, QueueType::LiveJobs, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
       filesBefore=jobsSummary.files;

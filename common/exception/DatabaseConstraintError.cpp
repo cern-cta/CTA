@@ -16,27 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include "scheduler/RetrieveMount.hpp"
-#include "scheduler/RetrieveJob.hpp"
-#include <memory>
+#include "common/exception/DatabaseConstraintError.hpp"
 
 namespace cta {
-  class MockRetrieveJob: public cta::RetrieveJob {
-  public:
-    int completes;
-    int failures;
-    MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(rm,
-    cta::common::dataStructures::RetrieveRequest(), 
-    cta::common::dataStructures::ArchiveFile(), 1,
-    cta::PositioningMethod::ByBlock), completes(0), failures(0) {
-      archiveFile.tapeFiles[1];
-    } 
-    virtual void asyncComplete() override { completes++;  }
-    virtual void checkComplete() override {}
-    void failed(const std::string& failureReason, cta::log::LogContext&) override { failures++; };
-    
-    ~MockRetrieveJob() throw() {} 
-  };
+namespace exception {
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+DatabaseConstraintError::DatabaseConstraintError(const std::string &context, const bool embedBacktrace):
+  Exception(context, embedBacktrace) {
 }
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+DatabaseConstraintError::~DatabaseConstraintError() noexcept {
+}
+
+} // namespace exception
+} // namespace cta

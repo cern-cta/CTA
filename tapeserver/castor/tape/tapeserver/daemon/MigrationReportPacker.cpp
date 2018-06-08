@@ -25,6 +25,7 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
+#include "common/utils/utils.hpp"
 
 #include <memory>
 #include <numeric>
@@ -68,7 +69,9 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception &ex, cta::log::LogContext & lc){
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob),ex));
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+      " " + ex.what();
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob), failureLog));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFailedJob(), pushing a report.");
@@ -285,12 +288,12 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
   reportPacker.m_errorHappened=true;
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", m_ex.getMessageValue())
+    params.add("failureLog", m_failureLog)
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
   }
   try {
-    m_failedArchiveJob->failed(cta::exception::Exception(m_ex.getMessageValue()), reportPacker.m_lc);
+    m_failedArchiveJob->failed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())

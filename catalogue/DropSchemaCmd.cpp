@@ -139,6 +139,7 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "ADMIN_USER",
       "ADMIN_HOST",
       "STORAGE_CLASS",
+      "STORAGE_CLASS_ID",
       "TAPE_POOL",
       "LOGICAL_LIBRARY",
       "MOUNT_POLICY"};
@@ -191,7 +192,7 @@ void DropSchemaCmd::dropOracleCatalogueSchema(rdbms::Conn &conn) {
 
     dropDatabaseTables(conn, tablesToDrop);
 
-    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ"};
+    std::list<std::string> sequencesToDrop = {"ARCHIVE_FILE_ID_SEQ", "STORAGE_CLASS_ID_SEQ"};
     dropDatabaseSequences(conn, sequencesToDrop);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

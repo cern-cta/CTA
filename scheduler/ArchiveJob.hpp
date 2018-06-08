@@ -102,16 +102,10 @@ public:
   virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten();
   
   /**
-   * Triggers a scheduler update following the failure of the job.
-   * The reason for the failure should have been set beforehand by calling
-   * setFailureReason(), but failure to do it is non-fatal (a standard error
-   * reason will be used)
-   * This 2 step approach allows the reason to be recorded fast in the 
-   * tape writing thread, and the slow(er) update of the DB to be executed
-   * in a second thread.
-   *
+   * Triggers a scheduler update following the failure of the job. Retry policy will
+   * be applied by the scheduler.
    */
-  virtual void failed(const cta::exception::Exception &ex, log::LogContext & lc);
+  virtual void failed(const std::string &failureReason, log::LogContext & lc);
   
   /**
    * Get the URL used for reporting

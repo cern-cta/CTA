@@ -1,0 +1,49 @@
+.phony: all
+
+all: valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
+	
+	
+valgrind:
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
+	/usr/bin/cta-unitTests
+
+valgrindMultiprocess:
+	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
+	/usr/bin/cta-unitTests-multiProcess
+
+helgrindBase:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
+
+helgrindScheduler:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
+
+helgrindOStoreDB:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter=OStoreTestVFS*
+
+helgrindDataTransfer:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+
+helgrindInMemoryCatalogue:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter=InMemory/*
+
+helgrindMultiprocess:
+	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
+	/usr/bin/cta-unitTests-multiProcess

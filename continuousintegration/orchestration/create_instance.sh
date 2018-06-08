@@ -299,7 +299,7 @@ kubectl --namespace=${instance} exec ctacli klist
 
 
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
-for ((i=0; i<300; i++)); do
+for ((i=0; i<1000; i++)); do
   echo -n "."
   [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /etc/eos.keytab ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
@@ -331,7 +331,7 @@ CTA_ENDPOINT=ctafrontend:10955
 
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
-for WORKFLOW in sync::create.default sync::closew.default archived.default sync::prepare.default closew.retrieve_written sync::delete.default
+for WORKFLOW in sync::create.default sync::closew.default archived.default archive_failed.default sync::prepare.default closew.retrieve_written retrieve_failed.default sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"

@@ -25,6 +25,8 @@ file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF3_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctamediachangerprotobuf ${ProtoSources})
+target_link_libraries (ctamediachangerprotobuf
+  ${PROTOBUF3_LIBRARIES})
 
 set (MEDIACHANGER_LIB_SRC_FILES
   AcsLibrarySlot.cpp
@@ -65,7 +67,6 @@ set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (ctamediachanger
   ctacommon
   ctamediachangerprotobuf
-  ${PROTOBUF3_LIBRARIES}
   ssl
   zmq)
 

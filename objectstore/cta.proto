@@ -100,10 +100,11 @@ message RetrieveQueuePointer {
 // The root entry. This entry contains all the most static information, i.e.
 // the admin handled configuration information
 message RootEntry {
-  repeated ArchiveQueuePointer archivequeuepointers = 1050;
-  repeated RetrieveQueuePointer retrievequeuepointers = 1060; //new queues by tape 
-  // vid that will replace the old retrieve queues (these are pointers because queues 
-  // change often and are volatile and we shouldn't lock th root entry for each change)
+  repeated ArchiveQueuePointer livearchivejobsqueuepointers = 1050;
+  repeated RetrieveQueuePointer liveretrievejobsqueuepointers = 1060;
+  repeated ArchiveQueuePointer failedarchivejobsqueuepointers = 1062;
+  repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
+  repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
   optional AgentRegisterPointer agentregisterpointer = 1080;
   optional string agentregisterintent = 1090;
@@ -315,6 +316,7 @@ message ArchiveJob {
   required uint64 lastmountwithfailure = 4407;
   required uint32 maxtotalretries = 4408;
   required uint32 maxretrieswithinmount = 4409;
+  repeated string failurelogs = 4410;
 }
 
 message ArchiveRequest {
@@ -354,6 +356,7 @@ message RetrieveJob {
   required uint32 totalretries = 9204;
   required RetrieveJobStatus status = 9205;
   required uint64 lastmountwithfailure = 9206;
+  repeated string failurelogs = 9207;
 }
 
 message RetrieveRequest {

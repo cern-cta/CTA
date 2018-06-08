@@ -62,7 +62,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/Tape.cpp
   dataStructures/TapeFile.cpp
   dataStructures/TapeLog.cpp
-        ../catalogue/TapePool.cpp
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
@@ -79,7 +78,8 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
-  exception/DatabaseConstraintViolation.cpp  
+  exception/DatabaseConstraintError.cpp  
+  exception/DatabasePrimaryKeyError.cpp  
   exception/DismountFailed.cpp  
   exception/Errnum.cpp
   exception/Exception.cpp

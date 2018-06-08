@@ -18,25 +18,6 @@
 
 #pragma once
 
-#include "scheduler/RetrieveMount.hpp"
-#include "scheduler/RetrieveJob.hpp"
-#include <memory>
-
-namespace cta {
-  class MockRetrieveJob: public cta::RetrieveJob {
-  public:
-    int completes;
-    int failures;
-    MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(rm,
-    cta::common::dataStructures::RetrieveRequest(), 
-    cta::common::dataStructures::ArchiveFile(), 1,
-    cta::PositioningMethod::ByBlock), completes(0), failures(0) {
-      archiveFile.tapeFiles[1];
-    } 
-    virtual void asyncComplete() override { completes++;  }
-    virtual void checkComplete() override {}
-    void failed(const std::string& failureReason, cta::log::LogContext&) override { failures++; };
-    
-    ~MockRetrieveJob() throw() {} 
-  };
-}
+namespace cta { namespace objectstore {
+enum class QueueType { LiveJobs, FailedJobs, JobsToReport };
+}} // namespace cta::objectstore

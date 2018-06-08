@@ -1131,6 +1131,20 @@ protected:
   virtual uint64_t getNextArchiveFileId(rdbms::Conn &conn) = 0;
 
   /**
+   * Returns a unique storage class ID that can be used by a new storage class
+   * within the catalogue.
+   *
+   * This method must be implemented by the sub-classes of RdbmsCatalogue
+   * because different database technologies propose different solution to the
+   * problem of generating ever increasing numeric identifiers.
+   *
+   * @param conn The database connection.
+   * @return a unique archive ID that can be used by a new archive file within
+   * within the catalogue.
+   */
+  virtual uint64_t getNextStorageClassId(rdbms::Conn &conn) = 0;
+
+  /**
    * Returns a cached version of the mapping from tape copy to tape pool for the
    * specified storage class.
    *

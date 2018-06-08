@@ -80,7 +80,7 @@ private:
 public:
   void waitSubthreadsComplete() override;
   void setThreadNumber(uint64_t threadNumber);
-  void setBootomHalfQueueSize(uint64_t tasksNumber);
+  void setBottomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
 
@@ -166,7 +166,7 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    bool fail(log::LogContext & lc) override;
+    bool fail(const std::string& failureReason, log::LogContext& lc) override;
   private:
     void asyncSucceed();
     bool waitAsyncSucceed();
@@ -213,7 +213,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
-    virtual bool fail(log::LogContext &) override; ///< Returns true if this failure is final (we will not retry).
+    bool fail(const std::string& failureReason, log::LogContext&) override;
     virtual ~RetrieveJob() override;
   private:
     RetrieveJob(const std::string &, OStoreDB &, RetrieveMount &);

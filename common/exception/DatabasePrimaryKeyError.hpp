@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
+#include "common/exception/DatabaseConstraintError.hpp"
 
 #include <string>
 
@@ -29,7 +29,7 @@ namespace exception {
 /**
  * A database constraint has been violated.
  */
-class DatabaseConstraintViolation : public cta::exception::Exception {
+class DatabasePrimaryKeyError : public DatabaseConstraintError {
 public:
 
   /**
@@ -40,15 +40,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  DatabaseConstraintViolation(const std::string &context = "", const bool embedBacktrace = true);
+  DatabasePrimaryKeyError(const std::string &context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~DatabaseConstraintViolation() noexcept override;
+  ~DatabasePrimaryKeyError() noexcept override;
   
-}; // class DatabaseConstraintViolation
+}; // class DatabasePrimaryKeyError
 
 } // namespace exception
 } // namespace cta

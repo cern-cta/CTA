@@ -24,6 +24,7 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/utils.hpp"
 
 #include <signal.h>
 #include <iostream>
@@ -69,8 +70,10 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------  
-void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob){
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob)));
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex){
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+      " " + ex.what();
+  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob), failureLog));
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -199,14 +202,22 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 //------------------------------------------------------------------------------
 //ReportError::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
-  parent.m_errorHappened=true;
+void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
+  reportPacker.m_errorHappened=true;
   {
-    cta::log::ScopedParamContainer params(parent.m_lc);
-    params.add("errorMessage", m_failedRetrieveJob->failureMessage);
-    parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): processing error message");
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("failureLog", m_failureLog)
+          .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
   }
-  m_failedRetrieveJob->failed(m_failedRetrieveJob->failureMessage, parent.m_lc);
+  try {
+    m_failedRetrieveJob->failed(m_failureLog, reportPacker.m_lc);
+  } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -225,7 +225,7 @@ TEST_P(BackendAbstractTest, ParametersInterface) {
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
 #ifdef TEST_RADOS
-static cta::log::DummyLogger dl("");
+static cta::log::DummyLogger dl("", "");
 static cta::objectstore::BackendRados osRados(dl, "tapetest", "tapetest");
 INSTANTIATE_TEST_CASE_P(BackendTestRados, BackendAbstractTest, ::testing::Values((cta::objectstore::Backend*)&osRados));
 #endif
