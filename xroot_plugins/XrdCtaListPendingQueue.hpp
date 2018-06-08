@@ -71,8 +71,7 @@ public:
 
       try {
          // If there is nothing more to send, close the stream
-         if(m_queueItor.end() ||
-            (m_isExtended && !m_queueItor.is_valid()))
+         if(m_queueItor.end())
          {
             last = true;
             return nullptr;
@@ -92,11 +91,8 @@ public:
          if(m_isExtended) {
             // Detailed listing of all queued files
 
-            for(bool is_buffer_full = false; m_queueItor.is_valid() && !is_buffer_full; ++m_queueItor)
+            for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
             {
-               auto job = m_queueItor.getJob();
-               if(!job.first) continue;
-               //is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), job.second);
                is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), *m_queueItor);
             }
          } else {
@@ -107,7 +103,7 @@ public:
                uint64_t total_files = 0;
                uint64_t total_size = 0;
 
-               for( ; !m_queueItor.endq(); ++m_queueItor) {
+               for( ; !m_queueItor.end(); ++m_queueItor) {
                   auto job = m_queueItor.getJob();
                   if(job.first) {
                      ++total_files;

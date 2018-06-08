@@ -54,8 +54,7 @@ public:
     m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
     m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
     m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
-    m_jobQueueIt(std::move(rhs).m_jobQueueIt),
-    m_jobsCache(std::move(rhs).m_jobsCache)
+    m_jobCache(std::move(rhs).m_jobCache)
   {
 std::cerr << "QueueItor move constructor" << std::endl;
     // The move constructor works for all queue members, including begin(), but not for end() which
@@ -64,9 +63,6 @@ std::cerr << "QueueItor move constructor" << std::endl;
 
     if(m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
-    }
-    if(m_jobQueueIt == rhs.m_jobQueue.end()) {
-      m_jobQueueIt = m_jobQueue.end();
     }
   }
 
@@ -80,70 +76,19 @@ std::cerr << "QueueItor move constructor" << std::endl;
 std::cerr << "QueueItor inc++" << std::endl;
 
     // Are there still jobs in the cache?
-    if(m_jobsCache.size() > 0) {
-      m_jobsCache.pop_front();
+    if(!m_jobCache.empty()) {
+       m_jobCache.pop_front();
+    } else {
+      updateJobCache();
+      if(m_jobCache.empty()) nextJobQueue();
     }
-
-    // If the cache is empty, refresh it
-    if(m_jobsCache.empty()) {
-      updateJobsCache();
-    }
-#if 0
-    if(m_jobQueueIt != m_jobQueue.end()) {
-      ++m_jobQueueIt;
-    } else if(!m_onlyThisQueueId) {
-      ++m_jobQueuesQueueIt;
-      if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
-        getQueueJobs();
-      }
-    }
-#endif
   }
-
-  /*!
-   * Ensures that the QueueItor points to a valid object, returning false if there
-   * are no further objects.
-   *
-   * If we have reached the end of a job queue, attempts to advance to the next
-   * queue and rechecks validity.
-   *
-   * @retval true  if internal iterators point to a valid object
-   * @retval false if we have advanced past the last valid job
-   */
-  bool is_valid() {
-std::cerr << "QueueItor is_valid()" << std::endl;
-    // Case 1: no more queues
-    if(m_jobQueuesQueueIt == m_jobQueuesQueue.end()) return false;
-
-    // Case 2: we are in a queue and haven't reached the end of it
-    if(m_jobQueueIt != m_jobQueue.end()) return true;
-
-    // Case 3: we have reached the end of the current queue and this is the only queue we care about
-    if(m_onlyThisQueueId) return false;
-
-    // Case 4: we have reached the end of the current queue, try to advance to the next queue
-    for(++m_jobQueuesQueueIt; m_jobQueuesQueueIt != m_jobQueuesQueue.end(); ++m_jobQueuesQueueIt) {
-      getQueueJobs();
-      if(m_jobQueueIt != m_jobQueue.end()) break;
-    }
-    return m_jobQueueIt != m_jobQueue.end();
-  }
-
-  /*!
-   * True if we are at the end of the current queue
-   */
-  bool endq() const {
-std::cerr << "QueueItor endq()" << std::endl;
- if(!m_jobsCache.empty()) return false;
- return m_jobQueueIt == m_jobQueue.end(); }
 
   /*!
    * True if we are at the end of the last queue
    */
   bool end() const {
-std::cerr << "QueueItor end()" << std::endl;
-    if(!m_jobsCache.empty()) return false;
-    return m_jobQueuesQueueIt == m_jobQueuesQueue.end() || (m_onlyThisQueueId && endq());
+    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
   }
 
   /*!
@@ -156,7 +101,7 @@ std::cerr << "QueueItor end()" << std::endl;
    */
   const typename JobQueue::job_t &operator*() const {
 std::cerr << "QueueItor operator*" << std::endl;
-     return m_jobsCache.front();
+     return m_jobCache.front();
   }
 
   /*!
@@ -166,25 +111,40 @@ std::cerr << "QueueItor operator*" << std::endl;
 
 private:
   /*!
-   * Get the list of jobs in the queue
+   * Advance to the next job queue
    */
-  void getQueueJobs();
+  bool nextJobQueue()
+  {
+    if(m_onlyThisQueueId) {
+      // If we are filtering on a specific queue, ignore the other queues
+      m_jobQueuesQueueIt = m_jobQueuesQueue.end();
+    } else {
+      m_jobQueuesQueueIt++;
+    }
+
+    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
+  }
+
+  /*!
+   * Get the list of jobs in the job queue
+   */
+  void getJobQueue();
 
   /*!
    * Update the cache of queue jobs
    */
-  void updateJobsCache();
+  void updateJobCache();
 
-  const size_t JOB_CACHE_SIZE = 100;                                                     //! Maximum number of jobs to asynchronously fetch from the queue at once
+  //! Maximum number of jobs to asynchronously fetch from the queue at once
+  const size_t JOB_CACHE_SIZE = 111;
 
-  objectstore::Backend                                           &m_objectStore;         //! Reference to ObjectStore Backend
-  bool                                                            m_onlyThisQueueId;     //! true if a queue_id parameter was passed to the constructor
-  typename std::list<JobQueuesQueue>                              m_jobQueuesQueue;      //! list of Archive or Retrieve Job Queues
-  typename std::list<JobQueuesQueue>::const_iterator              m_jobQueuesQueueIt;    //! iterator across m_jobQueuesQueue
-  typename std::list<typename JobQueue::JobDump>                  m_jobQueue;            //! list of Archive or Retrieve Jobs
-  typename std::list<typename JobQueue::JobDump>::const_iterator  m_jobQueueIt;          //! iterator across m_jobQueue
+  objectstore::Backend                               &m_objectStore;         //!< Reference to ObjectStore Backend
+  bool                                                m_onlyThisQueueId;     //!< true if a queue_id parameter was passed to the constructor
 
-  typename std::list<typename JobQueue::job_t>                    m_jobsCache;           //! local cache of queue jobs
+  typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;      //!< list of Archive or Retrieve Job Queues
+  typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;    //!< iterator across m_jobQueuesQueue
+  typename std::list<typename JobQueue::JobDump>      m_jobQueue;            //!< list of Archive or Retrieve Jobs
+  typename std::list<typename JobQueue::job_t>        m_jobCache;            //!< local cache of queue jobs
 };
 
 } // namespace cta
