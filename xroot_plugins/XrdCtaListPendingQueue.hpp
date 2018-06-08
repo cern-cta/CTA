@@ -104,11 +104,8 @@ public:
                uint64_t total_size = 0;
 
                for( ; !m_queueItor.end(); ++m_queueItor) {
-                  auto job = m_queueItor.getJob();
-                  if(job.first) {
-                     ++total_files;
-                     total_size += fileSize(job.second);
-                  }
+                  ++total_files;
+                  total_size += fileSize(*m_queueItor);
                }
 
                is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), total_files, total_size);
@@ -138,7 +135,7 @@ private:
    bool                       m_isExtended;                                //!< Summary or extended listing?
    QueueItor_t                m_queueItor;                                 //!< Archive/Retrieve Queue Iterator
 
-   typedef decltype(m_queueItor.getJob().second) data_t;                   //!< Infer data type from template type
+   typedef decltype(*m_queueItor) data_t;                                  //!< Infer data type from template type
 
    uint64_t fileSize(const data_t &job);                                   //!< Obtain file size from queue item
    bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf,               //!< Convert data to protobufs and put on stream

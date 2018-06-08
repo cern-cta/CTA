@@ -75,10 +75,9 @@ std::cerr << "QueueItor move constructor" << std::endl;
   void operator++() {
 std::cerr << "QueueItor inc++" << std::endl;
 
-    // Are there still jobs in the cache?
-    if(!m_jobCache.empty()) {
-       m_jobCache.pop_front();
-    } else {
+    m_jobCache.pop_front();
+
+    if(m_jobCache.empty()) {
       updateJobCache();
       if(m_jobCache.empty()) nextJobQueue();
     }
@@ -88,6 +87,7 @@ std::cerr << "QueueItor inc++" << std::endl;
    * True if we are at the end of the last queue
    */
   bool end() const {
+std::cerr << "QueueItor end()" << std::endl;
     return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
   }
 
@@ -104,25 +104,19 @@ std::cerr << "QueueItor operator*" << std::endl;
      return m_jobCache.front();
   }
 
-  /*!
-   * Get the current job, bool is set to true if the data retrieved is valid
-   */
-  std::pair<bool,typename JobQueue::job_t> getJob() const;
-
 private:
   /*!
    * Advance to the next job queue
    */
-  bool nextJobQueue()
+  void nextJobQueue()
   {
+std::cerr << "QueueItor nextJobQueue()" << std::endl;
     if(m_onlyThisQueueId) {
       // If we are filtering on a specific queue, ignore the other queues
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
     } else {
       m_jobQueuesQueueIt++;
     }
-
-    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
   }
 
   /*!

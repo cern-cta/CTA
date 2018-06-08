@@ -104,6 +104,7 @@ updateJobCache()
 std::cerr << "ArchiveQueue updateJobCache()" << std::endl;
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // QueueItor::getJob (Archive specialisation)
 //------------------------------------------------------------------------------
@@ -115,7 +116,6 @@ getJob() const
 std::cerr << "ArchiveQueueItor getJob()" << std::endl;
   auto job = cta::common::dataStructures::ArchiveJob();
 
-#if 0
   try {
     objectstore::ArchiveRequest osar(m_jobQueueIt->address, m_objectStore);
     objectstore::ScopedSharedLock osarl(osar);
@@ -145,11 +145,11 @@ std::cerr << "ArchiveQueueItor getJob()" << std::endl;
     }
     osarl.release();
   } catch(...) {}
-#endif
 
   // Skip the request if copy number is not found
   return std::make_pair(false, job);
 }
+#endif
 
 //------------------------------------------------------------------------------
 // QueueItor::QueueItor (Retrieve specialisation)
@@ -181,8 +181,9 @@ std::cerr << "RetrieveQueueItor constructor" << std::endl;
   }
 
   // Fill the cache with the first batch of jobs
-  for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end() && m_jobCache.empty(); nextJobQueue()) {
+  for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end() ; nextJobQueue()) {
     getJobQueue();
+    if(!m_jobCache.empty()) break;
   }
 }
 
@@ -206,26 +207,26 @@ void
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 updateJobCache()
 {
-std::cerr << "RetrieveQueue updateJobCache()" << std::endl;
+std::cerr << "RetrieveQueue updateJobCache(): jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
 
-  while(!m_jobQueue.empty() && !m_jobCache.empty())
+  while(!m_jobQueue.empty() && m_jobCache.empty())
   {
     // Get a chunk of retrieve jobs from the current retrieve queue
 
-    decltype(m_jobQueue) jobQueueChunk;
-
     auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
-    auto jobQueueIt = m_jobQueue.begin();
-    std::advance(jobQueueIt, chunksize);
+    auto jobQueueChunkEnd = m_jobQueue.begin();
+    std::advance(jobQueueChunkEnd, chunksize);
 
-    jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueIt);
+    decltype(m_jobQueue) jobQueueChunk;
+    jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueChunkEnd);
+std::cerr << "RetrieveQueue updateJobCache(): jobQueueChunk has " << jobQueueChunk.size() << " entries, jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
 
     // Populate the jobs cache from the retrieve jobs
 
     for(auto &j: jobQueueChunk) {
-      auto job = cta::common::dataStructures::RetrieveJob();
-
       try {
+        auto job = cta::common::dataStructures::RetrieveJob();
+
         objectstore::RetrieveRequest rr(j.address, m_objectStore);
         objectstore::ScopedSharedLock rrl(rr);
         rr.fetch();
@@ -241,6 +242,8 @@ std::cerr << "RetrieveQueue updateJobCache()" << std::endl;
       }
     }
   }
+
+std::cerr << "RetrieveQueue updateJobCache(): jobCache updated with " << m_jobCache.size() << " entries." << std::endl;
 }
 
 //auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
