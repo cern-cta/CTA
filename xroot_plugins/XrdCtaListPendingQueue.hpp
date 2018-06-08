@@ -98,17 +98,19 @@ public:
          } else {
             // Summary by tapepool or vid
 
-            for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; ++m_queueItor)
+            for(bool is_buffer_full = false; !m_queueItor.end() && !is_buffer_full; )
             {
                uint64_t total_files = 0;
                uint64_t total_size = 0;
 
-               for( ; !m_queueItor.end(); ++m_queueItor) {
+               auto qid = m_queueItor.qid();
+
+               for( ; !m_queueItor.endq(); ++m_queueItor) {
                   ++total_files;
                   total_size += fileSize(*m_queueItor);
                }
 
-               is_buffer_full = pushRecord(streambuf, m_queueItor.qid(), total_files, total_size);
+               is_buffer_full = pushRecord(streambuf, qid, total_files, total_size);
             }
          }
 

@@ -51,6 +51,7 @@ public:
   QueueItor(QueueItor &&rhs) :
     m_objectStore(std::move(rhs).m_objectStore),
     m_onlyThisQueueId(std::move(rhs).m_onlyThisQueueId),
+    m_isEndQueue(std::move(rhs).m_isEndQueue),
     m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
     m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
     m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
@@ -74,12 +75,16 @@ std::cerr << "QueueItor move constructor" << std::endl;
    */
   void operator++() {
 std::cerr << "QueueItor inc++" << std::endl;
+    m_isEndQueue = false;
 
     m_jobCache.pop_front();
 
     if(m_jobCache.empty()) {
       updateJobCache();
-      if(m_jobCache.empty()) nextJobQueue();
+      if(m_jobCache.empty()) {
+        m_isEndQueue = true;
+        nextJobQueue();
+      }
     }
   }
 
@@ -89,6 +94,14 @@ std::cerr << "QueueItor inc++" << std::endl;
   bool end() const {
 std::cerr << "QueueItor end()" << std::endl;
     return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
+  }
+
+  /*!
+   * True if the last call to operator++() took us past the end of a queue
+   */
+  bool endq() const {
+std::cerr << "QueueItor endq()" << std::endl;
+    return m_isEndQueue;
   }
 
   /*!
@@ -134,6 +147,7 @@ std::cerr << "QueueItor nextJobQueue()" << std::endl;
 
   objectstore::Backend                               &m_objectStore;         //!< Reference to ObjectStore Backend
   bool                                                m_onlyThisQueueId;     //!< true if a queue_id parameter was passed to the constructor
+  bool                                                m_isEndQueue;          //!< true if the last increment++ took us past the end of a queue
 
   typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;      //!< list of Archive or Retrieve Job Queues
   typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;    //!< iterator across m_jobQueuesQueue

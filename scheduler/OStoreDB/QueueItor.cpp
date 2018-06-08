@@ -52,7 +52,8 @@ template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_objectStore(objectStore),
-  m_onlyThisQueueId(!queue_id.empty())
+  m_onlyThisQueueId(!queue_id.empty()),
+  m_isEndQueue(false)
 {
 std::cerr << "ArchiveQueueItor constructor" << std::endl;
   objectstore::RootEntry re(m_objectStore);
@@ -158,7 +159,8 @@ template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_objectStore(objectStore),
-  m_onlyThisQueueId(!queue_id.empty())
+  m_onlyThisQueueId(!queue_id.empty()),
+  m_isEndQueue(false)
 {
 std::cerr << "RetrieveQueueItor constructor" << std::endl;
   // Get the list of job queues from the objectstore
