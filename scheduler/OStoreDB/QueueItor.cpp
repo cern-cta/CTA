@@ -40,7 +40,7 @@ std::cerr << "ArchiveQueueItor constructor" << std::endl;
   {
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpArchiveQueues();
+    m_jobQueuesQueue = re.dumpArchiveQueues(objectstore::QueueType::LiveJobs);
   }
 
   // Set queue iterator to the first queue in the list
@@ -230,7 +230,7 @@ std::cerr << "RetrieveQueueItor constructor" << std::endl;
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpRetrieveQueues();
+    m_jobQueuesQueue = re.dumpRetrieveQueues(objectstore::QueueType::LiveJobs);
   }
 
   // Find the first queue
