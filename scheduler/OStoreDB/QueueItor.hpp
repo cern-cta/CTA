@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <iostream>
-
 #include <objectstore/Backend.hpp>
 #include <objectstore/ObjectOps.hpp>
 
@@ -49,6 +47,11 @@ public:
 
   /*!
    * Move constructor
+   *
+   * Same as the default move constructor, with one small difference: the moved list iterator will point
+   * to the correct queue entry except in one case. If the iterator is set to end() (including the case
+   * where the queue is empty), it will be invalidated by the move. In this case we need to set it
+   * explicitly.
    */
   QueueItor(QueueItor &&rhs) :
     m_objectStore(std::move(rhs).m_objectStore),
@@ -59,11 +62,6 @@ public:
     m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
     m_jobCache(std::move(rhs).m_jobCache)
   {
-std::cerr << "QueueItor move constructor" << std::endl;
-    // The move constructor works for all queue members, including begin(), but not for end() which
-    // does not point to an actual object! In the case where the iterator points to end(), including
-    // the case of an empty queue, we need to explicitly set it.
-
     if(m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
     }
@@ -76,7 +74,6 @@ std::cerr << "QueueItor move constructor" << std::endl;
    * except when we are limited to one tapepool/vid.
    */
   void operator++() {
-std::cerr << "QueueItor inc++" << std::endl;
     m_isEndQueue = false;
 
     m_jobCache.pop_front();
@@ -91,23 +88,23 @@ std::cerr << "QueueItor inc++" << std::endl;
   }
 
   /*!
-   * True if we are at the end of the last queue
-   */
-  bool end() const {
-std::cerr << "QueueItor end()" << std::endl;
-    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
-  }
-
-  /*!
    * True if the last call to operator++() took us past the end of a queue
    */
   bool endq() const {
-std::cerr << "QueueItor endq()" << std::endl;
     return m_isEndQueue;
   }
 
   /*!
-   * Queue ID (returns tapepool for archives/vid for retrieves)
+   * True if there are no more queues to process
+   */
+  bool end() const {
+    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
+  }
+
+  /*!
+   * Queue ID
+   *
+   * Returns tapepool for archive queues and vid for retrieve queues.
    */
   const std::string &qid() const;
 
@@ -115,33 +112,41 @@ std::cerr << "QueueItor endq()" << std::endl;
    * Dereference the QueueItor
    */
   const typename JobQueue::job_t &operator*() const {
-std::cerr << "QueueItor operator*" << std::endl;
-     return m_jobCache.front();
+    return m_jobCache.front();
   }
 
 private:
-  /*!
-   * Get the list of jobs in the job queue
-   */
-  void getJobQueue();
-
-  /*!
-   * Get a chunk of queue jobs from the objectstore
-   */
-  void getQueueJobs(const jobQueue_t &jobQueueChunk);
-
   /*!
    * Advance to the next job queue
    */
   void nextJobQueue()
   {
-std::cerr << "QueueItor nextJobQueue()" << std::endl;
     if(m_onlyThisQueueId) {
-      // If we are filtering on a specific queue, ignore the other queues
+      // If we are filtering by tapepool or vid, skip the other queues
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
     } else {
-      m_jobQueuesQueueIt++;
+      ++m_jobQueuesQueueIt;
     }
+  }
+
+  /*!
+   * Get the list of jobs in the job queue
+   */
+  void getJobQueue()
+  {
+    try {
+      JobQueue osq(m_jobQueuesQueueIt->address, m_objectStore);
+      objectstore::ScopedSharedLock ostpl(osq);
+      osq.fetch();
+      m_jobQueue = osq.dumpJobs();
+    } catch(...) {
+      // Behaviour is racy: it's possible that the queue can disappear before we read it.
+      // In this case, we ignore the error and move on.
+      m_jobQueue.resize(0);
+    }
+
+    // Grab the first batch of jobs from the current queue
+    updateJobCache();
   }
 
   /*!
@@ -149,25 +154,24 @@ std::cerr << "QueueItor nextJobQueue()" << std::endl;
    */
   void updateJobCache()
   {
-std::cerr << "RetrieveQueue updateJobCache(): jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
-    while(!m_jobQueue.empty() && m_jobCache.empty())
-    {
-      // Get a chunk of retrieve jobs from the current retrieve queue
-
+    while(!m_jobQueue.empty() && m_jobCache.empty()) {
       auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
       auto jobQueueChunkEnd = m_jobQueue.begin();
       std::advance(jobQueueChunkEnd, chunksize);
 
       jobQueue_t jobQueueChunk;
       jobQueueChunk.splice(jobQueueChunk.end(), m_jobQueue, m_jobQueue.begin(), jobQueueChunkEnd);
-std::cerr << "RetrieveQueue updateJobCache(): jobQueueChunk has " << jobQueueChunk.size() << " entries, jobQueue has " << m_jobQueue.size() << " entries." << std::endl;
       getQueueJobs(jobQueueChunk);
     }
-std::cerr << "RetrieveQueue updateJobCache(): jobCache updated with " << m_jobCache.size() << " entries." << std::endl;
   }
 
+  /*!
+   * Populate the cache with a chunk of queue jobs from the objectstore
+   */
+  void getQueueJobs(const jobQueue_t &jobQueueChunk);
+
   //! Maximum number of jobs to asynchronously fetch from the queue at once
-  const size_t JOB_CACHE_SIZE = 111;
+  const size_t JOB_CACHE_SIZE = 300;
 
   objectstore::Backend                               &m_objectStore;         //!< Reference to ObjectStore Backend
   bool                                                m_onlyThisQueueId;     //!< true if a queue_id parameter was passed to the constructor

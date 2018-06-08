@@ -16,34 +16,14 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+
 #include "QueueItor.hpp"
 #include <objectstore/RootEntry.hpp>
 #include <objectstore/ArchiveQueue.hpp>
 #include <objectstore/RetrieveQueue.hpp>
 
 namespace cta {
-
-//------------------------------------------------------------------------------
-// QueueItor::getJobQueue (generic)
-//------------------------------------------------------------------------------
-template<typename JobQueuesQueue, typename JobQueue> void
-QueueItor<JobQueuesQueue, JobQueue>::
-getJobQueue()
-{
-std::cerr << "getJobQueue()" << std::endl;
-  try {
-    JobQueue osq(m_jobQueuesQueueIt->address, m_objectStore);
-    objectstore::ScopedSharedLock ostpl(osq);
-    osq.fetch();
-    m_jobQueue = osq.dumpJobs();
-  } catch(...) {
-    // Behaviour is racy: it's possible that the queue can disappear before we read it.
-    // In this case, we ignore the error and move on.
-  }
-
-  // Grab the first batch of jobs from the current queue
-  updateJobCache();
-}
 
 //------------------------------------------------------------------------------
 // QueueItor::QueueItor (Archive specialisation)
@@ -99,7 +79,7 @@ template<> void
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
-std::cerr << "ArchiveQueue getQueueJobs()" << std::endl;
+std::cerr << "ArchiveQueue getQueueJobs() : fetching " << jobQueueChunk.size() << " jobs." << std::endl;
   // Populate the jobs cache from the retrieve jobs
 
   for(auto &j: jobQueueChunk) {
@@ -191,7 +171,7 @@ template<> void
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
 getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
-std::cerr << "RetrieveQueue getQueueJobs()" << std::endl;
+std::cerr << "RetrieveQueue getQueueJobs() : fetching " << jobQueueChunk.size() << " jobs." << std::endl;
   // Populate the jobs cache from the retrieve jobs
 
   for(auto &j: jobQueueChunk) {
@@ -214,33 +194,35 @@ std::cerr << "RetrieveQueue getQueueJobs()" << std::endl;
   }
 }
 
-//auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
-  //checkPayloadReadable();
+#if 0
+auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
+  checkPayloadReadable();
   // Go read the shards in parallel...
-  // std::list<JobDump> ret;
-  // std::list<ArchiveQueueShard> shards;
-  // std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  // for (auto & sa: m_payload.archivequeueshards()) {
-  // shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
-  // shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
-  // }
-  // auto s = shards.begin();
-  // auto sf = shardsFetchers.begin();
-  // while (s != shards.end()) {
-  // try {
-  // (*sf)->wait();
-  // } catch (Backend::NoSuchObject & ex) {
-  // // We are possibly in read only mode, so we cannot rebuild.
-  // // Just skip this shard.
-  // goto nextShard;
-  // }
-  // for (auto & j: s->dumpJobs()) {
-  // ret.emplace_back(JobDump{j.size, j.address, j.copyNb});
-  // }
-  // nextShard:
-  // s++; sf++;
-  // }
-  // return ret;
-  // }
+  std::list<JobDump> ret;
+  std::list<ArchiveQueueShard> shards;
+  std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
+  for (auto & sa: m_payload.archivequeueshards()) {
+  shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
+  shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
+  }
+  auto s = shards.begin();
+  auto sf = shardsFetchers.begin();
+  while (s != shards.end()) {
+  try {
+  (*sf)->wait();
+  } catch (Backend::NoSuchObject & ex) {
+  // We are possibly in read only mode, so we cannot rebuild.
+  // Just skip this shard.
+  goto nextShard;
+  }
+  for (auto & j: s->dumpJobs()) {
+  ret.emplace_back(JobDump{j.size, j.address, j.copyNb});
+  }
+  nextShard:
+  s++; sf++;
+  }
+  return ret;
+  }
+#endif
 
 } // namespace cta
