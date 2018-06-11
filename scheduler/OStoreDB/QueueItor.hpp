@@ -74,17 +74,30 @@ public:
    * except when we are limited to one tapepool/vid.
    */
   void operator++() {
-    m_isEndQueue = false;
-
     m_jobCache.pop_front();
 
     if(m_jobCache.empty()) {
       updateJobCache();
       if(m_jobCache.empty()) {
+        // We have reached the end of the current queue,
         m_isEndQueue = true;
-        nextJobQueue();
+        // advance to next queue which contains jobs
+        for(nextJobQueue(); m_jobQueuesQueueIt != m_jobQueuesQueue.end(); nextJobQueue()) {
+          getJobQueue();
+          if(!m_jobCache.empty()) break;
+        }
       }
     }
+  }
+
+  /*!
+   * Resets end queue flag
+   *
+   * This is required if we want to detect when we have reached the end of each queue, for example
+   * when calculating summary statistics.
+   */
+  void beginq() {
+    m_isEndQueue = false;
   }
 
   /*!

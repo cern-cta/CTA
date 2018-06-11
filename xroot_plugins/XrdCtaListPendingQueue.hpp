@@ -105,7 +105,7 @@ public:
 
                auto qid = m_queueItor.qid();
 
-               for( ; !m_queueItor.endq(); ++m_queueItor) {
+               for(m_queueItor.beginq(); !m_queueItor.endq(); ++m_queueItor) {
                   ++total_files;
                   total_size += fileSize(*m_queueItor);
                }
