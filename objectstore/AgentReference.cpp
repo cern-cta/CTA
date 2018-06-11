@@ -74,49 +74,27 @@ std::string AgentReference::nextId(const std::string& childType) {
 }
 
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Add, objectAddress));
+  std::shared_ptr<Action> a (new Action(AgentOperation::Add, objectAddress, std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
-  objectstore::Agent ag(m_agentAddress, backend);
-  log::LogContext lc(m_logger);
-  log::ScopedParamContainer params(lc);
-  params.add("agentObject", m_agentAddress);
-  objectstore::ScopedExclusiveLock agl(ag);
-  ag.fetch();
-  for (const auto & oa: objectAdresses) {
-    ag.addToOwnership(oa);
-    log::ScopedParamContainer params(lc);
-    params.add("ownedObject", oa);
-    lc.log(log::DEBUG, "In AgentReference::addBatchToOwnership(): added object to ownership.");
-  }
-  ag.commit();
+  std::shared_ptr<Action> a (new Action(AgentOperation::AddBatch, "", objectAdresses));
+  queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Remove, objectAddress));
+  std::shared_ptr<Action> a (new Action(AgentOperation::Remove, objectAddress, std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
-  objectstore::Agent ag(m_agentAddress, backend);
-  log::LogContext lc(m_logger);
-  log::ScopedParamContainer params(lc);
-  params.add("agentObject", m_agentAddress);
-  objectstore::ScopedExclusiveLock agl(ag);
-  ag.fetch();
-  for (const auto & oa: objectAdresses) {
-    ag.removeFromOwnership(oa);
-    log::ScopedParamContainer params(lc);
-    params.add("ownedObject", oa);
-    lc.log(log::DEBUG, "In AgentReference::removeBatchFromOwnership(): removed object from ownership.");
-  }
-  ag.commit();
+  std::shared_ptr<Action> a (new Action(AgentOperation::RemoveBatch, "", objectAdresses));
+  queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Heartbeat, ""));
+  std::shared_ptr<Action> a (new Action(AgentOperation::Heartbeat, "", std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
 
@@ -262,12 +240,33 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent,
     lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
     break;
   }
+  case AgentOperation::AddBatch:
+  {
+    for (const auto & oa: action.objectAddressSet) {
+      ownershipSet.insert(oa);
+      log::ScopedParamContainer params(lc);
+      params.add("ownedObject", oa);
+      lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership (by batch).");
+    }
+    
+    break;
+  }
   case AgentOperation::Remove:
   {
     ownershipSet.erase(action.objectAddress);
     log::ScopedParamContainer params(lc);
     params.add("ownedObject", action.objectAddress);
     lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
+    break;
+  }
+  case AgentOperation::RemoveBatch:
+  {
+    for (const auto & oa: action.objectAddressSet) {
+      ownershipSet.erase(oa);
+      log::ScopedParamContainer params(lc);
+      params.add("ownedObject", oa);
+      lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership (by batch).");
+    }
     break;
   }
   case AgentOperation::Heartbeat:
