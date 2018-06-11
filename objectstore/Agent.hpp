@@ -190,33 +190,6 @@ public:
     }
   }
   
-  CTA_GENERATE_EXCEPTION_CLASS(AgentDoesNotOwnObject);
-  
-  template <class Cont, class Obj>
-  void pushToContainer (Cont & container, Obj & object) {
-    // Lock the object for write
-    ScopedExclusiveLock objLock(object);
-    object.fetch();
-    // Check that the object is indeed ours
-    if (object.getOwner() != getAddressIfSet())
-      throw AgentDoesNotOwnObject("In Agent::pushToContainer: agent is not the owner of the object");
-    // Lock the container for write
-    ScopedExclusiveLock contLock(container);
-    // Add a pointer to the object in the container
-    container.fetch();
-    container.push(object.getNameIfSet());
-    container.commit();
-    // Note: we retain the lock on the container until the ownership if official
-    // in the object. Otherwise, there would be a race condition, and pointer could
-    // be lost.
-    object.setOwner(container.getNameIfSet());
-    object.setBackupOwner(container.getNameIfSet());
-    object.commit();
-    objLock.release();
-    contLock.release();
-  }
-
-  
 private:
   uint64_t m_nextId;
 };
