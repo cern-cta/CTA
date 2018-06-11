@@ -215,6 +215,8 @@ std::cerr << "RetrieveQueue getQueueJobs() : fetching " << jobQueueChunk.size() 
 
         job.tapeCopies[tf.second.vid].first  = tf.second.copyNb;
         job.tapeCopies[tf.second.vid].second = tf.second;
+        job.request.dstURL                   = osrr.first.getSchedulerRequest().dstURL;
+        job.request.archiveFileID            = osrr.first.getArchiveFile().archiveFileID;
 
         m_jobCache.push_back(job);
       }
