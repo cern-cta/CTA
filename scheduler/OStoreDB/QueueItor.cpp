@@ -55,7 +55,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   }
 
   // Find the first valid job
-  for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end() ; nextJobQueue) {
+  for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end() ; nextJobQueue()) {
     getJobQueue();
     if(!m_jobCache.empty()) break;
   }
