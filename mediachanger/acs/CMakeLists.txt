@@ -113,3 +113,28 @@ set_target_properties (cta-tape-acs-queryvolume PROPERTIES
 install (TARGETS cta-tape-acs-queryvolume
   DESTINATION /usr/bin)
 install (FILES cta-tape-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
+
+################################################################################
+# Rules to build and install cta-tape-acs-querydrive
+################################################################################
+message(STATUS "Adding cta-tape-acs-querydrive target")
+set (ACS_QUERYDRIVE_SRC_FILES
+  Acs.cpp
+  AcsCmd.cpp
+  AcsCmdLine.cpp
+  AcsImpl.cpp
+  AcsQueryDriveCmd.cpp
+  AcsQueryDriveCmdLine.cpp
+  AcsQueryDriveCmdMain.cpp
+  CmdLineTool.cpp
+  AcsDebugBuf.cpp)
+
+add_executable (cta-tape-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
+target_link_libraries (cta-tape-acs-querydrive
+ctacommon
+${STK_LIBRARIES})
+set_target_properties (cta-tape-acs-querydrive PROPERTIES
+  COMPILE_FLAGS -I/usr/include/CDK
+  COMPILE_DEFINITIONS LINUX)
+install (TARGETS cta-tape-acs-querydrive
+  DESTINATION /usr/bin)

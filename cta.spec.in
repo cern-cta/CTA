@@ -376,6 +376,7 @@ castor (Cern Advanced STORage system)
 %attr(0755,root,root) /usr/bin/cta-tape-acs-queryvolume
 %attr(0755,root,root) /usr/bin/cta-tape-acs-dismount
 %attr(0755,root,root) /usr/bin/cta-tape-acs-mount
+%attr(0755,root,root) /usr/bin/cta-tape-acs-querydrive
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-queryvolume.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-mount.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-dismount.1cta.gz
