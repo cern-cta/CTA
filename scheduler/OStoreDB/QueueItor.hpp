@@ -91,17 +91,17 @@ public:
   }
 
   /*!
-   * Resets end queue flag
+   * Reset end queue flag
    *
-   * This is required if we want to detect when we have reached the end of each queue, for example
-   * when calculating summary statistics.
+   * If we need to detect when we have reached the end of the current queue (for example when calculating
+   * summary statistics), call this method at the beginning of each queue to reset the end queue flag.
    */
   void beginq() {
-    m_isEndQueue = false;
+    m_isEndQueue = m_jobCache.empty();
   }
 
   /*!
-   * True if the last call to operator++() took us past the end of a queue
+   * True if the last call to operator++() took us past the end of a queue (or the queue was empty to begin with)
    */
   bool endq() const {
     return m_isEndQueue;
@@ -156,6 +156,7 @@ private:
       // Behaviour is racy: it's possible that the queue can disappear before we read it.
       // In this case, we ignore the error and move on.
       m_jobQueue.resize(0);
+      m_isEndQueue = true;
     }
 
     // Grab the first batch of jobs from the current queue
@@ -183,7 +184,7 @@ private:
    */
   void getQueueJobs(const jobQueue_t &jobQueueChunk);
 
-  //! Maximum number of jobs to asynchronously fetch from the queue at once
+  //! Maximum number of jobs to asynchronously fetch from the objectstore at once
   const size_t JOB_CACHE_SIZE = 300;
 
   objectstore::Backend                               &m_objectStore;         //!< Reference to ObjectStore Backend

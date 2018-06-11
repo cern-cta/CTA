@@ -16,8 +16,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-
 #include "QueueItor.hpp"
 #include <objectstore/RootEntry.hpp>
 #include <objectstore/ArchiveQueue.hpp>
@@ -35,7 +33,6 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
 {
-std::cerr << "ArchiveQueueItor constructor" << std::endl;
   // Get the list of job queues from the objectstore
   {
     objectstore::RootEntry re(m_objectStore);
@@ -57,9 +54,10 @@ std::cerr << "ArchiveQueueItor constructor" << std::endl;
     }
   }
 
-  // Find the first job in the queue
-  if(m_jobQueuesQueueIt != m_jobQueuesQueue.end()) {
+  // Find the first valid job
+  for( ; m_jobQueuesQueueIt != m_jobQueuesQueue.end() ; nextJobQueue) {
     getJobQueue();
+    if(!m_jobCache.empty()) break;
   }
 }
 
@@ -81,8 +79,6 @@ QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
 getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
   using namespace objectstore;
-
-std::cerr << "ArchiveQueue getQueueJobs() : fetching " << jobQueueChunk.size() << " jobs." << std::endl;
 
   typedef std::pair<ArchiveRequest,
                     std::unique_ptr<ArchiveRequest::AsyncLockfreeFetcher>> archiveJob_t;
@@ -140,7 +136,6 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
 {
-std::cerr << "RetrieveQueueItor constructor" << std::endl;
   // Get the list of job queues from the objectstore
   {
     objectstore::RootEntry re(m_objectStore);
@@ -185,8 +180,6 @@ QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>
 getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
   using namespace objectstore;
-
-std::cerr << "RetrieveQueue getQueueJobs() : fetching " << jobQueueChunk.size() << " jobs." << std::endl;
 
   typedef std::pair<RetrieveRequest,
                     std::unique_ptr<RetrieveRequest::AsyncLockfreeFetcher>> retrieveJob_t;
