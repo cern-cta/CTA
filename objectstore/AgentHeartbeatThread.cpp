@@ -18,6 +18,7 @@
 
 #include "AgentHeartbeatThread.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/Timer.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -38,7 +39,17 @@ void AgentHeartbeatThread::run() {
   auto exitFuture = m_exit.get_future();
   try {
     while (std::future_status::ready != exitFuture.wait_for(m_heartRate)) {
+      utils::Timer t;
       m_agentReference.bumpHeatbeat(m_backend);
+      auto updateTime = t.secs();
+      auto updateTimeLimit = std::chrono::duration<double, std::ratio<1, 1>>(m_heartRate).count();
+      if (updateTime > updateTimeLimit) {
+        log::ScopedParamContainer params(lc);
+        params.add("HeartbeatUpdateTimeLimit", updateTimeLimit)
+              .add("HeartbeatUpdateTime", updateTime);
+        lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting.");
+        ::exit(EXIT_FAILURE);
+      }
     }
     ANNOTATE_HAPPENS_AFTER(&m_exit);
     ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_exit);
