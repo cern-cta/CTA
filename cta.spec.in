@@ -105,16 +105,13 @@ cd build
 Summary: CERN Tape Archive: tape daemon
 Group: Application/CTA
 Requires: logrotate
+Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
-Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
-%pre -n cta-taped
-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
 %files -n cta-taped
 %defattr(-,root,root)
-%attr(0755,cta,tape) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.conf.example
@@ -138,18 +135,15 @@ The tape server daemon
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 Requires: logrotate
+Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: xrootd-server
-Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
 %description -n cta-frontend
 CERN Tape Archive:
 The xroot plugin
-%pre -n cta-frontend
-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
 %files -n cta-frontend
 %defattr(0755,root,root)
 %{_libdir}/libXrdSsiCta.so*
-%attr(0755,cta,tape) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.conf
 %attr(0644,cta,tape) /etc/systemd/system/cta-frontend.service
@@ -212,6 +206,7 @@ The shared libraries
 Summary: CERN Tape Archive: unit and system tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
+Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 %description -n cta-systemtests
@@ -250,6 +245,7 @@ Unit tests and system tests with virtual tape drives
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
 %description -n cta-objectstore-tools
 CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
@@ -268,6 +264,7 @@ Tools allowing initialization and inspection of the object store.
 %package -n cta-catalogueutils
 Summary: Utilities to faciliate working with the CTA catalogue
 Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
 %description -n cta-catalogueutils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
@@ -286,6 +283,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %package -n cta-mediachangerutils
 Summary: Utilities to faciliate working with mediachangers
 Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
 %description -n cta-mediachangerutils
 CERN Tape Archive:
 Utilities to faciliate working with the mediachangers
@@ -299,16 +297,13 @@ Utilities to faciliate working with the mediachangers
 Summary: Tools to faciliate working with acsd in cta
 Group: Application/CTA
 Requires: logrotate
-#Requires: cta-lib = %{version}-%{release}
-Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
+Requires: cta-common = %{version}-%{release}
+Requires: cta-lib = %{version}-%{release}
 %description -n cta-acsd
 CERN Tape Archive:
 Tools to faciliate working with acsd in cta
-%pre -n cta-acsd
-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
 %files -n cta-acsd
 %defattr(-,root,root)
-%attr(0755,cta,tape) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-acsd
 #%attr(0644,root,root) %doc /usr/share/man/man1/cta-acsd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-acsd
@@ -331,16 +326,12 @@ Tools to faciliate working with acsd in cta
 Summary: Tools to faciliate working with rmcd and smc in cta
 Group: Application/CTA
 Requires: logrotate
-#Requires: cta-lib = %{version}-%{release}
-Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
+Requires: cta-common = %{version}-%{release}
 %description -n cta-rmcd
 CERN Tape Archive:
 Tools to faciliate working with rmcd and smc in cta
-%pre -n cta-rmcd
-/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
 %files -n cta-rmcd
 %defattr(-,root,root)
-%attr(0755,cta,tape) %dir /var/log/cta
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd
@@ -380,3 +371,16 @@ castor (Cern Advanced STORage system)
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-queryvolume.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-mount.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-tape-acs-dismount.1cta.gz
+
+%package -n cta-common
+Summary: CERN Tape Archive common items
+Group: Application/CTA
+Requires(pre): /usr/bin/egrep, /usr/sbin/groupadd, /usr/sbin/luseradd
+%description -n cta-common
+CERN Tape Archive:
+Common items such as the creation of the cta local user and /var/log/cta
+%pre -n cta-common
+/usr/bin/egrep -q '^cta:' /etc/passwd || /usr/sbin/luseradd -s /bin/nologin -c "CTA system account" -g tape cta
+%files -n cta-common
+%defattr(-,root,root)
+%attr(0755,cta,tape) %dir /var/log/cta
