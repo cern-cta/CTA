@@ -110,16 +110,26 @@ private:
   enum class AgentOperation: char {
     Add,
     Remove,
+    AddBatch,
+    RemoveBatch,
     Heartbeat
   };
+  
+  /**
+   * A set used to test for ownership modifying actions.
+   */
+  std::set<AgentOperation> m_ownerShipModifyingOperations = { AgentOperation::Add, AgentOperation::Remove, 
+    AgentOperation::AddBatch, AgentOperation::RemoveBatch };
   
   /**
    * An operation with its parameter and promise
    */
   struct Action {
-    Action(AgentOperation op, const std::string & objectAddress): op(op), objectAddress(objectAddress) {}
+    Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet): 
+      op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet) {}
     AgentOperation op;
     const std::string & objectAddress;
+    const std::list<std::string> & objectAddressSet;
     std::promise<void> promise;
     /***
      * A mutex ensuring the object will not be released before the promise's result
