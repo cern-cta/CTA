@@ -164,11 +164,11 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       size_t operationsCount = q->queue.size() + 1;
       bool ownershipModification = false;
       // First, determine if any action is an ownership modification
-      if (action->op == AgentOperation::Add || action->op == AgentOperation::Remove)
+      if (m_ownerShipModifyingOperations.count(action->op))
         ownershipModification = true;
       if (!ownershipModification) {
         for (auto &a: q->queue) {
-          if (a->op == AgentOperation::Add || a->op == AgentOperation::Remove) {
+          if (m_ownerShipModifyingOperations.count(a->op)) {
             ownershipModification = true;
             break;
           }

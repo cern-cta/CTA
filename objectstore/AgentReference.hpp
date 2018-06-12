@@ -116,6 +116,12 @@ private:
   };
   
   /**
+   * A set used to test for ownership modifying actions.
+   */
+  std::set<AgentOperation> m_ownerShipModifyingOperations = { AgentOperation::Add, AgentOperation::Remove, 
+    AgentOperation::AddBatch, AgentOperation::RemoveBatch };
+  
+  /**
    * An operation with its parameter and promise
    */
   struct Action {
