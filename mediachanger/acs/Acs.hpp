@@ -28,6 +28,7 @@ extern "C" {
 #include <stdint.h>
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -176,4 +177,5 @@ protected:
 }; // class  Acs
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta

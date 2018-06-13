@@ -18,13 +18,14 @@
 
 #pragma once
 
-#include "mediachanger/DebugBuf.hpp"
+#include "mediachanger/acs/AcsDebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
 #include <string>
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -69,7 +70,7 @@ protected:
    * Debug stream buffer that inserts a standard debug preamble before each
    * message-line written to it.
    */
-  cta::mediachanger::DebugBuf m_debugBuf;
+  cta::mediachanger::acs::DebugBuf m_debugBuf;
 
   /**
    * Stream used to write debug messages.
@@ -89,4 +90,5 @@ protected:
 }; // class CmdLineTool
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta

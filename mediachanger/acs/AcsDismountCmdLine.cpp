@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::acs::AcsDismountCmdLine::AcsDismountCmdLine() throw():
+cta::mediachanger::acs::AcsDismountCmdLine::AcsDismountCmdLine() throw():
   debug(false),
   force(FALSE),
   help(false),
@@ -46,7 +46,7 @@ cta::acs::AcsDismountCmdLine::AcsDismountCmdLine() throw():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
+cta::mediachanger::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
   char *const *const argv):
   debug(false),
   force(FALSE),
@@ -108,7 +108,7 @@ cta::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
 //------------------------------------------------------------------------------
 // processOption
 //------------------------------------------------------------------------------
-void cta::acs::AcsDismountCmdLine::processOption(const int opt) {
+void cta::mediachanger::acs::AcsDismountCmdLine::processOption(const int opt) {
   switch (opt) {
   case 'd':
     debug = true;
@@ -143,7 +143,7 @@ void cta::acs::AcsDismountCmdLine::processOption(const int opt) {
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::acs::AcsDismountCmdLine::getUsage() throw() {
+std::string cta::mediachanger::acs::AcsDismountCmdLine::getUsage() throw() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"

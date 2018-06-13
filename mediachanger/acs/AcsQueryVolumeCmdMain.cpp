@@ -61,8 +61,8 @@ int main(const int argc, char *const *const argv) {
 static int exceptionThrowingMain(const int argc, char *const *const argv) {
   using namespace cta;
 
-  acs::AcsImpl acs;
-  acs::AcsQueryVolumeCmd cmd(std::cin, std::cout, std::cerr, acs);
+  mediachanger::acs::AcsImpl acs;
+  mediachanger::acs::AcsQueryVolumeCmd cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.exceptionThrowingMain(argc, argv);
 }

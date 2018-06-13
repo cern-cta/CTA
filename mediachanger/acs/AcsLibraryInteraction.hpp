@@ -20,6 +20,7 @@
 
 #include "common/exception/Mismatch.hpp"
 #include "common/exception/RequestFailed.hpp"
+#include "common/log/log.hpp"
 #include "Acs.hpp"
 
 #include <string>
@@ -30,6 +31,7 @@ extern "C" {
 }
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -44,7 +46,7 @@ public:
    *
    * @param acs Wrapper around the ACSLS C-API.
    */
-  AcsLibraryInteraction(Acs &acs) throw();
+  AcsLibraryInteraction(Acs &acs, cta::log::Logger &log) throw();
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
@@ -108,10 +110,11 @@ protected:
    * Wrapper around the ACSLS C-API.
    */
   Acs &m_acs;
-  
+  log::Logger &m_log;
 }; // class AcsLibraryInteraction
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta
 
 

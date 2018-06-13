@@ -81,6 +81,7 @@ set (COMMON_LIB_SRC_FILES
   exception/DatabaseConstraintError.cpp  
   exception/DatabasePrimaryKeyError.cpp  
   exception/DismountFailed.cpp  
+  exception/ForceDismountFailed.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
   exception/InvalidArgument.cpp

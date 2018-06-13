@@ -41,5 +41,5 @@ namespace cta { namespace exception {
 
     }; // class QueryVolumeFailed
 
-} } // namespace castor exception
+} } // namespace cta exception
 

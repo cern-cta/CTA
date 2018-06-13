@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
+cta::mediachanger::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
   throw():
   debug(FALSE),
   help(FALSE),
@@ -42,7 +42,7 @@ cta::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int argc,
+cta::mediachanger::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int argc,
   char *const *const argv):
   debug(FALSE),
   help(FALSE),
@@ -89,7 +89,7 @@ cta::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int argc,
 //------------------------------------------------------------------------------
 // processOption
 //------------------------------------------------------------------------------
-void cta::acs::AcsQueryVolumeCmdLine::processOption(const int opt) {
+void cta::mediachanger::acs::AcsQueryVolumeCmdLine::processOption(const int opt) {
   switch(opt) {
   case 'd':
     debug = true;
@@ -121,7 +121,7 @@ void cta::acs::AcsQueryVolumeCmdLine::processOption(const int opt) {
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::acs::AcsQueryVolumeCmdLine::getUsage() throw() {
+std::string cta::mediachanger::acs::AcsQueryVolumeCmdLine::getUsage() throw() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"

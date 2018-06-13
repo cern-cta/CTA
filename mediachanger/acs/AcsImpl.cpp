@@ -25,13 +25,13 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsImpl::~AcsImpl() throw() {
+cta::mediachanger::acs::AcsImpl::~AcsImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mount
 //------------------------------------------------------------------------------
-STATUS cta::acs::AcsImpl::mount(
+STATUS cta::mediachanger::acs::AcsImpl::mount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -45,7 +45,7 @@ STATUS cta::acs::AcsImpl::mount(
 //------------------------------------------------------------------------------
 // dismount
 //------------------------------------------------------------------------------
-STATUS cta::acs::AcsImpl::dismount(
+STATUS cta::mediachanger::acs::AcsImpl::dismount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -58,7 +58,7 @@ STATUS cta::acs::AcsImpl::dismount(
 //------------------------------------------------------------------------------
 // response
 //------------------------------------------------------------------------------
-STATUS cta::acs::AcsImpl::response(
+STATUS cta::mediachanger::acs::AcsImpl::response(
   const int timeout,
   SEQ_NO &seqNumber,
   REQ_ID &reqId,
@@ -70,7 +70,7 @@ STATUS cta::acs::AcsImpl::response(
 //------------------------------------------------------------------------------
 // queryVolume
 //------------------------------------------------------------------------------
-STATUS cta::acs::AcsImpl::queryVolume(
+STATUS cta::mediachanger::acs::AcsImpl::queryVolume(
   const SEQ_NO seqNumber,
   VOLID (&volIds)[MAX_ID],
   const unsigned short count) throw() {

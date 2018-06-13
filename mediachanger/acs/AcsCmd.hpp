@@ -36,6 +36,7 @@ extern "C" {
 }
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -118,4 +119,5 @@ protected:
 }; // class AcsCmd
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta

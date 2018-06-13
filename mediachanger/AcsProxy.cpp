@@ -197,7 +197,7 @@ void AcsProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &libr
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for read only access: "
+      "Failed to request CTA ACS daemon to mount tape for read only access: "
       << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -225,7 +225,7 @@ void AcsProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &lib
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to mount tape for read/write " 
+      "Failed to request CTA ACS daemon to mount tape for read/write " 
       "access: " << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -253,7 +253,7 @@ void AcsProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySl
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to dismount tape: " <<
+      "Failed to request CTA ACS daemon to dismount tape: " <<
       librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -281,7 +281,7 @@ void AcsProxy::forceDismountTape(const std::string &vid, const LibrarySlot &libr
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() <<
-      "Failed to request CASTOR ACS daemon to force dismount tape: " <<
+      "Failed to request CTA ACS daemon to force dismount tape: " <<
       librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }

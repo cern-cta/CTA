@@ -25,6 +25,7 @@
 #include "common/exception/MissingOperand.hpp"
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -104,4 +105,5 @@ private:
 }; // class AcsDismountCmd
 
 } // namespace acs
+} // namepace mediachanger
 } // namespace cta

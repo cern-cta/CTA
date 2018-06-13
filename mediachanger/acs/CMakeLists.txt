@@ -22,51 +22,24 @@
 # Rules to build and install acsd
 ################################################################################
 
-##add_library(
-  #castorAcsDaemon 
- ## Acs.cpp
-  #AcsDaemon.cpp
-  #AcsDaemonConfig.cpp
-  #AcsDaemonMain.cpp
-  #AcsDismountTape.cpp
-  #AcsForceDismountTape.cpp
- ## AcsImpl.cpp
-  #AcsLibraryInteraction.cpp
-  #AcsMessageHandler.cpp
-  #AcsMountTapeReadOnly.cpp
-  #AcsMountTapeReadWrite.cpp
-  #AcsPendingRequests.cpp
-  #AcsRequest.cpp
-  #AcsRequestDismountTape.cpp
-##)
-#add_dependencies(castorAcsDaemon castormessagesprotobuf)
+add_subdirectory(daemon)
 
-#target_link_libraries(castorAcsDaemon castortapereactor)
-#set_target_properties (castorAcsDaemon PROPERTIES
-#  COMPILE_FLAGS -I/usr/include/CDK
-#  COMPILE_DEFINITIONS LINUX)
+add_library(cta-acs 
+  Acs.cpp
+  AcsImpl.cpp
+  AcsDebugBuf.cpp
+  AcsLibraryInteraction.cpp)
 
+target_link_libraries(cta-acs
+  ctamediachanger 
+  ctacommon
+  ctareactor 
+  zmq
+  ${STK_LIBRARIES})
 
-#add_executable(acsd AcsDaemon.cpp)
-#set_target_properties (acsd PROPERTIES
-#  COMPILE_FLAGS -I/usr/include/CDK
-#  COMPILE_DEFINITIONS LINUX)
-
-#target_link_libraries(
-  #acsd
-  #castorAcsDaemon
-  #castortapereactor
-  #castorcommon
-  #castorserver
- # castormessages
-  #zmq
-  #${STK_LIBRARIES})
-
-#install (TARGETS acsd DESTINATION /usr/bin})
-#CastorInstallAdmManPage (acsd)
-#CastorInstallLogrotate (castor-acs-server)
-#CastorInstallSysconfigExample (acsd)
-#CastorInstallInitScript (acsd)
+set_target_properties (cta-acs PROPERTIES
+ COMPILE_FLAGS -I/usr/include/CDK
+ COMPILE_DEFINITIONS LINUX)
 
 ################################################################################
 # Rules to build and install castor-tape-acs-dismount
@@ -80,18 +53,17 @@ set (ACS_DISMOUNT_SRC_FILES
   AcsDismountCmd.cpp
   AcsDismountCmdLine.cpp
   AcsDismountCmdMain.cpp
-  CmdLineTool.cpp)
+  CmdLineTool.cpp
+  AcsDebugBuf.cpp)
 add_executable (cta-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
 set_target_properties (cta-tape-acs-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-tape-acs-dismount
-  ctamediachanger
   ctacommon
   ${STK_LIBRARIES})
 install (TARGETS cta-tape-acs-dismount DESTINATION /usr/bin)
 install (FILES cta-tape-acs-dismount.1cta DESTINATION /usr/share/man/man1)
-#CastorInstallExeManPage(cta-tape-acs-dismount)
 
 ################################################################################
 # Rules to build and install cta-tape-acs-mount
@@ -104,18 +76,17 @@ set (ACS_MOUNT_SRC_FILES
   AcsMountCmd.cpp
   AcsMountCmdLine.cpp
   AcsMountCmdMain.cpp
-  CmdLineTool.cpp)
+  CmdLineTool.cpp
+  AcsDebugBuf.cpp)
 add_executable (cta-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
 set_target_properties (cta-tape-acs-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-tape-acs-mount
-ctamediachanger
 ctacommon
 ${STK_LIBRARIES})
 install (TARGETS cta-tape-acs-mount DESTINATION /usr/bin)
 install (FILES cta-tape-acs-mount.1cta DESTINATION /usr/share/man/man1)
-#CastorInstallExeManPage(cta-tape-acs-mount)
 
 ################################################################################
 # Rules to build and install cta-tape-acs-queryvolume
@@ -129,18 +100,41 @@ set (ACS_QUERYVOLUME_SRC_FILES
   AcsQueryVolumeCmd.cpp
   AcsQueryVolumeCmdLine.cpp
   AcsQueryVolumeCmdMain.cpp
-  CmdLineTool.cpp)
+  CmdLineTool.cpp
+  AcsDebugBuf.cpp)
 
 add_executable (cta-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
 target_link_libraries (cta-tape-acs-queryvolume
-ctamediachanger
 ctacommon
 ${STK_LIBRARIES})
 set_target_properties (cta-tape-acs-queryvolume PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
-  #COMPILE_FLAGS -I/usr/include/STK_INCLUDE_DIR
   COMPILE_DEFINITIONS LINUX)
 install (TARGETS cta-tape-acs-queryvolume
   DESTINATION /usr/bin)
 install (FILES cta-tape-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
-#CastorInstallExeManPage(cta-tape-acs-queryvolume)
+
+################################################################################
+# Rules to build and install cta-tape-acs-querydrive
+################################################################################
+message(STATUS "Adding cta-tape-acs-querydrive target")
+set (ACS_QUERYDRIVE_SRC_FILES
+  Acs.cpp
+  AcsCmd.cpp
+  AcsCmdLine.cpp
+  AcsImpl.cpp
+  AcsQueryDriveCmd.cpp
+  AcsQueryDriveCmdLine.cpp
+  AcsQueryDriveCmdMain.cpp
+  CmdLineTool.cpp
+  AcsDebugBuf.cpp)
+
+add_executable (cta-tape-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
+target_link_libraries (cta-tape-acs-querydrive
+ctacommon
+${STK_LIBRARIES})
+set_target_properties (cta-tape-acs-querydrive PROPERTIES
+  COMPILE_FLAGS -I/usr/include/CDK
+  COMPILE_DEFINITIONS LINUX)
+install (TARGETS cta-tape-acs-querydrive
+  DESTINATION /usr/bin)

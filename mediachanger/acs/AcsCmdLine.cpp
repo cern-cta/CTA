@@ -26,7 +26,7 @@
 //------------------------------------------------------------------------------
 // parseQueryInterval
 //------------------------------------------------------------------------------
-int cta::acs::AcsCmdLine::parseQueryInterval(const std::string &s) {
+int cta::mediachanger::acs::AcsCmdLine::parseQueryInterval(const std::string &s) {
   const int queryInterval = atoi(s.c_str());
   if(0 >= queryInterval) {
     cta::exception::InvalidArgument ex;
@@ -41,7 +41,7 @@ int cta::acs::AcsCmdLine::parseQueryInterval(const std::string &s) {
 //------------------------------------------------------------------------------
 // parseTimeout
 //------------------------------------------------------------------------------
-int cta::acs::AcsCmdLine::parseTimeout(const std::string &s) {
+int cta::mediachanger::acs::AcsCmdLine::parseTimeout(const std::string &s) {
   const int timeout = atoi(s.c_str());
   if(0 >= timeout) {
     cta::exception::InvalidArgument ex;
@@ -55,7 +55,7 @@ int cta::acs::AcsCmdLine::parseTimeout(const std::string &s) {
 //------------------------------------------------------------------------------
 // handleMissingParameter
 //------------------------------------------------------------------------------
-void cta::acs::AcsCmdLine::handleMissingParameter(const int opt) {
+void cta::mediachanger::acs::AcsCmdLine::handleMissingParameter(const int opt) {
   cta::exception::MissingOperand ex;
   ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
  throw ex;
@@ -64,7 +64,7 @@ void cta::acs::AcsCmdLine::handleMissingParameter(const int opt) {
 //------------------------------------------------------------------------------
 // handleUnknownOption
 //------------------------------------------------------------------------------
-void cta::acs::AcsCmdLine::handleUnknownOption(const int opt) {
+void cta::mediachanger::acs::AcsCmdLine::handleUnknownOption(const int opt) {
   cta::exception::InvalidArgument ex;
   if(0 == optopt) {
     ex.getMessage() << "Unknown command-line option";

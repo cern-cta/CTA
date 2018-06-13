@@ -23,7 +23,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::acs::AcsCmd::AcsCmd(std::istream &inStream,
+cta::mediachanger::acs::AcsCmd::AcsCmd(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
   CmdLineTool(inStream, outStream, errStream), m_acs(acs) {
 }
@@ -31,13 +31,13 @@ cta::acs::AcsCmd::AcsCmd(std::istream &inStream,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::acs::AcsCmd::~AcsCmd() throw() {
+cta::mediachanger::acs::AcsCmd::~AcsCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string cta::acs::AcsCmd::bool2Str(const BOOLEAN value) const
+std::string cta::mediachanger::acs::AcsCmd::bool2Str(const BOOLEAN value) const
   throw() {
   return value ? "TRUE" : "FALSE";
 }
@@ -45,7 +45,7 @@ std::string cta::acs::AcsCmd::bool2Str(const BOOLEAN value) const
 //------------------------------------------------------------------------------
 // requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void cta::acs::AcsCmd::requestResponsesUntilFinal(
+void cta::mediachanger::acs::AcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
   const int queryInterval, const int timeout) {
@@ -77,7 +77,7 @@ void cta::acs::AcsCmd::requestResponsesUntilFinal(
 //------------------------------------------------------------------------------
 // requestResponse
 //------------------------------------------------------------------------------
-ACS_RESPONSE_TYPE cta::acs::AcsCmd::requestResponse(
+ACS_RESPONSE_TYPE cta::mediachanger::acs::AcsCmd::requestResponse(
   const int timeout, const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)]) {
   SEQ_NO responseSeqNumber = 0;
@@ -105,7 +105,7 @@ ACS_RESPONSE_TYPE cta::acs::AcsCmd::requestResponse(
 //------------------------------------------------------------------------------
 // checkSeqNumber
 //------------------------------------------------------------------------------
-void cta::acs::AcsCmd::checkResponseSeqNumber( const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber) {
+void cta::mediachanger::acs::AcsCmd::checkResponseSeqNumber( const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber) {
   if(requestSeqNumber != responseSeqNumber) {
     cta::exception::Mismatch ex;
     ex.getMessage() <<  ": Sequence number mismatch: requestSeqNumber="

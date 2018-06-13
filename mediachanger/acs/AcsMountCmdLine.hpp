@@ -28,6 +28,7 @@ extern "C" {
 #include <string>
 
 namespace cta {
+namespace mediachanger {
 namespace acs {
 
 /**
@@ -106,4 +107,5 @@ private:
 }; // class AcsMountCmdLine
 
 } // namespace acs
+} // namespace mediachanger
 } // namespace cta
