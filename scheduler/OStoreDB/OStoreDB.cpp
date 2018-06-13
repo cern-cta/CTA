@@ -899,12 +899,15 @@ void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdent
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob>
-OStoreDB::getRetrieveJobs(const std::string &tapePoolName) const
+OStoreDB::getRetrieveJobs(const std::string &vid) const
 {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  std::list<common::dataStructures::RetrieveJob> ret;
 
-  // To implement this method, needs a way to get a list of vids in the tapepool, then
-  // create a QueueItor object for each vid...
+  for(RetrieveQueueItor_t q_it(m_objectStore, vid); !q_it.end(); ++q_it) {
+    ret.push_back(*q_it);
+  }
+
+  return ret;
 }
 
 //------------------------------------------------------------------------------

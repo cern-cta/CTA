@@ -485,7 +485,13 @@ std::map<std::string, std::list<common::dataStructures::RetrieveJob> > Scheduler
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid, log::LogContext &lc) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  utils::Timer t;
+  auto ret =  m_db.getRetrieveJobs(vid);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::getPendingRetrieveJobs(): success.");
+  return ret;
 }
 
 //------------------------------------------------------------------------------

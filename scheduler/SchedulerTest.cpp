@@ -512,6 +512,19 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     ASSERT_EQ("dstURL", job.request.dstURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
+
+    // Check that we can retrieve jobs by VID
+
+    // Get the vid from the above job and submit a separate request for the same vid
+    auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
+    auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
+    // same tests as above
+    ASSERT_EQ(1, rqsts_vid.size());
+    auto &job_vid = rqsts_vid.back();
+    ASSERT_EQ(1, job_vid.tapeCopies.size());
+    ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
+    ASSERT_EQ("dstURL", job_vid.request.dstURL);
+    ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
   }
   
   {

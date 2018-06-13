@@ -277,7 +277,7 @@ public:
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester, 
     const std::string& remoteFile) override;
 
-  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override;
+  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string &vid) const override;
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
 
