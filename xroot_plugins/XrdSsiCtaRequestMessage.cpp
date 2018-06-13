@@ -842,7 +842,7 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
    }
 
    // Create a XrdSsi stream object to return the results
-   stream = new ArchiveFileLsStream(has_flag(OptionBoolean::EXTENDED), m_catalogue.getArchiveFiles(searchCriteria));
+   stream = new ArchiveFileLsStream(m_catalogue, searchCriteria, has_flag(OptionBoolean::SUMMARY));
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {

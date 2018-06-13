@@ -31,12 +31,17 @@ namespace cta { namespace xrd {
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream(bool is_extended, cta::catalogue::ArchiveFileItor archiveFileItor) :
+   ArchiveFileLsStream(cta::catalogue::Catalogue &catalogue, const cta::catalogue::TapeFileSearchCriteria &searchCriteria, bool is_summary) :
       XrdSsiStream(XrdSsiStream::isActive),
-      m_isExtended(is_extended),
-      m_archiveFileItor(std::move(archiveFileItor))
+      m_catalogue(catalogue),
+      m_searchCriteria(searchCriteria),
+      m_isSummary(is_summary)
    {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveFileLsStream() constructor");
+
+      if(!m_isSummary) {
+         m_archiveFileItor = m_catalogue.getArchiveFiles(searchCriteria);
+      }
    }
 
    virtual ~ArchiveFileLsStream() {
@@ -65,39 +70,31 @@ public:
    virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
-      XrdSsiPb::OStreamBuffer<cta::xrd::Data> *streambuf;
+      XrdSsiPb::OStreamBuffer<Data> *streambuf;
 
       try {
-         if(!m_archiveFileItor.hasMore()) {
+         if(!m_isSummary && !m_archiveFileItor.hasMore()) {
             // Nothing more to send, close the stream
             last = true;
             return nullptr;
          }
 
-         streambuf = new XrdSsiPb::OStreamBuffer<cta::xrd::Data>(dlen);
+         streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
 
-#if 0
-   if(has_flag(OptionBoolean::SUMMARY)) {
-      // Probably we should use a data response here, to prevent timeouts while calculating the summary statistics
-      cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = { "total number of files","total size" };
-      std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
-                                      std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-      responseTable.push_back(row);
-      std::stringstream cmdlineOutput;
-      cmdlineOutput << formatResponse(responseTable);
-      response.set_message_txt(cmdlineOutput.str());
-   }
-#endif
+         // Special handling for -S option
+         if(m_isSummary) {
+            GetBuffSummary(streambuf);
+            dlen = streambuf->Size();
+            last = true;
+            return streambuf;
+         }
 
          for(bool is_buffer_full = false; m_archiveFileItor.hasMore() && !is_buffer_full; )
          {
             const cta::common::dataStructures::ArchiveFile archiveFile = m_archiveFileItor.next();
 
             for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
-               cta::xrd::Data record;
+               Data record;
 
                // Response type
                record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::ARCHIVEFILE_LS);
@@ -151,9 +148,28 @@ public:
       return streambuf;
    }
 
+   void GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+      common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(m_searchCriteria);
+
+      Data record;
+
+      // Response type
+      record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::ARCHIVEFILE_LS);
+
+      // Summary statistics
+      record.mutable_af_summary_item()->set_total_files(summary.totalFiles);
+      record.mutable_af_summary_item()->set_total_size(summary.totalBytes);
+
+      streambuf->Push(record);
+
+      m_isSummary = false;
+   }
+
 private:
-   bool                       m_isExtended;                                   //!< Summary or extended listing?
-   catalogue::ArchiveFileItor m_archiveFileItor;                              //!< Iterator across files which have been archived
+   cta::catalogue::Catalogue                    &m_catalogue;                 //!< Reference to CTA Catalogue
+   const cta::catalogue::TapeFileSearchCriteria  m_searchCriteria;            //!< Search criteria
+   catalogue::ArchiveFileItor                    m_archiveFileItor;           //!< Iterator across files which have been archived
+   bool                                          m_isSummary;                 //!< Full listing or short summary?
 
    static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
 };
