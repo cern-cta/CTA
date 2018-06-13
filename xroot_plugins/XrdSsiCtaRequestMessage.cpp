@@ -841,26 +841,13 @@ void RequestMessage::processArchiveFile_Ls(const cta::admin::AdminCmd &admincmd,
       }
    }
 
-   if(has_flag(OptionBoolean::SUMMARY)) {
-      // Probably we should use a data response here, to prevent timeouts while calculating the summary statistics
-      cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = { "total number of files","total size" };
-      std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
-                                      std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-      responseTable.push_back(row);
-      std::stringstream cmdlineOutput;
-      cmdlineOutput << formatResponse(responseTable);
-      response.set_message_txt(cmdlineOutput.str());
-   } else {
-      // Create a XrdSsi stream object to return the results
-      stream = new ArchiveFileLsStream(m_catalogue.getArchiveFiles(searchCriteria));
+   // Create a XrdSsi stream object to return the results
+   stream = new ArchiveFileLsStream(has_flag(OptionBoolean::EXTENDED), m_catalogue.getArchiveFiles(searchCriteria));
 
-      // Should the client print headers?
-      if(has_flag(OptionBoolean::SHOW_HEADER)) {
-         response.set_show_header(cta::admin::HeaderType::ARCHIVEFILE_LS);
-      }
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) {
+      response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::ARCHIVEFILE_LS_SUMMARY
+                                                                : HeaderType::ARCHIVEFILE_LS);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1224,11 +1211,8 @@ void RequestMessage::processListPendingArchives(const cta::admin::AdminCmd &admi
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
-      if(has_flag(OptionBoolean::EXTENDED)) {
-         response.set_show_header(HeaderType::LISTPENDINGARCHIVES);
-      } else {
-         response.set_show_header(HeaderType::LISTPENDINGARCHIVES_SUMMARY);
-      }
+      response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGARCHIVES
+                                                                 : HeaderType::LISTPENDINGARCHIVES_SUMMARY);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1250,11 +1234,8 @@ void RequestMessage::processListPendingRetrieves(const cta::admin::AdminCmd &adm
 
    // Should the client display column headers?
    if(has_flag(OptionBoolean::SHOW_HEADER)) {
-      if(has_flag(OptionBoolean::EXTENDED)) {
-         response.set_show_header(HeaderType::LISTPENDINGRETRIEVES);
-      } else {
-         response.set_show_header(HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
-      }
+         response.set_show_header(has_flag(OptionBoolean::EXTENDED) ? HeaderType::LISTPENDINGRETRIEVES
+                                                                    : HeaderType::LISTPENDINGRETRIEVES_SUMMARY);
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

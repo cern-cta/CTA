@@ -39,6 +39,8 @@ public:
    // "archivefile ls" command
    static void printAfLsHeader();
    static void printAfLsItem(const ArchiveFileItem &af_item);
+   static void printAfLsSummaryHeader();
+   static void printAfLsSummaryItem(const ArchiveFileSummaryItem &af_item);
 
    // "listpendingarchives" command
    static void printLpaHeader();

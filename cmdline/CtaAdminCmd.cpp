@@ -60,9 +60,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    {
       case Data::kAfItemFieldNumber : switch(record.af_item().type())
       {
-         case ArchiveFileItem::ARCHIVEFILE_LS:          CtaAdminCmd::printAfLsItem(record.af_item()); break;
-         case ArchiveFileItem::LISTPENDINGARCHIVES:     CtaAdminCmd::printLpaItem (record.af_item()); break;
-         case ArchiveFileItem::LISTPENDINGRETRIEVES:    CtaAdminCmd::printLprItem (record.af_item()); break;
+         case ArchiveFileItem::ARCHIVEFILE_LS:         CtaAdminCmd::printAfLsItem(record.af_item()); break;
+         case ArchiveFileItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaItem (record.af_item()); break;
+         case ArchiveFileItem::LISTPENDINGRETRIEVES:   CtaAdminCmd::printLprItem (record.af_item()); break;
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
       }
@@ -70,8 +70,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
       case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
       {
-         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaSummaryItem(record.af_summary_item()); break;
-         case ArchiveFileSummaryItem::LISTPENDINGRETRIEVES:   CtaAdminCmd::printLprSummaryItem(record.af_summary_item()); break;
+         case ArchiveFileSummaryItem::ARCHIVEFILE_LS:         CtaAdminCmd::printAfLsSummaryItem(record.af_summary_item()); break;
+         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaSummaryItem (record.af_summary_item()); break;
+         case ArchiveFileSummaryItem::LISTPENDINGRETRIEVES:   CtaAdminCmd::printLprSummaryItem (record.af_summary_item()); break;
          default:
             throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
       }
@@ -196,6 +197,7 @@ void CtaAdminCmd::send() const
          // Print streaming response header
          switch(response.show_header()) {
             case HeaderType::ARCHIVEFILE_LS:               printAfLsHeader(); break;
+            case HeaderType::ARCHIVEFILE_LS_SUMMARY:       printAfLsSummaryHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          printLpaHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  printLpaSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         printLprHeader(); break;
@@ -401,6 +403,21 @@ void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
              << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
              << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
                                                                  << af_item.af().df().path()
+             << std::endl;
+}
+
+void CtaAdminCmd::printAfLsSummaryHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(13) << std::right << "total files" << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "total size"  << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::printAfLsSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+{
+   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
              << std::endl;
 }
 

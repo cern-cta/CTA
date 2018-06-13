@@ -31,8 +31,9 @@ namespace cta { namespace xrd {
 class ArchiveFileLsStream : public XrdSsiStream
 {
 public:
-   ArchiveFileLsStream(cta::catalogue::ArchiveFileItor archiveFileItor) :
+   ArchiveFileLsStream(bool is_extended, cta::catalogue::ArchiveFileItor archiveFileItor) :
       XrdSsiStream(XrdSsiStream::isActive),
+      m_isExtended(is_extended),
       m_archiveFileItor(std::move(archiveFileItor))
    {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveFileLsStream() constructor");
@@ -74,6 +75,22 @@ public:
          }
 
          streambuf = new XrdSsiPb::OStreamBuffer<cta::xrd::Data>(dlen);
+
+#if 0
+   if(has_flag(OptionBoolean::SUMMARY)) {
+      // Probably we should use a data response here, to prevent timeouts while calculating the summary statistics
+      cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue.getTapeFileSummary(searchCriteria);
+      std::vector<std::vector<std::string>> responseTable;
+      std::vector<std::string> header = { "total number of files","total size" };
+      std::vector<std::string> row = {std::to_string(static_cast<unsigned long long>(summary.totalFiles)),
+                                      std::to_string(static_cast<unsigned long long>(summary.totalBytes))};
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
+      responseTable.push_back(row);
+      std::stringstream cmdlineOutput;
+      cmdlineOutput << formatResponse(responseTable);
+      response.set_message_txt(cmdlineOutput.str());
+   }
+#endif
 
          for(bool is_buffer_full = false; m_archiveFileItor.hasMore() && !is_buffer_full; )
          {
@@ -135,7 +152,8 @@ public:
    }
 
 private:
-   catalogue::ArchiveFileItor m_archiveFileItor;
+   bool                       m_isExtended;                                   //!< Summary or extended listing?
+   catalogue::ArchiveFileItor m_archiveFileItor;                              //!< Iterator across files which have been archived
 
    static constexpr const char* const LOG_SUFFIX  = "ArchiveFileLsStream";    //!< Identifier for log messages
 };
