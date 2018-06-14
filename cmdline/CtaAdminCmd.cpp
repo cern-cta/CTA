@@ -368,7 +368,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
 void CtaAdminCmd::printAfLsHeader()
 {
    std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << "archive id"     << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << "vid"            << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' '
@@ -388,7 +388,7 @@ void CtaAdminCmd::printAfLsHeader()
 
 void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
 {
-   std::cout << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id()    << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
@@ -425,7 +425,7 @@ void CtaAdminCmd::printLpaHeader()
 {
    std::cout << TEXT_RED
              << std::setfill(' ') << std::setw(18) << std::right << "tapepool"       << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << "archive id"     << ' '
              << std::setfill(' ') << std::setw(13) << std::right << "storage class"  << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << "disk id"        << ' '
@@ -442,7 +442,7 @@ void CtaAdminCmd::printLpaHeader()
 void CtaAdminCmd::printLpaItem(const cta::admin::ArchiveFileItem &af_item)
 {
    std::cout << std::setfill(' ') << std::setw(18) << std::right << af_item.tapepool()           << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id()    << ' '
              << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
@@ -476,14 +476,14 @@ void CtaAdminCmd::printLpaSummaryItem(const cta::admin::ArchiveFileSummaryItem &
 void CtaAdminCmd::printLprHeader()
 {
    std::cout << TEXT_RED
-             << std::setfill(' ') << std::setw(13) << std::right << "vid"            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "id"             << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"        << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"           << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << "block id"       << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << "size"           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "user"           << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << "group"          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << "vid"        << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << "archive id" << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "copy no"    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "fseq"       << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << "block id"   << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "size"       << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "user"       << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "group"      << ' '
              <<                                                     "path"
              << TEXT_NORMAL << std::endl;
 }
@@ -491,7 +491,7 @@ void CtaAdminCmd::printLprHeader()
 void CtaAdminCmd::printLprItem(const cta::admin::ArchiveFileItem &af_item)
 {
    std::cout << std::setfill(' ') << std::setw(13) << std::right << af_item.tf().vid()        << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().archive_id() << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id() << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()         << ' '
              << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()      << ' '
              << std::setfill(' ') << std::setw(9)  << std::right << af_item.tf().block_id()   << ' '
