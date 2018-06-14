@@ -510,7 +510,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH    },
       { opt_tapepool_alias, opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_summary.optional(), opt_header.optional() }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_READ  },
       { opt_drivename, opt_vid, opt_firstfseq, opt_lastfseq, opt_checkchecksum, opt_output }},
    {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_WRITE },

@@ -2055,22 +2055,35 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
 
    std::stringstream cmdlineOutput;
 
-   const std::list<cta::catalogue::TapePool> list= m_catalogue.getTapePools();
+   const std::list<cta::catalogue::TapePool> tp_list= m_catalogue.getTapePools();
 
-   if(!list.empty())
+   if(!tp_list.empty())
    {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "name","# partial tapes","encrypt","c.user","c.host","c.time","m.user","m.host","m.time","comment"
+      const std::vector<std::string> header = {
+         "name","# tapes","# partial","size","used","avail","use%","encrypt",
+         "c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
+      std::vector<std::vector<std::string>> responseTable;
+      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
+      for(auto &tp : tp_list) {
          std::vector<std::string> currentRow;
-         currentRow.push_back(it->name);
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->nbPartialTapes)));
-         if(it->encryption) currentRow.push_back("true"); else currentRow.push_back("false");
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
+
+         uint64_t avail = tp.capacityGigabytes > tp.dataGigabytes ? tp.capacityGigabytes - tp.dataGigabytes : 0; 
+         double use_d = (static_cast<double>(tp.dataGigabytes) / static_cast<double>(tp.capacityGigabytes)) * 100.0;
+         std::ostringstream use;
+         use << std::fixed << std::setprecision(1) <<(use_d < 0.0 ? 0.0 : use_d) << '%';
+
+         currentRow.push_back(tp.name);
+         currentRow.push_back(std::to_string(tp.nbTapes));
+         currentRow.push_back(std::to_string(tp.nbPartialTapes));
+         currentRow.push_back(std::to_string(tp.capacityGigabytes) + "G");
+         currentRow.push_back(std::to_string(tp.dataGigabytes) + "G");
+         currentRow.push_back(std::to_string(avail) + "G");
+         currentRow.push_back(use.str());
+         currentRow.push_back(tp.encryption ? "true" : "false");
+         addLogInfoToResponseRow(currentRow, tp.creationLog, tp.lastModificationLog);
+         currentRow.push_back(tp.comment);
+
          responseTable.push_back(currentRow);
       }
       cmdlineOutput << formatResponse(responseTable);
