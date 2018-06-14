@@ -32,9 +32,8 @@ template<typename QueueItor_t>
 class ListPendingQueue : public XrdSsiStream
 {
 public:
-   ListPendingQueue(cta::catalogue::Catalogue &catalogue, bool is_extended, QueueItor_t queueItor) :
+   ListPendingQueue(QueueItor_t queueItor, bool is_extended) :
       XrdSsiStream(XrdSsiStream::isActive),
-      m_catalogue(catalogue),
       m_isExtended(is_extended),
       m_queueItor(std::move(queueItor))
    {
@@ -133,9 +132,8 @@ public:
    }
 
 private:
-   cta::catalogue::Catalogue &m_catalogue;                                 //!< Reference to CTA Catalogue
-   bool                       m_isExtended;                                //!< Summary or extended listing?
-   QueueItor_t                m_queueItor;                                 //!< Archive/Retrieve Queue Iterator
+   bool m_isExtended;                                                      //!< Summary or extended listing?
+   QueueItor_t m_queueItor;                                                //!< Archive/Retrieve Queue Iterator
 
    typedef decltype(*m_queueItor) data_t;                                  //!< Infer data type from template type
 
@@ -214,7 +212,7 @@ bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStrea
 
 template<>
 uint64_t ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fileSize(const data_t &job) {
-   return m_catalogue.getArchiveFileById(job.request.archiveFileID).fileSize;
+   return 0; //m_catalogue.getArchiveFileById(job.request.archiveFileID).fileSize;
 }
 
 template<>
