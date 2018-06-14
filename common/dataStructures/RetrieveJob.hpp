@@ -43,6 +43,7 @@ struct RetrieveJob {
   bool operator!=(const RetrieveJob &rhs) const;
 
   RetrieveRequest request;
+  uint64_t fileSize;
   std::map<std::string,std::pair<uint64_t,TapeFile>> tapeCopies;
 
 }; // struct RetrieveJob

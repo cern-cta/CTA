@@ -212,7 +212,7 @@ bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStrea
 
 template<>
 uint64_t ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::fileSize(const data_t &job) {
-   return 0; //m_catalogue.getArchiveFileById(job.request.archiveFileID).fileSize;
+   return job.fileSize;
 }
 
 template<>
@@ -243,7 +243,7 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
       auto af = record.mutable_af_item()->mutable_af();
       af->set_archive_id(job.request.archiveFileID);
       //af->set_size(tape_it->second.second.compressedSize);
-      af->set_size(fileSize(job));
+      af->set_size(job.fileSize);
       af->mutable_df()->set_owner(job.request.requester.name);
       af->mutable_df()->set_group(job.request.requester.group);
       af->mutable_df()->set_path(job.request.diskFileInfo.path);

@@ -34,6 +34,7 @@ RetrieveJob::RetrieveJob() {}
 //------------------------------------------------------------------------------
 bool RetrieveJob::operator==(const RetrieveJob &rhs) const {
   return request==rhs.request
+      && fileSize==rhs.fileSize
       && tapeCopies==rhs.tapeCopies;
 }
 
@@ -49,6 +50,7 @@ bool RetrieveJob::operator!=(const RetrieveJob &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj) {
   os << "(request=" << obj.request
+     << " fileSize=" << obj.fileSize
      << " tapeFiles=" << obj.tapeCopies << ")";
   return os;
 }
