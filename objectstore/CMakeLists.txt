@@ -88,6 +88,7 @@ set(ObjectStoreUnitTests
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
+  AlgorithmsTest.cpp
 )
 
 add_library(ctaobjectstoreunittests SHARED ${ObjectStoreUnitTests})
