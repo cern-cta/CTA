@@ -20,18 +20,19 @@
 #include "RootEntry.hpp"
 #include "AgentReference.hpp"
 #include "Agent.hpp"
-#include "ArchiveQueueAlgorithms.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "catalogue/DummyCatalogue.hpp"
 #include "BackendVFS.hpp"
 #include "common/make_unique.hpp"
+#include "ArchiveQueueAlgorithms.hpp"
+#include "RetrieveQueueAlgorithms.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-TEST(ObjectStore, Algorithms) {
+TEST(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object 
 #ifdef STDOUT_LOGGING
@@ -91,7 +92,91 @@ TEST(ObjectStore, Algorithms) {
   }
   ContainerAlgorithms<ArchiveQueue> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
-  
+}
+
+TEST(ObjectStore, RetrieveQueueAlgorithms) {
+  using namespace cta::objectstore;
+  // We will need a log object 
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::catalogue::DummyCatalogue catalogue;
+  cta::log::LogContext lc(dl);
+  // Here we check for the ability to detect dead (but empty agents)
+  // and clean them up.
+  BackendVFS be;
+  AgentReference agentRef("unitTestGarbageCollector", dl);
+  Agent agent(agentRef.getAgentAddress(), be);
+  // Create the root entry
+  RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  ScopedExclusiveLock rel(re);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  agent.initialize();
+  agent.insertAndRegisterSelf(lc);
+  ContainerAlgorithms<RetrieveQueue>::ElementMemoryContainer requests;
+  for (size_t i=0; i<10; i++) {
+    std::string rrAddr = agentRef.nextId("RetrieveRequest");
+    agentRef.addToOwnership(rrAddr, be);
+    cta::common::dataStructures::MountPolicy mp;
+    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
+    rqc.archiveFile.archiveFileID = 123456789L;
+    rqc.archiveFile.diskFileId = "eos://diskFile";
+    rqc.archiveFile.checksumType = "";
+    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.creationTime = 0;
+    rqc.archiveFile.reconciliationTime = 0;
+    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    rqc.archiveFile.diskInstance = "eoseos";
+    rqc.archiveFile.fileSize = 1000 + i;
+    rqc.archiveFile.storageClass = "sc";
+    rqc.archiveFile.tapeFiles[1].blockId=0;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].copyNb=1;
+    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
+    rqc.archiveFile.tapeFiles[1].fSeq=i;
+    rqc.archiveFile.tapeFiles[1].vid="Tape0";
+    rqc.mountPolicy.archiveMinRequestAge = 1;
+    rqc.mountPolicy.archivePriority = 1;
+    rqc.mountPolicy.creationLog.time = time(nullptr);
+    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.maxDrivesAllowed = 1;
+    rqc.mountPolicy.retrieveMinRequestAge = 1;
+    rqc.mountPolicy.retrievePriority = 1;
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue>::Element{cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp,
+        serializers::RetrieveJobStatus::RJS_Pending});
+    auto & rr=*requests.back().retrieveRequest;
+    rr.initialize();
+    rr.setRetrieveFileQueueCriteria(rqc);
+    cta::common::dataStructures::RetrieveRequest sReq;
+    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
+    sReq.creationLog.time=time(nullptr);
+    rr.setSchedulerRequest(sReq);
+    rr.addJob(1, 1, 1);
+    rr.setOwner(agentRef.getAgentAddress());
+    rr.setActiveCopyNumber(1);
+    rr.insert();
+  }
+  ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
+  try {
+    retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
+  } catch (ContainerTraits<RetrieveQueue>::OwnershipSwitchFailure & ex) {
+    for (auto & e: ex.failedElements) {
+      try {
+        throw e.failure;
+      } catch (std::exception & e) {
+        std::cout << e.what() << std::endl;
+      }
+    }
+  }
 }
 
 }
