@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
 /**
  * This file defines the containers, their traits and algorithms to add/remove
  * to/from them.
