@@ -24,7 +24,6 @@
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/TapePool.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
-#include "common/dataStructures/AdminHost.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
@@ -239,11 +238,6 @@ public:
   virtual void deleteAdminUser(const std::string &username) = 0;
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
   virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) = 0;
-
-  virtual void createAdminHost(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) = 0;
-  virtual void deleteAdminHost(const std::string &hostName) = 0;
-  virtual std::list<common::dataStructures::AdminHost> getAdminHosts() const = 0;
-  virtual void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) = 0;
 
   /**
    * Creates the specified storage class.

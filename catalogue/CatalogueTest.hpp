@@ -84,16 +84,6 @@ protected:
     const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers);
 
   /**
-   * Creates a map from admin host name to admin user from the specified list of
-   * admin users.
-   *
-   * @param listOfAdminHosts The list of admin hosts.
-   * @return Map from host name to admin host.
-   */
-  std::map<std::string, cta::common::dataStructures::AdminHost> adminHostListToMap(
-    const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts);
-
-  /**
    * Creates a map from tape pool name to tape pool from the specified list of
    * tape pools.
    *

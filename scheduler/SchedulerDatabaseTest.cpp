@@ -19,7 +19,6 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/UserIdentity.hpp"
-#include "common/admin/AdminHost.hpp"
 #include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "scheduler/SchedulerDatabase.hpp"

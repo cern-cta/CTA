@@ -71,12 +71,6 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
-      const std::list<common::dataStructures::AdminHost> adminHosts = m_catalogue->getAdminHosts();
-      for(auto &adminHost: adminHosts) {
-        m_catalogue->deleteAdminHost(adminHost.name);
-      }
-    }
-    {
       const std::list<common::dataStructures::ArchiveRoute> archiveRoutes = m_catalogue->getArchiveRoutes();
       for(auto &archiveRoute: archiveRoutes) {
         m_catalogue->deleteArchiveRoute(archiveRoute.diskInstanceName, archiveRoute.storageClassName,
@@ -217,30 +211,6 @@ std::map<std::string, cta::common::dataStructures::AdminUser> cta_catalogue_Cata
         throw ex;
       }
       m[adminUser.name] = adminUser;
-    }
-    return m;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// adminHostListToMap
-//------------------------------------------------------------------------------
-std::map<std::string, cta::common::dataStructures::AdminHost> cta_catalogue_CatalogueTest::adminHostListToMap(
-  const std::list<cta::common::dataStructures::AdminHost> &listOfAdminHosts) {
-  using namespace cta;
-
-  try {
-    std::map<std::string, common::dataStructures::AdminHost> m;
-
-    for(auto &adminHost: listOfAdminHosts) {
-      if(m.end() != m.find(adminHost.name)) {
-        exception::Exception ex;
-        ex.getMessage() << "Admin host " << adminHost.name << " is a duplicate";
-        throw ex;
-      }
-      m[adminHost.name] = adminHost;
     }
     return m;
   } catch(exception::Exception &ex) {
@@ -395,133 +365,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_nonExtistentAdminUser
     exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createAdminHost) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  const std::string createAdminHostComment = "Create admin host";
-  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(createAdminHostComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
-  }
-}
-
-TEST_P(cta_catalogue_CatalogueTest, createAdminHost_same_twice) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  const std::string createAdminHostComment = "Create admin host";
-  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(createAdminHostComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
-  }
-
-  ASSERT_THROW(m_catalogue->createAdminHost(m_localAdmin, m_admin.host, "comment 2"), exception::UserError);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  const std::string createAdminHostComment = "Create admin host";
-  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(createAdminHostComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
-  }
-
-  m_catalogue->deleteAdminHost(m_admin.host);
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-}
-
-TEST_P(cta_catalogue_CatalogueTest, deleteAdminHost_non_existant) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-  ASSERT_THROW(m_catalogue->deleteAdminHost("non_exstant_admin_host"), exception::UserError);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, modifyAdminHostComment) {
-  using namespace cta;
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  const std::string createAdminHostComment = "Create admin host";
-  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(createAdminHostComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
-  }
-
-  const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyAdminHostComment(m_localAdmin, m_admin.host, modifiedComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(modifiedComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
-  }
-}
-
 TEST_P(cta_catalogue_CatalogueTest, isAdmin_false) {
   using namespace cta;
 
@@ -549,26 +392,6 @@ TEST_P(cta_catalogue_CatalogueTest, isAdmin_true) {
     ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
     ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
     ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
-  }
-
-  ASSERT_TRUE(m_catalogue->getAdminHosts().empty());
-
-  const std::string createAdminHostComment = "Create admin host";
-  m_catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = m_catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost h = hosts.front();
-
-    ASSERT_EQ(m_admin.host, h.name);
-    ASSERT_EQ(createAdminHostComment, h.comment);
-    ASSERT_EQ(m_localAdmin.username, h.creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.creationLog.host);
-    ASSERT_EQ(m_localAdmin.username, h.lastModificationLog.username);
-    ASSERT_EQ(m_localAdmin.host, h.lastModificationLog.host);
   }
 
   ASSERT_TRUE(m_catalogue->isAdmin(m_admin));
@@ -9168,7 +8991,6 @@ TEST_P(cta_catalogue_CatalogueTest, schemaTables) {
     tableNameToListPos[tableName] = listPos++;
   }
 
-  ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_HOST"));
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ADMIN_USER"));
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_FILE"));
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("ARCHIVE_ROUTE"));
@@ -9181,19 +9003,6 @@ TEST_P(cta_catalogue_CatalogueTest, schemaTables) {
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE"));
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_FILE"));
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_POOL"));
-
-  ASSERT_LT(tableNameToListPos.at("ADMIN_HOST")                , tableNameToListPos.at("ADMIN_USER"));
-  ASSERT_LT(tableNameToListPos.at("ADMIN_USER")                , tableNameToListPos.at("ARCHIVE_FILE"));
-  ASSERT_LT(tableNameToListPos.at("ARCHIVE_FILE")              , tableNameToListPos.at("ARCHIVE_ROUTE"));
-  ASSERT_LT(tableNameToListPos.at("ARCHIVE_ROUTE")             , tableNameToListPos.at("CTA_CATALOGUE"));
-  ASSERT_LT(tableNameToListPos.at("CTA_CATALOGUE")             , tableNameToListPos.at("LOGICAL_LIBRARY"));
-  ASSERT_LT(tableNameToListPos.at("LOGICAL_LIBRARY")           , tableNameToListPos.at("MOUNT_POLICY"));
-  ASSERT_LT(tableNameToListPos.at("MOUNT_POLICY")              , tableNameToListPos.at("REQUESTER_GROUP_MOUNT_RULE"));
-  ASSERT_LT(tableNameToListPos.at("REQUESTER_GROUP_MOUNT_RULE"), tableNameToListPos.at("REQUESTER_MOUNT_RULE"));
-  ASSERT_LT(tableNameToListPos.at("REQUESTER_MOUNT_RULE")      , tableNameToListPos.at("STORAGE_CLASS"));
-  ASSERT_LT(tableNameToListPos.at("STORAGE_CLASS")             , tableNameToListPos.at("TAPE"));
-  ASSERT_LT(tableNameToListPos.at("TAPE")                      , tableNameToListPos.at("TAPE_FILE"));
-  ASSERT_LT(tableNameToListPos.at("TAPE_FILE")                 , tableNameToListPos.at("TAPE_POOL"));
 }
 
 } // namespace unitTests

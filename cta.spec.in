@@ -270,11 +270,9 @@ CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
 %files -n cta-catalogueutils
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-user-create
-%attr(0755,root,root) %{_bindir}/cta-catalogue-admin-host-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
 %attr(0755,root,root) %{_bindir}/cta-database-poll
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-host-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz

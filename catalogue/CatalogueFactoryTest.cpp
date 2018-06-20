@@ -61,13 +61,9 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   ASSERT_TRUE(nullptr != catalogue.get());
 
   ASSERT_TRUE(catalogue->getAdminUsers().empty());
-  ASSERT_TRUE(catalogue->getAdminHosts().empty());
 
   const std::string createAdminUserComment = "Create admin user";
   catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
-
-  const std::string createAdminHostComment = "Create admin host";
-  catalogue->createAdminHost(m_localAdmin, m_admin.host, createAdminHostComment);
 
   {
     std::list<common::dataStructures::AdminUser> admins;
@@ -82,22 +78,6 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
     ASSERT_EQ(m_localAdmin.host, creationLog.host);
 
     const common::dataStructures::EntryLog lastModificationLog = admin.lastModificationLog;
-    ASSERT_EQ(creationLog, lastModificationLog);
-  }
-
-  {
-    std::list<common::dataStructures::AdminHost> hosts;
-    hosts = catalogue->getAdminHosts();
-    ASSERT_EQ(1, hosts.size());
-
-    const common::dataStructures::AdminHost host = hosts.front();
-    ASSERT_EQ(createAdminHostComment, host.comment);
-
-    const common::dataStructures::EntryLog creationLog = host.creationLog;
-    ASSERT_EQ(m_localAdmin.username, creationLog.username);
-    ASSERT_EQ(m_localAdmin.host, creationLog.host);
-
-    const common::dataStructures::EntryLog lastModificationLog = host.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 }

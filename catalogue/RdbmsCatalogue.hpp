@@ -240,11 +240,6 @@ public:
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
 
-  void createAdminHost(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override;
-  void deleteAdminHost(const std::string &hostName) override;
-  std::list<common::dataStructures::AdminHost> getAdminHosts() const override;
-  void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override;
-
   /**
    * Creates the specified storage class.
    *
@@ -601,15 +596,6 @@ protected:
   bool adminUserExists(rdbms::Conn &conn, const std::string adminUsername) const;
 
   /**
-   * Returns true if the specified admin host exists.
-   *
-   * @param conn The database connection.
-   * @param adminHost The name of the admin host.
-   * @return True if the admin host exists.
-   */
-  bool adminHostExists(rdbms::Conn &conn, const std::string adminHost) const;
-
-  /**
    * Returns true if the specified storage class exists.
    *
    * @param conn The database connection.
@@ -926,26 +912,6 @@ protected:
    * Creates the database schema.
    */
   void createDbSchema();
-
-  /**
-   * Returns true if the specified user name is listed in the ADMIN_USER table.
-   *
-   * @param conn The database connection.
-   * @param userName The name of the user to be search for in the ADMIN_USER
-   * table.
-   * @return true if the specified user name is listed in the ADMIN_USER table.
-   */
-  bool userIsAdmin(rdbms::Conn &conn, const std::string &userName) const;
-
-  /**
-   * Returns true if the specified host name is listed in the ADMIN_HOST table.
-   *
-   * @param conn The database connection.
-   * @param userName The name of the host to be search for in the ADMIN_HOST
-   * table.
-   * @return true if the specified host name is listed in the ADMIN_HOST table.
-   */
-  bool hostIsAdmin(rdbms::Conn &conn, const std::string &userName) const;
 
   /**
    * A fully qualified storage class, in other words the name of the disk

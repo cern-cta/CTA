@@ -121,22 +121,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyAdminUserComment(admin, username, comment);}, m_maxTriesToConnect);
   }
 
-  void createAdminHost(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createAdminHost(admin, hostName, comment);}, m_maxTriesToConnect);
-  }
-
-  void deleteAdminHost(const std::string &hostName) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteAdminHost(hostName);}, m_maxTriesToConnect);
-  }
-
-  std::list<common::dataStructures::AdminHost> getAdminHosts() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getAdminHosts();}, m_maxTriesToConnect);
-  }
-
-  void modifyAdminHostComment(const common::dataStructures::SecurityIdentity &admin, const std::string &hostName, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyAdminHostComment(admin, hostName, comment);}, m_maxTriesToConnect);
-  }
-
   void createStorageClass(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::StorageClass &storageClass) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createStorageClass(admin, storageClass);}, m_maxTriesToConnect);
   }
