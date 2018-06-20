@@ -29,115 +29,28 @@
 
 namespace cta { namespace objectstore {
 
-class EmptyClass {};
-class ArchiveQueue;
-class ArchiveJob;
-
 /**
  * Container traits definition. To be specialized class by class.
  * This is mostly a model.
  */
-template <class Container> 
+template <class C> 
 class ContainerTraits{
 public:
+  typedef C                                   Container;
   typedef std::string                         ContainerAddress;
   typedef std::string                         ElementAddress;
   typedef std::string                         ContainerIdentifyer;
-  typedef cta::objectstore::EmptyClass        Element;
+  class                                       Element {};
   typedef std::list<std::unique_ptr<Element>> ElementMemoryContainer;
   typedef std::list <Element *>               ElementPointerContainer;
-  typedef cta::objectstore::EmptyClass        ElementDescriptor;
+  class                                       ElementDescriptor {};
   typedef std::list<ElementDescriptor>        ElementDescriptorContainer;
 
+  static ElementAddress getElementAddress(const Element & e);
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef, const ContainerIdentifyer & cId,
     log::LogContext & lc);
   static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont);
   static ElementPointerContainer switchElementsOwnership(Container & cont, ElementMemoryContainer & elements, log::LogContext & lc);
-};
-
-template <>
-class ContainerTraits<ArchiveQueue> {
-public:
-  typedef ArchiveQueue                                           Container;
-  typedef std::string                                            ContainerAddress;
-  typedef std::string                                            ElementAddress;
-  typedef std::string                                            ContainerIdentifyer;
-  struct Element {
-    std::unique_ptr<ArchiveRequest> archiveRequest;
-    uint16_t copyNb;
-    cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::common::dataStructures::MountPolicy mountPolicy;
-  };
-  typedef std::list<Element>                                     ElementMemoryContainer;
-  struct ElementOpFailure {
-    Element * element;
-    std::exception_ptr failure;
-  };
-  typedef std::list<ElementOpFailure>                            ElementOpFailureContainer;
-  typedef ArchiveRequest::JobDump                                ElementDescriptor;
-  typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
-  
-  static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
-  
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & tapePool,
-    log::LogContext & lc) {
-    Helpers::getLockedAndFetchedQueue<ArchiveQueue>(cont, aqL, agRef, tapePool, QueueType::LiveJobs, lc);
-  }
-  
-  static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc) {
-    std::list<ArchiveQueue::JobToAdd> jobsToAdd;
-    for (auto & e: elemMemCont) {
-      ArchiveRequest::JobDump jd;
-      jd.copyNb = e.copyNb;
-      jd.tapePool = cont.getTapePool();
-      jd.owner = cont.getAddressIfSet();
-      ArchiveRequest & ar = *e.archiveRequest;
-      jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-          e.mountPolicy, time(NULL)});
-    }
-    cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
-  }
-  
-  static void removeReferencesAndCommit(Container & cont, ElementOpFailureContainer & elementsOpFailures) {
-    std::list<std::string> elementsToRemove;
-    for (auto & eof: elementsOpFailures) {
-      elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
-    }
-    cont.removeJobsAndCommit(elementsToRemove);
-  }
-  
-  static ElementOpFailureContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, Container & cont,
-      const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
-    std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-    for (auto & e: elemMemCont) {
-      ArchiveRequest & ar = *e.archiveRequest;
-      auto copyNb = e.copyNb;
-      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, cont.getAddressIfSet(), previousOwnerAddress));
-    }
-    auto u = updaters.begin();
-    auto e = elemMemCont.begin();
-    ElementOpFailureContainer ret;
-    while (e != elemMemCont.end()) {
-      try {
-        u->get()->wait();
-      } catch (...) {
-        ret.push_back(ElementOpFailure());
-        ret.back().element = &(*e);
-        ret.back().failure = std::current_exception();
-      }
-      u++;
-      e++;
-    }
-    return ret;
- }
- 
-  
-  class OwnershipSwitchFailure: public cta::exception::Exception {
-  public:
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
-    ElementOpFailureContainer failedElements;
-  };
 };
 
 template <class C>
