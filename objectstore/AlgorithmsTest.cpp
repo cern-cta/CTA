@@ -51,7 +51,7 @@ TEST(ObjectStore, Algorithms) {
   re.initialize();
   re.insert();
   // Create the agent register
-    EntryLogSerDeser el("user0",
+  EntryLogSerDeser el("user0",
       "unittesthost", time(NULL));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);

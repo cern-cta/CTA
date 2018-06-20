@@ -46,22 +46,22 @@ public:
   
   static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & tapePool,
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
     log::LogContext & lc) {
-    Helpers::getLockedAndFetchedQueue<ArchiveQueue>(cont, aqL, agRef, tapePool, QueueType::LiveJobs, lc);
+    Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
   }
   
   static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc) {
     std::list<ArchiveQueue::JobToAdd> jobsToAdd;
     for (auto & e: elemMemCont) {
-      ArchiveRequest::JobDump jd;
+      ElementDescriptor jd;
       jd.copyNb = e.copyNb;
       jd.tapePool = cont.getTapePool();
       jd.owner = cont.getAddressIfSet();
       ArchiveRequest & ar = *e.archiveRequest;
       jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-          e.mountPolicy, time(NULL)});
+          e.mountPolicy, time(nullptr)});
     }
     cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
   }
