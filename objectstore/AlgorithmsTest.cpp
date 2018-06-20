@@ -26,6 +26,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "catalogue/DummyCatalogue.hpp"
 #include "BackendVFS.hpp"
+#include "common/make_unique.hpp"
 
 #include <gtest/gtest.h>
 
@@ -62,12 +63,8 @@ TEST(ObjectStore, Algorithms) {
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
+    cta::common::dataStructures::MountPolicy mp;
     // This will be a copy number 1.
-    requests.emplace_back(std::make_tuple<std::unique_ptr<ArchiveRequest>, uint16_t> (
-      std::move(std::unique_ptr<ArchiveRequest>(new ArchiveRequest(arAddr, be))), 1));
-    auto & ar=*std::get<0>(requests.back());
-    auto copyNb = std::get<1>(requests.back());
-    ar.initialize();
     cta::common::dataStructures::ArchiveFile aFile;
     aFile.archiveFileID = 123456789L;
     aFile.diskFileId = "eos://diskFile";
@@ -79,9 +76,12 @@ TEST(ObjectStore, Algorithms) {
     aFile.diskInstance = "eoseos";
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue>::Element{cta::make_unique<ArchiveRequest>(arAddr, be), 1, aFile, mp});
+    auto & ar=*requests.back().archiveRequest;
+    auto copyNb = requests.back().copyNb;
+    ar.initialize();
     ar.setArchiveFile(aFile);
     ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1);
-    cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");

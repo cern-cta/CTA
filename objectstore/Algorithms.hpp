@@ -62,7 +62,12 @@ public:
   typedef std::string                                            ContainerAddress;
   typedef std::string                                            ElementAddress;
   typedef std::string                                            ContainerIdentifyer;
-  typedef std::tuple <std::unique_ptr<ArchiveRequest>, uint16_t> Element;
+  struct Element {
+    std::unique_ptr<ArchiveRequest> archiveRequest;
+    uint16_t copyNb;
+    cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::MountPolicy mountPolicy;
+  };
   typedef std::list<Element>                                     ElementMemoryContainer;
   struct ElementOpFailure {
     Element * element;
@@ -72,7 +77,7 @@ public:
   typedef ArchiveRequest::JobDump                                ElementDescriptor;
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
   
-  static ElementAddress getElementAddress(const Element & e) { return std::get<0>(e)->getAddressIfSet(); }
+  static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & tapePool,
     log::LogContext & lc) {
@@ -84,12 +89,12 @@ public:
     std::list<ArchiveQueue::JobToAdd> jobsToAdd;
     for (auto & e: elemMemCont) {
       ArchiveRequest::JobDump jd;
-      jd.copyNb = std::get<1>(e);
+      jd.copyNb = e.copyNb;
       jd.tapePool = cont.getTapePool();
       jd.owner = cont.getAddressIfSet();
-      ArchiveRequest & ar = *std::get<0>(e);
-      jobsToAdd.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, ar.getArchiveFile().fileSize,
-          ar.getMountPolicy(), time(NULL)});
+      ArchiveRequest & ar = *e.archiveRequest;
+      jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
+          e.mountPolicy, time(NULL)});
     }
     cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
   }
@@ -97,7 +102,7 @@ public:
   static void removeReferencesAndCommit(Container & cont, ElementOpFailureContainer & elementsOpFailures) {
     std::list<std::string> elementsToRemove;
     for (auto & eof: elementsOpFailures) {
-      elementsToRemove.emplace_back(std::get<0>(*eof.element)->getAddressIfSet());
+      elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
     }
     cont.removeJobsAndCommit(elementsToRemove);
   }
@@ -106,8 +111,8 @@ public:
       const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
     std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
     for (auto & e: elemMemCont) {
-      ArchiveRequest & ar = *std::get<0>(e);
-      auto copyNb = std::get<1>(e);
+      ArchiveRequest & ar = *e.archiveRequest;
+      auto copyNb = e.copyNb;
       updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, cont.getAddressIfSet(), previousOwnerAddress));
     }
     auto u = updaters.begin();
@@ -141,6 +146,7 @@ public:
   ContainerAlgorithms(Backend & backend, AgentReference & agentReference):
     m_backend(backend), m_agentReference(agentReference) {}
     
+  typedef typename ContainerTraits<C>::Element Element;
   typedef typename ContainerTraits<C>::ElementMemoryContainer ElementMemoryContainer;
     
   /** Reference objects in the container and then switch their ownership them. Objects 
