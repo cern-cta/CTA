@@ -538,12 +538,10 @@ public:
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
 
   /**
-   * Returns true if the specified user running the CTA command-line tool on
-   * the specified host has administrator privileges.
+   * Returns true if the specified user has administrator privileges.
    *
    * @param admin The administrator.
-   * @return True if the specified user running the CTA command-line tool on
-   * the specified host has administrator privileges.
+   * @return True if the specified user has administrator privileges.
    */
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
 
