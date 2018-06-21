@@ -1144,6 +1144,24 @@ protected:
   void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
 
   /**
+   * Returns a cached version of the result of calling isAdmin().
+   *
+   * @param admin The administrator.
+   * @return True if the specified user has administrator privileges.
+   */
+  bool isCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const;
+
+  /**
+   * Returns true if the specified user has administrator privileges.
+   *
+   * Please note that this method always queries the Catalogue database.
+   *
+   * @param admin The administrator.
+   * @return True if the specified user has administrator privileges.
+   */
+  bool isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const;
+
+  /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
@@ -1166,6 +1184,11 @@ protected:
    * createArchiveRoute() method.
    */
   mutable TimeBasedCache<StorageClass, uint64_t> m_expectedNbArchiveRoutesCache;
+
+  /**
+   * Cached version of isAdmin() results.
+   */
+  mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
 
 }; // class RdbmsCatalogue
 

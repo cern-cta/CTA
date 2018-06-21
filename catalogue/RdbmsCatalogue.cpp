@@ -54,7 +54,8 @@ RdbmsCatalogue::RdbmsCatalogue(
   m_tapeCopyToPoolCache(10),
   m_groupMountPolicyCache(10),
   m_userMountPolicyCache(10),
-  m_expectedNbArchiveRoutesCache(10) {
+  m_expectedNbArchiveRoutesCache(10),
+  m_isAdminCache(10) {
 }
 
 //------------------------------------------------------------------------------
@@ -4378,6 +4379,38 @@ RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
 // isAdmin
 //------------------------------------------------------------------------------
 bool RdbmsCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
+  try {
+    return isCachedAdmin(admin);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// isCachedAdmin
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentity &admin)
+  const {
+  try {
+    auto getNonCachedValue = [&] {
+      return isNonCachedAdmin(admin);
+    };
+    return m_isAdminCache.getCachedValue(admin, getNonCachedValue);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// isNonCachedAdmin
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const {
   try {
     const char *const sql =
       "SELECT "
