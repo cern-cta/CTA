@@ -970,6 +970,8 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
+   const int DRIVE_TIMEOUT = 30;
+
    std::stringstream cmdlineOutput;
 
    // Dump all drives unless we specified a drive
@@ -997,6 +999,11 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
       {
          if(!driveRegex.has_match(ds.driveName)) continue;
          driveFound = true;
+
+         auto timeSinceLastUpdate_s = time(nullptr) - ds.lastUpdateTime;
+         if(timeSinceLastUpdate_s > DRIVE_TIMEOUT) {
+            ds.driveStatus = cta::common::dataStructures::DriveStatus::Unknown;
+         }
 
          std::vector<std::string> currentRow;
          currentRow.push_back(ds.logicalLibrary);
@@ -1051,7 +1058,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
             default:
                currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
          }
-         currentRow.push_back(std::to_string(static_cast<unsigned long long>((time(nullptr)-ds.lastUpdateTime))));
+         currentRow.push_back(std::to_string(timeSinceLastUpdate_s));
          responseTable.push_back(currentRow);
       }
 
