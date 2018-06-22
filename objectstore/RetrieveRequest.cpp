@@ -449,7 +449,7 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
         }
         // We don't need to deserialize the payload to update owner...
         if (oh.owner() != previousOwner)
-          throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): Request not owned.");
+          throw Backend::WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): Request not owned.");
         oh.set_owner(owner);
         // ... but we still need to extract information
         serializers::RetrieveRequest payload;
@@ -486,7 +486,7 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
           }
         }
         // If we do not find the copy, return not owned as well...
-        throw WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
+        throw Backend::WrongPreviousOwner("In RetrieveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
       };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
   return ret.release();

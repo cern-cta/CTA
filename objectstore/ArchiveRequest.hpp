@@ -94,7 +94,6 @@ public:
     TimingsReport m_timingReport;
   };
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
 
   // An asynchronous job updating class for success.

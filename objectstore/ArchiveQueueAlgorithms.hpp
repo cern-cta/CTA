@@ -74,13 +74,17 @@ public:
     cont.removeJobsAndCommit(elementsToRemove);
   }
   
-  static ElementOpFailureContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, Container & cont,
+  void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList) {
+    cont.removeJobsAndCommit(elementAddressList);
+  }
+  
+  static ElementOpFailureContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
       const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
     std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
     for (auto & e: elemMemCont) {
       ArchiveRequest & ar = *e.archiveRequest;
       auto copyNb = e.copyNb;
-      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, cont.getAddressIfSet(), previousOwnerAddress));
+      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
     }
     auto u = updaters.begin();
     auto e = elemMemCont.begin();
@@ -104,6 +108,33 @@ public:
     OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
     ElementOpFailureContainer failedElements;
   };
+  
+  class PoppedElementsSummary;
+  class PopCriteria {
+  public:
+    PopCriteria();
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+  };
+  class PoppedElementsList {
+  public:
+    PoppedElementsList();
+    void insertBack(PoppedElementsList &&);
+  };
+  class PoppedElementsSummary {
+  public:
+    PoppedElementsSummary();
+    bool operator< (const PopCriteria &);
+    PoppedElementsSummary& operator+= (const PoppedElementsSummary &);
+  };
+  class PoppedElementsBatch {
+  public:
+    PoppedElementsBatch();
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+  };
+  
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
+
 };
 
 }} // namespace cta::objectstore

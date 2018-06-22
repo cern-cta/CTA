@@ -1846,7 +1846,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         } catch (cta::exception::Exception & e) {
           std::string debugType=typeid(e).name();
           if (typeid(e) == typeid(Backend::NoSuchObject) ||
-              typeid(e) == typeid(objectstore::ArchiveRequest::WrongPreviousOwner)) {
+              typeid(e) == typeid(Backend::WrongPreviousOwner)) {
             // The object was not present or not owned, so we skip it. It should be removed from
             // the queue.
             jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
@@ -2253,7 +2253,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
         } catch (cta::exception::Exception & e) {
           std::string debugType=typeid(e).name();
           if (typeid(e) == typeid(Backend::NoSuchObject) ||
-              typeid(e) == typeid(objectstore::RetrieveRequest::WrongPreviousOwner)) {
+              typeid(e) == typeid(Backend::WrongPreviousOwner)) {
             // The object was not present or not owned, so we skip it. It should be removed from
             // the queue.
             jobsToDequeue.emplace_back((*j)->m_retrieveRequest.getAddressIfSet());

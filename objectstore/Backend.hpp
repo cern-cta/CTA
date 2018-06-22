@@ -104,6 +104,7 @@ public:
   
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchObject);
+  CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotLock);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotFetch);
   CTA_GENERATE_EXCEPTION_CLASS(CouldNotUpdateValue);

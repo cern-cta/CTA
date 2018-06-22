@@ -634,7 +634,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
            // Update did not go through. It could be benign
             std::string debugType=typeid(e).name();
             if (typeid(e) == typeid(Backend::NoSuchObject) ||
-                typeid(e) == typeid(objectstore::ArchiveRequest::WrongPreviousOwner)) {
+                typeid(e) == typeid(Backend::WrongPreviousOwner)) {
               // The object was not present or not owned during update, so we skip it.
               // This is nevertheless unexpected (from previous fetch, so this is an error).
               log::ScopedParamContainer params(lc);
