@@ -51,6 +51,17 @@ bool SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
 }
 
 //------------------------------------------------------------------------------
+// operator<
+//------------------------------------------------------------------------------
+bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
+  if(username == rhs.username) {
+    return host < rhs.host;
+  } else {
+    return username < rhs.username;
+  }
+}
+
+//------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {

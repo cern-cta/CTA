@@ -41,6 +41,8 @@ struct SecurityIdentity {
 
   bool operator!=(const SecurityIdentity &rhs) const;
 
+  bool operator<(const SecurityIdentity &rhs) const;
+
   std::string username;
   std::string host;
 
