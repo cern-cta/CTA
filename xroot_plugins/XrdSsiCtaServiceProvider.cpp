@@ -1,4 +1,4 @@
-/*!
+/*
  * @project        The CERN Tape Archive (CTA)
  * @brief          XRootD Service Provider class implementation
  * @copyright      Copyright 2017 CERN
@@ -32,7 +32,7 @@
 #include "XrdSsiPbConfig.hpp"
 #include "XrdSsiPbService.hpp"
 
-/*!
+/*
  * Global pointer to the Service Provider object.
  *
  * This must be defined at library load time (i.e. it is a file-level global static symbol). When the
@@ -41,13 +41,30 @@
  */
 XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
+bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn,
+                                    const std::string parms, int argc, char **argv)
+{
+   try {
+      ExceptionThrowingInit(logP, clsP, cfgFn, parms, argc, argv);
+      return true;
+   } catch(XrdSsiPb::XrdSsiException &ex) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): XrdSsiPb::XrdSsiException ", ex.what());
+   } catch(cta::exception::Exception &ex) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): cta::exception::Exception ", ex.what());
+   } catch(std::exception &ex) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): std::exception ", ex.what());
+   } catch(...) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): unknown exception");
+   }
 
+   // XRootD has a bug where if we return false here, it triggers a SIGABRT. Until this is fixed, exit(1) as a workaround.
+   exit(1);
 
-/*!
- * Initialise the Service Provider
- */
+   return false;
+}
 
-bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn, const std::string parms, int argc, char **argv)
+void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string &cfgFn,
+                                                     const std::string &parms, int argc, char **argv)
 {
    using namespace XrdSsiPb;
    using namespace cta;
@@ -128,15 +145,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
 
    // All done
    log(log::INFO, std::string("cta-frontend started"), params);
-
-   return true;
 }
-
-
-
-/*!
- * Instantiate a Service object
- */
 
 XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
 {
@@ -146,22 +155,6 @@ XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const 
 
    return ptr;
 }
-
-
-
-/*!
- * Query whether a resource exists on a server.
- *
- * @param[in]    rName      The resource name
- * @param[in]    contact    Used by client-initiated queries for a resource at a particular endpoint.
- *                          It is set to NULL for server-initiated queries.
- *
- * @retval    XrdSsiProvider::notPresent    The resource does not exist
- * @retval    XrdSsiProvider::isPresent     The resource exists
- * @retval    XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful
- *                                          only in clustered environments where the resource may be
- *                                          immediately available on some other node.)
- */
 
 XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName, const char *contact)
 {

@@ -41,7 +41,6 @@ extern XrdSsiProvider *XrdSsiProviderServer;
 /*!
  * Instantiates a Service to process client requests.
  */
-
 class XrdSsiCtaServiceProvider : public XrdSsiProvider
 {
 public:
@@ -62,12 +61,26 @@ public:
              const std::string parms, int argc, char **argv) override;
 
    /*!
+    * Instantiate a Service object.
+    *
     * Called exactly once after initialisation to obtain an instance of an XrdSsiService object
     */
    XrdSsiService *GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold=256) override;
 
    /*!
-    * Determine resource availability. Can be called any time the client asks for the resource status.
+    * Query whether a resource exists on a server.
+    *
+    * Determines resource availability. Can be called any time the client asks for the resource status.
+    *
+    * @param[in]    rName      The resource name
+    * @param[in]    contact    Used by client-initiated queries for a resource at a particular endpoint.
+    *                          It is set to NULL for server-initiated queries.
+    *
+    * @retval    XrdSsiProvider::notPresent    The resource does not exist
+    * @retval    XrdSsiProvider::isPresent     The resource exists
+    * @retval    XrdSsiProvider::isPending     The resource exists but is not immediately available. (Useful
+    *                                          only in clustered environments where the resource may be
+    *                                          immediately available on some other node.)
     */
    XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact=0) override;
 
@@ -92,6 +105,12 @@ public:
    cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
 
 private:
+   /*!
+    * Version of Init() that throws exceptions in case of problems
+    */
+   void ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string &cfgFn,
+                              const std::string &parms, int argc, char **argv);
+
    /*!
     * Deleter for instances of the AgentHeartbeatThread class.
     *
