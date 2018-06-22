@@ -138,3 +138,4 @@ set_target_properties (cta-tape-acs-querydrive PROPERTIES
   COMPILE_DEFINITIONS LINUX)
 install (TARGETS cta-tape-acs-querydrive
   DESTINATION /usr/bin)
+install (FILES cta-tape-acs-querydrive.1cta DESTINATION /usr/share/man/man1)
