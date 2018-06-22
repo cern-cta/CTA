@@ -83,10 +83,6 @@ private:
    admincmd_t processAdmin_Ch;
    admincmd_t processAdmin_Rm;
    admincmd_t processAdmin_Ls;
-   admincmd_t processAdminHost_Add;
-   admincmd_t processAdminHost_Ch;
-   admincmd_t processAdminHost_Rm;
-   admincmd_t processAdminHost_Ls;
    admincmd_t processArchiveRoute_Add;
    admincmd_t processArchiveRoute_Ch;
    admincmd_t processArchiveRoute_Rm;

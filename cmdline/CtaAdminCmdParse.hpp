@@ -181,8 +181,6 @@ private:
 const cmdLookup_t cmdLookup = {
    { "admin",                   AdminCmd::CMD_ADMIN },
    { "ad",                      AdminCmd::CMD_ADMIN },
-   { "adminhost",               AdminCmd::CMD_ADMINHOST },
-   { "ah",                      AdminCmd::CMD_ADMINHOST },
    { "archivefile",             AdminCmd::CMD_ARCHIVEFILE },
    { "af",                      AdminCmd::CMD_ARCHIVEFILE },
    { "archiveroute",            AdminCmd::CMD_ARCHIVEROUTE },
@@ -326,7 +324,6 @@ const std::map<std::string, OptionStrList::Key> strListOptions = {
  */
 const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ADMIN,                { "admin",                "ad",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_ADMINHOST,            { "adminhost",            "ah",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_ARCHIVEFILE,          { "archivefile",          "af",  { "ls" } }},
    { AdminCmd::CMD_ARCHIVEROUTE,         { "archiveroute",         "ar",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DRIVE,                { "drive",                "dr",  { "up", "down", "ls", "rm" },
@@ -431,10 +428,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_CH    }, { opt_username, opt_comment }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_RM    }, { opt_username }},
    {{ AdminCmd::CMD_ADMIN,                AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
-   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_ADD   }, { opt_hostname_alias, opt_comment }},
-   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_CH    }, { opt_hostname_alias, opt_comment }},
-   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_RM    }, { opt_hostname_alias }},
-   {{ AdminCmd::CMD_ADMINHOST,            AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_ARCHIVEFILE,          AdminCmd::SUBCMD_LS    },
       { opt_header.optional(), opt_archivefileid.optional(), opt_diskid.optional(), opt_copynb.optional(),
         opt_vid.optional(), opt_tapepool.optional(), opt_owner.optional(), opt_group.optional(),

@@ -28,7 +28,6 @@ include_directories (${XROOTD_INCLUDE_DIR})
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
-  dataStructures/AdminHost.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
   dataStructures/ArchiveFileQueueCriteria.cpp
@@ -69,7 +68,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
-  admin/AdminHost.cpp
   admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
   checksum/Checksum.cpp

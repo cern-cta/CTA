@@ -137,7 +137,6 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
       "REQUESTER_MOUNT_RULE",
       "REQUESTER_GROUP_MOUNT_RULE",
       "ADMIN_USER",
-      "ADMIN_HOST",
       "STORAGE_CLASS",
       "STORAGE_CLASS_ID",
       "TAPE_POOL",

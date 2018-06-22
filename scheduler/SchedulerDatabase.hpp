@@ -19,7 +19,6 @@
 #pragma once
 
 #include "common/admin/AdminUser.hpp"
-#include "common/admin/AdminHost.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/DriveState.hpp"
@@ -53,7 +52,6 @@ namespace cta {
 // Forward declarations for opaque references.
 namespace common {
 namespace admin {
-  class AdminHost;
   class AdminUser;
 } // cta::common::admin
 namespace archiveRoute {

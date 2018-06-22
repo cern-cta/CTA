@@ -111,18 +111,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
                processAdmin_Ls(request.admincmd(), response);
                break;
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_ADD):
-               processAdminHost_Add(request.admincmd(), response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_CH):
-               processAdminHost_Ch(request.admincmd(), response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_RM):
-               processAdminHost_Rm(request.admincmd(), response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMINHOST, AdminCmd::SUBCMD_LS):
-               processAdminHost_Ls(request.admincmd(), response);
-               break;
             case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_LS):
                processArchiveFile_Ls(request.admincmd(), response, stream);
                break;
@@ -720,83 +708,6 @@ void RequestMessage::processAdmin_Ls(const cta::admin::AdminCmd &admincmd, cta::
          "user","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
-      for(auto it = list.cbegin(); it != list.cend(); it++) {
-         std::vector<std::string> currentRow;
-         currentRow.push_back(it->name);
-         addLogInfoToResponseRow(currentRow, it->creationLog, it->lastModificationLog);
-         currentRow.push_back(it->comment);
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processAdminHost_Add(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   auto &hostname = getRequired(OptionString::HOSTNAME);
-   auto &comment  = getRequired(OptionString::COMMENT);
-
-   // Validate that the hostname is a valid IPv4 or IPv6 address, or a Fully-Qualified Domain Name
-   if(!utils::isValidIPAddress(hostname)) {
-     utils::assertIsFQDN(hostname);
-   }
-
-   m_catalogue.createAdminHost(m_cliIdentity, hostname, comment);
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processAdminHost_Ch(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   auto &hostname = getRequired(OptionString::HOSTNAME);
-   auto &comment  = getRequired(OptionString::COMMENT);
-
-   m_catalogue.modifyAdminHostComment(m_cliIdentity, hostname, comment);
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processAdminHost_Rm(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   auto &hostname = getRequired(OptionString::HOSTNAME);
-
-   m_catalogue.deleteAdminHost(hostname);
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-
-
-void RequestMessage::processAdminHost_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   std::stringstream cmdlineOutput;
-
-   std::list<cta::common::dataStructures::AdminHost> list= m_catalogue.getAdminHosts();
-
-   if(!list.empty())
-   {
-      std::vector<std::vector<std::string>> responseTable;
-      std::vector<std::string> header = {
-         "hostname","c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->name);
