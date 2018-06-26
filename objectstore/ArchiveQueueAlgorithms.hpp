@@ -29,71 +29,111 @@ public:
   typedef std::string                                            ContainerAddress;
   typedef std::string                                            ElementAddress;
   typedef std::string                                            ContainerIdentifyer;
-  struct Element {
+  struct InsertedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::MountPolicy mountPolicy;
+    typedef std::list<InsertedElement> list;
   };
-  typedef std::list<Element>                                     ElementMemoryContainer;
-  struct ElementOpFailure {
+  
+  template <class Element>
+  struct OpFailure {
     Element * element;
     std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
   };
-  typedef std::list<ElementOpFailure>                            ElementOpFailureContainer;
+  
   typedef ArchiveRequest::JobDump                                ElementDescriptor;
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
   
+  template <class Element>
   static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
-    log::LogContext & lc) {
-    Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
-  }
+    log::LogContext & lc);
   
-  static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc) {
-    std::list<ArchiveQueue::JobToAdd> jobsToAdd;
-    for (auto & e: elemMemCont) {
-      ElementDescriptor jd;
-      jd.copyNb = e.copyNb;
-      jd.tapePool = cont.getTapePool();
-      jd.owner = cont.getAddressIfSet();
-      ArchiveRequest & ar = *e.archiveRequest;
-      jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-          e.mountPolicy, time(nullptr)});
+  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
+    log::LogContext & lc);
+  
+  static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
+  
+  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures);
+  
+  static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
+  
+  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+  
+  class OwnershipSwitchFailure: public cta::exception::Exception {
+  public:
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    OpFailure<InsertedElement>::list failedElements;
+  };
+  
+  class PoppedElement {
+  public:
+    std::unique_ptr<ArchiveRequest> archiveRequest;
+    uint16_t copyNb;
+    uint64_t bytes;
+  };
+  class PoppedElementsSummary;
+  class PopCriteria {
+  public:
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+    uint64_t bytes;
+    uint64_t files;
+  };
+  class PoppedElementsList: public std::list<PoppedElement> {
+  public:
+    void insertBack(PoppedElementsList &&);
+    void insertBack(PoppedElement &&);
+  };
+  
+  class PoppedElementsSummary {
+  public:
+    uint64_t bytes;
+    uint64_t files;
+    bool operator< (const PopCriteria & pc) {
+      return bytes < pc.bytes && files < pc.files;
     }
-    cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
-  }
-  
-  static void removeReferencesAndCommit(Container & cont, ElementOpFailureContainer & elementsOpFailures) {
-    std::list<std::string> elementsToRemove;
-    for (auto & eof: elementsOpFailures) {
-      elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
+    PoppedElementsSummary& operator+= (const PoppedElementsSummary & other) {
+      bytes += other.bytes;
+      files += other.files;
+      return *this;
     }
-    cont.removeJobsAndCommit(elementsToRemove);
-  }
+  };
+  class PoppedElementsBatch {
+  public:
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+  };
   
-  void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList) {
-    cont.removeJobsAndCommit(elementAddressList);
-  }
+  typedef std::set<ElementAddress> ElementsToSkipSet;
   
-  static ElementOpFailureContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
+  
+  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
+      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
+
+  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress,
       const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
     std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-    for (auto & e: elemMemCont) {
+    for (auto & e: popedElementBatch.elements) {
       ArchiveRequest & ar = *e.archiveRequest;
       auto copyNb = e.copyNb;
       updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
     }
     auto u = updaters.begin();
-    auto e = elemMemCont.begin();
-    ElementOpFailureContainer ret;
-    while (e != elemMemCont.end()) {
+    auto e = popedElementBatch.elements.begin();
+    OpFailure<PoppedElement>::list ret;
+    while (e != popedElementBatch.elements.end()) {
       try {
         u->get()->wait();
       } catch (...) {
-        ret.push_back(ElementOpFailure());
+        ret.push_back(OpFailure<PoppedElement>());
         ret.back().element = &(*e);
         ret.back().failure = std::current_exception();
       }
@@ -101,40 +141,8 @@ public:
       e++;
     }
     return ret;
- }
-   
-  class OwnershipSwitchFailure: public cta::exception::Exception {
-  public:
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
-    ElementOpFailureContainer failedElements;
-  };
+  }
   
-  class PoppedElementsSummary;
-  class PopCriteria {
-  public:
-    PopCriteria();
-    PopCriteria& operator-= (const PoppedElementsSummary &);
-  };
-  class PoppedElementsList {
-  public:
-    PoppedElementsList();
-    void insertBack(PoppedElementsList &&);
-  };
-  class PoppedElementsSummary {
-  public:
-    PoppedElementsSummary();
-    bool operator< (const PopCriteria &);
-    PoppedElementsSummary& operator+= (const PoppedElementsSummary &);
-  };
-  class PoppedElementsBatch {
-  public:
-    PoppedElementsBatch();
-    PoppedElementsList elements;
-    PoppedElementsSummary summary;
-  };
-  
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
-
 };
 
 }} // namespace cta::objectstore

@@ -32,6 +32,9 @@ namespace cta { namespace objectstore {
 class AgentReference;
 class ScopedLock;
 class ScopedExclusiveLock;
+template <class C> class ContainerTraits;
+class ArchiveQueue;
+class RetrieveQueue;
 
 class ObjectOpsBase {
   friend class ScopedLock;
@@ -39,6 +42,8 @@ class ObjectOpsBase {
   friend class ScopedExclusiveLock;
   friend class GenericObject;
   friend class Helpers;
+  friend ContainerTraits<ArchiveQueue>;
+  friend ContainerTraits<RetrieveQueue>;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),

@@ -29,23 +29,26 @@ public:
   typedef std::string                                            ContainerAddress;
   typedef std::string                                            ElementAddress;
   typedef std::string                                            ContainerIdentifyer;
-  struct Element {
+  struct InsertedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
     uint16_t copyNb;
     uint64_t fSeq;
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
     serializers::RetrieveJobStatus status;
+    typedef std::list<InsertedElement> list;
   };
-  typedef std::list<Element>                                     ElementMemoryContainer;
-  struct ElementOpFailure {
+  
+  template <class Element>
+  struct OpFailure {
     Element * element;
     std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
   };
-  typedef std::list<ElementOpFailure>                            ElementOpFailureContainer;
   typedef RetrieveRequest::JobDump                               ElementDescriptor;
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
   
+  template <class Element>
   static ElementAddress getElementAddress(const Element & e) { return e.retrieveRequest->getAddressIfSet(); }
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
@@ -53,7 +56,7 @@ public:
     Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
   }
   
-  static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont,
+  static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc) {
     std::list<RetrieveQueue::JobToAdd> jobsToAdd;
     for (auto & e: elemMemCont) {
@@ -63,7 +66,7 @@ public:
     cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
   }
   
-  static void removeReferencesAndCommit(Container & cont, ElementOpFailureContainer & elementsOpFailures) {
+  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures) {
     std::list<std::string> elementsToRemove;
     for (auto & eof: elementsOpFailures) {
       elementsToRemove.emplace_back(eof.element->retrieveRequest->getAddressIfSet());
@@ -71,7 +74,7 @@ public:
     cont.removeJobsAndCommit(elementsToRemove);
   }
   
-  static ElementOpFailureContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
+  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont, const ContainerAddress & contAddress,
       const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
     std::list<std::unique_ptr<RetrieveRequest::AsyncOwnerUpdater>> updaters;
     for (auto & e: elemMemCont) {
@@ -81,12 +84,12 @@ public:
     }
     auto u = updaters.begin();
     auto e = elemMemCont.begin();
-    ElementOpFailureContainer ret;
+    OpFailure<InsertedElement>::list ret;
     while (e != elemMemCont.end()) {
       try {
         u->get()->wait();
       } catch (...) {
-        ret.push_back(ElementOpFailure());
+        ret.push_back(OpFailure<InsertedElement>());
         ret.back().element = &(*e);
         ret.back().failure = std::current_exception();
       }
@@ -99,7 +102,7 @@ public:
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
     OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
-    ElementOpFailureContainer failedElements;
+    OpFailure<InsertedElement>::list failedElements;
   };
   class PoppedElementsSummary;
   class PopCriteria {

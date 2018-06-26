@@ -42,16 +42,20 @@ public:
   typedef std::string                         ContainerAddress;
   typedef std::string                         ElementAddress;
   typedef std::string                         ContainerIdentifyer;
-  class                                       Element {};
-  typedef std::list<std::unique_ptr<Element>> ElementMemoryContainer;
-  typedef std::list <Element *>               ElementPointerContainer;
+  struct InsertedElement {
+    typedef std::list<InsertedElement> list;
+  };
+  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
+  typedef std::list <InsertedElement *>       ElementPointerContainer;
   class                                       ElementDescriptor {};
   typedef std::list<ElementDescriptor>        ElementDescriptorContainer;
-  struct ElementOpFailure {
+  
+  template <class Element>
+  struct OpFailure {
     Element * element;
     std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
   };
-  typedef std::list<ElementOpFailure>         ElementOpFailureContainer;
   
   class PoppedElementsSummary;
   class PopCriteria {
@@ -76,19 +80,26 @@ public:
     PoppedElementsList elements;
     PoppedElementsSummary summary;
   };
+  typedef std::set<ElementAddress> ElementsToSkipSet;
   
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
-
+  
+  template <class Element>
   static ElementAddress getElementAddress(const Element & e);
+  
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef, const ContainerIdentifyer & cId,
     log::LogContext & lc);
   static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
     log::LogContext & lc);
   static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont);
-  void removeReferencesAndCommit(Container & cont, ElementOpFailureContainer & elementsOpFailures);
+  void removeReferencesAndCommit(Container & cont, typename OpFailure<InsertedElement>::list & elementsOpFailures);
   void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
       const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+  template <class Element>
+  static PoppedElementsSummary getElementSummary(const Element &);
+  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
+      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
 };
 
 template <class C>
@@ -97,15 +108,14 @@ public:
   ContainerAlgorithms(Backend & backend, AgentReference & agentReference):
     m_backend(backend), m_agentReference(agentReference) {}
     
-  typedef typename ContainerTraits<C>::Element Element;
-  typedef typename ContainerTraits<C>::ElementMemoryContainer ElementMemoryContainer;
+  typedef typename ContainerTraits<C>::InsertedElement InsertedElement;
     
   /** Reference objects in the container and then switch their ownership them. Objects 
    * are provided existing and owned by algorithm's agent. Returns a list of 
    * @returns list of elements for which the addition or ownership switch failed.
    * @throws */
   void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
-      typename ContainerTraits<C>::ElementMemoryContainer & elements, log::LogContext & lc) {
+      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
     ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
@@ -143,52 +153,88 @@ public:
     }
   }
   
-  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
       typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {
     // Prepare the return value
     typename ContainerTraits<C>::PoppedElementsBatch ret;
     typename ContainerTraits<C>::PopCriteria unfulfilledCriteria = popCriteria;
     size_t iterationCount=0;
+    typename ContainerTraits<C>::ElementsToSkipSet elementsToSkip;
     while (ret.summary < popCriteria) {
       // Get a container if it exists
       C cont(m_backend);
       iterationCount++;
+      ScopedExclusiveLock contLock;
       try {
-        typename ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contId, lc);
+        ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
       } catch (typename ContainerTraits<C>::NoSuchContainer &) {
         // We could not find a container to pop from: return what we have.
         return ret;
       }
       // We have a container. Get candidate element list from it.
-      typename ContainerTraits<C>::PoppingElementsCandidateList candidateElements = 
-          ContainerTraits<C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, lc);
+      typename ContainerTraits<C>::PoppedElementsBatch candidateElements = 
+          ContainerTraits<C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, elementsToSkip, lc);
       // Reference the candidates to our agent
       std::list<typename ContainerTraits<C>::ElementAddress> candidateElementsAddresses;
-      for (auto & e: candidateElements) {
+      for (auto & e: candidateElements.elements) {
         candidateElementsAddresses.emplace_back(ContainerTraits<C>::getElementAddress(e));
       }
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
       auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(candidateElements,
-          m_agentReference.getAgentAddress(), cont.getAddressIfSet());
+          m_agentReference.getAgentAddress(), cont.getAddressIfSet(), lc);
       if (failedOwnershipSwitchElements.empty()) {
-        // This is the easy (and most common case). Everything went through fine.
-        ContainerTraits<C>::removeReferencesAndCommit(candidateElementsAddresses);
+        // This is the easy case (and most common case). Everything went through fine.
+        ContainerTraits<C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
+        contLock.release();
+        // All jobs are validated
+        ret.summary += candidateElements.summary;
+        unfulfilledCriteria -= candidateElements.summary;
+        ret.elements.insertBack(std::move(candidateElements.elements));
       } else {
         // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
         // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
         // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
         std::set<typename ContainerTraits<C>::ElementAddress> elementsNotToDereferenceFromContainer;
+        std::set<typename ContainerTraits<C>::ElementAddress> elementsNotToReport;
+        std::list<typename ContainerTraits<C>::ElementAddress> elementsToDereferenceFromAgent;
         for (auto &e: failedOwnershipSwitchElements) {
           try {
             throw e.failure;
-          } catch (Backend::NoSuchObject &) {}
-          catch (Backend::WrongPreviousOwner&) {}
+          } catch (Backend::NoSuchObject &) {
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<C>::getElementAddress(*e.element));
+          } catch (Backend::WrongPreviousOwner &) {
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<C>::getElementAddress(*e.element));
+          } catch (Backend::CouldNotUnlock&) {
+            // Do nothing, this element was indeed OK.
+          }
           catch (...) {
             // This is a different error, so we will leave the reference to the element in the container
             elementsNotToDereferenceFromContainer.insert(ContainerTraits<C>::getElementAddress(*e.element));
+            elementsToDereferenceFromAgent.push_back(ContainerTraits<C>::getElementAddress(*e.element));
+            elementsNotToReport.insert(ContainerTraits<C>::getElementAddress(*e.element));
+            elementsToSkip.insert(ContainerTraits<C>::getElementAddress(*e.element));
           }
-        }   
+        }
+        // We are done with the sorting. Apply the decisions...
+        std::list<typename ContainerTraits<C>::ElementAddress> elementsToDereferenceFromContainer;
+        for (auto & e: candidateElements.elements) {
+          if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<C>::getElementAddress(e))) {
+            elementsToDereferenceFromContainer.push_back(ContainerTraits<C>::getElementAddress(e));
+          }
+        }
+        ContainerTraits<C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
+        contLock.release();
+        m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
+        for (auto & e: candidateElements.elements) {
+          if (!elementsNotToReport.count(ContainerTraits<C>::getElementAddress(e))) {
+            ret.summary += ContainerTraits<C>::getElementSummary(e);
+            unfulfilledCriteria -= ContainerTraits<C>::getElementSummary(e);
+            ret.elements.insertBack(std::move(e));
+          }
+        }
       }
     }
     return ret;
