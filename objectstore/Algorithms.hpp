@@ -82,6 +82,8 @@ public:
   };
   typedef std::set<ElementAddress> ElementsToSkipSet;
   
+  static void trimContainerIfNeeded(Container & cont);
+  
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
   
   template <class Element>
@@ -186,7 +188,10 @@ public:
       if (failedOwnershipSwitchElements.empty()) {
         // This is the easy case (and most common case). Everything went through fine.
         ContainerTraits<C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
-        contLock.release();
+        // If we emptied the container, we have to trim it.
+        ContainerTraits<C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        // trimming might release the lock
+        if (contLock.isLocked()) contLock.release();
         // All jobs are validated
         ret.summary += candidateElements.summary;
         unfulfilledCriteria -= candidateElements.summary;
@@ -226,7 +231,10 @@ public:
           }
         }
         ContainerTraits<C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
-        contLock.release();
+        // If we emptied the container, we have to trim it.
+        ContainerTraits<C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        // trimming might release the lock
+        if (contLock.isLocked()) contLock.release();
         m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
         for (auto & e: candidateElements.elements) {
           if (!elementsNotToReport.count(ContainerTraits<C>::getElementAddress(e))) {

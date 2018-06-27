@@ -82,8 +82,8 @@ public:
   class PopCriteria {
   public:
     PopCriteria& operator-= (const PoppedElementsSummary &);
-    uint64_t bytes;
-    uint64_t files;
+    uint64_t bytes = 0;
+    uint64_t files = 0;
   };
   class PoppedElementsList: public std::list<PoppedElement> {
   public:
@@ -93,8 +93,8 @@ public:
   
   class PoppedElementsSummary {
   public:
-    uint64_t bytes;
-    uint64_t files;
+    uint64_t bytes = 0;
+    uint64_t files = 0;
     bool operator< (const PopCriteria & pc) {
       return bytes < pc.bytes && files < pc.files;
     }
@@ -118,30 +118,10 @@ public:
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
-  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress,
-      const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
-    std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-    for (auto & e: popedElementBatch.elements) {
-      ArchiveRequest & ar = *e.archiveRequest;
-      auto copyNb = e.copyNb;
-      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
-    }
-    auto u = updaters.begin();
-    auto e = popedElementBatch.elements.begin();
-    OpFailure<PoppedElement>::list ret;
-    while (e != popedElementBatch.elements.end()) {
-      try {
-        u->get()->wait();
-      } catch (...) {
-        ret.push_back(OpFailure<PoppedElement>());
-        ret.back().element = &(*e);
-        ret.back().failure = std::current_exception();
-      }
-      u++;
-      e++;
-    }
-    return ret;
-  }
+  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+  
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
   
 };
 

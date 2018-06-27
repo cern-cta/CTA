@@ -94,12 +94,12 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
   }
   if (!aqAddress.size()) throw NoSuchContainer("In ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(): no such archive queue");
   // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
-  objectstore::ArchiveQueue aq(aqAddress, cont.m_objectStore);
-  objectstore::ScopedExclusiveLock aqlock;
+  cont.setAddress(aqAddress);
   //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
   try {
-    aqlock.lock(aq);
-    aq.fetch();
+    if (contLock.isLocked()) contLock.release();
+    contLock.lock(cont);
+    cont.fetch();
     //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
   } catch (cta::exception::Exception & ex) {
     // The queue is now absent. We can remove its reference in the root entry.
@@ -111,20 +111,19 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
       re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
-            .add("queueObject", aq.getAddressIfSet());
+            .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
-      // TODO: improve: if we fail here we could retry to fetch a job.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
-            .add("queueObject", aq.getAddressIfSet())
+            .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
-            .add("queueObject", aq.getAddressIfSet());
+            .add("queueObject", cont.getAddressIfSet());
       lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
@@ -139,9 +138,11 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size});
+    ret.summary.bytes += cjfq.size;
+    ret.summary.files++;
   }
   return ret;
-    }
+}
 
 auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
@@ -164,6 +165,58 @@ auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElements
   bytes -= pes.bytes;
   files -= pes.files;
   return *this;
+}
+
+auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
+    const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc) 
+-> OpFailure<PoppedElement>::list {
+  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+  for (auto & e: popedElementBatch.elements) {
+    ArchiveRequest & ar = *e.archiveRequest;
+    auto copyNb = e.copyNb;
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+  }
+  auto u = updaters.begin();
+  auto e = popedElementBatch.elements.begin();
+  OpFailure<PoppedElement>::list ret;
+  while (e != popedElementBatch.elements.end()) {
+    try {
+      u->get()->wait();
+    } catch (...) {
+      ret.push_back(OpFailure<PoppedElement>());
+      ret.back().element = &(*e);
+      ret.back().failure = std::current_exception();
+    }
+    u++;
+    e++;
+  }
+  return ret;
+}
+
+void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
+    log::LogContext& lc) {
+  if (cont.isEmpty()) {
+    // The current implementation is done unlocked.
+    contLock.release();
+    try {
+      // The queue should be removed as it is empty.
+      RootEntry re(cont.m_objectStore);
+      ScopedExclusiveLock rexl(re);
+      re.fetch();
+      re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("Message", ex.getMessageValue());
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+    }
+    //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  }
 }
 
 

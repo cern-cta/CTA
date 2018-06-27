@@ -32,7 +32,7 @@
 
 namespace unitTests {
 
-TEST(ObjectStore, DISABLED_ArchiveQueueAlgorithms) {
+TEST(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object 
 #ifdef STDOUT_LOGGING
@@ -94,7 +94,7 @@ TEST(ObjectStore, DISABLED_ArchiveQueueAlgorithms) {
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
   // Now get the requests back
   ContainerTraits<ArchiveQueue>::PopCriteria popCriteria;
-  popCriteria.bytes = 1000;
+  popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto popedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
   ASSERT_EQ(popedJobs.summary.files, 10);
