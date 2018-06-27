@@ -29,6 +29,8 @@ public:
   typedef std::string                                            ContainerAddress;
   typedef std::string                                            ElementAddress;
   typedef std::string                                            ContainerIdentifyer;
+  static const std::string                    c_containerTypeName; //= "ArchiveQueue";
+  static const std::string                    c_identifyerType; // = "tapepool";
   struct InsertedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
@@ -108,6 +110,7 @@ public:
   public:
     PoppedElementsList elements;
     PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer &);
   };
   
   typedef std::set<ElementAddress> ElementsToSkipSet;

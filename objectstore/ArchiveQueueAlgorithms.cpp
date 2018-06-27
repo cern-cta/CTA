@@ -22,6 +22,10 @@
 
 namespace cta { namespace objectstore {
 
+const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
+
+const std::string ContainerTraits<ArchiveQueue>::c_identifyerType = "tapepool";
+
 void ContainerTraits<ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
     const ContainerIdentifyer& contId, log::LogContext& lc) {
   Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
@@ -78,7 +82,6 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
   return ret;
 }
 
-
 void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock,
     const ContainerIdentifyer& cId, log::LogContext& lc) {
   // Try and get access to a queue.
@@ -130,6 +133,11 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
     attemptCount++;
     goto retry;
   }
+}
+
+void ContainerTraits<ArchiveQueue>::PoppedElementsBatch::addToLog(log::ScopedParamContainer& params) {
+  params.add("bytes", summary.bytes)
+        .add("files", summary.files);
 }
 
 auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,

@@ -27,6 +27,9 @@
 #include "common/make_unique.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
 #include "RetrieveQueueAlgorithms.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#endif
 
 #include <gtest/gtest.h>
 

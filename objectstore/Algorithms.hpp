@@ -28,6 +28,7 @@
 #include "Helpers.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/TimingList.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -42,6 +43,8 @@ public:
   typedef std::string                         ContainerAddress;
   typedef std::string                         ElementAddress;
   typedef std::string                         ContainerIdentifyer;
+  static const std::string                    c_containerTypeName; //= "genericContainer";
+  static const std::string                    c_identifyerType; // = "genericId";
   struct InsertedElement {
     typedef std::list<InsertedElement> list;
   };
@@ -79,6 +82,7 @@ public:
     PoppedElementsBatch();
     PoppedElementsList elements;
     PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer &);
   };
   typedef std::set<ElementAddress> ElementsToSkipSet;
   
@@ -162,7 +166,10 @@ public:
     typename ContainerTraits<C>::PopCriteria unfulfilledCriteria = popCriteria;
     size_t iterationCount=0;
     typename ContainerTraits<C>::ElementsToSkipSet elementsToSkip;
+    log::TimingList timingList;
+    utils::Timer t;
     while (ret.summary < popCriteria) {
+      log::TimingList localTimingList;
       // Get a container if it exists
       C cont(m_backend);
       iterationCount++;
@@ -170,12 +177,16 @@ public:
       try {
         ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
       } catch (typename ContainerTraits<C>::NoSuchContainer &) {
+        localTimingList.insertAndReset("findQueueTime", t);
+        timingList+=localTimingList;
         // We could not find a container to pop from: return what we have.
-        return ret;
+        goto logAndReturn;
       }
+      localTimingList.insertAndReset("findQueueTime", t);
       // We have a container. Get candidate element list from it.
       typename ContainerTraits<C>::PoppedElementsBatch candidateElements = 
           ContainerTraits<C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, elementsToSkip, lc);
+      
       // Reference the candidates to our agent
       std::list<typename ContainerTraits<C>::ElementAddress> candidateElementsAddresses;
       for (auto & e: candidateElements.elements) {
@@ -245,6 +256,15 @@ public:
         }
       }
     }
+  logAndReturn:;
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("C", ContainerTraits<C>::c_containerTypeName);
+      params.add(ContainerTraits<C>::c_identifyerType, contId);
+      ret.addToLog(params);
+      timingList.addToLog(params);
+      lc.log(log::INFO, "In ContainerTraits<C>::PoppedElementsBatch(): elements retrieval complete.");
+    } 
     return ret;
   }
 private:

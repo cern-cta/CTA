@@ -18,6 +18,24 @@
 
 #pragma once
 
-#undef LOOPING_TEST
-#undef LOW_LEVEL_TRACING
-#undef STDOUT_LOGGING
+#include <list>
+#include <tuple>
+#include <string>
+
+namespace cta { namespace utils {
+class Timer;
+}}
+
+namespace cta { namespace log {
+
+class ScopedParamContainer;
+
+class TimingList: public std::list<std::tuple<std::string, double>> {
+public:
+  void insert(const std::string &, double);
+  void insertAndReset(const std::string&, utils::Timer &);
+  TimingList & operator+= (const TimingList &);
+  void addToLog(ScopedParamContainer &);
+};
+
+}} // namespace cta::log
