@@ -401,8 +401,12 @@ bool RetrieveRequest::finishIfNecessary(log::LogContext & lc) {
   for (auto & j: jl)
     if (!finishedStatuses.count(j.status()))
       return false;
-  remove();
   log::ScopedParamContainer params(lc);
+  size_t failureNumber = 0;
+  for (auto failure: getFailures()) {
+    params.add(std::string("failure")+std::to_string(failureNumber++), failure);
+  }
+  remove();
   params.add("retrieveRequestObject", getAddressIfSet());
   for (auto & j: jl) {
     params.add(std::string("statusForCopyNb")+std::to_string(j.copynb()), statusToString(j.status()));

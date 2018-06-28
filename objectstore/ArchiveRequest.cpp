@@ -621,7 +621,7 @@ bool ArchiveRequest::finishIfNecessary(log::LogContext & lc) {
   log::ScopedParamContainer params(lc);
   size_t failureNumber = 0;
   for (auto failure: getFailures()) {
-    params.add(std::string("failure")+std::to_string(failureNumber), failure);
+    params.add(std::string("failure")+std::to_string(failureNumber++), failure);
   }
   remove();
   params.add("archiveRequestObject", getAddressIfSet());

@@ -2753,10 +2753,6 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
     m_jobOwned = false;
     log::ScopedParamContainer params(logContext);
     params.add("object", m_retrieveRequest.getAddressIfSet());
-    size_t failureNumber=0;
-    for (auto failure: m_retrieveRequest.getFailures()) {
-      params.add(std::string("failure")+std::to_string(failureNumber++), failure);
-    }
     logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
     return true;
   } else {
