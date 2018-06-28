@@ -45,6 +45,11 @@ public:
   typedef std::string                         ContainerIdentifyer;
   static const std::string                    c_containerTypeName; //= "genericContainer";
   static const std::string                    c_identifyerType; // = "genericId";
+  class ContainerSummary {
+  public:
+    void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
+  };
+  ContainerSummary getContainerSummary(Container &);
   struct InsertedElement {
     typedef std::list<InsertedElement> list;
   };
@@ -73,13 +78,13 @@ public:
   };
   class PoppedElementsSummary {
   public:
-    PoppedElementsSummary();
     bool operator< (const PopCriteria &);
     PoppedElementsSummary& operator+= (const PoppedElementsSummary &);
+    PoppedElementsSummary(const PoppedElementsSummary&);
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
   };
   class PoppedElementsBatch {
   public:
-    PoppedElementsBatch();
     PoppedElementsList elements;
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer &);
@@ -124,10 +129,12 @@ public:
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
+    log::TimingList timingList;
+    utils::Timer t;
     ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
     ContainerTraits<C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        m_agentReference.getAgentAddress(), lc);
+        m_agentReference.getAgentAddress(), timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
@@ -167,8 +174,9 @@ public:
     size_t iterationCount=0;
     typename ContainerTraits<C>::ElementsToSkipSet elementsToSkip;
     log::TimingList timingList;
-    utils::Timer t;
+    utils::Timer t, totalTime;
     while (ret.summary < popCriteria) {
+      typename ContainerTraits<C>::PoppedElementsSummary previousSummary = ret.summary;
       log::TimingList localTimingList;
       // Get a container if it exists
       C cont(m_backend);
@@ -177,36 +185,45 @@ public:
       try {
         ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
       } catch (typename ContainerTraits<C>::NoSuchContainer &) {
-        localTimingList.insertAndReset("findQueueTime", t);
+        localTimingList.insertAndReset("findLockFetchQueueTime", t);
         timingList+=localTimingList;
         // We could not find a container to pop from: return what we have.
         goto logAndReturn;
       }
-      localTimingList.insertAndReset("findQueueTime", t);
+      localTimingList.insertAndReset("findLockFetchQueueTime", t);
+      typename ContainerTraits<C>::ContainerSummary contSummaryBefore, contSummaryAfter;
+      contSummaryBefore = ContainerTraits<C>::getContainerSummary(cont);
       // We have a container. Get candidate element list from it.
       typename ContainerTraits<C>::PoppedElementsBatch candidateElements = 
           ContainerTraits<C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, elementsToSkip, lc);
-      
+      localTimingList.insertAndReset("jobSelectionTime", t);
       // Reference the candidates to our agent
       std::list<typename ContainerTraits<C>::ElementAddress> candidateElementsAddresses;
       for (auto & e: candidateElements.elements) {
         candidateElementsAddresses.emplace_back(ContainerTraits<C>::getElementAddress(e));
       }
+      localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
       auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(candidateElements,
-          m_agentReference.getAgentAddress(), cont.getAddressIfSet(), lc);
+          m_agentReference.getAgentAddress(), cont.getAddressIfSet(), localTimingList, t, lc);
       if (failedOwnershipSwitchElements.empty()) {
+        localTimingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
         ContainerTraits<C>::removeReferencesAndCommit(cont, candidateElementsAddresses);
+        localTimingList.insertAndReset("containerUpdateTime", t);
+        contSummaryAfter = ContainerTraits<C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.
         ContainerTraits<C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        localTimingList.insertAndReset("containerTrimmingTime", t);
         // trimming might release the lock
         if (contLock.isLocked()) contLock.release();
+        localTimingList.insertAndReset("containerUnlockTime", t);
         // All jobs are validated
         ret.summary += candidateElements.summary;
         unfulfilledCriteria -= candidateElements.summary;
         ret.elements.insertBack(std::move(candidateElements.elements));
+        localTimingList.insertAndReset("structureProcessingTime", t);
       } else {
         // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
         // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
@@ -241,11 +258,16 @@ public:
             elementsToDereferenceFromContainer.push_back(ContainerTraits<C>::getElementAddress(e));
           }
         }
+        localTimingList.insertAndReset("updateResultProcessingTime", t);
         ContainerTraits<C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer);
+        localTimingList.insertAndReset("containerUpdateTime", t);
+        contSummaryAfter = ContainerTraits<C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.
         ContainerTraits<C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        localTimingList.insertAndReset("containerTrimmingTime", t);
         // trimming might release the lock
         if (contLock.isLocked()) contLock.release();
+        localTimingList.insertAndReset("containerUnlockTime", t);
         m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
         for (auto & e: candidateElements.elements) {
           if (!elementsNotToReport.count(ContainerTraits<C>::getElementAddress(e))) {
@@ -254,17 +276,29 @@ public:
             ret.elements.insertBack(std::move(e));
           }
         }
+        localTimingList.insertAndReset("structureProcessingTime", t);
       }
+      log::ScopedParamContainer params(lc);
+      params.add("C", ContainerTraits<C>::c_containerTypeName)
+            .add(ContainerTraits<C>::c_identifyerType, contId)
+            .add("containerAddress", cont.getAddressIfSet());
+      ret.summary.addDeltaToLog(previousSummary, params);
+      contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
+      localTimingList.addToLog(params);
+      lc.log(log::INFO, "In ContainerTraits<C>::PoppedElementsBatch(): did one round of elements retrieval.");
+      timingList+=localTimingList;
     }
   logAndReturn:;
     {
       log::ScopedParamContainer params(lc);
-      params.add("C", ContainerTraits<C>::c_containerTypeName);
-      params.add(ContainerTraits<C>::c_identifyerType, contId);
+      params.add("C", ContainerTraits<C>::c_containerTypeName)
+            .add(ContainerTraits<C>::c_identifyerType, contId);
       ret.addToLog(params);
       timingList.addToLog(params);
+      params.add("schedulerDbTime", totalTime.secs());
+      params.add("iterationsCounnt", iterationCount);
       lc.log(log::INFO, "In ContainerTraits<C>::PoppedElementsBatch(): elements retrieval complete.");
-    } 
+    }
     return ret;
   }
 private:

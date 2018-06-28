@@ -58,13 +58,39 @@ void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, s
   cont.removeJobsAndCommit(elementAddressList);
 }
 
-auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::list& elemMemCont, const ContainerAddress& contAddress, const ContainerAddress& previousOwnerAddress, log::LogContext& lc) ->  OpFailure<InsertedElement>::list {
+void ContainerTraits<ArchiveQueue>::PoppedElementsSummary::addDeltaToLog(const PoppedElementsSummary& previous,
+    log::ScopedParamContainer& params) {
+  params.add("filesAdded", files - previous.files)
+        .add("bytesAdded", bytes - previous.bytes)
+        .add("filesBefore", previous.files)
+        .add("bytesBefore", previous.bytes)
+        .add("filesAfter", files)
+        .add("bytesAfter", bytes);
+}
+
+void ContainerTraits<ArchiveQueue>::ContainerSummary::addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params) {
+  params.add("queueJobsBefore", previous.jobs)
+        .add("queueBytesBefore", previous.bytes)
+        .add("queueJobsAfter", jobs)
+        .add("queueBytesAfter", bytes);
+}
+
+auto ContainerTraits<ArchiveQueue>::getContainerSummary(Container& cont) -> ContainerSummary {
+  ContainerSummary ret;
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+  return ret;
+}
+
+auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::list& elemMemCont, const ContainerAddress& contAddress,
+    const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext& lc) 
+->  OpFailure<InsertedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: elemMemCont) {
     ArchiveRequest & ar = *e.archiveRequest;
     auto copyNb = e.copyNb;
     updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
   }
+  timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
   auto e = elemMemCont.begin();
   OpFailure<InsertedElement>::list ret;
@@ -79,6 +105,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
     u++;
     e++;
   }
+  timingList.insertAndReset("asyncUpdateCompletionTime", t);
   return ret;
 }
 
@@ -176,7 +203,8 @@ auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElements
 }
 
 auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
-    const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc) 
+    const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+    log::LogContext & lc) 
 -> OpFailure<PoppedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: popedElementBatch.elements) {
@@ -184,6 +212,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
     auto copyNb = e.copyNb;
     updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
   }
+  timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
   auto e = popedElementBatch.elements.begin();
   OpFailure<PoppedElement>::list ret;
@@ -198,6 +227,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
     u++;
     e++;
   }
+  timingList.insertAndReset("asyncUpdateCompletionTime", t);
   return ret;
 }
 

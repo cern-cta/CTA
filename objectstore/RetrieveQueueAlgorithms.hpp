@@ -75,13 +75,14 @@ public:
   }
   
   static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont, const ContainerAddress & contAddress,
-      const ContainerAddress & previousOwnerAddress, log::LogContext & lc) {
+      const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc) {
     std::list<std::unique_ptr<RetrieveRequest::AsyncOwnerUpdater>> updaters;
     for (auto & e: elemMemCont) {
       RetrieveRequest & rr = *e.retrieveRequest;
       auto copyNb = e.copyNb;
       updaters.emplace_back(rr.asyncUpdateOwner(copyNb, contAddress, previousOwnerAddress));
     }
+    timingList.insertAndReset("asyncUpdateLaunchTime", t);
     auto u = updaters.begin();
     auto e = elemMemCont.begin();
     OpFailure<InsertedElement>::list ret;
@@ -96,6 +97,7 @@ public:
       u++;
       e++;
     }
+    timingList.insertAndReset("asyncUpdateCompletionTime", t);
     return ret;
  }
    

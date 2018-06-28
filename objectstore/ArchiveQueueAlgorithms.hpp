@@ -39,6 +39,13 @@ public:
     typedef std::list<InsertedElement> list;
   };
   
+  class ContainerSummary: public ArchiveQueue::JobsSummary {
+  public:
+    void addDeltaToLog(ContainerSummary &, log::ScopedParamContainer &);
+  };
+  
+  static ContainerSummary getContainerSummary(Container &cont);
+  
   template <class Element>
   struct OpFailure {
     Element * element;
@@ -66,7 +73,8 @@ public:
   static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   
   static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc);
   
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
@@ -105,6 +113,7 @@ public:
       files += other.files;
       return *this;
     }
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
   };
   class PoppedElementsBatch {
   public:
@@ -122,7 +131,8 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
   static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc);
   
   static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
   
