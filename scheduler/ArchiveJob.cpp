@@ -148,6 +148,7 @@ void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext 
             .add("exceptionMsg", ex.getMessageValue())
             .add("reportTime", t.secs());
       lc.log(log::ERR, "In ArchiveJob::failed(): failed to report error to client.");
+      lc.logBacktrace(log::ERR, ex.backtrace());
     }
   }
 }
