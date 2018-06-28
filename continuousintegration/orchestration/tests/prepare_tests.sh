@@ -129,8 +129,6 @@ echo "EOS server version is used:"
 echo "Adding super client capabilities"
 
 clientIP=`kubectl --namespace ${NAMESPACE} describe pod client | grep IP | sed -E 's/IP:[[:space:]]+//'`
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin adminhost add --name ${clientIP} --comment "for the super client"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin adminhost add --name [::ffff:${clientIP}] --comment "for the super client"
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace=${NAMESPACE} exec kdc cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
