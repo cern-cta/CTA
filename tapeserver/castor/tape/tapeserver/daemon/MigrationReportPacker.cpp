@@ -299,6 +299,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+    reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
   }
 }
 
