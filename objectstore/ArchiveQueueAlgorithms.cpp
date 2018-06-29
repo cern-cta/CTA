@@ -172,7 +172,8 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size});
+    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
+    common::dataStructures::ArchiveFile(), "", "", "", });
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
   }
@@ -219,6 +220,10 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
   while (e != popedElementBatch.elements.end()) {
     try {
       u->get()->wait();
+      e->archiveFile = u->get()->getArchiveFile();
+      e->archiveReportURL = u->get()->getArchiveReportURL();
+      e->errorReportURL = u->get()->getArchiveErrorReportURL();
+      e->srcURL = u->get()->getSrcURL();
     } catch (...) {
       ret.push_back(OpFailure<PoppedElement>());
       ret.back().element = &(*e);
