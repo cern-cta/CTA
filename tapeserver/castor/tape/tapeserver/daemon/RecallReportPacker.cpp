@@ -72,7 +72,7 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //------------------------------------------------------------------------------  
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex){
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
-      " " + ex.what();
+      " " + ex.getMessageValue();
   std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob), failureLog));
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());

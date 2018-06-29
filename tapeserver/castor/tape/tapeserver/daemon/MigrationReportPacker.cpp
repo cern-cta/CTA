@@ -70,7 +70,7 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception &ex, cta::log::LogContext & lc){
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
-      " " + ex.what();
+      " " + ex.getMessageValue();
   std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob), failureLog));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
