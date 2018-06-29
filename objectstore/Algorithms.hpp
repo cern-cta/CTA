@@ -120,6 +120,7 @@ public:
     m_backend(backend), m_agentReference(agentReference) {}
     
   typedef typename ContainerTraits<C>::InsertedElement InsertedElement;
+  typedef typename ContainerTraits<C>::PopCriteria PopCriteria;
     
   /** Reference objects in the container and then switch their ownership them. Objects 
    * are provided existing and owned by algorithm's agent. Returns a list of 
@@ -175,7 +176,8 @@ public:
     typename ContainerTraits<C>::ElementsToSkipSet elementsToSkip;
     log::TimingList timingList;
     utils::Timer t, totalTime;
-    while (ret.summary < popCriteria) {
+    bool unexpectedException = false;
+    while (!unexpectedException && ret.summary < popCriteria) {
       typename ContainerTraits<C>::PoppedElementsSummary previousSummary = ret.summary;
       log::TimingList localTimingList;
       // Get a container if it exists
@@ -233,7 +235,7 @@ public:
         std::list<typename ContainerTraits<C>::ElementAddress> elementsToDereferenceFromAgent;
         for (auto &e: failedOwnershipSwitchElements) {
           try {
-            throw e.failure;
+            std::rethrow_exception(e.failure);
           } catch (Backend::NoSuchObject &) {
             elementsToDereferenceFromAgent.push_back(ContainerTraits<C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<C>::getElementAddress(*e.element));
@@ -249,6 +251,8 @@ public:
             elementsToDereferenceFromAgent.push_back(ContainerTraits<C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<C>::getElementAddress(*e.element));
             elementsToSkip.insert(ContainerTraits<C>::getElementAddress(*e.element));
+            // If we get this kind of situation, we do not try to carry on, as it becomes too complex.
+            unexpectedException = true;
           }
         }
         // We are done with the sorting. Apply the decisions...

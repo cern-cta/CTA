@@ -87,6 +87,10 @@ public:
     std::unique_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
     uint64_t bytes;
+    common::dataStructures::ArchiveFile archiveFile;
+    std::string archiveReportURL;
+    std::string errorReportURL;
+    std::string srcURL;
   };
   class PoppedElementsSummary;
   class PopCriteria {
