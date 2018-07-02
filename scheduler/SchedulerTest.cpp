@@ -623,8 +623,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
-    // The file should be retried 10 times
-    for (int i=0; i<=5; i++) {
+    // The file should be retried twice
+    for (int i=0; i<=1; i++) {
       std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1,1,lc);
       if (!archiveJobList.front().get()) {
         int __attribute__((__unused__)) debugI=i;
