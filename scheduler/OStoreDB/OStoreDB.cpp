@@ -481,8 +481,8 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
   aReq->setEntryLog(request.creationLog);
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
   for (auto & copy:criteria.copyToPoolMap) {
-    const uint32_t hardcodedRetriesWithinMount = 3;
-    const uint32_t hardcodedTotalRetries = 6;
+    const uint32_t hardcodedRetriesWithinMount = 2;
+    const uint32_t hardcodedTotalRetries = 2;
     aReq->addJob(copy.first, copy.second, m_agentReference->getAgentAddress(), hardcodedRetriesWithinMount, hardcodedTotalRetries);
     jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
     jl.back().copyNb = copy.first;
