@@ -160,7 +160,7 @@ namespace cta {
      * 
      * @param tapeFilesWritten The set of report events for the catalog update. 
      */
-    void updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten); 
+    void updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeItemWrittenPointer> &tapeFilesWritten); 
     
     /**
      * Destructor.

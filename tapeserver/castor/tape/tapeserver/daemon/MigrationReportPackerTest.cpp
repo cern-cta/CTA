@@ -70,8 +70,9 @@ namespace unitTests {
     MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
     
     virtual void validate() override {}
-    virtual cta::catalogue::TapeFileWritten validateAndGetTapeFileWritten() override {
-      cta::catalogue::TapeFileWritten fileReport;
+    virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
+      auto fileReportUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;
       fileReport.checksumType = tapeFile.checksumType;
@@ -89,7 +90,7 @@ namespace unitTests {
       fileReport.storageClassName = archiveFile.storageClass;
       fileReport.tapeDrive = std::string("testDrive");
       fileReport.vid = tapeFile.vid;
-      return fileReport;
+      return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
     }
    
 

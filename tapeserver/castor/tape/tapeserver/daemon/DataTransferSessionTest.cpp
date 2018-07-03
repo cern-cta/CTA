@@ -383,7 +383,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      cta::catalogue::TapeFileWritten tapeFileWritten;
+      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto &tapeFileWritten=*tapeFileWrittenUP;
+      std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+      tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
@@ -414,7 +417,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -569,46 +572,57 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       // Close the file
       wf.close();
       
-      // Create a fictious file record on the tape to allow adding one to fseq=2 afterwards.
-      cta::catalogue::TapeFileWritten tapeFileWritten;
-      tapeFileWritten.archiveFileId=666;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue="0xDEADBEEF";
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.blockId=0;
-      tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
-      tapeFileWritten.diskInstance = s_diskInstance;
-      tapeFileWritten.diskFileId = std::to_string(fseq);
-      tapeFileWritten.diskFilePath = "/somefile";
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
-      tapeFileWritten.storageClassName = s_storageClassName;
-      tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      {
+        // Create a fictious file record on the tape to allow adding one to fseq=2 afterwards.
+        auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto &tapeFileWritten=*tapeFileWrittenUP;
+        std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+        tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
+        tapeFileWritten.archiveFileId=666;
+        tapeFileWritten.checksumType="ADLER32";
+        tapeFileWritten.checksumValue="0xDEADBEEF";
+        tapeFileWritten.vid=volInfo.vid;
+        tapeFileWritten.size=archiveFileSize;
+        tapeFileWritten.fSeq=fseq;
+        tapeFileWritten.blockId=0;
+        tapeFileWritten.copyNb=1;
+        tapeFileWritten.compressedSize=archiveFileSize; // No compression
+        tapeFileWritten.diskInstance = s_diskInstance;
+        tapeFileWritten.diskFileId = std::to_string(fseq);
+        tapeFileWritten.diskFilePath = "/somefile";
+        tapeFileWritten.diskFileUser = s_userName;
+        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileRecoveryBlob = "B106";
+        tapeFileWritten.storageClassName = s_storageClassName;
+        tapeFileWritten.tapeDrive = "drive0";
+        catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      }
       
-      // Create an archive file entry in the archive catalogue
-      tapeFileWritten.archiveFileId=1000 + fseq;
-      tapeFileWritten.checksumType="ADLER32";
-      tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq + 1;
-      tapeFileWritten.blockId=wf.getBlockId() + 10000;
-      tapeFileWritten.copyNb=1;
-      tapeFileWritten.compressedSize=archiveFileSize; // No compression
-      tapeFileWritten.diskInstance = s_diskInstance;
-      tapeFileWritten.diskFileId = std::to_string(fseq + 1);
-      tapeFileWritten.diskFilePath = remoteFilePath.str();
-      tapeFileWritten.diskFileUser = s_userName;
-      tapeFileWritten.diskFileGroup = "someGroup";
-      tapeFileWritten.diskFileRecoveryBlob = "B106";
-      tapeFileWritten.storageClassName = s_storageClassName;
-      tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      {
+        // Create an archive file entry in the archive catalogue
+        auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto &tapeFileWritten=*tapeFileWrittenUP;
+        std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+        tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
+        tapeFileWritten.archiveFileId=1000 + fseq;
+        tapeFileWritten.checksumType="ADLER32";
+        tapeFileWritten.checksumValue=cta::utils::getAdler32String(data, archiveFileSize);
+        tapeFileWritten.vid=volInfo.vid;
+        tapeFileWritten.size=archiveFileSize;
+        tapeFileWritten.fSeq=fseq + 1;
+        tapeFileWritten.blockId=wf.getBlockId() + 10000;
+        tapeFileWritten.copyNb=1;
+        tapeFileWritten.compressedSize=archiveFileSize; // No compression
+        tapeFileWritten.diskInstance = s_diskInstance;
+        tapeFileWritten.diskFileId = std::to_string(fseq + 1);
+        tapeFileWritten.diskFilePath = remoteFilePath.str();
+        tapeFileWritten.diskFileUser = s_userName;
+        tapeFileWritten.diskFileGroup = "someGroup";
+        tapeFileWritten.diskFileRecoveryBlob = "B106";
+        tapeFileWritten.storageClassName = s_storageClassName;
+        tapeFileWritten.tapeDrive = "drive0";
+        catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      }
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -749,7 +763,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      cta::catalogue::TapeFileWritten tapeFileWritten;
+      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto &tapeFileWritten=*tapeFileWrittenUP;
+      std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+      tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
@@ -780,7 +797,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -957,7 +974,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      cta::catalogue::TapeFileWritten tapeFileWritten;
+      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto &tapeFileWritten=*tapeFileWrittenUP;
+      std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+      tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
@@ -988,7 +1008,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -1102,7 +1122,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      cta::catalogue::TapeFileWritten tapeFileWritten;
+      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto &tapeFileWritten=*tapeFileWrittenUP;
+      std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
+      tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
       
       // Write the file to tape
       cta::MockArchiveMount mam(catalogue);
@@ -1133,7 +1156,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.diskFileRecoveryBlob = "B106";
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(std::set<cta::catalogue::TapeFileWritten>{tapeFileWritten});
+      catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance="disk_instance";
@@ -1418,8 +1441,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
-      // Delete the file: the migration will fail.
-      sourceFiles.clear();
+      // Delete the even files: the migration will work for half of them.
+      if (fseq % 2) sourceFiles.pop_back();
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1451,8 +1474,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  // We should no have logged a single successful file read.
-  ASSERT_EQ(std::string::npos, logger.getLog().find("MSG=\"File successfully read from disk\""));
+  // We should no have 5 successfully read files.
+  size_t count=0;
+  std::string::size_type pos=0;
+  std::string successLog="MSG=\"File successfully read from disk\"";
+  while ((pos = logger.getLog().find(successLog, pos)) != std::string::npos) {
+    pos+=successLog.size();
+    count++;
+  }
+  ASSERT_EQ(5, count);
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";

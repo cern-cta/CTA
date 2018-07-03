@@ -19,8 +19,8 @@
 #pragma once
 
 #include "common/checksum/Checksum.hpp"
+#include "TapeItemWritten.hpp"
 
-#include <stdint.h>
 #include <string>
 
 namespace cta {
@@ -29,7 +29,7 @@ namespace catalogue {
 /**
  * Structure describing the event of having written a file to tape.
  */
-struct TapeFileWritten {
+struct TapeFileWritten: public TapeItemWritten {
 
   /**
    * Constructor.
@@ -44,21 +44,6 @@ struct TapeFileWritten {
    * @param rhs The right hand side of the operator.
    */
   bool operator==(const TapeFileWritten &rhs) const;
-
-  /**
-   * Less than operator.
-   *
-   * TapeFileWritten events are ordered by their tape file sequence number.
-   *
-   * TapeFileWritten events are written to the catalogue database in batches in
-   * order to improve performance by reducing the number of network round trips
-   * to the database.  Each batch is ordered by tape file sequence number so
-   * that the CTA catalogue code can easily assert that files that are written
-   * to tape are reported correctly.
-   *
-   * @param rhs The right hand side of the operator.
-   */
-  bool operator<(const TapeFileWritten &rhs) const;
 
   /**
    * The unique identifier of the file being archived.
@@ -121,16 +106,6 @@ struct TapeFileWritten {
   std::string storageClassName;
 
   /**
-   * The volume identifier of the tape on which the file has been written.
-   */
-  std::string vid;
-
-  /**
-   * The position of the file on tape in the form of its file sequence number.
-   */
-  uint64_t fSeq;
-
-  /**
    * The position of the file on tape in the form of its logical block
    * identifier.
    */
@@ -146,11 +121,6 @@ struct TapeFileWritten {
    * The copy number of the tape file.
    */
   uint64_t copyNb;
-
-  /**
-   * The name of the tape drive that wrote the file.
-   */
-  std::string tapeDrive;
 
 }; // struct TapeFileWritten
 

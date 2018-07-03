@@ -52,7 +52,7 @@ namespace cta {
       void reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
         cta::log::LogContext& logContext) override {
         try {
-          std::set<cta::catalogue::TapeFileWritten> tapeFilesWritten;
+          std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
           std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
           std::unique_ptr<cta::ArchiveJob> job;
           while(!successfulArchiveJobs.empty()) {
@@ -60,11 +60,11 @@ namespace cta {
             job = std::move(successfulArchiveJobs.front());
             successfulArchiveJobs.pop();
             if (!job.get()) continue;        
-            tapeFilesWritten.insert(job->validateAndGetTapeFileWritten());
+            tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten());
             validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
             job.reset(nullptr);
           }
-          m_catalogue.filesWrittenToTape(tapeFilesWritten);
+          m_catalogue.filesWrittenToTape(tapeItemsWritten);
           for (auto &job: validatedSuccessfulArchiveJobs) {
             MockArchiveJob * maj = dynamic_cast<MockArchiveJob *>(job.get());
             if (!maj) throw cta::exception::Exception("Wrong job type.");

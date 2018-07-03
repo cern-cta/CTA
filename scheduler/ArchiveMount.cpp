@@ -95,7 +95,7 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 //------------------------------------------------------------------------------
 // updateCatalogueWithTapeFilesWritten
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeFileWritten> &tapeFilesWritten) {
+void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeItemWrittenPointer> &tapeFilesWritten) {
   m_catalogue.filesWrittenToTape(tapeFilesWritten);
 }
 
@@ -125,7 +125,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
   cta::log::LogContext& logContext) {
-  std::set<cta::catalogue::TapeFileWritten> tapeFilesWritten;
+  std::set<cta::catalogue::TapeItemWrittenPointer> tapeFilesWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
   try{
@@ -139,7 +139,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
       if (!job.get()) continue;        
-      tapeFilesWritten.insert(job->validateAndGetTapeFileWritten());
+      tapeFilesWritten.emplace(job->validateAndGetTapeFileWritten().release());
       files++;
       bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      

@@ -33,6 +33,7 @@
 #include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
+#include <algorithm>
 
 namespace cta {
 namespace catalogue {
@@ -652,15 +653,15 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
 //------------------------------------------------------------------------------
 // filesWrittenToTape
 //------------------------------------------------------------------------------
-void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
+void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
   try {
     if (events.empty()) {
       return;
     }
 
     auto firstEventItor = events.begin();
-    const auto &firstEvent = *firstEventItor;
-    checkTapeFileWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+    const auto &firstEvent = **firstEventItor;
+    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
     const time_t now = time(nullptr);
     threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
@@ -671,54 +672,72 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     uint64_t totalCompressedBytesWritten = 0;
 
     uint32_t i = 0;
-    TapeFileBatch tapeFileBatch(events.size());
+    // We have a mix of files and items. Only files will be recorded, but items
+    // allow checking fSeq coherency.
+    // determine the number of files
+    size_t filesCount=std::count_if(events.cbegin(), events.cend(), 
+        [](const TapeItemWrittenPointer &e){return typeid(*e)==typeid(TapeFileWritten);});
+    TapeFileBatch tapeFileBatch(filesCount);
+    
+    std::set<TapeFileWritten> fileEvents;
 
-    for (const auto &event: events) {
-      checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
+    for (const auto &eventP: events) {
+      // Check for all item types.
+      const auto &event = *eventP;
+      checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
 
       if (event.vid != firstEvent.vid) {
         throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
-
+      
       if (expectedFSeq != event.fSeq) {
         exception::Exception ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
-          firstEvent.fSeq;
+          event.fSeq;
         throw ex;
       }
-
       expectedFSeq++;
-      totalCompressedBytesWritten += event.compressedSize;
+      
+      try {
+        // If this is a file (as opposed to a placeholder), do the full processing.
+        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
 
-      // Store the length of each field and implicitly calculate the maximum field
-      // length of each column 
-      tapeFileBatch.vid.setFieldLenToValueLen(i, event.vid);
-      tapeFileBatch.fSeq.setFieldLenToValueLen(i, event.fSeq);
-      tapeFileBatch.blockId.setFieldLenToValueLen(i, event.blockId);
-      tapeFileBatch.compressedSize.setFieldLenToValueLen(i, event.compressedSize);
-      tapeFileBatch.copyNb.setFieldLenToValueLen(i, event.copyNb);
-      tapeFileBatch.creationTime.setFieldLenToValueLen(i, now);
-      tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, event.archiveFileId);
+        checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
+        
+        totalCompressedBytesWritten += fileEvent.compressedSize;
 
+        // Store the length of each field and implicitly calculate the maximum field
+        // length of each column 
+        tapeFileBatch.vid.setFieldLenToValueLen(i, fileEvent.vid);
+        tapeFileBatch.fSeq.setFieldLenToValueLen(i, fileEvent.fSeq);
+        tapeFileBatch.blockId.setFieldLenToValueLen(i, fileEvent.blockId);
+        tapeFileBatch.compressedSize.setFieldLenToValueLen(i, fileEvent.compressedSize);
+        tapeFileBatch.copyNb.setFieldLenToValueLen(i, fileEvent.copyNb);
+        tapeFileBatch.creationTime.setFieldLenToValueLen(i, now);
+        tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, fileEvent.archiveFileId);
+        
+        fileEvents.insert(fileEvent);
+        
+      } catch (std::bad_cast&) {}
       i++;
     }
 
     // Update the tape because all the necessary information is now available
     auto lastEventItor = events.cend();
     lastEventItor--;
-    const TapeFileWritten &lastEvent = *lastEventItor;
+    const TapeItemWritten &lastEvent = **lastEventItor;
     updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     // Create the archive file entries, skipping those that already exist
-    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, events);
+    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, fileEvents);
 
-    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::OFF, events);
+    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::OFF, fileEvents);
 
     // Verify that the archive file entries in the catalogue database agree with
     // the tape file written events
-    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, events);
-    for (const auto &event: events) {
+    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    for (const auto &event: fileEvents) {
       const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
 
       std::ostringstream fileContext;
@@ -758,7 +777,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
 
     // Store the value of each field
     i = 0;
-    for (const auto &event: events) {
+    for (const auto &event: fileEvents) {
       tapeFileBatch.vid.setFieldValue(i, event.vid);
       tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
       tapeFileBatch.blockId.setFieldValue(i, event.blockId);

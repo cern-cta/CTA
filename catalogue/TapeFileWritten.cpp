@@ -27,7 +27,6 @@ namespace catalogue {
 TapeFileWritten::TapeFileWritten() :
   archiveFileId(0),
   size(0),
-  fSeq(0),
   blockId(0),
   compressedSize(0),
   copyNb(0) {
@@ -38,6 +37,7 @@ TapeFileWritten::TapeFileWritten() :
 //------------------------------------------------------------------------------
 bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
   return
+    TapeItemWritten::operator ==(rhs) &&
     archiveFileId == rhs.archiveFileId &&
     diskInstance == rhs.diskInstance &&
     diskFileId == rhs.diskFileId &&
@@ -49,19 +49,10 @@ bool TapeFileWritten::operator==(const TapeFileWritten &rhs) const {
     checksumType == rhs.checksumType &&
     checksumValue == rhs.checksumValue &&
     storageClassName == rhs.storageClassName &&
-    vid == rhs.vid &&
-    fSeq == rhs.fSeq &&
     blockId == rhs.blockId &&
     compressedSize == rhs.compressedSize &&
     copyNb == rhs.copyNb &&
     tapeDrive == rhs.tapeDrive;
-}
-
-//------------------------------------------------------------------------------
-// operator<
-//------------------------------------------------------------------------------
-bool TapeFileWritten::operator<(const TapeFileWritten &rhs) const {
-  return fSeq < rhs.fSeq;
 }
 
 //------------------------------------------------------------------------------

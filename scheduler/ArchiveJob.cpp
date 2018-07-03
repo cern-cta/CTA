@@ -19,6 +19,7 @@
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "eos/DiskReporterFactory.hpp"
+#include "common/make_unique.hpp"
 #include <limits>
 #include <cryptopp/base64.h>
 
@@ -60,9 +61,10 @@ double cta::ArchiveJob::reportTime() {
 //------------------------------------------------------------------------------
 // ArchiveJob::validateAndGetTapeFileWritten
 //------------------------------------------------------------------------------
-cta::catalogue::TapeFileWritten cta::ArchiveJob::validateAndGetTapeFileWritten() {
+cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWritten() {
   validate();
-  catalogue::TapeFileWritten fileReport;
+  auto fileReportUP = cta::make_unique<catalogue::TapeFileWritten>();
+  auto & fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
   fileReport.blockId = tapeFile.blockId;
   fileReport.checksumType = tapeFile.checksumType;
@@ -80,7 +82,7 @@ cta::catalogue::TapeFileWritten cta::ArchiveJob::validateAndGetTapeFileWritten()
   fileReport.storageClassName = archiveFile.storageClass;
   fileReport.tapeDrive = m_mount.getDrive();
   fileReport.vid = tapeFile.vid;
-  return fileReport;
+  return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
 }
 
 //------------------------------------------------------------------------------

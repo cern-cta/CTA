@@ -435,15 +435,15 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Autocommit
 //------------------------------------------------------------------------------
 // filesWrittenToTape
 //------------------------------------------------------------------------------
-void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events) {
+void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
   try {
     if(events.empty()) {
       return;
     }
 
     auto firstEventItor = events.cbegin();
-    const auto &firstEvent = *firstEventItor;;
-    checkTapeFileWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+    const auto &firstEvent = **firstEventItor;;
+    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
 
     // The SQLite implementation of this method relies on the fact that a tape
     // cannot be physically mounted in two or more drives at the same time
@@ -458,8 +458,9 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
-    for(const auto &event: events) {
-      checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
+    for(const auto &eventP: events) {
+      const auto & event = *eventP;
+      checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
 
       if(event.vid != firstEvent.vid) {
         throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
@@ -472,18 +473,27 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeFileWritten> &events
         throw ex;
       }
       expectedFSeq++;
-        
-      totalCompressedBytesWritten += event.compressedSize;
+      
+      
+      try {
+        // If this is a file (as opposed to a placeholder), do the full processing.
+        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
+        totalCompressedBytesWritten += fileEvent.compressedSize;
+      } catch (std::bad_cast&) {}
     }
 
     auto lastEventItor = events.cend();
     lastEventItor--;
-    const TapeFileWritten &lastEvent = *lastEventItor;
+    const TapeItemWritten &lastEvent = **lastEventItor;
     updateTape(conn, rdbms::AutocommitMode::ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     for(const auto &event : events) {
-      fileWrittenToTape(rdbms::AutocommitMode::ON, conn, event);
+      try {
+        // If this is a file (as opposed to a placeholder), do the full processing.
+        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
+        fileWrittenToTape(rdbms::AutocommitMode::ON, conn, fileEvent);
+      } catch (std::bad_cast&) {}
     }
   } catch(exception::UserError &) {
     throw;

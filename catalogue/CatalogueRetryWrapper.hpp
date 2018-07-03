@@ -81,7 +81,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesForWriting(logicalLibraryName);}, m_maxTriesToConnect);
   }
 
-  void filesWrittenToTape(const std::set<TapeFileWritten> &event) override {
+  void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->filesWrittenToTape(event);}, m_maxTriesToConnect);
   }
 

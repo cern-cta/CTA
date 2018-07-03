@@ -99,7 +99,7 @@ public:
    * request.
    * @return The tapeFileWritten event for the catalog update.
    */
-  virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten();
+  virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten();
   
   /**
    * Triggers a scheduler update following the failure of the job. Retry policy will

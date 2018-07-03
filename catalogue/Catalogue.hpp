@@ -20,6 +20,7 @@
 
 #include "catalogue/ArchiveFileItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/TapePool.hpp"
@@ -66,6 +67,7 @@
 #include <set>
 #include <stdint.h>
 #include <string>
+#include <memory>
 
 namespace cta {
 
@@ -151,7 +153,7 @@ public:
    *
    * @param events The tape file written events.
    */
-  virtual void filesWrittenToTape(const std::set<TapeFileWritten> &event) = 0;
+  virtual void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in

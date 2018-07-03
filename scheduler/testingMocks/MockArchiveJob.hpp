@@ -20,6 +20,7 @@
 
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "common/make_unique.hpp"
 #include <memory>
 
 namespace cta {
@@ -43,8 +44,9 @@ namespace cta {
     } 
     
     virtual void validate() override  {}
-    virtual catalogue::TapeFileWritten validateAndGetTapeFileWritten() override {
-      catalogue::TapeFileWritten fileReport;
+    virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
+      auto fileReportUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto &  fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;
       fileReport.checksumType = tapeFile.checksumType;
@@ -62,7 +64,7 @@ namespace cta {
       fileReport.storageClassName = archiveFile.storageClass;
       fileReport.tapeDrive = "dummy";
       fileReport.vid = tapeFile.vid;
-      return fileReport;
+      return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
     }
     virtual void failed(const cta::exception::Exception& ex) {
       failures++;

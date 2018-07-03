@@ -25,6 +25,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
+#include "common/make_unique.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -2054,7 +2055,10 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   const uint64_t fileSize = 1234 * 1000000000UL;
   {
-    catalogue::TapeFileWritten file1Written;
+    auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & file1Written = *file1WrittenUP;
+    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+    file1WrittenSet.insert(file1WrittenUP.release());
     file1Written.archiveFileId        = 1234;
     file1Written.diskInstance         = storageClass.diskInstance;
     file1Written.diskFileId           = "5678";
@@ -2072,7 +2076,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     file1Written.compressedSize       = fileSize;
     file1Written.copyNb               = 1;
     file1Written.tapeDrive            = "tape_drive";
-    m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+    m_catalogue->filesWrittenToTape(file1WrittenSet);
   }
 
   {
@@ -5179,7 +5183,9 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+    std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;    file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -5197,7 +5203,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -5228,7 +5234,10 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -5246,7 +5255,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -5431,7 +5440,10 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId) {
 
   const std::string diskFileId = "5678";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = diskFileId;
@@ -5449,7 +5461,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -5480,7 +5492,10 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -5498,7 +5513,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId) {
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -5912,7 +5927,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t compressedFileSize = archiveFileSize;
 
-  std::set<catalogue::TapeFileWritten> tapeFilesWrittenCopy1;
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
@@ -5920,7 +5935,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     diskFilePath << "/public_dir/public_file_" << i;
 
     // Tape copy 1 written to tape
-    catalogue::TapeFileWritten fileWritten;
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
@@ -5938,7 +5954,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.compressedSize = compressedFileSize;
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
-    tapeFilesWrittenCopy1.emplace(fileWritten);
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
   }
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   {
@@ -5974,7 +5990,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
-  std::set<catalogue::TapeFileWritten> tapeFilesWrittenCopy2;
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy2;
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
@@ -5982,7 +5998,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     diskFilePath << "/public_dir/public_file_" << i;
 
     // Tape copy 2 written to tape
-    catalogue::TapeFileWritten fileWritten;
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = storageClass.diskInstance;
     fileWritten.diskFileId = diskFileId.str();
@@ -6000,7 +6017,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.compressedSize = compressedFileSize;
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
-    tapeFilesWrittenCopy2.emplace(fileWritten);
+    tapeFilesWrittenCopy2.emplace(fileWrittenUP.release());
   }
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy2);
   {
@@ -6413,7 +6430,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -6431,7 +6451,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -6471,7 +6491,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -6489,7 +6512,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(2, m_catalogue->getTapes().size());
@@ -6634,7 +6657,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -6652,7 +6678,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -6692,7 +6718,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -6710,7 +6739,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(2, m_catalogue->getTapes().size());
@@ -6826,7 +6855,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -6844,7 +6876,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -6884,7 +6916,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -6902,7 +6937,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(1, m_catalogue->getTapes().size());
@@ -7044,7 +7079,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -7062,7 +7100,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -7104,7 +7142,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
   const uint64_t archiveFileSize2 = 2;
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -7122,7 +7163,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  ASSERT_THROW(m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written}),
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
     catalogue::FileSizeMismatch);
 }
 
@@ -7217,7 +7258,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -7235,7 +7279,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -7277,7 +7321,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
   const std::string checksumType2 = "checksum_type_2";
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -7295,7 +7342,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  ASSERT_THROW(m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written}),
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
     catalogue::ChecksumTypeMismatch);
 }
 
@@ -7390,7 +7437,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const std::string checksumValue1 = "checksum_value_1";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -7408,7 +7458,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -7450,7 +7500,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
   const std::string checksumValue2 = "checksum_value_2";
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -7468,7 +7521,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  ASSERT_THROW(m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written}),
+  ASSERT_THROW(m_catalogue->filesWrittenToTape(file2WrittenSet),
     catalogue::ChecksumValueMismatch);
 }
 
@@ -7563,7 +7616,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -7581,7 +7637,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -7656,7 +7712,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -7674,7 +7733,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(2, m_catalogue->getTapes().size());
@@ -7874,7 +7933,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id) {
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -7892,7 +7954,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -7967,7 +8029,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -7985,7 +8050,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_disk_file_id) {
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(2, m_catalogue->getTapes().size());
@@ -8185,7 +8250,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const std::string checksumValue = "checksum_value";
   const std::string tapeDrive = "tape_drive";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -8203,7 +8271,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
@@ -8278,7 +8346,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  catalogue::TapeFileWritten file2Written;
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
@@ -8296,7 +8367,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.compressedSize       = 1;
   file2Written.copyNb               = 2;
   file2Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file2Written});
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
 
   {
     ASSERT_EQ(2, m_catalogue->getTapes().size());
@@ -8679,7 +8750,10 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -8697,7 +8771,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -8890,7 +8964,10 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const std::string checksumType = "checksum_type";
   const std::string checksumValue = "checksum_value";
 
-  catalogue::TapeFileWritten file1Written;
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = storageClass.diskInstance;
   file1Written.diskFileId           = "5678";
@@ -8908,7 +8985,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.compressedSize       = 1;
   file1Written.copyNb               = 1;
   file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->filesWrittenToTape(std::set<catalogue::TapeFileWritten>{file1Written});
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
 
   {
     const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);

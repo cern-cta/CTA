@@ -4800,5 +4800,19 @@ void RdbmsCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &calling
   }
 }
 
+//------------------------------------------------------------------------------
+// checkTapeItemWrittenFieldsAreSet
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::checkTapeItemWrittenFieldsAreSet(const std::string& callingFunc, const TapeItemWritten& event) const {
+  try {
+    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
+    if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
+    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
+  } catch (exception::Exception &ex) {
+    throw exception::Exception(callingFunc + " failed: TapeItemWrittenEvent is invalid: " + ex.getMessage().str());
+  }
+}
+
+
 } // namespace catalogue
 } // namespace cta
