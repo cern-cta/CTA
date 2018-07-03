@@ -97,10 +97,28 @@ namespace daemon {
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
       // We are not error sources here until we actually write.
       currentErrorToCount = "";
+      bool firstBlock = true;
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
         m_taskStats.waitDataTime += timer.secs(cta::utils::Timer::resetCounter);
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
+        
+        // Special treatment for 1st block. If disk failed to provide anything, we can skip the file
+        // by leaving a placeholder on the tape (at minimal tape space cost), so we can continue
+        // the tape session (and save a tape mount!).
+        if (firstBlock && mb->isFailed()) {
+          currentErrorToCount = "Error_tapeWriteData";
+          const char blank[]="This file intentionally left blank: leaving placeholder after failing to read from disk.";
+          output->write(blank, sizeof(blank));
+          m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
+          watchdog.notify(sizeof(blank));
+          currentErrorToCount = "Error_tapeWriteTrailer";
+          output->close();
+          currentErrorToCount = "";
+          // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
+          throw Skip(mb->errorMsg());
+        }
+        firstBlock = false;
         
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb,memBlockId,lc);
@@ -130,7 +148,8 @@ namespace daemon {
       m_archiveJob->tapeFile.checksumType = "ADLER32";
       { 
         std::stringstream cs;
-        cs << "0X" << std::hex << std::noshowbase << std::uppercase << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
+        cs << "0X" << std::hex << std::noshowbase << std::uppercase 
+            << std::setfill('0') << std::setw(8) << (uint32_t)ckSum;
         m_archiveJob->tapeFile.checksumValue = cs.str();
       }
       m_archiveJob->tapeFile.compressedSize = m_taskStats.dataVolume;
@@ -152,7 +171,23 @@ namespace daemon {
       // and go into a degraded mode operation.
       throw;
     }
-    catch(const cta::exception::Exception& e){
+    catch(const Skip& s) {
+      // We failed to read anything from the file. We can get rid of any block from the queue to
+      // recycle them, and pass the report to the report packer. After than, we can carry on with 
+      // the write session.
+      circulateMemBlocks();
+      watchdog.addToErrorCount("Info_fileSkipped");
+      m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
+      m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
+      m_taskStats.filesCount ++;
+      // Record the fSeq in the tape session
+      session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+      reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
+      m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
+      m_taskStats.totalTime = localTime.secs();
+      // Log the successful transfer      
+      logWithStats(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.", lc);
+    } catch(const cta::exception::Exception& e){
       //we can end up there because
       //we failed to open the WriteFile
       //we received a bad block or a block written failed

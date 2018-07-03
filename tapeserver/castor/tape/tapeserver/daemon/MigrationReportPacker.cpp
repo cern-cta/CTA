@@ -65,6 +65,20 @@ std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc
   m_fifo.push(rep.release());
 }
 //------------------------------------------------------------------------------
+//reportSkippedJob
+//------------------------------------------------------------------------------ 
+void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
+    cta::log::LogContext& lc) {
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
+      " " + failure;
+  std::unique_ptr<Report> rep(new ReportSkipped(std::move(skippedArchiveJob), failureLog));
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReporSkipped");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
+  cta::threading::MutexLocker ml(m_producterProtection);
+  m_fifo.push(rep.release());
+}
+//------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
@@ -168,6 +182,28 @@ void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& reportPacker){
   reportPacker.m_successfulArchiveJobs.push(std::move(m_successfulArchiveJob));
+}
+
+//------------------------------------------------------------------------------
+//reportSkipped:execute
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& reportPacker) {
+  // We have no successful file to add, but we should report the failure for the file.
+  {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("failureLog", m_failureLog)
+          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
+  }
+  try {
+    m_skippedArchiveJob->failed(m_failureLog, reportPacker.m_lc);
+  } catch (cta::exception::Exception & ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue())
+          .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+    reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
+  }
 }
 
 //------------------------------------------------------------------------------

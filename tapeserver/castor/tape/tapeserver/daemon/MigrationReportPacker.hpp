@@ -59,6 +59,14 @@ public:
   virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc);
   
   /**
+   * Create into the MigrationReportPacker a report for a skipped file. We left a placeholder on tape, so
+   * writing can carry on, but this fSeq holds no data. In the mean time, the job has to count a failure.
+   * @param skippedArchiveJob the failed file
+   * @param ex the reason for the failure
+   * @param lc log context provided by the calling thread.
+   */
+  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure, cta::log::LogContext & lc);
+  /**
    * Create into the MigrationReportPacker a report for the failled migration
    * of migratedFile
    * @param migratedFile the file which failled 
@@ -136,6 +144,19 @@ private:
     m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
     void execute(MigrationReportPacker& reportPacker) override;
   };
+  
+  class ReportSkipped : public Report{
+    const std::string m_failureLog;
+    /**
+     * The failed archive job we skipped
+     */
+    std::unique_ptr<cta::ArchiveJob> m_skippedArchiveJob;
+  public:
+    ReportSkipped(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, std::string &failureLog):
+    m_failureLog(failureLog), m_skippedArchiveJob(std::move(skippedArchiveJob)) {}
+    void execute(MigrationReportPacker& reportPacker) override;
+  };
+  
   class ReportTestGoingToEnd :  public Report {
   public:
     ReportTestGoingToEnd() {}

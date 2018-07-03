@@ -78,6 +78,14 @@ public:
    MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
    cta::log::LogContext&  lc, cta::utils::Timer & timer);
   
+private:
+  /** Utility class used in execute()'s implementation*/
+  class Skip: public std::string {
+  public:
+    template<typename T> Skip(const T&t): std::string(t) {}
+  };
+  
+public:
   /**
    * Used to reclaim used memory blocks
    * @return the recyclable memory block

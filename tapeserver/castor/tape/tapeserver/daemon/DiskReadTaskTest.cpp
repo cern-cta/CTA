@@ -52,8 +52,10 @@ namespace unitTests{
   
   struct MockMigrationReportPacker : public MigrationReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) override {}
+    void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
+        cta::log::LogContext& lc) override {}
     void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, 
-      const cta::exception::Exception& ex, cta::log::LogContext & lc) override {}
+        const cta::exception::Exception& ex, cta::log::LogContext & lc) override {}
     void reportEndOfSession(cta::log::LogContext & lc) override {}
     void reportEndOfSessionWithErrors(const std::string msg, int error_code, cta::log::LogContext & lc) override {}
     void disableBulk() override {}
