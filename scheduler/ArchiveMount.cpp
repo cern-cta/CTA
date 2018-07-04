@@ -17,6 +17,7 @@
  */
 
 #include "scheduler/ArchiveMount.hpp"
+#include "common/make_unique.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -124,8 +125,8 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 // reportJobsBatchWritten
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
-  cta::log::LogContext& logContext) {
-  std::set<cta::catalogue::TapeItemWrittenPointer> tapeFilesWritten;
+    std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) {
+  std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
   std::unique_ptr<cta::ArchiveJob> job;
   try{
@@ -139,19 +140,25 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
       job = std::move(successfulArchiveJobs.front());
       successfulArchiveJobs.pop();
       if (!job.get()) continue;        
-      tapeFilesWritten.emplace(job->validateAndGetTapeFileWritten().release());
+      tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
       files++;
       bytes+=job->archiveFile.fileSize;
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
       job.reset();
     }
+    while (!skippedFiles.empty()) {
+      auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
+      *tiwup = skippedFiles.front();
+      skippedFiles.pop();
+      tapeItemsWritten.emplace(tiwup.release());
+    }
     utils::Timer t;
     // Note: former content of ReportFlush::updateCatalogueWithTapeFilesWritten
-    updateCatalogueWithTapeFilesWritten(tapeFilesWritten);
+    updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogueTime=t.secs(utils::Timer::resetCounter);
     {
       cta::log::ScopedParamContainer params(logContext);
-      params.add("tapeFilesWritten", tapeFilesWritten.size())
+      params.add("tapeFilesWritten", tapeItemsWritten.size())
             .add("files", files)
             .add("bytes", bytes)
             .add("catalogueTime", catalogueTime);

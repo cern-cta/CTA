@@ -50,7 +50,7 @@ namespace cta {
       }
       
       void reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
-        cta::log::LogContext& logContext) override {
+          std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) override {
         try {
           std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
           std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
@@ -63,6 +63,12 @@ namespace cta {
             tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten());
             validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
             job.reset(nullptr);
+          }
+          while (!skippedFiles.empty()) {
+            auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
+            *tiwup = skippedFiles.front();
+            skippedFiles.pop();
+            tapeItemsWritten.emplace(tiwup.release());
           }
           m_catalogue.filesWrittenToTape(tapeItemsWritten);
           for (auto &job: validatedSuccessfulArchiveJobs) {

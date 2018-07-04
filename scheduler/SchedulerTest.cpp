@@ -467,8 +467,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
-    archiveMount->reportJobsBatchWritten(sDBarchiveJobBatch, lc);
+    archiveMount->reportJobsBatchWritten(sDBarchiveJobBatch, sTapeItems, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();

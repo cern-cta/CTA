@@ -131,7 +131,8 @@ namespace cta {
      * @param successfulArchiveJobs the jobs to report
      * @param logContext
      */
-    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs, cta::log::LogContext &logContext);
+    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
+        std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext &logContext);
     
     /**
      * Returns the tape pool of the tape to be mounted.

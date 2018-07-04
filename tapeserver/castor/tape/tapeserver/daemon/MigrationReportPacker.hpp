@@ -254,6 +254,11 @@ private:
    * The successful archive jobs to be reported when flushing
    */
   std::queue<std::unique_ptr<cta::ArchiveJob> > m_successfulArchiveJobs;
+  
+  /**
+   * The skipped files (or placeholders list)
+   */
+  std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
 };
 
 }}}}

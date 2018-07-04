@@ -1434,6 +1434,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.requester.group = "group";
       ar.fileSize = 1000;
       ar.diskFileID = "x";
+      ar.diskFileID += std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner = "z";
       ar.diskFileInfo.group = "g";
@@ -1442,7 +1443,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
       // Delete the even files: the migration will work for half of them.
-      if (fseq % 2) sourceFiles.pop_back();
+      if (!(fseq % 2)) sourceFiles.pop_back();
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
@@ -1483,6 +1484,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     count++;
   }
   ASSERT_EQ(5, count);
+  cta::catalogue::TapeSearchCriteria tapeCriteria;
+  tapeCriteria.vid=s_vid;
+  auto tapeInfo = catalogue.getTapes(tapeCriteria);
+  ASSERT_EQ(1, tapeInfo.size());
+  ASSERT_EQ(10, tapeInfo.begin()->lastFSeq);
+  ASSERT_EQ(5*1000, tapeInfo.begin()->dataOnTapeInBytes);
+      
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";

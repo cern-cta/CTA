@@ -204,6 +204,11 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
   }
+  reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
+  auto & tapeItem = reportPacker.m_skippedFiles.back();
+  tapeItem.fSeq = m_skippedArchiveJob->tapeFile.fSeq;
+  tapeItem.tapeDrive = reportPacker.m_archiveMount->getDrive();
+  tapeItem.vid = m_skippedArchiveJob->tapeFile.vid;
 }
 
 //------------------------------------------------------------------------------
@@ -236,11 +241,12 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // We can receive double flushes when the periodic flush happens
     // right before the end of session (which triggers also a flush)
     // We refrain from sending an empty report to the client in this case.
-    if (reportPacker.m_successfulArchiveJobs.empty()) {
+    if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    reportPacker.m_archiveMount->reportJobsBatchWritten(reportPacker.m_successfulArchiveJobs, reportPacker.m_lc);
+    reportPacker.m_archiveMount->reportJobsBatchWritten(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, 
+        reportPacker.m_lc);
   } else {
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT,"Received a flush after an error: sending file errors to client");
