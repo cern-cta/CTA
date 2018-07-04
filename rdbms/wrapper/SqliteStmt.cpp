@@ -273,7 +273,10 @@ void SqliteStmt::executeNonQuery() {
     case SQLITE_CONSTRAINT:
       throw exception::DatabaseConstraintError(msg.str());
     default:
-      throw exception::Exception(msg.str());
+      if ((stepRc & 0xFF) == SQLITE_CONSTRAINT)
+        throw exception::DatabaseConstraintError(msg.str());
+      else
+        throw exception::Exception(msg.str());
     }
   }
 
