@@ -34,6 +34,8 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/OracleCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
@@ -111,6 +113,15 @@ public:
     }
   };
 
+#undef USE_ORACLE_CATALOGUE
+#ifdef USE_ORACLE_CATALOGUE
+  class OracleCatalogueExposingConnection: public cta::catalogue::OracleCatalogue {
+  public:
+    template <typename...Ts> OracleCatalogueExposingConnection(Ts&...args): cta::catalogue::OracleCatalogue(args...) {}
+    cta::rdbms::Conn getConn() { return m_connPool.getConn(); }
+  };
+#endif
+  
     virtual void SetUp() {
     using namespace cta;
 
@@ -119,9 +130,26 @@ public:
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     const uint32_t maxTriesToConnect = 1;
+#ifdef USE_ORACLE_CATALOGUE
+    cta::rdbms::Login login=cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
+    
+    m_catalogue = cta::make_unique<OracleCatalogueExposingConnection>(m_dummyLog, login.username, login.password, login.database,
+        nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    try {
+      // If we decide to create an oracle catalogue, we have to prepare it.
+      // This is a striped down version of CreateSchemaCmd.
+      OracleCatalogueExposingConnection & oracleCatalogue = dynamic_cast<OracleCatalogueExposingConnection &>(*m_catalogue);
+      auto conn=oracleCatalogue.getConn();
+      for (auto &name: conn.getTableNames())
+        if (name=="CTA_CATALOGUE") throw cta::exception::Exception("In SetUp(): schema is already populated.");
+      cta::catalogue::OracleCatalogueSchema schema;
+      conn.executeNonQueries(schema.sql);
+    } catch (std::bad_cast &) {}
+#else
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns,
       maxTriesToConnect);
+#endif
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
     
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
@@ -1466,6 +1494,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
+  castorConf.maxBytesBeforeFlush = 9999999;
+  castorConf.maxFilesBeforeFlush = 9999999;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1483,6 +1513,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     pos+=successLog.size();
     count++;
   }
+  //std::cout << logger.getLog() << std::endl;
   ASSERT_EQ(5, count);
   cta::catalogue::TapeSearchCriteria tapeCriteria;
   tapeCriteria.vid=s_vid;
