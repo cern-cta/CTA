@@ -717,9 +717,8 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, fileEvent.archiveFileId);
         
         fileEvents.insert(fileEvent);
-        
+        i++;
       } catch (std::bad_cast&) {}
-      i++;
     }
 
     // Update the tape because all the necessary information is now available
