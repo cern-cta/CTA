@@ -59,7 +59,7 @@ public:
    * Sets the length of the field at the specified index to the length of the
    * specified value.
    *
-   * Please not that this method does not record the specified value.  This
+   * Please note that this method does not record the specified value.  This
    * method only stores the length of the value.
    *
    * This method tag dispatches using std::is_integral.
@@ -119,7 +119,7 @@ private:
    * Sets the length of the field at the specified index to the length of the
    * specified value.
    *
-   * Please not that this method does not record the specified value.  This
+   * Please note that this method does not record the specified value.  This
    * method only stores the length of the value.
    *
    * The third unnamed parameter of this method is used to implement tag
@@ -136,7 +136,7 @@ private:
    * Sets the length of the field at the specified index to the length of the
    * specified value.
    *
-   * Please not that this method does not record the specified value.  This
+   * Please note that this method does not record the specified value.  This
    * method only stores the length of the value.
    *
    * The third unnamed parameter of this method is used to implement tag
