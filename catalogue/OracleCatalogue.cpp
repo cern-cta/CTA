@@ -728,6 +728,9 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
+    // If we had only placeholders and no file recorded, we are done.
+    if (fileEvents.empty()) return;
+    
     // Create the archive file entries, skipping those that already exist
     idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, fileEvents);
 
