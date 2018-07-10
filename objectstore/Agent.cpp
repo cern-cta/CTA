@@ -156,19 +156,6 @@ void cta::objectstore::Agent::addToOwnership(std::string name) {
 void cta::objectstore::Agent::removeFromOwnership(std::string name) {
   checkPayloadWritable();
   serializers::removeString(m_payload.mutable_ownedobjects(), name);
-  /*
-  bool found;
-  do {
-    found = false;
-    for (int i=0; i<m_payload.mutable_ownedobjects()->size(); i++) {
-      if (name == *m_payload.mutable_ownedobjects(i)) {
-        found = true;
-        m_payload.mutable_ownedobjects()->SwapElements(i, m_payload.mutable_ownedobjects()->size()-1);
-        m_payload.mutable_ownedobjects()->RemoveLast();
-        break;
-      }
-    }
-  } while (found);*/
 }
 
 std::list<std::string> 
