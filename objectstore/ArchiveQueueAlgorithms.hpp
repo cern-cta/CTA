@@ -32,7 +32,7 @@ public:
   static const std::string                    c_containerTypeName; //= "ArchiveQueue";
   static const std::string                    c_identifyerType; // = "tapepool";
   struct InsertedElement {
-    std::unique_ptr<ArchiveRequest> archiveRequest;
+    std::shared_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::MountPolicy mountPolicy;
@@ -66,6 +66,9 @@ public:
     log::LogContext & lc);
   
   static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
+  
+  static void addReferencesIfNecessaryAndCommit(Container & cont, InsertedElement::list & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc);
   
   static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures);
