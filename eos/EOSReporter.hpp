@@ -29,14 +29,13 @@ const uint16_t CTA_EOS_QUERY_TIMEOUT = 15; // Timeout in seconds that is rounded
 class EOSReporter: public DiskReporter, public XrdCl::ResponseHandler {
 public:
   EOSReporter(const std::string & hostURL, const std::string & queryValue, std::promise<void> &reporterState);
-  void reportArchiveFullyComplete() override;
   void asyncReportArchiveFullyComplete() override;
 private:
   XrdCl::FileSystem m_fs;
   std::string m_query;
   std::promise<void> &m_reporterState;
-  virtual void HandleResponse(XrdCl::XRootDStatus *status,
-                              XrdCl::AnyObject    *response);
+  void HandleResponse(XrdCl::XRootDStatus *status,
+                      XrdCl::AnyObject    *response) override;
 };
 
 }} // namespace cta::disk

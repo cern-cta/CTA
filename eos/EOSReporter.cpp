@@ -26,18 +26,6 @@ namespace cta { namespace eos {
 EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue, std::promise<void>& reporterState):
   m_fs(hostURL), m_query(queryValue), m_reporterState(reporterState) {}
 
-
-void EOSReporter::reportArchiveFullyComplete() {
-  auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
-  XrdCl::Buffer arg (m_query.size());
-  arg.FromString(m_query);
-  XrdCl::Buffer * resp = nullptr;
-  XrdCl::XRootDStatus status=m_fs.Query(qcOpaque, arg, resp, CTA_EOS_QUERY_TIMEOUT);
-  delete (resp);
-  cta::exception::XrootCl::throwOnError(status,
-      "In EOSReporter::reportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
-} 
-
 void EOSReporter::asyncReportArchiveFullyComplete() {
   auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
   XrdCl::Buffer arg (m_query.size());
