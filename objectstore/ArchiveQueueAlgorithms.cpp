@@ -46,6 +46,21 @@ void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, Inse
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
 
+void ContainerTraits<ArchiveQueue>::addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMemCont, 
+    AgentReference& agentRef, log::LogContext& lc) {
+  std::list<ArchiveQueue::JobToAdd> jobsToAdd;
+  for (auto & e: elemMemCont) {
+    ElementDescriptor jd;
+    jd.copyNb = e.copyNb;
+    jd.tapePool = cont.getTapePool();
+    jd.owner = cont.getAddressIfSet();
+    ArchiveRequest & ar = *e.archiveRequest;
+    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
+        e.mountPolicy, time(nullptr)});
+  }
+  cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
+}
+
 void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, OpFailure<InsertedElement>::list& elementsOpFailures) {
   std::list<std::string> elementsToRemove;
   for (auto & eof: elementsOpFailures) {
