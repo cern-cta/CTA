@@ -91,6 +91,12 @@ public:
   };
   typedef std::set<ElementAddress> ElementsToSkipSet;
   
+  class OwnershipSwitchFailure: public cta::exception::Exception {
+  public:
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    typename OpFailure<InsertedElement>::list failedElements;
+  };
+  
   static void trimContainerIfNeeded(Container & cont);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
@@ -102,7 +108,10 @@ public:
     log::LogContext & lc);
   static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
     log::LogContext & lc);
-  static void addReferencesAndCommit(Container & cont, ElementMemoryContainer & elemMemCont);
+  static void addReferencesAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
+  static void addReferencesIfNecessaryAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
   void removeReferencesAndCommit(Container & cont, typename OpFailure<InsertedElement>::list & elementsOpFailures);
   void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
@@ -121,12 +130,13 @@ public:
     
   typedef typename ContainerTraits<C>::InsertedElement InsertedElement;
   typedef typename ContainerTraits<C>::PopCriteria PopCriteria;
+  typedef typename ContainerTraits<C>::OwnershipSwitchFailure OwnershipSwitchFailure;
     
-  /** Reference objects in the container and then switch their ownership them. Objects 
-   * are provided existing and owned by algorithm's agent. Returns a list of 
-   * @returns list of elements for which the addition or ownership switch failed.
-   * @throws */
+  /** Reference objects in the container and then switch their ownership. Objects 
+   * are provided existing and owned by algorithm's agent.
+   */
   void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+      const typename ContainerTraits<C>::ContainerIdentifyer & prevContId,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
@@ -135,7 +145,7 @@ public:
     ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
     ContainerTraits<C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        m_agentReference.getAgentAddress(), timingList, t, lc);
+        prevContId, timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
@@ -166,6 +176,69 @@ public:
       throw failureEx;
     }
   }
+  
+  /** Reference objects in the container if needed and then switch their ownership (if needed). Objects 
+   * are expected to be owned by agent, and not listed in the container but situations might vary.
+   * This function is typically used by the garbage collector. We do noe take care of dereferencing
+   * the object from the caller.
+   */
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+      typename ContainerTraits<C>::ContainerAddress & previousOwnerAddress,
+      typename ContainerTraits<C>::ContainerAddress & contAddress,
+      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
+    C cont(m_backend);
+    ScopedExclusiveLock contLock;
+    log::TimingList timingList;
+    utils::Timer t;
+    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    contAddress = cont.getAddressIfSet();
+    auto contSummaryBefore = ContainerTraits<C>::getContainerSummary(cont);
+    timingList.insertAndReset("queueLockFetchTime", t);
+    ContainerTraits<C>::addReferencesIfNecessaryAndCommit(cont, elements, m_agentReference, lc);
+    timingList.insertAndReset("queueProcessAndCommitTime", t);
+    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
+        previousOwnerAddress, timingList, t, lc);
+    timingList.insertAndReset("requestsUpdatingTime", t);
+    // If ownership switching failed, remove failed object from queue to not leave stale pointers.
+    if (failedOwnershipSwitchElements.size()) {
+      ContainerTraits<C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
+      timingList.insertAndReset("queueRecommitTime", t);
+    }
+    // We are now done with the container.
+    auto contSummaryAfter = ContainerTraits<C>::getContainerSummary(cont);
+    contLock.release();
+    timingList.insertAndReset("queueUnlockTime", t);
+    log::ScopedParamContainer params(lc);
+    params.add("C", ContainerTraits<C>::c_containerTypeName)
+          .add(ContainerTraits<C>::c_identifyerType, contId)
+          .add("containerAddress", cont.getAddressIfSet());
+    contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
+    timingList.addToLog(params);
+    if (failedOwnershipSwitchElements.empty()) {
+      // That's it, we're done.
+      lc.log(log::INFO, "In ContainerAlgorithms::referenceAndSwitchOwnershipIfNecessary(): Requeued a batch of elements.");
+      return;
+    } else {
+      // Bad case: just return the failure set to the caller.
+      typename ContainerTraits<C>::OwnershipSwitchFailure failureEx(
+          "In ContainerAlgorithms<>::referenceAndSwitchOwnershipIfNecessar(): failed to switch ownership of some elements");
+      failureEx.failedElements = failedOwnershipSwitchElements;
+      params.add("errorCount", failedOwnershipSwitchElements.size());
+      lc.log(log::WARNING, "In ContainerAlgorithms::referenceAndSwitchOwnershipIfNecessary(): "
+          "Encountered problems while requeuing a batch of elements");
+      throw failureEx;
+    }
+  }
+  
+  /**
+   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
+   * (most cases except garbage collection).
+   */
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
+    referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
+  }
+  
   
   typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
       typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {

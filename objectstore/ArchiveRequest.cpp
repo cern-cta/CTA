@@ -474,10 +474,13 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint16
         auto *jl=payload.mutable_jobs();
         for (auto j=jl->begin(); j!=jl->end(); j++) {
           if (j->copynb() == copyNumber) {
-            if (j->owner() != previousOwner) {
-              throw Backend::WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
+            // The owner might already be the right one (in garbage collection cases), in which case, it's job done.
+            if (j->owner() != owner) {
+              if (j->owner() != previousOwner) {
+                throw Backend::WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): Job not owned.");
+              }
+              j->set_owner(owner);
             }
-            j->set_owner(owner);
             // We also need to gather all the job content for the user to get in-memory
             // representation.
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
