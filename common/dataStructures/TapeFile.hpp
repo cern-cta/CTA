@@ -64,7 +64,7 @@ struct TapeFile {
    * The copy number of the file. Copy numbers start from 1. Copy number 0 
    * is an invalid copy number. 
    */
-  uint64_t copyNb;
+  uint16_t copyNb;
   /**
    * The time the file recorded in the catalogue. 
    */
