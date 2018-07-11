@@ -368,8 +368,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     ar.setArchiveFile(aFile);
-    ar.addJob(1, "TapePool0", tpAddr[0], 1, 1);
-    ar.addJob(2, "TapePool1", tpAddr[1], 1, 1);
+    ar.addJob(1, "TapePool0", agrA.getAgentAddress(), 1, 1);
+    ar.addJob(2, "TapePool1", agrA.getAgentAddress(), 1, 1);
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
@@ -398,6 +398,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
       aq.addJobsAndCommit(jta, agentRef, lc);
+      ar.setJobOwner(1, aq.getAddressIfSet());
+      ar.commit();
     }
     if (pass < 4) { pass++; continue; }
     // TODO: partially migrated or selected
@@ -417,6 +419,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
       aq.addJobsAndCommit(jta, agentRef, lc);
+      ar.setJobOwner(2, aq.getAddressIfSet());
+      ar.commit();
     }
     if (pass < 5) { pass++; continue; }
     // The step is now deprecated
