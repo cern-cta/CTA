@@ -82,12 +82,6 @@ public:
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
-  // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setAllJobsLinkingToTapePool();
-  // Mark all the jobs as being deleted, in case of a cancellation
-  void setAllJobsFailed();
-  // Mark all the jobs as pending deletion from NS.
-  void setAllJobsPendingNSdeletion();
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncOwnerUpdater {
@@ -104,9 +98,6 @@ public:
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
   AsyncOwnerUpdater * asyncUpdateOwner(uint16_t copyNumber, const std::string & owner, const std::string &previousOwner);
-  // Request management ========================================================
-  void setSuccessful();
-  void setFailed();
   // ===========================================================================
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();

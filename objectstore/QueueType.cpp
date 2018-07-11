@@ -1,4 +1,3 @@
-
 /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
