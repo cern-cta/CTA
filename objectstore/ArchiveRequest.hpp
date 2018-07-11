@@ -24,6 +24,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/UserIdentity.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
+#include "QueueType.hpp"
 #include "common/Timer.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
@@ -42,9 +43,12 @@ public:
   ArchiveRequest(Backend & os);
   ArchiveRequest(GenericObject & go);
   void initialize();
+  // Ownership of archive requests is managed per job. Object level owner has no meaning.
+  std::string getOwner() = delete;
+  void setOwner(const std::string &) = delete;
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & archivequeueaddress, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+    const std::string & initialOwner, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   void setJobSelected(uint16_t copyNumber, const std::string & owner);
   void setJobPending(uint16_t copyNumber);
   bool setJobSuccessful(uint16_t copyNumber); //< returns true if this is the last job
@@ -61,10 +65,8 @@ public:
   std::string statusToString(const serializers::ArchiveJobStatus & status);
   bool finishIfNecessary(log::LogContext & lc);/**< Handling of the consequences of a job status change for the entire request.
                                                 * This function returns true if the request got finished. */
-  // Mark all jobs as pending mount (following their linking to a tape pool)
-  void setAllJobsLinkingToArchiveQueue();
-  // Mark all the jobs as being deleted, in case of a cancellation
-  void setAllJobsFailed();
+  CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
+  QueueType getJobQueueType(uint16_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint16_t copyNumber, const std::string & owner);
@@ -110,6 +112,10 @@ public:
 
   // Get a job owner
   std::string getJobOwner(uint16_t copyNumber);
+
+  // Utility to convert status to queue type
+  static QueueType getQueueType(const serializers::ArchiveJobStatus &status);
+
   // Request management ========================================================
   void setSuccessful();
   void setFailed();

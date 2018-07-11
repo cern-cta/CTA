@@ -51,9 +51,9 @@ public:
   template <class Element>
   static ElementAddress getElementAddress(const Element & e) { return e.retrieveRequest->getAddressIfSet(); }
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
-    log::LogContext & lc) {
-    Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef,
+      const ContainerIdentifyer & contId, QueueType queueType, log::LogContext & lc) {
+    Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
   }
   
   static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,

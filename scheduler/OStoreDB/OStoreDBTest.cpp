@@ -141,7 +141,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
     RootEntry re(osdbi.getBackend());
     ScopedSharedLock rel(re);
     re.fetch();
-    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::objectstore::QueueType::LiveJobs);
+    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::objectstore::QueueType::JobsToTransfer);
     rel.release();
     ArchiveQueue aq(aqAddr, osdbi.getBackend());
     ScopedSharedLock aql(aq);

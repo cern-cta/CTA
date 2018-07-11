@@ -59,11 +59,11 @@ public:
   template <class Element>
   static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
-    log::LogContext & lc);
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef,
+      const ContainerIdentifyer & contId, QueueType queueType, log::LogContext & lc);
   
-  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
-    log::LogContext & lc);
+  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock,
+      const ContainerIdentifyer & cId, QueueType queueType, log::LogContext & lc);
   
   static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc);

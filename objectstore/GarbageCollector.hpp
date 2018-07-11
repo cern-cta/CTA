@@ -22,6 +22,7 @@
 #include "Agent.hpp"
 #include "AgentWatchdog.hpp"
 #include "AgentRegister.hpp"
+#include "QueueType.hpp"
 #include "common/log/LogContext.hpp"
 
 /**
@@ -54,8 +55,8 @@ public:
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
   struct OwnedObjectSorter {
-    std::map<std::string, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
-    std::map<std::string, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
+    std::map<std::tuple<std::string, QueueType>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    std::map<std::tuple<std::string, QueueType>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
     /// Fill up the fetchedObjects with objects of interest.
     void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,

@@ -1,3 +1,4 @@
+
 /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
@@ -16,11 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <string>
+#include "QueueType.hpp"
 
 namespace cta { namespace objectstore {
-enum class QueueType { JobsToTransfer, FailedJobs, JobsToReport };
-std::string toString(QueueType queueType);
-}} // namespace cta::objectstore
+
+std::string toString(QueueType queueType) {
+  switch (queueType) {
+  case QueueType::FailedJobs:
+    return "failedJobs";
+  case QueueType::JobsToReport:
+    return "jobsToReport";
+  case QueueType::JobsToTransfer:
+    return "jobsToTranfer";
+  default:
+    return "Unknown queue type.";
+  }
+}
+
+}} //namespace cta::objectstore

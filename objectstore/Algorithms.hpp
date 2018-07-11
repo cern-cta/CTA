@@ -104,10 +104,10 @@ public:
   template <class Element>
   static ElementAddress getElementAddress(const Element & e);
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef, const ContainerIdentifyer & cId,
-    log::LogContext & lc);
-  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
-    log::LogContext & lc);
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef,
+      const ContainerIdentifyer & cId, QueueType queueType, log::LogContext & lc);
+  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock,
+      const ContainerIdentifyer & cId, QueueType queueType, log::LogContext & lc);
   static void addReferencesAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc);
   static void addReferencesIfNecessaryAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
@@ -136,13 +136,13 @@ public:
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
-      const typename ContainerTraits<C>::ContainerIdentifyer & prevContId,
+      QueueType queueType, const typename ContainerTraits<C>::ContainerIdentifyer & prevContId,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
     ContainerTraits<C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
         prevContId, timingList, t, lc);
@@ -182,7 +182,7 @@ public:
    * This function is typically used by the garbage collector. We do noe take care of dereferencing
    * the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifyer & contId, QueueType queueType,
       typename ContainerTraits<C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<C>::ContainerAddress & contAddress,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -190,7 +190,7 @@ public:
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
     contAddress = cont.getAddressIfSet();
     auto contSummaryBefore = ContainerTraits<C>::getContainerSummary(cont);
     timingList.insertAndReset("queueLockFetchTime", t);
@@ -234,14 +234,14 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId, QueueType queueType,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
-    referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
+    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
   }
   
   
   typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
-      typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {
+      QueueType queueType, typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {
     // Prepare the return value
     typename ContainerTraits<C>::PoppedElementsBatch ret;
     typename ContainerTraits<C>::PopCriteria unfulfilledCriteria = popCriteria;
@@ -258,7 +258,7 @@ public:
       iterationCount++;
       ScopedExclusiveLock contLock;
       try {
-        ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
+        ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, queueType, lc);
       } catch (typename ContainerTraits<C>::NoSuchContainer &) {
         localTimingList.insertAndReset("findLockFetchQueueTime", t);
         timingList+=localTimingList;

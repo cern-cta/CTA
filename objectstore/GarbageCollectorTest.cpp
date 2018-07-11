@@ -341,7 +341,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     re.fetch();
     std::stringstream tapePoolName;
     tapePoolName << "TapePool" << i;
-    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::QueueType::LiveJobs, lc);
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::QueueType::JobsToTransfer, lc);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -369,8 +369,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aFile.storageClass = "sc";
     ar.setArchiveFile(aFile);
     ar.addJob(1, "TapePool0", tpAddr[0], 1, 1);
-    ar.addJob(2, "TapePool1", tpAddr[1], 1, 1);    
-    ar.setOwner(agA.getAddressIfSet());
+    ar.addJob(2, "TapePool1", tpAddr[1], 1, 1);
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
@@ -381,13 +380,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }
-    // - Change the jobs statuses from PendingNSCreation to LinkingToArchiveQueue.
-    // They will be automatically connected to the tape pool by the garbage 
-    // collector from that moment on.
-    {
-      ar.setAllJobsLinkingToArchiveQueue();
-      ar.commit();
-    }
+    // The step is now deprecated
     if (pass < 3) { pass++; continue; }
     // - Referenced in the first tape pool
     {
@@ -426,11 +419,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       aq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }
-    // - Still marked a not owned but referenced in the agent
-    {
-      ar.setOwner("");
-      ar.commit();
-    }
+    // The step is now deprecated
     break;
   }
   // Create the garbage collector and run it twice.
@@ -470,7 +459,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   std::list<std::string> tapePools = { "TapePool0", "TapePool1" };
   for (auto & tp: tapePools) {
     // Empty queue
-    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp, cta::objectstore::QueueType::LiveJobs), be);
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp, cta::objectstore::QueueType::JobsToTransfer), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
     std::list<std::string> ajtr;
@@ -480,7 +469,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aq.removeJobsAndCommit(ajtr);
     aql.release();
     // Remove queues from root
-    re.removeArchiveQueueAndCommit(tp, cta::objectstore::QueueType::LiveJobs, lc);
+    re.removeArchiveQueueAndCommit(tp, cta::objectstore::QueueType::JobsToTransfer, lc);
   }
 
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
@@ -540,7 +529,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     re.fetch();
     std::stringstream vid;
     vid << "Tape" << i;
-    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::QueueType::LiveJobs, lc);
+    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::QueueType::JobsToTransfer, lc);
     cta::objectstore::RetrieveQueue rq(tAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -653,7 +642,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   std::list<std::string> retrieveQueues = { "Tape0", "Tape1" };
   for (auto & vid: retrieveQueues) {
     // Empty queue
-    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::QueueType::LiveJobs), be);
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::QueueType::JobsToTransfer), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
     std::list<std::string> jtrl;
@@ -663,7 +652,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rq.removeJobsAndCommit(jtrl);
     rql.release();
     // Remove queues from root
-    re.removeRetrieveQueueAndCommit(vid, cta::objectstore::QueueType::LiveJobs, lc);
+    re.removeRetrieveQueueAndCommit(vid, cta::objectstore::QueueType::JobsToTransfer, lc);
   }
 
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));

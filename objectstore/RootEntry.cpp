@@ -67,11 +67,11 @@ bool RootEntry::isEmpty() {
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
     return false;
-  for (auto &qt: {QueueType::LiveJobs, QueueType::FailedJobs, QueueType::JobsToReport}) {
+  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
     if (archiveQueuePointers(qt).size())
       return false;
   }
-  for (auto &qt: {QueueType::LiveJobs, QueueType::FailedJobs}) {
+  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
     if (retrieveQueuePointers(qt).size())
       return false;
   }
@@ -101,7 +101,7 @@ void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference 
 
 const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(QueueType queueType) {
   switch(queueType) {
-  case QueueType::LiveJobs:
+  case QueueType::JobsToTransfer:
     return m_payload.livearchivejobsqueuepointers();
   case QueueType::JobsToReport:
     return m_payload.archivejobstoreportqueuepointers();
@@ -114,7 +114,7 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
 
 ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(QueueType queueType) {
   switch(queueType) {
-  case QueueType::LiveJobs:
+  case QueueType::JobsToTransfer:
     return m_payload.mutable_livearchivejobsqueuepointers();
   case QueueType::JobsToReport:
     return m_payload.mutable_archivejobstoreportqueuepointers();
@@ -127,8 +127,10 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Arch
 
 const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(QueueType queueType) {
   switch(queueType) {
-  case QueueType::LiveJobs:
+  case QueueType::JobsToTransfer:
     return m_payload.liveretrievejobsqueuepointers();
+  case QueueType::JobsToReport:
+    return m_payload.retrievefailurestoreportqueuepointers();
   case QueueType::FailedJobs:
     return m_payload.failedretrievejobsqueuepointers();
   default:
@@ -138,8 +140,10 @@ const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::Retr
 
 ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(QueueType queueType) {
   switch(queueType) {
-  case QueueType::LiveJobs:
+  case QueueType::JobsToTransfer:
     return m_payload.mutable_liveretrievejobsqueuepointers();
+  case QueueType::JobsToReport:
+    return m_payload.mutable_retrievefailurestoreportqueuepointers();
   case QueueType::FailedJobs:
     return m_payload.mutable_failedretrievejobsqueuepointers();
   default:
@@ -161,8 +165,6 @@ namespace {
   }
 }
 
-
-
 std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, 
     QueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
@@ -170,29 +172,27 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   try {
     return serializers::findElement(archiveQueuePointers(queueType), tapePool).address();
   } catch (serializers::NotFound &) {}
-  // Insert the archive queue, then its pointer, with agent intent log update
-  // First generate the intent. We expect the agent to be passed locked.
-  std::string archiveQueueAddress = agentRef.nextId("ArchiveQueue");
-  agentRef.addToOwnership(archiveQueueAddress, m_objectStore);
-  // Then create the tape pool queue object
-  ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  aq.initialize(tapePool);
-  aq.setOwner(agentRef.getAgentAddress());
-  aq.setBackupOwner("root");
-  aq.insert();
-  ScopedExclusiveLock tpl(aq);
-  // Now move the tape pool's ownership to the root entry
+  // Insert the archive queue pointer in the root entry, then the queue.
+  std::string archiveQueueNameHeader = "ArchiveQueue";
+  switch(queueType) {
+  case QueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
+  case QueueType::JobsToReport: archiveQueueNameHeader+="ToReport"; break;
+  case QueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  default: break;
+  }
+  std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
+  // Now move create a reference the tape pool's ownership to the root entry
   auto * tpp = mutableArchiveQueuePointers(queueType)->Add();
   tpp->set_address(archiveQueueAddress);
   tpp->set_name(tapePool);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
-  // Now update the tape pool's ownership.
+  // Then insert the queue object
+  ArchiveQueue aq(archiveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  aq.initialize(tapePool);
   aq.setOwner(getAddressIfSet());
   aq.setBackupOwner(getAddressIfSet());
-  aq.commit();
-  // ... and clean up the agent
-  agentRef.removeFromOwnership(archiveQueueAddress, m_objectStore);
+  aq.insert();
   return archiveQueueAddress;
 }
 
@@ -303,27 +303,26 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // Insert the retrieve queue, then its pointer, with agent intent log update
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
-  std::string retrieveQueueAddress = agentRef.nextId(std::string("RetrieveQueue-")+vid);
-  agentRef.addToOwnership(retrieveQueueAddress, m_objectStore);
-  // Then create the tape pool queue object
-  RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
-  rq.initialize(vid);
-  rq.setOwner(agentRef.getAgentAddress());
-  rq.setBackupOwner("root");
-  rq.insert();
-  ScopedExclusiveLock tpl(rq);
-  // Now move the tape pool's ownership to the root entry
+  std::string retrieveQueueNameHeader = "RetrieveQueue";
+  switch(queueType) {
+  case QueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
+  case QueueType::JobsToReport: retrieveQueueNameHeader+="ToReport"; break;
+  case QueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  default: break;
+  }
+  std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);
+  // Reference the queue to the root entry before creation
   auto * rqp = mutableRetrieveQueuePointers(queueType)->Add();
   rqp->set_address(retrieveQueueAddress);
   rqp->set_vid(vid);
   // We must commit here to ensure the tape pool object is referenced.
   commit();
-  // Now update the tape pool's ownership.
+  // Then create the tape pool queue object
+  RetrieveQueue rq(retrieveQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  rq.initialize(vid);
   rq.setOwner(getAddressIfSet());
-  rq.setBackupOwner(getAddressIfSet());
-  rq.commit();
-  // ... and clean up the agent
-  agentRef.removeFromOwnership(retrieveQueueAddress, m_objectStore);
+  rq.setBackupOwner("root");
+  rq.insert();
   return retrieveQueueAddress;
 }
 

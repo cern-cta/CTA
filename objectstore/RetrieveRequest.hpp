@@ -21,6 +21,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "TapeFileSerDeser.hpp"
+#include "QueueType.hpp"
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -46,8 +47,10 @@ public:
     cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
   void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
-  void setJobSelected(uint16_t copyNumber, const std::string & owner);
-  void setJobPending(uint16_t copyNumber);
+  std::string getLastActiveVid();
+  void setFailureReason(const std::string & reason);
+  bool isFailureReported();
+  void setFailureReported();
   class JobDump {
   public:
     uint64_t copyNb;
@@ -74,10 +77,10 @@ public:
     uint64_t maxTotalRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
+  /// Returns queue type depending on the compound statuses of all retrieve requests.
+  QueueType getQueueType();
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
-  bool finishIfNecessary(log::LogContext & lc);                   /**< Handling of the consequences of a job status change for the entire request.
-                                               * This function returns true if the request got finished. */
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
   // Mark all jobs as pending mount (following their linking to a tape pool)
   void setAllJobsLinkingToTapePool();

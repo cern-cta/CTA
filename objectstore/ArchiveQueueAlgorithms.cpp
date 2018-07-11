@@ -27,8 +27,8 @@ const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQ
 const std::string ContainerTraits<ArchiveQueue>::c_identifyerType = "tapepool";
 
 void ContainerTraits<ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
-    const ContainerIdentifyer& contId, log::LogContext& lc) {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
+    const ContainerIdentifyer& contId, QueueType queueType, log::LogContext& lc) {
+  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
 }
 
 void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, InsertedElement::list& elemMemCont,
@@ -125,14 +125,14 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
 }
 
 void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock,
-    const ContainerIdentifyer& cId, log::LogContext& lc) {
+    const ContainerIdentifyer& cId, QueueType queueType, log::LogContext& lc) {
   // Try and get access to a queue.
   size_t attemptCount = 0;
   retry:
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string aqAddress;
-  auto aql = re.dumpArchiveQueues(QueueType::LiveJobs);
+  auto aql = re.dumpArchiveQueues(queueType);
   for (auto & aqp : aql) {
     if (aqp.tapePool == cId)
       aqAddress = aqp.address;
@@ -153,7 +153,7 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      re.removeArchiveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -261,7 +261,7 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Scope
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      re.removeArchiveQueueAndCommit(cId, QueueType::JobsToTransfer, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());

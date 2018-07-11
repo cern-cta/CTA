@@ -94,12 +94,12 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue> archiveAlgos(be, agentRef);
-  archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
+  archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
   // Now get the requests back
   ContainerTraits<ArchiveQueue>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
-  auto popedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
+  auto popedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);
   ASSERT_EQ(popedJobs.summary.files, 10);
 }
 
@@ -161,7 +161,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue>::InsertedElement{cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp,
-        serializers::RetrieveJobStatus::RJS_Pending});
+        serializers::RetrieveJobStatus::RJS_ToTransfer});
     auto & rr=*requests.back().retrieveRequest;
     rr.initialize();
     rr.setRetrieveFileQueueCriteria(rqc);
@@ -176,7 +176,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   }
   ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
-    retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
+    retrieveAlgos.referenceAndSwitchOwnership("VID", QueueType::JobsToTransfer, agentRef.getAgentAddress(), requests, lc);
   } catch (ContainerTraits<RetrieveQueue>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {
