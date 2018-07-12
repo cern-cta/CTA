@@ -145,4 +145,39 @@ public:
   
 };
 
+template<>
+class ContainerTraits<ArchiveQueueToReport>: public ContainerTraits<ArchiveQueue> {
+  class PoppedElementsSummary;
+  class PopCriteria {
+  public:
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+    uint64_t files = 0;
+  };
+  class PoppedElementsSummary {
+  public:
+    uint64_t files = 0;
+    bool operator< (const PopCriteria & pc) {
+      return files < pc.files;
+    }
+    PoppedElementsSummary& operator+= (const PoppedElementsSummary & other) {
+      files += other.files;
+      return *this;
+    }
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
+  };
+
+  class PoppedElementsBatch {
+  public:
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer &);
+  };
+  
+  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
+      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+};
+
+template<>
+class ContainerTraits<ArchiveQueueFailed>: public ContainerTraits<ArchiveQueueToReport> {/* Same same */ };
+
 }} // namespace cta::objectstore

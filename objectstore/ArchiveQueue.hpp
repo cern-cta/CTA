@@ -137,5 +137,15 @@ public:
   // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
   static const uint64_t c_maxShardSize = 25000;
 };
+
+class ArchiveQueueToReport: public ArchiveQueue {
+public:
+  template<typename...Ts> ArchiveQueueToReport(Ts...args): ArchiveQueue(args...) {}
+};
+
+class ArchiveQueueFailed: public ArchiveQueue {
+public:
+  template<typename...Ts> ArchiveQueueFailed(Ts...args): ArchiveQueue(args...) {}
+};
   
 }}

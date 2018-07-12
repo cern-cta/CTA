@@ -83,6 +83,13 @@ void ContainerTraits<ArchiveQueue>::PoppedElementsSummary::addDeltaToLog(const P
         .add("bytesAfter", bytes);
 }
 
+void ContainerTraits<ArchiveQueueToReport>::PoppedElementsSummary::addDeltaToLog(const PoppedElementsSummary& previous,
+    log::ScopedParamContainer& params) {
+  params.add("filesAdded", files - previous.files)
+        .add("filesBefore", previous.files)
+        .add("filesAfter", files);
+}
+
 void ContainerTraits<ArchiveQueue>::ContainerSummary::addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params) {
   params.add("queueJobsBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
@@ -195,6 +202,18 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
   return ret;
 }
 
+auto ContainerTraits<ArchiveQueueToReport>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
+    ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
+  PoppedElementsBatch ret;
+  auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  for (auto &cjfq: candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
+    common::dataStructures::ArchiveFile(), "", "", "", });
+    ret.summary.files++;
+  }
+  return ret;
+}
+
 auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
@@ -214,6 +233,11 @@ void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement
 
 auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   bytes -= pes.bytes;
+  files -= pes.files;
+  return *this;
+}
+
+auto ContainerTraits<ArchiveQueueToReport>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   files -= pes.files;
   return *this;
 }
