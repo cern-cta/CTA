@@ -682,6 +682,22 @@ OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tape
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getNextArchiveJobsToReportBatch()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArchiveJobsToReportBatch(
+    uint64_t filesRequested, log::LogContext& logContext) {
+  throw cta::exception::Exception("TODOTODO: implement.");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setJobBatchReported()
+//------------------------------------------------------------------------------
+void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, 
+    log::LogContext& lc) {
+  throw cta::exception::Exception("TODOTODO: implement.");
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getRetrieveQueueStatistics()
 //------------------------------------------------------------------------------
 std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueueStatistics(

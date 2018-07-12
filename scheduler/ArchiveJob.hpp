@@ -33,6 +33,9 @@ namespace cta {
 
 // Forward declaration
 class ArchiveMount;
+namespace eos {
+class DiskReporterFactory;
+}
 
 /**
  * Class representing the transfer of a single copy of a remote file to tape.
@@ -44,6 +47,7 @@ class ArchiveJob {
    * constructor of ArchiveJob.
    */
   friend class ArchiveMount;
+  friend class Scheduler;
 
 protected:
   /**
@@ -55,7 +59,7 @@ protected:
    * @param tapeFileLocation the location within the tape
    */
   ArchiveJob(
-  ArchiveMount &mount,
+  ArchiveMount *mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &srcURL,
@@ -80,7 +84,7 @@ public:
   /**
    * Launch a report to the user.
    */
-  virtual void asyncReportComplete();
+  virtual void asyncReportComplete(eos::DiskReporterFactory & reporterFactory);
   
   /**
    * Get the report time (in seconds).
@@ -129,7 +133,12 @@ private:
   /**
    * The mount that generated this job
    */
-  ArchiveMount &m_mount;
+  ArchiveMount *m_mount = nullptr;
+
+  /**
+   * Get access to the mount or throw exception if we do not have one
+   */
+  ArchiveMount &getMount();
 
   /**
    * Reference to the name server

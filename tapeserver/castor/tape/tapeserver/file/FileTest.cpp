@@ -48,7 +48,7 @@ namespace unitTests {
 
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
-    TestingArchiveJob(): cta::ArchiveJob(*((cta::ArchiveMount *)NULL), 
+    TestingArchiveJob(): cta::ArchiveJob(nullptr, 
         *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
         "", cta::common::dataStructures::TapeFile()) {
     }

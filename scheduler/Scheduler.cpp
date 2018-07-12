@@ -1061,5 +1061,27 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// createDiskReporter
+//------------------------------------------------------------------------------
+eos::DiskReporter* Scheduler::createDiskReporter(std::string& URL, std::promise<void>& reporterState) {
+  return m_reporterFactory.createDiskReporter(URL, reporterState);
+}
 
+//------------------------------------------------------------------------------
+// getNextArchiveJobsToReportBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBatch(
+  uint64_t filesRequested, log::LogContext& logContext) {
+  // We need to go through the queues of archive jobs to report 
+  std::list<std::unique_ptr<ArchiveJob> > ret;
+  // Get the list of jobs to report from the scheduler db
+  auto dbRet = m_db.getNextArchiveJobsToReportBatch(filesRequested, logContext);
+  for (auto & j: dbRet) {
+    ret.emplace_back(new ArchiveJob(nullptr, m_catalogue, j->archiveFile,
+        j->srcURL, j->tapeFile));
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
 } // namespace cta

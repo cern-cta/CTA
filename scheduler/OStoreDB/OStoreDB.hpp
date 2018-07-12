@@ -260,6 +260,10 @@ public:
   typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
   ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName) const;
 
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext & logContext) override;
+  
+  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext& lc) override;
+  
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
   

@@ -114,7 +114,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
   std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
   for (auto & sdaj: dbJobBatch) {
-    ret.emplace_back(new ArchiveJob(*this, m_catalogue,
+    ret.emplace_back(new ArchiveJob(this, m_catalogue,
       sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
     ret.back()->m_dbJob.reset(sdaj.release());
   }
@@ -189,7 +189,8 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
       if (jobsToReport.count(job->m_dbJob.get())) {
         logContext.log(cta::log::DEBUG,
           "In ArchiveMount::reportJobsBatchWritten(): archive request complete. Will launch async report to user.");
-        job->asyncReportComplete();
+        // TODOTODO: requeue instead!
+        // TODOTODO: job->asyncReportComplete();
       } else {
         logContext.log(cta::log::DEBUG,
           "In ArchiveMount::reportJobsBatchWritten(): Recorded the partial migration of a file.");

@@ -176,6 +176,25 @@ public:
     virtual ~ArchiveJob() {}
   };
   
+  /**
+   * Get a a set of jobs to report to the clients. This function is like 
+   * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any 
+   * process can grab a batch of jobs to report and proceed with the reporting.
+   * After reporting, setJobReported will be the last step of the job's lifecycle.
+   * @return A list of process-owned jobs to report.
+   */
+  virtual std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext & logContext) = 0;
+  
+  /**
+   * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
+   * @param jobsBatch
+   * @param lc
+   */
+  
+  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch,
+    log::LogContext & lc) = 0;
+  
   /*============ Retrieve  management: user side ============================*/
 
   /**

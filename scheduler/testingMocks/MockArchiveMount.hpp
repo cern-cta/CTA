@@ -98,7 +98,7 @@ namespace cta {
       void createArchiveJobs(const unsigned int nbJobs) {
         for(unsigned int i = 0; i < nbJobs; i++) {
           m_jobs.push_back(std::unique_ptr<cta::ArchiveJob>(
-            new cta::MockArchiveJob(*this, ::cta::ArchiveMount::m_catalogue)));
+            new cta::MockArchiveJob(this, ::cta::ArchiveMount::m_catalogue)));
         }
       }
     }; // class MockArchiveMount   

@@ -67,7 +67,7 @@ namespace unitTests {
   public:
     MockArchiveJobExternalStats(cta::ArchiveMount & am, cta::catalogue::Catalogue & catalogue, 
        int & completes, int &failures):
-    MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
+    MockArchiveJob(&am, catalogue), completesRef(completes), failuresRef(failures) {}
     
     virtual void validate() override {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
@@ -213,12 +213,12 @@ namespace unitTests {
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
       job2.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job3;

@@ -48,6 +48,9 @@
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include "eos/DiskReporter.hpp"
+#include "eos/DiskReporterFactory.hpp"
+
 #include <list>
 #include <map>
 #include <memory>
@@ -55,6 +58,8 @@
 #include <string>
 
 namespace cta {
+
+class ArchiveJob;
 
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
@@ -312,6 +317,31 @@ public:
    */
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
+  /*============== Archive reporting support =================================*/
+  /**
+   * Batch job factory
+   * 
+   * @param filesRequested the number of files requested
+   * @param logContext
+   * @return a list of unique_ptr to the next successful archive jobs to report. 
+   * The list is empty when no more jobs can be found. Will return jobs (if 
+   * available) up to specified number.
+   */
+  std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext &logContext);
+
+
+  /**
+   * Creates a disk reporter for the ArchiveJob (this is a wrapper).
+   * @param URL: report address
+   * @param reporterState void promise to be set when the report is done asynchronously.
+   * @return pointer to the reporter created.
+   */
+  eos::DiskReporter * createDiskReporter(std::string & URL, std::promise<void> &reporterState);   
+private:
+  /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
+  eos::DiskReporterFactory m_reporterFactory;
+public:    
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
 

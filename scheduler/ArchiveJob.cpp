@@ -32,7 +32,7 @@ cta::ArchiveJob::~ArchiveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
+cta::ArchiveJob::ArchiveJob(ArchiveMount *mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &srcURL,
@@ -45,8 +45,8 @@ cta::ArchiveJob::ArchiveJob(ArchiveMount &mount,
 //------------------------------------------------------------------------------
 // asyncReportComplete
 //------------------------------------------------------------------------------
-void cta::ArchiveJob::asyncReportComplete() {
-  m_reporter.reset(m_mount.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
+void cta::ArchiveJob::asyncReportComplete(eos::DiskReporterFactory & reporterFactory) {
+  m_reporter.reset(reporterFactory.createDiskReporter(m_dbJob->archiveReportURL, m_reporterState));
   m_reporter->asyncReportArchiveFullyComplete();
   m_reporterTimer.reset();
 }
@@ -80,7 +80,7 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
   fileReport.fSeq = tapeFile.fSeq;
   fileReport.size = archiveFile.fileSize;
   fileReport.storageClassName = archiveFile.storageClass;
-  fileReport.tapeDrive = m_mount.getDrive();
+  fileReport.tapeDrive = getMount().getDrive();
   fileReport.vid = tapeFile.vid;
   return cta::catalogue::TapeItemWrittenPointer(fileReportUP.release());
 }
@@ -129,8 +129,8 @@ void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext 
     // That's all job's already done.
     std::promise<void> reporterState;
     utils::Timer t;
-    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
-    reporter->asyncReportArchiveFullyComplete();
+    // TODOTODO: put in the queue std::unique_ptr<cta::DiskReporter> reporter(getMount().createDiskReporter(fullReportURL, reporterState));
+    // TODOTODO: reporter->asyncReportArchiveFullyComplete();
     try {
       reporterState.get_future().get();
       log::ScopedParamContainer params(lc);
@@ -160,4 +160,12 @@ void cta::ArchiveJob::failed(const std::string &failureReason,  log::LogContext 
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::waitForReporting() {
   m_reporterState.get_future().get();
+}
+
+//------------------------------------------------------------------------------
+// cta::ArchiveJob::getMount()
+//------------------------------------------------------------------------------
+cta::ArchiveMount& cta::ArchiveJob::getMount() {
+  if (m_mount) return *m_mount;
+  throw exception::Exception("In ArchiveJob::getMount(): no mount set.");
 }
