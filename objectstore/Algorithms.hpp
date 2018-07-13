@@ -65,6 +65,7 @@ public:
     typedef std::list<OpFailure> list;
   };
   
+  class PoppedElement;
   class PoppedElementsSummary;
   class PopCriteria {
   public:
@@ -114,14 +115,21 @@ public:
       AgentReference & agentRef, log::LogContext & lc);
   void removeReferencesAndCommit(Container & cont, typename OpFailure<InsertedElement>::list & elementsOpFailures);
   void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
-  static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
-      const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+  static typename OpFailure<InsertedElement>::list switchElementsOwnership(typename InsertedElement::list & elemMemCont,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc);
+  static typename OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc);
   template <class Element>
   static PoppedElementsSummary getElementSummary(const Element &);
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
 };
 
+/************************************************************************************************************/
+/* The algorithms themselves ********************************************************************************/
+/************************************************************************************************************/
 template <class C>
 class ContainerAlgorithms {
 public:

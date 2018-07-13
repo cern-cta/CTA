@@ -137,9 +137,38 @@ public:
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
-  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
+  template <class t_PoppedElementsBatch>
+  static OpFailure<PoppedElement>::list switchElementsOwnership(t_PoppedElementsBatch & popedElementBatch,
       const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-      log::LogContext & lc);
+      log::LogContext & lc) {
+    std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+    for (auto & e: popedElementBatch.elements) {
+      ArchiveRequest & ar = *e.archiveRequest;
+      auto copyNb = e.copyNb;
+      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+    }
+    timingList.insertAndReset("asyncUpdateLaunchTime", t);
+    auto u = updaters.begin();
+    auto e = popedElementBatch.elements.begin();
+    OpFailure<PoppedElement>::list ret;
+    while (e != popedElementBatch.elements.end()) {
+      try {
+        u->get()->wait();
+        e->archiveFile = u->get()->getArchiveFile();
+        e->archiveReportURL = u->get()->getArchiveReportURL();
+        e->errorReportURL = u->get()->getArchiveErrorReportURL();
+        e->srcURL = u->get()->getSrcURL();
+      } catch (...) {
+        ret.push_back(OpFailure<PoppedElement>());
+        ret.back().element = &(*e);
+        ret.back().failure = std::current_exception();
+      }
+      u++;
+      e++;
+    }
+    timingList.insertAndReset("asyncUpdateCompletionTime", t);
+    return ret;
+  }
   
   static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
   
@@ -147,6 +176,7 @@ public:
 
 template<>
 class ContainerTraits<ArchiveQueueToReport>: public ContainerTraits<ArchiveQueue> {
+public:
   class PoppedElementsSummary;
   class PopCriteria {
   public:
@@ -172,6 +202,8 @@ class ContainerTraits<ArchiveQueueToReport>: public ContainerTraits<ArchiveQueue
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer &);
   };
+  
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
   
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);

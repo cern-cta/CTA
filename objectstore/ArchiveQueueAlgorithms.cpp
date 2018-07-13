@@ -189,6 +189,10 @@ void ContainerTraits<ArchiveQueue>::PoppedElementsBatch::addToLog(log::ScopedPar
         .add("files", summary.files);
 }
 
+void ContainerTraits<ArchiveQueueToReport>::PoppedElementsBatch::addToLog(log::ScopedParamContainer& params) {
+  params.add("files", summary.files);
+}
+
 auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
     ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
@@ -221,6 +225,12 @@ auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppe
   return ret;
 }
 
+auto ContainerTraits<ArchiveQueueToReport>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
+  PoppedElementsSummary ret;
+  ret.files = 1;
+  return ret;
+}
+
 void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElementsList&& insertedList) {
   for (auto &e: insertedList) {
     std::list<PoppedElement>::emplace_back(std::move(e));
@@ -240,39 +250,6 @@ auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElements
 auto ContainerTraits<ArchiveQueueToReport>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   files -= pes.files;
   return *this;
-}
-
-auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
-    const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-    log::LogContext & lc) 
--> OpFailure<PoppedElement>::list {
-  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-  for (auto & e: popedElementBatch.elements) {
-    ArchiveRequest & ar = *e.archiveRequest;
-    auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
-  }
-  timingList.insertAndReset("asyncUpdateLaunchTime", t);
-  auto u = updaters.begin();
-  auto e = popedElementBatch.elements.begin();
-  OpFailure<PoppedElement>::list ret;
-  while (e != popedElementBatch.elements.end()) {
-    try {
-      u->get()->wait();
-      e->archiveFile = u->get()->getArchiveFile();
-      e->archiveReportURL = u->get()->getArchiveReportURL();
-      e->errorReportURL = u->get()->getArchiveErrorReportURL();
-      e->srcURL = u->get()->getSrcURL();
-    } catch (...) {
-      ret.push_back(OpFailure<PoppedElement>());
-      ret.back().element = &(*e);
-      ret.back().failure = std::current_exception();
-    }
-    u++;
-    e++;
-  }
-  timingList.insertAndReset("asyncUpdateCompletionTime", t);
-  return ret;
 }
 
 void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,

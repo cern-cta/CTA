@@ -686,7 +686,35 @@ OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tape
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArchiveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext& logContext) {
-  throw cta::exception::Exception("TODOTODO: implement.");
+  typedef objectstore::ContainerAlgorithms<ArchiveQueueToReport> AQTRAlgo;
+  AQTRAlgo aqtrAlgo(m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop.
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while (true) {
+    auto queueList = re.dumpArchiveQueues(QueueType::JobsToReport);
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
+    if (queueList.empty()) return ret;
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed,
+    // so we can got for another round.
+    AQTRAlgo::PopCriteria criteria;
+    criteria.files = filesRequested;
+    auto jobs = aqtrAlgo.popNextBatch(queueList.front().tapePool, QueueType::JobsToReport, criteria, logContext);
+    if (jobs.elements.empty()) continue;
+    for (auto & j: jobs.elements) {
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this, nullptr));
+      aj->tapeFile.copyNb = j.copyNb;
+      aj->archiveFile = j.archiveFile;
+      aj->archiveReportURL = j.archiveReportURL;
+      aj->errorReportURL = j.errorReportURL;
+      aj->srcURL = j.srcURL;
+      // We leave the tape file not set. It does not exist in all cases (not in case of failure).
+      aj->m_jobOwned = true;
+      aj->m_mountId = 0;
+      ret.emplace_back(std::move(aj));
+    }
+    return ret;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1676,7 +1704,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   // We can construct the return value.
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
   for (auto & j: jobs.elements) {
-    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB, *this));
+    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB, this));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportURL;
@@ -1719,8 +1747,17 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB, ArchiveMount& am): m_jobOwned(false),
-  m_oStoreDB(oStoreDB), m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore), m_archiveMount(am) {}
+OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB, ArchiveMount* am): m_jobOwned(false),
+  m_oStoreDB(oStoreDB), m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore), m_archiveMount(am) { }
+
+//------------------------------------------------------------------------------
+// OStoreDB::ArchiveJob::getArchiveMount()
+//------------------------------------------------------------------------------
+OStoreDB::ArchiveMount& OStoreDB::ArchiveJob::getArchiveMount() {
+  if (!m_archiveMount)
+    throw cta::exception::Exception("In OStoreDB::ArchiveJob::getArchiveMount(): trying to access a non-set mount.");
+  return *m_archiveMount;
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::RetrieveMount()

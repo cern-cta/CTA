@@ -140,12 +140,12 @@ public:
 
 class ArchiveQueueToReport: public ArchiveQueue {
 public:
-  template<typename...Ts> ArchiveQueueToReport(Ts...args): ArchiveQueue(args...) {}
+  template<typename...Ts> ArchiveQueueToReport(Ts&...args): ArchiveQueue(args...) {}
 };
 
 class ArchiveQueueFailed: public ArchiveQueue {
 public:
-  template<typename...Ts> ArchiveQueueFailed(Ts...args): ArchiveQueue(args...) {}
+  template<typename...Ts> ArchiveQueueFailed(Ts&...args): ArchiveQueue(args...) {}
 };
   
 }}
