@@ -702,7 +702,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
     auto jobs = aqtrAlgo.popNextBatch(queueList.front().tapePool, QueueType::JobsToReport, criteria, logContext);
     if (jobs.elements.empty()) continue;
     for (auto & j: jobs.elements) {
-      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this, nullptr));
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
       aj->tapeFile.copyNb = j.copyNb;
       aj->archiveFile = j.archiveFile;
       aj->archiveReportURL = j.archiveReportURL;
@@ -1704,7 +1704,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   // We can construct the return value.
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > ret;
   for (auto & j: jobs.elements) {
-    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB, this));
+    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->archiveReportURL = j.archiveReportURL;
@@ -1747,17 +1747,8 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB, ArchiveMount* am): m_jobOwned(false),
-  m_oStoreDB(oStoreDB), m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore), m_archiveMount(am) { }
-
-//------------------------------------------------------------------------------
-// OStoreDB::ArchiveJob::getArchiveMount()
-//------------------------------------------------------------------------------
-OStoreDB::ArchiveMount& OStoreDB::ArchiveJob::getArchiveMount() {
-  if (!m_archiveMount)
-    throw cta::exception::Exception("In OStoreDB::ArchiveJob::getArchiveMount(): trying to access a non-set mount.");
-  return *m_archiveMount;
-}
+OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB): m_jobOwned(false),
+  m_oStoreDB(oStoreDB), m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore) { }
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::RetrieveMount()

@@ -175,14 +175,12 @@ public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
   private:
-    ArchiveJob(const std::string &, OStoreDB &, ArchiveMount *);
+    ArchiveJob(const std::string &, OStoreDB &);
     bool m_jobOwned;
     uint64_t m_mountId;
     std::string m_tapePool;
     OStoreDB & m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
-    ArchiveMount *m_archiveMount;
-    ArchiveMount & getArchiveMount();
     std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
   };
   friend class ArchiveJob;
