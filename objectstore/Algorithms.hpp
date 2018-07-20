@@ -1,4 +1,4 @@
-/*
+ /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
  *
@@ -185,9 +185,18 @@ public:
     }
   }
   
+  /**
+   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
+   * (most cases except garbage collection).
+   */
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId, QueueType queueType,
+      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
+    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
+  }
+  
   /** Reference objects in the container if needed and then switch their ownership (if needed). Objects 
    * are expected to be owned by agent, and not listed in the container but situations might vary.
-   * This function is typically used by the garbage collector. We do noe take care of dereferencing
+   * This function is typically used by the garbage collector. We do not take care of dereferencing
    * the object from the caller.
    */
   void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifyer & contId, QueueType queueType,
@@ -237,16 +246,6 @@ public:
       throw failureEx;
     }
   }
-  
-  /**
-   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
-   * (most cases except garbage collection).
-   */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId, QueueType queueType,
-      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
-    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
-  }
-  
   
   typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
       QueueType queueType, typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {

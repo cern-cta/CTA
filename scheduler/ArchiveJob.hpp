@@ -80,11 +80,6 @@ public:
    * Start an asynchronous update for a batch of jobs and then make sure they complete.
    */
   static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
-public:
-  /**
-   * Launch a report to the user.
-   */
-  virtual void asyncReportComplete(eos::DiskReporterFactory & reporterFactory);
   
   /**
    * Get the report time (in seconds).
@@ -109,13 +104,26 @@ public:
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed(const std::string &failureReason, log::LogContext & lc);
+  virtual void transferFailed(const std::string &failureReason, log::LogContext & lc);
   
   /**
    * Get the URL used for reporting
    * @return The URL used to report to the disk system.
    */
   virtual std::string reportURL();
+
+  /**
+   * Get the report type.
+   * @return the type of report (success or failure), as a string
+   */
+  virtual std::string reportType();
+  
+  /**
+   * Triggers a scheduler update following the failure of the report. Retry policy will
+   * be applied by the scheduler. Failure to report success will also be a failure reason.
+   */
+  virtual void reportFailed(const std::string &failureReason, log::LogContext & lc);
+  
 
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;

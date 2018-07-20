@@ -368,8 +368,8 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     ar.setArchiveFile(aFile);
-    ar.addJob(1, "TapePool0", agrA.getAgentAddress(), 1, 1);
-    ar.addJob(2, "TapePool1", agrA.getAgentAddress(), 1, 1);
+    ar.addJob(1, "TapePool0", agrA.getAgentAddress(), 1, 1, 1);
+    ar.addJob(2, "TapePool1", agrA.getAgentAddress(), 1, 1, 1);
     cta::common::dataStructures::MountPolicy mp;
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");

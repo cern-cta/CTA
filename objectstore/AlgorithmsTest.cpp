@@ -63,6 +63,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
   ContainerAlgorithms<ArchiveQueue>::InsertedElement::list requests;
+  std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
@@ -79,12 +80,14 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.diskInstance = "eoseos";
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue>::InsertedElement{cta::make_unique<ArchiveRequest>(arAddr, be), 1, aFile, mp});
+    archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+        cta::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
     ar.setArchiveFile(aFile);
-    ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1);
+    ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");

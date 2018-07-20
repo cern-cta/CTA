@@ -115,8 +115,9 @@ public:
     return m_OStoreDB.getNextArchiveJobsToReportBatch(filesRequested, lc);
   }
   
-  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext& lc) override {
-    m_OStoreDB.setJobBatchReported(jobsBatch, lc);
+  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
+      utils::Timer & t, log::LogContext& lc) override {
+    m_OStoreDB.setJobBatchReported(jobsBatch, timingList, t, lc);
   }
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {

@@ -19,6 +19,7 @@
 #include "DiskReportRunner.hpp"
 #include "Scheduler.hpp"
 #include "ArchiveJob.hpp"
+#include "common/log/TimingList.hpp"
 
 namespace cta {
 
@@ -28,52 +29,19 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
   utils::Timer t;
   size_t roundCount = 0;
   while (t.secs() < 30) {
-    utils::Timer t2;
+    log::TimingList timings;
+    utils::Timer t2, roundTime;
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(500, lc);
     if (archiveJobsToReport.empty()) break;
-    double getJobsToReportTime = t2.secs(utils::Timer::resetCounter);
-    for (auto &job: archiveJobsToReport) {
-      job->asyncReportComplete(m_reporterFactory);
-    }
-    double asyncStartReports = t2.secs(utils::Timer::resetCounter);
-    size_t successfulReports = 0, failedReports = 0;
-    // Now gather the result of the reporting to client.
-    for (auto &job: archiveJobsToReport) {
-      try {
-        job->waitForReporting();
-        log::ScopedParamContainer params(lc);
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-              .add("reportURL", job->reportURL())
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-              .add("reportTime", job->reportTime());
-        lc.log(cta::log::INFO,"Reported to the client a full file archival");
-      } catch(cta::exception::Exception &ex) {
-        cta::log::ScopedParamContainer params(lc);
-        params.add("fileId", job->archiveFile.archiveFileID)
-              .add("diskInstance", job->archiveFile.diskInstance)
-              .add("diskFileId", job->archiveFile.diskFileId)
-              .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path).add("reportURL", job->reportURL())
-              .add("errorMessage", ex.getMessage().str());
-        lc.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
-      }
-    }
-    double asyncCheckJobCompletionTime = t2.secs(utils::Timer::resetCounter);
-    log::ScopedParamContainer params (lc);
-    params.add("successfulReports", successfulReports)
-          .add("failedReports", failedReports)
-          .add("totalReports", successfulReports + failedReports)
-          .add("getJobsToReportTime", getJobsToReportTime)
-          .add("asyncStartReports", asyncStartReports)
-          .add("asyncCheckJobCompletionTime", asyncCheckJobCompletionTime);
-    
+    timings.insertAndReset("getJobsToReportTime", t2);
+    m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t2, lc);
+    log::ScopedParamContainer params(lc);
+    params.add("roundTime", roundTime.secs());
+    lc.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): did one round of reports.");
   }
-  double clientReportingTime=t.secs();
-  cta::log::ScopedParamContainer params(lc);
+  log::ScopedParamContainer params(lc);  
   params.add("roundCount", roundCount)
-        .add("clientReportingTime", clientReportingTime);
+        .add("passTime", t.secs());
   lc.log(log::INFO, "In ReporterProcess::runOnePass(): finished one pass.");
 }
 

@@ -45,6 +45,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/TimingList.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
@@ -329,18 +330,9 @@ public:
    */
   std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext &logContext);
-
-
-  /**
-   * Creates a disk reporter for the ArchiveJob (this is a wrapper).
-   * @param URL: report address
-   * @param reporterState void promise to be set when the report is done asynchronously.
-   * @return pointer to the reporter created.
-   */
-  eos::DiskReporter * createDiskReporter(std::string & URL, std::promise<void> &reporterState);   
-private:
-  /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs) */
-  eos::DiskReporterFactory m_reporterFactory;
+  
+  void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
+      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
 public:    
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);

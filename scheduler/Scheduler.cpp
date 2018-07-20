@@ -27,6 +27,7 @@
 #include "common/Timer.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/make_unique.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -1062,13 +1063,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 }
 
 //------------------------------------------------------------------------------
-// createDiskReporter
-//------------------------------------------------------------------------------
-eos::DiskReporter* Scheduler::createDiskReporter(std::string& URL, std::promise<void>& reporterState) {
-  return m_reporterFactory.createDiskReporter(URL, reporterState);
-}
-
-//------------------------------------------------------------------------------
 // getNextArchiveJobsToReportBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBatch(
@@ -1084,4 +1078,76 @@ std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBat
   }
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// reportArchiveJobsBatch
+//------------------------------------------------------------------------------
+void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& archiveJobsBatch,
+    eos::DiskReporterFactory & reporterFactory, log::TimingList& timingList, utils::Timer& t, 
+    log::LogContext& lc){
+  // Create the reporters
+  struct ReporterAndPromise {
+    std::unique_ptr<eos::DiskReporter> reporter;
+    std::promise<void> promise;
+    ArchiveJob * archiveJob;
+  };
+  std::list<ReporterAndPromise> pendingReports;
+  std::list<ArchiveJob *> reportedJobs;
+  for (auto &j: archiveJobsBatch) {
+    pendingReports.push_back(ReporterAndPromise());
+    auto & current = pendingReports.back();
+    // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
+    try {
+      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL(), current.promise));
+      current.reporter->asyncReport();
+      current.archiveJob = j.get();
+    } catch (cta::exception::Exception & ex) {
+      // Whether creation or launching of reporter failed, the promise will not receive result, so we can safely delete it.
+      // we will first determine if we need to clean up the reporter as well or not.
+      pendingReports.pop_back();
+      // We are ready to carry on for other files without interactions.
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID)
+            .add("reportType", j->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
+      j->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("asyncReportLaunchTime", t);
+  for (auto &current: pendingReports) {
+    try {
+      current.promise.get_future().wait();
+      reportedJobs.push_back(current.archiveJob);
+    } catch (cta::exception::Exception & ex) {
+      // Log the error, update the request.
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", current.archiveJob->archiveFile.archiveFileID)
+            .add("reportType", current.archiveJob->reportType())
+            .add("exceptionMSG", ex.getMessageValue());
+      lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
+      current.archiveJob->reportFailed(ex.getMessageValue(), lc);
+    }
+  }
+  timingList.insertAndReset("reportCompletionTime", t);
+  std::list<SchedulerDatabase::ArchiveJob *> reportedDbJobs;
+  for (auto &j: reportedJobs) reportedDbJobs.push_back(j->m_dbJob.get());
+  m_db.setJobBatchReported(reportedDbJobs, timingList, t, lc);
+  // Log the successful reports.
+  for (auto & j: reportedJobs) {
+    log::ScopedParamContainer params(lc);
+    params.add("fileId", j->archiveFile.archiveFileID)
+          .add("reportType", j->reportType());
+    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
+  }
+  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
+  log::ScopedParamContainer params(lc);
+  params.add("totalReports", archiveJobsBatch.size())
+        .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
+        .add("successfulReports", reportedJobs.size());
+  timingList.addToLog(params);
+  lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+}
+
 } // namespace cta

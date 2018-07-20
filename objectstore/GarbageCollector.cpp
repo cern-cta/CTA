@@ -406,7 +406,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
         // Determine the copy number and feed the queue with it.
         for (auto &j: ar->dumpJobs()) {
           if (j.tapePool == tapepool) {
-            jobsToAdd.push_back({ar, j.copyNb, ar->getArchiveFile(), ar->getMountPolicy()});         
+            jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), cta::nullopt});         
           }
         }
       }

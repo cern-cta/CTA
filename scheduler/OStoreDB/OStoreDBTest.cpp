@@ -208,7 +208,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       aReq.setRequester(requester);
       aReq.setSrcURL("");
       aReq.setEntryLog(entryLog);
-      aReq.addJob(1, "tapepool", "archive queue address to be set later", 2, 2);
+      aReq.addJob(1, "tapepool", "archive queue address to be set later", 2, 2, 2);
       aReq.insert();
       cta::objectstore::ScopedExclusiveLock aql(aReq);
       ArchiveRequest::JobDump jd;

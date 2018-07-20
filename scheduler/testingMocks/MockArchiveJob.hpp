@@ -35,7 +35,7 @@ namespace cta {
       
     ~MockArchiveJob() throw() {} 
 
-    void failed(const std::string& failureReason, log::LogContext& lc) override {
+    void transferFailed(const std::string& failureReason, log::LogContext& lc) override {
       failures++;
     }
     

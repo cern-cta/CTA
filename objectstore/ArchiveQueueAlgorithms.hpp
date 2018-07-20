@@ -19,6 +19,7 @@
 #pragma once
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/optional.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -32,10 +33,11 @@ public:
   static const std::string                    c_containerTypeName; //= "ArchiveQueue";
   static const std::string                    c_identifyerType; // = "tapepool";
   struct InsertedElement {
-    std::shared_ptr<ArchiveRequest> archiveRequest;
+    ArchiveRequest* archiveRequest;
     uint16_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::common::dataStructures::MountPolicy mountPolicy;
+    cta::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
+    cta::optional<serializers::ArchiveJobStatus> newStatus;
     typedef std::list<InsertedElement> list;
   };
   
@@ -91,9 +93,11 @@ public:
     uint16_t copyNb;
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
+    std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
-    std::string srcURL;
+    std::string latestError;
+    SchedulerDatabase::ArchiveJob::ReportType reportType;
   };
   class PoppedElementsSummary;
   class PopCriteria {
@@ -145,7 +149,7 @@ public:
     for (auto & e: popedElementBatch.elements) {
       ArchiveRequest & ar = *e.archiveRequest;
       auto copyNb = e.copyNb;
-      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
     }
     timingList.insertAndReset("asyncUpdateLaunchTime", t);
     auto u = updaters.begin();
@@ -158,6 +162,7 @@ public:
         e->archiveReportURL = u->get()->getArchiveReportURL();
         e->errorReportURL = u->get()->getArchiveErrorReportURL();
         e->srcURL = u->get()->getSrcURL();
+        //if (u->get()->)
       } catch (...) {
         ret.push_back(OpFailure<PoppedElement>());
         ret.back().element = &(*e);

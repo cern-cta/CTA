@@ -263,9 +263,9 @@ message MountPolicy {
 
 enum ArchiveJobStatus {
   AJS_ToTransfer = 1;
-  AJS_ToReport = 2;
+  AJS_ToReportForTransfer = 2;
   AJS_Complete = 3;
-  AJS_FailedToReport = 997;
+  AJS_ToReportForFailure = 997;
   AJS_Failed = 998;
   AJS_Abandoned = 999;
 }
@@ -282,10 +282,13 @@ message ArchiveJob {
   required uint32 maxtotalretries = 4408;
   required uint32 maxretrieswithinmount = 4409;
   repeated string failurelogs = 4410;
+  required uint32 maxreportretries = 4411;
+  required uint32 totalreportretries = 4412;
+  repeated string reportfailurelogs = 4413;
 }
 
 message ArchiveRequest {
-  required uint64 archiveFileID = 8990;
+  required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
   required string checksumtype = 9000;
   required string checksumvalue = 9010;
@@ -302,6 +305,7 @@ message ArchiveRequest {
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
   repeated ArchiveJob jobs = 9092;
+  required bool reportdecided = 9093;
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------

@@ -74,7 +74,7 @@ void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext
     std::promise<void> reporterState;
     utils::Timer t;
     std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
-    reporter->asyncReportArchiveFullyComplete();
+    reporter->asyncReport();
     try {
       reporterState.get_future().get();
       log::ScopedParamContainer params(lc);

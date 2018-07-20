@@ -94,7 +94,7 @@ namespace unitTests {
     }
    
 
-    void failed(const std::string& failureReason, cta::log::LogContext& lc) override {
+    void transferFailed(const std::string& failureReason, cta::log::LogContext& lc) override {
       failuresRef++;
     }
     

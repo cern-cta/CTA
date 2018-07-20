@@ -167,68 +167,20 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
     
     // Now get the db mount to mark the jobs as successful.
     // Extract the db jobs from the scheduler jobs.
-    std::list<cta::SchedulerDatabase::ArchiveJob *> validatedSuccessfulDBArchiveJobs;
+    std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
     for (auto &schJob: validatedSuccessfulArchiveJobs) {
-      validatedSuccessfulDBArchiveJobs.emplace_back(schJob->m_dbJob.get());
+      validatedSuccessfulDBArchiveJobs.emplace_back(std::move(schJob->m_dbJob));
     }
     
-    // We can now pass this list for the dbMount to process.
-    // The dbMount will indicate the list of jobs that need to the reported to
-    // the client (the complete ones) in the report set.
-    std::set<cta::SchedulerDatabase::ArchiveJob *> jobsToReport = 
-        m_dbMount->setJobBatchSuccessful(validatedSuccessfulDBArchiveJobs, logContext);
+    // We can now pass this list for the dbMount to process. We are done at that point.
+    // Reporting to client will be queued if needed and done in another process.
+    m_dbMount->setJobBatchSuccessful(validatedSuccessfulDBArchiveJobs, logContext);
     schedulerDbTime=t.secs(utils::Timer::resetCounter);
-    // We have the list of files to report to the user and the that just needed 
-    // an update.
-    for (auto &job: validatedSuccessfulArchiveJobs) {
-      cta::log::ScopedParamContainer params(logContext);
-      params.add("fileId", job->archiveFile.archiveFileID)
-            .add("diskInstance", job->archiveFile.diskInstance)
-            .add("diskFileId", job->archiveFile.diskFileId)
-            .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
-      if (jobsToReport.count(job->m_dbJob.get())) {
-        logContext.log(cta::log::DEBUG,
-          "In ArchiveMount::reportJobsBatchWritten(): archive request complete. Will launch async report to user.");
-        // TODOTODO: requeue instead!
-        // TODOTODO: job->asyncReportComplete();
-      } else {
-        logContext.log(cta::log::DEBUG,
-          "In ArchiveMount::reportJobsBatchWritten(): Recorded the partial migration of a file.");
-      }
-    }
-    
-    // Now gather the result of the reporting to client.
-    for (auto &job: validatedSuccessfulArchiveJobs) {
-      if (jobsToReport.count(job->m_dbJob.get())) {
-        try {
-          job->waitForReporting();
-          cta::log::ScopedParamContainer params(logContext);
-          params.add("fileId", job->archiveFile.archiveFileID)
-                .add("diskInstance", job->archiveFile.diskInstance)
-                .add("diskFileId", job->archiveFile.diskFileId)
-                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-                .add("reportURL", job->reportURL())
-                .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path)
-                .add("reportTime", job->reportTime());
-          logContext.log(cta::log::INFO,"Reported to the client a full file archival");
-        } catch(cta::exception::Exception &ex) {
-          cta::log::ScopedParamContainer params(logContext);
-            params.add("fileId", job->archiveFile.archiveFileID)
-                  .add("diskInstance", job->archiveFile.diskInstance)
-                  .add("diskFileId", job->archiveFile.diskFileId)
-                  .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path).add("reportURL", job->reportURL())
-                  .add("errorMessage", ex.getMessage().str());
-            logContext.log(cta::log::ERR,"Unsuccessful report to the client a full file archival:");
-        }
-      }
-    }
-    clientReportingTime=t.secs();
     cta::log::ScopedParamContainer params(logContext);
     params.add("files", files)
           .add("bytes", bytes)
           .add("catalogueTime", catalogueTime)
           .add("schedulerDbTime", schedulerDbTime)
-          .add("clientReportingTime", clientReportingTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
   } catch(const cta::exception::Exception& e){

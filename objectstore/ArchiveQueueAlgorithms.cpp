@@ -40,8 +40,13 @@ void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, Inse
     jd.tapePool = cont.getTapePool();
     jd.owner = cont.getAddressIfSet();
     ArchiveRequest & ar = *e.archiveRequest;
+    cta::common::dataStructures::MountPolicy mp;
+    if (e.mountPolicy) 
+      mp=*e.mountPolicy;
+    else
+      mp=cta::common::dataStructures::MountPolicy();
     jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-        e.mountPolicy, time(nullptr)});
+        mp, time(nullptr)});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -55,8 +60,13 @@ void ContainerTraits<ArchiveQueue>::addReferencesIfNecessaryAndCommit(Container&
     jd.tapePool = cont.getTapePool();
     jd.owner = cont.getAddressIfSet();
     ArchiveRequest & ar = *e.archiveRequest;
+    cta::common::dataStructures::MountPolicy mp;
+    if (e.mountPolicy) 
+      mp=*e.mountPolicy;
+    else
+      mp=cta::common::dataStructures::MountPolicy();
     jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-        e.mountPolicy, time(nullptr)});
+        mp, time(nullptr)});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -110,7 +120,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
   for (auto & e: elemMemCont) {
     ArchiveRequest & ar = *e.archiveRequest;
     auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -198,8 +208,17 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", });
+    ret.elements.emplace_back(PoppedElement());
+    ContainerTraits<ArchiveQueue>::PoppedElement & elem = ret.elements.back();
+    elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
+    elem.copyNb = cjfq.copyNb;
+    elem.bytes = cjfq.size;
+    elem.archiveFile = common::dataStructures::ArchiveFile();
+    elem.srcURL = "";
+    elem.archiveReportURL = "";
+    elem.errorReportURL = "";
+    elem.latestError = "";
+    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
   }
@@ -211,8 +230,17 @@ auto ContainerTraits<ArchiveQueueToReport>::getPoppingElementsCandidates(Contain
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", });
+    ret.elements.emplace_back(PoppedElement());
+    ContainerTraits<ArchiveQueue>::PoppedElement & elem = ret.elements.back();
+    elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
+    elem.copyNb = cjfq.copyNb;
+    elem.bytes = cjfq.size;
+    elem.archiveFile = common::dataStructures::ArchiveFile();
+    elem.srcURL = "";
+    elem.archiveReportURL = "";
+    elem.errorReportURL = "";
+    elem.latestError = "";
+    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
     ret.summary.files++;
   }
   return ret;

@@ -26,7 +26,7 @@ namespace cta { namespace eos {
 EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue, std::promise<void>& reporterState):
   m_fs(hostURL), m_query(queryValue), m_reporterState(reporterState) {}
 
-void EOSReporter::asyncReportArchiveFullyComplete() {
+void EOSReporter::asyncReport() {
   auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
   XrdCl::Buffer arg (m_query.size());
   arg.FromString(m_query);

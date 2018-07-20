@@ -152,11 +152,9 @@ public:
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-  private:
-    OStoreDB::ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
   public:
-    std::set<cta::SchedulerDatabase::ArchiveJob*> setJobBatchSuccessful(
-      std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext & lc) override;
+    void setJobBatchSuccessful(
+      std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext & lc) override;
   };
   friend class ArchiveMount;
   
@@ -167,9 +165,11 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
-    bool fail(const std::string& failureReason, log::LogContext& lc) override;
+    void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+    void failReport(const std::string& failureReason, log::LogContext& lc) override;
   private:
     void asyncSucceed();
+    /** Returns true if the jobs was the last one and the request should be queued for report. */
     bool waitAsyncSucceed();
   public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
@@ -181,9 +181,10 @@ public:
     std::string m_tapePool;
     OStoreDB & m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
-    std::unique_ptr<objectstore::ArchiveRequest::AsyncJobSuccessfulUpdater> m_jobUpdate;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_jobUpdate;
   };
   friend class ArchiveJob;
+  static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveJob;
@@ -260,9 +261,11 @@ public:
   typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
   ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName) const;
 
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext & logContext) override;
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
+     log::LogContext & logContext) override;
   
-  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::LogContext& lc) override;
+  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList, utils::Timer & t,
+     log::LogContext& lc) override;
   
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;

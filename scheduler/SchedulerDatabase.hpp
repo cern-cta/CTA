@@ -48,6 +48,20 @@
 
 namespace cta {
 // Forward declarations for opaque references.
+namespace common {
+namespace admin {
+  class AdminUser;
+} // cta::common::admin
+namespace archiveRoute {
+  class ArchiveRoute;
+} // cta::common::archiveRoute
+} // cta::common
+namespace log {
+  class TimingList;
+} // cta::log
+namespace utils {
+  class Timer;
+} // cta::utils
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
@@ -57,7 +71,7 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class UserIdentity;
-} /// cta
+} // cta
 
 namespace cta {
 
@@ -154,8 +168,8 @@ public:
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    virtual std::set<cta::SchedulerDatabase::ArchiveJob *> setJobBatchSuccessful(
-      std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::LogContext & lc) = 0;
+    virtual void setJobBatchSuccessful(
+      std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -169,9 +183,16 @@ public:
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
+    std::string latestError;
+    enum class ReportType: uint8_t {
+      NoReportRequired,
+      CompletionReport,
+      FailureReport
+    } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    virtual bool fail(const std::string & failureReason, log::LogContext & lc) = 0;
+    virtual void failTransfer(const std::string & failureReason, log::LogContext & lc) = 0;
+    virtual void failReport(const std::string & failureReason, log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
@@ -191,9 +212,8 @@ public:
    * @param jobsBatch
    * @param lc
    */
-  
-  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch,
-    log::LogContext & lc) = 0;
+  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::TimingList & timingList, 
+    utils::Timer & t, log::LogContext & lc) = 0;
   
   /*============ Retrieve  management: user side ============================*/
 
