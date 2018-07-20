@@ -40,7 +40,9 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
-  TapeForWriting.cpp)
+  TapeForWriting.cpp
+  UserSpecifiedANonEmptyTape.cpp
+  UserSpecifiedANonExistentTape.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})

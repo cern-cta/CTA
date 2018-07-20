@@ -21,6 +21,8 @@
 #include "catalogue/RdbmsCatalogue.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/UserSpecifiedANonEmptyTape.hpp"
+#include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -1618,14 +1620,27 @@ bool RdbmsCatalogue::tapeExists(rdbms::Conn &conn, const std::string &vid) const
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTape(const std::string &vid) {
   try {
-    const char *const sql = "DELETE FROM TAPE WHERE VID = :VID";
+    const char *const delete_sql =
+      "DELETE "
+      "FROM "
+        "TAPE "
+      "WHERE "
+        "VID = :DELETE_VID AND "
+        "NOT EXISTS (SELECT VID FROM TAPE_FILE WHERE VID = :SELECT_VID)";
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
-    stmt.bindString(":VID", vid);
+    auto stmt = conn.createStmt(delete_sql, rdbms::AutocommitMode::ON);
+    stmt.bindString(":DELETE_VID", vid);
+    stmt.bindString(":SELECT_VID", vid);
     stmt.executeNonQuery();
 
+    // The delete statement will effect no rows and will not raise an error if
+    // either the tape does not exist or if it still has tape files
     if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete tape ") + vid + " because it does not exist");
+      if(tapeExists(conn, vid)) {
+        throw UserSpecifiedANonEmptyTape(std::string("Cannot delete tape ") + vid + " because it contains one or more files");
+      } else {
+        throw UserSpecifiedANonExistentTape(std::string("Cannot delete tape ") + vid + " because it does not exist");
+      }
     }
   } catch(exception::UserError &) {
     throw;
