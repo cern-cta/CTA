@@ -665,8 +665,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
   ASSERT_EQ(0, pool.nbTapes);
-  ASSERT_EQ(0, pool.capacityGigabytes);
-  ASSERT_EQ(0, pool.dataGigabytes);
+  ASSERT_EQ(0, pool.capacityBytes);
+  ASSERT_EQ(0, pool.dataBytes);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -712,8 +712,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(isEncrypted, pool.encryption);
   ASSERT_EQ(0, pool.nbTapes);
-  ASSERT_EQ(0, pool.capacityGigabytes);
-  ASSERT_EQ(0, pool.dataGigabytes);
+  ASSERT_EQ(0, pool.capacityBytes);
+  ASSERT_EQ(0, pool.dataBytes);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -756,8 +756,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -781,8 +781,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -823,8 +823,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -848,8 +848,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(modifiedComment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -889,8 +889,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(isEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -914,8 +914,8 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(modifiedIsEncrypted, pool.encryption);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1556,8 +1556,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -1598,8 +1598,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 }
 
@@ -1665,8 +1665,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -1705,8 +1705,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes / 1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 }
 
@@ -1732,8 +1732,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
@@ -1746,8 +1746,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName,
@@ -1761,8 +1761,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 }
 
@@ -1788,8 +1788,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -1809,8 +1809,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       const auto &pool = pools.front();
       ASSERT_EQ(tapePoolName, pool.name);
       ASSERT_EQ(i, pool.nbTapes);
-      ASSERT_EQ(i * capacityInBytes/1000000000, pool.capacityGigabytes);
-      ASSERT_EQ(0, pool.dataGigabytes);
+      ASSERT_EQ(i * capacityInBytes, pool.capacityBytes);
+      ASSERT_EQ(0, pool.dataBytes);
     }
   }
 
@@ -2007,8 +2007,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   {
@@ -2049,8 +2049,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   const uint64_t fileSize = 1234 * 1000000000UL;
@@ -2086,8 +2086,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(fileSize/1000000000, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(fileSize, pool.dataBytes);
   }
 
   {
@@ -2128,8 +2128,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(2, pool.nbTapes);
-    ASSERT_EQ(2*capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(fileSize/1000000000, pool.dataGigabytes);
+    ASSERT_EQ(2*capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(fileSize, pool.dataBytes);
   }
 }
 
@@ -5802,8 +5802,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTapePool(m_admin, tapePoolName2, 1, true, "Create tape pool");
@@ -5818,8 +5818,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
-    ASSERT_EQ(0, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName1, capacityInBytes,
@@ -5835,8 +5835,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName2, capacityInBytes,
@@ -5852,8 +5852,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(0, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
   }
 
   {
@@ -5968,8 +5968,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize/1000000000, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
   }
 
   {
@@ -6031,8 +6031,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
-    ASSERT_EQ(capacityInBytes/1000000000, pool.capacityGigabytes);
-    ASSERT_EQ(nbArchiveFiles * compressedFileSize/1000000000, pool.dataGigabytes);
+    ASSERT_EQ(capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
   }
 
   {

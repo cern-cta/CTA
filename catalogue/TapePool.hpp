@@ -74,15 +74,15 @@ struct TapePool {
   uint64_t nbTapes;
 
   /**
-   * The total capacity of all the tapes in the pool in gigabytes (10^9 bytes).
+   * The total capacity of all the tapes in the pool in bytes.
    */
-  uint64_t capacityGigabytes;
+  uint64_t capacityBytes;
 
   /**
    * The total amount of compressed data written to all the tapes in the pool in
-   * gigabytes * (10^9 bytes).
+   * bytes.
    */
-  uint64_t dataGigabytes;
+  uint64_t dataBytes;
 
   /**
    * The creation log.

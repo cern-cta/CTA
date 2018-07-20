@@ -829,8 +829,8 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
-        "COALESCE(ROUND(SUM(CAPACITY_IN_BYTES)/1000000000), 0) AS CAPACITY_IN_GB,"
-        "COALESCE(ROUND(SUM(DATA_IN_BYTES)/1000000000), 0) AS DATA_IN_GB,"
+        "COALESCE(SUM(CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
+        "COALESCE(SUM(DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
 
         "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
 
@@ -869,8 +869,8 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
       pool.nbTapes = rset.columnUint64("NB_TAPES");
-      pool.capacityGigabytes = rset.columnUint64("CAPACITY_IN_GB");
-      pool.dataGigabytes = rset.columnUint64("DATA_IN_GB");
+      pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+      pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
       pool.comment = rset.columnString("USER_COMMENT");
       pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");

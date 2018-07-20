@@ -28,8 +28,8 @@ TapePool::TapePool():
   nbPartialTapes(0),
   encryption(false),
   nbTapes(0),
-  capacityGigabytes(0),
-  dataGigabytes(0) {
+  capacityBytes(0),
+  dataBytes(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -54,8 +54,8 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
      << " nbTapes=" << obj.nbTapes
-     << " capacityGigabytes=" << obj.capacityGigabytes
-     << " dataGigabytes=" << obj.dataGigabytes
+     << " capacityBytes=" << obj.capacityBytes
+     << " dataBytes=" << obj.dataBytes
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";

@@ -1986,17 +1986,17 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
       for(auto &tp : tp_list) {
          std::vector<std::string> currentRow;
 
-         uint64_t avail = tp.capacityGigabytes > tp.dataGigabytes ? tp.capacityGigabytes - tp.dataGigabytes : 0; 
-         double use_d = (static_cast<double>(tp.dataGigabytes) / static_cast<double>(tp.capacityGigabytes)) * 100.0;
+         uint64_t avail = tp.capacityBytes > tp.dataBytes ? tp.capacityBytes - tp.dataBytes : 0; 
+         double use_d = (static_cast<double>(tp.dataBytes) / static_cast<double>(tp.capacityBytes)) * 100.0;
          std::ostringstream use;
          use << std::fixed << std::setprecision(1) <<(use_d < 0.0 ? 0.0 : use_d) << '%';
 
          currentRow.push_back(tp.name);
          currentRow.push_back(std::to_string(tp.nbTapes));
          currentRow.push_back(std::to_string(tp.nbPartialTapes));
-         currentRow.push_back(std::to_string(tp.capacityGigabytes) + "G");
-         currentRow.push_back(std::to_string(tp.dataGigabytes) + "G");
-         currentRow.push_back(std::to_string(avail) + "G");
+         currentRow.push_back(std::to_string(tp.capacityBytes/1000000000) + "G");
+         currentRow.push_back(std::to_string(tp.dataBytes/1000000000) + "G");
+         currentRow.push_back(std::to_string(avail/1000000000) + "G");
          currentRow.push_back(use.str());
          currentRow.push_back(tp.encryption ? "true" : "false");
          addLogInfoToResponseRow(currentRow, tp.creationLog, tp.lastModificationLog);
