@@ -22,6 +22,68 @@
 
 namespace cta { namespace objectstore {
 
+template<>
+struct ContainerTraitsTypes<ArchiveQueue>
+{ 
+  class ContainerSummary: public ArchiveQueue::JobsSummary {
+  public:
+    void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
+  };
+  
+  struct InsertedElement {
+    std::shared_ptr<ArchiveRequest> archiveRequest;
+    uint16_t copyNb;
+    cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::MountPolicy mountPolicy;
+    typedef std::list<InsertedElement> list;
+  };
+
+  typedef ArchiveRequest::JobDump ElementDescriptor;
+
+  struct PoppedElementsSummary;
+  struct PopCriteria {
+    PopCriteria& operator-=(const PoppedElementsSummary&);
+    uint64_t bytes = 0;
+    uint64_t files = 0;
+  };
+  struct PoppedElementsSummary {
+    uint64_t bytes = 0;
+    uint64_t files = 0;
+    bool operator< (const PopCriteria & pc) {
+      return bytes < pc.bytes && files < pc.files;
+    }
+    PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
+      bytes += other.bytes;
+      files += other.files;
+      return *this;
+    }
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+  };
+};
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsSummary::
+addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params)
+{
+  params.add("filesAdded", files - previous.files)
+        .add("bytesAdded", bytes - previous.bytes)
+        .add("filesBefore", previous.files)
+        .add("bytesBefore", previous.bytes)
+        .add("filesAfter", files)
+        .add("bytesAfter", bytes);
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::ContainerSummary::
+addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params)
+{
+  params.add("queueJobsBefore", previous.jobs)
+        .add("queueBytesBefore", previous.bytes)
+        .add("queueJobsAfter", jobs)
+        .add("queueBytesAfter", bytes);
+}
+
+
+
+#if 0
 template <>
 class ContainerTraits<ArchiveQueue> {
 public:
@@ -31,18 +93,6 @@ public:
   typedef std::string                                            ContainerIdentifyer;
   static const std::string                    c_containerTypeName; //= "ArchiveQueue";
   static const std::string                    c_identifyerType; // = "tapepool";
-  struct InsertedElement {
-    std::shared_ptr<ArchiveRequest> archiveRequest;
-    uint16_t copyNb;
-    cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::common::dataStructures::MountPolicy mountPolicy;
-    typedef std::list<InsertedElement> list;
-  };
-  
-  class ContainerSummary: public ArchiveQueue::JobsSummary {
-  public:
-    void addDeltaToLog(ContainerSummary &, log::ScopedParamContainer &);
-  };
   
   static ContainerSummary getContainerSummary(Container &cont);
   
@@ -53,7 +103,6 @@ public:
     typedef std::list<OpFailure> list;
   };
   
-  typedef ArchiveRequest::JobDump                                ElementDescriptor;
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
   
   template <class Element>
@@ -75,9 +124,7 @@ public:
   
   static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   
-  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-      log::LogContext & lc);
+  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc);
   
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
@@ -95,33 +142,12 @@ public:
     std::string errorReportURL;
     std::string srcURL;
   };
-  class PoppedElementsSummary;
-  class PopCriteria {
-  public:
-    PopCriteria& operator-= (const PoppedElementsSummary &);
-    uint64_t bytes = 0;
-    uint64_t files = 0;
-  };
   class PoppedElementsList: public std::list<PoppedElement> {
   public:
     void insertBack(PoppedElementsList &&);
     void insertBack(PoppedElement &&);
   };
   
-  class PoppedElementsSummary {
-  public:
-    uint64_t bytes = 0;
-    uint64_t files = 0;
-    bool operator< (const PopCriteria & pc) {
-      return bytes < pc.bytes && files < pc.files;
-    }
-    PoppedElementsSummary& operator+= (const PoppedElementsSummary & other) {
-      bytes += other.bytes;
-      files += other.files;
-      return *this;
-    }
-    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
-  };
   class PoppedElementsBatch {
   public:
     PoppedElementsList elements;
@@ -137,12 +163,10 @@ public:
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
-  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-      log::LogContext & lc);
+  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc);
   
   static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
-  
 };
+#endif
 
 }} // namespace cta::objectstore

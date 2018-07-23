@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@
  */
 
 #include <string>
-#include "ArchiveRequest.hpp"
 #include "Helpers.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
@@ -32,59 +31,69 @@
 
 namespace cta { namespace objectstore {
 
-/**
- * Container traits definition. To be specialized class by class.
- * This is mostly a model.
- */
-template <class C> 
-class ContainerTraits{
-public:
-  typedef C                                   Container;
-  typedef std::string                         ContainerAddress;
-  typedef std::string                         ElementAddress;
-  typedef std::string                         ContainerIdentifyer;
-  static const std::string                    c_containerTypeName; //= "genericContainer";
-  static const std::string                    c_identifyerType; // = "genericId";
-  class ContainerSummary {
-  public:
+template<typename C>
+struct ContainerTraitsTypes
+{
+  struct ContainerSummary {
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
   };
-  ContainerSummary getContainerSummary(Container &);
+
   struct InsertedElement {
     typedef std::list<InsertedElement> list;
   };
+
+  struct ElementDescriptor {};
+
+  struct PoppedElementsSummary;
+  struct PopCriteria {
+    PopCriteria();
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+  };
+  struct PoppedElementsSummary {
+    bool operator<(const PopCriteria&);
+    PoppedElementsSummary& operator+=(const PoppedElementsSummary&);
+    PoppedElementsSummary(const PoppedElementsSummary&);
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+  };
+};
+
+/**
+ * Container traits definition. To be specialized class by class.
+ */
+template<typename C> 
+struct ContainerTraits
+{
+  typedef C                   Container;
+  typedef std::string         ContainerAddress;
+  typedef std::string         ElementAddress;
+  typedef std::string         ContainerIdentifyer;
+  static const std::string    c_containerTypeName; // = "genericContainer"
+  static const std::string    c_identifyerType;    // = "genericId"
+
+  using ContainerSummary = typename ContainerTraitsTypes<C>::ContainerSummary;
+  ContainerSummary getContainerSummary(Container&);
+
+  using InsertedElement = typename ContainerTraitsTypes<C>::InsertedElement;
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
-  typedef std::list <InsertedElement *>       ElementPointerContainer;
-  class                                       ElementDescriptor {};
-  typedef std::list<ElementDescriptor>        ElementDescriptorContainer;
+  typedef std::list<InsertedElement*> ElementPointerContainer;
+
+  using ElementDescriptor = typename ContainerTraitsTypes<C>::ElementDescriptor;
+  typedef std::list<ElementDescriptor> ElementDescriptorContainer;
   
-  template <class Element>
+  template<typename Element>
   struct OpFailure {
     Element * element;
     std::exception_ptr failure;
     typedef std::list<OpFailure> list;
   };
   
-  class PoppedElementsSummary;
-  class PopCriteria {
-  public:
-    PopCriteria();
-    PopCriteria& operator-= (const PoppedElementsSummary &);
-  };
-  class PoppedElementsList {
-  public:
+  using PopCriteria = typename ContainerTraitsTypes<C>::PopCriteria;
+  using PoppedElementsSummary = typename ContainerTraitsTypes<C>::PoppedElementsSummary;
+  struct PoppedElementsList {
     PoppedElementsList();
     void insertBack(PoppedElementsList &&);
   };
-  class PoppedElementsSummary {
-  public:
-    bool operator< (const PopCriteria &);
-    PoppedElementsSummary& operator+= (const PoppedElementsSummary &);
-    PoppedElementsSummary(const PoppedElementsSummary&);
-    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
-  };
-  class PoppedElementsBatch {
-  public:
+  struct PoppedElementsBatch {
     PoppedElementsList elements;
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer &);
@@ -101,7 +110,7 @@ public:
   
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
   
-  template <class Element>
+  template<typename Element>
   static ElementAddress getElementAddress(const Element & e);
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef, const ContainerIdentifyer & cId,
@@ -114,15 +123,14 @@ public:
       AgentReference & agentRef, log::LogContext & lc);
   void removeReferencesAndCommit(Container & cont, typename OpFailure<InsertedElement>::list & elementsOpFailures);
   void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
-  static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress,
-      const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
-  template <class Element>
+  static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
+  template<typename Element>
   static PoppedElementsSummary getElementSummary(const Element &);
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
 };
 
-template <class C>
+template<typename C>
 class ContainerAlgorithms {
 public:
   ContainerAlgorithms(Backend & backend, AgentReference & agentReference):
@@ -144,8 +152,7 @@ public:
     utils::Timer t;
     ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
     ContainerTraits<C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
-    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        prevContId, timingList, t, lc);
+    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(), prevContId, timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
@@ -196,8 +203,7 @@ public:
     timingList.insertAndReset("queueLockFetchTime", t);
     ContainerTraits<C>::addReferencesIfNecessaryAndCommit(cont, elements, m_agentReference, lc);
     timingList.insertAndReset("queueProcessAndCommitTime", t);
-    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        previousOwnerAddress, timingList, t, lc);
+    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(), previousOwnerAddress, timingList, t, lc);
     timingList.insertAndReset("requestsUpdatingTime", t);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
@@ -280,8 +286,7 @@ public:
       localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(candidateElements,
-          m_agentReference.getAgentAddress(), cont.getAddressIfSet(), localTimingList, t, lc);
+      auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(), cont.getAddressIfSet(), localTimingList, t, lc);
       if (failedOwnershipSwitchElements.empty()) {
         localTimingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
