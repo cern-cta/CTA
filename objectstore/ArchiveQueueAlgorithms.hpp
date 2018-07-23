@@ -40,6 +40,15 @@ struct ContainerTraitsTypes<ArchiveQueue>
 
   typedef ArchiveRequest::JobDump ElementDescriptor;
 
+  struct PoppedElement {
+    std::unique_ptr<ArchiveRequest> archiveRequest;
+    uint16_t copyNb;
+    uint64_t bytes;
+    common::dataStructures::ArchiveFile archiveFile;
+    std::string archiveReportURL;
+    std::string errorReportURL;
+    std::string srcURL;
+  };
   struct PoppedElementsSummary;
   struct PopCriteria {
     PopCriteria& operator-=(const PoppedElementsSummary&);
@@ -58,6 +67,15 @@ struct ContainerTraitsTypes<ArchiveQueue>
       return *this;
     }
     void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+  };
+  struct PoppedElementsList : public std::list<PoppedElement> {
+    void insertBack(PoppedElementsList&&);
+    void insertBack(PoppedElement&&);
+  };
+  struct PoppedElementsBatch {
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer&);
   };
 };
 
@@ -81,6 +99,33 @@ addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params)
         .add("queueBytesAfter", bytes);
 }
 
+auto ContainerTraits<ArchiveQueue>::PopCriteria::
+operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
+  bytes -= pes.bytes;
+  files -= pes.files;
+  return *this;
+}
+
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::
+insertBack(PoppedElementsList &&insertedList) {
+  for (auto &e: insertedList) {
+    std::list<PoppedElement>::emplace_back(std::move(e));
+  }
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
+  std::list<PoppedElement>::emplace_back(std::move(e));
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsBatch::
+addToLog(log::ScopedParamContainer &params) {
+  params.add("bytes", summary.bytes)
+        .add("files", summary.files);
+}
+
+
+
 
 
 #if 0
@@ -90,7 +135,7 @@ public:
   typedef ArchiveQueue                                           Container;
   typedef std::string                                            ContainerAddress;
   typedef std::string                                            ElementAddress;
-  typedef std::string                                            ContainerIdentifyer;
+  typedef std::string                                            ContainerIdentifier;
   static const std::string                    c_containerTypeName; //= "ArchiveQueue";
   static const std::string                    c_identifyerType; // = "tapepool";
   
@@ -108,10 +153,10 @@ public:
   template <class Element>
   static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifier & contId,
     log::LogContext & lc);
   
-  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
+  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifier & cId,
     log::LogContext & lc);
   
   static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
@@ -124,48 +169,19 @@ public:
   
   static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   
-  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc);
-  
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
     OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
     OpFailure<InsertedElement>::list failedElements;
   };
   
-  class PoppedElement {
-  public:
-    std::unique_ptr<ArchiveRequest> archiveRequest;
-    uint16_t copyNb;
-    uint64_t bytes;
-    common::dataStructures::ArchiveFile archiveFile;
-    std::string archiveReportURL;
-    std::string errorReportURL;
-    std::string srcURL;
-  };
-  class PoppedElementsList: public std::list<PoppedElement> {
-  public:
-    void insertBack(PoppedElementsList &&);
-    void insertBack(PoppedElement &&);
-  };
-  
-  class PoppedElementsBatch {
-  public:
-    PoppedElementsList elements;
-    PoppedElementsSummary summary;
-    void addToLog(log::ScopedParamContainer &);
-  };
-  
   typedef std::set<ElementAddress> ElementsToSkipSet;
   
-  static PoppedElementsSummary getElementSummary(const PoppedElement &);
   
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
-  static OpFailure<PoppedElement>::list switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc);
-  
-  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
 };
 #endif
 
