@@ -135,8 +135,8 @@ struct ContainerTraits
     const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
 
   static PoppedElementsSummary getElementSummary(const PoppedElement &);
-  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
-      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+  static PoppedElementsBatch getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria,
+    ElementsToSkipSet &elemtsToSkip, log::LogContext &lc);
 
   static const std::string c_containerTypeName; // = "genericContainer"
   static const std::string c_identifyerType;    // = "genericId"
