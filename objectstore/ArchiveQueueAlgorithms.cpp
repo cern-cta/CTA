@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,48 @@
 #include "common/make_unique.hpp"
 
 namespace cta { namespace objectstore {
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsSummary::
+addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
+  params.add("filesAdded", files - previous.files)
+        .add("bytesAdded", bytes - previous.bytes)
+        .add("filesBefore", previous.files)
+        .add("bytesBefore", previous.bytes)
+        .add("filesAfter", files)
+        .add("bytesAfter", bytes);
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::ContainerSummary::
+addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params) {
+  params.add("queueJobsBefore", previous.jobs)
+        .add("queueBytesBefore", previous.bytes)
+        .add("queueJobsAfter", jobs)
+        .add("queueBytesAfter", bytes);
+}
+
+auto ContainerTraits<ArchiveQueue>::PopCriteria::
+operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
+  bytes -= pes.bytes;
+  files -= pes.files;
+  return *this;
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::
+insertBack(PoppedElementsList &&insertedList) {
+  for (auto &e: insertedList) {
+    std::list<PoppedElement>::emplace_back(std::move(e));
+  }
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
+  std::list<PoppedElement>::emplace_back(std::move(e));
+}
+
+void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsBatch::
+addToLog(log::ScopedParamContainer &params) {
+  params.add("bytes", summary.bytes)
+        .add("files", summary.files);
+}
 
 template<>
 const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";

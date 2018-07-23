@@ -79,49 +79,12 @@ struct ContainerTraitsTypes<ArchiveQueue>
   };
 };
 
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsSummary::
-addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params)
-{
-  params.add("filesAdded", files - previous.files)
-        .add("bytesAdded", bytes - previous.bytes)
-        .add("filesBefore", previous.files)
-        .add("bytesBefore", previous.bytes)
-        .add("filesAfter", files)
-        .add("bytesAfter", bytes);
-}
 
-void ContainerTraitsTypes<ArchiveQueue>::ContainerSummary::
-addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params)
-{
-  params.add("queueJobsBefore", previous.jobs)
-        .add("queueBytesBefore", previous.bytes)
-        .add("queueJobsAfter", jobs)
-        .add("queueBytesAfter", bytes);
-}
-
-auto ContainerTraits<ArchiveQueue>::PopCriteria::
-operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
-  bytes -= pes.bytes;
-  files -= pes.files;
-  return *this;
-}
-
-
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::
-insertBack(PoppedElementsList &&insertedList) {
-  for (auto &e: insertedList) {
-    std::list<PoppedElement>::emplace_back(std::move(e));
-  }
-}
-
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
-  std::list<PoppedElement>::emplace_back(std::move(e));
-}
-
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsBatch::
-addToLog(log::ScopedParamContainer &params) {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
+template<>
+template<typename Element>
+ContainerTraits<ArchiveQueue>::ElementAddress ContainerTraits<ArchiveQueue>::
+getElementAddress(const Element &e) {
+  return e.archiveRequest->getAddressIfSet();
 }
 
 
@@ -139,8 +102,6 @@ public:
   static const std::string                    c_containerTypeName; //= "ArchiveQueue";
   static const std::string                    c_identifyerType; // = "tapepool";
   
-  static ContainerSummary getContainerSummary(Container &cont);
-  
   template <class Element>
   struct OpFailure {
     Element * element;
@@ -149,9 +110,6 @@ public:
   };
   
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
-  
-  template <class Element>
-  static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifier & contId,
     log::LogContext & lc);
@@ -164,10 +122,6 @@ public:
   
   static void addReferencesIfNecessaryAndCommit(Container & cont, InsertedElement::list & elemMemCont,
       AgentReference & agentRef, log::LogContext & lc);
-  
-  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures);
-  
-  static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
   
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
