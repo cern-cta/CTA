@@ -31,6 +31,9 @@
 
 namespace cta { namespace objectstore {
 
+/**
+ * Container traits type definitions
+ */
 template<typename C>
 struct ContainerTraitsTypes
 {
@@ -44,6 +47,7 @@ struct ContainerTraitsTypes
 
   struct ElementDescriptor {};
 
+  struct PoppedElement {};
   struct PoppedElementsSummary;
   struct PopCriteria {
     PopCriteria();
@@ -55,81 +59,91 @@ struct ContainerTraitsTypes
     PoppedElementsSummary(const PoppedElementsSummary&);
     void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
   };
-};
-
-/**
- * Container traits definition. To be specialized class by class.
- */
-template<typename C> 
-struct ContainerTraits
-{
-  typedef C                   Container;
-  typedef std::string         ContainerAddress;
-  typedef std::string         ElementAddress;
-  typedef std::string         ContainerIdentifyer;
-  static const std::string    c_containerTypeName; // = "genericContainer"
-  static const std::string    c_identifyerType;    // = "genericId"
-
-  using ContainerSummary = typename ContainerTraitsTypes<C>::ContainerSummary;
-  ContainerSummary getContainerSummary(Container&);
-
-  using InsertedElement = typename ContainerTraitsTypes<C>::InsertedElement;
-  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
-  typedef std::list<InsertedElement*> ElementPointerContainer;
-
-  using ElementDescriptor = typename ContainerTraitsTypes<C>::ElementDescriptor;
-  typedef std::list<ElementDescriptor> ElementDescriptorContainer;
-  
-  template<typename Element>
-  struct OpFailure {
-    Element * element;
-    std::exception_ptr failure;
-    typedef std::list<OpFailure> list;
-  };
-  
-  using PopCriteria = typename ContainerTraitsTypes<C>::PopCriteria;
-  using PoppedElementsSummary = typename ContainerTraitsTypes<C>::PoppedElementsSummary;
   struct PoppedElementsList {
     PoppedElementsList();
-    void insertBack(PoppedElementsList &&);
+    void insertBack(PoppedElementsList&&);
   };
   struct PoppedElementsBatch {
     PoppedElementsList elements;
     PoppedElementsSummary summary;
-    void addToLog(log::ScopedParamContainer &);
+    void addToLog(log::ScopedParamContainer&);
   };
-  typedef std::set<ElementAddress> ElementsToSkipSet;
-  
+};
+
+
+/**
+ * Container traits definition
+ */
+template<typename C> 
+struct ContainerTraits
+{
+  using ContainerSummary = typename ContainerTraitsTypes<C>::ContainerSummary;
+  using InsertedElement = typename ContainerTraitsTypes<C>::InsertedElement;
+  using ElementDescriptor = typename ContainerTraitsTypes<C>::ElementDescriptor;
+  using PoppedElement = typename ContainerTraitsTypes<C>::PoppedElement;
+  using PopCriteria = typename ContainerTraitsTypes<C>::PopCriteria;
+  using PoppedElementsSummary = typename ContainerTraitsTypes<C>::PoppedElementsSummary;
+  using PoppedElementsList = typename ContainerTraitsTypes<C>::PoppedElementsList;
+  using PoppedElementsBatch = typename ContainerTraitsTypes<C>::PoppedElementsBatch;
+
+  typedef C                                           Container;
+  typedef std::string                                 ContainerAddress;
+  typedef std::string                                 ElementAddress;
+  typedef std::string                                 ContainerIdentifier;
+  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
+  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
+  typedef std::set<ElementAddress>                    ElementsToSkipSet;
+
+  template<typename Element>
+  struct OpFailure {
+    Element *element;
+    std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
+  };
+
   class OwnershipSwitchFailure: public cta::exception::Exception {
   public:
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    OwnershipSwitchFailure(const std::string &message): cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
+
+  ContainerSummary getContainerSummary(Container&);
   
-  static void trimContainerIfNeeded(Container & cont);
+  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
   
   template<typename Element>
-  static ElementAddress getElementAddress(const Element & e);
+  static ElementAddress getElementAddress(const Element &e);
   
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & contLock, AgentReference & agRef, const ContainerIdentifyer & cId,
-    log::LogContext & lc);
-  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
-    log::LogContext & lc);
-  static void addReferencesAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc);
-  static void addReferencesIfNecessaryAndCommit(Container & cont, typename InsertedElement::list & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc);
-  void removeReferencesAndCommit(Container & cont, typename OpFailure<InsertedElement>::list & elementsOpFailures);
-  void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
-  static ElementPointerContainer switchElementsOwnership(ElementMemoryContainer & elemMemCont, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::LogContext & lc);
-  template<typename Element>
-  static PoppedElementsSummary getElementSummary(const Element &);
+  static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef, const ContainerIdentifier &cId, log::LogContext &lc);
+  static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId, log::LogContext &lc);
+  static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont, AgentReference &agentRef, log::LogContext &lc);
+  static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont, AgentReference &agentRef, log::LogContext &lc);
+  void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
+  void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
+
+  static typename OpFailure<InsertedElement>::list
+  switchElementsOwnership(typename InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
+    const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
+
+  static typename OpFailure<PoppedElement>::list
+  switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
+    const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
+
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+
+  static const std::string c_containerTypeName; // = "genericContainer"
+  static const std::string c_identifyerType;    // = "genericId"
 };
 
+
+/**
+ * Container algorithms
+ */
 template<typename C>
 class ContainerAlgorithms {
 public:
@@ -143,8 +157,8 @@ public:
   /** Reference objects in the container and then switch their ownership. Objects 
    * are provided existing and owned by algorithm's agent.
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
-      const typename ContainerTraits<C>::ContainerIdentifyer & prevContId,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier & contId,
+      const typename ContainerTraits<C>::ContainerIdentifier & prevContId,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
@@ -189,7 +203,7 @@ public:
    * This function is typically used by the garbage collector. We do noe take care of dereferencing
    * the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifier & contId,
       typename ContainerTraits<C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<C>::ContainerAddress & contAddress,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -240,13 +254,13 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier & contId,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
   }
   
   
-  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifyer & contId,
+  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifier & contId,
       typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {
     // Prepare the return value
     typename ContainerTraits<C>::PoppedElementsBatch ret;

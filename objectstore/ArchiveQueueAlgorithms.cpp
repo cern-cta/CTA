@@ -30,7 +30,7 @@ const std::string ContainerTraits<ArchiveQueue>::c_identifyerType = "tapepool";
 
 template<>
 void ContainerTraits<ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
-    const ContainerIdentifyer& contId, log::LogContext& lc) {
+    const ContainerIdentifier& contId, log::LogContext& lc) {
   Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
 }
 
@@ -116,7 +116,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
 
 template<>
 void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock,
-    const ContainerIdentifyer& cId, log::LogContext& lc) {
+    const ContainerIdentifier& cId, log::LogContext& lc) {
   // Try and get access to a queue.
   size_t attemptCount = 0;
   retry:
@@ -169,12 +169,6 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::PoppedElementsBatch::addToLog(log::ScopedParamContainer& params) {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
-}
-
-template<>
 auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
     ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
@@ -194,25 +188,6 @@ auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppe
   ret.bytes = poppedElement.bytes;
   ret.files = 1;
   return ret;
-}
-
-template<>
-void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElementsList&& insertedList) {
-  for (auto &e: insertedList) {
-    std::list<PoppedElement>::emplace_back(std::move(e));
-  }
-}
-
-template<>
-void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement&& e) {
-  std::list<PoppedElement>::emplace_back(std::move(e));
-}
-
-template<>
-auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
-  bytes -= pes.bytes;
-  files -= pes.files;
-  return *this;
 }
 
 template<>
@@ -247,7 +222,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
+void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifier & cId,
     log::LogContext& lc) {
   if (cont.isEmpty()) {
     // The current implementation is done unlocked.
