@@ -22,13 +22,13 @@
 
 namespace cta { namespace objectstore {
 
-template <>
-class ContainerTraits<RetrieveQueue> {
-public:
-  typedef RetrieveQueue                                          Container;
-  typedef std::string                                            ContainerAddress;
-  typedef std::string                                            ElementAddress;
-  typedef std::string                                            ContainerIdentifyer;
+template<>
+struct ContainerTraitsTypes<RetrieveQueue>
+{
+  struct ContainerSummary {
+    void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
+  };
+
   struct InsertedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
     uint16_t copyNb;
@@ -38,6 +38,49 @@ public:
     serializers::RetrieveJobStatus status;
     typedef std::list<InsertedElement> list;
   };
+
+  struct ElementDescriptor {};
+
+  struct PoppedElement {};
+  struct PoppedElementsSummary;
+  struct PopCriteria {
+    PopCriteria();
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+  };
+  struct PoppedElementsSummary {
+    bool operator<(const PopCriteria&);
+    PoppedElementsSummary& operator+=(const PoppedElementsSummary&);
+    PoppedElementsSummary(const PoppedElementsSummary&);
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+  };
+  struct PoppedElementsList {
+    PoppedElementsList();
+    void insertBack(PoppedElementsList&&);
+  };
+  struct PoppedElementsBatch {
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer&);
+  };
+};
+
+
+template<>
+template<typename Element>
+ContainerTraits<RetrieveQueue>::ElementAddress ContainerTraits<RetrieveQueue>::
+getElementAddress(const Element &e) {
+  return e.retrieveRequest->getAddressIfSet();
+}
+
+
+#if 0
+template <>
+class ContainerTraits<RetrieveQueue> {
+public:
+  typedef RetrieveQueue                                          Container;
+  typedef std::string                                            ContainerAddress;
+  typedef std::string                                            ElementAddress;
+  typedef std::string                                            ContainerIdentifyer;
   
   template <class Element>
   struct OpFailure {
@@ -48,8 +91,6 @@ public:
   typedef RetrieveRequest::JobDump                               ElementDescriptor;
   typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
   
-  template <class Element>
-  static ElementAddress getElementAddress(const Element & e) { return e.retrieveRequest->getAddressIfSet(); }
   
   static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef, const ContainerIdentifyer & contId,
     log::LogContext & lc) {
@@ -133,5 +174,6 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
 };
+#endif
 
 }} // namespace cta::objectstore

@@ -94,6 +94,8 @@ struct ContainerTraits
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
 
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
+
   template<typename Element>
   struct OpFailure {
     Element *element;
@@ -107,22 +109,22 @@ struct ContainerTraits
     typename OpFailure<InsertedElement>::list failedElements;
   };
 
-  ContainerSummary getContainerSummary(Container&);
-  
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
-  
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
-  
   template<typename Element>
   static ElementAddress getElementAddress(const Element &e);
-  
-  static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef, const ContainerIdentifier &cId, log::LogContext &lc);
-  static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId, log::LogContext &lc);
-  static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont, AgentReference &agentRef, log::LogContext &lc);
-  static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont, AgentReference &agentRef, log::LogContext &lc);
-  void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
-  void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
+
+  static ContainerSummary getContainerSummary(Container &cont);
+  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
+  static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
+    const ContainerIdentifier &cId, log::LogContext &lc);
+  static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
+  static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
+    AgentReference &agentRef, log::LogContext &lc);
+  static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
+    AgentReference &agentRef, log::LogContext &lc);
+  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
+  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
 
   static typename OpFailure<InsertedElement>::list
   switchElementsOwnership(typename InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
