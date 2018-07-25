@@ -47,7 +47,11 @@ add_executable(cta-wfe-test EosCtaStub.cpp)
 target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsi-4 XrdSsiLib XrdUtils)
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
+# Easter egg: the castor version tool
+add_executable(castor castor.c)
+
 install(TARGETS cta-admin DESTINATION usr/bin)
 install(TARGETS cta-wfe-test DESTINATION usr/bin)
 install(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(TARGETS castor DESTINATION usr/bin)
 
