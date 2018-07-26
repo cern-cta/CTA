@@ -471,17 +471,17 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
             // representation.
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
             // We could try and refactor this.
-            retRef.m_retieveRequest.archiveFileID = payload.archivefile().archivefileid();
+            retRef.m_retrieveRequest.archiveFileID = payload.archivefile().archivefileid();
             objectstore::EntryLogSerDeser el;
             el.deserialize(payload.schedulerrequest().entrylog());
-            retRef.m_retieveRequest.creationLog = el;
+            retRef.m_retrieveRequest.creationLog = el;
             objectstore::DiskFileInfoSerDeser dfi;
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
-            retRef.m_retieveRequest.diskFileInfo = dfi;
-            retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
-            retRef.m_retieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
-            retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
-            retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
+            retRef.m_retrieveRequest.diskFileInfo = dfi;
+            retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
+            retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
+            retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
             objectstore::ArchiveFileSerDeser af;
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
@@ -514,7 +514,7 @@ const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::g
 // RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest()
 //------------------------------------------------------------------------------
 const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
-  return m_retieveRequest;
+  return m_retrieveRequest;
 }
 
 //------------------------------------------------------------------------------

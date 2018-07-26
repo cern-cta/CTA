@@ -96,7 +96,7 @@ public:
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
-    common::dataStructures::RetrieveRequest m_retieveRequest;
+    common::dataStructures::RetrieveRequest m_retrieveRequest;
     common::dataStructures::ArchiveFile m_archiveFile;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.

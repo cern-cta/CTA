@@ -42,25 +42,29 @@ struct ContainerTraitsTypes<RetrieveQueue>
 
   typedef RetrieveRequest::JobDump ElementDescriptor;
 
-  struct PoppedElement {};
+  struct PoppedElement {
+    std::unique_ptr<RetrieveRequest> retrieveRequest;
+    common::dataStructures::ArchiveFile archiveFile;
+  };
   struct PoppedElementsSummary;
   struct PopCriteria {
-    PopCriteria();
-    PopCriteria& operator-= (const PoppedElementsSummary &);
+    PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+    PopCriteria& operator-=(const PoppedElementsSummary&);
+    uint64_t files;
+    uint64_t bytes;
   };
   struct PoppedElementsSummary {
     //PoppedElementsSummary();
     bool operator<(const PopCriteria&);
     PoppedElementsSummary& operator+=(const PoppedElementsSummary&);
     //PoppedElementsSummary(const PoppedElementsSummary&);
-    //void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
   };
-  struct PoppedElementsList {
-    PoppedElementsList();
+  struct PoppedElementsList : public std::list<PoppedElement> {
     void insertBack(PoppedElementsList&&);
+    void insertBack(PoppedElement&&);
   };
   struct PoppedElementsBatch {
-    //PoppedElementsBatch();
     PoppedElementsList elements;
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer&);
@@ -74,6 +78,5 @@ ContainerTraits<RetrieveQueue>::ElementAddress ContainerTraits<RetrieveQueue>::
 getElementAddress(const Element &e) {
   return e.retrieveRequest->getAddressIfSet();
 }
-
 
 }} // namespace cta::objectstore
