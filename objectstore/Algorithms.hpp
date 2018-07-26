@@ -139,7 +139,7 @@ struct ContainerTraits
     ElementsToSkipSet &elemtsToSkip, log::LogContext &lc);
 
   static const std::string c_containerTypeName; // = "genericContainer"
-  static const std::string c_identifyerType;    // = "genericId"
+  static const std::string c_identifierType;    // = "genericId"
 };
 
 
@@ -232,7 +232,7 @@ public:
     timingList.insertAndReset("queueUnlockTime", t);
     log::ScopedParamContainer params(lc);
     params.add("C", ContainerTraits<C>::c_containerTypeName)
-          .add(ContainerTraits<C>::c_identifyerType, contId)
+          .add(ContainerTraits<C>::c_identifierType, contId)
           .add("containerAddress", cont.getAddressIfSet());
     contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
     timingList.addToLog(params);
@@ -378,7 +378,7 @@ public:
       }
       log::ScopedParamContainer params(lc);
       params.add("C", ContainerTraits<C>::c_containerTypeName)
-            .add(ContainerTraits<C>::c_identifyerType, contId)
+            .add(ContainerTraits<C>::c_identifierType, contId)
             .add("containerAddress", cont.getAddressIfSet());
       ret.summary.addDeltaToLog(previousSummary, params);
       contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
@@ -390,7 +390,7 @@ public:
     {
       log::ScopedParamContainer params(lc);
       params.add("C", ContainerTraits<C>::c_containerTypeName)
-            .add(ContainerTraits<C>::c_identifyerType, contId);
+            .add(ContainerTraits<C>::c_identifierType, contId);
       ret.addToLog(params);
       timingList.addToLog(params);
       params.add("schedulerDbTime", totalTime.secs());

@@ -26,7 +26,7 @@ namespace cta { namespace objectstore {
 template<>
 struct ContainerTraitsTypes<RetrieveQueue>
 {
-  struct ContainerSummary {
+  struct ContainerSummary : public RetrieveQueue::JobsSummary {
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
   };
 
@@ -54,10 +54,16 @@ struct ContainerTraitsTypes<RetrieveQueue>
     uint64_t bytes;
   };
   struct PoppedElementsSummary {
-    //PoppedElementsSummary();
-    bool operator<(const PopCriteria&);
-    PoppedElementsSummary& operator+=(const PoppedElementsSummary&);
-    //PoppedElementsSummary(const PoppedElementsSummary&);
+    uint64_t bytes = 0;
+    uint64_t files = 0;
+    bool operator<(const PopCriteria &pc) {
+      return bytes < pc.bytes && files < pc.files;
+    }
+    PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
+      bytes += other.bytes;
+      files += other.files;
+      return *this;
+    }
     void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
   };
   struct PoppedElementsList : public std::list<PoppedElement> {
