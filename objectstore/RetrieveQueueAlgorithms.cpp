@@ -83,5 +83,4 @@ switchElementsOwnership(InsertedElement::list &elemMemCont, const ContainerAddre
   return ret;
 }
 
-
 }} // namespace cta::objectstore

@@ -51,9 +51,10 @@ struct ContainerTraitsTypes<ArchiveQueue>
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
+    PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
     PopCriteria& operator-=(const PoppedElementsSummary&);
-    uint64_t bytes = 0;
-    uint64_t files = 0;
+    uint64_t files;
+    uint64_t bytes;
   };
   struct PoppedElementsSummary {
     uint64_t bytes = 0;
