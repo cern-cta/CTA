@@ -22,6 +22,14 @@
 
 namespace cta { namespace objectstore {
 
+template<>
+const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
+
+template<>
+const std::string ContainerTraits<ArchiveQueue>::c_identifierType = "tapepool";
+
+// ContainerTraitsTypes
+
 void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
   params.add("filesAdded", files - previous.files)
@@ -64,11 +72,7 @@ addToLog(log::ScopedParamContainer &params) {
         .add("files", summary.files);
 }
 
-template<>
-const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
-
-template<>
-const std::string ContainerTraits<ArchiveQueue>::c_identifyerType = "tapepool";
+// ContainerTraits
 
 template<>
 void ContainerTraits<ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
