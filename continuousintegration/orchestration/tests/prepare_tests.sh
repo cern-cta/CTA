@@ -64,6 +64,7 @@ echo "Preparing CTA configuration for tests"
      --comment "ctasystest"                                           
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
+    --vo vo                                                           \
     --partialtapesnumber 5                                            \
     --encrypted false                                                 \
     --comment "ctasystest"                                            

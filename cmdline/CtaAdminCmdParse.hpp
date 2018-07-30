@@ -305,7 +305,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--storageclass",          OptionString::STORAGE_CLASS },
    { "--tapepool",              OptionString::TAPE_POOL },
    { "--username",              OptionString::USERNAME },
-   { "--vid",                   OptionString::VID }
+   { "--vid",                   OptionString::VID },
+   { "--vo",                    OptionString::VO }
 };
 
 
@@ -415,6 +416,7 @@ const Option opt_username             { Option::OPT_STR,  "--username",         
 const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>",
                                         "--username" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
+const Option opt_vo                   { Option::OPT_STR,  "--vo",                    "-v",   " <vo>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
 
@@ -499,9 +501,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional(), opt_lbp.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
-      { opt_tapepool_alias, opt_partialtapes, opt_encrypted, opt_comment }},
+      { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_comment }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_CH    },
-      { opt_tapepool_alias, opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
+      { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_header.optional() }},
    {{ AdminCmd::CMD_TEST,                 AdminCmd::SUBCMD_READ  },

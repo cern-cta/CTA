@@ -59,6 +59,11 @@ struct TapePool {
   std::string name;
 
   /**
+   * The virtual organisation of the tape pool.
+   */
+  std::string vo;
+
+  /**
    * The desired number of tapes that should be empty or partially filled.
    */
   uint64_t nbPartialTapes;

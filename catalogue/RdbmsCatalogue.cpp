@@ -23,6 +23,9 @@
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -524,10 +527,25 @@ void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::Sec
 void RdbmsCatalogue::createTapePool(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &name,
+  const std::string &vo,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
   const std::string &comment) {
   try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape pool because the tape pool name is an empty string");
+    }
+
+    if(vo.empty()) {
+      throw UserSpecifiedAnEmptyStringVo(std::string("Cannot create tape pool ") + name +
+        " because the VO is an empty string");
+    }
+
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create tape pool ") + name +
+        " because the comment is an empty string");
+    }
+
     auto conn = m_connPool.getConn();
 
     if(tapePoolExists(conn, name)) {
@@ -538,6 +556,7 @@ void RdbmsCatalogue::createTapePool(
     const char *const sql =
       "INSERT INTO TAPE_POOL("
         "TAPE_POOL_NAME,"
+        "VO,"
         "NB_PARTIAL_TAPES,"
         "IS_ENCRYPTED,"
 
@@ -552,6 +571,7 @@ void RdbmsCatalogue::createTapePool(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":TAPE_POOL_NAME,"
+        ":VO,"
         ":NB_PARTIAL_TAPES,"
         ":IS_ENCRYPTED,"
 
@@ -567,6 +587,7 @@ void RdbmsCatalogue::createTapePool(
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
 
     stmt.bindString(":TAPE_POOL_NAME", name);
+    stmt.bindString(":VO", vo);
     stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
     stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
 
@@ -827,6 +848,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     const char *const sql =
       "SELECT "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "COALESCE(TAPE_POOL.VO, 'NONE') AS VO," // TBD Remove COALESCE
         "TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
 
@@ -849,6 +871,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.TAPE_POOL_NAME = TAPE.TAPE_POOL_NAME "
       "GROUP BY "
         "TAPE_POOL.TAPE_POOL_NAME,"
+        "TAPE_POOL.VO,"
         "TAPE_POOL.NB_PARTIAL_TAPES,"
         "TAPE_POOL.IS_ENCRYPTED,"
         "TAPE_POOL.USER_COMMENT,"
@@ -868,6 +891,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       TapePool pool;
 
       pool.name = rset.columnString("TAPE_POOL_NAME");
+      pool.vo = rset.columnString("VO");
       pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
       pool.encryption = rset.columnBool("IS_ENCRYPTED");
       pool.nbTapes = rset.columnUint64("NB_TAPES");
@@ -885,6 +909,46 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
     }
 
     return pools;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapePoolVO
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &vo) {
+  try {
+    if(vo.empty()) {
+      throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify tape pool ") + name +
+        " because the new VO is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE_POOL SET "
+        "VO = :VO,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "TAPE_POOL_NAME = :TAPE_POOL_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::ON);
+    stmt.bindString(":VO", vo);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":TAPE_POOL_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape pool ") + name + " because it does not exist");
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -934,6 +998,11 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
 void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot modify tape pool ") + name +
+        " because the new comment is an empty string");
+    }
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE_POOL SET "

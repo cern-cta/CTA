@@ -141,8 +141,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassComment(admin, instanceName, name, comment);}, m_maxTriesToConnect);
   }
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, nbPartialTapes, encryptionValue, comment);}, m_maxTriesToConnect);
+  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, comment);}, m_maxTriesToConnect);
   }
 
   void deleteTapePool(const std::string &name) override {
@@ -151,6 +151,10 @@ public:
 
   std::list<TapePool> getTapePools() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePools();}, m_maxTriesToConnect);
+  }
+
+  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapePoolVo(admin, name, vo);}, m_maxTriesToConnect);
   }
 
   void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) override {

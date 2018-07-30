@@ -1919,11 +1919,12 @@ void RequestMessage::processTapePool_Add(const cta::admin::AdminCmd &admincmd, c
    using namespace cta::admin;
 
    auto &name      = getRequired(OptionString::TAPE_POOL);
+   auto &vo        = getRequired(OptionString::VO);
    auto &ptn       = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto &comment   = getRequired(OptionString::COMMENT);
    auto &encrypted = getRequired(OptionBoolean::ENCRYPTED);
 
-   m_catalogue.createTapePool(m_cliIdentity, name, ptn, encrypted, comment);
+   m_catalogue.createTapePool(m_cliIdentity, name, vo, ptn, encrypted, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1935,12 +1936,16 @@ void RequestMessage::processTapePool_Ch(const cta::admin::AdminCmd &admincmd, ct
    using namespace cta::admin;
 
    auto &name      = getRequired(OptionString::TAPE_POOL);
+   auto  vo        = getOptional(OptionString::VO);
    auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
    auto  comment   = getOptional(OptionString::COMMENT);
    auto  encrypted = getOptional(OptionBoolean::ENCRYPTED);
 
    if(comment) {
       m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
+   }
+   if(vo) {
+      m_catalogue.modifyTapePoolVo(m_cliIdentity, name, vo.value());
    }
    if(ptn) {
       m_catalogue.modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
@@ -1978,7 +1983,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
    if(!tp_list.empty())
    {
       const std::vector<std::string> header = {
-         "name","# tapes","# partial","size","used","avail","use%","encrypt",
+         "name","vo", "# tapes","# partial","size","used","avail","use%","encrypt",
          "c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       std::vector<std::vector<std::string>> responseTable;
@@ -1992,6 +1997,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
          use << std::fixed << std::setprecision(1) <<(use_d < 0.0 ? 0.0 : use_d) << '%';
 
          currentRow.push_back(tp.name);
+         currentRow.push_back(tp.vo);
          currentRow.push_back(std::to_string(tp.nbTapes));
          currentRow.push_back(std::to_string(tp.nbPartialTapes));
          currentRow.push_back(std::to_string(tp.capacityBytes/1000000000) + "G");

@@ -114,6 +114,7 @@ namespace unitTests {
     const std::string vid2 = "VTEST002";
     const std::string logicalLibraryName = "logical_library_name";
     const std::string tapePoolName = "tape_pool_name";
+    const std::string vo = "vo";
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
@@ -121,7 +122,7 @@ namespace unitTests {
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, "Create logical library");
-    m_catalogue->createTapePool(admin, tapePoolName, 2, true, "Create tape pool");
+    m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, "Create tape pool");
     m_catalogue->createTape(admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, createTapeComment);
 
@@ -259,6 +260,7 @@ namespace unitTests {
     const std::string vid2 = "VTEST002";
     const std::string logicalLibraryName = "logical_library_name";
     const std::string tapePoolName = "tape_pool_name";
+    const std::string vo = "vo";
     const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
     const bool disabledValue = true;
     const bool fullValue = false;
@@ -266,7 +268,7 @@ namespace unitTests {
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, "Create logical library");
-    m_catalogue->createTapePool(admin, tapePoolName, 2, true, "Create tape pool");
+    m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, "Create tape pool");
     m_catalogue->createTape(admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, createTapeComment);
 

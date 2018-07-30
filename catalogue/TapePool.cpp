@@ -51,6 +51,7 @@ bool TapePool::operator!=(const TapePool &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
   os << "(name=" << obj.name
+     << " vo=" << obj.vo
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
      << " nbTapes=" << obj.nbTapes

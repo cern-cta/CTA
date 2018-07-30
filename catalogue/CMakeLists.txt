@@ -42,7 +42,10 @@ set (CATALOGUE_LIB_SRC_FILES
   SqliteCatalogue.cpp
   TapeForWriting.cpp
   UserSpecifiedANonEmptyTape.cpp
-  UserSpecifiedANonExistentTape.cpp)
+  UserSpecifiedANonExistentTape.cpp
+  UserSpecifiedAnEmptyStringComment.cpp
+  UserSpecifiedAnEmptyStringTapePoolName.cpp
+  UserSpecifiedAnEmptyStringVo.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
