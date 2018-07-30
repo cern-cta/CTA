@@ -552,3 +552,27 @@
    fun:OCIEnvCreate
    ...
 }
+{
+   XrdSysUtils_ExecName
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:strdup
+   fun:_ZN11XrdSysUtils8ExecNameEv
+   fun:_ZN5XrdCl10DefaultEnvC1Ev
+   fun:_ZN5XrdCl10DefaultEnv10InitializeEv
+   obj:/usr/lib64/libXrdCl.so.2.0.0
+   fun:_dl_init
+   obj:/usr/lib64/ld-2.17.so
+}
+{
+   dl_init_libceph_common
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   obj:/usr/lib64/ceph/libceph-common.so.0
+   fun:_dl_init
+   obj:/usr/lib64/ld-2.17.so
+}
