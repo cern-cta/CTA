@@ -109,7 +109,7 @@ public:
       }
     } else { // No cache hit
       const auto emplaceResult = m_cache.emplace(std::make_pair(key,
-        make_unique<TimestampedValue>(now, getNonCachedValue())));
+        cta::make_unique<TimestampedValue>(now, getNonCachedValue())));
       return emplaceResult.first->second->value;
     }
   }
