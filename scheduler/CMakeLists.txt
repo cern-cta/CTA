@@ -45,12 +45,12 @@ set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 if(CMAKE_COMPILER_IS_GNUCC)
-  # Add -Wno-unused-function compiler flag if using gcc version 7 or greater
-  if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  # Add -Wno-unused-function compiler flag if using gcc version 6 or greater
+  if (GCC_VERSION VERSION_EQUAL 6 OR GCC_VERSION VERSION_GREATER 6)
     set_property(SOURCE OStoreDB/OStoreDBTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
     set_property(SOURCE SchedulerDatabaseTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
     set_property(SOURCE SchedulerTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
-  endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  endif (GCC_VERSION VERSION_EQUAL 6 OR GCC_VERSION VERSION_GREATER 6)
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 target_link_libraries (ctaschedulerunittests 
