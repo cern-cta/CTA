@@ -34,6 +34,7 @@
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include <algorithm>
+#include <cmath>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 #include <stdexcept>
