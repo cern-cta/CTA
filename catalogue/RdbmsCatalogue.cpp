@@ -24,8 +24,11 @@
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
+#include "catalogue/UserSpecifiedAZeroCapacity.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -1562,6 +1565,30 @@ void RdbmsCatalogue::createTape(
   const bool full,
   const std::string &comment) {
   try {
+    if(vid.empty()) {
+      throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
+    }
+
+    if(logicalLibraryName.empty()) {
+      throw UserSpecifiedAnEmptyStringLogicalLibraryName(std::string("Cannot create tape ") + vid +
+        " because the logical library name is an empty string");
+    }
+
+    if(tapePoolName.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName(std::string("Cannot create tape ") + vid +
+        " because the tape pool name is an empty string");
+    }
+
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create tape ") + vid +
+        " because the comment is an empty string");
+    }
+
+    if(0 == capacityInBytes) {
+      throw UserSpecifiedAZeroCapacity(std::string("Cannot create tape ") + vid +
+        " because the capacity is zero");
+    }
+
     auto conn = m_connPool.getConn();
     if(tapeExists(conn, vid)) {
       throw exception::UserError(std::string("Cannot create tape ") + vid +

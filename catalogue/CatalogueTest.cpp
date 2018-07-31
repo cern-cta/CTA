@@ -25,8 +25,11 @@
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
+#include "catalogue/UserSpecifiedAZeroCapacity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -1810,6 +1813,173 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
   }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "";
+
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, 2, true, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+  }
+
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+    fullValue, comment), catalogue::UserSpecifiedAnEmptyStringVid);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
+  const std::string logicalLibraryName = "";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, 2, true, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+  }
+
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+    fullValue, comment), catalogue::UserSpecifiedAnEmptyStringLogicalLibraryName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringTapePoolName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+    fullValue, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = 0;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "Create tape";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, 2, true, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+  }
+
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+    fullValue, comment), catalogue::UserSpecifiedAZeroCapacity);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapes().empty());
+
+  const std::string vid = "vid";
+
+  ASSERT_FALSE(m_catalogue->tapeExists(vid));
+
+  const std::string logicalLibraryName = "logical_library_name";
+  const std::string tapePoolName = "tape_pool_name";
+  const std::string vo = "vo";
+  const uint64_t capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  const bool disabledValue = true;
+  const bool fullValue = false;
+  const std::string comment = "";
+
+  m_catalogue->createLogicalLibrary(m_admin, logicalLibraryName,
+    "Create logical library");
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, 2, true, "Create tape pool");
+  {
+    const auto pools = m_catalogue->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(vo, pool.vo);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+  }
+
+  ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
+    fullValue, comment), catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {

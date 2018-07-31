@@ -44,8 +44,11 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentTape.cpp
   UserSpecifiedAnEmptyStringComment.cpp
+  UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
-  UserSpecifiedAnEmptyStringVo.cpp)
+  UserSpecifiedAnEmptyStringVid.cpp
+  UserSpecifiedAnEmptyStringVo.cpp
+  UserSpecifiedAZeroCapacity.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
