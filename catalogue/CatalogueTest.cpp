@@ -1067,6 +1067,17 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes_emptyStringTapePoolName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "";
+  const uint64_t modifiedNbPartialTapes = 5;
+  ASSERT_THROW(m_catalogue->modifyTapePoolNbPartialTapes(m_admin, tapePoolName, modifiedNbPartialTapes),
+    catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes_nonExistentTapePool) {
   using namespace cta;
       

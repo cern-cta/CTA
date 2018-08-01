@@ -1007,6 +1007,11 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
 void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t nbPartialTapes) {
   try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
+        " string");
+    }
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE_POOL SET "
