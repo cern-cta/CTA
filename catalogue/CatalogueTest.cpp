@@ -898,7 +898,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existant) {
   ASSERT_THROW(m_catalogue->deleteTapePool("non_existant_tape_pool"), exception::UserError);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVO) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
