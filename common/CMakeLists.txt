@@ -139,7 +139,6 @@ set (COMMON_LIB_SRC_FILES
   Configuration.cpp
   ConfigurationFile.cpp
   SourcedParameter.cpp   
-  TapePool.cpp
   Timer.cpp
   UserIdentity.cpp
   VO.cpp)

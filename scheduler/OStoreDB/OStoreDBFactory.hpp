@@ -20,7 +20,6 @@
 
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "common/TapePool.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"

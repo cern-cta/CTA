@@ -29,7 +29,6 @@
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "common/TapePool.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/make_unique.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
