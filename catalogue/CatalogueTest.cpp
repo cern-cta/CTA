@@ -1137,7 +1137,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyString) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringTapePoolName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+      
+  const std::string tapePoolName = "";
+  const std::string modifiedComment = "Modified comment";
+  ASSERT_THROW(m_catalogue->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment),
+    catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
   using namespace cta;
       
   ASSERT_TRUE(m_catalogue->getTapePools().empty());

@@ -1042,6 +1042,11 @@ void RdbmsCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::
 void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
+        " string");
+    }
+
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment(std::string("Cannot modify tape pool ") + name +
         " because the new comment is an empty string");
