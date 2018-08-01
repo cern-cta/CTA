@@ -89,8 +89,7 @@ void RdbmsCatalogue::createAdminUser(
     }
 
     if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create admin user ") + username +
-        " because the comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot create admin user because the comment is an empty string");
     }
 
     auto conn = m_connPool.getConn();
@@ -254,8 +253,7 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
     }
 
     if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot modify admin user ") + username +
-        " because the comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot modify admin user because the comment is an empty string");
     }
 
     const time_t now = time(nullptr);
@@ -295,18 +293,17 @@ void RdbmsCatalogue::createStorageClass(
   const common::dataStructures::StorageClass &storageClass) {
   try {
     if(storageClass.diskInstance.empty()) {
-      throw UserSpecifiedAnEmptyStringDiskInstanceName(std::string("Cannot create storage class ") +
-         storageClass.diskInstance + ":" + storageClass.name + " because the disk instance name is an empty string");
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create storage class because the disk instance name is"
+        " an empty string");
     }
 
     if(storageClass.name.empty()) {
-      throw UserSpecifiedAnEmptyStringStorageClassName(std::string("Cannot create storage class ") +
-        storageClass.diskInstance + ":" + storageClass.name + " because the storage class name is an empty string");
+      throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create storage class because the storage class name is"
+        " an empty string");
     }
 
     if(storageClass.comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create storage class ") +
-        storageClass.diskInstance + ":" + storageClass.name + " because the comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot create storage class because the comment is an empty string");
     }
 
     auto conn = m_connPool.getConn();
@@ -577,13 +574,11 @@ void RdbmsCatalogue::createTapePool(
     }
 
     if(vo.empty()) {
-      throw UserSpecifiedAnEmptyStringVo(std::string("Cannot create tape pool ") + name +
-        " because the VO is an empty string");
+      throw UserSpecifiedAnEmptyStringVo("Cannot create tape pool because the VO is an empty string");
     }
 
     if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create tape pool ") + name +
-        " because the comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot create tape pool because the comment is an empty string");
     }
 
     auto conn = m_connPool.getConn();
@@ -969,8 +964,7 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
     }
 
     if(vo.empty()) {
-      throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify tape pool ") + name +
-        " because the new VO is an empty string");
+      throw UserSpecifiedAnEmptyStringVo("Cannot modify tape pool because the new VO is an empty string");
     }
 
     const time_t now = time(nullptr);
@@ -1054,8 +1048,7 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     }
 
     if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot modify tape pool ") + name +
-        " because the new comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot modify tape pool because the new comment is an empty string");
     }
 
     const time_t now = time(nullptr);
@@ -1641,23 +1634,20 @@ void RdbmsCatalogue::createTape(
     }
 
     if(logicalLibraryName.empty()) {
-      throw UserSpecifiedAnEmptyStringLogicalLibraryName(std::string("Cannot create tape ") + vid +
-        " because the logical library name is an empty string");
+      throw UserSpecifiedAnEmptyStringLogicalLibraryName("Cannot create tape because the logical library name is an"
+        " empty string");
     }
 
     if(tapePoolName.empty()) {
-      throw UserSpecifiedAnEmptyStringTapePoolName(std::string("Cannot create tape ") + vid +
-        " because the tape pool name is an empty string");
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
 
     if(comment.empty()) {
-      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create tape ") + vid +
-        " because the comment is an empty string");
+      throw UserSpecifiedAnEmptyStringComment("Cannot create tape because the comment is an empty string");
     }
 
     if(0 == capacityInBytes) {
-      throw UserSpecifiedAZeroCapacity(std::string("Cannot create tape ") + vid +
-        " because the capacity is zero");
+      throw UserSpecifiedAZeroCapacity("Cannot create tape because the capacity is zero");
     }
 
     auto conn = m_connPool.getConn();
