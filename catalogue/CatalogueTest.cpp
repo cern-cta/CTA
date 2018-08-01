@@ -957,7 +957,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVO) {
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyString) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringTapePool) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+
+  const std::string tapePoolName = "";
+  const std::string modifiedVo = "modified_vo";
+  ASSERT_THROW(m_catalogue->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo),
+    catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringVo) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getTapePools().empty());
@@ -993,7 +1004,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyString) {
   }
 
   const std::string modifiedVo = "";
-  ASSERT_THROW(m_catalogue->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo), exception::UserError);
+  ASSERT_THROW(m_catalogue->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo),
+    catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {

@@ -962,6 +962,11 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
 void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &vo) {
   try {
+    if(name.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
+        " string");
+    }
+
     if(vo.empty()) {
       throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify tape pool ") + name +
         " because the new VO is an empty string");
