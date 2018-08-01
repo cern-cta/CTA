@@ -1383,7 +1383,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 // This test is the same as the previous one, except that the files are deleted
 // from filesystem immediately. The disk tasks will then fail on open.
 ///
-TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
+TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionMissingFilesMigration) {
   
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
