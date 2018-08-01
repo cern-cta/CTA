@@ -26,6 +26,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
@@ -80,6 +81,15 @@ void RdbmsCatalogue::createAdminUser(
   const std::string &username,
   const std::string &comment) {
   try {
+    if(username.empty()) {
+      throw UserSpecifiedAnEmptyStringUsername("Cannot create admin user because the username is an empty string");
+    }
+
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create admin user ") + username +
+        " because the comment  is an empty string");
+    }
+
     auto conn = m_connPool.getConn();
     if (adminUserExists(conn, username)) {
       throw exception::UserError(std::string("Cannot create admin user " + username +

@@ -46,6 +46,7 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
+  UserSpecifiedAnEmptyStringUsername.cpp
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
   UserSpecifiedAZeroCapacity.cpp)

@@ -27,6 +27,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
@@ -313,6 +314,27 @@ TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser) {
   m_catalogue->deleteAdminUser(m_admin.username);
 
   ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createAdminUser_emptyStringUsername) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  const std::string adminUsername = "";
+  const std::string createAdminUserComment = "Create admin user";
+  ASSERT_THROW(m_catalogue->createAdminUser(m_localAdmin, adminUsername, createAdminUserComment),
+    catalogue::UserSpecifiedAnEmptyStringUsername);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createAdminUser_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  const std::string createAdminUserComment = "";
+  ASSERT_THROW(m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment),
+    catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, deleteAdminUser_non_existant) {
