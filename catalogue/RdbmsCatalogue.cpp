@@ -248,6 +248,15 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
 void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
   try {
+    if(username.empty()) {
+      throw UserSpecifiedAnEmptyStringUsername("Cannot modify admin user because the username is an empty string");
+    }
+
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot modify admin user ") + username +
+        " because the comment is an empty string");
+    }
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE ADMIN_USER SET "

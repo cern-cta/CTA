@@ -388,6 +388,45 @@ TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_emptyStringUsername) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  const std::string adminUsername = "";
+  const std::string modifiedComment = "Modified comment";
+  ASSERT_THROW(m_catalogue->modifyAdminUserComment(m_localAdmin, adminUsername, modifiedComment),
+    catalogue::UserSpecifiedAnEmptyStringUsername);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAdminUsers().empty());
+
+  const std::string createAdminUserComment = "Create admin user";
+  m_catalogue->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
+
+  {
+    std::list<common::dataStructures::AdminUser> admins;
+    admins = m_catalogue->getAdminUsers();
+    ASSERT_EQ(1, admins.size());
+
+    const common::dataStructures::AdminUser a = admins.front();
+
+    ASSERT_EQ(m_admin.username, a.name);
+    ASSERT_EQ(createAdminUserComment, a.comment);
+    ASSERT_EQ(m_localAdmin.username, a.creationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.creationLog.host);
+    ASSERT_EQ(m_localAdmin.username, a.lastModificationLog.username);
+    ASSERT_EQ(m_localAdmin.host, a.lastModificationLog.host);
+  }
+
+  const std::string modifiedComment = "";
+  ASSERT_THROW(m_catalogue->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment),
+    catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyAdminUserComment_nonExtistentAdminUser) {
   using namespace cta;
 
