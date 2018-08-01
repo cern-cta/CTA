@@ -44,7 +44,9 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentTape.cpp
   UserSpecifiedAnEmptyStringComment.cpp
+  UserSpecifiedAnEmptyStringDiskInstanceName.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
+  UserSpecifiedAnEmptyStringStorageClassName.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
   UserSpecifiedAnEmptyStringUsername.cpp
   UserSpecifiedAnEmptyStringVid.cpp

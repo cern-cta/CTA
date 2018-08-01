@@ -24,7 +24,9 @@
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
@@ -87,7 +89,7 @@ void RdbmsCatalogue::createAdminUser(
 
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create admin user ") + username +
-        " because the comment  is an empty string");
+        " because the comment is an empty string");
     }
 
     auto conn = m_connPool.getConn();
@@ -282,6 +284,21 @@ void RdbmsCatalogue::createStorageClass(
   const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::StorageClass &storageClass) {
   try {
+    if(storageClass.diskInstance.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName(std::string("Cannot create storage class ") +
+         storageClass.diskInstance + ":" + storageClass.name + " because the disk instance name is an empty string");
+    }
+
+    if(storageClass.name.empty()) {
+      throw UserSpecifiedAnEmptyStringStorageClassName(std::string("Cannot create storage class ") +
+        storageClass.diskInstance + ":" + storageClass.name + " because the storage class name is an empty string");
+    }
+
+    if(storageClass.comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create storage class ") +
+        storageClass.diskInstance + ":" + storageClass.name + " because the comment is an empty string");
+    }
+
     auto conn = m_connPool.getConn();
     if(storageClassExists(conn, storageClass.diskInstance, storageClass.name)) {
       throw exception::UserError(std::string("Cannot create storage class ") + storageClass.diskInstance + ":" +

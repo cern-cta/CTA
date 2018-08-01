@@ -25,7 +25,9 @@
 #include "catalogue/UserSpecifiedANonEmptyTape.hpp"
 #include "catalogue/UserSpecifiedANonExistentTape.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
@@ -468,6 +470,48 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   storageClass.comment = "Create storage class";
   m_catalogue->createStorageClass(m_admin, storageClass);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringDiskInstanceName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
+    catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
+    catalogue::UserSpecifiedAnEmptyStringStorageClassName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "";
+  ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass),
+    catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_name_different_disk_instance) {
