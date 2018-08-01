@@ -28,7 +28,8 @@
 cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine():
   foreground(false),
   help(false),
-  configLocation(""){
+  configLocation(""),
+  readOnly(false){
 }
 
 //------------------------------------------------------------------------------
@@ -38,14 +39,16 @@ cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine(const int argc,
   char *const *const argv):
   foreground(false),    //< Prevents daemonisation
   help(false),          //< Help requested: will print out help and exit.
-  configLocation(""){   //< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
+  configLocation(""),   //< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
+  readOnly(false){      //< True if the tape is to be mount for read-only access
 
   
 static struct option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
     { "foreground", no_argument, NULL, 'f' },
-    { "config", required_argument, NULL, 'c' },
     { "help", no_argument, NULL, 'h' },
+    { "config", required_argument, NULL, 'c' },
+    { "readOnly" , no_argument, NULL, 'r'},
     { NULL, 0, NULL, '\0' }
   };
 
@@ -55,27 +58,36 @@ static struct option longopts[] = {
   // Prevent getopt from printing out errors on stdout
   opterr=0;
   // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+fc:h", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "fhc:r", longopts, NULL)) != -1) {
      //log:write(LOG_INFO, "Usage: [options]\n");
-    switch (c) {
+   switch (c) {
+    case 'r':
+      readOnly = true;
+      break;
     case 'f':
       foreground = true;
       break;
     case 'c':
       configLocation = optarg;
       break;
-    case 'h':
+    case 'h':{
       help = true;
-   std::cout<<"Usage: "<<"cta-acsd"<<" [options]\n"
-    "where options can be:\n"
-    "--foreground            or -f         Remain in the Foreground\n"
-    "--config <config-file>  or -c         Configuration file\n"
-    "--help                  or -h         Print this help and exit\n";
+      std::ostringstream usage;
+      usage <<
+      "Usage: "<<"cta-acsd"<<" [options]\n"
+      "where options can be:\n"
+      "--foreground            or -f         Remain in the Foreground\n"
+      "--readOnly              or -r         Request the volume is mounted for read-only access\n"
+      "--config <config-file>  or -c         Configuration file\n"
+      "--help                  or -h         Print this help and exit\n";}
       break;
-    default:
-      break;
-    }
+    default:{
+      cta::exception::Exception ex;
+      ex.getMessage() <<
+      "getopt_long returned the following unknown value: 0x" <<
+      std::hex << (int)c;
+      throw ex;}
   }
+ }
 }
-
 

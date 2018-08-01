@@ -110,7 +110,6 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_foreground) {
   ASSERT_TRUE(acsdcmdLine1.foreground);
 }
 
-
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_help) {
   using namespace cta::mediachanger::acs::daemon;
 
@@ -118,26 +117,40 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_help) {
   m_argsList.push_back(args);
   args->argc = 2;
   args->argv = new char *[3];
-  args->argv[0] = dupString("cta-mediachanger-acs-daemon");
+  args->argv[0] = dupString("cta-acsd");
   args->argv[1] = dupString("-h");
   args->argv[2] = NULL;
   cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine2(args->argc, args->argv);
   ASSERT_TRUE(acsdcmdLine2.help);
 }
 
- 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_configLocation) {
   using namespace cta::mediachanger::acs::daemon;
 
   Argcv *args1 = new Argcv();
   m_argsList.push_back(args1);
-  args1->argc = 2;
-  args1->argv = new char *[3];
-  args1->argv[0] = dupString("cta-mediachanger-acs-daemon");
+  args1->argc = 3;
+  args1->argv = new char *[4];
+  args1->argv[0] = dupString("cta-acsd");
   args1->argv[1] = dupString("-c");
-  args1->argv[2] = NULL;
+  args1->argv[2] = dupString("");
+  args1->argv[3] = NULL;
   cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine3(args1->argc, args1->argv);
   ASSERT_EQ(acsdcmdLine3.configLocation,"");
+}
+
+TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_readOnly) {
+  using namespace cta::mediachanger::acs::daemon;
+
+  Argcv *args = new Argcv();
+  m_argsList.push_back(args);
+  args->argc = 2;
+  args->argv = new char *[3];
+  args->argv[0] = dupString("cta-acsd");
+  args->argv[1] = dupString("-r");
+  args->argv[2] = NULL;
+  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine4(args->argc, args->argv);
+  ASSERT_TRUE(acsdcmdLine4.readOnly);
 }
 
 } // namespace unitTests

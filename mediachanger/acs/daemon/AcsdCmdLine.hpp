@@ -54,6 +54,10 @@ public:
  
    std::string configLocation;
  
+   /**
+    * True if the tape is to be mount for read-only access.
+    */
+   bool readOnly;
 
 };
 
@@ -61,9 +65,4 @@ public:
 }
 }
 }
-
-
-
-
-
 
