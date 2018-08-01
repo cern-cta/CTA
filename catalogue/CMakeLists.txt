@@ -51,7 +51,8 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringUsername.cpp
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
-  UserSpecifiedAZeroCapacity.cpp)
+  UserSpecifiedAZeroCapacity.cpp
+  UserSpecifiedAZeroCopyNb.cpp)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})

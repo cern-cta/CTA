@@ -32,6 +32,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
+#include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -1132,6 +1133,25 @@ void RdbmsCatalogue::createArchiveRoute(
   const std::string &tapePoolName,
   const std::string &comment) {
   try {
+    if(diskInstanceName.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create archive route because disk instance name is an"
+        " empty string");
+    }
+    if(storageClassName.empty()) {
+      throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create archive route because storage class name is an"
+        " empty string");
+    }
+    if(0 == copyNb) {
+      throw UserSpecifiedAZeroCopyNb("Cannot create archive route because copy number is zero");
+    }
+    if(tapePoolName.empty()) {
+      throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create archive route because tape pool name is an empty"
+        " string");
+    }
+    if(comment.empty()) {
+      throw UserSpecifiedAnEmptyStringComment("Cannot create archive route because comment is an empty string");
+    }
+
     const time_t now = time(nullptr);
     auto conn = m_connPool.getConn();
     if(archiveRouteExists(conn, diskInstanceName, storageClassName, copyNb)) {

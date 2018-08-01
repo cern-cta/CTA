@@ -33,6 +33,7 @@
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
+#include "catalogue/UserSpecifiedAZeroCopyNb.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -1277,7 +1278,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption_nonExistentTapePool) {
   const bool isEncrypted = false;
   ASSERT_THROW(m_catalogue->setTapePoolEncryption(m_admin, tapePoolName, isEncrypted), exception::UserError);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
       
@@ -1319,6 +1320,133 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   
   const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringDiskInstanceName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const std::string diskInstanceName = "";
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, diskInstanceName, storageClass.name, copyNb, tapePoolName,
+    comment), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const std::string storageClassName = "";
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClassName, copyNb,
+   tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringStorageClassName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 0;
+  const std::string comment = "Create archive route";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb,
+    tapePoolName, comment), catalogue::UserSpecifiedAZeroCopyNb);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "";
+  const uint64_t copyNb = 1;
+  const std::string comment = "Create archive route";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb,
+    tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
+  using namespace cta;
+      
+  ASSERT_TRUE(m_catalogue->getStorageClasses().empty());
+  ASSERT_TRUE(m_catalogue->getTapePools().empty());
+  ASSERT_TRUE(m_catalogue->getArchiveRoutes().empty());
+
+  common::dataStructures::StorageClass storageClass;
+  storageClass.diskInstance = "disk_instance";
+  storageClass.name = "storage_class";
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  m_catalogue->createStorageClass(m_admin, storageClass);
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string vo = "vo";
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  m_catalogue->createTapePool(m_admin, tapePoolName, vo, nbPartialTapes, isEncrypted, "Create tape pool");
+
+  const uint64_t copyNb = 1;
+  const std::string comment = "";
+  ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClass.diskInstance, storageClass.name, copyNb,
+    tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringComment);
 }
   
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_class) {
