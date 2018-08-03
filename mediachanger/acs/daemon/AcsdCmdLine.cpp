@@ -22,28 +22,27 @@
 #include <iostream>
 #include <getopt.h>
 
+namespace cta {
+namespace mediachanger {
+namespace acs {
+namespace daemon {
+
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine():
-  foreground(false),
+AcsdCmdLine::AcsdCmdLine():
+  foreground(false),                                     
   help(false),
-  configLocation(""),
-  readOnly(false){
+  readOnly(false) {
 }
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine(const int argc,
-  char *const *const argv):
-  foreground(false),    //< Prevents daemonisation
-  help(false),          //< Help requested: will print out help and exit.
-  configLocation(""),   //< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
-  readOnly(false){      //< True if the tape is to be mount for read-only access
+//so instead 
+//use the factory pattern that makes an instance of that class together with the arguments wanted passed but not a constryuctor by itself
 
-  
-static struct option longopts[] = {
+AcsdCmdLine AcsdCmdLine::parse(const int argc, char *const *const argv) {
+  AcsdCmdLine cmdline;
+
+  struct option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
     { "foreground", no_argument, NULL, 'f' },
     { "help", no_argument, NULL, 'h' },
@@ -58,36 +57,67 @@ static struct option longopts[] = {
   // Prevent getopt from printing out errors on stdout
   opterr=0;
   // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "fhc:r", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, ":fhc:r", longopts, NULL)) != -1) {
      //log:write(LOG_INFO, "Usage: [options]\n");
    switch (c) {
-    case 'r':
-      readOnly = true;
-      break;
-    case 'f':
-      foreground = true;
-      break;
-    case 'c':
-      configLocation = optarg;
-      break;
-    case 'h':{
-      help = true;
-      std::ostringstream usage;
-      usage <<
-      "Usage: "<<"cta-acsd"<<" [options]\n"
-      "where options can be:\n"
-      "--foreground            or -f         Remain in the Foreground\n"
-      "--readOnly              or -r         Request the volume is mounted for read-only access\n"
-      "--config <config-file>  or -c         Configuration file\n"
-      "--help                  or -h         Print this help and exit\n";}
-      break;
-    default:{
-      cta::exception::Exception ex;
-      ex.getMessage() <<
-      "getopt_long returned the following unknown value: 0x" <<
-      std::hex << (int)c;
-      throw ex;}
+   case 'r':
+     cmdline.readOnly = true;
+     break;
+   case 'f':
+     cmdline.foreground = true;
+     break;
+   case 'c':
+     cmdline.configLocation = optarg;
+     break;
+   case 'h':
+     cmdline.help = true;
+     break;
+   case ':':
+     throw exception::Exception(std::string("Incorrect command-line arguments: The -") + (char)optopt +
+       " option is missing an argument\n\n" + getUsage());
+   case '?':
+     throw exception::Exception(std::string("Incorrect command-line arguments: Unknown option\n\n") + getUsage());
+   default:
+     throw exception::Exception(std::string("Incorrect command-line arguments\n\n") + getUsage());
+   }
   }
- }
+
+
+  const int expectedNbNonOptionalArgs = 0;
+  const int nbNonOptionalArgs = argc - optind;
+  if (expectedNbNonOptionalArgs != nbNonOptionalArgs) {
+     exception::Exception ex;
+     ex.getMessage() << "Incorrect command-line arguments: Incorrect number of non-optional arguments: expected=" <<
+       expectedNbNonOptionalArgs << ",actual=" << nbNonOptionalArgs << "\n\n" << getUsage();
+     throw ex;
+  }
+
+  return cmdline;
 }
 
+//------------------------------------------------------------------------------
+// getUsage
+//------------------------------------------------------------------------------
+std::string AcsdCmdLine::getUsage() {
+  std::ostringstream usage;
+  usage <<
+    "Usage:\n"
+    "  cta-acsd [options]\n"
+    "\n"
+    "Where:\n"
+    "\n"
+    "Options:\n"
+    "\n"
+    "--foreground            or -f         Remain in the Foreground\n"
+    "--readOnly              or -r         Request the volume is mounted for read-only access\n"
+    "--config <config-file>  or -c         Configuration file\n"
+    "--help                  or -h         Print this help and exit\n"
+    "\n"
+    "Comments to CTA team\n";
+  return usage.str();
+}
+
+} // namespace daemon
+} // namespace acs
+} // namespace mediachanger
+} // namespace cta

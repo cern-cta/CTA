@@ -21,7 +21,6 @@
 #include "AcsdConfiguration.hpp"
 #include "mediachanger/acs/daemon/AcsMessageHandler.hpp"
 #include "AcsPendingRequests.hpp"
-#include "mediachanger/acs/daemon/AcsdCmdLine.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/BadAlloc.hpp"
 #include "common/exception/Exception.hpp"
@@ -35,21 +34,25 @@
 #include <getopt.h>
 #include <iostream>
 
+namespace cta { namespace mediachanger { namespace acs { namespace daemon {
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-namespace cta { namespace mediachanger { namespace acs { namespace daemon {
-
 AcsDaemon::AcsDaemon(
   const int argc,
   char **const argv,
   cta::log::Logger& log,
+  std::ostream &outStream, 
+  std::ostream &errStream, 
   cta::mediachanger::reactor::ZMQReactor &reactor,
   const AcsdConfiguration &config):
   cta::server::Daemon(log),
   m_argc(argc),
   m_argv(argv),
-  m_log(log),  
+  m_log(log),
+  m_out(outStream),
+  m_err(errStream),  
   m_reactor(reactor),
   m_programName("acsd"),
   m_hostName(getHostName()),  
@@ -126,11 +129,17 @@ int AcsDaemon::main() {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 
-void AcsDaemon::exceptionThrowingMain(
-  const int argc, char **const argv)  {
+void AcsDaemon::exceptionThrowingMain(const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
-  AcsdCmdLine Commandline(argc,argv); //parse command line
-  setCommandLineHasBeenParsed(Commandline.foreground);
+  m_cmdline = AcsdCmdLine::parse(argc,argv);
+
+  //Display the usage message to standard out and exit with success if the
+  //user requested help
+  if(m_cmdline.help) {
+    m_out << AcsdCmdLine::getUsage();
+    return;
+  }
+  setCommandLineHasBeenParsed(m_cmdline.foreground);
   const std::string runAsStagerSuperuser = m_config.daemonUserName.value();
   const std::string runAsStagerSupergroup = m_config.daemonGroupName.value();
   daemonizeIfNotRunInForegroundAndSetUserAndGroup(runAsStagerSuperuser, runAsStagerSupergroup);

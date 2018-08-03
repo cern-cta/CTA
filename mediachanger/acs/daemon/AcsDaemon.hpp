@@ -17,14 +17,15 @@
  */
 
 #pragma once
+#include "common/processCap/ProcessCap.hpp"
 #include "common/threading/Daemon.hpp"
 #include "mediachanger/reactor/ZMQReactor.hpp"
+#include "mediachanger/acs/daemon/AcsdCmdLine.hpp"
 #include "AcsdConfiguration.hpp"
 #include "AcsPendingRequests.hpp"
 #include "common/Constants.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "AcsdCmdLine.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include <signal.h>
 
 #include <getopt.h>
@@ -56,6 +57,8 @@ public:
     const int argc,
     char **const argv,
     log::Logger& log,
+    std::ostream &outStream,
+    std::ostream &errStream,
     cta::mediachanger::reactor::ZMQReactor &reactor,
     const AcsdConfiguration &config);
 
@@ -166,12 +169,22 @@ protected:
   char **const m_argv;
 
   log::Logger &m_log;
+
+  /**
+   * Standard output stream.
+   */
+  std::ostream &m_out;
+
+  /**
+   * Standard error stream.
+   */
+  std::ostream &m_err;
+
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers
    * of the CTA ACS daemon.
    */
   cta::mediachanger::reactor::ZMQReactor &m_reactor;
-
   /**
    * The program name of the daemon.
    */
@@ -200,10 +213,12 @@ protected:
 private:
  
   /**
-   * Flag indicating whether the server should run in foreground or background
-   * mode.
+   * The parsed command-line.
+   *
+   * The value of this member variable is set within the main() method of this
+   * class.
    */
-  bool m_foreground;
+  AcsdCmdLine m_cmdline;
 
 }; // class AcsDaemon
 

@@ -75,11 +75,11 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_no_command_line_
   args->argv = new char *[2];
   args->argv[0] = dupString("cta-acsd");
   args->argv[1] = NULL;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine1(args->argc, args->argv);
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
  
-  ASSERT_FALSE(acsdcmdLine1.foreground);
-  ASSERT_TRUE(acsdcmdLine1.configLocation.empty());
-  ASSERT_FALSE(acsdcmdLine1.help);
+  ASSERT_FALSE(acsdcmdLine.foreground);
+  ASSERT_TRUE(acsdcmdLine.configLocation.empty());
+  ASSERT_FALSE(acsdcmdLine.help);
 }
 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, default_constructor) {
@@ -88,11 +88,11 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, default_constructor) {
   Argcv *args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 0;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine1(args->argc, args->argv);
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
  
-  ASSERT_FALSE(acsdcmdLine1.foreground);
-  ASSERT_TRUE(acsdcmdLine1.configLocation.empty());
-  ASSERT_FALSE(acsdcmdLine1.help);
+  ASSERT_FALSE(acsdcmdLine.foreground);
+  ASSERT_TRUE(acsdcmdLine.configLocation.empty());
+  ASSERT_FALSE(acsdcmdLine.help);
 }
 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_foreground) {
@@ -105,9 +105,9 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_foreground) {
   args->argv[0] = dupString("cta-acsd");
   args->argv[1] = dupString("-f");
   args->argv[2] = NULL;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine1(args->argc, args->argv);
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
  
-  ASSERT_TRUE(acsdcmdLine1.foreground);
+  ASSERT_TRUE(acsdcmdLine.foreground);
 }
 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_help) {
@@ -120,23 +120,23 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_help) {
   args->argv[0] = dupString("cta-acsd");
   args->argv[1] = dupString("-h");
   args->argv[2] = NULL;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine2(args->argc, args->argv);
-  ASSERT_TRUE(acsdcmdLine2.help);
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
+  ASSERT_TRUE(acsdcmdLine.help);
 }
 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_configLocation) {
   using namespace cta::mediachanger::acs::daemon;
 
-  Argcv *args1 = new Argcv();
-  m_argsList.push_back(args1);
-  args1->argc = 3;
-  args1->argv = new char *[4];
-  args1->argv[0] = dupString("cta-acsd");
-  args1->argv[1] = dupString("-c");
-  args1->argv[2] = dupString("");
-  args1->argv[3] = NULL;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine3(args1->argc, args1->argv);
-  ASSERT_EQ(acsdcmdLine3.configLocation,"");
+  Argcv *args = new Argcv();
+  m_argsList.push_back(args);
+  args->argc = 3;
+  args->argv = new char *[4];
+  args->argv[0] = dupString("cta-acsd");
+  args->argv[1] = dupString("-c");
+  args->argv[2] = dupString("");
+  args->argv[3] = NULL;
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
+  ASSERT_EQ(acsdcmdLine.configLocation,"");
 }
 
 TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_readOnly) {
@@ -149,8 +149,8 @@ TEST_F(cta_mediachanger_acs_daemon_AcsdCmdLineTest, constructor_readOnly) {
   args->argv[0] = dupString("cta-acsd");
   args->argv[1] = dupString("-r");
   args->argv[2] = NULL;
-  cta::mediachanger::acs::daemon::AcsdCmdLine acsdcmdLine4(args->argc, args->argv);
-  ASSERT_TRUE(acsdcmdLine4.readOnly);
+  const auto acsdcmdLine = AcsdCmdLine::parse(args->argc, args->argv);
+  ASSERT_TRUE(acsdcmdLine.readOnly);
 }
 
 } // namespace unitTests

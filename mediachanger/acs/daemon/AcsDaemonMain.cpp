@@ -88,6 +88,8 @@ static int exceptionThrowingMain(cta::log::Logger &log, const int argc, char **c
     argc,
     argv,
     log,
+    std::cout,
+    std::cerr,
     reactor,
     config);
 

@@ -26,9 +26,18 @@ namespace mediachanger{
 namespace acs{
 namespace daemon{
 
-class AcsdCmdLine: public CmdLine{
+struct AcsdCmdLine {
 
-public:
+  bool foreground;
+
+  bool help;
+ 
+  std::string configLocation;
+ 
+  /**
+   * True if the tape is to be mount for read-only access.
+   */
+  bool readOnly;
 
   /**
    * Constructor.
@@ -46,18 +55,14 @@ public:
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
    */
-  AcsdCmdLine(const int argc, char *const *const argv);
+  static AcsdCmdLine parse(const int argc, char *const *const argv);
 
-   bool foreground;
-
-   bool help;
- 
-   std::string configLocation;
- 
-   /**
-    * True if the tape is to be mount for read-only access.
-    */
-   bool readOnly;
+  /**
+   * Gets the usage message that describes the comamnd line.
+   *
+   * @return The usage message.
+   */
+  static std::string getUsage();
 
 };
 
