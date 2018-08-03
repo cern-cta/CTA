@@ -1,0 +1,120 @@
+// @project        XRootD SSI/Protocol Buffer Interface Project
+// @brief          Protocol buffer definitions for test client/server
+// @copyright      Copyright 2018 CERN
+// @license        This program is free software: you can redistribute it and/or modify
+//                 it under the terms of the GNU General Public License as published by
+//                 the Free Software Foundation, either version 3 of the License, or
+//                 (at your option) any later version.
+//
+//                 This program is distributed in the hope that it will be useful,
+//                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+//                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//                 GNU General Public License for more details.
+//
+//                 You should have received a copy of the GNU General Public License
+//                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+syntax = "proto3";
+package rmc_test;
+
+
+message MountOptions {
+  string      vid                     =  4;     // char * template
+  uint32      drvord		      = 6;
+}
+
+message DismountOptions {
+  string      vid                     =  4;     // char * template
+  uint32       drvord                  =  5;    // maybe given as a string
+}
+
+
+message FindcartOptions {
+  uint32      uid                     =  1;
+  uint32      gid                     =  2;
+  string      smc_ldr                 =  3;     // char *
+  string      template                =  4;     // char * 
+  int32       type                    =  5;
+  int64       startaddr               =  6;
+  int64       nbelem                  =  7;
+}
+
+message GetGeomOptions {
+  uint32      uid                     =  1;
+  uint32      gid                     =  2;
+  string      smc_ldr                 =  3;     // char *
+}
+
+message ImportExportOptions {
+  uint32      uid                     =  1;
+  uint32      gid                     =  2;
+  string      smc_ldr                 =  3;     // char *
+  string      vid                     =  4;     // char * template
+}
+
+message ReadelemOptions {
+  int32       uid                     =  1;
+  uint32      gid                     =  2;
+  string      smc_ldr                 =  3;     // char *
+  int32       type                    =  4;
+  int64       startaddr               =  5;
+  int64       nbelem                  =  6;
+}
+
+
+//
+// Requests sent to the Test Server
+//
+message Record {
+}
+
+
+//
+// Requests sent to the Test Server
+//
+message Request {
+  oneof cmdOptions {
+    MountOptions mount                = 1;
+    DismountOptions dismount          = 2;
+    FindcartOptions findcart          = 3;
+    GetGeomOptions getGeometry        = 4;      
+    ImportExportOptions export        = 5;
+    ImportExportOptions import        = 6;
+    ReadelemOptions readelem          = 7; 
+  }
+}
+
+
+//
+// Metadata responses sent by the Test Server
+//
+message Response {
+  enum ResponseType {
+    RSP_INVALID                       = 0;      //< Response type was not set
+    RSP_SUCCESS                       = 1;      //< Request is valid and was accepted for processing
+    RSP_ERR_PROTOBUF                  = 2;      //< Framework error caused by Google Protocol Buffers layer
+    RSP_ERR_SERVER                    = 3;      //< Server error
+    RSP_ERR_USER                      = 4;      //< User request is invalid
+  }
+  ResponseType type                   = 1;      //< Encode the type of this response
+  string message_txt                  = 2;      //< Optional response message text
+}
+
+  
+
+//
+// Stream/Data responses sent by the Test Server
+//
+message Data {
+  Response record                       = 1;      //< Response record
+}
+
+
+
+//
+// Alert Messages
+//
+message Alert {
+  string message_txt                  = 1;      //< Text of the alert message
+}
+

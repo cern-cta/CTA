@@ -131,6 +131,51 @@ The tape server daemon
 %systemd_postun cta-taped.service
 %systemdDaemonReload
 
+%package -n cta-xrmcd
+Summary: CERN Tape Archive: Xrootd plugin
+Group: Application/CTA
+Requires: logrotate
+Requires: cta-common = %{version}-%{release}
+Requires: cta-lib = %{version}-%{release}
+Requires: xrootd-server
+%description -n cta-xrmcd
+CERN Tape Archive:
+The xroot plugin
+%files -n cta-xrmcd
+%defattr(0755,root,root)
+%{_libdir}/libXrdSsiRmcd.so*
+%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-xrmcd
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-xrmcd.conf
+%attr(0644,cta,tape) /etc/systemd/system/cta-xrmcd.service
+%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-xrmcd
+
+#xrmcd installs libraries so we need ldconfig.
+%post -n cta-xrmcd
+/sbin/ldconfig
+%systemd_post cta-xrmcd.service
+%systemdDaemonReload
+
+%preun -n cta-xrmcd
+%systemd_preun cta-xrmcd.service
+
+%postun -n cta-xrmcd
+/sbin/ldconfig
+%systemd_post cta-xrmcd.service
+%systemdDaemonReload
+
+%package -n cta-xsmc
+Summary: CERN Tape Archive: command line interface
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+%description -n cta-xsmc
+CERN Tape Archive:
+The xroot plugin
+%files -n cta-xsmc
+%defattr(-,root,root)
+%attr(0755,root,root) %{_bindir}/cta-xsmc
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-mount.1cta.gz
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-xsmc-dismount.1cta.gz
+
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
