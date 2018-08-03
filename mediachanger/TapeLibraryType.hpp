@@ -37,7 +37,7 @@ enum TapeLibraryType {
  * Please note that this function does not throw an exception.  If the
  * tape-library type is not known then an appropriate string is returned.
  */
-const char *tapeLibraryTypeToString(const TapeLibraryType libraryType) throw();
+const char *tapeLibraryTypeToString(const TapeLibraryType libraryType);
   
 } // namespace mediachanger
 } // namespace cta

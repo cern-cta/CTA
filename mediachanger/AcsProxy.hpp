@@ -40,7 +40,7 @@ public:
    * @param serverPort The TCP/IP port on which the CASTOR ACS daemon is
    * listening for ZMQ messages.
    */
-  AcsProxy(const unsigned short serverPort = ACS_PORT) throw();
+  AcsProxy(const unsigned short serverPort = ACS_PORT);
 
   /**
    * Request the CASTOR ACS daemon to mount the specified tape for read-only

@@ -31,7 +31,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 cta::mediachanger::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
-  throw():
+ :
   debug(FALSE),
   help(FALSE),
   queryInterval(0),
@@ -121,7 +121,7 @@ void cta::mediachanger::acs::AcsQueryVolumeCmdLine::processOption(const int opt)
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::acs::AcsQueryVolumeCmdLine::getUsage() throw() {
+std::string cta::mediachanger::acs::AcsQueryVolumeCmdLine::getUsage() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"

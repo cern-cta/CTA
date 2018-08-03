@@ -34,7 +34,7 @@ cta::mediachanger::acs::DebugBuf::~DebugBuf() {
 //------------------------------------------------------------------------------
 // setDebug
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::DebugBuf::setDebug(const bool value) throw() {
+void cta::mediachanger::acs::DebugBuf::setDebug(const bool value) {
   m_debug = value;
 }
 
@@ -64,6 +64,6 @@ std::streambuf::int_type cta::mediachanger::acs::DebugBuf::overflow(
 //------------------------------------------------------------------------------
 // writePreamble
 //------------------------------------------------------------------------------
-void cta::mediachanger::acs::DebugBuf::writePreamble() throw() {
+void cta::mediachanger::acs::DebugBuf::writePreamble() {
   m_os << "DEBUG: ";
 }

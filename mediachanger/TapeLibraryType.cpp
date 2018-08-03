@@ -22,7 +22,7 @@
 // tapeLibraryTypeToString
 //------------------------------------------------------------------------------
 const char *cta::mediachanger::tapeLibraryTypeToString(
-  const TapeLibraryType libraryType) throw() {
+  const TapeLibraryType libraryType) {
   switch(libraryType) {
   case TAPE_LIBRARY_TYPE_NONE  : return "NONE";
   case TAPE_LIBRARY_TYPE_ACS   : return "ACS";

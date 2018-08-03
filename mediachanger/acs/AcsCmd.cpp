@@ -24,21 +24,21 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::AcsCmd::AcsCmd(std::istream &inStream,
-  std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
+  std::ostream &outStream, std::ostream &errStream, Acs &acs):
   CmdLineTool(inStream, outStream, errStream), m_acs(acs) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsCmd::~AcsCmd() throw() {
+cta::mediachanger::acs::AcsCmd::~AcsCmd() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::acs::AcsCmd::bool2Str(const BOOLEAN value) const
-  throw() {
+  {
   return value ? "TRUE" : "FALSE";
 }
 

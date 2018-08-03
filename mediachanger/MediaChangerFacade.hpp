@@ -44,7 +44,7 @@ public:
    * object will be used by the manual media changer to communicate with the
    * tape operator.
    */
-  MediaChangerFacade(log::Logger &log) throw();
+  MediaChangerFacade(log::Logger &log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only

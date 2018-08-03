@@ -37,28 +37,28 @@ public:
   /**
    * Constructor.
    */
-  ZmqMsg() throw();
+  ZmqMsg();
 
   /**
    * Constructor.
    *
    * @param msgSize The size of the ZMQ message.
    */
-  ZmqMsg(const size_t msgSize) throw();
+  ZmqMsg(const size_t msgSize);
 
   /**
    * Destructor.
    *
    * Calls zmq_msg_close().
    */
-  ~ZmqMsg() throw();
+  ~ZmqMsg();
 
   /**
    * Returns the enclosed ZMQ message.
    *
    * @return The underlying ZMQ message.
    */
-  zmq_msg_t &getZmqMsg() throw();
+  zmq_msg_t &getZmqMsg();
   
   /**
    * Gives read access to the data of the enclosed ZMQ message.
@@ -100,7 +100,7 @@ private:
    *
    * Not implemented so that it cannot be called
    */
-  ZmqMsg(const ZmqMsg &obj) throw();
+  ZmqMsg(const ZmqMsg &obj);
 
 }; // class ZmqMsg
 

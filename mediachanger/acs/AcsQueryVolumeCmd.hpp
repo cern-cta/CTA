@@ -46,12 +46,12 @@ public:
    * @param acs Wrapper around the ACSLS C-API.
    */
   AcsQueryVolumeCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw();
+    std::ostream &errStream, Acs &acs);
 
   /**
    * Destructor.
    */
-  virtual ~AcsQueryVolumeCmd() throw();
+  virtual ~AcsQueryVolumeCmd();
 
   /**
    * The entry function of the command.
@@ -101,7 +101,7 @@ protected:
    * @param os The output stream.
    * @param s The volume status.
    */
-  void writeVolumeStatus(std::ostream &os, const QU_VOL_STATUS &s) throw();
+  void writeVolumeStatus(std::ostream &os, const QU_VOL_STATUS &s);
 
 private:
 

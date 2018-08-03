@@ -32,7 +32,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsImpl() throw();
+  ~AcsImpl();
 
   /**
    * C++ wrapper around the acs_mount() function of the ACSLS C-API.
@@ -54,7 +54,7 @@ public:
     const DRIVEID &driveId,
     const BOOLEAN readOnly,
     const BOOLEAN bypass)
-    throw();
+   ;
 
   /**
    * C++ wrapper around the acs_dismount() function of the ACSLS C-API.
@@ -74,7 +74,7 @@ public:
     const VOLID &volId,
     const DRIVEID &driveId,
     const BOOLEAN force)
-    throw();
+   ;
 
   /**
    * C++ wrapper around the acs_response() function of the ACSLS C-API.
@@ -96,7 +96,7 @@ public:
     SEQ_NO &seqNumber,
     REQ_ID &reqId,
     ACS_RESPONSE_TYPE &rType,
-    ALIGNED_BYTES rBuf) throw();
+    ALIGNED_BYTES rBuf);
 
   /**
    * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
@@ -110,7 +110,7 @@ public:
   STATUS queryVolume(
     const SEQ_NO seqNumber,
     VOLID (&volIds)[MAX_ID],
-    const unsigned short count) throw();
+    const unsigned short count);
 
 }; // class AcsImpl
 

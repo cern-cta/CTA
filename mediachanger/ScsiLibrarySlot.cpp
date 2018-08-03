@@ -24,7 +24,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
-  throw():
+ :
   LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
   m_drvOrd(0) {
   m_str = librarySlotToString(0);
@@ -52,7 +52,7 @@ cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd):
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot::~ScsiLibrarySlot() throw() {
+cta::mediachanger::ScsiLibrarySlot::~ScsiLibrarySlot() {
 }
 
 //------------------------------------------------------------------------------
@@ -66,6 +66,6 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::ScsiLibrarySlot::
 //------------------------------------------------------------------------------
 // getDrvOrd
 //------------------------------------------------------------------------------
-uint16_t cta::mediachanger::ScsiLibrarySlot::getDrvOrd() const throw() {
+uint16_t cta::mediachanger::ScsiLibrarySlot::getDrvOrd() const {
   return m_drvOrd;
 }

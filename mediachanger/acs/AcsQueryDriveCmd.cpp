@@ -29,14 +29,14 @@
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::AcsQueryDriveCmd::AcsQueryDriveCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  Acs &acs) throw():
+  Acs &acs):
   AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsQueryDriveCmd::~AcsQueryDriveCmd() throw() {
+cta::mediachanger::acs::AcsQueryDriveCmd::~AcsQueryDriveCmd() {
   // Do nothing
 }
 
@@ -152,7 +152,7 @@ void cta::mediachanger::acs::AcsQueryDriveCmd::processQueryResponse(
 // writeDriveStatus
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::AcsQueryDriveCmd::writeDriveStatus(
-  std::ostream &os, const QU_DRV_STATUS &s) throw() {
+  std::ostream &os, const QU_DRV_STATUS &s) {
 
   os << "Drive identifier: " << m_acs.driveId2Str(s.drive_id) << std::endl;
   os << "Drive type: " << acs_type((TYPE)s.drive_type) << std::endl;

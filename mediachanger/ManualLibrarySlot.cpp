@@ -24,7 +24,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::ManualLibrarySlot::ManualLibrarySlot()
-  throw():
+ :
   LibrarySlot(TAPE_LIBRARY_TYPE_MANUAL) {
   m_str = "manual";
 }
@@ -48,7 +48,7 @@ cta::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ManualLibrarySlot::~ManualLibrarySlot() throw() {
+cta::mediachanger::ManualLibrarySlot::~ManualLibrarySlot() {
 }
 
 //------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ public:
   /**
    * Destructor.
    */
-  ~ZmqSocketMT() throw();
+  ~ZmqSocketMT();
     
   /**
    * Closes the ZMQ socket.
@@ -117,7 +117,7 @@ public:
    *
    * @return The ZMQ socket wrappeed by this class.
    */
-  void *getZmqSocket() const throw();
+  void *getZmqSocket() const;
 
 private:
 

@@ -54,12 +54,12 @@ public:
    * @param acs Wrapper around the ACSLS C-API.
    */
   AcsCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw();
+    std::ostream &errStream, Acs &acs);
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
    */
-  virtual ~AcsCmd() throw() = 0;
+  virtual ~AcsCmd() = 0;
 
 protected:
 
@@ -73,7 +73,7 @@ protected:
    *
    * @param value The boolean value.
    */
-  std::string bool2Str(const BOOLEAN value) const throw();
+  std::string bool2Str(const BOOLEAN value) const;
 
   /**
    * Requests responses from ACSLS in a loop until the RT_FINAL response is

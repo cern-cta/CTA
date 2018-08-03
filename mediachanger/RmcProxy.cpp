@@ -33,7 +33,7 @@ namespace mediachanger {
 RmcProxy::RmcProxy(
   const unsigned short rmcPort,
   const int netTimeout,
-  const unsigned int maxRqstAttempts) throw():
+  const unsigned int maxRqstAttempts):
   m_rmcPort(rmcPort),
   m_netTimeout(netTimeout),
   m_maxRqstAttempts(maxRqstAttempts) {
@@ -42,7 +42,7 @@ RmcProxy::RmcProxy(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-RmcProxy::~RmcProxy() throw() {
+RmcProxy::~RmcProxy() {
 }
 
 //------------------------------------------------------------------------------

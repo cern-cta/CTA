@@ -29,14 +29,14 @@
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  Acs &acs) throw():
+  Acs &acs):
   AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
+cta::mediachanger::acs::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() {
   // Do nothing
 }
 
@@ -158,7 +158,7 @@ void cta::mediachanger::acs::AcsQueryVolumeCmd::processQueryResponse(
 // writeVolumeStatus
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::AcsQueryVolumeCmd::writeVolumeStatus(
-  std::ostream &os, const QU_VOL_STATUS &s) throw() {
+  std::ostream &os, const QU_VOL_STATUS &s) {
   os << "Volume identifier: " << s.vol_id.external_label << std::endl;
   os << "Media type (media_types.dat): " << (int)s.media_type << std::endl;
 

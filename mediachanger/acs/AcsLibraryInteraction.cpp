@@ -26,13 +26,13 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::AcsLibraryInteraction::AcsLibraryInteraction(
-  Acs &acs, cta::log::Logger& log) throw(): m_acs(acs), m_log(log) {
+  Acs &acs, cta::log::Logger& log): m_acs(acs), m_log(log) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsLibraryInteraction::~AcsLibraryInteraction() throw() {
+cta::mediachanger::acs::AcsLibraryInteraction::~AcsLibraryInteraction() {
 }
 
 
@@ -124,7 +124,7 @@ void cta::mediachanger::acs::AcsLibraryInteraction::checkResponseSeqNumber(
 // volumeStatusAsString
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::acs::AcsLibraryInteraction::volumeStatusAsString(
-  const QU_VOL_STATUS &s) const throw() {
+  const QU_VOL_STATUS &s) const {
   
   std::ostringstream os;
   os << "vid=" << s.vol_id.external_label << " ";

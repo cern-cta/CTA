@@ -171,7 +171,7 @@ Frame createAcsForceDismountTapeFrame(const std::string &vid, const AcsLibrarySl
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AcsProxy::AcsProxy(const unsigned short serverPort) throw():
+AcsProxy::AcsProxy(const unsigned short serverPort):
   m_serverPort(serverPort) {
 }
 

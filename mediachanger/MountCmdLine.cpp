@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::MountCmdLine::MountCmdLine() throw():
+cta::mediachanger::MountCmdLine::MountCmdLine():
   m_debug(false),
   m_help(false),
   m_readOnly(false),
@@ -99,7 +99,7 @@ cta::mediachanger::MountCmdLine::MountCmdLine(const MountCmdLine &obj):
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::MountCmdLine::~MountCmdLine() throw() {
+cta::mediachanger::MountCmdLine::~MountCmdLine() {
   delete m_driveLibrarySlot;
 }
 
@@ -156,7 +156,7 @@ void cta::mediachanger::MountCmdLine::processOption(const int opt) {
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::MountCmdLine::getUsage() throw() {
+std::string cta::mediachanger::MountCmdLine::getUsage() {
   return std::string() +
   "Usage:\n"
   "\n"
@@ -185,28 +185,28 @@ std::string cta::mediachanger::MountCmdLine::getUsage() throw() {
 //------------------------------------------------------------------------------
 // getDebug
 //------------------------------------------------------------------------------
-bool cta::mediachanger::MountCmdLine::getDebug() const throw() {
+bool cta::mediachanger::MountCmdLine::getDebug() const {
   return m_debug;
 }
 
 //------------------------------------------------------------------------------
 // getHelp
 //------------------------------------------------------------------------------
-bool cta::mediachanger::MountCmdLine::getHelp() const throw() {
+bool cta::mediachanger::MountCmdLine::getHelp() const {
   return m_help;
 }
 
 //------------------------------------------------------------------------------
 // getReadOnly
 //------------------------------------------------------------------------------
-bool cta::mediachanger::MountCmdLine::getReadOnly() const throw() {
+bool cta::mediachanger::MountCmdLine::getReadOnly() const {
   return m_readOnly;
 }
 
 //------------------------------------------------------------------------------
 // getVid
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::MountCmdLine::getVid() const throw() {
+std::string cta::mediachanger::MountCmdLine::getVid() const {
   return m_vid;
 }
 

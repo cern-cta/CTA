@@ -68,7 +68,7 @@ struct AcsQueryDriveCmdLine: public AcsCmdLine {
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  AcsQueryDriveCmdLine() throw();
+  AcsQueryDriveCmdLine();
 
   /**
    * Constructor.
@@ -86,7 +86,7 @@ struct AcsQueryDriveCmdLine: public AcsCmdLine {
   *
   * @return The usage message.
   */
-  static std::string getUsage() throw();
+  static std::string getUsage();
 
   /**
    * Return sthe program name.

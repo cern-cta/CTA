@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine() throw():
+cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine():
   debug(false),
   help(false),
   queryInterval(0),
@@ -124,7 +124,7 @@ void cta::mediachanger::acs::AcsQueryDriveCmdLine::processOption(const int opt) 
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-  std::string cta::mediachanger::acs::AcsQueryDriveCmdLine::getUsage() throw() {
+  std::string cta::mediachanger::acs::AcsQueryDriveCmdLine::getUsage() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"

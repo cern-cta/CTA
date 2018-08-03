@@ -50,7 +50,7 @@ struct MessageHeader {
    *
    * Sets all integer member-variables to 0.
    */
-  MessageHeader() throw();
+  MessageHeader();
 }; // struct MessageHeader
 
 } // namespace mediachanger

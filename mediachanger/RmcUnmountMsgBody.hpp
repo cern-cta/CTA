@@ -42,7 +42,7 @@ struct RmcUnmountMsgBody {
    * Sets all integer member-variables to 0 and all string member-variables to
    * the empty string.
    */
-  RmcUnmountMsgBody() throw();
+  RmcUnmountMsgBody();
 }; // struct RmcUnmountMsgBody
 
 } // namespace mediachanger

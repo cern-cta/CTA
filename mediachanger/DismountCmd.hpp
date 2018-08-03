@@ -44,12 +44,12 @@ public:
    * @param mc Interface to the media changer.
    */
   DismountCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, MediaChangerFacade &mc) throw();
+    std::ostream &errStream, MediaChangerFacade &mc);
 
   /**
    * Destructor.
    */
-  virtual ~DismountCmd() throw();
+  virtual ~DismountCmd();
 
   /**
    * The entry function of the command.

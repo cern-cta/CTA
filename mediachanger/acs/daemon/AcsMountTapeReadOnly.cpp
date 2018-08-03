@@ -209,5 +209,5 @@ std::string cta::mediachanger::acs::daemon::AcsMountTapeReadOnly::processQueryRe
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsMountTapeReadOnly::~AcsMountTapeReadOnly() throw() {  
+cta::mediachanger::acs::daemon::AcsMountTapeReadOnly::~AcsMountTapeReadOnly() {  
 }

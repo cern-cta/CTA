@@ -63,7 +63,7 @@ cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::
 // isAcs
 //------------------------------------------------------------------------------
 bool cta::mediachanger::LibrarySlotParser::isAcs(const std::string &str)
-  throw() {
+  {
   return 0 == str.find("acs");
 }
 
@@ -71,7 +71,7 @@ bool cta::mediachanger::LibrarySlotParser::isAcs(const std::string &str)
 // isManual
 //------------------------------------------------------------------------------
 bool cta::mediachanger::LibrarySlotParser::isManual(const std::string &str)
-  throw() {
+  {
   return 0 == str.find("manual");
 }
 
@@ -79,7 +79,7 @@ bool cta::mediachanger::LibrarySlotParser::isManual(const std::string &str)
 // isScsi
 //------------------------------------------------------------------------------
 bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string &str)
-  throw() {
+  {
   return 0 == str.find("smc");
 }
 

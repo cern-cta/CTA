@@ -36,7 +36,7 @@ public:
    *
    * Sets all integer member-variables to 0 and all strings to the empty string.
    */
-  ScsiLibrarySlot() throw();
+  ScsiLibrarySlot();
 
   /**
    * Constructor.
@@ -48,7 +48,7 @@ public:
   /**
    * Destructor.
    */
-  ~ScsiLibrarySlot() throw();
+  ~ScsiLibrarySlot();
 
   /**
    * Creates a clone of this object.
@@ -62,7 +62,7 @@ public:
    *
    * @return The drive ordinal.
    */
-  uint16_t getDrvOrd() const throw();
+  uint16_t getDrvOrd() const;
 
 private:
 

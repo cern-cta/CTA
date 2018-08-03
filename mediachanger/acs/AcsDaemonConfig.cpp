@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::acs::AcsDaemonConfig::AcsDaemonConfig() throw():
+castor::acs::AcsDaemonConfig::AcsDaemonConfig():
   port(0),
   queryInterval(0),
   cmdTimeout(0) {

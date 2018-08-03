@@ -37,14 +37,14 @@ protected:
    *
    * @param libraryType The library type of the slot.
    */
-  LibrarySlot(const TapeLibraryType libraryType) throw();
+  LibrarySlot(const TapeLibraryType libraryType);
 
 public:
 
   /**
    * Destructor.
    */
-  virtual ~LibrarySlot() throw() = 0;
+  virtual ~LibrarySlot() = 0;
 
   /**
    * Creates a clone of this object.
@@ -58,12 +58,12 @@ public:
    *
    * @return The string representation of this tape library slot.
    */
-  const std::string &str() const throw();
+  const std::string &str() const;
 
   /**
    * Returns the type of the tape library to which this library slot refers.
    */
-  TapeLibraryType getLibraryType() const throw();
+  TapeLibraryType getLibraryType() const;
 
 protected:
 

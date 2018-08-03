@@ -42,12 +42,12 @@ public:
    * @param errStream Standard error stream.
    */
   CmdLineTool(std::istream &inStream, std::ostream &outStream, std::ostream &errStream)
-    throw();
+   ;
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
    */
-  virtual ~CmdLineTool() throw() = 0;
+  virtual ~CmdLineTool() = 0;
 
 protected:
 
@@ -85,7 +85,7 @@ protected:
    *
    * @param value The boolean value.
    */
-  std::string bool2Str(const bool value) const throw();
+  std::string bool2Str(const bool value) const;
 
 }; // class CmdLineTool
 

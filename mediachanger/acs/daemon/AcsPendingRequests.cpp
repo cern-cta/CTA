@@ -41,7 +41,7 @@ cta::mediachanger::acs::daemon::AcsPendingRequests::AcsPendingRequests(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() throw() {
+cta::mediachanger::acs::daemon::AcsPendingRequests::~AcsPendingRequests() {
   for(RequestList::const_iterator itor = m_acsRequestList.begin(); 
     itor != m_acsRequestList.end();  itor++) {
     cta::mediachanger::acs::daemon::AcsRequest *const acsRequest = *itor;

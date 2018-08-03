@@ -50,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsDismountTape() throw();
+  ~AcsDismountTape();
 
   /**
    * Execute dismount request through ACS API.

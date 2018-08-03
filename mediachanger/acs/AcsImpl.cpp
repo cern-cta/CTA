@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsImpl::~AcsImpl() throw() {
+cta::mediachanger::acs::AcsImpl::~AcsImpl() {
 }
 
 //------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ STATUS cta::mediachanger::acs::AcsImpl::mount(
   const DRIVEID &driveId,
   const BOOLEAN readOnly,
   const BOOLEAN bypass)
-  throw() {
+  {
   return acs_mount(seqNumber, lockId, volId, driveId, readOnly, bypass);
 }
 
@@ -51,7 +51,7 @@ STATUS cta::mediachanger::acs::AcsImpl::dismount(
   const VOLID &volId,
   const DRIVEID &driveId,
   const BOOLEAN force)
-  throw() {
+  {
   return acs_dismount(seqNumber, lockId, volId, driveId, force);
 }
 
@@ -63,7 +63,7 @@ STATUS cta::mediachanger::acs::AcsImpl::response(
   SEQ_NO &seqNumber,
   REQ_ID &reqId,
   ACS_RESPONSE_TYPE &rType,
-  ALIGNED_BYTES rBuf) throw() {
+  ALIGNED_BYTES rBuf) {
   return acs_response(timeout, &seqNumber, &reqId, &rType, rBuf);
 }
 
@@ -73,6 +73,6 @@ STATUS cta::mediachanger::acs::AcsImpl::response(
 STATUS cta::mediachanger::acs::AcsImpl::queryVolume(
   const SEQ_NO seqNumber,
   VOLID (&volIds)[MAX_ID],
-  const unsigned short count) throw() {
+  const unsigned short count) {
   return acs_query_volume(seqNumber, volIds, count);
 }

@@ -35,7 +35,7 @@ public:
   /**
    * Default constructor that sets all integer members to 0.
    */
-  AcsLibrarySlot() throw();
+  AcsLibrarySlot();
 
   /**
    * Constructor.
@@ -46,12 +46,12 @@ public:
    * @param drive The drive component of the library slot.
    */
   AcsLibrarySlot(const uint32_t acs, const uint32_t lsm,
-    const uint32_t panel, const uint32_t drive) throw();
+    const uint32_t panel, const uint32_t drive);
 
   /**
    * Destructor.
    */
-  ~AcsLibrarySlot() throw();
+  ~AcsLibrarySlot();
 
   /**
    * Creates a clone of this object.
@@ -65,28 +65,28 @@ public:
    *
    * @return the acs component of the library slot.
    */
-  uint32_t getAcs() const throw();
+  uint32_t getAcs() const;
 
   /**
    * Gets the lsm component of the library slot.
    *
    * @return the lsm component of the library slot.
    */
-  uint32_t getLsm() const throw();
+  uint32_t getLsm() const;
 
   /**
    * Gets the panel component of the library slot.
    *
    * @return the panel component of the library slot.
    */
-  uint32_t getPanel() const throw();
+  uint32_t getPanel() const;
 
   /**
    * Gets the drive component of the library slot.
    *
    * @return the drive component of the library slot.
    */
-  uint32_t getDrive() const throw();
+  uint32_t getDrive() const;
 
 private:
 

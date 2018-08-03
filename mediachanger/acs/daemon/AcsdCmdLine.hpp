@@ -36,7 +36,7 @@ public:
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  AcsdCmdLine() throw();
+  AcsdCmdLine();
 
   /**
    * Constructor.

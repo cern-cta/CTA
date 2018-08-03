@@ -46,12 +46,12 @@ public:
    *
    * @param acs Wrapper around the ACSLS C-API.
    */
-  AcsLibraryInteraction(Acs &acs, cta::log::Logger &log) throw();
+  AcsLibraryInteraction(Acs &acs, cta::log::Logger &log);
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
    */
-  virtual ~AcsLibraryInteraction() throw() = 0;
+  virtual ~AcsLibraryInteraction() = 0;
 
 protected:
 
@@ -104,7 +104,7 @@ protected:
    * @param s The volume status.
    * @return  The string presentation of the volume status.
    */
-  std::string volumeStatusAsString(const QU_VOL_STATUS &s) const throw();
+  std::string volumeStatusAsString(const QU_VOL_STATUS &s) const;
 
   /**
    * Wrapper around the ACSLS C-API.

@@ -138,5 +138,5 @@ void cta::mediachanger::acs::daemon::AcsForceDismountTape::processForceDismountR
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsForceDismountTape::~AcsForceDismountTape() throw() {  
+cta::mediachanger::acs::daemon::AcsForceDismountTape::~AcsForceDismountTape() {  
 }

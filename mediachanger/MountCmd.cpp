@@ -27,14 +27,14 @@
 //------------------------------------------------------------------------------
 cta::mediachanger::MountCmd::MountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  MediaChangerFacade &mc) throw():
+  MediaChangerFacade &mc):
   CmdLineTool(inStream, outStream, errStream, mc) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::MountCmd::~MountCmd() throw() {
+cta::mediachanger::MountCmd::~MountCmd() {
   // Do nothing
 }
 

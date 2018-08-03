@@ -36,7 +36,7 @@ cta::mediachanger::ZmqSocketMT::ZmqSocketMT(void *const zmqContext,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ZmqSocketMT::~ZmqSocketMT() throw() {
+cta::mediachanger::ZmqSocketMT::~ZmqSocketMT() {
   try {
     close();
   } catch(...) {
@@ -104,6 +104,6 @@ void cta::mediachanger::ZmqSocketMT::recv(zmq_msg_t *const msg, int flags) {
 //------------------------------------------------------------------------------
 // getZmqSocket
 //------------------------------------------------------------------------------
-void *cta::mediachanger::ZmqSocketMT::getZmqSocket() const throw() {
+void *cta::mediachanger::ZmqSocketMT::getZmqSocket() const {
   return m_socket.getZmqSocket();
 }

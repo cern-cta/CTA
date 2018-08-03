@@ -50,11 +50,11 @@ public:
   /**
    * Constructor.
    */
-  ZMQReactor(cta::log::Logger &) throw();
+  ZMQReactor(cta::log::Logger &);
   /**
    * Destructor.
    */
-  virtual ~ZMQReactor() throw();
+  virtual ~ZMQReactor();
 
   /**
    * Removes and deletes all of the event handlers registered with the reactor.

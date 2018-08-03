@@ -35,7 +35,7 @@ public:
    *
    * @param log Object representing the API to the CTA logging system.
    */
-  MmcProxy(log::Logger &log) throw();
+  MmcProxy(log::Logger &log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only

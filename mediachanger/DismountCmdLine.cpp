@@ -26,7 +26,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::DismountCmdLine::DismountCmdLine() throw():
+cta::mediachanger::DismountCmdLine::DismountCmdLine():
   m_debug(false),
   m_help(false),
   m_driveLibrarySlot(0),
@@ -101,7 +101,7 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::DismountCmdLine::~DismountCmdLine() throw() {
+cta::mediachanger::DismountCmdLine::~DismountCmdLine() {
   delete m_driveLibrarySlot;
 }
 
@@ -129,7 +129,7 @@ cta::mediachanger::DismountCmdLine &cta::mediachanger::DismountCmdLine::
 //------------------------------------------------------------------------------
 // getForce
 //------------------------------------------------------------------------------
-bool cta::mediachanger::DismountCmdLine::getForce() const throw() {
+bool cta::mediachanger::DismountCmdLine::getForce() const {
   return m_force;
 }
 
@@ -172,7 +172,7 @@ void cta::mediachanger::DismountCmdLine::processOption(const int opt) {
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::DismountCmdLine::getUsage() throw() {
+std::string cta::mediachanger::DismountCmdLine::getUsage() {
   return std::string() +
   "Usage:\n"
   "\n"
@@ -201,14 +201,14 @@ std::string cta::mediachanger::DismountCmdLine::getUsage() throw() {
 //------------------------------------------------------------------------------
 // getDebug
 //------------------------------------------------------------------------------
-bool cta::mediachanger::DismountCmdLine::getDebug() const throw() {
+bool cta::mediachanger::DismountCmdLine::getDebug() const {
   return m_debug;
 }
 
 //------------------------------------------------------------------------------
 // getHelp
 //------------------------------------------------------------------------------
-bool cta::mediachanger::DismountCmdLine::getHelp() const throw() {
+bool cta::mediachanger::DismountCmdLine::getHelp() const {
   return m_help;
 }
 
@@ -216,7 +216,7 @@ bool cta::mediachanger::DismountCmdLine::getHelp() const throw() {
 // getVid
 //------------------------------------------------------------------------------
 const std::string &cta::mediachanger::DismountCmdLine::getVid()
-  const throw() {
+  const {
   return m_vid;
 }
 

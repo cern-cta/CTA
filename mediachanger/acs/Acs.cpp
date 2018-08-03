@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::Acs::~Acs() throw() {
+cta::mediachanger::acs::Acs::~Acs() {
 }
 
 //------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ DRIVEID cta::mediachanger::acs::Acs::str2DriveId(const std::string &str) {
 //------------------------------------------------------------------------------
 // onlyContainsNumerals
 //------------------------------------------------------------------------------
-bool cta::mediachanger::acs::Acs::onlyContainsNumerals(const std::string &str) throw() {
+bool cta::mediachanger::acs::Acs::onlyContainsNumerals(const std::string &str) {
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
     itor++) {
     if(*itor < '0' || *itor  > '9') {
@@ -126,7 +126,7 @@ bool cta::mediachanger::acs::Acs::onlyContainsNumerals(const std::string &str) t
 // alpd2DriveId
 //------------------------------------------------------------------------------
 DRIVEID cta::mediachanger::acs::Acs::alpd2DriveId(const uint32_t acs,
-  const uint32_t lsm, const uint32_t panel, const uint32_t drive) throw () {
+  const uint32_t lsm, const uint32_t panel, const uint32_t drive) {
   
   DRIVEID driveId;
   driveId.panel_id.lsm_id.acs = (ACS)acs;
@@ -158,7 +158,7 @@ VOLID cta::mediachanger::acs::Acs::str2Volid(const std::string &str) {
 //------------------------------------------------------------------------------
 // driveId2Str
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::acs::Acs::driveId2Str(const DRIVEID &driveId) throw() {
+std::string cta::mediachanger::acs::Acs::driveId2Str(const DRIVEID &driveId) {
   std::ostringstream oss;
   oss << std::setfill('0') <<
     std::setw(3) << (int32_t)driveId.panel_id.lsm_id.acs << ":" <<

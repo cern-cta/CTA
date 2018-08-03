@@ -62,14 +62,14 @@ public:
   /**
    * Destructor.
    */
-  ~AcsDaemon() throw();
+  ~AcsDaemon();
 
   /**
    * The main entry function of the daemon.
    *
    * @return The return code of the process.
    */
-  int main() throw();
+  int main();
   
 protected:
 
@@ -89,7 +89,7 @@ protected:
   /**
    * Logs the start of the daemon.
    */
-  void logStartOfDaemon(const int argc, const char *const *const argv) throw();
+  void logStartOfDaemon(const int argc, const char *const *const argv);
 
   /**
    * Creates a string that contains the specified command-line arguments
@@ -99,12 +99,12 @@ protected:
    * @param argv The array of command-line arguments.
    */
   std::string argvToString(const int argc, const char *const *const argv)
-    throw();
+   ;
 
   /**
    * Idempotent method that destroys the ZMQ context.
    */
-  void destroyZmqContext() throw();
+  void destroyZmqContext();
 
   /**
    * Sets the dumpable attribute of the current process to true.
@@ -147,7 +147,7 @@ protected:
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handlePendingSignals() throw();
+  bool handlePendingSignals();
   
   /**
    * Handles any pending Acs requests.

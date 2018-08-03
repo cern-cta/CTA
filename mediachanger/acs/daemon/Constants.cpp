@@ -21,7 +21,7 @@
 //------------------------------------------------------------------------------
 // msgTypeToString
 //------------------------------------------------------------------------------
-const char *cta::mediachanger::acs::daemon::msgTypeToString(const cta::mediachanger::acs::daemon::MsgType msgType) throw() {
+const char *cta::mediachanger::acs::daemon::msgTypeToString(const cta::mediachanger::acs::daemon::MsgType msgType) {
   switch(msgType) {
   case MSG_TYPE_NONE:
     return "None";

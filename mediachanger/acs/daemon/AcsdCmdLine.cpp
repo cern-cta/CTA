@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine() throw():
+cta::mediachanger::acs::daemon::AcsdCmdLine::AcsdCmdLine():
   foreground(false),
   help(false),
   configLocation(""){

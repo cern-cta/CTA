@@ -27,14 +27,14 @@
 //------------------------------------------------------------------------------
 cta::mediachanger::DismountCmd::DismountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  MediaChangerFacade &mc) throw():
+  MediaChangerFacade &mc):
   CmdLineTool(inStream, outStream, errStream, mc) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DismountCmd::~DismountCmd() throw() {
+cta::mediachanger::DismountCmd::~DismountCmd() {
   // Do nothing
 }
 

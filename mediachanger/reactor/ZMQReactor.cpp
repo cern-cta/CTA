@@ -40,12 +40,12 @@ namespace{
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::reactor::ZMQReactor::ZMQReactor(cta::log::Logger &l) throw():m_log(l) {
+cta::mediachanger::reactor::ZMQReactor::ZMQReactor(cta::log::Logger &l):m_log(l) {
 }
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::reactor::ZMQReactor::~ZMQReactor() throw() {
+cta::mediachanger::reactor::ZMQReactor::~ZMQReactor() {
   clear();
 }
 

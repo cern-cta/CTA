@@ -53,7 +53,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsPendingRequests() throw();
+  ~AcsPendingRequests();
 
   /**
    * Notifies the AcsPendingRequests that it should perform any time related 

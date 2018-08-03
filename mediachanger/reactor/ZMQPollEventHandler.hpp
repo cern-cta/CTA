@@ -47,12 +47,12 @@ public:
   /**
    * Destructor.
    */
-  virtual ~ZMQPollEventHandler() throw() = 0;
+  virtual ~ZMQPollEventHandler() = 0;
 
   /**
    * Returns the human-readable name this event handler.
    */
-  virtual std::string getName() const throw() = 0;
+  virtual std::string getName() const = 0;
 
   /**
    * Fills the specified poll file-descriptor ready to be used in a call to

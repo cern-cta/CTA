@@ -34,7 +34,7 @@ public:
    *
    * Sets all string member-variables to the empty string.
    */
-  ManualLibrarySlot() throw();
+  ManualLibrarySlot();
 
   /**
    * Constructor.
@@ -49,7 +49,7 @@ public:
   /**
    * Destructor.
    */
-  ~ManualLibrarySlot() throw();
+  ~ManualLibrarySlot();
 
   /**
    * Creates a clone of this object.

@@ -55,7 +55,7 @@ public:
    *
    * The default set in the constructor is off (false).
    */
-  void setDebug(const bool value) throw();
+  void setDebug(const bool value);
 
 protected:
 
@@ -67,7 +67,7 @@ protected:
   /**
    * Writes the standard preamble to the output stream.
    */
-  void writePreamble() throw();
+  void writePreamble();
 
 private:
 

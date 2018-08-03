@@ -43,12 +43,12 @@ public:
    * @param acs Wrapper around the ACSLS C-API.
    */
   AcsDismountCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw();
+    std::ostream &errStream, Acs &acs);
 
   /**
    * Destructor.
    */
-  virtual ~AcsDismountCmd() throw();
+  virtual ~AcsDismountCmd();
 
   /**
    * The entry function of the command.

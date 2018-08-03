@@ -52,7 +52,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsForceDismountTape() throw();
+  ~AcsForceDismountTape();
 
   /**
    * Execute force dismount request through ACS API.

@@ -25,7 +25,7 @@ cta::mediachanger::CmdLineTool::CmdLineTool(
   std::istream &inStream,
   std::ostream &outStream,
   std::ostream &errStream,
-  MediaChangerFacade &mc) throw():
+  MediaChangerFacade &mc):
   m_in(inStream),
   m_out(outStream),
   m_err(errStream),
@@ -37,13 +37,13 @@ cta::mediachanger::CmdLineTool::CmdLineTool(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::CmdLineTool::~CmdLineTool() throw() {
+cta::mediachanger::CmdLineTool::~CmdLineTool() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::CmdLineTool::bool2Str(const bool value)
-  const throw() {
+  const {
   return value ? "TRUE" : "FALSE";
 }

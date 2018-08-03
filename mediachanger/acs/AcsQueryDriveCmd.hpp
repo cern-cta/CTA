@@ -44,12 +44,12 @@ public:
    * @param acs Wrapper around the ACSLS C-API.
    */
   AcsQueryDriveCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw();
+    std::ostream &errStream, Acs &acs);
 
   /**
    * Destructor.
    */
-  virtual ~AcsQueryDriveCmd() throw();
+  virtual ~AcsQueryDriveCmd();
 
   /**
    * The entry function of the command.
@@ -98,7 +98,7 @@ protected:
    * @param os The output stream.
    * @param s The drive status.
    */
-  void writeDriveStatus(std::ostream &os, const QU_DRV_STATUS &s) throw();
+  void writeDriveStatus(std::ostream &os, const QU_DRV_STATUS &s);
 
 private:
 

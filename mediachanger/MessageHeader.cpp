@@ -24,7 +24,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MessageHeader::MessageHeader() throw():
+MessageHeader::MessageHeader():
   magic(0),
   reqType(0),
   lenOrStatus(0) {

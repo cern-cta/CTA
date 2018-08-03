@@ -25,14 +25,14 @@
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::AcsMountCmd::AcsMountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  Acs &acs) throw():
+  Acs &acs):
   AcsCmd(inStream, outStream, errStream, acs) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::AcsMountCmd::~AcsMountCmd() throw() {
+cta::mediachanger::acs::AcsMountCmd::~AcsMountCmd() {
   // Do nothing
 }
 

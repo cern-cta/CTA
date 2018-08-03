@@ -27,5 +27,5 @@ cta::mediachanger::ZmqSocket::ZmqSocket() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ZmqSocket::~ZmqSocket() throw() {
+cta::mediachanger::ZmqSocket::~ZmqSocket() {
 }

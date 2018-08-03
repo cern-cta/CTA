@@ -212,5 +212,5 @@ std::string cta::mediachanger::acs::daemon::AcsMountTapeReadWrite::processQueryR
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::acs::daemon::AcsMountTapeReadWrite::~AcsMountTapeReadWrite() throw() {  
+cta::mediachanger::acs::daemon::AcsMountTapeReadWrite::~AcsMountTapeReadWrite() {  
 }

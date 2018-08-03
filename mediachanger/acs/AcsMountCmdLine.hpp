@@ -76,7 +76,7 @@ struct AcsMountCmdLine: public AcsCmdLine {
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  AcsMountCmdLine() throw();
+  AcsMountCmdLine();
 
   /**
    * Constructor.
@@ -93,7 +93,7 @@ struct AcsMountCmdLine: public AcsCmdLine {
    *
    * @return The usage message.
    */
-  static std::string getUsage() throw();
+  static std::string getUsage();
 
 private:
 

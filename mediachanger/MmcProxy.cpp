@@ -25,7 +25,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MmcProxy::MmcProxy(log::Logger &log) throw():
+MmcProxy::MmcProxy(log::Logger &log):
   m_log(log) {
 }
 

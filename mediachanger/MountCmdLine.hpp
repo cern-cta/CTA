@@ -39,7 +39,7 @@ public:
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  MountCmdLine() throw();
+  MountCmdLine();
 
   /**
    * Constructor.
@@ -61,7 +61,7 @@ public:
   /**
    * Destructor.
    */
-  ~MountCmdLine() throw();
+  ~MountCmdLine();
 
   /**
    * Assignment oprator.
@@ -75,35 +75,35 @@ public:
    *
    * @return The usage message.
    */
-  static std::string getUsage() throw();
+  static std::string getUsage();
 
   /**
    * Gets the value of the debug option.
    *
    * @return True if the debug option has been set.
    */
-  bool getDebug() const throw();
+  bool getDebug() const;
 
   /**
    * Gets the value of th ehelp option.
    *
    * True if the help option has been set.
    */
-  bool getHelp() const throw();
+  bool getHelp() const;
 
   /**
    * Gets the value of the read-only option.
    *
    * @return True if the tape is to be mount for read-only access.
    */
-  bool getReadOnly() const throw();
+  bool getReadOnly() const;
 
   /**
    * Gets the volume identifier of the tape to be mounted.
    *
    * @return The volume identifier of the tape to be mounted.
    */
-  std::string getVid() const throw();
+  std::string getVid() const;
 
   /**
    * Gets the slot in the tape library where the drive is located.

@@ -26,7 +26,7 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcMountMsgBody::RmcMountMsgBody() throw():
+RmcMountMsgBody::RmcMountMsgBody():
   uid(0),
   gid(0),
   side(0),

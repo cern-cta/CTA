@@ -40,7 +40,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~ZmqSocket() throw() = 0;
+  virtual ~ZmqSocket() = 0;
     
   /**
    * Closes the ZMQ socket.
@@ -98,7 +98,7 @@ public:
    *
    * @return The ZMQ socket wrappeed by this class.
    */
-  virtual void *getZmqSocket() const throw() = 0;
+  virtual void *getZmqSocket() const = 0;
 
 private:
 

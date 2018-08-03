@@ -23,7 +23,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::AcsLibrarySlot::AcsLibrarySlot() throw():
+cta::mediachanger::AcsLibrarySlot::AcsLibrarySlot():
   LibrarySlot(TAPE_LIBRARY_TYPE_ACS),
   m_acs(0),
   m_lsm(0),
@@ -47,7 +47,7 @@ std::string cta::mediachanger::AcsLibrarySlot::librarySlotToString(
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::AcsLibrarySlot::AcsLibrarySlot(const uint32_t acs,
-  const uint32_t lsm, const uint32_t panel, const uint32_t drive) throw():
+  const uint32_t lsm, const uint32_t panel, const uint32_t drive):
   LibrarySlot(TAPE_LIBRARY_TYPE_ACS),
   m_acs(acs),
   m_lsm(lsm),
@@ -59,7 +59,7 @@ cta::mediachanger::AcsLibrarySlot::AcsLibrarySlot(const uint32_t acs,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::AcsLibrarySlot::~AcsLibrarySlot() throw() {
+cta::mediachanger::AcsLibrarySlot::~AcsLibrarySlot() {
 }
 
 //------------------------------------------------------------------------------
@@ -73,27 +73,27 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::AcsLibrarySlot::
 //------------------------------------------------------------------------------
 // getAcs
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::AcsLibrarySlot::getAcs() const throw () {
+uint32_t cta::mediachanger::AcsLibrarySlot::getAcs() const {
   return m_acs;
 }
 
 //------------------------------------------------------------------------------
 // getLsm
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::AcsLibrarySlot::getLsm() const throw () {
+uint32_t cta::mediachanger::AcsLibrarySlot::getLsm() const {
   return m_lsm;
 }
 
 //------------------------------------------------------------------------------
 // getPanel
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::AcsLibrarySlot::getPanel() const throw () {
+uint32_t cta::mediachanger::AcsLibrarySlot::getPanel() const {
   return m_panel;
 }
 
 //------------------------------------------------------------------------------
 // getDrive
 //------------------------------------------------------------------------------
-uint32_t cta::mediachanger::AcsLibrarySlot::getDrive() const throw () {
+uint32_t cta::mediachanger::AcsLibrarySlot::getDrive() const {
   return m_drive;
 }

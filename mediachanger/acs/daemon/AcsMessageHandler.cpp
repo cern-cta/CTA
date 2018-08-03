@@ -80,14 +80,14 @@ cta::mediachanger::acs::daemon::AcsMessageHandler::AcsMessageHandler(
 // destructor
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::daemon::AcsMessageHandler::~AcsMessageHandler()
-  throw() {
+  {
 }
 
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::acs::daemon::AcsMessageHandler::getName()
-  const throw() {
+  const {
   return "AcsMessageHandler";
 }
 
@@ -95,7 +95,7 @@ std::string cta::mediachanger::acs::daemon::AcsMessageHandler::getName()
 // fillPollFd
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::daemon::AcsMessageHandler::fillPollFd(
-  zmq_pollitem_t &fd) throw() {
+  zmq_pollitem_t &fd) {
   fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = m_socket.getZmqSocket();
@@ -106,7 +106,7 @@ void cta::mediachanger::acs::daemon::AcsMessageHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool cta::mediachanger::acs::daemon::AcsMessageHandler::handleEvent(
-  const zmq_pollitem_t &fd) throw() {
+  const zmq_pollitem_t &fd) {
   // Try to receive a request, simply giving up if an exception is raised
   cta::mediachanger::Frame rqst;
 

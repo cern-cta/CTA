@@ -72,7 +72,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return True if the type if the library slot is ACS.
    */
-  static bool isAcs(const std::string &str) throw();
+  static bool isAcs(const std::string &str);
 
   /**
    * Returns true if the type of the specified tape library slot is manual.
@@ -80,7 +80,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return True if the type of the library slot is a manual.
    */
-  static bool isManual(const std::string &str) throw(); 
+  static bool isManual(const std::string &str); 
 
   /**
    * Returns true if the type of the specified tape library slot is SCSI.
@@ -88,7 +88,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return True if the type of the library slot is a manual.
    */
-  static bool isScsi(const std::string &str) throw(); 
+  static bool isScsi(const std::string &str); 
 
   /**
    * Parses the specified string representation of a library slot taking into

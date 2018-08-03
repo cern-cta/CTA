@@ -29,7 +29,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::acs::AcsMountCmdLine::AcsMountCmdLine() throw():
+cta::mediachanger::acs::AcsMountCmdLine::AcsMountCmdLine():
   debug(false),
   help(false),
   queryInterval(0),
@@ -139,7 +139,7 @@ void cta::mediachanger::acs::AcsMountCmdLine::processOption(const int opt) {
 //------------------------------------------------------------------------------
 // getUsage
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::acs::AcsMountCmdLine::getUsage() throw() {
+std::string cta::mediachanger::acs::AcsMountCmdLine::getUsage() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"

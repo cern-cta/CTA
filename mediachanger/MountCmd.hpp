@@ -44,12 +44,12 @@ public:
    * @param mc Interface to the media changer.
    */
   MountCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, MediaChangerFacade &mc) throw();
+    std::ostream &errStream, MediaChangerFacade &mc);
 
   /**
    * Destructor.
    */
-  virtual ~MountCmd() throw();
+  virtual ~MountCmd();
 
   /**
    * The entry function of the command.

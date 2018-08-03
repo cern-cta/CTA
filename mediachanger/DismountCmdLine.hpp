@@ -35,7 +35,7 @@ public:
   /**
    * Constructor.
    */
-  DismountCmdLine() throw();
+  DismountCmdLine();
 
   /**
    * Constructor.
@@ -57,7 +57,7 @@ public:
   /**
    * Destructor.
    */
-  ~DismountCmdLine() throw();
+  ~DismountCmdLine();
 
   /**
    * Assignment oprator.
@@ -71,28 +71,28 @@ public:
    *
    * @return The usage message.
    */ 
-  static std::string getUsage() throw();
+  static std::string getUsage();
 
   /**
    * Gets the value of the debug option.
    *
    * @return True if the debug option has been set.
    */
-  bool getDebug() const throw();
+  bool getDebug() const;
 
   /**
    * Gets the value of the help option.
    *
    * @return True if the help option has been set.
    */
-  bool getHelp() const throw();
+  bool getHelp() const;
 
   /**
    * Gets the volume identifier of the tape to be mounted.
    *
    * @return The volume identifier of the tape to be mounted.
    */
-  const std::string &getVid() const throw();
+  const std::string &getVid() const;
 
   /**
    * Gets the slot in the tape library where the drive is located.
@@ -107,7 +107,7 @@ public:
    * @return True if the dismount should be forced.  Forcing a dismount means
    * rewinding and ejecting the tape where necessary.
    */
-  bool getForce() const throw();
+  bool getForce() const;
 
   /**
    * Return sthe program name.

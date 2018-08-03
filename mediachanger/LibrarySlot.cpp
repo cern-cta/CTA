@@ -23,14 +23,14 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::LibrarySlot::LibrarySlot(
-  const TapeLibraryType libraryType) throw():
+  const TapeLibraryType libraryType):
   m_libraryType(libraryType) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::~LibrarySlot() throw() {
+cta::mediachanger::LibrarySlot::~LibrarySlot() {
 }
 
 //------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::
 // str
 //------------------------------------------------------------------------------
 const std::string &cta::mediachanger::LibrarySlot::str() const
-  throw() {
+  {
   return m_str;
 }
 
@@ -60,6 +60,6 @@ const std::string &cta::mediachanger::LibrarySlot::str() const
 // getLibraryType
 //------------------------------------------------------------------------------
 cta::mediachanger::TapeLibraryType
-  cta::mediachanger::LibrarySlot::getLibraryType() const throw() {
+  cta::mediachanger::LibrarySlot::getLibraryType() const {
   return m_libraryType;
 }

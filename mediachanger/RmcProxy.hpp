@@ -51,12 +51,12 @@ public:
   RmcProxy(
     const unsigned short rmcPort = RMC_PORT,
     const int netTimeout = RMC_NET_TIMEOUT,
-    const unsigned int maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS) throw();
+    const unsigned int maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
   /**
    * Destructor.
    */
-  ~RmcProxy() throw();
+  ~RmcProxy();
 
   /**
    * Requests the media changer to mount the specified tape for read-only

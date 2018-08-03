@@ -44,7 +44,7 @@ ZmqSocketST::ZmqSocketST(void *const zmqContext, const int socketType) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-ZmqSocketST::~ZmqSocketST() throw() {
+ZmqSocketST::~ZmqSocketST() {
   try {
     close();
   } catch(...) {
@@ -134,7 +134,7 @@ void ZmqSocketST::recv(zmq_msg_t *const msg, int flags) {
 //------------------------------------------------------------------------------
 // getZmqSocket
 //------------------------------------------------------------------------------
-void *ZmqSocketST::getZmqSocket() const throw() {
+void *ZmqSocketST::getZmqSocket() const {
   return m_zmqSocket;
 }
 

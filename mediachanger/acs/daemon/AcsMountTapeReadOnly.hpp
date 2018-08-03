@@ -50,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~AcsMountTapeReadOnly() throw();
+  ~AcsMountTapeReadOnly();
 
   /**
    * Execute mount request through ACS API.

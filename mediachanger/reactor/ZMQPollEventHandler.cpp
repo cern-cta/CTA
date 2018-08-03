@@ -24,5 +24,5 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::reactor::ZMQPollEventHandler::~ZMQPollEventHandler() throw() {
+cta::mediachanger::reactor::ZMQPollEventHandler::~ZMQPollEventHandler() {
 }

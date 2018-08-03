@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::ZmqMsg::ZmqMsg() throw() {
+cta::mediachanger::ZmqMsg::ZmqMsg() {
   if(zmq_msg_init(&m_zmqMsg)) {
     const int savedErrno = errno;
     cta::exception::Exception ex;
@@ -37,7 +37,7 @@ cta::mediachanger::ZmqMsg::ZmqMsg() throw() {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
+cta::mediachanger::ZmqMsg::ZmqMsg(const size_t msgSize) {
   if(zmq_msg_init_size(&m_zmqMsg, msgSize)) {
     const int savedErrno = errno;
     cta::exception::Exception ex;
@@ -50,14 +50,14 @@ cta::mediachanger::ZmqMsg::ZmqMsg(const size_t msgSize) throw() {
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::ZmqMsg::~ZmqMsg() throw() {
+cta::mediachanger::ZmqMsg::~ZmqMsg() {
   zmq_msg_close(&m_zmqMsg);
 }
 
 //-----------------------------------------------------------------------------
 // getZmqMsg
 //-----------------------------------------------------------------------------
-zmq_msg_t &cta::mediachanger::ZmqMsg::getZmqMsg() throw() {
+zmq_msg_t &cta::mediachanger::ZmqMsg::getZmqMsg() {
   return m_zmqMsg;
 }
 

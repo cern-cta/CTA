@@ -78,7 +78,7 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-  AcsDaemon::~AcsDaemon() throw() {  
+  AcsDaemon::~AcsDaemon() {  
   m_reactor.clear();  
   destroyZmqContext();
   google::protobuf::ShutdownProtobufLibrary();
@@ -88,7 +88,7 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
 // destroyZmqContext
 //------------------------------------------------------------------------------
 
-  void AcsDaemon::destroyZmqContext() throw() {
+  void AcsDaemon::destroyZmqContext() {
   if(NULL != m_zmqContext) {
     if(zmq_term(m_zmqContext)) {
       cta::exception::Exception ex;
@@ -104,7 +104,7 @@ std::string cta::mediachanger::acs::daemon::AcsDaemon::getHostName() const  {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int AcsDaemon::main() throw() {
+int AcsDaemon::main() {
     
   try {
     exceptionThrowingMain(m_argc, m_argv);
@@ -148,7 +148,7 @@ void AcsDaemon::exceptionThrowingMain(
 //------------------------------------------------------------------------------
 
   void AcsDaemon::logStartOfDaemon(
-  const int argc, const char *const *const argv) throw() {
+  const int argc, const char *const *const argv) {
   const std::string concatenatedArgs = argvToString(argc, argv);
   std::ostringstream msg;
   msg << m_programName << " started";
@@ -163,7 +163,7 @@ void AcsDaemon::exceptionThrowingMain(
 //------------------------------------------------------------------------------
 
   std::string AcsDaemon::argvToString(
-  const int argc, const char *const *const argv) throw() {
+  const int argc, const char *const *const argv) {
   std::string str;
 
   for(int i=0; i < argc; i++) {
@@ -339,7 +339,7 @@ void AcsDaemon::handlePendingRequests() {
 // handlePendingSignals
 //------------------------------------------------------------------------------
 
-bool AcsDaemon::handlePendingSignals() throw() {
+bool AcsDaemon::handlePendingSignals() {
   bool continueMainEventLoop = true;
   int sig = 0;
   sigset_t allSignals;

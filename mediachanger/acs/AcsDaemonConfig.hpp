@@ -56,7 +56,7 @@ struct AcsDaemonConfig {
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */
-  AcsDaemonConfig() throw();
+  AcsDaemonConfig();
 
   /**
    * Returns a configuration structure based on the contents of

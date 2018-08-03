@@ -75,19 +75,19 @@ public:
    * 
    * @return true if the ACS request in state to Execute.
    */  
-  bool isToExecute() const throw();  
+  bool isToExecute() const;  
   
   /**
    * Sets state of the ACS request to be executed.
    */
-  void setStateToExecute() throw();
+  void setStateToExecute();
   
   /**
    * Checks if the ACS request is in running state.
    * 
    * @return true if the ACS request is in running state.
    */  
-  bool isRunning() const throw();
+  bool isRunning() const;
   
   /**
    * Sets state of the ACS request to running.
@@ -99,7 +99,7 @@ public:
    * 
    * @return true if the ACS request is in completed state.
    */  
-  bool isCompleted() const throw();
+  bool isCompleted() const;
   
   /**
    * Sets state of the ACS request to completed and fills ZMQ replay frame with 
@@ -112,7 +112,7 @@ public:
    * 
    * @return true if the ACS request is in failed state.
    */  
-  bool isFailed() const throw();
+  bool isFailed() const;
   
   /**
    * Sets state of the ACS request to failed and fills ZMQ replay frame with
@@ -125,54 +125,54 @@ public:
    * 
    * @return true if the ACS request is in to delete state.
    */  
-  bool isToDelete() const throw();
+  bool isToDelete() const;
   
   /**
    * Sets state of the ACS request to be deleted.
    */
-  void setStateToDelete() throw();
+  void setStateToDelete();
 
   /**
    * Gets the vid component of the ACS request.
    *
    * @return the vid component of the ACS request.
    */
-  const std::string &getVid() const throw ();
+  const std::string &getVid() const;
   
   /**
    * Gets the acs component of the ACS request.
    *
    * @return the acs component of the ACS request.
    */
-  uint32_t getAcs() const throw ();
+  uint32_t getAcs() const;
 
   /**
    * Gets the lsm component of the ACS request.
    *
    * @return the lsm component of the ACS request.
    */
-  uint32_t getLsm() const throw ();
+  uint32_t getLsm() const;
 
   /**
    * Gets the panel component of the ACS request.
    *
    * @return the panel component of the ACS request.
    */
-  uint32_t getPanel() const throw ();
+  uint32_t getPanel() const;
 
   /**
    * Gets the drive component of the ACS request.
    *
    * @return the drive component of the ACS request.
    */
-  uint32_t getDrive() const throw ();
+  uint32_t getDrive() const;
   
   /**
    * Gets the SeqNumber component of the ACS request.
    *
    * @return the SeqNo component of the ACS request.
    */
-  SEQ_NO getSeqNo() const throw ();
+  SEQ_NO getSeqNo() const;
   
   /**
    * Sets the fields of the response message of the ACS response request.
@@ -181,7 +181,7 @@ public:
    * @param responseMsg  The response message.
    */
   void setResponse(const ACS_RESPONSE_TYPE responseType,
-    const ALIGNED_BYTES *const responseMsg) throw ();
+    const ALIGNED_BYTES *const responseMsg);
   
   /**
    * Send a replay to the client who issued the ACS request.
@@ -193,7 +193,7 @@ public:
    * 
    * @return The connection Identity.
    */
-  std::string getIdentity() const throw();
+  std::string getIdentity() const;
   
   /**
    * Returns a string representing ACS request.
