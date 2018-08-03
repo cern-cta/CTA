@@ -138,7 +138,7 @@ namespace utils {
    * @param s The string to be trimmed.
    * @return The result of trimming the string.
    */
-  std::string trimString(const std::string &s) throw();
+  std::string trimString(const std::string &s);
   
   /**
    * Returns a string with an ellipsis in the end if necessary so that the 
@@ -209,7 +209,7 @@ namespace utils {
    * @param str The original string.
    * @return    The newly created string with single spaces.
    */
-  std::string singleSpaceString(const std::string &str) throw();
+  std::string singleSpaceString(const std::string &str);
   
   /**
    * C++ wrapper around the setxtarr() function.
@@ -237,7 +237,7 @@ namespace utils {
    * @param errnoValue The errno value.
    * @return The string representation.
    */
-  std::string errnoToString(const int errnoValue) throw();
+  std::string errnoToString(const int errnoValue);
 
   /**
    * Converts the specified string to an unsigned integer.
@@ -269,7 +269,7 @@ namespace utils {
    * @param str The string to be checked.
    * @returns true if the string is a valid unsigned integer, else false.
    */
-  bool isValidUInt(const std::string &str) throw();
+  bool isValidUInt(const std::string &str);
 
   /**
    * Parses the specified string representation of an unsigned 64-bit integer.

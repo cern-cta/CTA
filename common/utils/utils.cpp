@@ -272,7 +272,7 @@ void splitString(const std::string &str, const char separator,
 //-----------------------------------------------------------------------------
 // trimString
 //-----------------------------------------------------------------------------
-std::string trimString(const std::string &s) throw() {
+std::string trimString(const std::string &s) {
   const std::string& spaces="\t\n\v\f\r ";
 
   // Find first non white character
@@ -337,7 +337,7 @@ std::string preEllipsis(const std::string &s, size_t maxSize) {
 //------------------------------------------------------------------------------
 // singleSpaceString
 //------------------------------------------------------------------------------
-std::string singleSpaceString(const std::string &str) throw() {
+std::string singleSpaceString(const std::string &str) {
   bool inWhitespace = false;
   bool strContainsNonWhiteSpace = false;
 
@@ -460,7 +460,7 @@ std::string getXattr(const std::string &path,
 //------------------------------------------------------------------------------
 // errnoToString
 //------------------------------------------------------------------------------
-std::string errnoToString(const int errnoValue) throw() {
+std::string errnoToString(const int errnoValue) {
   char buf[100];
 
   if(!strerror_r_wrapper(errnoValue, buf, sizeof(buf))) {
@@ -602,7 +602,7 @@ gid_t toGid(const std::string &str) {
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool isValidUInt(const std::string &str) throw() {
+bool isValidUInt(const std::string &str) {
   // An empty string is not a valid unsigned integer
   if(str.empty()) {
     return false;
