@@ -66,7 +66,7 @@ public:
   /**
    * Destructor.
    */
-  ~OcciStmt() throw() override;
+  ~OcciStmt() override;
 
   /**
    * Prevent copying the object.

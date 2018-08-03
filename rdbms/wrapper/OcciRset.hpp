@@ -55,7 +55,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OcciRset() throw() override;
+  virtual ~OcciRset() override;
 
   /**
    * Returns the SQL statement.

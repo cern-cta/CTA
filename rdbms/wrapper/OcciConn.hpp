@@ -53,7 +53,7 @@ public:
   /**
    * Destructor.
    */
-  ~OcciConn() throw() override;
+  ~OcciConn() override;
 
   /**
    * Idempotent close() method.  The destructor calls this method.

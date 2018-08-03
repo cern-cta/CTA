@@ -38,7 +38,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~Conn() throw() = 0;
+  virtual ~Conn() = 0;
 
   /**
    * Idempotent close() method.  The destructor calls this method.

@@ -56,7 +56,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~Stmt() throw() = 0;
+  virtual ~Stmt() = 0;
 
   /**
    * Deletion of the copy constructor.

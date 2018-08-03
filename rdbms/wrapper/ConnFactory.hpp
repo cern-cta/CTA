@@ -35,7 +35,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~ConnFactory() throw() = 0;
+  virtual ~ConnFactory() = 0;
 
   /**
    * Returns a newly created database connection.

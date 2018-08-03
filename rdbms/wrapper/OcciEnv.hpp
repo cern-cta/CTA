@@ -45,7 +45,7 @@ public:
    *
    * Terminates the underlying OCCI environment.
    */
-  ~OcciEnv() throw();
+  ~OcciEnv();
 
   /**
    * Creates an OCCI connection.

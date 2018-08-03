@@ -54,7 +54,7 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteStmt() throw() override;
+  ~SqliteStmt() override;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.

@@ -37,7 +37,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~Rset() throw() = 0;
+  virtual ~Rset() = 0;
 
   /**
    * Returns the SQL statement.

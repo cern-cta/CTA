@@ -50,7 +50,7 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteRset() throw() override;
+  ~SqliteRset() override;
 
   /**
    * Returns the SQL statement.

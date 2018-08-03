@@ -55,7 +55,7 @@ public:
   /**
    * Destructor.
    */
-  ~SqliteConn() throw() override;
+  ~SqliteConn() override;
 
   /**
    * Idempotent close() method.  The destructor calls this method.

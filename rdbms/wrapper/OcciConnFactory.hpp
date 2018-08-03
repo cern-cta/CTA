@@ -45,7 +45,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OcciConnFactory() throw() override;
+  virtual ~OcciConnFactory() override;
 
   /**
    * Returns a newly created database connection.

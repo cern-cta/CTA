@@ -40,7 +40,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SqliteConnFactory() throw() override;
+  virtual ~SqliteConnFactory() override;
 
   /**
    * Returns a newly created database connection.
