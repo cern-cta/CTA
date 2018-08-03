@@ -38,13 +38,13 @@ public:
    * @param remainingTime The number of remaining seconds when
    * castor::io::acceptConnection() was interrupted.
    */
-  AcceptConnectionInterrupted(const time_t remainingTime) throw();
+  AcceptConnectionInterrupted(const time_t remainingTime);
 
   /**
    * Returns the number of remaining seconds when
    * castor::io::acceptConnection() was interrupted.
    */
-  time_t remainingTime() const throw();
+  time_t remainingTime() const;
 
 private:
 

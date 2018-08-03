@@ -46,7 +46,7 @@ namespace cta { namespace exception {
        * Trivial, but explicitely non-throwing destructor (required through
        * inheritence from std::exception) 
        */
-      virtual ~InvalidConfigEntry() throw() {};
+      virtual ~InvalidConfigEntry() {};
       
       /**
        * Returns the category of the configuration entry.

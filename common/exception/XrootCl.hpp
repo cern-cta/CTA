@@ -36,7 +36,7 @@ namespace exception {
   class XrootCl: public cta::exception::Exception {
   public:
     XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() throw() {};
+    virtual ~XrootCl() {};
     const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
     static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
   protected:

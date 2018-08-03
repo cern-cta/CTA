@@ -55,7 +55,7 @@ public:
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  virtual ~Exception() throw ();
+  virtual ~Exception();
   
   /**
    * Get the value of m_message
@@ -96,7 +96,7 @@ public:
    * the stack trace.
    * @return pointer to m_what's contents
    */
-  virtual const char * what() const throw ();
+  virtual const char * what() const noexcept;
 
 private:
   /// A message explaining why this exception was raised

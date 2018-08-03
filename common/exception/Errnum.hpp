@@ -28,7 +28,7 @@ namespace exception {
   public:
     Errnum(std::string what = "");
     Errnum (int err, std::string what = "");
-    virtual ~Errnum() throw() {};
+    virtual ~Errnum() {};
     int errorNumber() const { return m_errnum; }
     std::string strError() const { return m_strerror; }
     static void throwOnReturnedErrno(const int err, const std::string &context = "");

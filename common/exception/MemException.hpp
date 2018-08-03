@@ -28,6 +28,6 @@ namespace exception {
 class MemException: public cta::exception::Exception {
   public:
     MemException(const std::string & what): Exception(what) {}
-    virtual ~MemException() throw() {}
+    virtual ~MemException() {}
 };
 }}

@@ -50,7 +50,7 @@ cta::exception::Exception& cta::exception::Exception::operator=(
 //------------------------------------------------------------------------------
 // what operator
 //------------------------------------------------------------------------------
-const char * cta::exception::Exception::what() const throw () {
+const char * cta::exception::Exception::what() const noexcept {
   m_what = getMessageValue();
   m_what += "\n";
   m_what += (std::string) m_backtrace;
@@ -60,7 +60,7 @@ const char * cta::exception::Exception::what() const throw () {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::~Exception() throw() {
+cta::exception::Exception::~Exception() {
 }
 
 //------------------------------------------------------------------------------

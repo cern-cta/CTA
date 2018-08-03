@@ -40,23 +40,23 @@ public:
    * @param highPort The inclusive high port of the port number range.
    */
   NoPortInRange(const unsigned short lowPort, const unsigned short highPort)
-    throw();
+   ;
   
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  virtual ~NoPortInRange() throw() {}
+  virtual ~NoPortInRange() {}
   
   /**
    * Returns the inclusive low port of the port number range.
    */
-  unsigned short getLowPort() throw();
+  unsigned short getLowPort();
 
   /**
    * Returns the inclusive high port of the port number range.
    */
-  unsigned short getHighPort() throw();
+  unsigned short getHighPort();
 
 
 private:

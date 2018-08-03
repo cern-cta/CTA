@@ -23,7 +23,7 @@
 // constructor
 // -----------------------------------------------------------------------------
 cta::exception::AcceptConnectionInterrupted::AcceptConnectionInterrupted(
-  const time_t remainingTime) throw() :
+  const time_t remainingTime) :
   cta::exception::Exception(),
   m_remainingTime(remainingTime) {
 
@@ -34,6 +34,6 @@ cta::exception::AcceptConnectionInterrupted::AcceptConnectionInterrupted(
 // remainingTime()
 // -----------------------------------------------------------------------------
 time_t cta::exception::AcceptConnectionInterrupted::remainingTime() const
-  throw() {
+  {
   return m_remainingTime;
 }

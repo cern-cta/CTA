@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 cta::exception::NoPortInRange::NoPortInRange(
   const unsigned short lowPort,
-  const unsigned short highPort) throw() :
+  const unsigned short highPort) :
   cta::exception::Exception(),
   m_lowPort(lowPort),
   m_highPort(highPort)  {
@@ -36,7 +36,7 @@ cta::exception::NoPortInRange::NoPortInRange(
 //------------------------------------------------------------------------------
 // getLowPort()
 //------------------------------------------------------------------------------
-unsigned short cta::exception::NoPortInRange::getLowPort() throw() {
+unsigned short cta::exception::NoPortInRange::getLowPort() {
   return m_lowPort;
 }
 
@@ -44,6 +44,6 @@ unsigned short cta::exception::NoPortInRange::getLowPort() throw() {
 //------------------------------------------------------------------------------
 // getHighPort()
 //------------------------------------------------------------------------------
-unsigned short cta::exception::NoPortInRange::getHighPort() throw() {
+unsigned short cta::exception::NoPortInRange::getHighPort() {
   return m_highPort;
 }
