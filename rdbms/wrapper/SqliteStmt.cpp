@@ -111,7 +111,7 @@ SqliteStmt::SqliteStmt(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SqliteStmt::~SqliteStmt() throw() {
+SqliteStmt::~SqliteStmt() {
   try {
     close(); // Idempotent close() method
   } catch(...) {

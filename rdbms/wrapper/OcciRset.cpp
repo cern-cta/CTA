@@ -70,7 +70,7 @@ void OcciRset::populateColNameToIdxMap() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciRset::~OcciRset() throw() {
+OcciRset::~OcciRset() {
   try {
     close(); // Idempotent close()
   } catch(...) {

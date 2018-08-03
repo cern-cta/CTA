@@ -71,7 +71,7 @@ SqliteConn::SqliteConn(const std::string &filename):
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SqliteConn::~SqliteConn() throw() {
+SqliteConn::~SqliteConn() {
   try {
     close(); // Idempotent close() method
   } catch(...) {

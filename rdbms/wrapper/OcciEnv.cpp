@@ -40,7 +40,7 @@ OcciEnv::OcciEnv() {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciEnv::~OcciEnv() throw() {
+OcciEnv::~OcciEnv() {
   using namespace oracle::occi;
 
   Environment::terminateEnvironment(m_env);

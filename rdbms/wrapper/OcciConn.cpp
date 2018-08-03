@@ -45,7 +45,7 @@ OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connectio
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciConn::~OcciConn() throw() {
+OcciConn::~OcciConn() {
   try {
     close(); // Idempotent close() method
   } catch(...) {

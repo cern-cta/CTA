@@ -73,7 +73,7 @@ OcciStmt::OcciStmt(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciStmt::~OcciStmt() throw() {
+OcciStmt::~OcciStmt() {
   try {
     close(); // Idempotent close() method
   } catch (...) {

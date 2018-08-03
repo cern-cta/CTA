@@ -25,7 +25,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-ConnFactory::~ConnFactory() throw() {
+ConnFactory::~ConnFactory() {
 }
 
 } // namespace wrapper

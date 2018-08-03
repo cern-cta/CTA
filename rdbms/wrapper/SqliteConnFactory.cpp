@@ -35,7 +35,7 @@ SqliteConnFactory::SqliteConnFactory(const std::string &filename):
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SqliteConnFactory::~SqliteConnFactory() throw() {
+SqliteConnFactory::~SqliteConnFactory() {
 }
 
 //------------------------------------------------------------------------------
