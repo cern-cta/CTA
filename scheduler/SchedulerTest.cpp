@@ -18,7 +18,6 @@
 
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
-#include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/make_unique.hpp"

@@ -25,7 +25,6 @@
 //#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/admin/AdminUser.hpp"
 #include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/LogicalLibrary.hpp"

@@ -68,7 +68,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/VerifyInfo.cpp
   dataStructures/WriteTestResult.cpp
   dataStructures/utils.cpp
-  admin/AdminUser.cpp
   archiveRoutes/ArchiveRoute.cpp
   checksum/Checksum.cpp
   exception/AcceptConnectionInterrupted.cpp
