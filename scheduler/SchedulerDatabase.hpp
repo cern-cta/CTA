@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/archiveRoutes/ArchiveRoute.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/MountControl.hpp"
@@ -49,11 +48,6 @@
 
 namespace cta {
 // Forward declarations for opaque references.
-namespace common {
-namespace archiveRoute {
-  class ArchiveRoute;
-} // cta::common::archiveRoute
-} // cta::common
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
