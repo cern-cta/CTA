@@ -42,7 +42,8 @@ export EOS_MAIL_CC="none@mail.cern.ch"
 export EOS_NOTIFY="mail -s `date +%s`-`hostname`-eos-notify $EOS_MAIL_CC"
 
 # Changel minimum file system size setting - default is to have atleast 5 GB free on a partition
-export EOS_FS_FULL_SIZE_IN_GB=5
+# Changed from 5GB to 2GB on 06/08/2018 in order to help CI tests pass
+export EOS_FS_FULL_SIZE_IN_GB=2
 
 # define the log file where you want to grep
 export EOS_TTY_BROADCAST_LISTEN_LOGFILE="/var/log/eos/mgm/xrdlog.mgm"
