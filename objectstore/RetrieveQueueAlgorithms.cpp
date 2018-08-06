@@ -234,17 +234,18 @@ auto ContainerTraits<RetrieveQueue>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
-  throw std::runtime_error("7 Not implemented.");
   PoppedElementsBatch ret;
-#if 0
-  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", });
+
+  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  for(auto &cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{
+       cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+       common::dataStructures::ArchiveFile()
+    });
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
   }
-#endif
+
   return ret;
 }
 
