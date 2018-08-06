@@ -194,11 +194,7 @@ removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAdd
 template<>
 auto ContainerTraits<RetrieveQueue>::
 getContainerSummary(Container &cont) -> ContainerSummary {
-  throw std::runtime_error("6 Not implemented.");
-  ContainerSummary ret;
-#if 0
-  ret.JobsSummary::operator=(cont.getJobsSummary());
-#endif
+  ContainerSummary ret(cont.getJobsSummary());
   return ret;
 }
 

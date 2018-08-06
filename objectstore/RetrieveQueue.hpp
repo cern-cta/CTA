@@ -67,7 +67,7 @@ public:
     time_t startTime;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
-  /// This version will check for existence of the job in the queue before
+  // This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
