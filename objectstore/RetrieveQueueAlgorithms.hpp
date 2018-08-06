@@ -27,6 +27,8 @@ template<>
 struct ContainerTraitsTypes<RetrieveQueue>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
+    ContainerSummary() : RetrieveQueue::JobsSummary() {}
+    ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary() {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
   };
 
