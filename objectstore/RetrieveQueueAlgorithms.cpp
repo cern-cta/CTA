@@ -302,31 +302,28 @@ void ContainerTraits<RetrieveQueue>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  throw std::runtime_error("10 Not implemented.");
-#if 0
-  if(cont.isEmpty()) {
-    // The current implementation is done unlocked.
+  if(cont.isEmpty())
+  {
+    // The current implementation is done unlocked
     contLock.release();
     try {
-      // The queue should be removed as it is empty.
+      // The queue should be removed as it is empty
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      re.removeRetrieveQueueAndCommit(cId, QueueType::LiveJobs, lc);
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
-    } catch (cta::exception::Exception &ex) {
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::trimContainerIfNeeded(): deleted empty queue");
+    } catch(cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     }
-    //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
   }
-#endif
 }
 
 }} // namespace cta::objectstore
