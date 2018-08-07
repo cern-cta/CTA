@@ -530,7 +530,7 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
 // RetrieveRequest::getActiveCopyNumber()
 //------------------------------------------------------------------------------
 uint32_t RetrieveRequest::getActiveCopyNumber() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  return m_payload.activecopynb();
 }
 
 //------------------------------------------------------------------------------
