@@ -31,20 +31,16 @@ const std::string ContainerTraits<RetrieveQueue>::c_identifierType = "vid";
 
 void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
-  throw std::runtime_error("1 Not implemented.");
-#if 0
   params.add("filesAdded", files - previous.files)
         .add("bytesAdded", bytes - previous.bytes)
         .add("filesBefore", previous.files)
         .add("bytesBefore", previous.bytes)
         .add("filesAfter", files)
         .add("bytesAfter", bytes);
-#endif
 }
 
 void ContainerTraitsTypes<RetrieveQueue>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) {
-  throw std::runtime_error("2 Not implemented.");
 #if 0
   params.add("queueJobsBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
