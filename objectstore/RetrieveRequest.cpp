@@ -431,9 +431,10 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncUpdateOwner()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
-  -> AsyncOwnerUpdater* {
-  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner,
+  const std::string &previousOwner) -> AsyncJobOwnerUpdater*
+{
+  std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
   // Passing a reference to the unique pointer led to strange behaviors.
   auto & retRef = *ret;
   ret->m_updaterCallback=
@@ -497,23 +498,23 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
   }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::wait()
+// RetrieveRequest::AsyncJobOwnerUpdater::wait()
 //------------------------------------------------------------------------------
-void RetrieveRequest::AsyncOwnerUpdater::wait() {
+void RetrieveRequest::AsyncJobOwnerUpdater::wait() {
   m_backendUpdater->wait();
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::getArchiveFile()
+// RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
-const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest()
+// RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest()
 //------------------------------------------------------------------------------
-const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest() {
   return m_retrieveRequest;
 }
 
