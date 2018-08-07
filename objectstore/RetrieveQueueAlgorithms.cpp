@@ -204,11 +204,11 @@ switchElementsOwnership(InsertedElement::list &elemMemCont, const ContainerAddre
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t,
   log::LogContext &lc) -> OpFailure<InsertedElement>::list
 {
-  std::list<std::unique_ptr<RetrieveRequest::AsyncOwnerUpdater>> updaters;
+  std::list<std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
     auto copyNb = e.copyNb;
-    updaters.emplace_back(rr.asyncUpdateOwner(copyNb, contAddress, previousOwnerAddress));
+    updaters.emplace_back(rr.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -267,37 +267,33 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t,
   log::LogContext &lc) -> OpFailure<PoppedElement>::list
 {
-  throw std::runtime_error("9 Not implemented.");
-#if 0
-  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-  for (auto & e: popedElementBatch.elements) {
-    ArchiveRequest & ar = *e.archiveRequest;
-    auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+  // Asynchronously get the Retrieve requests
+  std::list<std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater>> updaters;
+  for(auto &e : poppedElementBatch.elements) {
+    RetrieveRequest &re = *e.retrieveRequest;
+    auto copyNb = re.getActiveCopyNumber();
+    updaters.emplace_back(re.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
-  auto u = updaters.begin();
-  auto e = popedElementBatch.elements.begin();
-#endif
+
+  // Process the Retrieve requests as they come in
   OpFailure<PoppedElement>::list ret;
-#if 0
-  while (e != popedElementBatch.elements.end()) {
+
+  for(auto el = std::make_pair(updaters.begin(), poppedElementBatch.elements.begin());
+      el.first != updaters.end(); ++el.first, ++el.second)
+  {
+    auto &u = *(el.first);
+    auto &e = *(el.second);
+
     try {
-      u->get()->wait();
-      e->archiveFile = u->get()->getArchiveFile();
-      e->archiveReportURL = u->get()->getArchiveReportURL();
-      e->errorReportURL = u->get()->getArchiveErrorReportURL();
-      e->srcURL = u->get()->getSrcURL();
-    } catch (...) {
-      ret.push_back(OpFailure<PoppedElement>());
-      ret.back().element = &(*e);
-      ret.back().failure = std::current_exception();
+      u.get()->wait();
+      e.archiveFile = u.get()->getArchiveFile();
+    } catch(...) {
+      ret.push_back(OpFailure<PoppedElement>(&e, std::current_exception()));
     }
-    u++;
-    e++;
   }
   timingList.insertAndReset("asyncUpdateCompletionTime", t);
-#endif
+
   return ret;
 }
 

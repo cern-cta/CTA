@@ -101,6 +101,9 @@ struct ContainerTraits
     Element *element;
     std::exception_ptr failure;
     typedef std::list<OpFailure> list;
+
+    OpFailure() {}
+    OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}
   };
 
   class OwnershipSwitchFailure: public cta::exception::Exception {
