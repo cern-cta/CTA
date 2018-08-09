@@ -46,6 +46,8 @@ struct ContainerTraitsTypes<RetrieveQueue>
 
   struct PoppedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
+    uint16_t copyNb;
+    uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
   };
   struct PoppedElementsSummary;
