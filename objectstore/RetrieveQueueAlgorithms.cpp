@@ -154,7 +154,7 @@ template<>
 void ContainerTraits<RetrieveQueue>::addReferencesIfNecessaryAndCommit(Container& cont,
   InsertedElement::list& elemMemCont, AgentReference& agentRef, log::LogContext& lc)
 {
-  throw std::runtime_error("5 Not implemented.");
+  throw std::runtime_error("ContainerTraits<RetrieveQueue>::addReferencesIfNecessaryAndCommit(): Not implemented");
 #if 0
   std::list<ArchiveQueue::JobToAdd> jobsToAdd;
   for (auto & e: elemMemCont) {
@@ -236,6 +236,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
        cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+       cjfq.copyNb,
+       cjfq.size,
        common::dataStructures::ArchiveFile()
     });
     ret.summary.bytes += cjfq.size;
@@ -248,13 +250,13 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 template<>
 auto ContainerTraits<RetrieveQueue>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
-  throw std::runtime_error("8 Not implemented.");
-  PoppedElementsSummary ret;
+  throw std::runtime_error("ContainerTraits<RetrieveQueue>::getElementSummary(): Not implemented");
 #if 0
+  PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
   ret.files = 1;
-#endif
   return ret;
+#endif
 }
 
 template<>
@@ -267,8 +269,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   std::list<std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater>> updaters;
   for(auto &e : poppedElementBatch.elements) {
     RetrieveRequest &re = *e.retrieveRequest;
-    auto copyNb = re.getActiveCopyNumber();
-    updaters.emplace_back(re.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+    updaters.emplace_back(re.asyncUpdateJobOwner(e.copyNb, contAddress, previousOwnerAddress));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
 
