@@ -181,7 +181,9 @@ public:
     if (failedOwnershipSwitchElements.empty()) {
       // The good case: all elements went through.
       std::list<std::string> transferedElements;
-      for (const auto & e: elements) transferedElements.emplace_back(ContainerTraits<C>::getElementAddress(e));
+      for(const auto &e : elements) {
+        transferedElements.emplace_back(ContainerTraits<C>::getElementAddress(e));
+      }
       m_agentReference.removeBatchFromOwnership(transferedElements, m_backend);
       // That's it, we're done.
       return;
@@ -246,7 +248,7 @@ public:
     } else {
       // Bad case: just return the failure set to the caller.
       typename ContainerTraits<C>::OwnershipSwitchFailure failureEx(
-          "In ContainerAlgorithms<>::referenceAndSwitchOwnershipIfNecessar(): failed to switch ownership of some elements");
+          "In ContainerAlgorithms<>::referenceAndSwitchOwnershipIfNecessary(): failed to switch ownership of some elements");
       failureEx.failedElements = failedOwnershipSwitchElements;
       params.add("errorCount", failedOwnershipSwitchElements.size());
       lc.log(log::WARNING, "In ContainerAlgorithms::referenceAndSwitchOwnershipIfNecessary(): "
@@ -254,7 +256,7 @@ public:
       throw failureEx;
     }
   }
-  
+
   /**
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
@@ -265,8 +267,11 @@ public:
   }
   
   
-  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(const typename ContainerTraits<C>::ContainerIdentifier & contId,
-      typename ContainerTraits<C>::PopCriteria & popCriteria, log::LogContext & lc) {
+  typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(
+    const typename ContainerTraits<C>::ContainerIdentifier &contId,
+    typename ContainerTraits<C>::PopCriteria &popCriteria,
+    log::LogContext &dlc)
+  {
     // Prepare the return value
     typename ContainerTraits<C>::PoppedElementsBatch ret;
     typename ContainerTraits<C>::PopCriteria unfulfilledCriteria = popCriteria;
@@ -389,7 +394,7 @@ public:
       lc.log(log::INFO, "In ContainerTraits<C>::PoppedElementsBatch(): did one round of elements retrieval.");
       timingList+=localTimingList;
     }
-  logAndReturn:;
+  logAndReturn:
     {
       log::ScopedParamContainer params(lc);
       params.add("C", ContainerTraits<C>::c_containerTypeName)
@@ -397,11 +402,12 @@ public:
       ret.addToLog(params);
       timingList.addToLog(params);
       params.add("schedulerDbTime", totalTime.secs());
-      params.add("iterationsCounnt", iterationCount);
+      params.add("iterationCount", iterationCount);
       lc.log(log::INFO, "In ContainerTraits<C>::PoppedElementsBatch(): elements retrieval complete.");
     }
     return ret;
   }
+
 private:
   Backend & m_backend;
   AgentReference & m_agentReference;
