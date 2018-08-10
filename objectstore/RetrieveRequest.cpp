@@ -429,7 +429,7 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::asyncUpdateOwner()
+// RetrieveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
 auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner,
   const std::string &previousOwner) -> AsyncJobOwnerUpdater*
