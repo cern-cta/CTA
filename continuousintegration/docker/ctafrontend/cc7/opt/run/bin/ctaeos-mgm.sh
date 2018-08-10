@@ -187,7 +187,7 @@ fi
   eos chmod 777 ${EOS_TMP_DIR}
 
   echo "Waiting for the EOS disk filesystem using /fst to come on-line"
-  while test 1 != `eos fs ls /fst | grep online | wc -l`; do
+  while test 1 != `eos fs ls /fst | grep booted | wc -l`; do
     echo "Sleeping 1 second"
     sleep 1
   done

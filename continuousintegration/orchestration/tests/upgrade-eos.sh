@@ -47,7 +47,7 @@ kubectl -n ${NAMESPACE} exec ctaeos -- systemctl status eos@*
 kubectl -n ${NAMESPACE} exec ctaeos -- eos version
 
 echo "Waiting for the EOS disk filesystem using /fst to come on-line"
-while test 1 != `kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst | grep online | wc -l`; do
+while test 1 != `kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst | grep booted | wc -l`; do
   echo "Sleeping 1 second"
   sleep 1
 done
