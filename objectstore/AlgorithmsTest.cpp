@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define STDOUT_LOGGING
+
 #include "RootEntry.hpp"
 #include "AgentReference.hpp"
 #include "Agent.hpp"
@@ -99,8 +101,8 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   ContainerTraits<ArchiveQueue>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
-  auto popedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
-  ASSERT_EQ(popedJobs.summary.files, 10);
+  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
+  ASSERT_EQ(poppedJobs.summary.files, 10);
 }
 
 TEST(ObjectStore, RetrieveQueueAlgorithms) {
@@ -176,12 +178,19 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   }
   ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
+    ASSERT_EQ(requests.size(), 10);
     retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
+    // Now get the requests back
+    ContainerTraits<RetrieveQueue>::PopCriteria popCriteria;
+    popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
+    popCriteria.files = 100;
+    auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
+    ASSERT_EQ(poppedJobs.summary.files, 10);
   } catch (ContainerTraits<RetrieveQueue>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {
         throw e.failure;
-      } catch (std::exception & e) {
+      } catch(std::exception &e) {
         std::cout << e.what() << std::endl;
       }
     }
