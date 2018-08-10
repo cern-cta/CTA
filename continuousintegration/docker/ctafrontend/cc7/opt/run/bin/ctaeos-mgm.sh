@@ -186,15 +186,13 @@ fi
   eos mkdir ${EOS_TMP_DIR}
   eos chmod 777 ${EOS_TMP_DIR}
 
-  echo "Waiting for the EOS disk filesystem using /fst to come on-line"
-  while test 1 != `eos fs ls /fst | grep booted | wc -l`; do
+  echo "Waiting for the EOS disk filesystem using /fst to boot and come on-line"
+  while test 1 != `eos fs ls /fst | egrep 'booted.*online' | wc -l`; do
     echo "Sleeping 1 second"
     sleep 1
   done
 
 # test EOS
-# eos slow behind us and we need to give it time to be ready
-  sleep 10
   eos -b node ls
   xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
 
