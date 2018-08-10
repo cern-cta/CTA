@@ -261,16 +261,15 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier & contId,
-      typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier &contId,
+      typename ContainerTraits<C>::InsertedElement::list &elements, log::LogContext &lc) {
     referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
   }
-  
-  
+
   typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<C>::ContainerIdentifier &contId,
     typename ContainerTraits<C>::PopCriteria &popCriteria,
-    log::LogContext &dlc)
+    log::LogContext &lc)
   {
     // Prepare the return value
     typename ContainerTraits<C>::PoppedElementsBatch ret;
