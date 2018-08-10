@@ -46,5 +46,17 @@ kubectl -n ${NAMESPACE} exec ctaeos -- systemctl status eos@*
 
 kubectl -n ${NAMESPACE} exec ctaeos -- eos version
 
+echo "Waiting for the EOS disk filesystem using /fst to come on-line"
+while test 1 != `kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst | grep online | wc -l`; do
+  echo "Sleeping 1 second"
+  sleep 1
+done
+
+# eos slow behind us and we need to give it time to be ready
+sleep 10
+
+echo "Available disk space inside EOS container:"
+kubectl -n ${NAMESPACE} exec ctaeos -- df -h
+
 echo "Launching archive_retrieve.sh:"
 ./archive_retrieve.sh -n ${NAMESPACE}
