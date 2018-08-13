@@ -78,16 +78,28 @@ cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine(const int arg
   if(help) {
     return;
   }
+
+  // Calculate the number of non-option ARGV-elements
+  const int nbArgs = argc - optind;
+
   // Check that DRIVE_SLOT has been specified
-  if(argc < 1) {
+  if(1 > nbArgs) {
     cta::exception::MissingOperand ex;
     ex.getMessage() << "DRIVE_SLOT must be specified";
     throw ex;
   }
-  // Parse DRIVE_SLOT
-  libraryDriveSlot = Acs::str2DriveId(argv[1]);
 
+  // Check that aren't too many non-optional arguments
+  if(1 < nbArgs) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "To many non-optional arguments: expected=1,actual=" << nbArgs;
+    throw ex;
+  }
+
+  // Parse DRIVE_SLOT
+  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
 }
+
 //------------------------------------------------------------------------------
 // processOption
 //------------------------------------------------------------------------------
@@ -134,16 +146,23 @@ void cta::mediachanger::acs::AcsQueryDriveCmdLine::processOption(const int opt) 
   "Where:\n"
   "\n"
   "  DRIVE_SLOT The slot in the tape library where the drive is located.\n"
-  "             DRIVE_SLOT must be in one of the following two forms:\n"
+  "             The format of DRIVE_SLOT is as follows:\n"
   "\n"
-  "             acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER\n"
-  "             smcDRIVE_ORDINAL\n"
+  "               ACS:LSM:panel:transport\n"
   "\n"
   "Options:\n"
   "\n"
-  "  -d|--debug    Turn on the printing of debug information.\n"
+  "  -d|--debug            Turn on the printing of debug information.\n"
   "\n"
-  "  -h|--help     Print this help message and exit.\n"
+  "  -h|--help             Print this help message and exit.\n"
+  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
+  "                        SECONDS must be an integer value greater than 0.\n"
+  "                        The default value of SECONDS is "
+    << ACS_QUERY_INTERVAL << ".\n"
+  "  -t|--timeout SECONDS  Time to wait for the query to conclude. SECONDS\n"
+  "                        must be an integer value greater than 0.  The\n"
+  "                        default value of SECONDS is "
+    << ACS_CMD_TIMEOUT << ".\n"
   "\n";
   return usage.str();
 }

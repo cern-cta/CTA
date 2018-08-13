@@ -18,15 +18,18 @@
 .SH NAME
 cta-tape-acs-querydrive \- queries a drive
 .SH SYNOPSIS
-.BI "cta-tape-acs-querydrive [options] VID"
+.BI "cta-tape-acs-querydrive [options] DRIVE_SLOT"
 
 .SH DESCRIPTION
 \fBWarning\fP, \fBcta-tape-acs-querydrive\fP is a developer tool and is
-therefore subject to change in and even removal from a future release of CTA.
+therefore subject to change and even removal from a future release of CTA.
 End users should not rely on this tool to operate their CTA installation.
 
 \fBcta-tape-acs-querydrive\fP quieries ACS for information about the drive
-with the specfied \fBVID\fP.
+located in the specified \fBDRIVE_SLOT\fP.  The format of \fBDRIVE_SLOT\fP
+is as follows:
+
+.B ACS:LSM:panel:transport
 
 Please note that this command-line tool communicates directly with the CSI of 
 the ACS system. This command-line tool does not communicate with any CTA
