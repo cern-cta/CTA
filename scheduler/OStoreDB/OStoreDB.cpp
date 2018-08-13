@@ -1733,6 +1733,7 @@ getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContex
   {
     std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, *this));
     rj->archiveFile = j.archiveFile;
+    rj->selectedCopyNb = j.copyNb;
     rj->m_jobOwned = true;
     rj->m_mountId = mountInfo.mountId;
     ret.emplace_back(std::move(rj));
