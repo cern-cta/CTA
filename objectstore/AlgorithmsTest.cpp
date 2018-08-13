@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define STDOUT_LOGGING
-
 #include "RootEntry.hpp"
 #include "AgentReference.hpp"
 #include "Agent.hpp"
