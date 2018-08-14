@@ -306,7 +306,6 @@ Tools to faciliate working with acsd in cta
 #%attr(0644,root,root) %doc /usr/share/man/man1/cta-acsd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-acsd
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-acsd.conf
-%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-acsd
 %attr(0644,root,root) /etc/systemd/system/cta-acsd.service
 
 %post -n cta-acsd
