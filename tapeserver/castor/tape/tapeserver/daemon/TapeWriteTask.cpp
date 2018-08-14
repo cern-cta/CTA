@@ -135,6 +135,21 @@ namespace daemon {
         ++memBlockId;
       }
       
+      // If, after the FIFO is finished, we are still in the first block, we are in the presence of a 0-length file.
+      // This also requires a placeholder.
+      if (firstBlock) {
+        currentErrorToCount = "Error_tapeWriteData";
+        const char blank[]="This file intentionally left blank: zero-length file cannot be recorded to tape.";
+        output->write(blank, sizeof(blank));
+        m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
+        watchdog.notify(sizeof(blank));
+        currentErrorToCount = "Error_tapeWriteTrailer";
+        output->close();
+        currentErrorToCount = "";
+        // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
+        throw Skip("In TapeWriteTask::execute(): inserted a placeholder for zero length file.");
+      }
+      
       //finish the writing of the file on tape
       //put the trailer
       currentErrorToCount = "Error_tapeWriteTrailer";
