@@ -1383,7 +1383,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 // This test is the same as the previous one, except that the files are deleted
 // from filesystem immediately. The disk tasks will then fail on open.
 ///
-TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionMissingFilesMigration) {
+TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
@@ -1520,7 +1520,8 @@ TEST_P(DataTransferSessionTest, DISABLED_DataTransferSessionMissingFilesMigratio
   tapeCriteria.vid=s_vid;
   auto tapeInfo = catalogue.getTapes(tapeCriteria);
   ASSERT_EQ(1, tapeInfo.size());
-  ASSERT_EQ(10, tapeInfo.begin()->lastFSeq);
+  // We should have max fseq at least 10. It could be higher is a retry manages to sneak in.
+  ASSERT_LE(10, tapeInfo.begin()->lastFSeq);
   ASSERT_EQ(5*1000, tapeInfo.begin()->dataOnTapeInBytes);
       
   // Check logs for drive statistics
