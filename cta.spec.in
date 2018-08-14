@@ -209,6 +209,7 @@ Requires: valgrind >= 3.8.1
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
+Requires: moreutils
 %description -n cta-systemtests
 CERN Tape Archive:
 Unit tests and system tests with virtual tape drives

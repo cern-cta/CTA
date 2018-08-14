@@ -6,44 +6,45 @@ all: valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStore
 valgrind: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
-	/usr/bin/cta-unitTests
+	/usr/bin/cta-unitTests | ts "vg: %b %d %H:%M:%S"
 
 valgrindMultiprocess:
 	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
-	/usr/bin/cta-unitTests-multiProcess
+	/usr/bin/cta-unitTests-multiProcess | ts "vgmp: %b %d %H:%M:%S"
 
 helgrindBase: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
+	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory* \
+	| ts "hgb: %b %d %H:%M:%S"
 
 helgrindScheduler: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler* | ts "hgs: %b %d %H:%M:%S"
 
 helgrindOStoreDB: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreTestVFS*
+	--gtest_filter=OStoreTestVFS* | ts "hgosdb: %b %d %H:%M:%S"
 
 helgrindDataTransfer: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* | ts "hgdt: %b %d %H:%M:%S"
 
 helgrindInMemoryCatalogue: valgrindMultiprocess helgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter=InMemory/*
+	--gtest_filter=InMemory/* | ts "hgimc: %b %d %H:%M:%S"
 
 helgrindMultiprocess: valgrindMultiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/helgrind.suppr           \
-	/usr/bin/cta-unitTests-multiProcess
+	/usr/bin/cta-unitTests-multiProcess | ts "hgmp: %b %d %H:%M:%S"
