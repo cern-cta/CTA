@@ -51,7 +51,8 @@ namespace daemon {
     m_srcURL(m_archiveJob->srcURL)
   {
     //register its fifo to the memory manager as a client in order to get mem block
-    mm.addClient(&m_fifo); 
+    // This should not be done in the case of a zero length file.
+    if (archiveJob->archiveFile.fileSize) mm.addClient(&m_fifo);
   }
 //------------------------------------------------------------------------------
 // fileSize
