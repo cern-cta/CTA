@@ -163,6 +163,7 @@ void AcsDaemon::exceptionThrowingMain(const int argc, char **const argv)  {
   msg << m_programName << " started";
 
   std::list<log::Param> params = {
+    log::Param("argc", argc),
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
 }
