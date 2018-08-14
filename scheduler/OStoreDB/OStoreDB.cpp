@@ -2647,7 +2647,7 @@ bool OStoreDB::ArchiveJob::fail(const std::string& failureReason, log::LogContex
           .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
           .add("totalRetries", retryStatus.totalRetries)
           .add("maxTotalRetries", retryStatus.maxTotalRetries);
-    lc.log(log::INFO, "OStoreDB::ArchiveJob::fail(): increased the error count for retrieve job.");
+    lc.log(log::INFO, "OStoreDB::ArchiveJob::fail(): increased the error count for archive job.");
   }
   // The job still has a chance, return it to its original tape pool's queue
   objectstore::ArchiveQueue aq(m_oStoreDB.m_objectStore);
