@@ -171,6 +171,6 @@ void cta::mediachanger::acs::AcsQueryDriveCmdLine::processOption(const int opt) 
 // getProgramName
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::acs::AcsQueryDriveCmdLine::getProgramName() {
-  return "cta-tape-acs-querydrive";
+  return "cta-acs-querydrive";
 }
 

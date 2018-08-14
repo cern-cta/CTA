@@ -14,22 +14,19 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.TH CTA-TAPE-ACS-QUERYDRIVE "1cta" "$Date: 2013/10/09 14:00:00 $" CTA "CTA"
+.TH CTA-TAPE-ACS-QUERYVOLUME "1cta" "$Date: 2013/10/09 14:00:00 $" CTA "CTA"
 .SH NAME
-cta-tape-acs-querydrive \- queries a drive
+cta-acs-queryvolume \- queries a volume
 .SH SYNOPSIS
-.BI "cta-tape-acs-querydrive [options] DRIVE_SLOT"
+.BI "cta-acs-queryvolume [options] VID"
 
 .SH DESCRIPTION
-\fBWarning\fP, \fBcta-tape-acs-querydrive\fP is a developer tool and is
-therefore subject to change and even removal from a future release of CTA.
+\fBWarning\fP, \fBcastor-tape-acs-queryvolume\fP is a developer tool and is
+therefore subject to change in and even removal from a future release of CTA.
 End users should not rely on this tool to operate their CTA installation.
 
-\fBcta-tape-acs-querydrive\fP quieries ACS for information about the drive
-located in the specified \fBDRIVE_SLOT\fP.  The format of \fBDRIVE_SLOT\fP
-is as follows:
-
-.B ACS:LSM:panel:transport
+\fBcastor-tape-acs-queryvolume\fP quieries ACS for information about the volume
+with the specfied \fBVID\fP.
 
 Please note that this command-line tool communicates directly with the CSI of 
 the ACS system. This command-line tool does not communicate with any CTA

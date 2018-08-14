@@ -148,7 +148,7 @@ std::string cta::mediachanger::acs::AcsDismountCmdLine::getUsage() {
   usage <<
   "Usage:\n"
   "\n"
-  "  cta-tape-acs-dismount [options] VID DRIVE_SLOT\n"
+  "  cta-acs-dismount [options] VID DRIVE_SLOT\n"
   "\n"
   "Where:\n"
   "\n"

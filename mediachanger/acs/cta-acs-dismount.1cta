@@ -1,4 +1,3 @@
-
 .\" The CERN Tape Archive (CTA) project
 .\" Copyright (C) 2015  CERN
 .\"
@@ -15,31 +14,34 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.TH CTA-TAPE-ACS-MOUNT "1cta" "$Date: 2013/10/09 14:00:00 $" CTA "CTA"
+.TH CASTOR-TAPE-ACS-DISMOUNT "1cta" "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
 .SH NAME
-cta-tape-acs-mount \- mount a volume
+cta-acs-dismount \- dismount a volume
 .SH SYNOPSIS
-.BI "cta-tape-acs-mount [options] VID DRIVE_SLOT"
+.BI "cta-acs-dismount [options] VID DRIVE_SLOT"
 
 .SH DESCRIPTION
-\fBWarning\fP, \fBcta-tape-acs-mount\fP is a developer tool and is therefore
-subject to change in and even removal from a future release of CTA.
-End users should not rely on this tool to operate their CTA installation.
+\fBWarning\fP, \fBcta-acs-dismount\fP is a developer tool and is
+therefore subject to change in and even removal from a future release of CASTOR.
+End users should not rely on this tool to operate their CASTOR installation.
 
-\fBcta-tape-acs-mount\fP mounts the volume with the specfied \fBVID\fP into
-the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
+\fBcta-acs-dismount\fP dismounts the volume with the specfied \fBVID\fP
+from the drive located in the specified \fBDRIVE_SLOT\fP of the tape library.
 The format of \fBDRIVE_SLOT\fP is as follows:
 
 .B ACS:LSM:panel:transport
 
-Please note that this command-line tool communicates directly with the CSI of
-the ACS system. This command-line tool does not communicate with any CTA
+Please note that this command-line tool communicates directly with the CSI of 
+the ACS system. This command-line tool does not communicate with any CASTOR
 daemons.
 
 .SH OPTIONS
 .TP
 \fB\-d, \-\-debug
 Turns on the printing of debug information.
+.TP
+\fB\-f, \-\-force
+Force the dismount.
 .TP
 \fB\-h, \-\-help
 Prints the usage message.
@@ -49,11 +51,8 @@ Time wait between queries to ACLS for responses.
 \fBSECONDS\fP must be an integer value greater than 0.
 The default value of \fBSECONDS\fP is 10.
 .TP
-\fB\-r, \-\-readonly
-Request the volume is mounted for read-only access.
-.TP
 \fB\-t, \-\-timeout SECONDS
-Time to wait for the mount operation to conclude.  
+Time to wait for the dismount operation to conclude.
 \fBSECONDS\fP must be an integer value greater than 0.
 The default value of \fBSECONDS\fP is 610.
 
