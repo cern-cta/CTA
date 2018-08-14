@@ -69,11 +69,16 @@ namespace daemon {
       // TODO: could be changed as a shared_ptr.
       auto archiveJobPtr=it->get();
       std::unique_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock, it->release(), m_memManager, m_errorFlag));
-      std::unique_ptr<DiskReadTask> drt(new DiskReadTask(*twt, archiveJobPtr, neededBlock, m_errorFlag));
+      std::unique_ptr<DiskReadTask> drt;
+      // We will skip the disk read task creation for zero-length files. Tape write task will handle the request and mark it as an
+      // error.
+      if (fileSize) drt.reset(new DiskReadTask(*twt, archiveJobPtr, neededBlock, m_errorFlag));
       
       m_tapeWriter.push(twt.release());
-      m_diskReader.push(drt.release());
+      if (fileSize) m_diskReader.push(drt.release());
       m_lc.log(cta::log::INFO, "Created tasks for migrating a file");
+      if (!fileSize)
+        m_lc.log(cta::log::WARNING, "Skipped disk read task creation for zero-length file.");
     }
     LogContext::ScopedParam(m_lc, Param("numbnerOfFiles", jobs.size()));
     m_lc.log(cta::log::INFO, "Finished creating tasks for migrating");
