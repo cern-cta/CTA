@@ -49,6 +49,7 @@ struct ContainerTraitsTypes<RetrieveQueue>
     uint16_t copyNb;
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
+    common::dataStructures::RetrieveRequest rr;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {

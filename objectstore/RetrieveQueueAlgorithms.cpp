@@ -41,6 +41,7 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
 
 void ContainerTraitsTypes<RetrieveQueue>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) {
+  //throw std::runtime_error("ContainerTraits<RetrieveQueue>::ContainerSummary::addDeltaToLog(): Not implemented");
 #if 0
   params.add("queueJobsBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
@@ -203,8 +204,7 @@ switchElementsOwnership(InsertedElement::list &elemMemCont, const ContainerAddre
   std::list<std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    auto copyNb = e.copyNb;
-    updaters.emplace_back(rr.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+    updaters.emplace_back(rr.asyncUpdateJobOwner(e.copyNb, contAddress, previousOwnerAddress));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -238,7 +238,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
        cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
        cjfq.copyNb,
        cjfq.size,
-       common::dataStructures::ArchiveFile()
+       common::dataStructures::ArchiveFile(),
+       common::dataStructures::RetrieveRequest()
     });
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
@@ -268,8 +269,8 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   // Asynchronously get the Retrieve requests
   std::list<std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater>> updaters;
   for(auto &e : poppedElementBatch.elements) {
-    RetrieveRequest &re = *e.retrieveRequest;
-    updaters.emplace_back(re.asyncUpdateJobOwner(e.copyNb, contAddress, previousOwnerAddress));
+    RetrieveRequest &rr = *e.retrieveRequest;
+    updaters.emplace_back(rr.asyncUpdateJobOwner(e.copyNb, contAddress, previousOwnerAddress));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
 
@@ -285,6 +286,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
     try {
       u.get()->wait();
       e.archiveFile = u.get()->getArchiveFile();
+      e.rr = u.get()->getRetrieveRequest();
     } catch(...) {
       ret.push_back(OpFailure<PoppedElement>(&e, std::current_exception()));
     }
