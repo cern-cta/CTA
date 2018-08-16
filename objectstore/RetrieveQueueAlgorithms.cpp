@@ -248,13 +248,10 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 template<>
 auto ContainerTraits<RetrieveQueue>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
-  throw std::runtime_error("ContainerTraits<RetrieveQueue>::getElementSummary(): Not implemented");
-#if 0
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
   ret.files = 1;
   return ret;
-#endif
 }
 
 template<>
