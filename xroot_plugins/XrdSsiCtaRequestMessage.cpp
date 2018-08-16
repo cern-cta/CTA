@@ -881,7 +881,7 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
 {
    using namespace cta::admin;
 
-   const int DRIVE_TIMEOUT = 30;
+   const int DRIVE_TIMEOUT = 600;
 
    std::stringstream cmdlineOutput;
 
@@ -912,9 +912,6 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
          driveFound = true;
 
          auto timeSinceLastUpdate_s = time(nullptr) - ds.lastUpdateTime;
-         if(timeSinceLastUpdate_s > DRIVE_TIMEOUT) {
-            ds.driveStatus = cta::common::dataStructures::DriveStatus::Unknown;
-         }
 
          std::vector<std::string> currentRow;
          currentRow.push_back(ds.logicalLibrary);
@@ -969,7 +966,8 @@ void RequestMessage::processDrive_Ls(const cta::admin::AdminCmd &admincmd, cta::
             default:
                currentRow.push_back(std::to_string(static_cast<unsigned long long>(ds.sessionId)));
          }
-         currentRow.push_back(std::to_string(timeSinceLastUpdate_s));
+         currentRow.push_back(std::to_string(timeSinceLastUpdate_s) +
+            (timeSinceLastUpdate_s > DRIVE_TIMEOUT ? " [STALE]" : ""));
          responseTable.push_back(currentRow);
       }
 
