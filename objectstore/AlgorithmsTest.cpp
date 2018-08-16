@@ -184,6 +184,13 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     popCriteria.files = 100;
     auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
+
+    // Validate that the summary has the same information as the popped elements
+    ContainerTraits<RetrieveQueue>::PoppedElementsSummary s;
+    for(auto &e: poppedJobs.elements) {
+      s += ContainerTraits<RetrieveQueue>::getElementSummary(e);
+    }
+    ASSERT_EQ(s, poppedJobs.summary);
   } catch (ContainerTraits<RetrieveQueue>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {

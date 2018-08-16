@@ -30,7 +30,7 @@ const std::string ContainerTraits<RetrieveQueue>::c_identifierType = "vid";
 // ContainerTraitsTypes
 
 void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsSummary::
-addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
+addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) const {
   params.add("filesAdded", files - previous.files)
         .add("bytesAdded", bytes - previous.bytes)
         .add("filesBefore", previous.files)
@@ -40,7 +40,7 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
 }
 
 void ContainerTraitsTypes<RetrieveQueue>::ContainerSummary::
-addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) {
+addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) const {
   params.add("queueFilesBefore", previous.files)
         .add("queueBytesBefore", previous.bytes)
         .add("queueFilesAfter", files)
@@ -66,7 +66,7 @@ void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsList::insertBack(PoppedE
 }
 
 void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsBatch::
-addToLog(log::ScopedParamContainer &params) {
+addToLog(log::ScopedParamContainer &params) const {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
 }

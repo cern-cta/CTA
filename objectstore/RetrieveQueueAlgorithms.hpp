@@ -29,7 +29,7 @@ struct ContainerTraitsTypes<RetrieveQueue>
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary() {}
-    void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&);
+    void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
 
   struct InsertedElement {
@@ -61,7 +61,10 @@ struct ContainerTraitsTypes<RetrieveQueue>
   struct PoppedElementsSummary {
     uint64_t bytes = 0;
     uint64_t files = 0;
-    bool operator<(const PopCriteria &pc) {
+    bool operator==(const PoppedElementsSummary &pes) const {
+      return bytes == pes.bytes && files == pes.files;
+    }
+    bool operator<(const PopCriteria &pc) const {
       return bytes < pc.bytes && files < pc.files;
     }
     PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
@@ -69,7 +72,7 @@ struct ContainerTraitsTypes<RetrieveQueue>
       files += other.files;
       return *this;
     }
-    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&) const;
   };
   struct PoppedElementsList : public std::list<PoppedElement> {
     void insertBack(PoppedElementsList&&);
@@ -78,7 +81,7 @@ struct ContainerTraitsTypes<RetrieveQueue>
   struct PoppedElementsBatch {
     PoppedElementsList elements;
     PoppedElementsSummary summary;
-    void addToLog(log::ScopedParamContainer&);
+    void addToLog(log::ScopedParamContainer&) const;
   };
 };
 
