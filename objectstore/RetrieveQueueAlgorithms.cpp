@@ -41,13 +41,10 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
 
 void ContainerTraitsTypes<RetrieveQueue>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) {
-  //throw std::runtime_error("ContainerTraits<RetrieveQueue>::ContainerSummary::addDeltaToLog(): Not implemented");
-#if 0
-  params.add("queueJobsBefore", previous.jobs)
+  params.add("queueFilesBefore", previous.files)
         .add("queueBytesBefore", previous.bytes)
-        .add("queueJobsAfter", jobs)
+        .add("queueFilesAfter", files)
         .add("queueBytesAfter", bytes);
-#endif
 }
 
 auto ContainerTraits<RetrieveQueue>::PopCriteria::
