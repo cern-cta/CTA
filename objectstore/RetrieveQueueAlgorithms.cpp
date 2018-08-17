@@ -149,23 +149,16 @@ addReferencesAndCommit(Container &cont, InsertedElement::list &elemMemCont, Agen
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::addReferencesIfNecessaryAndCommit(Container& cont,
-  InsertedElement::list& elemMemCont, AgentReference& agentRef, log::LogContext& lc)
+void ContainerTraits<RetrieveQueue>::
+addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMemCont,
+  AgentReference& agentRef, log::LogContext& lc)
 {
-  throw std::runtime_error("ContainerTraits<RetrieveQueue>::addReferencesIfNecessaryAndCommit(): Not implemented");
-#if 0
-  std::list<ArchiveQueue::JobToAdd> jobsToAdd;
-  for (auto & e: elemMemCont) {
-    ElementDescriptor jd;
-    jd.copyNb = e.copyNb;
-    jd.tapePool = cont.getTapePool();
-    jd.owner = cont.getAddressIfSet();
-    ArchiveRequest & ar = *e.archiveRequest;
-    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-        e.mountPolicy, time(nullptr)});
+  std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+  for (auto &e : elemMemCont) {
+    RetrieveRequest &rr = *e.retrieveRequest;
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr)});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
-#endif
 }
 
 template<>

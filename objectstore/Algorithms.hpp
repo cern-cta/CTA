@@ -205,10 +205,12 @@ public:
     }
   }
   
-  /** Reference objects in the container if needed and then switch their ownership (if needed). Objects 
-   * are expected to be owned by agent, and not listed in the container but situations might vary.
-   * This function is typically used by the garbage collector. We do noe take care of dereferencing
-   * the object from the caller.
+  /**
+   * Reference objects in the container if needed and then switch their ownership (if needed).
+   *
+   * Objects are expected to be owned by an agent and not listed in the container, but situations
+   * might vary. This function is typically used by the garbage collector. We do not take care of
+   * dereferencing the object from the caller.
    */
   void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifier & contId,
       typename ContainerTraits<C>::ContainerAddress & previousOwnerAddress,

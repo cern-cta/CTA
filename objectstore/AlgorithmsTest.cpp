@@ -177,7 +177,15 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
+
+#if 1
+    auto a1 = agentRef.getAgentAddress();
+    auto a2 = agentRef.getAgentAddress();
+    retrieveAlgos.referenceAndSwitchOwnershipIfNecessary("VID", a1, a2, requests, lc);
+#else
     retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
+#endif
+
     // Now get the requests back
     ContainerTraits<RetrieveQueue>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
