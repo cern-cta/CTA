@@ -35,6 +35,60 @@
 
 namespace unitTests {
 
+void fill_retrieve_requests(
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue>::InsertedElement::list &requests,
+  cta::objectstore::BackendVFS &be,
+  cta::objectstore::AgentReference &agentRef)
+{
+  using namespace cta::objectstore;
+
+  for(size_t i = 0; i < 10; ++i)
+  {
+    std::string rrAddr = agentRef.nextId("RetrieveRequest");
+    agentRef.addToOwnership(rrAddr, be);
+    cta::common::dataStructures::MountPolicy mp;
+    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
+    rqc.archiveFile.archiveFileID = 123456789L;
+    rqc.archiveFile.diskFileId = "eos://diskFile";
+    rqc.archiveFile.checksumType = "";
+    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.creationTime = 0;
+    rqc.archiveFile.reconciliationTime = 0;
+    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    rqc.archiveFile.diskInstance = "eoseos";
+    rqc.archiveFile.fileSize = 1000 + i;
+    rqc.archiveFile.storageClass = "sc";
+    rqc.archiveFile.tapeFiles[1].blockId = 0;
+    rqc.archiveFile.tapeFiles[1].compressedSize = 1;
+    rqc.archiveFile.tapeFiles[1].compressedSize = 1;
+    rqc.archiveFile.tapeFiles[1].copyNb = 1;
+    rqc.archiveFile.tapeFiles[1].creationTime = time(nullptr);
+    rqc.archiveFile.tapeFiles[1].fSeq = i;
+    rqc.archiveFile.tapeFiles[1].vid = "Tape0";
+    rqc.mountPolicy.archiveMinRequestAge = 1;
+    rqc.mountPolicy.archivePriority = 1;
+    rqc.mountPolicy.creationLog.time = time(nullptr);
+    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.maxDrivesAllowed = 1;
+    rqc.mountPolicy.retrieveMinRequestAge = 1;
+    rqc.mountPolicy.retrievePriority = 1;
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue>::InsertedElement{
+      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_Pending
+    });
+    auto &rr = *requests.back().retrieveRequest;
+    rr.initialize();
+    rr.setRetrieveFileQueueCriteria(rqc);
+    cta::common::dataStructures::RetrieveRequest sReq;
+    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
+    sReq.creationLog.time = time(nullptr);
+    rr.setSchedulerRequest(sReq);
+    rr.addJob(1, 1, 1);
+    rr.setOwner(agentRef.getAgentAddress());
+    rr.setActiveCopyNumber(1);
+    rr.insert();
+  }
+}
+
 TEST(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object 
@@ -113,8 +167,8 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
 #endif
   cta::catalogue::DummyCatalogue catalogue;
   cta::log::LogContext lc(dl);
-  // Here we check for the ability to detect dead (but empty agents)
-  // and clean them up.
+
+  // Here we check for the ability to detect dead (but empty agents) and clean them up
   BackendVFS be;
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
@@ -123,68 +177,45 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+  EntryLogSerDeser el("user0", "unittesthost", time(NULL));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
   ContainerAlgorithms<RetrieveQueue>::InsertedElement::list requests;
-  for (size_t i=0; i<10; i++) {
-    std::string rrAddr = agentRef.nextId("RetrieveRequest");
-    agentRef.addToOwnership(rrAddr, be);
-    cta::common::dataStructures::MountPolicy mp;
-    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
-    rqc.archiveFile.archiveFileID = 123456789L;
-    rqc.archiveFile.diskFileId = "eos://diskFile";
-    rqc.archiveFile.checksumType = "";
-    rqc.archiveFile.checksumValue = "";
-    rqc.archiveFile.creationTime = 0;
-    rqc.archiveFile.reconciliationTime = 0;
-    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
-    rqc.archiveFile.diskInstance = "eoseos";
-    rqc.archiveFile.fileSize = 1000 + i;
-    rqc.archiveFile.storageClass = "sc";
-    rqc.archiveFile.tapeFiles[1].blockId=0;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].copyNb=1;
-    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-    rqc.archiveFile.tapeFiles[1].fSeq=i;
-    rqc.archiveFile.tapeFiles[1].vid="Tape0";
-    rqc.mountPolicy.archiveMinRequestAge = 1;
-    rqc.mountPolicy.archivePriority = 1;
-    rqc.mountPolicy.creationLog.time = time(nullptr);
-    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-    rqc.mountPolicy.maxDrivesAllowed = 1;
-    rqc.mountPolicy.retrieveMinRequestAge = 1;
-    rqc.mountPolicy.retrievePriority = 1;
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue>::InsertedElement{cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp,
-        serializers::RetrieveJobStatus::RJS_Pending});
-    auto & rr=*requests.back().retrieveRequest;
-    rr.initialize();
-    rr.setRetrieveFileQueueCriteria(rqc);
-    cta::common::dataStructures::RetrieveRequest sReq;
-    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-    sReq.creationLog.time=time(nullptr);
-    rr.setSchedulerRequest(sReq);
-    rr.addJob(1, 1, 1);
-    rr.setOwner(agentRef.getAgentAddress());
-    rr.setActiveCopyNumber(1);
-    rr.insert();
+  fill_retrieve_requests(requests, be, agentRef);
+
+  {
+    // Second agent to test referenceAndSwitchOwnershipIfNecessary
+    BackendVFS be2;
+    AgentReference agentRef2("Agent 2", dl);
+    Agent agent2(agentRef2.getAgentAddress(), be2);
+    // Create the root entry
+    RootEntry re2(be2);
+    re2.initialize();
+    re2.insert();
+    // Create the agent register
+    EntryLogSerDeser el2("user0", "unittesthost", time(NULL));
+    ScopedExclusiveLock rel2(re2);
+    re2.addOrGetAgentRegisterPointerAndCommit(agentRef2, el2, lc);
+    rel2.release();
+    agent2.initialize();
+    agent2.insertAndRegisterSelf(lc);
+    ContainerAlgorithms<RetrieveQueue>::InsertedElement::list requests2;
+    fill_retrieve_requests(requests2, be2, agentRef2);
+
+    auto a1 = agentRef2.getAgentAddress();
+    auto a2 = agentRef2.getAgentAddress();
+    ContainerAlgorithms<RetrieveQueue> retrieveAlgos2(be2, agentRef2);
+    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", a2, a1, requests2, lc);
   }
+
   ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
-#if 1
-    auto a1 = agentRef.getAgentAddress();
-    auto a2 = agentRef.getAgentAddress();
-    retrieveAlgos.referenceAndSwitchOwnershipIfNecessary("VID", a1, a2, requests, lc);
-#else
     retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
-#endif
 
     // Now get the requests back
     ContainerTraits<RetrieveQueue>::PopCriteria popCriteria;
