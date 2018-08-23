@@ -376,8 +376,7 @@ namespace unitTests {
 
     std::string temp = log.getLog();
     ASSERT_NE(std::string::npos, temp.find("TapeFileWrittenEvent is invalid"));
-    ASSERT_NE(std::string::npos, temp.find("Successfully closed client's session "
-                                           "after the failed report MigrationResult"));
+    ASSERT_NE(std::string::npos, temp.find("Received a CTA exception while reporting archive mount results"));
     ASSERT_EQ(0, tam.completes);
     ASSERT_EQ(0, migratedBigFileCompletes);
     ASSERT_EQ(0, migratedFileSmallCompletes);
