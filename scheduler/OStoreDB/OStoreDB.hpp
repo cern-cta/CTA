@@ -233,26 +233,6 @@ public:
   
   void queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) override;
-  
-  CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyDeleted);
-  class ArchiveToFileRequestCancelation:
-    public SchedulerDatabase::ArchiveToFileRequestCancelation {
-  public:
-    ArchiveToFileRequestCancelation(objectstore::AgentReference & agentReference, 
-      objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger): m_request(be), m_lock(), m_objectStore(be),
-      m_catalogue(catalogue), m_logger(logger), m_agentReference(agentReference), m_closed(false) {} 
-    virtual ~ArchiveToFileRequestCancelation();
-    void complete(log::LogContext & lc) override;
-  private:
-    objectstore::ArchiveRequest m_request;
-    objectstore::ScopedExclusiveLock m_lock;
-    objectstore::Backend & m_objectStore;
-    catalogue::Catalogue & m_catalogue;
-    log::Logger & m_logger;
-    objectstore::AgentReference &m_agentReference;
-    bool m_closed;
-    friend class OStoreDB;
-  };
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>> getArchiveJobs() const override;
   

@@ -618,34 +618,6 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::ArchiveToFileRequestCancelation::complete()
-//------------------------------------------------------------------------------
-void OStoreDB::ArchiveToFileRequestCancelation::complete(log::LogContext & lc) {
-  if (m_closed)
-    throw ArchiveRequestAlreadyDeleted("OStoreDB::ArchiveToFileRequestCancelation::complete(): called twice");
-  // We just need to delete the object and forget it
-  m_request.remove();
-  log::ScopedParamContainer params(lc);
-  params.add("archiveRequestObject", m_request.getAddressIfSet());
-  lc.log(log::INFO, "In ArchiveToFileRequestCancelation::complete(): removed archive request.");
-  m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
-  m_closed = true;
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation()
-//------------------------------------------------------------------------------
-OStoreDB::ArchiveToFileRequestCancelation::~ArchiveToFileRequestCancelation() {
-  if (!m_closed) {
-    try {
-      log::LogContext lc(m_logger);
-      m_request.garbageCollect(m_agentReference.getAgentAddress(), m_agentReference, lc, m_catalogue);
-      m_agentReference.removeFromOwnership(m_request.getAddressIfSet(), m_objectStore);
-    } catch (...) {}
-  }
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>

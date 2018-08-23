@@ -131,21 +131,6 @@ public:
    */
   virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(
     const std::string &tapePoolName) const = 0;
-  
-  /*
-   * Subclass allowing the tracking and automated cleanup of a 
-   * ArchiveToFile requests on the SchdulerDB for deletion.
-   * This will mark the request as to be deleted, and then add it to the agent's
-   * list. In a second step, the request will be completely deleted when calling
-   * the complete() method.
-   * In case of failure, the request will be queued to the orphaned requests queue,
-   * so that the scheduler picks it up later.
-   */ 
-  class ArchiveToFileRequestCancelation {
-  public:
-    virtual void complete(log::LogContext & lc) = 0;
-    virtual ~ArchiveToFileRequestCancelation() {};
-  };
 
   /*============ Archive management: tape server side =======================*/
   /**
