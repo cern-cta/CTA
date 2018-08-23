@@ -153,7 +153,7 @@ public:
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    virtual void setJobBatchSuccessful(
+    virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;

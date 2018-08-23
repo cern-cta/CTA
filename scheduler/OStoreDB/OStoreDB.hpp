@@ -153,7 +153,7 @@ public:
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
-    void setJobBatchSuccessful(
+    void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext & lc) override;
   };
   friend class ArchiveMount;

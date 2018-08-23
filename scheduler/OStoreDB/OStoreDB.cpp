@@ -2335,9 +2335,9 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::ArchiveMount::asyncSetJobBatchSuccessful()
+// OStoreDB::ArchiveMount::setJobBatchTransferred()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setJobBatchSuccessful(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
+void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
     log::LogContext & lc) {
   std::set<cta::OStoreDB::ArchiveJob*> jobsToQueueForReporting;
   std::list<std::string> ajToUnown;
@@ -2373,7 +2373,7 @@ void OStoreDB::ArchiveMount::setJobBatchSuccessful(std::list<std::unique_ptr<cta
       params.add("VID", j->tapeFile.vid)
             .add("fileId", j->archiveFile.archiveFileID)
             .add("requestObject", j->m_archiveRequest.getAddressIfSet());
-      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchSuccessful(): will queue request for reporting.");
+      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting.");
     }
     for (auto &list: insertedElementsLists) {
       try {
@@ -2384,12 +2384,12 @@ void OStoreDB::ArchiveMount::setJobBatchSuccessful(std::list<std::unique_ptr<cta
         params.add("VID", list.first)
               .add("jobs", list.second.size())
               .add("enqueueTime", t.secs());
-        lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchSuccessful(): queued a batch of requests for reporting.");
+        lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
         params.add("VID", list.first)
               .add("exceptionMSG", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchSuccessful(): failed to queue a batch of requests for reporting.");
+        lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
       }
     }
     timingList.insertAndReset("queueingToReportTime", t);
@@ -2403,7 +2403,7 @@ void OStoreDB::ArchiveMount::setJobBatchSuccessful(std::list<std::unique_ptr<cta
     params.add("QueuedRequests", jobsToQueueForReporting.size())
           .add("PartiallyCompleteRequests", ajToUnown.size());
     timingList.addToLog(params);
-    lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchSuccessful(): set ArchiveRequests successful and queued for reporting.");
+    lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): set ArchiveRequests successful and queued for reporting.");
   }
 }
 

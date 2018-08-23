@@ -131,7 +131,7 @@ namespace cta {
      * @param successfulArchiveJobs the jobs to report
      * @param logContext
      */
-    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
+    virtual void reportJobsBatchTransferred (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
         std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext &logContext);
     
     /**

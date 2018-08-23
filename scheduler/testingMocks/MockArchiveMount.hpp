@@ -49,7 +49,7 @@ namespace cta {
         }
       }
       
-      void reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
+      void reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
           std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) override {
         try {
           std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;

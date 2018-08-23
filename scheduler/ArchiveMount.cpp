@@ -124,7 +124,7 @@ std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(
 //------------------------------------------------------------------------------
 // reportJobsBatchWritten
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
+void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
     std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
   std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
@@ -174,7 +174,7 @@ void cta::ArchiveMount::reportJobsBatchWritten(std::queue<std::unique_ptr<cta::A
     
     // We can now pass this list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
-    m_dbMount->setJobBatchSuccessful(validatedSuccessfulDBArchiveJobs, logContext);
+    m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
     schedulerDbTime=t.secs(utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(logContext);
     params.add("files", files)
