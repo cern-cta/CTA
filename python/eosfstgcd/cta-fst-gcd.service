@@ -1,0 +1,14 @@
+[Unit]
+Description=Tape aware garbage collector daemon to run on an EOS FST
+
+[Service]
+ExecStart=/usr/bin/cta-fst-gcd
+LimitCORE=infinity
+Type=simple
+Restart=no
+User=daemon
+Group=daemon
+WorkingDirectory=/tmp
+
+[Install]
+WantedBy=default.target

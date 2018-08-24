@@ -383,3 +383,26 @@ Common items such as the creation of the cta local user and /var/log/cta
 %files -n cta-common
 %defattr(-,root,root)
 %attr(0755,cta,tape) %dir /var/log/cta
+
+%package -n cta-fst-gcd
+Summary: Tape aware garbage collector daemon to run on an EOS FST
+Group: Application/CTA
+Requires: eos-client
+Requires: python
+Requires: python-cta = %{version}-%{release}
+%description -n cta-fst-gcd
+cta-fst-gcd is a daemon that runs on an EOS FST and garbage
+collects EOS disk copies that have been safely stored to tape.
+%files -n cta-fst-gcd
+%defattr(-,root,root)
+%attr(0755,root,root) /usr/bin/cta-fst-gcd
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-fst-gcd.1cta.gz
+%attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-fst-gcd.service
+%post -n cta-fst-gcd
+%systemd_post cta-fst-gcd.service
+%systemdDaemonReload
+%preun -n cta-fst-gcd
+%systemd_preun cta-fst-gcd.service
+%postun -n cta-fst-gcd
+%systemd_postun cta-fst-gcd.service
+%systemdDaemonReload
