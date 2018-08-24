@@ -1841,7 +1841,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
          "vid","logical library","tapepool","encryption key","capacity","occupancy","last fseq",
-         "full","disabled","lpb","label drive","label time","last w drive","last w time",
+         "full","disabled","lbp","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
