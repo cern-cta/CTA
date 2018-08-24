@@ -1856,7 +1856,11 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->lastFSeq)));
          if(it->full) currentRow.push_back("true"); else currentRow.push_back("false");
          if(it->disabled) currentRow.push_back("true"); else currentRow.push_back("false");
-         if(it->lbp) currentRow.push_back("true"); else currentRow.push_back("false");
+         if(it->lbp) {
+           if(it->lbp.value()) currentRow.push_back("true"); else currentRow.push_back("false");
+         } else {
+           currentRow.push_back("null");
+         }
 
          if(it->labelLog) {
             currentRow.push_back(it->labelLog.value().drive);
