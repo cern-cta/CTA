@@ -162,7 +162,17 @@ public:
         e->archiveReportURL = u->get()->getArchiveReportURL();
         e->errorReportURL = u->get()->getArchiveErrorReportURL();
         e->srcURL = u->get()->getSrcURL();
-        //if (u->get()->)
+        switch(u->get()->getJobStatus()) {
+          case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
+            break;
+          case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
+            break;
+          default:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
+            break;
+        }
       } catch (...) {
         ret.push_back(OpFailure<PoppedElement>());
         ret.back().element = &(*e);
@@ -175,7 +185,11 @@ public:
     return ret;
   }
   
-  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
+    trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+  }
+protected:
+  static void trimContainerIfNeeded (Container& cont, QueueType queueType, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
   
 };
 
@@ -212,9 +226,17 @@ public:
   
   static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
       ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+  
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
+    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
+  }
 };
 
 template<>
-class ContainerTraits<ArchiveQueueFailed>: public ContainerTraits<ArchiveQueueToReport> {/* Same same */ };
+class ContainerTraits<ArchiveQueueFailed>: public ContainerTraits<ArchiveQueueToReport> {/* Same same */ 
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
+    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::FailedJobs, contLock, cId, lc);
+  }
+};
 
 }} // namespace cta::objectstore

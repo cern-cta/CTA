@@ -136,7 +136,7 @@ std::string cta::ArchiveJob::reportType() {
     return "ErrorReport";
   default:
     { 
-      throw exception::Exception("In ArchiveJob::reportURL(): job status does not require reporting.");
+      throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
     }
   }
 }

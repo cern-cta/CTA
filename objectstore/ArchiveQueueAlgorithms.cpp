@@ -240,7 +240,7 @@ auto ContainerTraits<ArchiveQueueToReport>::getPoppingElementsCandidates(Contain
     elem.archiveReportURL = "";
     elem.errorReportURL = "";
     elem.latestError = "";
-    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
+    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::Report;
     ret.summary.files++;
   }
   return ret;
@@ -280,8 +280,8 @@ auto ContainerTraits<ArchiveQueueToReport>::PopCriteria::operator-=(const Popped
   return *this;
 }
 
-void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId,
-    log::LogContext& lc) {
+void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
+    const ContainerIdentifyer & cId, log::LogContext& lc) {
   if (cont.isEmpty()) {
     // The current implementation is done unlocked.
     contLock.release();
@@ -290,7 +290,7 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Scope
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeArchiveQueueAndCommit(cId, QueueType::JobsToTransfer, lc);
+      re.removeArchiveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());

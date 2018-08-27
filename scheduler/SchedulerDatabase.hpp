@@ -172,7 +172,8 @@ public:
     enum class ReportType: uint8_t {
       NoReportRequired,
       CompletionReport,
-      FailureReport
+      FailureReport,
+      Report ///< A generic grouped type
     } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;

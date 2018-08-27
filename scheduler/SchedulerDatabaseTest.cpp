@@ -205,7 +205,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       jobBatch.emplace_back(std::move(aj.front()));
       aj.pop_front();
       count++;
-      am->setJobBatchSuccessful(jobBatch, lc);
+      am->setJobBatchTransferred(jobBatch, lc);
     }
     else
       done = true;
@@ -293,7 +293,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       jobBatch.emplace_back(std::move(aj.front()));
       aj.pop_front();
       count++;
-      am->setJobBatchSuccessful(jobBatch, lc);
+      am->setJobBatchTransferred(jobBatch, lc);
     }
     else
       done = true;
