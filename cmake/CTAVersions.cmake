@@ -1,6 +1,6 @@
 # Default CTA Version
 set(CTA_VERSION 0)
-set(CTA_RELEASE 0)
+set(CTA_RELEASE 1)
 
 # Shared object internal version (used in SONAME)
 set(CTA_SOVERSION 0)
