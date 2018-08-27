@@ -29,10 +29,10 @@ namespace cta { namespace tape { namespace  daemon {
  * Handler for garbage collector subprocesses. This long lived process should live
  * as long as the main process, but will be respawned in case of crash.
  */
-class GarbageCollectorHandler: public SubprocessHandler {
+class MaintenanceHandler: public SubprocessHandler {
 public:
-  GarbageCollectorHandler(const TapedConfiguration & tapedConfig, ProcessManager & pm);
-  virtual ~GarbageCollectorHandler();
+  MaintenanceHandler(const TapedConfiguration & tapedConfig, ProcessManager & pm);
+  virtual ~MaintenanceHandler();
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
   SubprocessHandler::ProcessingStatus fork() override;
   void postForkCleanup() override;

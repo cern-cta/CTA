@@ -27,7 +27,7 @@ class Scheduler;
 
 class DiskReportRunner {
 public:
-  DiskReportRunner(Scheduler & scheduler);
+  DiskReportRunner(Scheduler & scheduler): m_scheduler(scheduler) {}
   
   void runOnePass(log::LogContext & lc);
   
