@@ -35,7 +35,7 @@ spec:
           key: subdir
     - name: TERM
       value: "xterm"
-    command: ['/opt/run/bin/ctaeos-mgm.sh']
+    command: ['/opt/run/bin/ctaeos-mgm-log-wrapper.sh']
     args: ["none"]
     volumeMounts:
     - mountPath: /shared
