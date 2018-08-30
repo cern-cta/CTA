@@ -132,31 +132,32 @@ class Gc:
     self.localfilesystempaths = []
 
   def eosfsls(self):
+    logger = logging.getLogger('gc')
     mgmurl = "root://{}".format(self.mgmhost)
     cmd = "eos -r 0 0 {} fs ls -m".format(mgmurl)
     env = os.environ.copy()
     env["XrdSecPROTOCOL"] = "sss"
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout,stderr = process.communicate()
-    if 0 != process.returncode:
-      raise Exception(
-        "\n"
-        "Failed to to execute: {}\n"
-        "Return code         : {}\n"
-        "Return code strerror: {}\n"
-        "Standard error      : {}".format(cmd, process.returncode, os.strerror(process.returncode), stderr))
-  
+
     result = []
-    lines = stdout.splitlines();
-    for l in lines:
-      linedict = {}
-      pairs = l.split()
-      for p in pairs:
-        splitpair = p.split('=')
-        if 2 == len(splitpair):
-          linedict[splitpair[0]] = splitpair[1]
-      if linedict:
-        result.append(linedict)
+
+    if 0 != process.returncode:
+      returncodestr = os.strerror(process.returncode)
+      stderrstr = stderr.replace('\n', ' ').replace('\r', '').strip()
+      logger.error("Failed to execute {}: returncode={} returncodestr='{}' stderr='{}'"
+        .format(cmd, process.returncode, returncodestr, stderrstr))
+    else:
+      lines = stdout.splitlines();
+      for l in lines:
+        linedict = {}
+        pairs = l.split()
+        for p in pairs:
+          splitpair = p.split('=')
+          if 2 == len(splitpair):
+            linedict[splitpair[0]] = splitpair[1]
+        if linedict:
+          result.append(linedict)
 
     return result
 
