@@ -36,7 +36,6 @@ ADD ${BASEDIR}/etc/yum/pluginconf.d /etc/yum/pluginconf.d
 RUN yum install -y\
       eos-client \
       eos-server \
-      zeromq     \
   && \
     yum clean all \
   && \
