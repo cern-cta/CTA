@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import ConfigParser
 import datetime
 import getpass
 import logging
@@ -51,9 +52,6 @@ class Gc:
       return self.get_sysconfig_file_mgmhost(sysconfig_file)
 
   def setmgmhost(self):
-    if self.mgmhost:
-      return
-
     self.mgmhost = self.get_env_mgmhost()
     if self.mgmhost:
       return
@@ -64,7 +62,7 @@ class Gc:
 
     raise Exception("Failed to determine the MGM host")
 
-  def configureDummyLogging(self):
+  def configuredummylogging(self):
     config = {
       'version': 1,
       'disable_existing_loggers': False,
@@ -76,13 +74,13 @@ class Gc:
     }
     logging.config.dictConfig(config)
 
-  def configureFileBasedLogging(self):
+  def configurereallogging(self):
     if None == self.logfilepath:
       raise Exception("Cannot configure file based logging because the log file path has not been set")
 
     loggingdir = os.path.dirname(self.logfilepath)
     if not os.path.isdir(loggingdir):
-      raise UserError("The logging directory {} does is not a directory or does not exist".format(loggingdir))
+      raise UserError("The logging directory {} is not a directory or does not exist".format(loggingdir))
     if not os.access(loggingdir, os.W_OK):
       raise UserError("The logging directory {} cannot be written to by {}".format(loggingdir, self.programname))
 
@@ -118,26 +116,22 @@ class Gc:
     except Exception as err:
       raise UserError(err)
 
-  def configureLogging(self):
+  def configurelogging(self):
     if None == self.logfilepath:
-      self.configureDummyLogging()
+      self.configuredummylogging()
     else:
-      self.configureFileBasedLogging()
+      self.configurereallogging()
 
-  def __init__(self, programname, env, minfreebytes, gcagesecs, cmdline_mgmhost = None,
-    logfilepath = '/var/log/eos/fst/cta-fst-gcd.log'):
-    self.programname = programname
+  def __init__(self, env, logfilepath = '/var/log/eos/fst/cta-fst-gcd.log'):
+    self.programname = 'cta-fst-gcd'
     self.env = env
-    self.minfreebytes = minfreebytes
-    self.gcagesecs = gcagesecs
-    self.cmdline_mgmhost = cmdline_mgmhost
+    self.conffilepath = '/etc/cta/cta-fst-gcd.conf'
     self.logfilepath = logfilepath
     self.fqdn = socket.getfqdn()
-    self.mgmhost = cmdline_mgmhost
     self.localfilesystempaths = []
 
-  def eosfsls(self, mgmhost):
-    mgmurl = "root://{}".format(mgmhost)
+  def eosfsls(self):
+    mgmurl = "root://{}".format(self.mgmhost)
     cmd = "eos -r 0 0 {} fs ls -m".format(mgmurl)
     env = os.environ.copy()
     env["XrdSecPROTOCOL"] = "sss"
@@ -165,10 +159,10 @@ class Gc:
 
     return result
 
-  def eosstagerrm(self, mgmhost, fxid):
+  def eosstagerrm(self, fxid):
     logger = logging.getLogger('gc')
-    mgmurl = "root://{}".format(mgmhost)
-    cmd = "eos {} stagerrm fxid:{}".format(mgmurl, fxid)
+    mgmurl = "root://{}".format(self.mgmhost)
+    cmd = "eos {} stagerrm fxid:{}".format(self.mgmurl, fxid)
     env = os.environ.copy()
     env["XrdSecPROTOCOL"] = "sss"
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
@@ -186,7 +180,7 @@ class Gc:
       now = time.time()
       agesecs = now - statinfo.st_ctime
       if agesecs > self.gcagesecs:
-        self.eosstagerrm(self.mgmhost, fstfile)
+        self.eosstagerrm(fstfile)
 
   def processfssubdir(self, subdir):
     logger = logging.getLogger('gc')
@@ -210,7 +204,7 @@ class Gc:
       i = i + 1
 
   def processallfs(self):
-    filesystems = self.eosfsls(self.mgmhost)
+    filesystems = self.eosfsls()
     newlocalfilesystempaths = [fs["path"] for fs in filesystems if "path" in fs and "host" in fs and self.fqdn == fs["host"]]
     if newlocalfilesystempaths != self.localfilesystempaths:
       self.localfilesystempaths = newlocalfilesystempaths
@@ -222,8 +216,21 @@ class Gc:
     logger = logging.getLogger('gc')
     logger.info("config minfreebytes={}".format(self.minfreebytes))
     logger.info("config gcagesecs={}".format(self.gcagesecs))
-    logger.info("config mgmhost={}".format(self.mgmhost))
-    logger.info("config logfilepath={}".format(self.logfilepath))
+
+  def readconf(self):
+    if not os.path.isfile(self.conffilepath):
+      raise UserError("The configuration file {} is not a directory or does not exist".format(self.conffilepath))
+    if not os.access(self.conffilepath, os.R_OK):
+      raise UserError("The configuration file {} cannot be read by {}".format(self.conffilepath, self.programname))
+
+    config = ConfigParser.ConfigParser()
+    config.read(self.conffilepath)
+
+    try:
+      self.minfreebytes = config.get('main', 'minfreebytes')
+      self.gcagesecs = config.get('main', 'gcagesecs')
+    except ConfigParser.Error as err:
+      raise UserError("Error with configuration file {}: {}".format(self.conffilepath, err))
 
   def run(self):
     username = getpass.getuser()
@@ -232,10 +239,11 @@ class Gc:
 
     self.setmgmhost()
 
-    self.configureLogging()
+    self.configurelogging()
     logger = logging.getLogger('gc')
     logger.info('{} started'.format(self.programname))
     logger.info('The fqdn of this machine is {}'.format(self.fqdn))
+    self.readconf()
     self.logconf()
 
     minperiod = 300 # In seconds
@@ -254,12 +262,9 @@ def main():
   programname = 'cta-fst-gcd'
 
   parser = argparse.ArgumentParser()
-  parser.add_argument("-f", "--minfreebytes", help="The minimum amount of free space in bytes", type=int, default=10*1000*1000*1000)
-  parser.add_argument("-a", "--gcagesecs", help="The age in seconds that a file must have in order to be considered for garbage collection", type=int, default=2*60*60)
-  parser.add_argument("-m", "--mgmhost", help="The EOS MGM host")
   args = parser.parse_args()
 
-  gc = Gc(programname, os.environ, args.minfreebytes, args.mgmhost)
+  gc = Gc(os.environ)
 
   try:
     gc.run()
