@@ -130,6 +130,8 @@ class Gc:
     self.logfilepath = logfilepath
     self.fqdn = socket.getfqdn()
     self.localfilesystempaths = []
+    self.nbfilesconsideredsincelastreport = 0
+    self.nbfilesbeforereport = 10000
 
   def eosfsls(self):
     logger = logging.getLogger('gc')
@@ -184,6 +186,12 @@ class Gc:
       agesecs = now - statinfo.st_ctime
       if agesecs > self.gcagesecs:
         self.eosstagerrm(fstfile)
+
+    self.nbfilesconsideredsincelastreport = self.nbfilesconsideredsincelastreport + 1
+    if self.nbfilesbeforereport == self.nbfilesconsideredsincelastreport:
+      self.nbfilesconsideredsincelastreport = 0
+      logger = logging.getLogger('gc')
+      logger.info('Considered another {} files'.format(self.nbfilesbeforereport))
 
   def processfssubdir(self, subdir):
     logger = logging.getLogger('gc')
