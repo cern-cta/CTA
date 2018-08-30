@@ -389,7 +389,6 @@ Summary: Tape aware garbage collector daemon to run on an EOS FST
 Group: Application/CTA
 Requires: eos-client
 Requires: python
-Requires: python-cta = %{version}-%{release}
 %description -n cta-fst-gcd
 cta-fst-gcd is a daemon that runs on an EOS FST and garbage
 collects EOS disk copies that have been safely stored to tape.
