@@ -168,9 +168,11 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
   private:
-    void asyncSucceed();
+    void asyncSucceedTransfer();
     /** Returns true if the jobs was the last one and the request should be queued for report. */
     bool waitAsyncSucceed();
+    void asyncDeleteRequest();
+    void waitAsyncDelete();
   public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
@@ -181,7 +183,8 @@ public:
     std::string m_tapePool;
     OStoreDB & m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
-    std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_jobUpdate;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_succesfulTransferUpdater;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
   friend class ArchiveJob;
   static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
