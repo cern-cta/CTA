@@ -1,0 +1,46 @@
+.\" The CERN Tape Archive (CTA) project
+.\" Copyright (C) 2015  CERN
+.\"
+.\" This program is free software: you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation, either version 3 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.TH CTA-CATALOGUE-SCHEMA-CREATE 1CTA "August 2016" CTA CTA
+.SH NAME
+cta-fst-gcd \- Tape aware garbage collector daemon to run on an EOS FST
+.SH SYNOPSIS
+.BI "cta-fst-gcd [options]"
+
+.SH DESCRIPTION
+\fBcta-fst-gcd\fP is a daemon that runs on an EOS FST and garbage
+collects EOS disk copies that have been safely stored to tape.
+.P
+The \fBcta-fst-gcd\fP daemon scans across every single EOS disk file on
+an FST.  A file is garbage collected if:
+.IP \[bu] 2
+The amount of free space on the corresponding file system is considered
+too low.
+.IP \[bu]
+The file is considered old enough to be garbage collected.
+.P
+The \fBcta-fst-gcd\fP daemon garbage collects an EOS disk file by
+extracting the hexadecimal EOS file identifier from the local disk
+filename and then running \fBeos stagerm fxid:<fid-hex>\fP.
+.P
+.SH OPTIONS
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.SH RETURN VALUE
+Zero on success and non-zero on failure.
+
+.SH AUTHOR
+\fBCTA\fP Team

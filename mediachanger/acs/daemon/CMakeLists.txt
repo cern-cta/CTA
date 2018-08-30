@@ -47,7 +47,6 @@ set_property (TARGET cta-acsd APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install (FILES cta-acsd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install (TARGETS cta-acsd DESTINATION /usr/bin)
 install (FILES cta-acsd.logrotate DESTINATION /etc/logrotate.d RENAME cta-acsd)
-install (FILES cta-acsd.sysconfig DESTINATION /etc/sysconfig RENAME cta-acsd)
 install (FILES cta-acsd.service DESTINATION /etc/systemd/system)
 
 add_library (ctamediachangeracsdaemonunittests SHARED AcsdCmdLineTest.cpp AcsdCmdLine.cpp)

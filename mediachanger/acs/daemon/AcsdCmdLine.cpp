@@ -85,6 +85,18 @@ AcsdCmdLine AcsdCmdLine::parse(const int argc, char *const *const argv) {
 
   const int expectedNbNonOptionalArgs = 0;
   const int nbNonOptionalArgs = argc - optind;
+
+  // Check for empty string arguments
+  // These might have been passed in by systemd
+  for(int i = optind; i < argc; i++) {
+    if(std::string(argv[i]).empty()) {
+      exception::Exception ex;
+        ex.getMessage() << "Incorrect command-line arguments: Encountered an empty string argument at argv[" << i
+          << "]\n\n" << getUsage();
+      throw ex;
+    }
+  }
+
   if (expectedNbNonOptionalArgs != nbNonOptionalArgs) {
      exception::Exception ex;
      ex.getMessage() << "Incorrect command-line arguments: Incorrect number of non-optional arguments: expected=" <<

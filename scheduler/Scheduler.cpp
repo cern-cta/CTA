@@ -122,6 +122,9 @@ void Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId, const std:
   cta::utils::Timer t;
   using utils::postEllipsis;
   using utils::midEllipsis;
+  
+  if (!request.fileSize)
+    throw cta::exception::UserError(std::string("Rejecting archive request for zero-length file: ")+request.diskFileInfo.path);
 
   const auto queueCriteria = m_catalogue.getArchiveFileQueueCriteria(instanceName, request.storageClass,
     request.requester);

@@ -125,7 +125,7 @@ std::string cta::mediachanger::acs::AcsQueryVolumeCmdLine::getUsage() {
   std::ostringstream usage;
   usage <<
   "Usage:\n"
-  "  cta-tape-acs-queryvolume [options] VID\n"
+  "  cta-acs-queryvolume [options] VID\n"
   "\n"
   "Where:\n"
   "\n"

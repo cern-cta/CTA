@@ -66,7 +66,7 @@ int cta::mediachanger::acs::AcsQueryDriveCmd::exceptionThrowingMain(const int ar
 
   m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
-  m_dbg << "DRIVE_SLOT = " << m_acs.driveId2Str(m_cmdLine.libraryDriveSlot);
+  m_dbg << "DRIVE_SLOT = " << m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << std::endl;
 
   syncQueryDrive();
   return 0;

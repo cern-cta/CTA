@@ -51,7 +51,8 @@ namespace daemon {
     m_srcURL(m_archiveJob->srcURL)
   {
     //register its fifo to the memory manager as a client in order to get mem block
-    mm.addClient(&m_fifo); 
+    // This should not be done in the case of a zero length file.
+    if (archiveJob->archiveFile.fileSize) mm.addClient(&m_fifo);
   }
 //------------------------------------------------------------------------------
 // fileSize
@@ -133,6 +134,21 @@ namespace daemon {
         m_taskStats.dataVolume += mb->m_payload.size();
         watchdog.notify(mb->m_payload.size());
         ++memBlockId;
+      }
+      
+      // If, after the FIFO is finished, we are still in the first block, we are in the presence of a 0-length file.
+      // This also requires a placeholder.
+      if (firstBlock) {
+        currentErrorToCount = "Error_tapeWriteData";
+        const char blank[]="This file intentionally left blank: zero-length file cannot be recorded to tape.";
+        output->write(blank, sizeof(blank));
+        m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
+        watchdog.notify(sizeof(blank));
+        currentErrorToCount = "Error_tapeWriteTrailer";
+        output->close();
+        currentErrorToCount = "";
+        // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
+        throw Skip("In TapeWriteTask::execute(): inserted a placeholder for zero length file.");
       }
       
       //finish the writing of the file on tape

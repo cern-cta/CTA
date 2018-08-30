@@ -44,7 +44,7 @@ set_target_properties (cta-acs PROPERTIES
 ################################################################################
 # Rules to build and install castor-tape-acs-dismount
 ################################################################################
-message(STATUS "Adding cta-tape-acs-dismount target")
+message(STATUS "Adding cta-acs-dismount target")
 set (ACS_DISMOUNT_SRC_FILES
   Acs.cpp
   AcsCmd.cpp
@@ -55,18 +55,18 @@ set (ACS_DISMOUNT_SRC_FILES
   AcsDismountCmdMain.cpp
   CmdLineTool.cpp
   AcsDebugBuf.cpp)
-add_executable (cta-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
-set_target_properties (cta-tape-acs-dismount PROPERTIES
+add_executable (cta-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
+set_target_properties (cta-acs-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-target_link_libraries (cta-tape-acs-dismount
+target_link_libraries (cta-acs-dismount
   ctacommon
   ${STK_LIBRARIES})
-install (TARGETS cta-tape-acs-dismount DESTINATION /usr/bin)
-install (FILES cta-tape-acs-dismount.1cta DESTINATION /usr/share/man/man1)
+install (TARGETS cta-acs-dismount DESTINATION /usr/bin)
+install (FILES cta-acs-dismount.1cta DESTINATION /usr/share/man/man1)
 
 ################################################################################
-# Rules to build and install cta-tape-acs-mount
+# Rules to build and install cta-acs-mount
 ################################################################################
 set (ACS_MOUNT_SRC_FILES
   Acs.cpp
@@ -78,20 +78,20 @@ set (ACS_MOUNT_SRC_FILES
   AcsMountCmdMain.cpp
   CmdLineTool.cpp
   AcsDebugBuf.cpp)
-add_executable (cta-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
-set_target_properties (cta-tape-acs-mount PROPERTIES
+add_executable (cta-acs-mount ${ACS_MOUNT_SRC_FILES})
+set_target_properties (cta-acs-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-target_link_libraries (cta-tape-acs-mount
+target_link_libraries (cta-acs-mount
 ctacommon
 ${STK_LIBRARIES})
-install (TARGETS cta-tape-acs-mount DESTINATION /usr/bin)
-install (FILES cta-tape-acs-mount.1cta DESTINATION /usr/share/man/man1)
+install (TARGETS cta-acs-mount DESTINATION /usr/bin)
+install (FILES cta-acs-mount.1cta DESTINATION /usr/share/man/man1)
 
 ################################################################################
-# Rules to build and install cta-tape-acs-queryvolume
+# Rules to build and install cta-acs-queryvolume
 ################################################################################
-message(STATUS "Adding cta-tape-acs-queryvolume target")
+message(STATUS "Adding cta-acs-queryvolume target")
 set (ACS_QUERYVOLUME_SRC_FILES
   Acs.cpp
   AcsCmd.cpp
@@ -103,21 +103,21 @@ set (ACS_QUERYVOLUME_SRC_FILES
   CmdLineTool.cpp
   AcsDebugBuf.cpp)
 
-add_executable (cta-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
-target_link_libraries (cta-tape-acs-queryvolume
+add_executable (cta-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
+target_link_libraries (cta-acs-queryvolume
 ctacommon
 ${STK_LIBRARIES})
-set_target_properties (cta-tape-acs-queryvolume PROPERTIES
+set_target_properties (cta-acs-queryvolume PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-install (TARGETS cta-tape-acs-queryvolume
+install (TARGETS cta-acs-queryvolume
   DESTINATION /usr/bin)
-install (FILES cta-tape-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
+install (FILES cta-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
 
 ################################################################################
-# Rules to build and install cta-tape-acs-querydrive
+# Rules to build and install cta-acs-querydrive
 ################################################################################
-message(STATUS "Adding cta-tape-acs-querydrive target")
+message(STATUS "Adding cta-acs-querydrive target")
 set (ACS_QUERYDRIVE_SRC_FILES
   Acs.cpp
   AcsCmd.cpp
@@ -129,13 +129,13 @@ set (ACS_QUERYDRIVE_SRC_FILES
   CmdLineTool.cpp
   AcsDebugBuf.cpp)
 
-add_executable (cta-tape-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
-target_link_libraries (cta-tape-acs-querydrive
+add_executable (cta-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
+target_link_libraries (cta-acs-querydrive
 ctacommon
 ${STK_LIBRARIES})
-set_target_properties (cta-tape-acs-querydrive PROPERTIES
+set_target_properties (cta-acs-querydrive PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-install (TARGETS cta-tape-acs-querydrive
+install (TARGETS cta-acs-querydrive
   DESTINATION /usr/bin)
-install (FILES cta-tape-acs-querydrive.1cta DESTINATION /usr/share/man/man1)
+install (FILES cta-acs-querydrive.1cta DESTINATION /usr/share/man/man1)
