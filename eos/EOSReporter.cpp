@@ -23,8 +23,8 @@
 
 namespace cta { namespace eos {
 
-EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue, std::promise<void>& reporterState):
-  m_fs(hostURL), m_query(queryValue), m_reporterState(reporterState) {}
+EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
+  m_fs(hostURL), m_query(queryValue) {}
 
 void EOSReporter::asyncReport() {
   auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
@@ -43,11 +43,11 @@ void EOSReporter::HandleResponse(XrdCl::XRootDStatus *status,
   try {
     cta::exception::XrootCl::throwOnError(*status,
       "In EOSReporter::AsyncQueryHandler::HandleResponse(): failed to XrdCl::FileSystem::Query()");
-    m_reporterState.set_value();
+    m_promise.set_value();
   } catch (...) {
     try {
       // store anything thrown in the promise
-      m_reporterState.set_exception(std::current_exception());
+      m_promise.set_exception(std::current_exception());
     } catch(...) {
       // set_exception() may throw too
     }

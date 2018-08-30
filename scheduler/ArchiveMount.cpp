@@ -78,8 +78,8 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL, std::promise<void> &reporterState) {
-  return m_reporterFactory.createDiskReporter(URL, reporterState);
+cta::eos::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
+  return m_reporterFactory.createDiskReporter(URL);
 }
 
 //------------------------------------------------------------------------------

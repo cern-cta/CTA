@@ -24,7 +24,7 @@ namespace cta { namespace eos {
 
 class NullReporter: public DiskReporter {
 public:
-  NullReporter() {};
+  NullReporter() { m_promise.set_value(); };
   void asyncReport() override {};
 };
 

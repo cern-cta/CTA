@@ -73,10 +73,10 @@ void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext
     // That's all job's already done.
     std::promise<void> reporterState;
     utils::Timer t;
-    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL, reporterState));
+    std::unique_ptr<cta::eos::DiskReporter> reporter(m_mount.createDiskReporter(fullReportURL));
     reporter->asyncReport();
     try {
-      reporterState.get_future().get();
+      reporter->waitReport();
       log::ScopedParamContainer params(lc);
       params.add("fileId", m_dbJob->archiveFile.archiveFileID)
             .add("diskInstance", m_dbJob->archiveFile.diskInstance)

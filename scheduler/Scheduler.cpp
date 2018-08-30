@@ -1086,19 +1086,18 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
     eos::DiskReporterFactory & reporterFactory, log::TimingList& timingList, utils::Timer& t, 
     log::LogContext& lc){
   // Create the reporters
-  struct ReporterAndPromise {
+  struct JobAndReporter {
     std::unique_ptr<eos::DiskReporter> reporter;
-    std::promise<void> promise;
     ArchiveJob * archiveJob;
   };
-  std::list<ReporterAndPromise> pendingReports;
+  std::list<JobAndReporter> pendingReports;
   std::list<ArchiveJob *> reportedJobs;
   for (auto &j: archiveJobsBatch) {
-    pendingReports.push_back(ReporterAndPromise());
+    pendingReports.push_back(JobAndReporter());
     auto & current = pendingReports.back();
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
-      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL(), current.promise));
+      current.reporter.reset(reporterFactory.createDiskReporter(j->reportURL()));
       current.reporter->asyncReport();
       current.archiveJob = j.get();
     } catch (cta::exception::Exception & ex) {
@@ -1118,7 +1117,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
   timingList.insertAndReset("asyncReportLaunchTime", t);
   for (auto &current: pendingReports) {
     try {
-      current.promise.get_future().wait();
+      current.reporter->waitReport();
       reportedJobs.push_back(current.archiveJob);
     } catch (cta::exception::Exception & ex) {
       // Log the error, update the request.
