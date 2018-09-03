@@ -128,9 +128,6 @@ struct ContainerTraits
   static ElementAddress getElementAddress(const Element &e);
   
   static ContainerSummary getContainerSummary(Container &cont);
-#if 0
-  static void trimContainerIfNeeded(Container &cont);
-#endif
   static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,

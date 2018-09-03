@@ -284,7 +284,6 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   return ret;
 }
 
-#if 0
 template<>
 void ContainerTraits<RetrieveQueue>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
@@ -299,7 +298,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
+      re.removeRetrieveQueueAndCommit(cId, QueueType::JobsToTransfer, lc);
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -313,6 +312,5 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
     }
   }
 }
-#endif
 
 }} // namespace cta::objectstore
