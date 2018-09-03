@@ -22,14 +22,15 @@
 namespace cta { namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue>::c_containerTypeName = "RetrieveQueue";
+const std::string ContainerTraits<RetrieveQueue_t,RetrieveQueue>::c_containerTypeName = "RetrieveQueue";
 
 template<>
-const std::string ContainerTraits<RetrieveQueue>::c_identifierType = "vid";
+const std::string ContainerTraits<RetrieveQueue_t,RetrieveQueue>::c_identifierType = "vid";
 
 // ContainerTraitsTypes
 
-void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsSummary::
+template<>
+void ContainerTraitsTypes<RetrieveQueue_t,RetrieveQueue>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) const {
   params.add("filesAdded", files - previous.files)
         .add("bytesAdded", bytes - previous.bytes)
@@ -39,7 +40,8 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
         .add("bytesAfter", bytes);
 }
 
-void ContainerTraitsTypes<RetrieveQueue>::ContainerSummary::
+template<>
+void ContainerTraitsTypes<RetrieveQueue_t,RetrieveQueue>::ContainerSummary::
 addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &params) const {
   params.add("queueFilesBefore", previous.files)
         .add("queueBytesBefore", previous.bytes)
@@ -47,25 +49,29 @@ addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &param
         .add("queueBytesAfter", bytes);
 }
 
-auto ContainerTraits<RetrieveQueue>::PopCriteria::
+template<>
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::PopCriteria::
 operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
   bytes -= pes.bytes;
   files -= pes.files;
   return *this;
 }
 
-void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsList::
+template<>
+void ContainerTraitsTypes<RetrieveQueue_t,RetrieveQueue>::PoppedElementsList::
 insertBack(PoppedElementsList &&insertedList) {
   for (auto &e: insertedList) {
     std::list<PoppedElement>::emplace_back(std::move(e));
   }
 }
 
-void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
+template<>
+void ContainerTraitsTypes<RetrieveQueue_t,RetrieveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
   std::list<PoppedElement>::emplace_back(std::move(e));
 }
 
-void ContainerTraitsTypes<RetrieveQueue>::PoppedElementsBatch::
+template<>
+void ContainerTraitsTypes<RetrieveQueue_t,RetrieveQueue>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) const {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
@@ -74,7 +80,7 @@ addToLog(log::ScopedParamContainer &params) const {
 // ContainerTraits
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 getLockedAndFetched(Container &cont, ScopedExclusiveLock &aqL, AgentReference &agRef,
   const ContainerIdentifier &contId, QueueType queueType, log::LogContext &lc)
 {
@@ -82,7 +88,7 @@ getLockedAndFetched(Container &cont, ScopedExclusiveLock &aqL, AgentReference &a
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
   const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc)
 {
@@ -98,7 +104,7 @@ retry:
     if (rqp.vid == cId)
       rqAddress = rqp.address;
   }
-  if(rqAddress.empty()) throw NoSuchContainer("In ContainerTraits<RetrieveQueue>::getLockedAndFetchedNoCreate(): no such retrieve queue");
+  if(rqAddress.empty()) throw NoSuchContainer("In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::getLockedAndFetchedNoCreate(): no such retrieve queue");
 
   // try and lock the retrieve queue. Any failure from here on means the end of the getting jobs.
   cont.setAddress(rqAddress);
@@ -117,19 +123,19 @@ retry:
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
     } catch (RootEntry::RetrieveQueueNotEmpty &ex) {
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
     } catch (RootEntry::NoSuchRetrieveQueue &ex) {
       // Somebody removed the queue in the meantime. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
+      lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
     }
     attemptCount++;
     goto retry;
@@ -137,7 +143,7 @@ retry:
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 addReferencesAndCommit(Container &cont, InsertedElement::list &elemMemCont, AgentReference &agentRef,
   log::LogContext &lc)
 {
@@ -150,7 +156,7 @@ addReferencesAndCommit(Container &cont, InsertedElement::list &elemMemCont, Agen
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMemCont,
   AgentReference& agentRef, log::LogContext& lc)
 {
@@ -163,7 +169,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMe
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 removeReferencesAndCommit(Container &cont, OpFailure<InsertedElement>::list &elementsOpFailures)
 {
   std::list<std::string> elementsToRemove;
@@ -174,20 +180,20 @@ removeReferencesAndCommit(Container &cont, OpFailure<InsertedElement>::list &ele
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList) {
   cont.removeJobsAndCommit(elementAddressList);
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue>::
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 getContainerSummary(Container &cont) -> ContainerSummary {
   ContainerSummary ret(cont.getJobsSummary());
   return ret;
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue>::
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 switchElementsOwnership(InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t,
   log::LogContext &lc) -> OpFailure<InsertedElement>::list
@@ -217,7 +223,7 @@ switchElementsOwnership(InsertedElement::list &elemMemCont, const ContainerAddre
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue>::
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
   log::LogContext &lc) -> PoppedElementsBatch
 {
@@ -240,7 +246,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue>::
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
@@ -249,7 +255,7 @@ getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
 }
 
 template<>
-auto ContainerTraits<RetrieveQueue>::
+auto ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t,
   log::LogContext &lc) -> OpFailure<PoppedElement>::list
@@ -285,7 +291,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
 }
 
 template<>
-void ContainerTraits<RetrieveQueue>::
+void ContainerTraits<RetrieveQueue_t,RetrieveQueue>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
@@ -302,13 +308,13 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::trimContainerIfNeeded(): deleted empty queue");
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::trimContainerIfNeeded(): deleted empty queue");
     } catch(cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+      lc.log(log::INFO, "In ContainerTraits<RetrieveQueue_t,RetrieveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     }
   }
 }

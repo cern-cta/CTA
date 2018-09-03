@@ -661,7 +661,7 @@ OStoreDB::ArchiveQueueItor_t OStoreDB::getArchiveJobItor(const std::string &tape
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArchiveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueueToReport> AQTRAlgo;
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueToReport> AQTRAlgo;
   AQTRAlgo aqtrAlgo(m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -751,7 +751,7 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
   }
   for (auto & queue: failedQueues) {
     // Put the jobs in the failed queue
-    typedef objectstore::ContainerAlgorithms<ArchiveQueueFailed> CaAQF;
+    typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueFailed> CaAQF;
     CaAQF caAQF(m_objectStore, *m_agentReference);
     // TODOTODO: also switch status in one step.
     CaAQF::InsertedElement::list insertedElements;
@@ -1742,7 +1742,7 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue> AQAlgos;
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue> AQAlgos;
   AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, objectstore::QueueType::JobsToTransfer, popCriteria, logContext);
@@ -1822,7 +1822,7 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::
 getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext &logContext)
 {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue> RQAlgos;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = rqAlgos.popNextBatch(mountInfo.vid, objectstore::QueueType::JobsToTransfer, popCriteria, logContext);
@@ -2357,7 +2357,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);
   if (jobsToQueueForReporting.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueueToReport> AqtrCa;
+    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue_t,objectstore::ArchiveQueueToReport> AqtrCa;
     AqtrCa aqtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     std::map<std::string, AqtrCa::InsertedElement::list> insertedElementsLists;
     for (auto & j: jobsToQueueForReporting) {
@@ -2457,7 +2457,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueueToReport> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2480,7 +2480,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2504,7 +2504,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueueFailed> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2549,7 +2549,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       // Algorithms suppose the objects are not locked.
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueueToReport> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
@@ -2569,7 +2569,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       // Algorithms suppose the objects are not locked.
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueueFailed> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue_t,ArchiveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });

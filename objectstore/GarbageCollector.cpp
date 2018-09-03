@@ -399,7 +399,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
         requestsList.pop_front();
       }
       utils::Timer t;
-      typedef ContainerAlgorithms<ArchiveQueue> AqAlgos;
+      typedef ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue> AqAlgos;
       AqAlgos aqcl(objectStore, agentReference);
       decltype(aqcl)::InsertedElement::list jobsToAdd;
       for (auto & ar: currentJobBatch) {

@@ -23,8 +23,8 @@
 
 namespace cta { namespace objectstore {
 
-template<>
-struct ContainerTraitsTypes<RetrieveQueue>
+template<typename C>
+struct ContainerTraitsTypes<RetrieveQueue_t,C>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
@@ -114,11 +114,13 @@ struct ContainerTraitsTypes<RetrieveQueue>
 };
 
 
+#if 0
 template<>
 template<typename Element>
 ContainerTraits<RetrieveQueue>::ElementAddress ContainerTraits<RetrieveQueue>::
 getElementAddress(const Element &e) {
   return e.retrieveRequest->getAddressIfSet();
 }
+#endif
 
 }} // namespace cta::objectstore

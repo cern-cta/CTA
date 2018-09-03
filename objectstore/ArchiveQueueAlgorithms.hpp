@@ -23,11 +23,10 @@
 
 namespace cta { namespace objectstore {
 
-template<>
-struct ContainerTraitsTypes<ArchiveQueue>
+template<typename C>
+struct ContainerTraitsTypes<ArchiveQueue_t,C>
 { 
-  class ContainerSummary: public ArchiveQueue::JobsSummary {
-  public:
+  struct ContainerSummary: public C::JobsSummary {
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
   
@@ -42,55 +41,6 @@ struct ContainerTraitsTypes<ArchiveQueue>
 
   typedef ArchiveRequest::JobDump ElementDescriptor;
 
-#if 0
-=======
-  
-  class ContainerSummary: public ArchiveQueue::JobsSummary {
-  public:
-    void addDeltaToLog(ContainerSummary &, log::ScopedParamContainer &);
-  };
-  
-  static ContainerSummary getContainerSummary(Container &cont);
-  
-  template <class Element>
-  struct OpFailure {
-    Element * element;
-    std::exception_ptr failure;
-    typedef std::list<OpFailure> list;
-  };
-  
-  typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
-  
-  template <class Element>
-  static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
-  
-  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef,
-      const ContainerIdentifyer & contId, QueueType queueType, log::LogContext & lc);
-  
-  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock,
-      const ContainerIdentifyer & cId, QueueType queueType, log::LogContext & lc);
-  
-  static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc);
-  
-  static void addReferencesIfNecessaryAndCommit(Container & cont, InsertedElement::list & elemMemCont,
-      AgentReference & agentRef, log::LogContext & lc);
-  
-  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures);
-  
-  static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
-  
-  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-      log::LogContext & lc);
-  
-  class OwnershipSwitchFailure: public cta::exception::Exception {
-  public:
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
-    OpFailure<InsertedElement>::list failedElements;
-  };
->>>>>>> reportQueues
-#endif
   struct PoppedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
@@ -135,36 +85,17 @@ struct ContainerTraitsTypes<ArchiveQueue>
 
 
 
-template<>
-class ContainerTraitsTypes<ArchiveQueueToReport>: public ContainerTraitsTypes<ArchiveQueue>
-{
-};
-
-
-
-template<>
-class ContainerTraitsTypes<ArchiveQueueFailed>: public ContainerTraitsTypes<ArchiveQueueToReport>
-{/* Same same */ 
 #if 0
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifyer &cId, log::LogContext& lc) {
-    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::FailedJobs, contLock, cId, lc);
-  }
-#endif
-};
-
-
-
-template<>
 template<typename Element>
-ContainerTraits<ArchiveQueue>::ElementAddress ContainerTraits<ArchiveQueue>::
-getElementAddress(const Element &e) {
+template<typename C>
+auto ContainerTraits<ArchiveQueue_t,C>::getElementAddress(const Element &e) {
   return e.archiveRequest->getAddressIfSet();
 }
+#endif
 
 }} // namespace cta::objectstore
+
 #if 0
-=======
-  
   typedef std::set<ElementAddress> ElementsToSkipSet;
   
   static PoppedElementsSummary getElementSummary(const PoppedElement &);
@@ -263,7 +194,5 @@ public:
     ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
   }
 };
-
-}} // namespace cta::objectstore
 >>>>>>> reportQueues
 #endif

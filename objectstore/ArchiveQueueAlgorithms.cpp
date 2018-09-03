@@ -23,14 +23,15 @@
 namespace cta { namespace objectstore {
 
 template<>
-const std::string ContainerTraits<ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
+const std::string ContainerTraits<ArchiveQueue_t,ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue_t,ArchiveQueue>::c_identifierType = "tapepool";
 
 // ContainerTraitsTypes
 
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsSummary::
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueue>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
   params.add("filesAdded", files - previous.files)
         .add("bytesAdded", bytes - previous.bytes)
@@ -41,7 +42,7 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
 }
 
 #if 0
-void ContainerTraitsTypes<ArchiveQueueToReport>::PoppedElementsSummary::
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueueToReport>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
   params.add("filesAdded", files - previous.files)
         .add("filesBefore", previous.files)
@@ -49,7 +50,8 @@ addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &
 }
 #endif
 
-void ContainerTraitsTypes<ArchiveQueue>::ContainerSummary::
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueue>::ContainerSummary::
 addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params) {
   params.add("queueJobsBefore", previous.jobs)
         .add("queueBytesBefore", previous.bytes)
@@ -57,32 +59,37 @@ addDeltaToLog(ContainerSummary& previous, log::ScopedParamContainer& params) {
         .add("queueBytesAfter", bytes);
 }
 
-auto ContainerTraits<ArchiveQueue>::PopCriteria::
+template<>
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PopCriteria::
 operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
   bytes -= pes.bytes;
   files -= pes.files;
   return *this;
 }
 
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::
 insertBack(PoppedElementsList &&insertedList) {
   for (auto &e: insertedList) {
     std::list<PoppedElement>::emplace_back(std::move(e));
   }
 }
 
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement &&e) {
   std::list<PoppedElement>::emplace_back(std::move(e));
 }
 
-void ContainerTraitsTypes<ArchiveQueue>::PoppedElementsBatch::
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueue>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
 }
 
 #if 0
-void ContainerTraitsTypes<ArchiveQueueToReport>::PoppedElementsBatch::
+template<>
+void ContainerTraitsTypes<ArchiveQueue_t,ArchiveQueueToReport>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("files", summary.files);
 }
@@ -93,13 +100,13 @@ addToLog(log::ScopedParamContainer &params) {
 // ContainerTraits
 
 template<>
-void ContainerTraits<ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
     const ContainerIdentifier& contId, QueueType queueType, log::LogContext& lc) {
   Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, InsertedElement::list& elemMemCont,
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::addReferencesAndCommit(Container& cont, InsertedElement::list& elemMemCont,
     AgentReference& agentRef, log::LogContext& lc) {
   std::list<ArchiveQueue::JobToAdd> jobsToAdd;
   for (auto & e: elemMemCont) {
@@ -120,7 +127,7 @@ void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, Inse
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMemCont, 
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::addReferencesIfNecessaryAndCommit(Container& cont, InsertedElement::list& elemMemCont, 
     AgentReference& agentRef, log::LogContext& lc) {
   std::list<ArchiveQueue::JobToAdd> jobsToAdd;
   for (auto & e: elemMemCont) {
@@ -137,7 +144,7 @@ void ContainerTraits<ArchiveQueue>::addReferencesIfNecessaryAndCommit(Container&
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, OpFailure<InsertedElement>::list& elementsOpFailures) {
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::removeReferencesAndCommit(Container& cont, OpFailure<InsertedElement>::list& elementsOpFailures) {
   std::list<std::string> elementsToRemove;
   for (auto & eof: elementsOpFailures) {
     elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
@@ -146,12 +153,12 @@ void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, O
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList) {
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList) {
   cont.removeJobsAndCommit(elementAddressList);
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue>::getContainerSummary(Container& cont) -> ContainerSummary {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getContainerSummary(Container& cont) -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());
   return ret;
@@ -160,7 +167,7 @@ auto ContainerTraits<ArchiveQueue>::getContainerSummary(Container& cont) -> Cont
 #if 0
 <<<<<<< HEAD
 template<>
-auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc) -> OpFailure<PoppedElement>::list {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch, const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext & lc) -> OpFailure<PoppedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: popedElementBatch.elements) {
     ArchiveRequest & ar = *e.archiveRequest;
@@ -194,7 +201,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
 #endif
 
 template<>
-auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::list& elemMemCont, const ContainerAddress& contAddress, const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext& lc) ->  OpFailure<InsertedElement>::list {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::switchElementsOwnership(InsertedElement::list& elemMemCont, const ContainerAddress& contAddress, const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext& lc) ->  OpFailure<InsertedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: elemMemCont) {
     ArchiveRequest & ar = *e.archiveRequest;
@@ -221,7 +228,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
 }
 
 template<>
-void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock,
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock,
     const ContainerIdentifier& cId, QueueType queueType, log::LogContext& lc) {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -275,7 +282,7 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
     ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
@@ -285,7 +292,7 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
 #if 0
 =======
     ret.elements.emplace_back(PoppedElement());
-    ContainerTraits<ArchiveQueue>::PoppedElement & elem = ret.elements.back();
+    ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElement & elem = ret.elements.back();
     elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
     elem.copyNb = cjfq.copyNb;
     elem.bytes = cjfq.size;
@@ -304,13 +311,13 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
 }
 
 #if 0
-auto ContainerTraits<ArchiveQueueToReport>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueueToReport>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
     ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement());
-    ContainerTraits<ArchiveQueue>::PoppedElement & elem = ret.elements.back();
+    ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElement & elem = ret.elements.back();
     elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
     elem.copyNb = cjfq.copyNb;
     elem.bytes = cjfq.size;
@@ -326,7 +333,7 @@ auto ContainerTraits<ArchiveQueueToReport>::getPoppingElementsCandidates(Contain
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
   ret.files = 1;
@@ -337,29 +344,29 @@ auto ContainerTraits<ArchiveQueue>::getElementSummary(const PoppedElement& poppe
 #if 0
 <<<<<<< HEAD
 =======
-auto ContainerTraits<ArchiveQueueToReport>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueueToReport>::getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.files = 1;
   return ret;
 }
 
-void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElementsList&& insertedList) {
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::insertBack(PoppedElementsList&& insertedList) {
   for (auto &e: insertedList) {
     std::list<PoppedElement>::emplace_back(std::move(e));
   }
 }
 
-void ContainerTraits<ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement&& e) {
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement&& e) {
   std::list<PoppedElement>::emplace_back(std::move(e));
 }
 
-auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   bytes -= pes.bytes;
   files -= pes.files;
   return *this;
 }
 
-auto ContainerTraits<ArchiveQueueToReport>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
+auto ContainerTraits<ArchiveQueue_t,ArchiveQueueToReport>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   files -= pes.files;
   return *this;
 }
@@ -368,7 +375,7 @@ auto ContainerTraits<ArchiveQueueToReport>::PopCriteria::operator-=(const Popped
 
 #if 0
 template<>
-void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
+void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
     const ContainerIdentifier & cId, log::LogContext& lc) {
   if (cont.isEmpty()) {
     // The current implementation is done unlocked.
@@ -382,13 +389,13 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Queue
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     }
     //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
   }
