@@ -67,7 +67,7 @@ namespace unitTests {
   public:
     MockArchiveJobExternalStats(cta::ArchiveMount & am, cta::catalogue::Catalogue & catalogue, 
        int & completes, int &failures):
-    MockArchiveJob(am, catalogue), completesRef(completes), failuresRef(failures) {}
+    MockArchiveJob(&am, catalogue), completesRef(completes), failuresRef(failures) {}
     
     virtual void validate() override {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
@@ -94,7 +94,7 @@ namespace unitTests {
     }
    
 
-    void failed(const std::string& failureReason, cta::log::LogContext& lc) override {
+    void transferFailed(const std::string& failureReason, cta::log::LogContext& lc) override {
       failuresRef++;
     }
     
@@ -213,12 +213,12 @@ namespace unitTests {
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
       job2.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job3;
@@ -376,8 +376,7 @@ namespace unitTests {
 
     std::string temp = log.getLog();
     ASSERT_NE(std::string::npos, temp.find("TapeFileWrittenEvent is invalid"));
-    ASSERT_NE(std::string::npos, temp.find("Successfully closed client's session "
-                                           "after the failed report MigrationResult"));
+    ASSERT_NE(std::string::npos, temp.find("Received a CTA exception while reporting archive mount results"));
     ASSERT_EQ(0, tam.completes);
     ASSERT_EQ(0, migratedBigFileCompletes);
     ASSERT_EQ(0, migratedFileSmallCompletes);

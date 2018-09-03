@@ -34,6 +34,8 @@ class ScopedLock;
 class ScopedExclusiveLock;
 template <class C> class ContainerTraits;
 class ArchiveQueue;
+class ArchiveQueueToReport;
+class ArchiveQueueFailed;
 class RetrieveQueue;
 
 class ObjectOpsBase {
@@ -43,6 +45,8 @@ class ObjectOpsBase {
   friend class GenericObject;
   friend class Helpers;
   friend ContainerTraits<ArchiveQueue>;
+  friend ContainerTraits<ArchiveQueueToReport>;
+  friend ContainerTraits<ArchiveQueueFailed>;
   friend ContainerTraits<RetrieveQueue>;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 

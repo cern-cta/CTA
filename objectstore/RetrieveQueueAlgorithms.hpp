@@ -64,6 +64,34 @@ struct ContainerTraitsTypes<RetrieveQueue>
     bool operator==(const PoppedElementsSummary &pes) const {
       return bytes == pes.bytes && files == pes.files;
     }
+#if 0
+=======
+  typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
+  
+  template <class Element>
+  static ElementAddress getElementAddress(const Element & e) { return e.retrieveRequest->getAddressIfSet(); }
+  
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef,
+      const ContainerIdentifyer & contId, QueueType queueType, log::LogContext & lc) {
+    Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  }
+  
+  static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc) {
+    std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+    for (auto & e: elemMemCont) {
+      RetrieveRequest & rr = *e.retrieveRequest;
+      jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr)});
+    }
+    cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
+  }
+  
+  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures) {
+    std::list<std::string> elementsToRemove;
+    for (auto & eof: elementsOpFailures) {
+      elementsToRemove.emplace_back(eof.element->retrieveRequest->getAddressIfSet());
+>>>>>>> reportQueues
+#endif
     bool operator<(const PopCriteria &pc) const {
       return bytes < pc.bytes && files < pc.files;
     }

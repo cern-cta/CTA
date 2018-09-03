@@ -221,7 +221,7 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReferen
     RootEntry re(m_objectStore);
     ScopedSharedLock rel (re);
     re.fetch();
-    auto tpd=re.dumpArchiveQueues(QueueType::LiveJobs);
+    auto tpd=re.dumpArchiveQueues(QueueType::JobsToTransfer);
     for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
       if (tp->address == getAddressIfSet()) {
         setOwner(re.getAddressIfSet());

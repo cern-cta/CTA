@@ -102,7 +102,9 @@ message RetrieveQueuePointer {
 message RootEntry {
   repeated ArchiveQueuePointer livearchivejobsqueuepointers = 1050;
   repeated RetrieveQueuePointer liveretrievejobsqueuepointers = 1060;
+  repeated ArchiveQueuePointer archivefailurestoreportqueuepointers = 1061;
   repeated ArchiveQueuePointer failedarchivejobsqueuepointers = 1062;
+  repeated RetrieveQueuePointer retrievefailurestoreportqueuepointers = 1063;
   repeated RetrieveQueuePointer failedretrievejobsqueuepointers = 1065;
   repeated ArchiveQueuePointer archivejobstoreportqueuepointers = 1068;
   optional DriveRegisterPointer driveregisterpointer = 1070;
@@ -181,57 +183,7 @@ message ArchiveFile {
   required string storageclass = 4361;
 }
 
-// ------------- Archive Jobs --------------------------------------------------
-
-// The status of the individual archive jobs. The jobs are materialised 
-// by table entries in the ArchiveRequest.
-// This life cycle represented by the following enum
-
-enum ArchiveJobStatus {
-  AJS_LinkingToArchiveQueue = 1;
-  AJS_PendingMount = 2;
-  AJS_Selected = 3;
-  AJS_Complete = 4;
-  AJS_Failed = 999;
-}
-
-message FilePathAndStatus {
-  required string path = 4450;
-  required uint64 mode = 4451;
-  required uint64 size = 4452;
-  required UserIdentity owner = 4453;
-}
-
-// ------------- Retrieve Jobs -------------------------------------------------
-
-// The status of the individual retrieve jobs. The jobs are materialised 
-// by table entries in the RetrieveRequest.
-// This life cycle represented by the following enum
-
-enum RetrieveJobStatus {
-  RJS_LinkingToTape = 0;
-  RJS_Pending = 1;
-  RJS_Selected = 2;
-  RJS_Complete = 3;
-  RJS_Failed = 99;
-}
-
-message RetrieveJobEntry {
-  required uint32 copynb = 4700;
-  required string tape = 4701;
-  required string tapeaddress = 4702;
-  required uint64 fseq = 4703;
-  required uint64 blockid = 4704;
-  required RetrieveJobStatus status = 4705;
-  required uint32 totalretries = 4706;
-  required uint32 retrieswithinmount = 4707;
-  required uint64 compressedsize = 4708;
-  required uint64 creationtime = 4709;
-}
-
 // ------------- Drives handling  ----------------------------------------------
-
-
 
 message DriveState {
   required string drivename = 5000;
@@ -280,8 +232,6 @@ message SchedulerGlobalLock {
   required uint64 nextmountid = 8000;
 }
 
-// ------------- New interface  ------------------------------------------------
-
 message User {
   required string name = 8800;
   required string group = 8810;
@@ -305,6 +255,21 @@ message MountPolicy {
   required string comment = 8988;
 }
 
+// ------------- Archive Jobs --------------------------------------------------
+
+// The status of the individual archive jobs. The jobs are materialised 
+// by table entries in the ArchiveRequest.
+// This life cycle represented by the following enum
+
+enum ArchiveJobStatus {
+  AJS_ToTransfer = 1;
+  AJS_ToReportForTransfer = 2;
+  AJS_Complete = 3;
+  AJS_ToReportForFailure = 997;
+  AJS_Failed = 998;
+  AJS_Abandoned = 999;
+}
+
 message ArchiveJob {
   required uint32 copynb = 4400;
   required string tapepool = 4401;
@@ -317,10 +282,13 @@ message ArchiveJob {
   required uint32 maxtotalretries = 4408;
   required uint32 maxretrieswithinmount = 4409;
   repeated string failurelogs = 4410;
+  required uint32 maxreportretries = 4411;
+  required uint32 totalreportretries = 4412;
+  repeated string reportfailurelogs = 4413;
 }
 
 message ArchiveRequest {
-  required uint64 archiveFileID = 8990;
+  required uint64 archivefileid = 8990;
   required MountPolicy mountpolicy = 8995;
   required string checksumtype = 9000;
   required string checksumvalue = 9010;
@@ -337,6 +305,22 @@ message ArchiveRequest {
   required string storageclass = 9090;
   required EntryLog creationlog = 9091;
   repeated ArchiveJob jobs = 9092;
+  required bool reportdecided = 9093;
+}
+
+// ------------- Retrieve Jobs -------------------------------------------------
+
+// The status of the individual retrieve jobs. The jobs are materialised 
+// by table entries in the RetrieveRequest.
+// This life cycle represented by the following enum
+// There is no complete state as the completion of one jobs implies the 
+// completion of the whole requests, and leads to the immediate deletion
+// of the request.
+
+enum RetrieveJobStatus {
+  RJS_ToTransfer = 1;
+  RJS_FailedToReport = 998;
+  RJS_Failed = 999;
 }
 
 message SchedulerRetrieveRequest {
@@ -365,6 +349,9 @@ message RetrieveRequest {
   required ArchiveFile archivefile = 9152;
   required uint32 activecopynb = 9153;
   repeated RetrieveJob jobs = 9154;
+  required string failurereporturl = 9155;
+  required string failurereportlog = 9156;
+  required bool failurereported = 9157;
 }
 
 message ValueCountPair {

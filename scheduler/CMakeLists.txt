@@ -20,7 +20,8 @@ set (CTA_SCHEDULER_SRC_FILES
   OStoreDB/MemQueues.cpp
   OStoreDB/OStoreDB.cpp
   OStoreDB/OStoreDBWithAgent.cpp
-  LabelMount.cpp)
+  LabelMount.cpp
+  DiskReportRunner.cpp)
 
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})

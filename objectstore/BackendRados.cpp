@@ -440,16 +440,6 @@ void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType
 #endif
 }
 
-void BackendRados::lockWithIoContext(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId, librados::IoCtx & radosCtx) {
-#if RADOS_LOCKING_STRATEGY == NOTIFY
-  lockNotify(name, timeout_us, lockType, clientId, radosCtx);
-#elif RADOS_LOCKING_STRATEGY == BACKOFF
-  lockBackoff(name, timeout_us, lockType, clientId, radosCtx);
-#else
-#error Wrong value for "RADOS_LOCKING_STRATEGY"
-#endif
-}
-
 void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 
     const std::string & clientId, librados::IoCtx & radosCtx) {
   // In Rados, locking a non-existing object will create it. This is not our intended

@@ -33,6 +33,9 @@ namespace cta {
 
 // Forward declaration
 class ArchiveMount;
+namespace eos {
+class DiskReporterFactory;
+}
 
 /**
  * Class representing the transfer of a single copy of a remote file to tape.
@@ -44,6 +47,7 @@ class ArchiveJob {
    * constructor of ArchiveJob.
    */
   friend class ArchiveMount;
+  friend class Scheduler;
 
 protected:
   /**
@@ -55,7 +59,7 @@ protected:
    * @param tapeFileLocation the location within the tape
    */
   ArchiveJob(
-  ArchiveMount &mount,
+  ArchiveMount *mount,
   catalogue::Catalogue & catalogue,
   const common::dataStructures::ArchiveFile &archiveFile,
   const std::string &srcURL,
@@ -76,11 +80,6 @@ public:
    * Start an asynchronous update for a batch of jobs and then make sure they complete.
    */
   static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
-public:
-  /**
-   * Launch a report to the user.
-   */
-  virtual void asyncReportComplete();
   
   /**
    * Get the report time (in seconds).
@@ -105,13 +104,26 @@ public:
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void failed(const std::string &failureReason, log::LogContext & lc);
+  virtual void transferFailed(const std::string &failureReason, log::LogContext & lc);
   
   /**
    * Get the URL used for reporting
    * @return The URL used to report to the disk system.
    */
   virtual std::string reportURL();
+
+  /**
+   * Get the report type.
+   * @return the type of report (success or failure), as a string
+   */
+  virtual std::string reportType();
+  
+  /**
+   * Triggers a scheduler update following the failure of the report. Retry policy will
+   * be applied by the scheduler. Failure to report success will also be a failure reason.
+   */
+  virtual void reportFailed(const std::string &failureReason, log::LogContext & lc);
+  
 
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
@@ -129,7 +141,12 @@ private:
   /**
    * The mount that generated this job
    */
-  ArchiveMount &m_mount;
+  ArchiveMount *m_mount = nullptr;
+
+  /**
+   * Get access to the mount or throw exception if we do not have one
+   */
+  ArchiveMount &getMount();
 
   /**
    * Reference to the name server

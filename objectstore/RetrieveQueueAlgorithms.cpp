@@ -76,14 +76,15 @@ addToLog(log::ScopedParamContainer &params) const {
 template<>
 void ContainerTraits<RetrieveQueue>::
 getLockedAndFetched(Container &cont, ScopedExclusiveLock &aqL, AgentReference &agRef,
-  const ContainerIdentifier &contId, log::LogContext &lc)
+  const ContainerIdentifier &contId, QueueType queueType, log::LogContext &lc)
 {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, QueueType::LiveJobs, lc);
+  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
 }
 
 template<>
 void ContainerTraits<RetrieveQueue>::
-getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId, log::LogContext &lc)
+getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
+  const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc)
 {
   // Try and get access to a queue.
   size_t attemptCount = 0;
@@ -92,7 +93,7 @@ retry:
   objectstore::RootEntry re(cont.m_objectStore);
   re.fetchNoLock();
   std::string rqAddress;
-  auto rql = re.dumpRetrieveQueues(QueueType::LiveJobs);
+  auto rql = re.dumpRetrieveQueues(queueType);
   for (auto &rqp : rql) {
     if (rqp.vid == cId)
       rqAddress = rqp.address;
@@ -112,7 +113,7 @@ retry:
     ScopedExclusiveLock rexl(re);
     re.fetch();
     try {
-      re.removeRetrieveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -283,6 +284,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   return ret;
 }
 
+#if 0
 template<>
 void ContainerTraits<RetrieveQueue>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
@@ -297,7 +299,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeRetrieveQueueAndCommit(cId, QueueType::LiveJobs, lc);
+      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -311,5 +313,6 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
     }
   }
 }
+#endif
 
 }} // namespace cta::objectstore

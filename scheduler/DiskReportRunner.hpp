@@ -1,4 +1,4 @@
-/*
+  /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
  *
@@ -18,23 +18,21 @@
 
 #pragma once
 
-#include "DiskReporter.hpp"
-#include <XrdCl/XrdClFileSystem.hh>
+#include "common/log/LogContext.hpp"
+#include "eos/DiskReporterFactory.hpp"
 
-#include <future>
+namespace cta {
 
-namespace cta { namespace eos {
-const uint16_t CTA_EOS_QUERY_TIMEOUT = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
-    
-class EOSReporter: public DiskReporter, public XrdCl::ResponseHandler {
+class Scheduler;
+
+class DiskReportRunner {
 public:
-  EOSReporter(const std::string & hostURL, const std::string & queryValue);
-  void asyncReport() override;
+  DiskReportRunner(Scheduler & scheduler): m_scheduler(scheduler) {}
+  
+  void runOnePass(log::LogContext & lc);
+  
 private:
-  XrdCl::FileSystem m_fs;
-  std::string m_query;
-  void HandleResponse(XrdCl::XRootDStatus *status,
-                      XrdCl::AnyObject    *response) override;
+  Scheduler & m_scheduler;
+  eos::DiskReporterFactory m_reporterFactory;
 };
-
-}} // namespace cta::disk
+} // namespace cta

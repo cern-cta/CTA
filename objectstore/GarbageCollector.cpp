@@ -264,9 +264,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
   // 3 Now decide the fate of each fetched and owned object.
   bool ownershipUdated=false;
   using serializers::ArchiveJobStatus;
-  std::set<ArchiveJobStatus> inactiveArchiveJobStatuses({ArchiveJobStatus::AJS_Complete, ArchiveJobStatus::AJS_Failed});
   using serializers::RetrieveJobStatus;
-  std::set<RetrieveJobStatus> inactiveRetrieveJobStatuses({RetrieveJobStatus::RJS_Complete, RetrieveJobStatus::RJS_Failed});
   for (auto & obj: fetchedObjects) {
     log::ScopedParamContainer params2(lc);
     params2.add("objectAddress", obj->getAddressIfSet());
@@ -297,15 +295,16 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         obj.reset();
         bool jobRequeued=false;
         for (auto &j: ar->dumpJobs()) {
-          if ((j.owner == agent.getAddressIfSet() || ar->getOwner() == agent.getAddressIfSet())
-              && !inactiveArchiveJobStatuses.count(j.status)) {
-            archiveQueuesAndRequests[j.tapePool].emplace_back(ar);
-            log::ScopedParamContainer params3(lc);
-            params3.add("tapepool", j.tapePool)
-                   .add("copynb", j.copyNb)
-                   .add("fileId", ar->getArchiveFile().archiveFileID);
-            lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
-            jobRequeued=true;
+          if ((j.owner == agent.getAddressIfSet())) {
+            try {
+              archiveQueuesAndRequests[std::make_tuple(j.tapePool, ar->getJobQueueType(j.copyNb))].emplace_back(ar);
+              log::ScopedParamContainer params3(lc);
+              params3.add("tapepool", j.tapePool)
+                     .add("copynb", j.copyNb)
+                     .add("fileId", ar->getArchiveFile().archiveFileID);
+              lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
+              jobRequeued=true;
+            } catch (ArchiveRequest::JobNotQueueable &) {}
           }
         }
         if (!jobRequeued) {
@@ -323,17 +322,25 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Get the list of vids for non failed tape files.
         std::set<std::string> candidateVids;
         for (auto & j: rr->dumpJobs()) {
-          if (!inactiveRetrieveJobStatuses.count(j.status)) {
+          if(j.status==RetrieveJobStatus::RJS_ToTransfer) {
             candidateVids.insert(rr->getArchiveFile().tapeFiles.at(j.copyNb).vid);
           }
         }
+        // Small parenthesis for non transfer cases.
         if (candidateVids.empty()) {
-          log::ScopedParamContainer params3(lc);
-          params3.add("fileId", rr->getArchiveFile().archiveFileID);
-          lc.log(log::INFO, "No active retrieve job to requeue found. Marking request for normal GC (and probably deletion).");
-          otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
-          break;
+          // The request might need to be added to the failed to report of failed queue/container.
+          try {
+            retrieveQueuesAndRequests[std::make_tuple(rr->getArchiveFile().tapeFiles.begin()->second.vid, rr->getQueueType())].emplace_back(rr);
+          } catch (cta::exception::Exception & ex) {
+            log::ScopedParamContainer params3(lc);
+            params3.add("fileId", rr->getArchiveFile().archiveFileID)
+                   .add("exceptionMessage", ex.getMessageValue());
+            lc.log(log::ERR, "Failed to determine destination queue for retrieve request. Marking request for normal GC (and probably deletion).");
+            otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
+            break;
+          }
         }
+        // Back to the transfer case.
         std::string vid;
         try {
           vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore);
@@ -344,7 +351,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[vid].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, QueueType::JobsToTransfer)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -377,15 +384,19 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
   // and validate ownership.
   // 
   // 1) Get the archive requests done.
-  for (auto & tapepool: archiveQueuesAndRequests) {
+  for (auto & archiveQueueIdAndReqs: archiveQueuesAndRequests) {
     // The number of objects to requeue could be very high. In order to limit the time taken by the
     // individual requeue operations, we limit the number of concurrently requeued objects to an 
     // arbitrary 500.
-    while (tapepool.second.size()) {
-      decltype (tapepool.second) currentJobBatch;
-      while (tapepool.second.size() && currentJobBatch.size() <= 500) {
-        currentJobBatch.emplace_back(std::move(tapepool.second.front()));
-        tapepool.second.pop_front();
+    std::string tapepool;
+    QueueType queueType;
+    std::tie(tapepool, queueType) = archiveQueueIdAndReqs.first;
+    auto & requestsList = archiveQueueIdAndReqs.second;
+    while (requestsList.size()) {
+      decltype (archiveQueueIdAndReqs.second) currentJobBatch;
+      while (requestsList.size() && currentJobBatch.size() <= 500) {
+        currentJobBatch.emplace_back(std::move(requestsList.front()));
+        requestsList.pop_front();
       }
       utils::Timer t;
       typedef ContainerAlgorithms<ArchiveQueue> AqAlgos;
@@ -394,8 +405,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       for (auto & ar: currentJobBatch) {
         // Determine the copy number and feed the queue with it.
         for (auto &j: ar->dumpJobs()) {
-          if (j.tapePool == tapepool.first) {
-            jobsToAdd.push_back({ar, j.copyNb, ar->getArchiveFile(), ar->getMountPolicy()});         
+          if (j.tapePool == tapepool) {
+            jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), cta::nullopt});         
           }
         }
       }
@@ -403,7 +414,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       std::set<std::string> jobsNotRequeued;
       std::string queueAddress;
       try {
-        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool.first, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
+        aqcl.referenceAndSwitchOwnershipIfNecessary(tapepool, queueType, agent.getAddressIfSet(), queueAddress, jobsToAdd, lc);
       } catch (AqAlgos::OwnershipSwitchFailure & failure) {
         for (auto &failedAR: failure.failedElements) {
           try {
@@ -450,7 +461,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
             params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
                   .add("copyNb", arup.copyNb)
                   .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                  .add("tapepool", tapepool.first)
+                  .add("tapepool", tapepool)
                   .add("archiveQueueObject", queueAddress)
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
@@ -486,7 +497,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       }
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
-      if (tapepool.second.size()) sleep (5);
+      if (archiveQueueIdAndReqs.second.size()) sleep (5);
     }
   }
 }
@@ -495,12 +506,16 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
     Backend & objectStore, log::LogContext & lc) {  
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
-  for (auto & tape: retrieveQueuesAndRequests) {
-    while (tape.second.size()) {
-      decltype (tape.second) currentJobBatch;
-      while (tape.second.size() && currentJobBatch.size() <= 500) {
-        currentJobBatch.emplace_back(std::move(tape.second.front()));
-        tape.second.pop_front();
+  for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
+    std::string vid;
+    QueueType queueType;
+    std::tie(vid, queueType) = retriveQueueIdAndReqs.first;
+    auto & requestsList = retriveQueueIdAndReqs.second;
+    while (requestsList.size()) {
+      decltype (retriveQueueIdAndReqs.second) currentJobBatch;
+      while (requestsList.size() && currentJobBatch.size() <= 500) {
+        currentJobBatch.emplace_back(std::move(requestsList.front()));
+        requestsList.pop_front();
       }
       double queueLockFetchTime=0;
       double queueProcessAndCommitTime=0;
@@ -517,7 +532,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, tape.first, QueueType::LiveJobs, lc);
+      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
       filesBefore=jobsSummary.files;
@@ -529,7 +544,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       for (auto & rr: currentJobBatch) {
         // Determine the copy number and feed the queue with it.
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
-          if (tf.second.vid == tape.first) {
+          if (tf.second.vid == vid) {
             jta.push_back({tf.second.copyNb, tf.second.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize, 
                 rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time});
           }
@@ -555,7 +570,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         std::list<RRUpdatedParams> rrUpdatersParams;
         for (auto & rr: currentJobBatch) {
           for (auto & tf: rr->getArchiveFile().tapeFiles) {
-            if (tf.second.vid == tape.first) {
+            if (tf.second.vid == vid) {
               rrUpdatersParams.emplace_back();
               rrUpdatersParams.back().retrieveRequest = rr;
               rrUpdatersParams.back().copyNb = tf.second.copyNb;
@@ -575,7 +590,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
             params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                   .add("copyNb", rrup.copyNb)
                   .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                  .add("vid", tape.first)
+                  .add("vid", vid)
                   .add("retreveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
@@ -627,7 +642,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       {
         log::ScopedParamContainer params(lc);
         auto jobsSummary = rq.getJobsSummary();
-        params.add("vid", tape.first)
+        params.add("vid", vid)
               .add("retrieveQueueObject", rq.getAddressIfSet())
               .add("filesAdded", filesQueued - filesDequeued)
               .add("bytesAdded", bytesQueued - bytesDequeued)
@@ -664,7 +679,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       if (ownershipUpdated) agent.commit();
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
-      if (tape.second.size()) sleep (5);
+      if (retriveQueueIdAndReqs.second.size()) sleep (5);
     }
   }
 }

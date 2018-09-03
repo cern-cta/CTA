@@ -31,7 +31,7 @@
 namespace cta { namespace objectstore {
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedArchiveQueue()
+// Helpers::getLockedAndFetchedQueue <ArchiveQueue> ()
 //------------------------------------------------------------------------------
 template <>
 void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
@@ -108,7 +108,6 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
           re.removeArchiveQueueAndCommit(tapePool, queueType, lc);
-     
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
           params.add("tapepool", tapePool)
@@ -149,7 +148,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
 
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedRetrieveQueue()
+// Helpers::getLockedAndFetchedQueue <RetrieveQueue> ()
 //------------------------------------------------------------------------------
 template <>
 void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
@@ -226,7 +225,6 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
           re.removeRetrieveQueueAndCommit(vid, queueType, lc);
-     
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
           params.add("vid", vid)
@@ -413,7 +411,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, QueueType::LiveJobs);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, QueueType::JobsToTransfer);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;

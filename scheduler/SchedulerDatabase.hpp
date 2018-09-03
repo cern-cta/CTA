@@ -48,6 +48,20 @@
 
 namespace cta {
 // Forward declarations for opaque references.
+namespace common {
+namespace admin {
+  class AdminUser;
+} // cta::common::admin
+namespace archiveRoute {
+  class ArchiveRoute;
+} // cta::common::archiveRoute
+} // cta::common
+namespace log {
+  class TimingList;
+} // cta::log
+namespace utils {
+  class Timer;
+} // cta::utils
 class ArchiveRequest;
 class LogicalLibrary;
 class RetrieveRequestDump;
@@ -57,7 +71,7 @@ class Tape;
 class TapeMount;
 class TapeSession;
 class UserIdentity;
-} /// cta
+} // cta
 
 namespace cta {
 
@@ -117,21 +131,6 @@ public:
    */
   virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(
     const std::string &tapePoolName) const = 0;
-  
-  /*
-   * Subclass allowing the tracking and automated cleanup of a 
-   * ArchiveToFile requests on the SchdulerDB for deletion.
-   * This will mark the request as to be deleted, and then add it to the agent's
-   * list. In a second step, the request will be completely deleted when calling
-   * the complete() method.
-   * In case of failure, the request will be queued to the orphaned requests queue,
-   * so that the scheduler picks it up later.
-   */ 
-  class ArchiveToFileRequestCancelation {
-  public:
-    virtual void complete(log::LogContext & lc) = 0;
-    virtual ~ArchiveToFileRequestCancelation() {};
-  };
 
   /*============ Archive management: tape server side =======================*/
   /**
@@ -154,8 +153,8 @@ public:
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    virtual std::set<cta::SchedulerDatabase::ArchiveJob *> setJobBatchSuccessful(
-      std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::LogContext & lc) = 0;
+    virtual void setJobBatchTransferred(
+      std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -169,12 +168,38 @@ public:
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
+    std::string latestError;
+    enum class ReportType: uint8_t {
+      NoReportRequired,
+      CompletionReport,
+      FailureReport,
+      Report ///< A generic grouped type
+    } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
-    virtual bool fail(const std::string & failureReason, log::LogContext & lc) = 0;
+    virtual void failTransfer(const std::string & failureReason, log::LogContext & lc) = 0;
+    virtual void failReport(const std::string & failureReason, log::LogContext & lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
+  
+  /**
+   * Get a a set of jobs to report to the clients. This function is like 
+   * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any 
+   * process can grab a batch of jobs to report and proceed with the reporting.
+   * After reporting, setJobReported will be the last step of the job's lifecycle.
+   * @return A list of process-owned jobs to report.
+   */
+  virtual std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext & logContext) = 0;
+  
+  /**
+   * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
+   * @param jobsBatch
+   * @param lc
+   */
+  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::TimingList & timingList, 
+    utils::Timer & t, log::LogContext & lc) = 0;
   
   /*============ Retrieve  management: user side ============================*/
 

@@ -196,7 +196,7 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
   }
   try {
-    m_skippedArchiveJob->failed(m_failureLog, reportPacker.m_lc);
+    m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
@@ -245,7 +245,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       reportPacker.m_lc.log(cta::log::INFO,"Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    reportPacker.m_archiveMount->reportJobsBatchWritten(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, 
+    reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, 
         reportPacker.m_lc);
   } else {
     // This is an abnormal situation: we should never flush after an error!
@@ -335,7 +335,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     reportPacker.m_lc.log(cta::log::ERR,"In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
   }
   try {
-    m_failedArchiveJob->failed(m_failureLog, reportPacker.m_lc);
+    m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
@@ -373,28 +373,16 @@ void MigrationReportPacker::WorkerThread::run(){
         free(demangledReportType);
         lc.log(cta::log::DEBUG,"In MigrationReportPacker::WorkerThread::run(): Got a new report.");
       }
-      try{
-        rep->execute(m_parent);
-      }
-      catch(const cta::ArchiveMount::FailedMigrationRecallResult& e){
-        //here we catch a failed report MigrationResult. We try to close and if that fails too
-        //we end up in the catch below
-        lc.log(cta::log::INFO,"Successfully closed client's session after the failed report MigrationResult");
-        if (m_parent.m_watchdog) {
-          m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-          m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
-        }
-        break;
-      }
+      rep->execute(m_parent);
     }
   } catch(const cta::exception::Exception& e){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMSG", e.getMessageValue());
-    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a CTA exception, cant do much more.");
+    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received a CTA exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(const std::exception& e){
@@ -409,17 +397,17 @@ void MigrationReportPacker::WorkerThread::run(){
     } else {
       params.add("exceptionType", typeid(e).name());
     }
-    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got a standard exception, cant do much more.");
+    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received a standard exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   } catch(...){
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    lc.log(cta::log::ERR, "Tried to report endOfSession or endofSessionWithErrors and got an unknown exception, cant do much more.");
+    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received an unknown exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   }

@@ -16,25 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "QueueType.hpp"
 
-#include "DiskReporter.hpp"
-#include <XrdCl/XrdClFileSystem.hh>
+namespace cta { namespace objectstore {
 
-#include <future>
+std::string toString(QueueType queueType) {
+  switch (queueType) {
+  case QueueType::FailedJobs:
+    return "failedJobs";
+  case QueueType::JobsToReport:
+    return "jobsToReport";
+  case QueueType::JobsToTransfer:
+    return "jobsToTranfer";
+  default:
+    return "Unknown queue type.";
+  }
+}
 
-namespace cta { namespace eos {
-const uint16_t CTA_EOS_QUERY_TIMEOUT = 15; // Timeout in seconds that is rounded up to the nearest 15 seconds
-    
-class EOSReporter: public DiskReporter, public XrdCl::ResponseHandler {
-public:
-  EOSReporter(const std::string & hostURL, const std::string & queryValue);
-  void asyncReport() override;
-private:
-  XrdCl::FileSystem m_fs;
-  std::string m_query;
-  void HandleResponse(XrdCl::XRootDStatus *status,
-                      XrdCl::AnyObject    *response) override;
-};
-
-}} // namespace cta::disk
+}} //namespace cta::objectstore

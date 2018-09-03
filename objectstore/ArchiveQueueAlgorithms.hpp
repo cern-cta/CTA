@@ -19,6 +19,7 @@
 #pragma once
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/optional.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -31,23 +32,75 @@ struct ContainerTraitsTypes<ArchiveQueue>
   };
   
   struct InsertedElement {
-    std::shared_ptr<ArchiveRequest> archiveRequest;
+    ArchiveRequest* archiveRequest;
     uint16_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::common::dataStructures::MountPolicy mountPolicy;
+    cta::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
+    cta::optional<serializers::ArchiveJobStatus> newStatus;
     typedef std::list<InsertedElement> list;
   };
 
   typedef ArchiveRequest::JobDump ElementDescriptor;
 
+#if 0
+=======
+  
+  class ContainerSummary: public ArchiveQueue::JobsSummary {
+  public:
+    void addDeltaToLog(ContainerSummary &, log::ScopedParamContainer &);
+  };
+  
+  static ContainerSummary getContainerSummary(Container &cont);
+  
+  template <class Element>
+  struct OpFailure {
+    Element * element;
+    std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
+  };
+  
+  typedef std::list<ElementDescriptor>                           ElementDescriptorContainer;
+  
+  template <class Element>
+  static ElementAddress getElementAddress(const Element & e) { return e.archiveRequest->getAddressIfSet(); }
+  
+  static void getLockedAndFetched(Container & cont, ScopedExclusiveLock & aqL, AgentReference & agRef,
+      const ContainerIdentifyer & contId, QueueType queueType, log::LogContext & lc);
+  
+  static void getLockedAndFetchedNoCreate(Container & cont, ScopedExclusiveLock & contLock,
+      const ContainerIdentifyer & cId, QueueType queueType, log::LogContext & lc);
+  
+  static void addReferencesAndCommit(Container & cont, InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
+  
+  static void addReferencesIfNecessaryAndCommit(Container & cont, InsertedElement::list & elemMemCont,
+      AgentReference & agentRef, log::LogContext & lc);
+  
+  static void removeReferencesAndCommit(Container & cont, OpFailure<InsertedElement>::list & elementsOpFailures);
+  
+  static void removeReferencesAndCommit(Container & cont, std::list<ElementAddress>& elementAddressList);
+  
+  static OpFailure<InsertedElement>::list switchElementsOwnership(InsertedElement::list & elemMemCont,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc);
+  
+  class OwnershipSwitchFailure: public cta::exception::Exception {
+  public:
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    OpFailure<InsertedElement>::list failedElements;
+  };
+>>>>>>> reportQueues
+#endif
   struct PoppedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
     uint16_t copyNb;
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
+    std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
-    std::string srcURL;
+    std::string latestError;
+    SchedulerDatabase::ArchiveJob::ReportType reportType;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -81,6 +134,26 @@ struct ContainerTraitsTypes<ArchiveQueue>
 };
 
 
+
+template<>
+class ContainerTraitsTypes<ArchiveQueueToReport>: public ContainerTraitsTypes<ArchiveQueue>
+{
+};
+
+
+
+template<>
+class ContainerTraitsTypes<ArchiveQueueFailed>: public ContainerTraitsTypes<ArchiveQueueToReport>
+{/* Same same */ 
+#if 0
+  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifyer &cId, log::LogContext& lc) {
+    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::FailedJobs, contLock, cId, lc);
+  }
+#endif
+};
+
+
+
 template<>
 template<typename Element>
 ContainerTraits<ArchiveQueue>::ElementAddress ContainerTraits<ArchiveQueue>::
@@ -88,5 +161,109 @@ getElementAddress(const Element &e) {
   return e.archiveRequest->getAddressIfSet();
 }
 
+}} // namespace cta::objectstore
+#if 0
+=======
+  
+  typedef std::set<ElementAddress> ElementsToSkipSet;
+  
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
+  
+  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
+      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
+
+  template <class t_PoppedElementsBatch>
+  static OpFailure<PoppedElement>::list switchElementsOwnership(t_PoppedElementsBatch & popedElementBatch,
+      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
+      log::LogContext & lc) {
+    std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+    for (auto & e: popedElementBatch.elements) {
+      ArchiveRequest & ar = *e.archiveRequest;
+      auto copyNb = e.copyNb;
+      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
+    }
+    timingList.insertAndReset("asyncUpdateLaunchTime", t);
+    auto u = updaters.begin();
+    auto e = popedElementBatch.elements.begin();
+    OpFailure<PoppedElement>::list ret;
+    while (e != popedElementBatch.elements.end()) {
+      try {
+        u->get()->wait();
+        e->archiveFile = u->get()->getArchiveFile();
+        e->archiveReportURL = u->get()->getArchiveReportURL();
+        e->errorReportURL = u->get()->getArchiveErrorReportURL();
+        e->srcURL = u->get()->getSrcURL();
+        switch(u->get()->getJobStatus()) {
+          case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
+            break;
+          case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
+            break;
+          default:
+            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
+            break;
+        }
+      } catch (...) {
+        ret.push_back(OpFailure<PoppedElement>());
+        ret.back().element = &(*e);
+        ret.back().failure = std::current_exception();
+      }
+      u++;
+      e++;
+    }
+    timingList.insertAndReset("asyncUpdateCompletionTime", t);
+    return ret;
+  }
+  
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
+    trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+  }
+protected:
+  static void trimContainerIfNeeded (Container& cont, QueueType queueType, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
+  
+};
+
+template<>
+class ContainerTraits<ArchiveQueueToReport>: public ContainerTraits<ArchiveQueue> {
+public:
+  class PoppedElementsSummary;
+  class PopCriteria {
+  public:
+    PopCriteria& operator-= (const PoppedElementsSummary &);
+    uint64_t files = 0;
+  };
+  class PoppedElementsSummary {
+  public:
+    uint64_t files = 0;
+    bool operator< (const PopCriteria & pc) {
+      return files < pc.files;
+    }
+    PoppedElementsSummary& operator+= (const PoppedElementsSummary & other) {
+      files += other.files;
+      return *this;
+    }
+    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
+  };
+
+  class PoppedElementsBatch {
+  public:
+    PoppedElementsList elements;
+    PoppedElementsSummary summary;
+    void addToLog(log::ScopedParamContainer &);
+  };
+  
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
+  
+  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
+      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
+  
+  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
+    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
+  }
+};
 
 }} // namespace cta::objectstore
+>>>>>>> reportQueues
+#endif

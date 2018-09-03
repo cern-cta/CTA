@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <string>
+
 namespace cta { namespace objectstore {
-enum class QueueType { LiveJobs, FailedJobs, JobsToReport };
+enum class QueueType { JobsToTransfer, FailedJobs, JobsToReport };
+std::string toString(QueueType queueType);
 }} // namespace cta::objectstore

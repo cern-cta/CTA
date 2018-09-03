@@ -18,13 +18,17 @@
 
 #pragma once
 
+#include <future>
+
 namespace cta { namespace eos {
 
 class DiskReporter {
 public:
-  virtual void reportArchiveFullyComplete() = 0;
-  virtual void asyncReportArchiveFullyComplete() = 0;
+  virtual void asyncReport() = 0;
+  virtual void waitReport() { m_promise.get_future().get(); }
   virtual ~DiskReporter() {};
+protected:
+  std::promise<void> m_promise;
 };
 
 }} // name space cta::clientsystem

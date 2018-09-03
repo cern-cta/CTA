@@ -45,8 +45,12 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/TimingList.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+
+#include "eos/DiskReporter.hpp"
+#include "eos/DiskReporterFactory.hpp"
 
 #include <list>
 #include <map>
@@ -55,6 +59,8 @@
 #include <string>
 
 namespace cta {
+
+class ArchiveJob;
 
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
@@ -312,6 +318,22 @@ public:
    */
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
   
+  /*============== Archive reporting support =================================*/
+  /**
+   * Batch job factory
+   * 
+   * @param filesRequested the number of files requested
+   * @param logContext
+   * @return a list of unique_ptr to the next successful archive jobs to report. 
+   * The list is empty when no more jobs can be found. Will return jobs (if 
+   * available) up to specified number.
+   */
+  std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext &logContext);
+  
+  void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
+      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
+public:    
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
 

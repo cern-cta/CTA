@@ -356,7 +356,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 //  ASSERT_FALSE(found);
 //}
 
-TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
+TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   using namespace cta;
 
   Scheduler &scheduler = getScheduler();
@@ -467,10 +467,21 @@ TEST_P(SchedulerTest, archive_and_retrieve_new_file) {
     std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
-    archiveMount->reportJobsBatchWritten(sDBarchiveJobBatch, sTapeItems, lc);
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, lc);
     archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
+  }
+  
+  {
+    // Emulate the the reporter process reporting successful transfer to tape to the disk system
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    eos::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
   }
 
   {
@@ -631,7 +642,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
       ASSERT_NE(0, archiveJobList.size());
       // Validate we got the right file
       ASSERT_EQ(archiveFileId, archiveJobList.front()->archiveFile.archiveFileID);
-      archiveJobList.front()->failed("Archive failed", lc);
+      archiveJobList.front()->transferFailed("Archive failed", lc);
     }
     // Then the request should be gone
     ASSERT_EQ(0, archiveMount->getNextJobBatch(1,1,lc).size());

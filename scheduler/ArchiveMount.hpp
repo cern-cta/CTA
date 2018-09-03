@@ -131,7 +131,7 @@ namespace cta {
      * @param successfulArchiveJobs the jobs to report
      * @param logContext
      */
-    virtual void reportJobsBatchWritten (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
+    virtual void reportJobsBatchTransferred (std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
         std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext &logContext);
     
     /**
@@ -154,7 +154,7 @@ namespace cta {
      * @param reporterState void promise to be set when the report is done asynchronously.
      * @return pointer to the reporter created.
      */
-    eos::DiskReporter * createDiskReporter(std::string & URL, std::promise<void> &reporterState);
+    eos::DiskReporter * createDiskReporter(std::string & URL);
     
     /**
      * Update the catalog with a set of TapeFileWritten events.

@@ -29,7 +29,7 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 std::string Sqlite::rcToStr(const int rc) {
   switch (rc) {
-    // Support one extended SQLite error code.
+    // Support some extended SQLite error code.
     case SQLITE_CONSTRAINT_PRIMARYKEY:
       return "Primary key error";
     case SQLITE_CONSTRAINT_UNIQUE:
@@ -78,7 +78,7 @@ std::string Sqlite::rcToStr(const int rc) {
         case SQLITE_OK:
           return "Operation successful";
         case SQLITE_PERM:
-          return "Permnission denied";
+          return "Permission denied";
         case SQLITE_RANGE:
           return "Invalid bind parameter index";
         case SQLITE_READONLY:
@@ -91,7 +91,7 @@ std::string Sqlite::rcToStr(const int rc) {
           return "TEXT or BLOCK too big";
         case SQLITE_ERROR:
           return "Generic error";
-      default:     {
+      default: {
           std::ostringstream oss;
           oss << "Unknown SQLite return code " << rc;
           return oss.str();

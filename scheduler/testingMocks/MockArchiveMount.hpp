@@ -49,7 +49,7 @@ namespace cta {
         }
       }
       
-      void reportJobsBatchWritten(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
+      void reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
           std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, cta::log::LogContext& logContext) override {
         try {
           std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
@@ -98,7 +98,7 @@ namespace cta {
       void createArchiveJobs(const unsigned int nbJobs) {
         for(unsigned int i = 0; i < nbJobs; i++) {
           m_jobs.push_back(std::unique_ptr<cta::ArchiveJob>(
-            new cta::MockArchiveJob(*this, ::cta::ArchiveMount::m_catalogue)));
+            new cta::MockArchiveJob(this, ::cta::ArchiveMount::m_catalogue)));
         }
       }
     }; // class MockArchiveMount   

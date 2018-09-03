@@ -47,8 +47,20 @@ struct ContainerTraitsTypes
 
   struct ElementDescriptor {};
 
+  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
+  typedef std::list<InsertedElement*>                 ElementPointerContainer;
+  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
+  
+  template<typename Element>
+  struct OpFailure {
+    Element *element;
+    std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
+  };
+
   struct PoppedElement {};
   struct PoppedElementsSummary;
+
   struct PopCriteria {
     PopCriteria();
     PopCriteria& operator-= (const PoppedElementsSummary &);
@@ -69,6 +81,7 @@ struct ContainerTraitsTypes
     void addToLog(log::ScopedParamContainer&);
   };
 };
+
 
 
 /**
@@ -106,22 +119,24 @@ struct ContainerTraits
     OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}
   };
 
-  class OwnershipSwitchFailure: public cta::exception::Exception {
-  public:
-    OwnershipSwitchFailure(const std::string &message): cta::exception::Exception(message) {};
+  struct OwnershipSwitchFailure: public cta::exception::Exception {
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
 
   template<typename Element>
   static ElementAddress getElementAddress(const Element &e);
-
+  
   static ContainerSummary getContainerSummary(Container &cont);
+#if 0
+  static void trimContainerIfNeeded(Container &cont);
+#endif
   static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
-    const ContainerIdentifier &cId, log::LogContext &lc);
+    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc);
+    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
   static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
     AgentReference &agentRef, log::LogContext &lc);
   static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
@@ -146,9 +161,10 @@ struct ContainerTraits
 };
 
 
-/**
- * Container algorithms
- */
+
+/************************************************************************************************************/
+/* The algorithms themselves ********************************************************************************/
+/************************************************************************************************************/
 template<typename C>
 class ContainerAlgorithms {
 public:
@@ -163,15 +179,16 @@ public:
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier & contId,
-      const typename ContainerTraits<C>::ContainerIdentifier & prevContId,
+      QueueType queueType, const typename ContainerTraits<C>::ContainerIdentifier & prevContId,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
     ContainerTraits<C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
-    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(), prevContId, timingList, t, lc);
+    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
+        prevContId, timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);
@@ -204,7 +221,16 @@ public:
       throw failureEx;
     }
   }
-  
+
+  /**
+   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
+   * (most cases except garbage collection).
+   */
+  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier &contId, QueueType queueType,
+      typename ContainerTraits<C>::InsertedElement::list &elements, log::LogContext &lc) {
+    referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
+  }
+
   /**
    * Reference objects in the container if needed and then switch their ownership (if needed).
    *
@@ -212,7 +238,7 @@ public:
    * might vary. This function is typically used by the garbage collector. We do not take care of
    * dereferencing the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifier & contId,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<C>::ContainerIdentifier & contId, QueueType queueType,
       typename ContainerTraits<C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<C>::ContainerAddress & contAddress,
       typename ContainerTraits<C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -220,13 +246,14 @@ public:
     ScopedExclusiveLock contLock;
     log::TimingList timingList;
     utils::Timer t;
-    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, lc);
+    ContainerTraits<C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
     contAddress = cont.getAddressIfSet();
     auto contSummaryBefore = ContainerTraits<C>::getContainerSummary(cont);
     timingList.insertAndReset("queueLockFetchTime", t);
     ContainerTraits<C>::addReferencesIfNecessaryAndCommit(cont, elements, m_agentReference, lc);
     timingList.insertAndReset("queueProcessAndCommitTime", t);
-    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(), previousOwnerAddress, timingList, t, lc);
+    auto failedOwnershipSwitchElements = ContainerTraits<C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
+        previousOwnerAddress, timingList, t, lc);
     timingList.insertAndReset("requestsUpdatingTime", t);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
@@ -259,17 +286,9 @@ public:
     }
   }
 
-  /**
-   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
-   * (most cases except garbage collection).
-   */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<C>::ContainerIdentifier &contId,
-      typename ContainerTraits<C>::InsertedElement::list &elements, log::LogContext &lc) {
-    referenceAndSwitchOwnership(contId, m_agentReference.getAgentAddress(), elements, lc);
-  }
-
   typename ContainerTraits<C>::PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<C>::ContainerIdentifier &contId,
+    QueueType queueType,
     typename ContainerTraits<C>::PopCriteria &popCriteria,
     log::LogContext &lc)
   {
@@ -289,7 +308,7 @@ public:
       iterationCount++;
       ScopedExclusiveLock contLock;
       try {
-        ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, lc);
+        ContainerTraits<C>::getLockedAndFetchedNoCreate(cont, contLock, contId, queueType, lc);
       } catch (typename ContainerTraits<C>::NoSuchContainer &) {
         localTimingList.insertAndReset("findLockFetchQueueTime", t);
         timingList+=localTimingList;

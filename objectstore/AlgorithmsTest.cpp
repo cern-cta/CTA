@@ -44,6 +44,7 @@ void fill_retrieve_requests(
 
   for(size_t i = 0; i < 10; ++i)
   {
+#if 0
     std::string rrAddr = agentRef.nextId("RetrieveRequest");
     agentRef.addToOwnership(rrAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -86,6 +87,49 @@ void fill_retrieve_requests(
     rr.setOwner(agentRef.getAgentAddress());
     rr.setActiveCopyNumber(1);
     rr.insert();
+#endif
+    std::string rrAddr = agentRef.nextId("RetrieveRequest");
+    agentRef.addToOwnership(rrAddr, be);
+    cta::common::dataStructures::MountPolicy mp;
+    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
+    rqc.archiveFile.archiveFileID = 123456789L;
+    rqc.archiveFile.diskFileId = "eos://diskFile";
+    rqc.archiveFile.checksumType = "";
+    rqc.archiveFile.checksumValue = "";
+    rqc.archiveFile.creationTime = 0;
+    rqc.archiveFile.reconciliationTime = 0;
+    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    rqc.archiveFile.diskInstance = "eoseos";
+    rqc.archiveFile.fileSize = 1000 + i;
+    rqc.archiveFile.storageClass = "sc";
+    rqc.archiveFile.tapeFiles[1].blockId=0;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].compressedSize=1;
+    rqc.archiveFile.tapeFiles[1].copyNb=1;
+    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
+    rqc.archiveFile.tapeFiles[1].fSeq=i;
+    rqc.archiveFile.tapeFiles[1].vid="Tape0";
+    rqc.mountPolicy.archiveMinRequestAge = 1;
+    rqc.mountPolicy.archivePriority = 1;
+    rqc.mountPolicy.creationLog.time = time(nullptr);
+    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.maxDrivesAllowed = 1;
+    rqc.mountPolicy.retrieveMinRequestAge = 1;
+    rqc.mountPolicy.retrievePriority = 1;
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue>::InsertedElement{
+      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
+    });
+    auto & rr=*requests.back().retrieveRequest;
+    rr.initialize();
+    rr.setRetrieveFileQueueCriteria(rqc);
+    cta::common::dataStructures::RetrieveRequest sReq;
+    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
+    sReq.creationLog.time=time(nullptr);
+    rr.setSchedulerRequest(sReq);
+    rr.addJob(1, 1, 1);
+    rr.setOwner(agentRef.getAgentAddress());
+    rr.setActiveCopyNumber(1);
+    rr.insert();
   }
 }
 
@@ -117,6 +161,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
   ContainerAlgorithms<ArchiveQueue>::InsertedElement::list requests;
+  std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
@@ -133,12 +178,14 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.diskInstance = "eoseos";
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue>::InsertedElement{cta::make_unique<ArchiveRequest>(arAddr, be), 1, aFile, mp});
+    archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+        cta::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
     ar.setArchiveFile(aFile);
-    ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1);
+    ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
     ar.setMountPolicy(mp);
     ar.setArchiveReportURL("");
     ar.setArchiveErrorReportURL("");
@@ -148,12 +195,12 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue> archiveAlgos(be, agentRef);
-  archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
+  archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
   // Now get the requests back
   ContainerTraits<ArchiveQueue>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
-  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
+  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
 }
 
@@ -208,20 +255,22 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
     ContainerAlgorithms<RetrieveQueue> retrieveAlgos2(be2, agentRef2);
-    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", a2, a1, requests2, lc);
+    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", QueueType::JobsToTransfer,
+      a2, a1, requests2, lc);
   }
 
   ContainerAlgorithms<RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
-    retrieveAlgos.referenceAndSwitchOwnership("VID", requests, lc);
+    retrieveAlgos.referenceAndSwitchOwnership("VID", QueueType::JobsToTransfer,
+      agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
     ContainerTraits<RetrieveQueue>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
-    auto poppedJobs = retrieveAlgos.popNextBatch("VID", popCriteria, lc);
+    auto poppedJobs = retrieveAlgos.popNextBatch("VID", QueueType::JobsToTransfer, popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements

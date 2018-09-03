@@ -38,7 +38,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpArchiveQueues(objectstore::QueueType::LiveJobs);
+    m_jobQueuesQueue = re.dumpArchiveQueues(objectstore::QueueType::JobsToTransfer);
   }
 
   // Set queue iterator to the first queue in the list
@@ -141,7 +141,7 @@ QueueItor(objectstore::Backend &objectStore, const std::string &queue_id) :
     objectstore::RootEntry re(m_objectStore);
     objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    m_jobQueuesQueue = re.dumpRetrieveQueues(objectstore::QueueType::LiveJobs);
+    m_jobQueuesQueue = re.dumpRetrieveQueues(objectstore::QueueType::JobsToTransfer);
   }
 
   // Find the first queue
