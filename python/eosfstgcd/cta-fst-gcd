@@ -34,23 +34,32 @@ class UserError(Exception):
 
 class Gc:
   def get_env_mgmhost(self):
+    logger = logging.getLogger('gc')
+
     if "EOS_MGM_URL" in self.env:
       mgm_url = self.env["EOS_MGM_URL"]
-      if mgm_url:
-        return re.sub("^x?root://", "", mgm_url)
-
-  def get_sysconfig_file_mgmhost(self, sysconfig_file):
-    for line in sysconfig_file:
-      mgmhostline = re.match("^EOS_MGM_HOST=.*", line)
-      if mgmhostline:
-        splitmgmhostline = mgmhostline.group(0).split('=')
-        if 2 == len(splitmgmhostline):
-          return splitmgmhostline[1]
+      mgmhost = re.sub("^x?root://", "", mgm_url)
+      logger.info("Determined MGM host {} from EOS_MGM_URL".format(mgmhost))
+      return mgmhost
+ 
+    logger.info("The environment variable EOS_MGM_URL is not set")
 
   def get_syconfig_mgmhost(self):
-    if os.path.isfile("/etc/sysconfig/eos_env"):
-      sysconfig_file = open("/etc/sysconfig/eos_env", "r")
-      return self.get_sysconfig_file_mgmhost(sysconfig_file)
+    logger = logging.getLogger('gc')
+    eos_env = '/etc/sysconfig/eos_env'
+
+    if os.path.isfile(eos_env) and os.access(eos_env, os.W_OK):
+      sysconfig_file = open(eos_env, "r")
+      for line in sysconfig_file:
+        mgmhostline = re.match("^EOS_MGM_HOST=.*", line)
+        if mgmhostline:
+          splitmgmhostline = mgmhostline.group(0).split('=')
+          if 2 == len(splitmgmhostline):
+            mgmhost = splitmgmhostline[1]
+            logger.info("Extracted MGM host {} from {}".format(mgmhost, eos_env))
+            return mgmhost
+
+    logger.info("Could not determine MGM host from {}".format(eos_env))
 
   def setmgmhost(self):
     self.mgmhost = self.get_env_mgmhost()
@@ -61,7 +70,7 @@ class Gc:
     if self.mgmhost:
       return
 
-    raise Exception("Failed to determine the MGM host")
+    raise UserError("Could not determine the MGM host from EOS_MGM_URL or from /etc/sysconfig/eos_env")
 
   def configuredummylogging(self):
     config = {
@@ -132,6 +141,7 @@ class Gc:
     self.localfilesystempaths = []
     self.nbfilesconsideredsincelastreport = 0
     self.nbfilesbeforereport = 10000
+    self.mgmhost = None
 
   def eosfsls(self):
     logger = logging.getLogger('gc')
@@ -227,6 +237,8 @@ class Gc:
 
   def logconf(self):
     logger = logging.getLogger('gc')
+    if self.mgmhost:
+      logger.info("config mgmhost={}".format(self.mgmhost))
     logger.info("config minfreebytes={}".format(self.minfreebytes))
     logger.info("config gcagesecs={}".format(self.gcagesecs))
 
@@ -240,6 +252,10 @@ class Gc:
     config.read(self.conffilepath)
 
     try:
+      try:
+        self.mgmhost = config.get('main', 'mgmhost')
+      except ConfigParser.NoOptionError:
+        pass
       self.minfreebytes = config.getint('main', 'minfreebytes')
       self.gcagesecs = config.getint('main', 'gcagesecs')
     except ConfigParser.Error as err:
@@ -250,15 +266,15 @@ class Gc:
     if 'daemon' != username:
       raise UserError('{} must be executed as user daemon and not user {}'.format(self.programname, username))
 
-    self.setmgmhost()
-
     self.configurelogging()
     logger = logging.getLogger('gc')
     logger.info('{} started'.format(self.programname))
-    logger.info('The EOS MGM host is {}'.format(self.mgmhost))
     logger.info('The fqdn of this machine is {}'.format(self.fqdn))
     self.readconf()
     self.logconf()
+    if not self.mgmhost:
+      self.setmgmhost()
+    logger.info('The EOS MGM host is {}'.format(self.mgmhost))
 
     minperiod = 300 # In seconds
 
