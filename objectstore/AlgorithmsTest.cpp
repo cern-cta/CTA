@@ -36,7 +36,7 @@
 namespace unitTests {
 
 void fill_retrieve_requests(
-  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue_t,cta::objectstore::RetrieveQueue>::InsertedElement::list &requests,
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueue>::InsertedElement::list &requests,
   cta::objectstore::BackendVFS &be,
   cta::objectstore::AgentReference &agentRef)
 {
@@ -73,7 +73,7 @@ void fill_retrieve_requests(
     rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue>::InsertedElement{
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement{
       cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_Pending
     });
     auto &rr = *requests.back().retrieveRequest;
@@ -116,7 +116,7 @@ void fill_retrieve_requests(
     rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue>::InsertedElement{
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement{
       cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
     });
     auto & rr=*requests.back().retrieveRequest;
@@ -160,7 +160,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue>::InsertedElement::list requests;
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueue>::InsertedElement::list requests;
   std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
@@ -179,7 +179,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueue>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
         cta::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
@@ -194,10 +194,10 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
   }
-  ContainerAlgorithms<ArchiveQueue_t,ArchiveQueue> archiveAlgos(be, agentRef);
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueue> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
   // Now get the requests back
-  ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PopCriteria popCriteria;
+  ContainerTraits<ArchiveQueue,ArchiveQueue>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);
@@ -230,7 +230,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue>::InsertedElement::list requests;
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement::list requests;
   fill_retrieve_requests(requests, be, agentRef);
 
   {
@@ -249,17 +249,17 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     rel2.release();
     agent2.initialize();
     agent2.insertAndRegisterSelf(lc);
-    ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue>::InsertedElement::list requests2;
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement::list requests2;
     fill_retrieve_requests(requests2, be2, agentRef2);
 
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
-    ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue> retrieveAlgos2(be2, agentRef2);
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueue> retrieveAlgos2(be2, agentRef2);
     retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", QueueType::JobsToTransfer,
       a2, a1, requests2, lc);
   }
 
-  ContainerAlgorithms<RetrieveQueue_t,RetrieveQueue> retrieveAlgos(be, agentRef);
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueue> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
@@ -267,19 +267,19 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
       agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
-    ContainerTraits<RetrieveQueue_t,RetrieveQueue>::PopCriteria popCriteria;
+    ContainerTraits<RetrieveQueue,RetrieveQueue>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
     auto poppedJobs = retrieveAlgos.popNextBatch("VID", QueueType::JobsToTransfer, popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements
-    ContainerTraits<RetrieveQueue_t,RetrieveQueue>::PoppedElementsSummary s;
+    ContainerTraits<RetrieveQueue,RetrieveQueue>::PoppedElementsSummary s;
     for(auto &e: poppedJobs.elements) {
-      s += ContainerTraits<RetrieveQueue_t,RetrieveQueue>::getElementSummary(e);
+      s += ContainerTraits<RetrieveQueue,RetrieveQueue>::getElementSummary(e);
     }
     ASSERT_EQ(s, poppedJobs.summary);
-  } catch (ContainerTraits<RetrieveQueue_t,RetrieveQueue>::OwnershipSwitchFailure & ex) {
+  } catch (ContainerTraits<RetrieveQueue,RetrieveQueue>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {
         throw e.failure;

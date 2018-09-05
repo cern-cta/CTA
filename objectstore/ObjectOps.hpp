@@ -33,8 +33,6 @@ class AgentReference;
 class ScopedLock;
 class ScopedExclusiveLock;
 template<typename Q,typename C> struct ContainerTraits;
-struct ArchiveQueue_t;
-struct RetrieveQueue_t;
 struct ArchiveQueue;
 struct ArchiveQueueToReport;
 struct ArchiveQueueFailed;
@@ -46,10 +44,10 @@ class ObjectOpsBase {
   friend class ScopedExclusiveLock;
   friend class GenericObject;
   friend class Helpers;
-  friend ContainerTraits<ArchiveQueue_t,ArchiveQueue>;
-  friend ContainerTraits<ArchiveQueue_t,ArchiveQueueToReport>;
-  friend ContainerTraits<ArchiveQueue_t,ArchiveQueueFailed>;
-  friend ContainerTraits<RetrieveQueue_t,RetrieveQueue>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueue>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueue>;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),

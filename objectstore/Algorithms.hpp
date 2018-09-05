@@ -31,6 +31,7 @@
 
 namespace cta { namespace objectstore {
 
+#if 0
 // Generic queue types for partial specialisation
 struct ArchiveQueue_t  {};
 struct RetrieveQueue_t {};
@@ -160,6 +161,7 @@ struct ContainerTraits
   static const std::string c_containerTypeName; // = "genericContainer"
   static const std::string c_identifierType;    // = "genericId"
 };
+#endif
 
 
 

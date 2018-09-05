@@ -23,13 +23,15 @@
 
 namespace cta { namespace objectstore {
 
+// Partial specialisation of ArchiveQueue traits
+
 template<typename C>
-struct ContainerTraitsTypes<ArchiveQueue_t,C>
+struct ContainerTraits<ArchiveQueue,C>
 { 
-  struct ContainerSummary: public C::JobsSummary {
+  struct ContainerSummary : public ArchiveQueue::JobsSummary {
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
-  
+
   struct InsertedElement {
     ArchiveRequest* archiveRequest;
     uint16_t copyNb;
@@ -63,6 +65,7 @@ struct ContainerTraitsTypes<ArchiveQueue_t,C>
     uint64_t bytes = 0;
     uint64_t files = 0;
     bool operator< (const PopCriteria & pc) {
+      // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
       return bytes < pc.bytes && files < pc.files;
     }
     PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
@@ -81,17 +84,384 @@ struct ContainerTraitsTypes<ArchiveQueue_t,C>
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer&);
   };
+
+  typedef C                                           Container;
+  typedef std::string                                 ContainerAddress;
+  typedef std::string                                 ElementAddress;
+  typedef std::string                                 ContainerIdentifier;
+  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
+  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
+  typedef std::set<ElementAddress>                    ElementsToSkipSet;
+
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
+
+  template<typename Element>
+  struct OpFailure {
+    Element *element;
+    std::exception_ptr failure;
+    typedef std::list<OpFailure> list;
+
+    OpFailure() {}
+    OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}
+  };
+
+  struct OwnershipSwitchFailure: public cta::exception::Exception {
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
+    typename OpFailure<InsertedElement>::list failedElements;
+  };
+
+  template<typename Element>
+  static ElementAddress getElementAddress(const Element &e) {
+    return e.archiveRequest->getAddressIfSet();
+  }
+  
+  static ContainerSummary getContainerSummary(Container &cont);
+  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc) {
+    trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+  }
+  static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
+    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+  static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
+  static void addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
+    AgentReference &agentRef, log::LogContext &lc);
+  static void addReferencesIfNecessaryAndCommit(Container &cont, typename InsertedElement::list &elemMemCont,
+    AgentReference &agentRef, log::LogContext &lc);
+  static void removeReferencesAndCommit(Container &cont, typename OpFailure<InsertedElement>::list &elementsOpFailures);
+  static void removeReferencesAndCommit(Container &cont, std::list<ElementAddress> &elementAddressList);
+
+  static typename OpFailure<InsertedElement>::list
+  switchElementsOwnership(typename InsertedElement::list &elemMemCont, const ContainerAddress &contAddress,
+    const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
+
+  static typename OpFailure<PoppedElement>::list
+  switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
+    const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
+
+  static PoppedElementsSummary getElementSummary(const PoppedElement &);
+  static PoppedElementsBatch getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria,
+    ElementsToSkipSet &elemtsToSkip, log::LogContext &lc);
+
+  static const std::string c_containerTypeName;
+  static const std::string c_identifierType;
+
+private:
+  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
 
-#if 0
-template<typename Element>
+// ArchiveQueue partial specialisations for ContainerTraits.
+//
+// Add a full specialisation to override for a specific ArchiveQueue type.
+
 template<typename C>
-auto ContainerTraits<ArchiveQueue_t,C>::getElementAddress(const Element &e) {
-  return e.archiveRequest->getAddressIfSet();
+void ContainerTraits<ArchiveQueue,C>::ContainerSummary::
+addDeltaToLog(ContainerSummary &previous, log::ScopedParamContainer &params) {
+  params.add("queueJobsBefore", previous.jobs)
+        .add("queueBytesBefore", previous.bytes)
+        .add("queueJobsAfter", jobs)
+        .add("queueBytesAfter", bytes);
+}
+
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::PopCriteria::
+operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
+  bytes -= pes.bytes;
+  files -= pes.files;
+  return *this;
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::PoppedElementsSummary::
+addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
+  params.add("filesAdded", files - previous.files)
+        .add("bytesAdded", bytes - previous.bytes)
+        .add("filesBefore", previous.files)
+        .add("bytesBefore", previous.bytes)
+        .add("filesAfter", files)
+        .add("bytesAfter", bytes);
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::PoppedElementsList::
+insertBack(PoppedElementsList &&insertedList) {
+  for (auto &e: insertedList) {
+    std::list<PoppedElement>::emplace_back(std::move(e));
+  }
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::PoppedElementsList::
+insertBack(PoppedElement &&e) {
+  std::list<PoppedElement>::emplace_back(std::move(e));
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::PoppedElementsBatch::
+addToLog(log::ScopedParamContainer &params) {
+  params.add("bytes", summary.bytes)
+        .add("files", summary.files);
+}
+
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::
+getContainerSummary(Container& cont) -> ContainerSummary {
+  ContainerSummary ret;
+#if 0
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+#endif
+  return ret;
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
+  const ContainerIdentifier & cId, log::LogContext& lc)
+{
+  if (cont.isEmpty()) {
+    // The current implementation is done unlocked.
+    contLock.release();
+    try {
+      // The queue should be removed as it is empty.
+      RootEntry re(cont.m_objectStore);
+      ScopedExclusiveLock rexl(re);
+      re.fetch();
+      re.removeArchiveQueueAndCommit(cId, queueType, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("Message", ex.getMessageValue());
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
+    }
+    //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  }
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
+  const ContainerIdentifier& contId, QueueType queueType, log::LogContext& lc)
+{
+  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, const ContainerIdentifier& cId,
+  QueueType queueType, log::LogContext& lc)
+{
+  // Try and get access to a queue.
+  size_t attemptCount = 0;
+  retry:
+  objectstore::RootEntry re(cont.m_objectStore);
+  re.fetchNoLock();
+  std::string aqAddress;
+  auto aql = re.dumpArchiveQueues(queueType);
+  for (auto & aqp : aql) {
+    if (aqp.tapePool == cId)
+      aqAddress = aqp.address;
+  }
+  if (!aqAddress.size()) throw NoSuchContainer("In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): no such archive queue");
+  // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
+  cont.setAddress(aqAddress);
+  //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
+  try {
+    if (contLock.isLocked()) contLock.release();
+    contLock.lock(cont);
+    cont.fetch();
+    //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
+  } catch (cta::exception::Exception & ex) {
+    // The queue is now absent. We can remove its reference in the root entry.
+    // A new queue could have been added in the mean time, and be non-empty.
+    // We will then fail to remove from the RootEntry (non-fatal).
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
+    try {
+      re.removeArchiveQueueAndCommit(cId, queueType, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
+    } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet())
+            .add("Message", ex.getMessageValue());
+      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+    } catch (RootEntry::NoSuchArchiveQueue & ex) {
+      // Somebody removed the queue in the mean time. Barely worth mentioning.
+      log::ScopedParamContainer params(lc);
+      params.add("tapepool", cId)
+            .add("queueObject", cont.getAddressIfSet());
+      lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
+    }
+    //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
+    attemptCount++;
+    goto retry;
+  }
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+addReferencesAndCommit(Container& cont, typename InsertedElement::list& elemMemCont, AgentReference& agentRef,
+  log::LogContext& lc)
+{
+  std::list<ArchiveQueue::JobToAdd> jobsToAdd;
+  for (auto & e: elemMemCont) {
+    ElementDescriptor jd;
+    jd.copyNb = e.copyNb;
+    jd.tapePool = cont.getTapePool();
+    jd.owner = cont.getAddressIfSet();
+    ArchiveRequest & ar = *e.archiveRequest;
+    cta::common::dataStructures::MountPolicy mp;
+    if (e.mountPolicy) 
+      mp=*e.mountPolicy;
+    else
+      mp=cta::common::dataStructures::MountPolicy();
+    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
+        mp, time(nullptr)});
+  }
+  cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::list& elemMemCont, AgentReference& agentRef,
+  log::LogContext& lc)
+{
+  std::list<ArchiveQueue::JobToAdd> jobsToAdd;
+  for (auto &e : elemMemCont) {
+    ElementDescriptor jd;
+    jd.copyNb = e.copyNb;
+    jd.tapePool = cont.getTapePool();
+    jd.owner = cont.getAddressIfSet();
+    ArchiveRequest & ar = *e.archiveRequest;
+    cta::common::dataStructures::MountPolicy mp = e.mountPolicy ? *e.mountPolicy : cta::common::dataStructures::MountPolicy();
+    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize, mp, time(nullptr)});
+  }
+  cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+removeReferencesAndCommit(Container& cont, typename OpFailure<InsertedElement>::list& elementsOpFailures) {
+  std::list<std::string> elementsToRemove;
+  for (auto &eof : elementsOpFailures) {
+    elementsToRemove.emplace_back(eof.element->archiveRequest->getAddressIfSet());
+  }
+  cont.removeJobsAndCommit(elementsToRemove);
+}
+
+template<typename C>
+void ContainerTraits<ArchiveQueue,C>::
+removeReferencesAndCommit(Container& cont, std::list<ElementAddress>& elementAddressList) {
+  cont.removeJobsAndCommit(elementAddressList);
+}
+
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::
+switchElementsOwnership(typename InsertedElement::list& elemMemCont, const ContainerAddress& contAddress,
+  const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer &t, log::LogContext& lc)
+  -> typename OpFailure<InsertedElement>::list
+{
+  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+  for (auto & e: elemMemCont) {
+    ArchiveRequest & ar = *e.archiveRequest;
+    auto copyNb = e.copyNb;
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
+  }
+  timingList.insertAndReset("asyncUpdateLaunchTime", t);
+  auto u = updaters.begin();
+  auto e = elemMemCont.begin();
+  typename OpFailure<InsertedElement>::list ret;
+  while (e != elemMemCont.end()) {
+    try {
+      u->get()->wait();
+    } catch (...) {
+      ret.push_back(OpFailure<InsertedElement>());
+      ret.back().element = &(*e);
+      ret.back().failure = std::current_exception();
+    }
+    u++;
+    e++;
+  }
+  timingList.insertAndReset("asyncUpdateCompletionTime", t);
+  return ret;
+}
+
+#if 0
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::
+switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
+  const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc)
+  -> typename OpFailure<PoppedElement>::list
+{
+  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+  for (auto & e: poppedElementBatch.elements) {
+    ArchiveRequest & ar = *e.archiveRequest;
+    auto copyNb = e.copyNb;
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+  }
+  timingList.insertAndReset("asyncUpdateLaunchTime", t);
+  auto u = updaters.begin();
+  auto e = poppedElementBatch.elements.begin();
+  OpFailure<PoppedElement>::list ret;
+  while (e != poppedElementBatch.elements.end()) {
+    try {
+      u->get()->wait();
+      e->archiveFile = u->get()->getArchiveFile();
+      e->archiveReportURL = u->get()->getArchiveReportURL();
+      e->errorReportURL = u->get()->getArchiveErrorReportURL();
+      e->srcURL = u->get()->getSrcURL();
+    } catch (...) {
+      ret.push_back(OpFailure<PoppedElement>());
+      ret.back().element = &(*e);
+      ret.back().failure = std::current_exception();
+    }
+    u++;
+    e++;
+  }
+  timingList.insertAndReset("asyncUpdateCompletionTime", t);
+  return ret;
 }
 #endif
+
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::
+getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
+  PoppedElementsSummary ret;
+  ret.bytes = poppedElement.bytes;
+  ret.files = 1;
+  return ret;
+}
+
+
+
+
+
+
+// ArchiveQueue_t partial specialisations for ContainerTraits.
+//
+// Add a full specialisation to override for a specific ArchiveQueue... class.
+
+#if 0
+static PoppedElementsSummary getElementSummary(const PoppedElement &poppedElement) {
+  PoppedElementsSummary ret;
+  ret.files = 1;
+  return ret;
+}
+#endif
+
+
+
 
 }} // namespace cta::objectstore
 
