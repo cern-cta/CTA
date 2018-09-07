@@ -29,32 +29,20 @@ const std::string ContainerTraits<ArchiveQueue,ArchiveQueue>::c_containerTypeNam
 template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueue>::c_identifierType = "tapepool";
 
-
-
-#if 0
-#if 0
-<<<<<<< HEAD
-=======
-
-void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::insertBack(PoppedElementsList&& insertedList) {
-  for (auto &e: insertedList) {
-    std::list<PoppedElement>::emplace_back(std::move(e));
-  }
+template<>
+auto ContainerTraits<ArchiveQueue,ArchiveQueue>::
+getContainerSummary(Container& cont) -> ContainerSummary {
+  ContainerSummary ret;
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+  return ret;
 }
 
-void ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElementsList::insertBack(PoppedElement&& e) {
-  std::list<PoppedElement>::emplace_back(std::move(e));
+template<>
+void ContainerTraits<ArchiveQueue,ArchiveQueue>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
+  log::LogContext &lc)
+{
+  trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
 }
-
-auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PopCriteria::operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
-  bytes -= pes.bytes;
-  files -= pes.files;
-  return *this;
-}
-
->>>>>>> reportQueues
-#endif
-#endif
 
 }} // namespace cta::objectstore
-

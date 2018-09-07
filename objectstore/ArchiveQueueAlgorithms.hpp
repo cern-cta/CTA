@@ -118,9 +118,7 @@ struct ContainerTraits<ArchiveQueue,C>
   
   static ContainerSummary getContainerSummary(Container &cont);
   static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
-    const ContainerIdentifier &cId, log::LogContext &lc) {
-    trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
-  }
+    const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
     const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
   static void getLockedAndFetchedNoCreate(Container &cont, ScopedExclusiveLock &contLock,
@@ -169,7 +167,7 @@ addDeltaToLog(ContainerSummary &previous, log::ScopedParamContainer &params) {
 
 template<typename C>
 auto ContainerTraits<ArchiveQueue,C>::PopCriteria::
-operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
+operator-=(const PoppedElementsSummary &pes) -> PopCriteria& {
   bytes -= pes.bytes;
   files -= pes.files;
   return *this;
@@ -205,16 +203,6 @@ void ContainerTraits<ArchiveQueue,C>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
-}
-
-template<typename C>
-auto ContainerTraits<ArchiveQueue,C>::
-getContainerSummary(Container& cont) -> ContainerSummary {
-  ContainerSummary ret;
-#if 0
-  ret.JobsSummary::operator=(cont.getJobsSummary());
-#endif
-  return ret;
 }
 
 template<typename C>
@@ -421,6 +409,17 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e->archiveReportURL = u->get()->getArchiveReportURL();
       e->errorReportURL = u->get()->getArchiveErrorReportURL();
       e->srcURL = u->get()->getSrcURL();
+      switch(u->get()->getJobStatus()) {
+        case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
+          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
+          break;
+        case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
+          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
+          break;
+        default:
+          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
+          break;
+      }
     } catch (...) {
       ret.push_back(OpFailure<PoppedElement>());
       ret.back().element = &(*e);
@@ -459,105 +458,3 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 }} // namespace cta::objectstore
-
-#if 0
-  typedef std::set<ElementAddress> ElementsToSkipSet;
-  
-  static PoppedElementsSummary getElementSummary(const PoppedElement &);
-  
-  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
-      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
-
-  template <class t_PoppedElementsBatch>
-  static OpFailure<PoppedElement>::list switchElementsOwnership(t_PoppedElementsBatch & popedElementBatch,
-      const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-      log::LogContext & lc) {
-    std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
-    for (auto & e: popedElementBatch.elements) {
-      ArchiveRequest & ar = *e.archiveRequest;
-      auto copyNb = e.copyNb;
-      updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
-    }
-    timingList.insertAndReset("asyncUpdateLaunchTime", t);
-    auto u = updaters.begin();
-    auto e = popedElementBatch.elements.begin();
-    OpFailure<PoppedElement>::list ret;
-    while (e != popedElementBatch.elements.end()) {
-      try {
-        u->get()->wait();
-        e->archiveFile = u->get()->getArchiveFile();
-        e->archiveReportURL = u->get()->getArchiveReportURL();
-        e->errorReportURL = u->get()->getArchiveErrorReportURL();
-        e->srcURL = u->get()->getSrcURL();
-        switch(u->get()->getJobStatus()) {
-          case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
-            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
-            break;
-          case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
-            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
-            break;
-          default:
-            e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
-            break;
-        }
-      } catch (...) {
-        ret.push_back(OpFailure<PoppedElement>());
-        ret.back().element = &(*e);
-        ret.back().failure = std::current_exception();
-      }
-      u++;
-      e++;
-    }
-    timingList.insertAndReset("asyncUpdateCompletionTime", t);
-    return ret;
-  }
-  
-  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
-    trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
-  }
-protected:
-  static void trimContainerIfNeeded (Container& cont, QueueType queueType, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc);
-  
-};
-
-template<>
-class ContainerTraits<ArchiveQueueToReport>: public ContainerTraits<ArchiveQueue> {
-public:
-  class PoppedElementsSummary;
-  class PopCriteria {
-  public:
-    PopCriteria& operator-= (const PoppedElementsSummary &);
-    uint64_t files = 0;
-  };
-  class PoppedElementsSummary {
-  public:
-    uint64_t files = 0;
-    bool operator< (const PopCriteria & pc) {
-      return files < pc.files;
-    }
-    PoppedElementsSummary& operator+= (const PoppedElementsSummary & other) {
-      files += other.files;
-      return *this;
-    }
-    void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer &);
-  };
-
-  class PoppedElementsBatch {
-  public:
-    PoppedElementsList elements;
-    PoppedElementsSummary summary;
-    void addToLog(log::ScopedParamContainer &);
-  };
-  
-  static PoppedElementsSummary getElementSummary(const PoppedElement &);
-  
-  static PoppedElementsBatch getPoppingElementsCandidates(Container & cont, PopCriteria & unfulfilledCriteria,
-      ElementsToSkipSet & elemtsToSkip, log::LogContext & lc);
-  
-  static void trimContainerIfNeeded (Container& cont, ScopedExclusiveLock & contLock, const ContainerIdentifyer & cId, log::LogContext& lc) {
-    ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
-  }
-};
->>>>>>> reportQueues
-#endif

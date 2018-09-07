@@ -44,7 +44,6 @@ void fill_retrieve_requests(
 
   for(size_t i = 0; i < 10; ++i)
   {
-#if 0
     std::string rrAddr = agentRef.nextId("RetrieveRequest");
     agentRef.addToOwnership(rrAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -74,7 +73,7 @@ void fill_retrieve_requests(
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement{
-      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_Pending
+      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();
@@ -82,49 +81,6 @@ void fill_retrieve_requests(
     cta::common::dataStructures::RetrieveRequest sReq;
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
     sReq.creationLog.time = time(nullptr);
-    rr.setSchedulerRequest(sReq);
-    rr.addJob(1, 1, 1);
-    rr.setOwner(agentRef.getAgentAddress());
-    rr.setActiveCopyNumber(1);
-    rr.insert();
-#endif
-    std::string rrAddr = agentRef.nextId("RetrieveRequest");
-    agentRef.addToOwnership(rrAddr, be);
-    cta::common::dataStructures::MountPolicy mp;
-    cta::common::dataStructures::RetrieveFileQueueCriteria rqc;
-    rqc.archiveFile.archiveFileID = 123456789L;
-    rqc.archiveFile.diskFileId = "eos://diskFile";
-    rqc.archiveFile.checksumType = "";
-    rqc.archiveFile.checksumValue = "";
-    rqc.archiveFile.creationTime = 0;
-    rqc.archiveFile.reconciliationTime = 0;
-    rqc.archiveFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
-    rqc.archiveFile.diskInstance = "eoseos";
-    rqc.archiveFile.fileSize = 1000 + i;
-    rqc.archiveFile.storageClass = "sc";
-    rqc.archiveFile.tapeFiles[1].blockId=0;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].compressedSize=1;
-    rqc.archiveFile.tapeFiles[1].copyNb=1;
-    rqc.archiveFile.tapeFiles[1].creationTime=time(nullptr);
-    rqc.archiveFile.tapeFiles[1].fSeq=i;
-    rqc.archiveFile.tapeFiles[1].vid="Tape0";
-    rqc.mountPolicy.archiveMinRequestAge = 1;
-    rqc.mountPolicy.archivePriority = 1;
-    rqc.mountPolicy.creationLog.time = time(nullptr);
-    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
-    rqc.mountPolicy.maxDrivesAllowed = 1;
-    rqc.mountPolicy.retrieveMinRequestAge = 1;
-    rqc.mountPolicy.retrievePriority = 1;
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement{
-      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
-    });
-    auto & rr=*requests.back().retrieveRequest;
-    rr.initialize();
-    rr.setRetrieveFileQueueCriteria(rqc);
-    cta::common::dataStructures::RetrieveRequest sReq;
-    sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-    sReq.creationLog.time=time(nullptr);
     rr.setSchedulerRequest(sReq);
     rr.addJob(1, 1, 1);
     rr.setOwner(agentRef.getAgentAddress());

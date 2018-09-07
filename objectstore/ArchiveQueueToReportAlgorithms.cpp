@@ -75,4 +75,20 @@ operator-=(const PoppedElementsSummary& pes) -> PopCriteria & {
   return *this;
 }
 
+template<>
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
+getContainerSummary(Container& cont) -> ContainerSummary {
+  ContainerSummary ret;
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+  return ret;
+}
+
+template<>
+void ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
+  log::LogContext &lc)
+{
+  trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
+}
+
 }} // namespace cta::objectstore
