@@ -85,7 +85,7 @@ struct ContainerTraits<RetrieveQueue,C>
     void addToLog(log::ScopedParamContainer&) const;
   };
 
-  typedef C                                           Container;
+  typedef RetrieveQueue                               Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
   typedef std::string                                 ContainerIdentifier;

@@ -19,6 +19,7 @@
 #pragma once
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/make_unique.hpp"
 #include "common/optional.hpp"
 
 namespace cta { namespace objectstore {
@@ -85,7 +86,7 @@ struct ContainerTraits<ArchiveQueue,C>
     void addToLog(log::ScopedParamContainer&);
   };
 
-  typedef C                                           Container;
+  typedef ArchiveQueue                                Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
   typedef std::string                                 ContainerIdentifier;
@@ -397,7 +398,6 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
   return ret;
 }
 
-#if 0
 template<typename C>
 auto ContainerTraits<ArchiveQueue,C>::
 switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
@@ -408,12 +408,12 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   for (auto & e: poppedElementBatch.elements) {
     ArchiveRequest & ar = *e.archiveRequest;
     auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress));
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
   auto e = poppedElementBatch.elements.begin();
-  OpFailure<PoppedElement>::list ret;
+  typename OpFailure<PoppedElement>::list ret;
   while (e != poppedElementBatch.elements.end()) {
     try {
       u->get()->wait();
@@ -432,7 +432,6 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   timingList.insertAndReset("asyncUpdateCompletionTime", t);
   return ret;
 }
-#endif
 
 template<typename C>
 auto ContainerTraits<ArchiveQueue,C>::
@@ -443,25 +442,21 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   return ret;
 }
 
-
-
-
-
-
-// ArchiveQueue_t partial specialisations for ContainerTraits.
-//
-// Add a full specialisation to override for a specific ArchiveQueue... class.
-
-#if 0
-static PoppedElementsSummary getElementSummary(const PoppedElement &poppedElement) {
-  PoppedElementsSummary ret;
-  ret.files = 1;
+template<typename C>
+auto ContainerTraits<ArchiveQueue,C>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+  log::LogContext& lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  for (auto &cjfq: candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
+    common::dataStructures::ArchiveFile(), "", "", "", "", SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired });
+    ret.summary.bytes += cjfq.size;
+    ret.summary.files++;
+  }
   return ret;
 }
-#endif
-
-
-
 
 }} // namespace cta::objectstore
 

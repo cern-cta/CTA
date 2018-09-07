@@ -18,7 +18,6 @@
 
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -33,41 +32,6 @@ const std::string ContainerTraits<ArchiveQueue,ArchiveQueue>::c_identifierType =
 
 
 #if 0
-#if 0
-<<<<<<< HEAD
->>>>>>> reportQueues
-#endif
-
-
-template<>
-auto ContainerTraits<ArchiveQueue_t,ArchiveQueue>::getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria,
-    ElementsToSkipSet& elemtsToSkip, log::LogContext& lc) -> PoppedElementsBatch {
-  PoppedElementsBatch ret;
-  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", "", SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired });
-#if 0
-=======
-    ret.elements.emplace_back(PoppedElement());
-    ContainerTraits<ArchiveQueue_t,ArchiveQueue>::PoppedElement & elem = ret.elements.back();
-    elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
-    elem.copyNb = cjfq.copyNb;
-    elem.bytes = cjfq.size;
-    elem.archiveFile = common::dataStructures::ArchiveFile();
-    elem.srcURL = "";
-    elem.archiveReportURL = "";
-    elem.errorReportURL = "";
-    elem.latestError = "";
-    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
->>>>>>> reportQueues
-#endif
-    ret.summary.bytes += cjfq.size;
-    ret.summary.files++;
-  }
-  return ret;
-}
-
 #if 0
 <<<<<<< HEAD
 =======
