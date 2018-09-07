@@ -31,14 +31,6 @@ template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::c_identifierType = "tapepool";
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::PoppedElementsSummary::
-addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
-  params.add("filesAdded", files - previous.files)
-        .add("filesBefore", previous.files)
-        .add("filesAfter", files);
-}
-
-template<>
 void ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("files", summary.files);

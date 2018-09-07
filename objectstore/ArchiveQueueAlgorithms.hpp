@@ -57,20 +57,17 @@ struct ContainerTraits<ArchiveQueue,C>
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
-    PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
-    PopCriteria& operator-=(const PoppedElementsSummary&);
     uint64_t files;
-    uint64_t bytes;
+    PopCriteria(uint64_t f = 0) : files(f) {}
+    PopCriteria& operator-=(const PoppedElementsSummary&);
   };
   struct PoppedElementsSummary {
-    uint64_t bytes = 0;
-    uint64_t files = 0;
+    uint64_t files;
+    PoppedElementsSummary(uint64_t f = 0) : files(f) {}
     bool operator< (const PopCriteria & pc) {
-      // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
-      return bytes < pc.bytes && files < pc.files;
+      return files < pc.files;
     }
     PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
-      bytes += other.bytes;
       files += other.files;
       return *this;
     }
@@ -168,7 +165,6 @@ addDeltaToLog(ContainerSummary &previous, log::ScopedParamContainer &params) {
 template<typename C>
 auto ContainerTraits<ArchiveQueue,C>::PopCriteria::
 operator-=(const PoppedElementsSummary &pes) -> PopCriteria& {
-  bytes -= pes.bytes;
   files -= pes.files;
   return *this;
 }
@@ -177,11 +173,8 @@ template<typename C>
 void ContainerTraits<ArchiveQueue,C>::PoppedElementsSummary::
 addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
   params.add("filesAdded", files - previous.files)
-        .add("bytesAdded", bytes - previous.bytes)
         .add("filesBefore", previous.files)
-        .add("bytesBefore", previous.bytes)
-        .add("filesAfter", files)
-        .add("bytesAfter", bytes);
+        .add("filesAfter", files);
 }
 
 template<typename C>
@@ -201,8 +194,7 @@ insertBack(PoppedElement &&e) {
 template<typename C>
 void ContainerTraits<ArchiveQueue,C>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
+  params.add("files", summary.files);
 }
 
 template<typename C>
@@ -436,25 +428,49 @@ template<typename C>
 auto ContainerTraits<ArchiveQueue,C>::
 getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
-  ret.bytes = poppedElement.bytes;
   ret.files = 1;
   return ret;
 }
 
-template<typename C>
-auto ContainerTraits<ArchiveQueue,C>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
-  log::LogContext& lc) -> PoppedElementsBatch
-{
-  PoppedElementsBatch ret;
-  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", "", SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired });
-    ret.summary.bytes += cjfq.size;
-    ret.summary.files++;
+
+
+// ArchiveQueue full specialisations for ContainerTraits.
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueue>::PopCriteria {
+  uint64_t files;
+  uint64_t bytes;
+  PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  template<typename PoppedElementsSummary_t>
+  PopCriteria& operator-=(const PoppedElementsSummary_t &pes) {
+    bytes -= pes.bytes;
+    files -= pes.files;
+    return *this;
   }
-  return ret;
-}
+};
+
+template<>
+struct ContainerTraits<ArchiveQueue,ArchiveQueue>::PoppedElementsSummary {
+  uint64_t files;
+  uint64_t bytes;
+  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  bool operator< (const PopCriteria & pc) {
+    // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
+    return bytes < pc.bytes && files < pc.files;
+  }
+  PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
+    bytes += other.bytes;
+    files += other.files;
+    return *this;
+  }
+  void addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
+    params.add("filesAdded", files - previous.files)
+          .add("bytesAdded", bytes - previous.bytes)
+          .add("filesBefore", previous.files)
+          .add("bytesBefore", previous.bytes)
+          .add("filesAfter", files)
+          .add("bytesAfter", bytes);
+  }
+};
 
 }} // namespace cta::objectstore
