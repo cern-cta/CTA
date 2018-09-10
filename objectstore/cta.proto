@@ -465,5 +465,5 @@ message RepackRequestPointer {
 }
 
 message RepackIndex {
-  repeated RepackRequestPointer repacktapepointers = 12100;
+  repeated RepackRequestPointer repackrequestpointers = 12100;
 }

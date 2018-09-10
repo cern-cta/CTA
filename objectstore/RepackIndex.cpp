@@ -82,7 +82,7 @@ void RepackIndex::garbageCollect(const std::string &presumedOwner, AgentReferenc
 //------------------------------------------------------------------------------
 std::string RepackIndex::getRepackRequestAddress(const std::string& vid) {
   checkPayloadReadable();
-  for (auto & rt: m_payload.repacktapepointers()) {
+  for (auto & rt: m_payload.repackrequestpointers()) {
     if (rt.vid() == vid)
       return rt.address();
   }
@@ -96,7 +96,7 @@ std::string RepackIndex::getRepackRequestAddress(const std::string& vid) {
 std::list<RepackIndex::RepackRequestAddress> RepackIndex::getRepackRequestsAddresses() {
   checkHeaderReadable();
   std::list<RepackRequestAddress> ret;
-  for (auto &rt: m_payload.repacktapepointers()) {
+  for (auto &rt: m_payload.repackrequestpointers()) {
     ret.push_back(RepackRequestAddress());
     ret.back().driveStateAddress = rt.address();
     ret.back().vid = rt.vid();
@@ -109,7 +109,7 @@ std::list<RepackIndex::RepackRequestAddress> RepackIndex::getRepackRequestsAddre
 //------------------------------------------------------------------------------
 bool RepackIndex::isEmpty() {
   checkPayloadReadable();
-  return m_payload.repacktapepointers().empty();
+  return m_payload.repackrequestpointers().empty();
 }
 
 //------------------------------------------------------------------------------
@@ -118,10 +118,10 @@ bool RepackIndex::isEmpty() {
 void RepackIndex::removeRepackRequest(const std::string& vid) {
   checkPayloadWritable();
   bool found = false;
-  auto vidToRemove = m_payload.mutable_repacktapepointers()->begin();
-  while (vidToRemove != m_payload.mutable_repacktapepointers()->end()) {
+  auto vidToRemove = m_payload.mutable_repackrequestpointers()->begin();
+  while (vidToRemove != m_payload.mutable_repackrequestpointers()->end()) {
     if ( vidToRemove->vid() == vid) {
-      vidToRemove = m_payload.mutable_repacktapepointers()->erase(vidToRemove);
+      vidToRemove = m_payload.mutable_repackrequestpointers()->erase(vidToRemove);
       found = true;
     } else {
       vidToRemove++;
@@ -140,13 +140,13 @@ void RepackIndex::removeRepackRequest(const std::string& vid) {
 void RepackIndex::addRepackRequestAddress(const std::string& vid, 
     const std::string& repackTapeAddress) {
   checkPayloadWritable();
-  for (int i=0; i< m_payload.mutable_repacktapepointers()->size(); i++) {
-    auto rt=m_payload.mutable_repacktapepointers(i);
+  for (int i=0; i< m_payload.mutable_repackrequestpointers()->size(); i++) {
+    auto rt=m_payload.mutable_repackrequestpointers(i);
     if (rt->vid() == vid) {
       throw VidAlreadyRegistered("In RepackIndex::addRepackRequestAddress(): VID already has a repack request.");
     }
   }
-  auto rt=m_payload.mutable_repacktapepointers()->Add();
+  auto rt=m_payload.mutable_repackrequestpointers()->Add();
   rt->set_vid(vid);
   rt->set_address(repackTapeAddress);
   return;
