@@ -1822,7 +1822,7 @@ const OStoreDB::RetrieveMount::MountInfo& OStoreDB::RetrieveMount::getMountInfo(
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMount::
 getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext &logContext)
 {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueue> RQAlgos;
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = rqAlgos.popNextBatch(mountInfo.vid, objectstore::QueueType::JobsToTransfer, popCriteria, logContext);

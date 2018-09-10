@@ -40,6 +40,9 @@ struct ArchiveQueueToTransfer;
 struct ArchiveQueueToReport;
 struct ArchiveQueueFailed;
 struct RetrieveQueue;
+struct RetrieveQueueToTransfer;
+struct RetrieveQueueToReport;
+struct RetrieveQueueFailed;
 
 class ObjectOpsBase {
   friend class ScopedLock;
@@ -50,7 +53,9 @@ class ObjectOpsBase {
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
-  friend ContainerTraits<RetrieveQueue,RetrieveQueue>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueToReport>;
+  friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
 protected:
   ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
     m_headerInterpreted(false), m_payloadInterpreted(false),

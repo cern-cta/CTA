@@ -21,9 +21,9 @@
 namespace cta { namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueue>::c_containerTypeName = "RetrieveQueue";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_containerTypeName = "RetrieveQueueToReport";
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueue>::c_identifierType = "vid";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "vid";
 
 }} // namespace cta::objectstore

@@ -1,4 +1,3 @@
-
 /*
  * The CERN Tape Archive (CTA) project
  * Copyright (C) 2015  CERN
@@ -35,8 +34,8 @@
 
 namespace unitTests {
 
-void fill_retrieve_requests(
-  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueue>::InsertedElement::list &requests,
+void fillRetrieveRequests(
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
   cta::objectstore::BackendVFS &be,
   cta::objectstore::AgentReference &agentRef)
 {
@@ -72,7 +71,7 @@ void fill_retrieve_requests(
     rqc.mountPolicy.maxDrivesAllowed = 1;
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement{
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
       cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
     });
     auto &rr = *requests.back().retrieveRequest;
@@ -186,8 +185,8 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement::list requests;
-  fill_retrieve_requests(requests, be, agentRef);
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
+  fillRetrieveRequests(requests, be, agentRef);
 
   {
     // Second agent to test referenceAndSwitchOwnershipIfNecessary
@@ -205,17 +204,17 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     rel2.release();
     agent2.initialize();
     agent2.insertAndRegisterSelf(lc);
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueue>::InsertedElement::list requests2;
-    fill_retrieve_requests(requests2, be2, agentRef2);
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
+    fillRetrieveRequests(requests2, be2, agentRef2);
 
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueue> retrieveAlgos2(be2, agentRef2);
+    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos2(be2, agentRef2);
     retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", QueueType::JobsToTransfer,
       a2, a1, requests2, lc);
   }
 
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueue> retrieveAlgos(be, agentRef);
+  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
@@ -223,19 +222,19 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
       agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
-    ContainerTraits<RetrieveQueue,RetrieveQueue>::PopCriteria popCriteria;
+    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
     auto poppedJobs = retrieveAlgos.popNextBatch("VID", QueueType::JobsToTransfer, popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements
-    ContainerTraits<RetrieveQueue,RetrieveQueue>::PoppedElementsSummary s;
+    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary s;
     for(auto &e: poppedJobs.elements) {
-      s += ContainerTraits<RetrieveQueue,RetrieveQueue>::getElementSummary(e);
+      s += ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getElementSummary(e);
     }
     ASSERT_EQ(s, poppedJobs.summary);
-  } catch (ContainerTraits<RetrieveQueue,RetrieveQueue>::OwnershipSwitchFailure & ex) {
+  } catch (ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::OwnershipSwitchFailure & ex) {
     for (auto & e: ex.failedElements) {
       try {
         throw e.failure;
