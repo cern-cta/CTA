@@ -15,8 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
-#install (PROGRAMS cta-fst-gcd DESTINATION usr/bin)
-#install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-fst-gcd.1cta DESTINATION /usr/share/man/man1)
-
 add_subdirectory(eosfstgcd)
-add_subdirectory(package)
