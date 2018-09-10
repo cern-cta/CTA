@@ -60,9 +60,9 @@ add_library (ctaobjectstore SHARED
   AgentWatchdog.cpp
   ArchiveQueue.cpp
   ArchiveQueueShard.cpp
-  ArchiveQueueAlgorithms.cpp
-  ArchiveQueueFailedAlgorithms.cpp
+  ArchiveQueueToTransferAlgorithms.cpp
   ArchiveQueueToReportAlgorithms.cpp
+  ArchiveQueueFailedAlgorithms.cpp
   RetrieveQueue.cpp
   RetrieveQueueShard.cpp
   RetrieveQueueAlgorithms.cpp

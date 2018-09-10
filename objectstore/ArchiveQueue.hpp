@@ -138,6 +138,11 @@ public:
   static const uint64_t c_maxShardSize = 25000;
 };
 
+class ArchiveQueueToTransfer: public ArchiveQueue {
+public:
+  template<typename...Ts> ArchiveQueueToTransfer(Ts&...args): ArchiveQueue(args...) {}
+};
+
 class ArchiveQueueToReport: public ArchiveQueue {
 public:
   template<typename...Ts> ArchiveQueueToReport(Ts&...args): ArchiveQueue(args...) {}

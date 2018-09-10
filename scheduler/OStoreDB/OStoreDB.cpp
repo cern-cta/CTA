@@ -1742,7 +1742,7 @@ const SchedulerDatabase::ArchiveMount::MountInfo& OStoreDB::ArchiveMount::getMou
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
     uint64_t bytesRequested, log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueue> AQAlgos;
+  typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> AQAlgos;
   AQAlgos aqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   AQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   auto jobs = aqAlgos.popNextBatch(mountInfo.tapePool, objectstore::QueueType::JobsToTransfer, popCriteria, logContext);
@@ -2137,7 +2137,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       m_archiveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueue> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });

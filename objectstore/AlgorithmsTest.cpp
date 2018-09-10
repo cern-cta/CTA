@@ -116,7 +116,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueue>::InsertedElement::list requests;
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer>::InsertedElement::list requests;
   std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
   for (size_t i=0; i<10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
@@ -135,7 +135,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueue>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
         cta::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
@@ -150,10 +150,10 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
   }
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueue> archiveAlgos(be, agentRef);
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
   // Now get the requests back
-  ContainerTraits<ArchiveQueue,ArchiveQueue>::PopCriteria popCriteria;
+  ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);

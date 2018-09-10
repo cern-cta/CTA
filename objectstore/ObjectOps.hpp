@@ -33,7 +33,10 @@ class AgentReference;
 class ScopedLock;
 class ScopedExclusiveLock;
 template<typename Q,typename C> struct ContainerTraits;
+
+// Defined queue types
 struct ArchiveQueue;
+struct ArchiveQueueToTransfer;
 struct ArchiveQueueToReport;
 struct ArchiveQueueFailed;
 struct RetrieveQueue;
@@ -44,7 +47,7 @@ class ObjectOpsBase {
   friend class ScopedExclusiveLock;
   friend class GenericObject;
   friend class Helpers;
-  friend ContainerTraits<ArchiveQueue,ArchiveQueue>;
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToReport>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueue>;

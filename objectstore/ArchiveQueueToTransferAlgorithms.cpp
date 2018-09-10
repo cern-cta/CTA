@@ -24,13 +24,13 @@ namespace cta { namespace objectstore {
 // ArchiveQueue full specialisations for ContainerTraits.
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueue>::c_containerTypeName = "ArchiveQueue";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::c_containerTypeName = "ArchiveQueueToTransfer";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueue>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::c_identifierType = "tapepool";
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueue>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 getContainerSummary(Container& cont) -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());
@@ -38,7 +38,7 @@ getContainerSummary(Container& cont) -> ContainerSummary {
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueue>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
   log::LogContext& lc) -> PoppedElementsBatch
 {
@@ -54,7 +54,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueue>::
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
@@ -63,14 +63,14 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueue>::PoppedElementsBatch::
+void ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) {
   params.add("bytes", summary.bytes)
         .add("files", summary.files);
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueue>::
+void ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {

@@ -437,7 +437,7 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 // ArchiveQueue full specialisations for ContainerTraits.
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueue>::PopCriteria {
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
   PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
@@ -450,7 +450,7 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueue>::PopCriteria {
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueue>::PoppedElementsSummary {
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
   PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
