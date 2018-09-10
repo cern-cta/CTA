@@ -26,4 +26,12 @@ const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_contai
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "vid";
 
+template<>
+void ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
+  log::LogContext &lc)
+{
+  trimContainerIfNeeded(cont, QueueType::JobsToReport, contLock, cId, lc);
+}
+
 }} // namespace cta::objectstore

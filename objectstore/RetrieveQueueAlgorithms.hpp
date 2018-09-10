@@ -141,6 +141,10 @@ struct ContainerTraits<RetrieveQueue,C>
 
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
+
+private:
+  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
@@ -408,8 +412,8 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
+trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc)
 {
   if(cont.isEmpty())
   {
@@ -420,7 +424,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeRetrieveQueueAndCommit(cId, QueueType::JobsToTransfer, lc);
+      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());

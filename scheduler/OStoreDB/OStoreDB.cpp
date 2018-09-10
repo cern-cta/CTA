@@ -20,11 +20,8 @@
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/RetrieveQueueAlgorithms.hpp"
-//#include "common/dataStructures/SecurityIdentity.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
-//#include "objectstore/ArchiveRequest.hpp"
-//#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -407,8 +404,8 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
           lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty archive queue.");
         }
       }
-      auto retrieveQeueueList = re.dumpRetrieveQueues(queueType);
-      for (auto & r:retrieveQeueueList) {
+      auto retrieveQueueList = re.dumpRetrieveQueues(queueType);
+      for (auto &r : retrieveQueueList) {
         RetrieveQueue rq(r.address, m_objectStore);
         ScopedSharedLock rql(rq);
         rq.fetch();

@@ -26,4 +26,12 @@ const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_cont
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_identifierType = "vid";
 
+template<>
+void ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
+  log::LogContext &lc)
+{
+  trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+}
+
 }} // namespace cta::objectstore
