@@ -691,7 +691,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  ASSERT_NO_THROW(sess.execute());
+  sess.execute();
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());

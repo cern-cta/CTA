@@ -106,7 +106,7 @@ cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile() {
     return archiveFile.tapeFiles.at(selectedCopyNb);
   } catch (std::out_of_range &ex) {
     auto __attribute__((__unused__)) & debug=ex;
-    throw;
+    throw std::runtime_error(std::string("cta::RetrieveJob::selectedTapeFile(): ") + ex.what());
   }
 }
 
@@ -118,7 +118,7 @@ const cta::common::dataStructures::TapeFile& cta::RetrieveJob::selectedTapeFile(
     return archiveFile.tapeFiles.at(selectedCopyNb);
   } catch (std::out_of_range &ex) {
     auto __attribute__((__unused__)) & debug=ex;
-    throw;
+    throw std::runtime_error(std::string("cta::RetrieveJob::selectedTapeFile(): ") + ex.what());
   }
 }
 

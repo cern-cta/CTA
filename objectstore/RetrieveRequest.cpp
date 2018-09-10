@@ -507,11 +507,12 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint16_t copyNumber
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::asyncUpdateOwner()
+// RetrieveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& owner, const std::string& previousOwner) 
-  -> AsyncOwnerUpdater* {
-  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner,
+  const std::string &previousOwner) -> AsyncJobOwnerUpdater*
+{
+  std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
   // Passing a reference to the unique pointer led to strange behaviors.
   auto & retRef = *ret;
   ret->m_updaterCallback=
@@ -549,17 +550,17 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
             // representation.
             // TODO this is an unfortunate duplication of the getXXX() members of ArchiveRequest.
             // We could try and refactor this.
-            retRef.m_retieveRequest.archiveFileID = payload.archivefile().archivefileid();
+            retRef.m_retrieveRequest.archiveFileID = payload.archivefile().archivefileid();
             objectstore::EntryLogSerDeser el;
             el.deserialize(payload.schedulerrequest().entrylog());
-            retRef.m_retieveRequest.creationLog = el;
+            retRef.m_retrieveRequest.creationLog = el;
             objectstore::DiskFileInfoSerDeser dfi;
             dfi.deserialize(payload.schedulerrequest().diskfileinfo());
-            retRef.m_retieveRequest.diskFileInfo = dfi;
-            retRef.m_retieveRequest.dstURL = payload.schedulerrequest().dsturl();
-            retRef.m_retieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
-            retRef.m_retieveRequest.requester.name = payload.schedulerrequest().requester().name();
-            retRef.m_retieveRequest.requester.group = payload.schedulerrequest().requester().group();
+            retRef.m_retrieveRequest.diskFileInfo = dfi;
+            retRef.m_retrieveRequest.dstURL = payload.schedulerrequest().dsturl();
+            retRef.m_retrieveRequest.errorReportURL = payload.schedulerrequest().retrieveerrorreporturl();
+            retRef.m_retrieveRequest.requester.name = payload.schedulerrequest().requester().name();
+            retRef.m_retrieveRequest.requester.group = payload.schedulerrequest().requester().group();
             objectstore::ArchiveFileSerDeser af;
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
@@ -575,24 +576,24 @@ auto RetrieveRequest::asyncUpdateOwner(uint16_t copyNumber, const std::string& o
   }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::wait()
+// RetrieveRequest::AsyncJobOwnerUpdater::wait()
 //------------------------------------------------------------------------------
-void RetrieveRequest::AsyncOwnerUpdater::wait() {
+void RetrieveRequest::AsyncJobOwnerUpdater::wait() {
   m_backendUpdater->wait();
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::getArchiveFile()
+// RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
-const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncOwnerUpdater::getArchiveFile() {
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
   return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest()
+// RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest()
 //------------------------------------------------------------------------------
-const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncOwnerUpdater::getRetrieveRequest() {
-  return m_retieveRequest;
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest() {
+  return m_retrieveRequest;
 }
 
 //------------------------------------------------------------------------------
@@ -607,7 +608,7 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
 // RetrieveRequest::getActiveCopyNumber()
 //------------------------------------------------------------------------------
 uint32_t RetrieveRequest::getActiveCopyNumber() {
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  return m_payload.activecopynb();
 }
 
 //------------------------------------------------------------------------------

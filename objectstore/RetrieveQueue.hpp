@@ -67,7 +67,7 @@ public:
     time_t startTime;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
-  /// This version will check for existence of the job in the queue before
+  // This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
@@ -145,4 +145,19 @@ private:
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 
+class RetrieveQueueToTransfer : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueToTransfer(Ts&...args): RetrieveQueue(args...) {}
+};
+
+class RetrieveQueueToReport : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueToReport(Ts&...args): RetrieveQueue(args...) {}
+};
+
+class RetrieveQueueFailed : public RetrieveQueue {
+public:
+  template<typename...Ts> RetrieveQueueFailed(Ts&...args): RetrieveQueue(args...) {}
+};
+  
 }}

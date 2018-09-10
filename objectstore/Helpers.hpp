@@ -34,8 +34,6 @@
 
 namespace cta { namespace objectstore {
 
-class ArchiveQueue;
-class RetrieveQueue;
 class ScopedExclusiveLock;
 class AgentReference;
 class DriveState;

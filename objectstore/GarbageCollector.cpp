@@ -399,7 +399,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
         requestsList.pop_front();
       }
       utils::Timer t;
-      typedef ContainerAlgorithms<ArchiveQueue> AqAlgos;
+      typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> AqAlgos;
       AqAlgos aqcl(objectStore, agentReference);
       decltype(aqcl)::InsertedElement::list jobsToAdd;
       for (auto & ar: currentJobBatch) {
@@ -562,7 +562,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // We will keep individual references for each job update we launch so that we make
       // our life easier downstream.
       struct RRUpdatedParams {
-        std::unique_ptr<RetrieveRequest::AsyncOwnerUpdater> updater;
+        std::unique_ptr<RetrieveRequest::AsyncJobOwnerUpdater> updater;
         std::shared_ptr<RetrieveRequest> retrieveRequest;
         uint16_t copyNb;
       };
@@ -574,7 +574,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               rrUpdatersParams.emplace_back();
               rrUpdatersParams.back().retrieveRequest = rr;
               rrUpdatersParams.back().copyNb = tf.second.copyNb;
-              rrUpdatersParams.back().updater.reset(rr->asyncUpdateOwner(tf.second.copyNb,
+              rrUpdatersParams.back().updater.reset(rr->asyncUpdateJobOwner(tf.second.copyNb,
                   rq.getAddressIfSet(), agent.getAddressIfSet()));
             }
           }

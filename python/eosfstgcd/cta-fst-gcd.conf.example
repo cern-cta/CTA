@@ -1,0 +1,27 @@
+# The CERN Tape Archive (CTA) project
+# Copyright (C) 2015  CERN
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file should contain one and only one connection string.  Blank lines and
+# comments are ignored.
+#
+# PLEASE NOTE that comments at the end of a line are not supported.  Only entire
+# line comments are allowed.  A comment line starts a hash '#' character.
+# Leading whitespace is permitted.
+
+# There must always be a main section
+[main]
+minfreebytes = 10000000000 ; Minimum number of free bytes a filesystem should have
+gcagesecs = 7200 ; The age at which a file can be considered for garbage collection
