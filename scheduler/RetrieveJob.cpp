@@ -59,6 +59,24 @@ void cta::RetrieveJob::checkComplete() {
 }
 
 //------------------------------------------------------------------------------
+// reportFailed
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
+  m_dbJob->failReport(failureReason, lc);
+}
+
+
+//------------------------------------------------------------------------------
+// transferFailed
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::transferFailed(const std::string &failureReason, log::LogContext &lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
+  m_dbJob->failTransfer(failureReason, lc);
+}
+
+#if 0
+//------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext &lc) {
@@ -97,6 +115,7 @@ void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext
     }
   }
 }
+#endif
 
 //------------------------------------------------------------------------------
 // selectedTapeFile

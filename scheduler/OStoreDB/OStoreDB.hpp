@@ -217,7 +217,11 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
+#if 0
     bool fail(const std::string& failureReason, log::LogContext&) override;
+#endif
+    void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+    void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
   private:
     RetrieveJob(const std::string &, OStoreDB &, RetrieveMount &);

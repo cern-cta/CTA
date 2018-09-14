@@ -436,8 +436,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
 
   {
-    // Emulate a tape server by asking for a mount and then a file (and succeed
-    // the transfer)
+    // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
@@ -537,8 +536,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
   
   {
-    // Emulate a tape server by asking for a mount and then a file (and succeed
-    // the transfer)
+    // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE((cta::TapeMount*)NULL, mount.get());
@@ -551,8 +549,11 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
+retrieveJob->transferFailed("Retrieve transfer failed", lc);
+#if 0
     retrieveJob->asyncComplete();
     retrieveJob->checkComplete();
+#endif
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }

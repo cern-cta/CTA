@@ -211,7 +211,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
     reportPacker.m_lc.log(cta::log::ERR,"In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
   }
   try {
-    m_failedRetrieveJob->failed(m_failureLog, reportPacker.m_lc);
+    m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())

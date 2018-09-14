@@ -35,7 +35,7 @@ namespace cta {
     } 
     virtual void asyncComplete() override { completes++;  }
     virtual void checkComplete() override {}
-    void failed(const std::string& failureReason, cta::log::LogContext&) override { failures++; };
+    void transferFailed(const std::string &failureReason, cta::log::LogContext&) override { failures++; };
     
     ~MockRetrieveJob() throw() {} 
   };
