@@ -132,7 +132,7 @@ queueForFailure:;
       }
     }
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
-    // to the latestes queued copy.
+    // to the latest queued copy.
     auto activeCopyNb = m_payload.activecopynb();
     std::string activeVid;
     uint64_t activeFseq;
