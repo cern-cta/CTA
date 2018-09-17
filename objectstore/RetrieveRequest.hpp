@@ -77,11 +77,31 @@ public:
     uint64_t maxTotalRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
-  /// Returns queue type depending on the compound statuses of all retrieve requests.
+  enum class JobEvent {
+    TransferFailed,
+    ReportFailed
+  };
+  std::string eventToString (JobEvent jobEvent);
+  struct EnqueueingNextStep {
+    enum class NextStep {
+      Nothing,
+      EnqueueForTransfer,
+      EnqueueForReport,
+      StoreInFailedJobsContainer,
+      Delete
+    } nextStep = NextStep::Nothing;
+    //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
+    serializers::RetrieveJobStatus nextStatus;
+  };
+  //! Returns next step to take with the job
+  EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  //! Returns queue type depending on the compound statuses of all retrieve requests
   QueueType getQueueType();
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
+  void setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus &status);
+  std::string getVIDForJob(uint16_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {

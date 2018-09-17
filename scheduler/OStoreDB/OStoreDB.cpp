@@ -2414,126 +2414,174 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
 // OStoreDB::RetrieveJob::failTransfer()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc) {
-  throw cta::exception::Exception("OStoreDB::RetrieveJob::failTransfer(): not implemented.");
-#if 0
   if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::ArchiveJob::failTransfer: cannot fail a job not owned");
-  // Lock the archive request. Fail the job.
-  objectstore::ScopedExclusiveLock arl(m_archiveRequest);
-  m_archiveRequest.fetch();
-  // Add a job failure. We will know what to do next..
-  typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
+    throw JobNowOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
+
+  // Lock the retrieve request. Fail the job.
+  objectstore::ScopedExclusiveLock rel(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+
+  // Add a job failure. We will know what to do next.
+  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
-  EnqueueingNextStep enQueueingNextStep = 
-      m_archiveRequest.addTransferFailure(tapeFile.copyNb, m_mountId, failureReason, lc);
+  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addTransferFailure(selectedCopyNb, m_mountId, failureReason, lc);
+  //
   // First set the job status
-  m_archiveRequest.setJobStatus(tapeFile.copyNb, enQueueingNextStep.nextStatus);
-  // Now apply the decision.
+  m_retrieveRequest.setJobStatus(selectedCopyNb, enQueueingNextStep.nextStatus);
+
+  // Now apply the decision
+  //
   // TODO: this will probably need to be factored out.
-  switch (enQueueingNextStep.nextStep) {
-  case NextStep::Nothing: {
-      m_archiveRequest.commit();
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+  switch(enQueueingNextStep.nextStep)
+  {
+    case NextStep::Nothing: {
+      m_retrieveRequest.commit();
+      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", selectedCopyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
             .add("retriesWithinMount", retryStatus.retriesWithinMount)
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO,
-          "In ArchiveJob::failTransfer(): left the request owned, to be garbage collected for retry at the end of the mount.");
+          "In RetrieveJob::failTransfer(): left the request owned, to be garbage collected for retry at the end of the mount.");
       return;
     }
-  case NextStep::Delete: {
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      m_archiveRequest.remove();
+
+    case NextStep::Delete: {
+      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      m_retrieveRequest.remove();
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", selectedCopyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
             .add("retriesWithinMount", retryStatus.retriesWithinMount)
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
-      lc.log(log::INFO, "In ArchiveJob::failTransfer(): removed request");
+      lc.log(log::INFO, "In RetrieveJob::failTransfer(): removed request");
       return;
     }
-  case NextStep::EnqueueForReport: {
-      // Algorithms suppose the objects are not locked.
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      m_archiveRequest.commit();
-      arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
+
+    case NextStep::EnqueueForReport: {
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
+
+      // Algorithms suppose the objects are not locked
+      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      m_retrieveRequest.commit();
+      rel.release();
+
+      // The job still has a chance, requeue is to the best tape
+      // Get the best vid from the cache
+      auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+      auto &af = rfqc.archiveFile;
+
+      std::set<std::string> candidateVids;
+      //using serializers::RetrieveJobStatus;
+      for(auto &tf: af.tapeFiles) {
+        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
+          candidateVids.insert(tf.second.vid);
+      }
+      if(candidateVids.empty()) {
+        throw cta::exception::Exception(
+          "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
+        );
+      }
+
+      // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
+      std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids,
+        m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+
+      auto tf_it = af.tapeFiles.begin();
+      for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
+      if(tf_it == af.tapeFiles.end()) {
+        std::stringstream err;
+        err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
+            << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
+        throw RetrieveRequestHasNoCopies(err.str());
+      }
+      auto &tf = tf_it->second;
+
+      CaRqtr::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaRqtr::InsertedElement{
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, retryStatus
+      });
+
+      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      caRqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", selectedCopyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
             .add("retriesWithinMount", retryStatus.retriesWithinMount)
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
-      lc.log(log::INFO, "In ArchiveJob::failTransfer(): enqueued job for reporting");
+      lc.log(log::INFO, "In RetrieveJob::failTransfer(): enqueued job for reporting");
       return;
     }
-  case NextStep::EnqueueForTransfer: {
-      // Algorithms suppose the objects are not locked.
-      auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      m_archiveRequest.commit();
-      arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapepool, objectstore::QueueType::JobsToTransfer,
-          insertedElements, lc);
+
+    case NextStep::EnqueueForTransfer: {
+      throw cta::exception::Exception("NextStep::EnqueueForTransfer case not implemented");
+#if 0
+      // Algorithms suppose the objects are not locked
+      auto vid = m_retrieveRequest.getVIDForJob(selectedCopyNb);
+      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      m_retrieveRequest.commit();
+      rel.release();
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
+      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      CaRqtr::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaRqtr::InsertedElement{
+        &m_retrieveRequest, bestCopyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, archiveFile, cta::nullopt, cta::nullopt });
+      caRqtr.referenceAndSwitchOwnership(vid, objectstore::QueueType::JobsToTransfer, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", selectedCopyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
             .add("retriesWithinMount", retryStatus.retriesWithinMount)
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO,
-          "In ArchiveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
+          "In RetrieveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
       return;
+#endif
     }
-  case NextStep::StoreInFailedJobsContainer: {
-      // Algorithms suppose the objects are not locked.
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
-      m_archiveRequest.commit();
-      arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueFailed> CaAqtr;
-      CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
+
+    case NextStep::StoreInFailedJobsContainer: {
+      throw cta::exception::Exception("NextStep::StoreInFailedJobsContainer case not implemented");
+#if 0
+      // Algorithms suppose the objects are not locked
+      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      m_retrieveRequest.commit();
+      rel.release();
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
+      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      CaRqtr::InsertedElement::list insertedElements;
+      insertedElements.push_back(CaRqtr::InsertedElement{&m_retrieveRequest, selectedCopyNb, archiveFile, cta::nullopt, cta::nullopt });
+      caRqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", selectedCopyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
             .add("retriesWithinMount", retryStatus.retriesWithinMount)
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO,
-          "In ArchiveJob::failTransfer(): stored job in failed container for operator handling.");
+          "In RetrieveJob::failTransfer(): stored job in failed container for operator handling.");
       return;
+#endif
     }
   }
-#endif
 }
 
 //------------------------------------------------------------------------------
