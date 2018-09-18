@@ -34,7 +34,7 @@ struct ContainerTraits<RetrieveQueue,C>
   };
 
   struct InsertedElement {
-    std::unique_ptr<RetrieveRequest> retrieveRequest;
+    RetrieveRequest *retrieveRequest;
     uint16_t copyNb;
     uint64_t fSeq;
     uint64_t filesize;
