@@ -736,6 +736,7 @@ auto ArchiveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobE
       ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
     }
   }
+  break;
   case JobEvent::ReportFailed:
   {
     ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;

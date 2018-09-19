@@ -93,6 +93,22 @@ public:
     //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
     serializers::RetrieveJobStatus nextStatus;
   };
+private:
+  /*!
+   * Determine and set the new status of the job.
+   *
+   * Determines whether the request should be queued or deleted after the job status change. This method
+   * only handles failures, which have a more varied array of possibilities.
+   *
+   * @param[in] copyNumberToUpdate    the copy number to update
+   * @param[in] jobEvent              the event that happened to the job
+   * @param[in] lc                    the log context
+   *
+   * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
+   *             and status setting
+   */
+  EnqueueingNextStep determineNextStep(uint16_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext &lc);
+public:
   //! Returns next step to take with the job
   EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
