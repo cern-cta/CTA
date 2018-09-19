@@ -117,7 +117,6 @@ public:
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
   void setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus &status);
-  std::string getVIDForJob(uint16_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {

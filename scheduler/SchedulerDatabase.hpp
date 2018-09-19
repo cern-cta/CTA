@@ -347,9 +347,6 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
-#if 0
-    virtual bool fail(const std::string & failureReason, log::LogContext &) = 0;
-#endif
     virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}

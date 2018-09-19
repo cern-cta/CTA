@@ -2468,6 +2468,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
     }
 
     case NextStep::EnqueueForReport: {
+      throw cta::exception::Exception("NextStep::EnqueueForReport case not implemented");
+#if 0
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
 
       // Algorithms suppose the objects are not locked
@@ -2524,22 +2526,52 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO, "In RetrieveJob::failTransfer(): enqueued job for reporting");
       return;
+#endif
     }
 
     case NextStep::EnqueueForTransfer: {
-      throw cta::exception::Exception("NextStep::EnqueueForTransfer case not implemented");
-#if 0
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
+
       // Algorithms suppose the objects are not locked
-      auto vid = m_retrieveRequest.getVIDForJob(selectedCopyNb);
       auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+
+      auto &af = rfqc.archiveFile;
+
+      std::set<std::string> candidateVids;
+      for(auto &tf : af.tapeFiles) {
+        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
+          candidateVids.insert(tf.second.vid);
+      }
+      if(candidateVids.empty()) {
+        throw cta::exception::Exception(
+          "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
+        );
+      }
       m_retrieveRequest.commit();
       rel.release();
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
-      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+
+      // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
+      std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
+        m_oStoreDB.m_objectStore);
+
+      auto tf_it = af.tapeFiles.begin();
+      for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
+      if(tf_it == af.tapeFiles.end()) {
+        std::stringstream err;
+        err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
+            << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
+        throw RetrieveRequestHasNoCopies(err.str());
+      }
+      auto &tf = tf_it->second;
+
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
-        &m_retrieveRequest, bestCopyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, archiveFile, cta::nullopt, cta::nullopt });
-      caRqtr.referenceAndSwitchOwnership(vid, objectstore::QueueType::JobsToTransfer, insertedElements, lc);
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToTransfer
+      });
+
+      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+      caRqtr.referenceAndSwitchOwnership(bestVid, objectstore::QueueType::JobsToTransfer, insertedElements, lc);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", selectedCopyNb)
@@ -2549,10 +2581,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
             .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
             .add("totalRetries", retryStatus.totalRetries)
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
-      lc.log(log::INFO,
-          "In RetrieveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
+      lc.log(log::INFO, "In RetrieveJob::failTransfer(): requeued job for (potentially in-mount) retry.");
       return;
-#endif
     }
 
     case NextStep::StoreInFailedJobsContainer: {

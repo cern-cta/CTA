@@ -87,14 +87,6 @@ public:
    */
   virtual void checkComplete();
 
-#if 0
-  /**
-   * Indicates that the job failed. Reason for failure is indicated. Retry policy will
-   * be applied by the scheduler.
-   */
-  virtual void failed(const std::string &failureReason, cta::log::LogContext &);
-#endif
-
   /**
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
