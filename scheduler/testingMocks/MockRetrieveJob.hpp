@@ -27,7 +27,7 @@ namespace cta {
   public:
     int completes;
     int failures;
-    MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(rm,
+    MockRetrieveJob(RetrieveMount & rm): cta::RetrieveJob(&rm,
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock), completes(0), failures(0) {

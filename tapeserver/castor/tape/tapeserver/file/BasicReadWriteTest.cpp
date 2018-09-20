@@ -56,7 +56,7 @@ int test = RAO_TEST;
 
 class BasicRetrieveJob: public cta::RetrieveJob {
   public:
-    BasicRetrieveJob() : cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    BasicRetrieveJob() : cta::RetrieveJob(nullptr,
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}

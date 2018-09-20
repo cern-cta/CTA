@@ -1042,16 +1042,14 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
     criteria.files = filesRequested;
     auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, objectstore::QueueType::JobsToReport, criteria, logContext);
     if(jobs.elements.empty()) continue;
-#if 0
     for(auto &j : jobs.elements)
     {
-      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this));
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
       rj->archiveFile = j.archiveFile;
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
       ret.emplace_back(std::move(rj));
     }
-#endif
     return ret;
   }
 }
@@ -1863,7 +1861,7 @@ getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContex
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
   {
-    std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, *this));
+    std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, this));
     rj->archiveFile = j.archiveFile;
     rj->retrieveRequest = j.rr;
     rj->selectedCopyNb = j.copyNb;
@@ -2355,12 +2353,6 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): will leave the job owned after destruction.");
   }
 }
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::RetrieveJob()
-//------------------------------------------------------------------------------
-OStoreDB::RetrieveJob::RetrieveJob(const std::string& jobAddress, OStoreDB & oStoreDB, OStoreDB::RetrieveMount& rm): 
-  m_jobOwned(false), m_oStoreDB(oStoreDB), m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore), m_retrieveMount(rm) { }
 
 #if 0
 //------------------------------------------------------------------------------

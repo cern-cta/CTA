@@ -32,7 +32,7 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
+cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
   const common::dataStructures::RetrieveRequest &retrieveRequest,
   const common::dataStructures::ArchiveFile & archiveFile,
   const uint64_t selectedCopyNb,

@@ -41,6 +41,7 @@ class RetrieveJob {
    * constructor of RetrieveJob.
    */
   friend class RetrieveMount;
+  friend class Scheduler;
   
 public:
   /**
@@ -52,7 +53,7 @@ public:
    * @param tapeFileLocation the location of the tape file
    * @param positioningMethod the positioning method
    */
-  RetrieveJob(RetrieveMount &mount,
+  RetrieveJob(RetrieveMount *mount,
   const common::dataStructures::RetrieveRequest &retrieveRequest,
   const common::dataStructures::ArchiveFile & archiveFile,
   const uint64_t selectedCopyNb,
@@ -64,7 +65,7 @@ private:
   /**
    * The mount that generated this job
    */
-  RetrieveMount &m_mount;
+  RetrieveMount *m_mount;
 
 public:
 

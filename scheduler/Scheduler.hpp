@@ -61,6 +61,7 @@
 namespace cta {
 
 class ArchiveJob;
+class RetrieveJob;
 
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
@@ -333,6 +334,21 @@ public:
   
   void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
       eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
+
+  /* ============================== Retrieve reporting support ============================== */
+  /*!
+   * Batch job factory
+   * 
+   * @param filesRequested    the number of files requested
+   * @param logContext
+   *
+   * @returns    A list of unique_ptr to the next successful archive jobs to report. The list
+   *             is empty when no more jobs can be found. Will return jobs (if available) up
+   *             to specified number.
+   */
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext &logContext);
+  
 public:    
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);

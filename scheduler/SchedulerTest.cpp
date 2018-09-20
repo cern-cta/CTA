@@ -553,10 +553,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveJob->checkComplete();
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
-
-//std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::
-//getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext)
-
   }
 }
 
@@ -762,6 +758,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     }
     // Then the request should be gone
     ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());
+    // and the failure should be reported on the jobs to report queue
+    auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    ASSERT_EQ(1, retrieveJobToReportList.size());
   }
 }
 
