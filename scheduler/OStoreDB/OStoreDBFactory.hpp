@@ -111,8 +111,12 @@ public:
     return m_OStoreDB.getRetrieveRequests();
   }
 
-  std::list<std::unique_ptr<ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext & lc) override {
+  std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextArchiveJobsToReportBatch(filesRequested, lc);
+  }
+
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_OStoreDB.getNextRetrieveJobsToReportBatch(filesRequested, lc);
   }
   
   void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,

@@ -193,8 +193,7 @@ void ContainerTraits<RetrieveQueue,C>::PoppedElementsList::insertBack(PoppedElem
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) const {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
+  params.add("files", summary.files);
 }
 
 // ContainerTraits
@@ -344,32 +343,8 @@ switchElementsOwnership(typename InsertedElement::list &elemMemCont, const Conta
 
 template<typename C>
 auto ContainerTraits<RetrieveQueue,C>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
-  log::LogContext &lc) -> PoppedElementsBatch
-{
-  PoppedElementsBatch ret;
-
-  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for(auto &cjfq : candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{
-      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
-      cjfq.copyNb,
-      cjfq.size,
-      common::dataStructures::ArchiveFile(),
-      common::dataStructures::RetrieveRequest()
-    });
-    ret.summary.bytes += cjfq.size;
-    ret.summary.files++;
-  }
-
-  return ret;
-}
-
-template<typename C>
-auto ContainerTraits<RetrieveQueue,C>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
-  ret.bytes = poppedElement.bytes;
   ret.files = 1;
   return ret;
 }

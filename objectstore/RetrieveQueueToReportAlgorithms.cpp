@@ -27,6 +27,27 @@ template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "vid";
 
 template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+
+  auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  for(auto &cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{
+      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+      cjfq.copyNb,
+      cjfq.size,
+      common::dataStructures::ArchiveFile(),
+      common::dataStructures::RetrieveRequest()
+    });
+    ret.summary.files++;
+  }
+  return ret;
+}
+
+template<>
 void ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)

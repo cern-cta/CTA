@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/log/StdoutLogger.hpp"
+
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
@@ -1019,6 +1021,40 @@ OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vi
   return RetrieveQueueItor_t(m_objectStore, vid);
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getNextRetrieveJobsToReportBatch()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::
+getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext)
+{
+  typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> RQTRAlgo;
+  RQTRAlgo rqtrAlgo(m_objectStore, *m_agentReference);
+  // Decide from which queue we are going to pop
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  while(true) {
+    auto queueList = re.dumpRetrieveQueues(QueueType::JobsToReport);
+    std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+    if (queueList.empty()) return ret;
+
+    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
+    RQTRAlgo::PopCriteria criteria;
+    criteria.files = filesRequested;
+    auto jobs = rqtrAlgo.popNextBatch(queueList.front().vid, objectstore::QueueType::JobsToReport, criteria, logContext);
+    if(jobs.elements.empty()) continue;
+#if 0
+    for(auto &j : jobs.elements)
+    {
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this));
+      rj->archiveFile = j.archiveFile;
+      rj->retrieveRequest = j.rr;
+      rj->selectedCopyNb = j.copyNb;
+      ret.emplace_back(std::move(rj));
+    }
+#endif
+    return ret;
+  }
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getDriveStates()
@@ -2413,9 +2449,13 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failTransfer()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc) {
+void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &ignore_lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
+
+  log::StdoutLogger dl("dummy", "unitTest");
+  log::LogContext lc(dl);
+  lc.log(log::INFO, "Entered RetrieveJob::failTransfer()");
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rel(m_retrieveRequest);

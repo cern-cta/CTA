@@ -147,14 +147,14 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
-      uint64_t bytesRequested, log::LogContext& logContext) override;
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested, 
+      uint64_t bytesRequested, log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
     void setJobBatchTransferred(
-      std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext & lc) override;
+      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> &jobsBatch, log::LogContext &lc) override;
   };
   friend class ArchiveMount;
   
@@ -226,7 +226,7 @@ public:
     uint64_t m_mountId;
     OStoreDB & m_oStoreDB;
     objectstore::RetrieveRequest m_retrieveRequest;
-    OStoreDB::RetrieveMount & m_retrieveMount;
+    OStoreDB::RetrieveMount &m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
   
@@ -274,6 +274,8 @@ public:
 
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
   /* === Drive state handling  ============================================== */
   /**

@@ -352,6 +352,16 @@ public:
     virtual ~RetrieveJob() {}
   };
 
+  /*!
+   * Get a a set of failed jobs to report to the client.
+   *
+   * This method is like RetrieveMount::getNextJobBatch. It it not in the context of a mount as any
+   * process can grab a batch of jobs to report and proceed with the reporting.
+   *
+   * @returns    A list of process-owned jobs to report
+   */
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+
   /*============ Label management: user side =================================*/
   // TODO
   
