@@ -33,6 +33,21 @@ class UserError(Exception):
   pass
 
 class Gc:
+  '''Implements the cta-fst-gcd daemon that runs on an EOS FST and garbage
+  collects EOS disk copies that have been safely stored to tape.
+
+  The cta-fst-gcd daemon scans across every single EOS disk file on an FST.
+  A file is garbage collected if:
+
+  * The amount of free space on the corresponding file system is
+    considered too low.
+
+  * The file is considered old enough to be garbage collected.
+
+  The cta-fst-gcd daemon garbage collects an EOS disk file by extracting the
+  hexadecimal EOS file identifier from the local disk filename and then
+  running eos stagerm fxid:<fid-hex>.'''
+
   def get_env_mgmhost(self):
     logger = logging.getLogger('gc')
 
