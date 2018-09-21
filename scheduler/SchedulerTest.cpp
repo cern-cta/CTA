@@ -83,6 +83,13 @@ public:
       return "Failed to get scheduler";
     }
   };
+
+  class FailedToGetDatabase: public std::exception {
+  public:
+    const char *what() const throw() {
+      return "Failed to get scheduler database";
+    }
+  };
   
   class FailedToGetSchedulerDB: public std::exception {
   public:
@@ -94,14 +101,22 @@ public:
   virtual void SetUp() {
     using namespace cta;
 
-    const SchedulerTestParam &param = GetParam();
-    m_db = param.dbFactory.create();
+    // We do a deep reference to the member as the C++ compiler requires the function to be already defined if called implicitly
+    const auto &factory = GetParam().dbFactory;
+    // Get the OStore DB from the factory
+    auto osdb = std::move(factory.create());
+    // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface)
+    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
+    // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
+    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
+
+    //const SchedulerTestParam &param = GetParam();
+    //m_db = param.dbFactory.create();
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     const uint32_t maxTriesToConnect = 1;
     //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns,
-      maxTriesToConnect);
+    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
 
@@ -109,6 +124,14 @@ public:
     m_scheduler.reset();
     m_catalogue.reset();
     m_db.reset();
+  }
+
+  cta::objectstore::OStoreDBWrapperInterface &getDb() {
+    cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
+    if(NULL == ptr) {
+      throw FailedToGetDatabase();
+    }
+    return *ptr;
   }
 
   cta::catalogue::Catalogue &getCatalogue() {
@@ -213,7 +236,8 @@ private:
   SchedulerTest & operator= (const SchedulerTest &) = delete;
 
   cta::log::DummyLogger m_dummyLog;
-  std::unique_ptr<cta::SchedulerDatabase> m_db;
+  std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
+  //std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
   
@@ -736,28 +760,45 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   }
 
   {
-    // Emulate a tape server by asking for a mount and then a file
-    std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
-    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
-    std::unique_ptr<cta::RetrieveMount> retrieveMount;
-    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
-    ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
-    // The file should be retried three times
-    for (int i = 0; i < 3; ++i)
-    {
-      std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1,1,lc);
-      if (!retrieveJobList.front().get()) {
-        int __attribute__((__unused__)) debugI=i;
+    // Try mounting the tape twice
+    for(int j = 0; j < 2; ++j) {
+      // Emulate a tape server by asking for a mount and then a file
+      std::unique_ptr<cta::TapeMount> mount;
+      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+      ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
+      std::unique_ptr<cta::RetrieveMount> retrieveMount;
+      retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+      ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
+      // The file should be retried three times
+      for(int i = 0; i < 3; ++i)
+      {
+        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1,1,lc);
+        if (!retrieveJobList.front().get()) {
+          int __attribute__((__unused__)) debugI=i;
+        }
+        ASSERT_NE(0, retrieveJobList.size());
+        // Validate we got the right file
+        ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
+        retrieveJobList.front()->transferFailed("Retrieve failed", lc);
       }
-      ASSERT_NE(0, retrieveJobList.size());
-      // Validate we got the right file
-      ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
-      retrieveJobList.front()->transferFailed("Retrieve failed", lc);
+      // Then the request should be gone
+      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());
+#if 0
+      // Garbage collect the request
+      auto &be = osdbi.getBackend();
+      cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+      cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+      gcAgent.initialize();
+      gcAgent.setTimeout_us(0);
+      gcAgent.insertAndRegisterSelf(lc);
+      {
+        cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+        gc.runOnePass(lc);
+        gc.runOnePass(lc);
+      }
+#endif
     }
-    // Then the request should be gone
-    ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());
     // and the failure should be reported on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());

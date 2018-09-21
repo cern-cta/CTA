@@ -2093,7 +2093,12 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::failTransfer()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
+void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& ignore_lc) {
+
+  log::StdoutLogger dl("dummy", "unitTest");
+  log::LogContext lc(dl);
+  lc.log(log::INFO, "Entered ArchiveJob::failTransfer()");
+
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::ArchiveJob::failTransfer: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
@@ -2747,7 +2752,7 @@ void OStoreDB::RetrieveJob::checkSucceed() {
   m_retrieveRequest.resetValues();
   // We no more own the job (which could be gone)
   m_jobOwned = false;
-  // Ownership will ber removed from agent by caller through retrieve mount object.
+  // Ownership will be removed from agent by caller through retrieve mount object.
 }
 
 } // namespace cta
