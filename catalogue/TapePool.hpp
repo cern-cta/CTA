@@ -90,6 +90,16 @@ struct TapePool {
   uint64_t dataBytes;
 
   /**
+   * The total number of physical files stored in the tape pool.
+   *
+   * Please note that physical files are only removed when a tape is erased.
+   * The deletion of a tape file from the CTA catalogue does NOT decrement the
+   * number of physical files on that tape and therefore does NOT decrement the
+   * number of physical files stored in the tape pool containing that tape.
+   */
+  uint64_t nbPhysicalFiles;
+
+  /**
    * The creation log.
    */
   common::dataStructures::EntryLog creationLog;
