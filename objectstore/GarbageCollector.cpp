@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/log/StdoutLogger.hpp"
+
 #include "GarbageCollector.hpp"
 #include "AgentReference.hpp"
 #include "ArchiveRequest.hpp"
@@ -40,7 +42,12 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
   m_agentRegister.fetch();
 }
 
-void GarbageCollector::runOnePass(log::LogContext & lc) {
+void GarbageCollector::runOnePass(log::LogContext & ignore_lc) {
+
+  log::StdoutLogger dl("dummy", "unitTest");
+  log::LogContext lc(dl);
+  lc.log(log::INFO, "Entered GarbageCollector::runOnePass()");
+
   trimGoneTargets(lc);
   aquireTargets(lc);
   checkHeartbeats(lc);

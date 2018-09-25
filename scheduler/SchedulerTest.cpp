@@ -31,6 +31,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "tests/TempFile.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "objectstore/GarbageCollector.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #ifdef STDOUT_LOGGING
@@ -126,14 +127,6 @@ public:
     m_db.reset();
   }
 
-  cta::objectstore::OStoreDBWrapperInterface &getDb() {
-    cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if(NULL == ptr) {
-      throw FailedToGetDatabase();
-    }
-    return *ptr;
-  }
-
   cta::catalogue::Catalogue &getCatalogue() {
     cta::catalogue::Catalogue *const ptr = m_catalogue.get();
     if(NULL == ptr) {
@@ -157,7 +150,15 @@ public:
     }
     return *ptr;
   }
-  
+
+  cta::objectstore::OStoreDBWrapperInterface &getDb() {
+    cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
+    if(NULL == ptr) {
+      throw FailedToGetDatabase();
+    }
+    return *ptr;
+  }
+
   void setupDefaultCatalogue() {
     using namespace cta;
     auto & catalogue=getCatalogue();
@@ -762,6 +763,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   {
     // Try mounting the tape twice
     for(int j = 0; j < 2; ++j) {
+std::cerr << "Pass " << j << std::endl;
       // Emulate a tape server by asking for a mount and then a file
       std::unique_ptr<cta::TapeMount> mount;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
@@ -773,6 +775,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       // The file should be retried three times
       for(int i = 0; i < 3; ++i)
       {
+std::cerr << "Attempt " << i << std::endl;
         std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1,1,lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI=i;
@@ -784,20 +787,23 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       }
       // Then the request should be gone
       ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());
-#if 0
+      // Set Agent timeout to zero for unit test
+      {
+        cta::objectstore::Agent rqAgent(getDb().getAgentReference().getAgentAddress(), getDb().getBackend());
+        cta::objectstore::ScopedExclusiveLock ralk(rqAgent);
+        rqAgent.fetch();
+        rqAgent.setTimeout_us(0);
+        rqAgent.commit();
+      }
       // Garbage collect the request
-      auto &be = osdbi.getBackend();
       cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
-      cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
+      cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), getDb().getBackend());
       gcAgent.initialize();
-      gcAgent.setTimeout_us(0);
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-        gc.runOnePass(lc);
+        cta::objectstore::GarbageCollector gc(getDb().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
-#endif
     }
     // and the failure should be reported on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
