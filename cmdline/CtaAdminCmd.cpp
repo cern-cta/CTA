@@ -183,7 +183,7 @@ void CtaAdminCmd::send() const
 
    // Send the Request to the Service and get a Response
    cta::xrd::Response response;
-   auto stream_future = cta_service.Send(m_request, response);
+   auto stream_future = cta_service.SendAsync(m_request, response);
 
    // Handle responses
    switch(response.type())
