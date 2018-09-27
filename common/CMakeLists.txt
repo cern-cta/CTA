@@ -184,7 +184,8 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
   UserIdentityTest.cpp
-  optionalTest.cpp)
+  optionalTest.cpp
+  rangeTest.cpp)
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
