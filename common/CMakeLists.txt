@@ -138,7 +138,8 @@ set (COMMON_LIB_SRC_FILES
   ConfigurationFile.cpp
   SourcedParameter.cpp   
   Timer.cpp
-  UserIdentity.cpp)
+  UserIdentity.cpp
+  optional.cpp)
 
 add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})
