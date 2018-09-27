@@ -36,6 +36,8 @@ public:
 
    // Static methods to format streaming responses
 
+   static bool isJson() { return is_json; }
+
    // "archivefile ls" command
    static void printAfLsHeader();
    static void printAfLsItem(const ArchiveFileItem &af_item);
@@ -88,6 +90,8 @@ private:
 
    std::string       m_execname;                        //!< Executable name of this program
    cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
+
+   static bool is_json;                                 //!< Display results in JSON format
 
    static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
    static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text

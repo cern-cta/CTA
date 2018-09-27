@@ -56,6 +56,19 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    using namespace cta::xrd;
    using namespace cta::admin;
 
+   // Output results in JSON format for parsing by a script
+   if(CtaAdminCmd::isJson())
+   {
+      switch(record.data_case()) {
+         case Data::kAfItemFieldNumber:          Log::DumpProtobuf(Log::ERROR, &record.af_item()); break;
+         case Data::kAfSummaryItemFieldNumber:   Log::DumpProtobuf(Log::ERROR, &record.af_summary_item()); break;
+         default:
+            throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+      }
+      return;
+   }
+
+   // Format results in a tabular format for a human
    switch(record.data_case())
    {
       case Data::kAfItemFieldNumber : switch(record.af_item().type())
@@ -90,6 +103,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 namespace cta {
 namespace admin {
 
+bool CtaAdminCmd::is_json = false;
+
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
 {
@@ -104,7 +119,17 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    cmdLookup_t::const_iterator cmd_it;
 
-   if(argc < 2 || (cmd_it = cmdLookup.find(argv[1])) == cmdLookup.end()) {
+   // Client-side only options
+
+   int argno = 1;
+
+   if(argc <= argno) throwUsage();
+
+   if(std::string(argv[argno]) == "--json") { is_json = true; ++argno; }
+
+   // Commands, subcommands and server-side options
+
+   if(argc <= argno || (cmd_it = cmdLookup.find(argv[argno++])) == cmdLookup.end()) {
       throwUsage();
    } else {
       admincmd.set_cmd(cmd_it->second);
@@ -112,7 +137,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    // Help is a special subcommand which suppresses errors and prints usage
    
-   if(argc > 2 && std::string(argv[2]) == "help") {
+   if(argc > argno && std::string(argv[argno]) == "help") {
       throwUsage();
    }
 
@@ -124,10 +149,10 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    {
       subcmdLookup_t::const_iterator subcmd_it;
 
-      if(argc < 3) {
+      if(argc <= argno) {
          throwUsage("Missing subcommand");
-      } else if((subcmd_it = subcmdLookup.find(argv[2])) == subcmdLookup.end()) {
-         throwUsage(std::string("Invalid subcommand: ") + argv[2]);
+      } else if((subcmd_it = subcmdLookup.find(argv[argno])) == subcmdLookup.end()) {
+         throwUsage(std::string("Invalid subcommand: ") + argv[argno]);
       } else {
          admincmd.set_subcmd(subcmd_it->second);
       }
@@ -138,10 +163,10 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    auto option_list_it = cmdOptions.find(cmd_key_t{ admincmd.cmd(), admincmd.subcmd() });
 
    if(option_list_it == cmdOptions.end()) {
-      throwUsage(std::string("Invalid subcommand: ") + argv[2]);
+      throwUsage(std::string("Invalid subcommand: ") + argv[argno]);
    }
 
-   parseOptions(has_subcommand ? 3 : 2, argc, argv, option_list_it->second);
+   parseOptions(has_subcommand ? argno+1 : argno, argc, argv, option_list_it->second);
 }
 
 
