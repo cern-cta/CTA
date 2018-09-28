@@ -59,43 +59,29 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    // Output results in JSON format for parsing by a script
    if(CtaAdminCmd::isJson())
    {
-      std::cout << CtaAdminCmd::jsonDelim() << Log::DumpProtobuf(&record);
-#if 0
+      std::cout << CtaAdminCmd::jsonDelim();
+
       switch(record.data_case()) {
-         case Data::kAfItemFieldNumber:          std::cout << Log::DumpProtobuf(&record.af_item()); break;
-         case Data::kAfSummaryItemFieldNumber:   std::cout << Log::DumpProtobuf(&record.af_summary_item()); break;
+         case Data::kAflsItem:      std::cout << Log::DumpProtobuf(&record.afls_item());    break;
+         case Data::kAflsSummary:   std::cout << Log::DumpProtobuf(&record.afls_summary()); break;
+         case Data::kLpaItem:       std::cout << Log::DumpProtobuf(&record.lpa_item());     break;
+         case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
+         case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
+         case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
-#endif
-      return;
    }
-
    // Format results in a tabular format for a human
-   switch(record.data_case())
-   {
-      case Data::kAfItemFieldNumber : switch(record.af_item().type())
-      {
-         case ArchiveFileItem::ARCHIVEFILE_LS:         CtaAdminCmd::printAfLsItem(record.af_item()); break;
-         case ArchiveFileItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaItem (record.af_item()); break;
-         case ArchiveFileItem::LISTPENDINGRETRIEVES:   CtaAdminCmd::printLprItem (record.af_item()); break;
+   else switch(record.data_case()) {
+         case Data::kAflsItem:      CtaAdminCmd::print(record.afls_item());    break;
+         case Data::kAflsSummary:   CtaAdminCmd::print(record.afls_summary()); break;
+         case Data::kLpaItem:       CtaAdminCmd::print(record.lpa_item());     break;
+         case Data::kLpaSummary:    CtaAdminCmd::print(record.lpa_summary());  break;
+         case Data::kLprItem:       CtaAdminCmd::print(record.lpr_item());     break;
+         case Data::kLprSummary:    CtaAdminCmd::print(record.lpr_summary());  break;
          default:
-            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
-      }
-      break;
-
-      case Data::kAfSummaryItemFieldNumber : switch(record.af_summary_item().type())
-      {
-         case ArchiveFileSummaryItem::ARCHIVEFILE_LS:         CtaAdminCmd::printAfLsSummaryItem(record.af_summary_item()); break;
-         case ArchiveFileSummaryItem::LISTPENDINGARCHIVES:    CtaAdminCmd::printLpaSummaryItem (record.af_summary_item()); break;
-         case ArchiveFileSummaryItem::LISTPENDINGRETRIEVES:   CtaAdminCmd::printLprSummaryItem (record.af_summary_item()); break;
-         default:
-            throw std::runtime_error("Not implemented/received invalid stream data from CTA Frontend.");
-      }
-      break;
-
-      default:
-         throw std::runtime_error("Received invalid stream data from CTA Frontend.");
+            throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
 }
 
@@ -223,7 +209,7 @@ void CtaAdminCmd::send() const
          // Print message text
          std::cout << response.message_txt();
          // Print streaming response header
-         switch(response.show_header()) {
+         if(!isJson()) switch(response.show_header()) {
             case HeaderType::ARCHIVEFILE_LS:               printAfLsHeader(); break;
             case HeaderType::ARCHIVEFILE_LS_SUMMARY:       printAfLsSummaryHeader(); break;
             case HeaderType::LISTPENDINGARCHIVES:          printLpaHeader(); break;
@@ -417,23 +403,23 @@ void CtaAdminCmd::printAfLsHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printAfLsItem(const cta::admin::ArchiveFileItem &af_item)
+void CtaAdminCmd::print(const cta::admin::ArchiveFileLsItem &afls_item)
 {
-   std::cout << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id()    << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().vid()           << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()         << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.tf().block_id()      << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().creation_time() << ' '
-                                                                 << af_item.af().df().path()
+   std::cout << std::setfill(' ') << std::setw(11) << std::right << afls_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << afls_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << afls_item.tf().vid()           << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << afls_item.tf().f_seq()         << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << afls_item.tf().block_id()      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << afls_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << afls_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << afls_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << afls_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << afls_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << afls_item.af().df().group()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << afls_item.af().creation_time() << ' '
+                                                                 << afls_item.af().df().path()
              << std::endl;
 }
 
@@ -445,10 +431,10 @@ void CtaAdminCmd::printAfLsSummaryHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printAfLsSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+void CtaAdminCmd::print(const cta::admin::ArchiveFileLsSummary &afls_summary)
 {
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
+   std::cout << std::setfill(' ') << std::setw(13) << std::right << afls_summary.total_files() << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << afls_summary.total_size()  << ' '
              << std::endl;
 }
 
@@ -470,20 +456,20 @@ void CtaAdminCmd::printLpaHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printLpaItem(const cta::admin::ArchiveFileItem &af_item)
+void CtaAdminCmd::print(const cta::admin::ListPendingArchivesItem &lpa_item)
 {
-   std::cout << std::setfill(' ') << std::setw(18) << std::right << af_item.tapepool()           << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().storage_class() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()            << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.af().disk_id()       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().disk_instance() << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_item.af().cs().type()     << ' '
-             << std::setfill(' ') << std::setw(14) << std::right << af_item.af().cs().value()    << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()          << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner()    << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group()    << ' '
-             <<                                                     af_item.af().df().path()
+   std::cout << std::setfill(' ') << std::setw(18) << std::right << lpa_item.tapepool()           << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << lpa_item.af().archive_id()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << lpa_item.af().storage_class() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << lpa_item.copy_nb()            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << lpa_item.af().disk_id()       << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().disk_instance() << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << lpa_item.af().cs().type()     << ' '
+             << std::setfill(' ') << std::setw(14) << std::right << lpa_item.af().cs().value()    << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << lpa_item.af().size()          << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().df().owner()    << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << lpa_item.af().df().group()    << ' '
+             <<                                                     lpa_item.af().df().path()
              << std::endl;
 }
 
@@ -496,11 +482,11 @@ void CtaAdminCmd::printLpaSummaryHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printLpaSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+void CtaAdminCmd::print(const cta::admin::ListPendingArchivesSummary &lpa_summary)
 {
-   std::cout << std::setfill(' ') << std::setw(18) << std::right << af_summary_item.tapepool()    << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
+   std::cout << std::setfill(' ') << std::setw(18) << std::right << lpa_summary.tapepool()    << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << lpa_summary.total_files() << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << lpa_summary.total_size()  << ' '
              << std::endl;
 }
 
@@ -519,17 +505,17 @@ void CtaAdminCmd::printLprHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printLprItem(const cta::admin::ArchiveFileItem &af_item)
+void CtaAdminCmd::print(const cta::admin::ListPendingRetrievesItem &lpr_item)
 {
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_item.tf().vid()        << ' '
-             << std::setfill(' ') << std::setw(11) << std::right << af_item.af().archive_id() << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.copy_nb()         << ' '
-             << std::setfill(' ') << std::setw(7)  << std::right << af_item.tf().f_seq()      << ' '
-             << std::setfill(' ') << std::setw(9)  << std::right << af_item.tf().block_id()   << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_item.af().size()       << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().owner() << ' '
-             << std::setfill(' ') << std::setw(8)  << std::right << af_item.af().df().group() << ' '
-             <<                                                     af_item.af().df().path()
+   std::cout << std::setfill(' ') << std::setw(13) << std::right << lpr_item.tf().vid()        << ' '
+             << std::setfill(' ') << std::setw(11) << std::right << lpr_item.af().archive_id() << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << lpr_item.copy_nb()         << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << lpr_item.tf().f_seq()      << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << lpr_item.tf().block_id()   << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << lpr_item.af().size()       << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << lpr_item.af().df().owner() << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << lpr_item.af().df().group() << ' '
+             <<                                                     lpr_item.af().df().path()
              << std::endl;
 }
 
@@ -542,11 +528,11 @@ void CtaAdminCmd::printLprSummaryHeader()
              << TEXT_NORMAL << std::endl;
 }
 
-void CtaAdminCmd::printLprSummaryItem(const cta::admin::ArchiveFileSummaryItem &af_summary_item)
+void CtaAdminCmd::print(const cta::admin::ListPendingRetrievesSummary &lpr_summary)
 {
-   std::cout << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.vid()         << ' '
-             << std::setfill(' ') << std::setw(13) << std::right << af_summary_item.total_files() << ' '
-             << std::setfill(' ') << std::setw(12) << std::right << af_summary_item.total_size()  << ' '
+   std::cout << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.vid()         << ' '
+             << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.total_files() << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << lpr_summary.total_size()  << ' '
              << std::endl;
 }
 

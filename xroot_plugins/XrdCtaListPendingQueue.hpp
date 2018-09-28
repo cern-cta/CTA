@@ -162,17 +162,14 @@ bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStrea
 {
    Data record;
 
-   // Response type
-   record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGARCHIVES);
-
    // Tapepool
-   record.mutable_af_item()->set_tapepool(tapepool);
+   record.mutable_lpa_item()->set_tapepool(tapepool);
 
    // Copy number
-   record.mutable_af_item()->set_copy_nb(job.copyNumber);
+   record.mutable_lpa_item()->set_copy_nb(job.copyNumber);
 
    // Archive file
-   auto af = record.mutable_af_item()->mutable_af();
+   auto af = record.mutable_lpa_item()->mutable_af();
    af->set_archive_id(job.archiveFileID);
    af->set_disk_instance(job.instanceName);
    af->set_disk_id(job.request.diskFileID);
@@ -193,15 +190,12 @@ bool ListPendingQueue<OStoreDB::ArchiveQueueItor_t>::pushRecord(XrdSsiPb::OStrea
 {
    Data record;
 
-   // Response type
-   record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::LISTPENDINGARCHIVES);
-
    // Tapepool
-   record.mutable_af_summary_item()->set_tapepool(tapepool);
+   record.mutable_lpa_summary()->set_tapepool(tapepool);
 
    // Summary statistics
-   record.mutable_af_summary_item()->set_total_files(total_files);
-   record.mutable_af_summary_item()->set_total_size(total_size);
+   record.mutable_lpa_summary()->set_total_files(total_files);
+   record.mutable_lpa_summary()->set_total_size(total_size);
 
    return streambuf->Push(record);
 }
@@ -233,14 +227,11 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
 
       Data record;
 
-      // Response type
-      record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::LISTPENDINGRETRIEVES);
-
       // Copy number
-      record.mutable_af_item()->set_copy_nb(tape_it->second.first);
+      record.mutable_lpr_item()->set_copy_nb(tape_it->second.first);
 
       // Archive file
-      auto af = record.mutable_af_item()->mutable_af();
+      auto af = record.mutable_lpr_item()->mutable_af();
       af->set_archive_id(job.request.archiveFileID);
       //af->set_size(tape_it->second.second.compressedSize);
       af->set_size(job.fileSize);
@@ -249,7 +240,7 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
       af->mutable_df()->set_path(job.request.diskFileInfo.path);
 
       // Tape file
-      auto tf = record.mutable_af_item()->mutable_tf();
+      auto tf = record.mutable_lpr_item()->mutable_tf();
       tf->set_vid(tape_it->first);
       tf->set_f_seq(tape_it->second.second.fSeq);
       tf->set_block_id(tape_it->second.second.blockId);
@@ -266,15 +257,12 @@ bool ListPendingQueue<OStoreDB::RetrieveQueueItor_t>::pushRecord(XrdSsiPb::OStre
 {
    Data record;
 
-   // Response type
-   record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::LISTPENDINGRETRIEVES);
-
    // Tapepool
-   record.mutable_af_summary_item()->set_vid(vid);
+   record.mutable_lpr_summary()->set_vid(vid);
 
    // Summary statistics
-   record.mutable_af_summary_item()->set_total_files(total_files);
-   record.mutable_af_summary_item()->set_total_size(total_size);
+   record.mutable_lpr_summary()->set_total_files(total_files);
+   record.mutable_lpr_summary()->set_total_size(total_size);
 
    return streambuf->Push(record);
 }
