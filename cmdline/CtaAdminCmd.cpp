@@ -59,12 +59,15 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
    // Output results in JSON format for parsing by a script
    if(CtaAdminCmd::isJson())
    {
+      std::cout << CtaAdminCmd::jsonDelim() << Log::DumpProtobuf(&record);
+#if 0
       switch(record.data_case()) {
-         case Data::kAfItemFieldNumber:          Log::DumpProtobuf(Log::ERROR, &record.af_item()); break;
-         case Data::kAfSummaryItemFieldNumber:   Log::DumpProtobuf(Log::ERROR, &record.af_summary_item()); break;
+         case Data::kAfItemFieldNumber:          std::cout << Log::DumpProtobuf(&record.af_item()); break;
+         case Data::kAfSummaryItemFieldNumber:   std::cout << Log::DumpProtobuf(&record.af_summary_item()); break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
+#endif
       return;
    }
 
@@ -103,7 +106,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 namespace cta {
 namespace admin {
 
-bool CtaAdminCmd::is_json = false;
+bool CtaAdminCmd::is_json         = false;
+bool CtaAdminCmd::is_first_record = true;
 
 CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
@@ -202,7 +206,6 @@ void CtaAdminCmd::send() const
       throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
    }
 
-
    // Obtain a Service Provider
    XrdSsiPbServiceType cta_service(config);
 
@@ -239,6 +242,9 @@ void CtaAdminCmd::send() const
 
    // If there is a Data/Stream payload, wait until it has been processed before exiting
    stream_future.wait();
+
+   // JSON output is an array of structs, close bracket
+   if(isJson()) { std::cout << ']'; }
 }
 
 

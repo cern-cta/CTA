@@ -37,6 +37,11 @@ public:
    // Static methods to format streaming responses
 
    static bool isJson() { return is_json; }
+   static char jsonDelim() {
+      char c = is_first_record ? '[' : ',';
+      is_first_record = false;
+      return c;
+   }
 
    // "archivefile ls" command
    static void printAfLsHeader();
@@ -92,6 +97,7 @@ private:
    cta::xrd::Request m_request;                         //!< Protocol Buffer for the command and parameters
 
    static bool is_json;                                 //!< Display results in JSON format
+   static bool is_first_record;                         //!< Delimiter for JSON records
 
    static constexpr const char* const TEXT_RED    = "\x1b[31;1m";     //!< Terminal formatting code for red text
    static constexpr const char* const TEXT_NORMAL = "\x1b[0m";        //!< Terminal formatting code for normal text
