@@ -32,10 +32,13 @@ class ScopedParamContainer;
 
 class TimingList: public std::list<std::tuple<std::string, double>> {
 public:
-  void insert(const std::string &, double);
+  void insertOrIncrement(const std::string &, double);
+  void insOrIncAndReset(const std::string&, utils::Timer &);
   void insertAndReset(const std::string&, utils::Timer &);
   TimingList & operator+= (const TimingList &);
   void addToLog(ScopedParamContainer &);
+private:
+  double & at(const std::string&);
 };
 
 }} // namespace cta::log
