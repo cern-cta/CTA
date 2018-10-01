@@ -24,6 +24,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "JobQueueType.hpp"
+#include "RepackQueueType.hpp"
 #include <string>
 #include <set>
 #include <future>
@@ -37,6 +38,7 @@ namespace cta { namespace objectstore {
 class ScopedExclusiveLock;
 class AgentReference;
 class DriveState;
+class RepackQueue;
 
 /**
  * A class with static functions allowing multi-object operations
@@ -56,6 +58,16 @@ public:
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
     const cta::optional<std::string> & tapePoolOrVid, JobQueueType queueType, log::LogContext & lc);
   
+  /**
+   * Find or create a repack queue, and return it locked and fetched to the caller
+   * (Queue and ScopedExclusiveLock objects are provided empty)
+   * @param queue the queue object, empty
+   * @param queueLock the lock, not initialized
+   * @param agentReference the agent reference that will be needed in case of object creation
+   */
+  static void getLockedAndFetchedRepackQueue(RepackQueue & queue, 
+    ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
+    RepackQueueType queueType, log::LogContext & lc);
   
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**

@@ -27,6 +27,8 @@
 //#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/RepackIndex.hpp"
+#include "objectstore/RepackQueue.hpp"
+#include "objectstore/RepackQueuePendingAlgorithms.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -1032,28 +1034,34 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
-  cta::objectstore::RepackRequest rr(m_agentReference->nextId("RepackTapeRequest"), m_objectStore);
-  rr.initialize();
+  auto rr=cta::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackTapeRequest"), m_objectStore);
+  rr->initialize();
   // We need to own the request until it is queued in the the pending queue.
-  rr.setOwner(m_agentReference->getAgentAddress());
-  rr.setVid(vid);
-  rr.setRepackType(repackType);
+  rr->setOwner(m_agentReference->getAgentAddress());
+  rr->setVid(vid);
+  rr->setRepackType(repackType);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   RepackIndex ri(re.addOrGetRepackIndexAndCommit(*m_agentReference, lc), m_objectStore);
   try {
-    Helpers::registerRepackRequestToIndex(vid, rr.getAddressIfSet(), *m_agentReference, m_objectStore, lc);
+    Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
   } catch (objectstore::RepackIndex::VidAlreadyRegistered &) {
     throw exception::UserError("A repack request already exists for this VID.");
   }
   // We're good to go to create the object. We need to own it.
-  m_agentReference->addToOwnership(rr.getAddressIfSet(), m_objectStore);
-  rr.insert();
+  m_agentReference->addToOwnership(rr->getAddressIfSet(), m_objectStore);
+  rr->insert();
   // If latency needs to the improved, the next steps could be deferred like they are for archive and retrieve requests.
-  // TODO typedef objectstore::ContainerAlgorithms<RepackPendingQueue> RPQA;
-  
-  
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  {
+    RQPAlgo::InsertedElement::list elements;
+    elements.push_back(RQPAlgo::InsertedElement());
+    elements.back().repackRequest=std::move(rr);
+    RQPAlgo rqpAlgo(m_objectStore, *m_agentReference);
+    rqpAlgo.referenceAndSwitchOwnership(nullopt, RepackQueueType::Pending, m_agentReference->getAgentAddress(),
+        elements, lc);
+  }
 }
 
 

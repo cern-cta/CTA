@@ -21,12 +21,15 @@
 #include "ArchiveQueue.hpp"
 #include "AgentReference.hpp"
 #include "RetrieveQueue.hpp"
+#include "RepackQueue.hpp"
 #include "RootEntry.hpp"
 #include "DriveRegister.hpp"
 #include "DriveState.hpp"
 #include "RepackIndex.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
+#include "common/range.hpp"
+#include "common/log/TimingList.hpp"
 #include <random>
 
 namespace cta { namespace objectstore {
@@ -262,6 +265,97 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedRetrieveQueue(): failed to find or create and lock archive queue after 5 retries for vid: ")
       + vid.value());
+}
+
+//------------------------------------------------------------------------------
+// Helpers::getLockedAndFetchedRepackQueue()
+//------------------------------------------------------------------------------
+void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusiveLock& queueLock, AgentReference& agentReference,
+    RepackQueueType queueType, log::LogContext& lc) {
+  // Try and find the repack queue.
+  Backend & be = queue.m_objectStore;
+  for (auto i: cta::range<size_t>(5)) {
+    utils::Timer t;
+    log::TimingList timings;
+    {
+      RootEntry re(be);
+      re.fetchNoLock();
+      timings.insertAndReset("rootFetchNoLockTime", t);
+      try {
+        queue.setAddress(re.getRepackQueueAddress(queueType));
+      } catch (cta::exception::Exception & ex) {
+        ScopedExclusiveLock rexl(re);
+        timings.insertAndReset("rootRelockExclusiveTime", t);
+        re.fetch();
+        timings.insertAndReset("rootRelockExclusiveTime", t);
+        queue.setAddress(re.addOrGetRepackQueueAndCommit(agentReference, queueType, lc));
+        timings.insertAndReset("addOrGetQueueandCommitTime", t);
+        rexl.release();
+        timings.insertAndReset("rootUnlockExclusiveTime", t);
+      }
+    }
+    try {
+      queueLock.lock(queue);
+      timings.insertAndReset("queueLockTime", t);
+      queue.fetch();
+      timings.insertAndReset("queueFetchTime", t);
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("queueObject", queue.getAddressIfSet());
+      timings.addToLog(params);
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): Successfully found and locked a repack queue.");
+      return;
+    } catch (cta::exception::Exception & ex) {
+      // We have a (rare) opportunity for a race condition, where we identify the
+      // queue and it gets deleted before we manage to lock it.
+      // The locking or fetching will fail in this case.
+      // We hence allow ourselves to retry a couple times.
+      // We also need to make sure the lock on the queue is released (it is
+      // an object and hence not scoped).
+      // We should also deal with the case where a queue was deleted but left 
+      // referenced in the root entry. We will try to clean up if necessary.
+      // Failing to do this, we will spin and exhaust all of our retries.
+      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+        // The queue has been proven to not exist. Let's make sure we de-reference
+        // it form the root entry.
+        RootEntry re(be);
+        ScopedExclusiveLock rexl(re);
+        timings.insOrIncAndReset("rootRelockExclusiveTime", t);
+        re.fetch();
+        timings.insOrIncAndReset("rootRefetchTime", t);
+        try {
+          re.removeRepackQueueAndCommit(queueType, lc);
+          timings.insOrIncAndReset("rootQueueDereferenceTime", t);
+          log::ScopedParamContainer params(lc);
+          params.add("queueObject", queue.getAddressIfSet())
+                .add("exceptionMsg", ex.getMessageValue());
+          lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): removed reference to gone repack queue from root entry.");
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+      }
+      if (queueLock.isLocked()) {
+        queueLock.release();
+        timings.insOrIncAndReset("queueLockReleaseTime", t);
+      }
+      log::ScopedParamContainer params(lc);
+      params.add("attemptNb", i+1)
+            .add("exceptionMessage", ex.getMessageValue())
+            .add("queueObject", queue.getAddressIfSet());
+      timings.addToLog(params);
+      lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): failed to fetch an existing queue. Retrying.");
+      queue.resetAddress();
+      continue;
+    } catch (...) {
+      // Also release the lock if needed here.
+      if (queueLock.isLocked()) queueLock.release();
+      queue.resetAddress();
+      throw;
+    }
+  } // end of retry loop.
+  // Also release the lock if needed here.
+  if (queueLock.isLocked()) queueLock.release();
+  queue.resetAddress();
+  throw cta::exception::Exception(
+      "In OStoreDB::getLockedAndFetchedRepackQueue(): failed to find or create and lock repack queue after 5 retries");
 }
 
 //------------------------------------------------------------------------------

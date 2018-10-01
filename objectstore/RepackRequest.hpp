@@ -21,6 +21,8 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/dataStructures/RepackType.hpp"
+#include "common/log/TimingList.hpp"
+#include "common/Timer.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -40,6 +42,21 @@ public:
   
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
+  
+  // An asynchronous request ownership updating class.
+  class AsyncOwnerUpdater {
+    friend class RepackRequest;
+  public:
+    void wait();
+  private:
+    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    log::TimingList m_timingReport;
+    utils::Timer m_timer;
+  };
+  // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
+  AsyncOwnerUpdater *asyncUpdateOwner(const std::string &owner, const std::string &previousOwner,
+      cta::optional<serializers::RepackRequestStatus> newStatus);
 };
 
 }} // namespace cta::objectstore

@@ -21,6 +21,7 @@
 #include "objectstore/cta.pb.h"
 
 #include "JobQueueType.hpp"
+#include "RepackQueueType.hpp"
 #include "Backend.hpp"
 #include "ObjectOps.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -126,7 +127,9 @@ public:
   std::string addOrGetAgentRegisterPointerAndCommit(AgentReference & agentRef,
     const EntryLogSerDeser & log, log::LogContext & lc);
   void removeAgentRegisterAndCommit(log::LogContext & lc);
-  
+private:
+  void addIntendedAgentRegistry(const std::string & address, log::LogContext & lc);
+public:  
   // Scheduler global lock manipulations =======================================
   std::string getSchedulerGlobalLock();
   std::string addOrGetSchedulerGlobalLockAndCommit(AgentReference & agentRef, const EntryLogSerDeser & log);
@@ -137,8 +140,15 @@ public:
   std::string addOrGetRepackIndexAndCommit(AgentReference & agentRef, log::LogContext & lc);
   void removeRepackIndexAndCommit(log::LogContext & lc);
   
+  // Repack queues manipulations ===============================================
+  CTA_GENERATE_EXCEPTION_CLASS(RepackQueueNotEmpty);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackQueue);
+  std::string getRepackQueueAddress(RepackQueueType queueType);
+  std::string addOrGetRepackQueueAndCommit(AgentReference & agentRef, RepackQueueType queueType, log::LogContext & lc);
+  void removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext & lc);
 private:
-  void addIntendedAgentRegistry(const std::string & address, log::LogContext & lc);
+  void setRepackQueueAddress(RepackQueueType queueType, const std::string &queueAddress);
+  void clearRepackQueueAddress(RepackQueueType queueType);
   
 public:
   // Dump the root entry

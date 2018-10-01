@@ -26,6 +26,7 @@
 #include "GenericObject.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "RepackIndex.hpp"
+#include "RepackQueue.hpp"
 #include <cxxabi.h>
 #include "ProtocolBuffersAlgorithms.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -764,6 +765,156 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
   // We commit for safety and symmetry with the add operation
   commit();
 }
+
+// =============================================================================
+// ================ Repack index manipulation ==================================
+// =============================================================================
+
+std::string RootEntry::getRepackQueueAddress(RepackQueueType queueType) {
+  checkPayloadReadable();
+  switch (queueType) {
+  case RepackQueueType::Pending:
+    if (!m_payload.has_repackrequestspendingqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: pending queue no set.");
+    return m_payload.repackrequestspendingqueuepointer().address();
+  case RepackQueueType::ToExpand:
+    if (!m_payload.has_repackrequeststoexpandqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::getRepackQueueAddress: toExpand queue not set.");
+    return m_payload.repackrequeststoexpandqueuepointer().address();
+  }
+  throw cta::exception::Exception("In RootEntry::getRepackQueueAddress(): unexptected queue type.");
+}
+
+void RootEntry::clearRepackQueueAddress(RepackQueueType queueType) {
+  checkPayloadWritable();
+  switch (queueType) {
+  case RepackQueueType::Pending:
+    if (!m_payload.has_repackrequestspendingqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: pending queue no set.");
+    m_payload.mutable_repackrequestspendingqueuepointer()->Clear();
+  case RepackQueueType::ToExpand:
+    if (!m_payload.has_repackrequeststoexpandqueuepointer())
+      throw NoSuchRepackQueue("In RootEntry::clearRepackQueueAddress: toExpand queue not set.");
+    return m_payload.mutable_repackrequeststoexpandqueuepointer()->Clear();
+  }
+  throw cta::exception::Exception("In RootEntry::clearRepackQueueAddress(): unexptected queue type.");
+}
+
+void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext& lc) {
+  checkPayloadWritable();
+  // find the address of the repack queue object
+  try {
+    bool hasQueue;
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      hasQueue = m_payload.has_repackrequestspendingqueuepointer();
+      break;
+    case RepackQueueType::ToExpand:
+      hasQueue = m_payload.has_repackrequeststoexpandqueuepointer();
+    }
+    if (!hasQueue) {
+      throw NoSuchRepackQueue("In RootEntry::removeRepackQueueAndCommit: trying to remove non-existing repack queue");
+    }
+    std::string queueAddress;
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      queueAddress = m_payload.repackrequestspendingqueuepointer().address();
+      break;
+    case RepackQueueType::ToExpand:
+      queueAddress = m_payload.repackrequeststoexpandqueuepointer().address();
+    }
+    // Open the repack queue object
+    RepackQueue rq(queueAddress, m_objectStore);
+    ScopedExclusiveLock rql;
+    try {
+      rql.lock(rq);
+      rq.fetch();
+    } catch (cta::exception::Exception & ex) {
+      // The repack queue seems to not be there. Make sure this is the case:
+      if (rq.exists()) {
+        // We failed to access the queue, yet it is present. This is an error.
+        // Let the exception pass through.
+        throw;
+      } else {
+        // The queue object is already gone. We can skip to removing the 
+        // reference from the RootEntry
+        goto deleteFromRootEntry;
+      }
+    }
+    // Check the repack queue is empty
+    if (!rq.isEmpty()) {
+      throw RepackQueueNotEmpty("In RootEntry::removeRepackQueueAndCommit: trying to "
+          "remove a non-empty tape pool");
+    }
+    // We can now delete the queue
+    rq.remove();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("repackQueueObject", rq.getAddressIfSet())
+            .add("queueType", toString(queueType));
+      lc.log(log::INFO, "In, RootEntry::removeRepackQueueAndCommit(): removed retrieve queue.");
+    }
+  deleteFromRootEntry:
+    // ... and remove it from our entry
+    switch (queueType) {
+    case RepackQueueType::Pending:
+      m_payload.clear_repackrequestspendingqueuepointer();
+      break;
+    case RepackQueueType::ToExpand:
+      m_payload.clear_repackrequeststoexpandqueuepointer();
+    }
+    commit();
+    {
+      log::ScopedParamContainer params(lc);
+      params.add("queueType", toString(queueType));
+      lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
+    }
+  } catch (serializers::NotFound &) {
+    // No such tape pool. Nothing to to.
+    throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
+  }
+}
+
+std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, RepackQueueType queueType, log::LogContext& lc) {
+  checkPayloadWritable();
+  // Check the repack queue does not already exist
+  try {
+    return getRepackQueueAddress(queueType);
+  } catch (NoSuchRetrieveQueue &) {}
+  // The queue is not there yet. Create it.
+  // Insert the archive queue pointer in the root entry, then the queue.
+  std::string repackQueueNameHeader = "RepackQueue";
+  switch(queueType) {
+  case RepackQueueType::Pending: repackQueueNameHeader+="Pending"; break;
+  case RepackQueueType::ToExpand: repackQueueNameHeader+="ToExpand"; break;
+  default: break;
+  }
+  std::string repackQueueAddress = agentRef.nextId(repackQueueNameHeader);
+  // Now move create a reference in the root entry
+  switch(queueType) {
+  case RepackQueueType::Pending:
+    m_payload.mutable_repackrequestspendingqueuepointer()->set_address(repackQueueAddress); 
+    break;
+  case RepackQueueType::ToExpand:
+    m_payload.mutable_repackrequeststoexpandqueuepointer()->set_address(repackQueueAddress);
+    break;
+  }
+  // We must commit here to ensure the repack queue is referenced.
+  commit();
+  // Then insert the queue object
+  RepackQueue rq(repackQueueAddress, ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::m_objectStore);
+  rq.initialize();
+  rq.setOwner(getAddressIfSet());
+  rq.setBackupOwner(getAddressIfSet());
+  rq.insert();
+  return repackQueueAddress;
+}
+
+
+
+// =============================================================================
+// ================ Dump =======================================================
+// =============================================================================
 
 // Dump the root entry
 std::string RootEntry::dump () {
