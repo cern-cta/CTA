@@ -26,6 +26,7 @@ template <typename T>
 class range: public std::initializer_list<T> {
 public:
   range (T begin, T end, T step=1): m_begin(begin), m_end(end), m_step(step) {}
+  range (T end): range(0, end) {}
 
   class iterator {
   private:
