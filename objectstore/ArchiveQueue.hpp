@@ -52,7 +52,7 @@ public:
   // In memory initialiser
   void initialize(const std::string & name);
   
-  // Commit with sanity checks (override from ObjectOps
+  // Commit with sanity checks (overload from ObjectOps)
   void commit();
 private:
   // Validates all summaries are in accordance with each other.

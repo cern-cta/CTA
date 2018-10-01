@@ -513,7 +513,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string
   const std::string &previousOwner) -> AsyncJobOwnerUpdater*
 {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
-  // Passing a reference to the unique pointer led to strange behaviors.
+  // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
   ret->m_updaterCallback=
       [this, copyNumber, owner, previousOwner, &retRef](const std::string &in)->std::string {

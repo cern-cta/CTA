@@ -54,7 +54,7 @@ public:
     ContainerTraits<Q,C>::getLockedAndFetched(cont, contLock, m_agentReference, contId, queueType, lc);
     ContainerTraits<Q,C>::addReferencesAndCommit(cont, elements, m_agentReference, lc);
     auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(elements, cont.getAddressIfSet(),
-        prevContId, timingList, t, lc);
+        prevContAddress, timingList, t, lc);
     // If ownership switching failed, remove failed object from queue to not leave stale pointers.
     if (failedOwnershipSwitchElements.size()) {
       ContainerTraits<Q,C>::removeReferencesAndCommit(cont, failedOwnershipSwitchElements);

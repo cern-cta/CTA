@@ -353,7 +353,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
         nextJob++;
       }
     }
-    // We will new commit this shard (and the queue) before moving to the next.
+    // We will now commit this shard (and the queue) before moving to the next.
     // Commit in the right order:
     // 1) commit the queue so the shard is referenced in all cases (creation).
     commit();
