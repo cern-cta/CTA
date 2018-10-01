@@ -32,6 +32,8 @@ struct ContainerTraits<ArchiveQueue,C>
   struct ContainerSummary : public ArchiveQueue::JobsSummary {
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
+  
+  typedef cta::objectstore::JobQueueType QueueType;
 
   struct InsertedElement {
     ArchiveRequest* archiveRequest;
@@ -231,7 +233,7 @@ void ContainerTraits<ArchiveQueue,C>::
 getLockedAndFetched(Container& cont, ScopedExclusiveLock& aqL, AgentReference& agRef,
   const ContainerIdentifier& contId, QueueType queueType, log::LogContext& lc)
 {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
 }
 
 template<typename C>

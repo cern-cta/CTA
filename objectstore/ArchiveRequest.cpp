@@ -71,23 +71,26 @@ void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_maxreportretries(maxReportRetries);
 }
 
-QueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
+//------------------------------------------------------------------------------
+// ArchiveRequest::getJobQueueType()
+//------------------------------------------------------------------------------
+JobQueueType ArchiveRequest::getJobQueueType(uint16_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
       switch (j.status()) {
       case serializers::ArchiveJobStatus::AJS_ToTransfer:
-        return QueueType::JobsToTransfer;
+        return JobQueueType::JobsToTransfer;
       case serializers::ArchiveJobStatus::AJS_Complete:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
       case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
         // We should report a success...
-        return QueueType::JobsToReport;
+        return JobQueueType::JobsToReport;
       case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
         // We should report a failure. The report queue can be shared.
-        return QueueType::JobsToReport;
+        return JobQueueType::JobsToReport;
       case serializers::ArchiveJobStatus::AJS_Failed:
-        return QueueType::FailedJobs;
+        return JobQueueType::FailedJobs;
       case serializers::ArchiveJobStatus::AJS_Abandoned:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Abandoned jobs are not queueable. They are finished and pend siblings completion.");
       }
@@ -357,7 +360,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
         // recreated (this will be done by helper).
         ArchiveQueue aq(m_objectStore);
         ScopedExclusiveLock aql;
-        Helpers::getLockedAndFetchedQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), getQueueType(status), lc);
+        Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(aq, aql, agentReference, j->tapepool(), getQueueType(status), lc);
         queueObject=aq.getAddressIfSet();
         ArchiveRequest::JobDump jd;
         jd.copyNb = j->copynb();
@@ -629,21 +632,27 @@ std::string ArchiveRequest::getJobOwner(uint16_t copyNumber) {
   return j->owner();
 }
 
-QueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
+//------------------------------------------------------------------------------
+// ArchiveRequest::getQueueType()
+//------------------------------------------------------------------------------
+JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
   using serializers::ArchiveJobStatus;
   switch(status) {
   case ArchiveJobStatus::AJS_ToTransfer:
-    return QueueType::JobsToTransfer;
+    return JobQueueType::JobsToTransfer;
   case ArchiveJobStatus::AJS_ToReportForTransfer:
   case ArchiveJobStatus::AJS_ToReportForFailure:
-    return QueueType::JobsToReport;
+    return JobQueueType::JobsToReport;
   case ArchiveJobStatus::AJS_Failed:
-    return QueueType::FailedJobs;
+    return JobQueueType::FailedJobs;
   default:
     throw cta::exception::Exception("In ArchiveRequest::getQueueType(): invalid status for queueing.");
   }
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::statusToString()
+//------------------------------------------------------------------------------
 std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& status) {
   switch(status) {
   case serializers::ArchiveJobStatus::AJS_ToTransfer:

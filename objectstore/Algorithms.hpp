@@ -45,7 +45,7 @@ public:
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId,
-      QueueType queueType, const typename ContainerTraits<Q,C>::ContainerIdentifier & prevContId,
+      const typename ContainerTraits<Q,C>::QueueType queueType, const typename ContainerTraits<Q,C>::ContainerAddress & prevContAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
     C cont(m_backend);
     ScopedExclusiveLock contLock;
@@ -92,7 +92,7 @@ public:
    * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
    * (most cases except garbage collection).
    */
-  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId, QueueType queueType,
+  void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId, JobQueueType queueType,
       typename ContainerTraits<Q,C>::InsertedElement::list &elements, log::LogContext &lc) {
     referenceAndSwitchOwnership(contId, queueType, m_agentReference.getAgentAddress(), elements, lc);
   }
@@ -104,7 +104,7 @@ public:
    * might vary. This function is typically used by the garbage collector. We do not take care of
    * dereferencing the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, QueueType queueType,
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, JobQueueType queueType,
       typename ContainerTraits<Q,C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<Q,C>::ContainerAddress & contAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -154,7 +154,7 @@ public:
 
   typename ContainerTraits<Q,C>::PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
-    QueueType queueType,
+    JobQueueType queueType,
     typename ContainerTraits<Q,C>::PopCriteria &popCriteria,
     log::LogContext &lc)
   {

@@ -341,7 +341,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     re.fetch();
     std::stringstream tapePoolName;
     tapePoolName << "TapePool" << i;
-    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::QueueType::JobsToTransfer, lc);
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer, lc);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -463,7 +463,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   std::list<std::string> tapePools = { "TapePool0", "TapePool1" };
   for (auto & tp: tapePools) {
     // Empty queue
-    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp, cta::objectstore::QueueType::JobsToTransfer), be);
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tp, cta::objectstore::JobQueueType::JobsToTransfer), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
     std::list<std::string> ajtr;
@@ -473,7 +473,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     aq.removeJobsAndCommit(ajtr);
     aql.release();
     // Remove queues from root
-    re.removeArchiveQueueAndCommit(tp, cta::objectstore::QueueType::JobsToTransfer, lc);
+    re.removeArchiveQueueAndCommit(tp, cta::objectstore::JobQueueType::JobsToTransfer, lc);
   }
 
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
@@ -533,7 +533,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     re.fetch();
     std::stringstream vid;
     vid << "Tape" << i;
-    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::QueueType::JobsToTransfer, lc);
+    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer, lc);
     cta::objectstore::RetrieveQueue rq(tAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -646,7 +646,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   std::list<std::string> retrieveQueues = { "Tape0", "Tape1" };
   for (auto & vid: retrieveQueues) {
     // Empty queue
-    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::QueueType::JobsToTransfer), be);
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::JobQueueType::JobsToTransfer), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
     std::list<std::string> jtrl;
@@ -656,7 +656,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     rq.removeJobsAndCommit(jtrl);
     rql.release();
     // Remove queues from root
-    re.removeRetrieveQueueAndCommit(vid, cta::objectstore::QueueType::JobsToTransfer, lc);
+    re.removeRetrieveQueueAndCommit(vid, cta::objectstore::JobQueueType::JobsToTransfer, lc);
   }
 
   ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));

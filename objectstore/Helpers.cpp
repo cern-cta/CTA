@@ -35,9 +35,9 @@ namespace cta { namespace objectstore {
 // Helpers::getLockedAndFetchedQueue <ArchiveQueue> ()
 //------------------------------------------------------------------------------
 template <>
-void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
+void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const std::string& tapePool, QueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& tapePool, JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -58,13 +58,13 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool, queueType));
+        archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool.value(), queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool, agentReference, queueType, lc));
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool.value(), agentReference, queueType, lc));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -108,10 +108,10 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeArchiveQueueAndCommit(tapePool, queueType, lc);
+          re.removeArchiveQueueAndCommit(tapePool.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("tapepool", tapePool)
+          params.add("tapepool", tapePool.value())
                 .add("queueObject", archiveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from root entry.");
@@ -144,7 +144,7 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   archiveQueue.resetAddress();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedArchiveQueue(): failed to find or create and lock archive queue after 5 retries for tapepool: ")
-      + tapePool);
+      + tapePool.value());
 }
 
 
@@ -152,9 +152,9 @@ void Helpers::getLockedAndFetchedQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
 // Helpers::getLockedAndFetchedQueue <RetrieveQueue> ()
 //------------------------------------------------------------------------------
 template <>
-void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
+void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
   ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
-  const std::string& vid, QueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& vid, JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -175,13 +175,13 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
       re.fetchNoLock();
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
-        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid, queueType));
+        retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid.value(), queueType));
       } catch (cta::exception::Exception & ex) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid, agentReference, queueType, lc));
+        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid.value(), agentReference, queueType, lc));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -225,10 +225,10 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
         re.fetch();
         rootRefetchTime += t.secs(utils::Timer::resetCounter);
         try {
-          re.removeRetrieveQueueAndCommit(vid, queueType, lc);
+          re.removeRetrieveQueueAndCommit(vid.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("vid", vid)
+          params.add("vid", vid.value())
                 .add("queueObject", retrieveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from root entry.");
@@ -261,7 +261,7 @@ void Helpers::getLockedAndFetchedQueue<RetrieveQueue>(RetrieveQueue& retrieveQue
   retrieveQueue.resetAddress();
   throw cta::exception::Exception(std::string(
       "In OStoreDB::getLockedAndFetchedRetrieveQueue(): failed to find or create and lock archive queue after 5 retries for vid: ")
-      + vid);
+      + vid.value());
 }
 
 //------------------------------------------------------------------------------
@@ -412,7 +412,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, QueueType::JobsToTransfer);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.second.vid, JobQueueType::JobsToTransfer);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.second.vid;

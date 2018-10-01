@@ -35,7 +35,7 @@ void ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, QueueType::FailedJobs, contLock, cId, lc);
+  trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
 }
 
 }} // namespace cta::objectstore

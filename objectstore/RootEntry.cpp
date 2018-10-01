@@ -68,11 +68,11 @@ bool RootEntry::isEmpty() {
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
     return false;
-  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReport, JobQueueType::FailedJobs}) {
     if (archiveQueuePointers(qt).size())
       return false;
   }
-  for (auto &qt: {QueueType::JobsToTransfer, QueueType::JobsToReport, QueueType::FailedJobs}) {
+  for (auto &qt: {JobQueueType::JobsToTransfer, JobQueueType::JobsToReport, JobQueueType::FailedJobs}) {
     if (retrieveQueuePointers(qt).size())
       return false;
   }
@@ -100,52 +100,52 @@ void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference 
 // ========== Queue types and helper functions =================================
 // =============================================================================
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(QueueType queueType) {
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.livearchivejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReport:
     return m_payload.archivejobstoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.failedarchivejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::archiveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(QueueType queueType) {
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.mutable_livearchivejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReport:
     return m_payload.mutable_archivejobstoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.mutable_failedarchivejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableArchiveQueuePointers(): unknown queue type.");
   }
 }
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(QueueType queueType) {
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.liveretrievejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReport:
     return m_payload.retrievefailurestoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.failedretrievejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::retrieveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(QueueType queueType) {
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(JobQueueType queueType) {
   switch(queueType) {
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return m_payload.mutable_liveretrievejobsqueuepointers();
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReport:
     return m_payload.mutable_retrievefailurestoreportqueuepointers();
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return m_payload.mutable_failedretrievejobsqueuepointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableRetrieveQueuePointers(): unknown queue type.");
@@ -167,7 +167,7 @@ namespace {
 }
 
 std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, 
-    QueueType queueType, log::LogContext & lc) {
+    JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -176,9 +176,9 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
   switch(queueType) {
-  case QueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
-  case QueueType::JobsToReport: archiveQueueNameHeader+="ToReport"; break;
-  case QueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToTransfer: archiveQueueNameHeader+="ToTransfer"; break;
+  case JobQueueType::JobsToReport: archiveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
   default: break;
   }
   std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
@@ -197,7 +197,7 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   return archiveQueueAddress;
 }
 
-void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueType queueType, log::LogContext & lc) {
+void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
@@ -246,7 +246,8 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueTy
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("tapePool", tapePool);
+      params.add("tapePool", tapePool)
+            .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
     }
   } catch (serializers::NotFound &) {
@@ -255,11 +256,11 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, QueueTy
   }
 }
 
-void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, QueueType queueType) {
+void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, JobQueueType queueType) {
   serializers::removeOccurences(mutableArchiveQueuePointers(queueType), tapePool);
 }
 
-std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, QueueType queueType) {
+std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & tpp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
@@ -269,7 +270,7 @@ std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, Queue
   }
 }
 
-auto RootEntry::dumpArchiveQueues(QueueType queueType) -> std::list<ArchiveQueueDump> {
+auto RootEntry::dumpArchiveQueues(JobQueueType queueType) -> std::list<ArchiveQueueDump> {
   checkPayloadReadable();
   std::list<ArchiveQueueDump> ret;
   auto & tpl = archiveQueuePointers(queueType);
@@ -295,7 +296,7 @@ namespace {
 }
 
 std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef,
-    QueueType queueType, log::LogContext & lc) {
+    JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
@@ -306,9 +307,9 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
   switch(queueType) {
-  case QueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
-  case QueueType::JobsToReport: retrieveQueueNameHeader+="ToReport"; break;
-  case QueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  case JobQueueType::JobsToTransfer: retrieveQueueNameHeader+="ToTransfer"; break;
+  case JobQueueType::JobsToReport: retrieveQueueNameHeader+="ToReport"; break;
+  case JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
   default: break;
   }
   std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);
@@ -327,11 +328,11 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   return retrieveQueueAddress;
 }
 
-void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, QueueType queueType) {
+void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, JobQueueType queueType) {
   serializers::removeOccurences(mutableRetrieveQueuePointers(queueType), vid);
 }
 
-void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType queueType, log::LogContext & lc) {
+void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueType queueType, log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the retrieve queue object
   try {
@@ -359,7 +360,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType q
       std::stringstream err;
       err << "Unexpected vid found in retrieve queue pointed to for vid: "
           << vid << " found: " << rq.getVid();
-      throw WrongArchiveQueue(err.str());
+      throw WrongRetrieveQueue(err.str());
     }
     // Check the retrieve queue is empty
     if (!rq.isEmpty()) {
@@ -380,17 +381,18 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, QueueType q
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("vid", vid);
+      params.add("vid", vid)
+            .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
     }
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
-    throw NoSuchRetrieveQueue("In RootEntry::addOrGetRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
+    throw NoSuchRetrieveQueue("In RootEntry::removeRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
   }
 }
 
 
-std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, QueueType queueType) {
+std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
@@ -400,7 +402,7 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, QueueType
   }
 }
 
-auto RootEntry::dumpRetrieveQueues(QueueType queueType) -> std::list<RetrieveQueueDump> {
+auto RootEntry::dumpRetrieveQueues(JobQueueType queueType) -> std::list<RetrieveQueueDump> {
   checkPayloadReadable();
   std::list<RetrieveQueueDump> ret;
   auto & tpl = retrieveQueuePointers(queueType);
@@ -695,7 +697,7 @@ void RootEntry::removeSchedulerGlobalLockAndCommit(log::LogContext & lc) {
 }
 
 // =============================================================================
-// ================ Repack index lock manipulation =============================
+// ================ Repack index manipulation ==================================
 // =============================================================================
 
 std::string RootEntry::getRepackIndexAddress() {

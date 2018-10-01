@@ -21,7 +21,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "TapeFileSerDeser.hpp"
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
 #include <list>
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -78,7 +78,7 @@ public:
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
   /// Returns queue type depending on the compound statuses of all retrieve requests.
-  QueueType getQueueType();
+  JobQueueType getQueueType();
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);

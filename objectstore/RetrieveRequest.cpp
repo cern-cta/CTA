@@ -153,8 +153,8 @@ queueForFailure:;
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
     // We need to know if this failure got reported yet.
-    QueueType queueType=isFailureReported()?QueueType::FailedJobs:QueueType::JobsToReport;
-    Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, queueType, lc);
+    JobQueueType queueType=isFailureReported()?JobQueueType::FailedJobs:JobQueueType::JobsToReport;
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, queueType, lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -212,7 +212,7 @@ queueForTransfer:;
       // We now need to grab the queue and requeue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, QueueType::JobsToTransfer, lc);
+      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToTransfer, lc);
       // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     mp.deserialize(m_payload.mountpolicy());
@@ -459,14 +459,14 @@ RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint16_t copy
 //------------------------------------------------------------------------------
 // RetrieveRequest::getQueueType()
 //------------------------------------------------------------------------------
-QueueType RetrieveRequest::getQueueType() {
+JobQueueType RetrieveRequest::getQueueType() {
   checkPayloadReadable();
   bool hasToReport=false;
   for (auto &j: m_payload.jobs()) {
     // Any job is to be transfered => To transfer
     switch(j.status()) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
-      return QueueType::JobsToTransfer;
+      return JobQueueType::JobsToTransfer;
       break;
     case serializers::RetrieveJobStatus::RJS_FailedToReport:
       // Else any job to report => to report.
@@ -475,8 +475,8 @@ QueueType RetrieveRequest::getQueueType() {
     default: break;
     }
   }
-  if (hasToReport) return QueueType::JobsToReport;
-  return QueueType::FailedJobs;
+  if (hasToReport) return JobQueueType::JobsToReport;
+  return JobQueueType::FailedJobs;
 }
 
 //------------------------------------------------------------------------------

@@ -32,6 +32,8 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary(const RetrieveQueue::JobsSummary &c) : RetrieveQueue::JobsSummary() {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
+  
+  typedef cta::objectstore::JobQueueType QueueType;
 
   struct InsertedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
@@ -206,7 +208,7 @@ void ContainerTraits<RetrieveQueue,C>::
 getLockedAndFetched(Container &cont, ScopedExclusiveLock &aqL, AgentReference &agRef,
   const ContainerIdentifier &contId, QueueType queueType, log::LogContext &lc)
 {
-  Helpers::getLockedAndFetchedQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
+  Helpers::getLockedAndFetchedJobQueue<Container>(cont, aqL, agRef, contId, queueType, lc);
 }
 
 template<typename C>

@@ -70,13 +70,14 @@ add_library (ctaobjectstore SHARED
   RetrieveQueueToTransferAlgorithms.cpp
   RetrieveQueueToReportAlgorithms.cpp
   RetrieveQueueFailedAlgorithms.cpp
-  QueueType.cpp
+  JobQueueType.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
   DriveState.cpp
   RepackIndex.cpp
   RepackRequest.cpp
+  RepackQueueType.cpp
   BackendVFS.cpp
   BackendRados.cpp
   BackendPopulator.cpp

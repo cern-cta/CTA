@@ -23,7 +23,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
 #include <string>
 #include <set>
 #include <future>
@@ -52,9 +52,10 @@ public:
    * @param tapePool or vid the name of the needed tape pool
    */
   template <class Queue>
-  static void getLockedAndFetchedQueue(Queue & queue, 
+  static void getLockedAndFetchedJobQueue(Queue & queue, 
     ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
-    const std::string & tapePoolOrVid, QueueType queueType, log::LogContext & lc);
+    const cta::optional<std::string> & tapePoolOrVid, JobQueueType queueType, log::LogContext & lc);
+  
   
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**

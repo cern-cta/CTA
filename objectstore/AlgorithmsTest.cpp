@@ -150,12 +150,12 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransfer> archiveAlgos(be, agentRef);
-  archiveAlgos.referenceAndSwitchOwnership("Tapepool", QueueType::JobsToTransfer, requests, lc);
+  archiveAlgos.referenceAndSwitchOwnership("Tapepool", JobQueueType::JobsToTransfer, requests, lc);
   // Now get the requests back
   ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
-  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", QueueType::JobsToTransfer, popCriteria, lc);
+  auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", JobQueueType::JobsToTransfer, popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
 }
 
@@ -210,7 +210,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
     auto a1 = agentRef2.getAgentAddress();
     auto a2 = agentRef2.getAgentAddress();
     ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos2(be2, agentRef2);
-    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", QueueType::JobsToTransfer,
+    retrieveAlgos2.referenceAndSwitchOwnershipIfNecessary("VID", JobQueueType::JobsToTransfer,
       a2, a1, requests2, lc);
   }
 
@@ -218,14 +218,14 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   try {
     ASSERT_EQ(requests.size(), 10);
 
-    retrieveAlgos.referenceAndSwitchOwnership("VID", QueueType::JobsToTransfer,
+    retrieveAlgos.referenceAndSwitchOwnership("VID", JobQueueType::JobsToTransfer,
       agentRef.getAgentAddress(), requests, lc);
 
     // Now get the requests back
     ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
-    auto poppedJobs = retrieveAlgos.popNextBatch("VID", QueueType::JobsToTransfer, popCriteria, lc);
+    auto poppedJobs = retrieveAlgos.popNextBatch("VID", JobQueueType::JobsToTransfer, popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements

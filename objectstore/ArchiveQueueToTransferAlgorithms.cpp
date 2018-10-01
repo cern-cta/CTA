@@ -74,7 +74,7 @@ void ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+  trimContainerIfNeeded(cont, JobQueueType::JobsToTransfer, contLock, cId, lc);
 }
 
 }} // namespace cta::objectstore

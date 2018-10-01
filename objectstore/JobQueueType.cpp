@@ -16,17 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "QueueType.hpp"
+#include "JobQueueType.hpp"
 
 namespace cta { namespace objectstore {
 
-std::string toString(QueueType queueType) {
+std::string toString(JobQueueType queueType) {
   switch (queueType) {
-  case QueueType::FailedJobs:
+  case JobQueueType::FailedJobs:
     return "failedJobs";
-  case QueueType::JobsToReport:
+  case JobQueueType::JobsToReport:
     return "jobsToReport";
-  case QueueType::JobsToTransfer:
+  case JobQueueType::JobsToTransfer:
     return "jobsToTranfer";
   default:
     return "Unknown queue type.";

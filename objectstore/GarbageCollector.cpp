@@ -351,7 +351,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
-        retrieveQueuesAndRequests[std::make_tuple(vid, QueueType::JobsToTransfer)].emplace_back(rr);
+        retrieveQueuesAndRequests[std::make_tuple(vid, JobQueueType::JobsToTransfer)].emplace_back(rr);
         log::ScopedParamContainer params3(lc);
         // Find copyNb for logging
         size_t copyNb = std::numeric_limits<size_t>::max();
@@ -389,7 +389,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
     // individual requeue operations, we limit the number of concurrently requeued objects to an 
     // arbitrary 500.
     std::string tapepool;
-    QueueType queueType;
+    JobQueueType queueType;
     std::tie(tapepool, queueType) = archiveQueueIdAndReqs.first;
     auto & requestsList = archiveQueueIdAndReqs.second;
     while (requestsList.size()) {
@@ -508,7 +508,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
     std::string vid;
-    QueueType queueType;
+    JobQueueType queueType;
     std::tie(vid, queueType) = retriveQueueIdAndReqs.first;
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
@@ -532,7 +532,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
-      Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
+      Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, vid, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();
       filesBefore=jobsSummary.files;
