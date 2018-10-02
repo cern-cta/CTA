@@ -56,7 +56,18 @@ kubectl -n ${NAMESPACE} exec ctaeos -- yum clean all
 
 kubectl -n ${NAMESPACE} exec ctaeos -- yum install -y eos-server eos-client
 
-kubectl -n ${NAMESPACE} exec ctaeos -- systemctl restart eos@*
+kubectl -n ${NAMESPACE} exec ctaeos -- systemctl stop eos@*
+
+sleep 5
+
+## MQ first, then MGM and finally FST
+kubectl -n ${NAMESPACE} exec ctaeos -- systemctl start eos@mq
+
+kubectl -n ${NAMESPACE} exec ctaeos -- systemctl start eos@mgm
+
+sleep 5
+
+kubectl -n ${NAMESPACE} exec ctaeos -- systemctl start eos@fst
 
 kubectl -n ${NAMESPACE} exec ctaeos -- systemctl status eos@*
 
@@ -67,6 +78,9 @@ while test 1 != `kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst | grep bo
   echo "Sleeping 1 second"
   sleep 1
 done
+
+echo "EOS filesystem statuses"
+kubectl -n ${NAMESPACE} exec ctaeos -- eos fs ls /fst
 
 echo "Available disk space inside EOS container:"
 kubectl -n ${NAMESPACE} exec ctaeos -- df -h
