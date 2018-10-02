@@ -40,9 +40,9 @@ kubectl -n ${NAMESPACE} exec ctaeos -- yum-config-manager --disable cta-artifact
 ####
 # This is the commit repo: any commit from any branch in EOS is pushed there => works if lucky...
 echo -e "[eos-ci-eos-commit]\nname=EOS CI commit repo for eos packages\nbaseurl=http://storage-ci.web.cern.ch/storage-ci/eos/citrine/commit/el-7/x86_64/\npriority=3\ngpgcheck=0\nenabled=${COMMIT_REPO_ENABLED}\n\n" | kubectl -n ${NAMESPACE} exec -i ctaeos -- bash -c "cat > /etc/yum.repos.d/eos-ci-commit.repo"
-# This is the tag repo: only tagged commits aimed for production are going here.
+# This is the koji testing repo: all tagged commits are going there.
 # IF IT DOESN'T WORK WE CAN COMPLAIN HEAVILY
-echo -e "[eos-ci-eos-tag]\nname=EOS CI tag repo for eos packages\nbaseurl=http://storage-ci.web.cern.ch/storage-ci/eos/citrine/tag/el-7/x86_64/\npriority=3\ngpgcheck=0\nenabled=${TAG_REPO_ENABLED}\n\n" | kubectl -n ${NAMESPACE} exec -i ctaeos -- bash -c "cat > /etc/yum.repos.d/eos-ci-tag.repo"
+echo -e "[eos-ci-eos-tag]\nname=EOS koji testing repo for eos packages\nbaseurl=http://linuxsoft.cern.ch/internal/repos/eos7-testing/x86_64/os/Packages/\npriority=3\ngpgcheck=0\nenabled=${TAG_REPO_ENABLED}\n\n" | kubectl -n ${NAMESPACE} exec -i ctaeos -- bash -c "cat > /etc/yum.repos.d/eos-ci-tag.repo"
 echo -e "[eos-ci-eos-depend]\nname=EOS CI repo for eos depend packages\nbaseurl=http://storage-ci.web.cern.ch/storage-ci/eos/citrine-depend/el-7/x86_64/\npriority=3\ngpgcheck=0\nenabled=1\n\n"  | kubectl -n ${NAMESPACE} exec -i ctaeos -- bash -c "cat > /etc/yum.repos.d/eos-ci-depend.repo"
 
 kubectl -n ${NAMESPACE} exec ctaeos -- eos version
