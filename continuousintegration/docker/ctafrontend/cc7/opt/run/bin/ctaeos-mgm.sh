@@ -194,7 +194,20 @@ fi
 
 # test EOS
   eos -b node ls
-  xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile
+
+  echo "Waiting for the basic file transfer test to succeed (workaround for the booted/online issue )"
+  for ((i=0; i<300; i++)); do
+    xrdcp /etc/group root://${eoshost}:/${EOS_TMP_DIR}/testFile && break
+    echo -n "."
+    sleep 1
+  done
+  echo OK
+  failed_xrdcp_test=$i
+  if test $failed_xrdcp_test -ne 0; then
+    echo "[SUCCESS]: basic file transfer test on online/booted FS." | tee -a /var/log/CI_tests
+  else
+    echo "[ERROR]: basic file transfer test on online/booted FS (${failed_xrdcp_test} attempts)." | tee -a /var/log/CI_tests
+  fi
 
 # prepare EOS workflow
   # enable eos workflow engine
