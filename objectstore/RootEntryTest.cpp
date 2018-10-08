@@ -99,7 +99,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     re.fetch();
     ASSERT_THROW(re.getArchiveQueueAddress("tapePool1", cta::objectstore::JobQueueType::JobsToTransfer),
       cta::objectstore::RootEntry::NoSuchArchiveQueue);
-    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, cta::objectstore::JobQueueType::JobsToTransfer, lc);
+    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, cta::objectstore::JobQueueType::JobsToTransfer);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
@@ -110,7 +110,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, cta::objectstore::JobQueueType::JobsToTransfer, lc);
+    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, cta::objectstore::JobQueueType::JobsToTransfer);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {

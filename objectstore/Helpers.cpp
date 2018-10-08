@@ -67,7 +67,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool.value(), agentReference, queueType, lc));
+        archiveQueue.setAddress(re.addOrGetArchiveQueueAndCommit(tapePool.value(), agentReference, queueType));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -184,7 +184,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
         rootRefetchTime = t.secs(utils::Timer::resetCounter);
-        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid.value(), agentReference, queueType, lc));
+        retrieveQueue.setAddress(re.addOrGetRetrieveQueueAndCommit(vid.value(), agentReference, queueType));
         addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
       }
     }
@@ -288,7 +288,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
         timings.insertAndReset("rootRelockExclusiveTime", t);
         re.fetch();
         timings.insertAndReset("rootRelockExclusiveTime", t);
-        queue.setAddress(re.addOrGetRepackQueueAndCommit(agentReference, queueType, lc));
+        queue.setAddress(re.addOrGetRepackQueueAndCommit(agentReference, queueType));
         timings.insertAndReset("addOrGetQueueandCommitTime", t);
         rexl.release();
         timings.insertAndReset("rootUnlockExclusiveTime", t);
@@ -667,7 +667,7 @@ void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::st
   } catch (RootEntry::NotAllocated &){
     ScopedExclusiveLock rel(re);
     re.fetch();
-    repackIndexAddress = re.addOrGetRepackIndexAndCommit(agentReference, lc);
+    repackIndexAddress = re.addOrGetRepackIndexAndCommit(agentReference);
   }
   RepackIndex ri(repackIndexAddress, backend);
   ScopedExclusiveLock ril(ri);

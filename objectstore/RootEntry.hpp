@@ -77,8 +77,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongArchiveQueue);
   /** This function implicitly creates the archive queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef,
-    JobQueueType queueType, log::LogContext & lc);
+  std::string addOrGetArchiveQueueAndCommit(const std::string & tapePool, AgentReference & agentRef, JobQueueType queueType);
   /** This function implicitly deletes the tape pool structure. 
    * Fails if it not empty*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchArchiveQueue);
@@ -98,8 +97,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongRetrieveQueue);
   /** This function implicitly creates the retrieve queue structure and updates 
    * the pointer to it. It will implicitly commit the object to the store. */
-  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef,
-    JobQueueType queueType, log::LogContext & lc);
+  std::string addOrGetRetrieveQueueAndCommit(const std::string & vid, AgentReference & agentRef, JobQueueType queueType);
   /** This function is used in a cleanup utility. Removes unconditionally the reference to the retrieve queue */
   void removeMissingRetrieveQueueReference(const std::string & address, JobQueueType queueType);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRetrieveQueue);
@@ -137,14 +135,14 @@ public:
   
   // Repack index manipulations ================================================
   std::string getRepackIndexAddress();
-  std::string addOrGetRepackIndexAndCommit(AgentReference & agentRef, log::LogContext & lc);
+  std::string addOrGetRepackIndexAndCommit(AgentReference & agentRef);
   void removeRepackIndexAndCommit(log::LogContext & lc);
   
   // Repack queues manipulations ===============================================
   CTA_GENERATE_EXCEPTION_CLASS(RepackQueueNotEmpty);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackQueue);
   std::string getRepackQueueAddress(RepackQueueType queueType);
-  std::string addOrGetRepackQueueAndCommit(AgentReference & agentRef, RepackQueueType queueType, log::LogContext & lc);
+  std::string addOrGetRepackQueueAndCommit(AgentReference & agentRef, RepackQueueType queueType);
   void removeRepackQueueAndCommit(RepackQueueType queueType, log::LogContext & lc);
 private:
   void setRepackQueueAddress(RepackQueueType queueType, const std::string &queueAddress);

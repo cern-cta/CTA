@@ -167,8 +167,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, 
-    JobQueueType queueType, log::LogContext & lc) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, JobQueueType queueType) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -296,8 +295,7 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef,
-    JobQueueType queueType, log::LogContext & lc) {
+std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef, JobQueueType queueType) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
@@ -710,7 +708,7 @@ std::string RootEntry::getRepackIndexAddress() {
   throw NotAllocated("In RootEntry::getRepackTapeRegistry: repack tape register not yet allocated");
 }
 
-std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef, log::LogContext & lc) {
+std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
   checkPayloadWritable();
   // Check if the repack tape register exists
   try {
@@ -875,7 +873,7 @@ void RootEntry::removeRepackQueueAndCommit(RepackQueueType queueType, log::LogCo
   }
 }
 
-std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, RepackQueueType queueType, log::LogContext& lc) {
+std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, RepackQueueType queueType) {
   checkPayloadWritable();
   // Check the repack queue does not already exist
   try {

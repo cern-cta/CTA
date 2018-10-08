@@ -341,7 +341,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
     re.fetch();
     std::stringstream tapePoolName;
     tapePoolName << "TapePool" << i;
-    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer, lc);
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -533,7 +533,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     re.fetch();
     std::stringstream vid;
     vid << "Tape" << i;
-    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer, lc);
+    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, cta::objectstore::JobQueueType::JobsToTransfer);
     cta::objectstore::RetrieveQueue rq(tAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
