@@ -156,6 +156,11 @@ public:
     m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
   }
   
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
+    return m_OStoreDB.getRepackInfo();
+  }
+
+  
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }

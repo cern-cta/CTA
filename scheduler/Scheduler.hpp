@@ -193,10 +193,8 @@ public:
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
     const std::string & bufferURL, const common::dataStructures::RepackType repackType, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
-  std::list<cta::common::dataStructures::RepackInfo> getRepacks(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity);
-  cta::common::dataStructures::RepackInfo getRepack(
-    const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
+  std::list<cta::common::dataStructures::RepackInfo> getRepacks();
+  cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
 
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)

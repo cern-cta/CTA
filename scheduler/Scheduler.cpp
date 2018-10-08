@@ -319,14 +319,14 @@ void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cli
 //------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks(const common::dataStructures::SecurityIdentity &cliIdentity) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks() {
+  return m_db.getRepackInfo();
 }
 
 //------------------------------------------------------------------------------
 // getRepack
 //------------------------------------------------------------------------------
-common::dataStructures::RepackInfo Scheduler::getRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid) {
+common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) {
   throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__); 
 }
 

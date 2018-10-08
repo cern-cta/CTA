@@ -878,7 +878,7 @@ std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, Re
   // Check the repack queue does not already exist
   try {
     return getRepackQueueAddress(queueType);
-  } catch (NoSuchRetrieveQueue &) {}
+  } catch (NoSuchRepackQueue &) {}
   // The queue is not there yet. Create it.
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string repackQueueNameHeader = "RepackQueue";

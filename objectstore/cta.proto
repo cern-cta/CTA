@@ -84,12 +84,10 @@ message AgentRegisterPointer {
 
 message RepackIndexPointer {
   required string address = 105;
-  required EntryLog log = 106;
 }
 
 message RepackQueuePointer {
   required string address = 107;
-  required EntryLog log = 108;
 }
 
 

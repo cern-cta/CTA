@@ -725,6 +725,22 @@ TEST_P(SchedulerTest, showqueues) {
   ASSERT_EQ(1, queuesSummary.size());
 }
 
+TEST_P(SchedulerTest, repack) {
+  using namespace cta;
+  
+  setupDefaultCatalogue();
+  
+  Scheduler &scheduler = getScheduler();
+  
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+  
+  common::dataStructures::SecurityIdentity cliId;
+  scheduler.queueRepack(cliId, "Tape", "root://server/repackDir", common::dataStructures::RepackType::justrepack, lc);
+  // TODO
+  // auto repacks = scheduler.getRepacks();
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;

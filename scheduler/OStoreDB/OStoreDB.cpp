@@ -1041,9 +1041,6 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   rr->setVid(vid);
   rr->setRepackType(repackType);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
-  RootEntry re(m_objectStore);
-  re.fetchNoLock();
-  RepackIndex ri(re.addOrGetRepackIndexAndCommit(*m_agentReference, lc), m_objectStore);
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
   } catch (objectstore::RepackIndex::VidAlreadyRegistered &) {
@@ -1064,6 +1061,13 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   }
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::queueRepack()
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
+  // TODO
+  throw exception::Exception("No implemented");
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getDriveStates()

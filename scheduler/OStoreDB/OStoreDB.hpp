@@ -278,6 +278,8 @@ public:
   void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackType repackType, 
       log::LogContext &logContext) override;
   
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
+  
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

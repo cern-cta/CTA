@@ -1407,9 +1407,9 @@ void RequestMessage::processRepack_Ls(const cta::admin::AdminCmd &admincmd, cta:
    std::list<cta::common::dataStructures::RepackInfo> list;
 
    if(!vid) {      
-      list = m_scheduler.getRepacks(m_cliIdentity);
+      list = m_scheduler.getRepacks();
    } else {
-      list.push_back(m_scheduler.getRepack(m_cliIdentity, vid.value()));
+      list.push_back(m_scheduler.getRepack(vid.value()));
    }
 
    if(!list.empty())
@@ -1459,7 +1459,7 @@ void RequestMessage::processRepack_Err(const cta::admin::AdminCmd &admincmd, cta
 
    auto &vid = getRequired(OptionString::VID);
 
-   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(m_cliIdentity, vid);
+   cta::common::dataStructures::RepackInfo info = m_scheduler.getRepack(vid);
 
    if(!info.errors.empty())
    {
