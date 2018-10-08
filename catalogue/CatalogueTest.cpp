@@ -782,6 +782,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   ASSERT_EQ(0, pool.nbTapes);
   ASSERT_EQ(0, pool.capacityBytes);
   ASSERT_EQ(0, pool.dataBytes);
+  ASSERT_EQ(0, pool.nbPhysicalFiles);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -830,6 +831,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   ASSERT_EQ(0, pool.nbTapes);
   ASSERT_EQ(0, pool.capacityBytes);
   ASSERT_EQ(0, pool.dataBytes);
+  ASSERT_EQ(0, pool.nbPhysicalFiles);
   ASSERT_EQ(comment, pool.comment);
 
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -924,6 +926,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -950,6 +953,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -994,6 +998,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringVo) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1034,6 +1039,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1060,6 +1066,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1115,6 +1122,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1141,6 +1149,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(modifiedComment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1185,6 +1194,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1235,6 +1245,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -1261,6 +1272,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
     ASSERT_EQ(comment, pool.comment);
 
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
@@ -2036,6 +2048,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2079,6 +2092,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 }
 
@@ -2111,6 +2125,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2145,6 +2160,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2206,6 +2222,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_zeroCapacity) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2243,6 +2260,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringComment) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2315,6 +2333,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName, capacityInBytes, disabledValue,
@@ -2356,6 +2375,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 }
 
@@ -2385,6 +2405,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTape(m_admin, vid, logicalLibraryName, tapePoolName,
@@ -2400,6 +2421,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_THROW(m_catalogue->createTape(m_admin, vid, logicalLibraryName,
@@ -2416,6 +2438,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 }
 
@@ -2445,6 +2468,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   ASSERT_TRUE(m_catalogue->getTapes().empty());
@@ -2467,6 +2491,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(i, pool.nbTapes);
       ASSERT_EQ(i * capacityInBytes, pool.capacityBytes);
       ASSERT_EQ(0, pool.dataBytes);
+      ASSERT_EQ(0, pool.nbPhysicalFiles);
     }
   }
 
@@ -2667,6 +2692,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   {
@@ -2710,6 +2736,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   const uint64_t fileSize = 1234 * 1000000000UL;
@@ -2748,6 +2775,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
+    ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
 
   {
@@ -2791,6 +2819,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(2, pool.nbTapes);
     ASSERT_EQ(2*capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(fileSize, pool.dataBytes);
+    ASSERT_EQ(1, pool.nbPhysicalFiles);
   }
 }
 
@@ -6602,6 +6631,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTapePool(m_admin, tapePoolName2, vo, 1, true, "Create tape pool");
@@ -6618,6 +6648,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTape(m_admin, vid1, logicalLibraryName, tapePoolName1, capacityInBytes,
@@ -6635,6 +6666,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   m_catalogue->createTape(m_admin, vid2, logicalLibraryName, tapePoolName2, capacityInBytes,
@@ -6652,6 +6684,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
   {
@@ -6768,6 +6801,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
   {
@@ -6831,6 +6865,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(nbArchiveFiles * compressedFileSize, pool.dataBytes);
+    ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
   {

@@ -888,8 +888,9 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
         "TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,"
 
         "COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,"
-        "COALESCE(SUM(CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
-        "COALESCE(SUM(DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
+        "COALESCE(SUM(TAPE.CAPACITY_IN_BYTES), 0) AS CAPACITY_IN_BYTES,"
+        "COALESCE(SUM(TAPE.DATA_IN_BYTES), 0) AS DATA_IN_BYTES,"
+        "COALESCE(SUM(TAPE.LAST_FSEQ), 0) AS NB_PHYSICAL_FILES,"
 
         "TAPE_POOL.USER_COMMENT AS USER_COMMENT,"
 
@@ -932,6 +933,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       pool.nbTapes = rset.columnUint64("NB_TAPES");
       pool.capacityBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       pool.dataBytes = rset.columnUint64("DATA_IN_BYTES");
+      pool.nbPhysicalFiles = rset.columnUint64("NB_PHYSICAL_FILES");
       pool.comment = rset.columnString("USER_COMMENT");
       pool.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       pool.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");

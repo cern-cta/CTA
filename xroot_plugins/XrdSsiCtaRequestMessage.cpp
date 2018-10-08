@@ -1992,7 +1992,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
    if(!tp_list.empty())
    {
       const std::vector<std::string> header = {
-         "name","vo", "# tapes","# partial","size","used","avail","use%","encrypt",
+         "name","vo","# tapes","# phys files","# partial","size","used","avail","use%","encrypt",
          "c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       std::vector<std::vector<std::string>> responseTable;
@@ -2009,6 +2009,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
          currentRow.push_back(tp.vo);
          currentRow.push_back(std::to_string(tp.nbTapes));
          currentRow.push_back(std::to_string(tp.nbPartialTapes));
+         currentRow.push_back(std::to_string(tp.nbPhysicalFiles));
          currentRow.push_back(std::to_string(tp.capacityBytes/1000000000) + "G");
          currentRow.push_back(std::to_string(tp.dataBytes/1000000000) + "G");
          currentRow.push_back(std::to_string(avail/1000000000) + "G");
