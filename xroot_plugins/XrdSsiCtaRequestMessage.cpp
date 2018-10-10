@@ -1985,7 +1985,7 @@ void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, ct
    if(!tp_list.empty())
    {
       const std::vector<std::string> header = {
-         "name","vo","# tapes","# phys files","# partial","size","used","avail","use%","encrypt",
+         "name","vo","# tapes","# partial","# phys files","size","used","avail","use%","encrypt",
          "c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       std::vector<std::vector<std::string>> responseTable;
