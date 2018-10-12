@@ -44,7 +44,7 @@ public:
   
   void runOnePass(log::LogContext & lc);
   
-  void aquireTargets(log::LogContext & lc);
+  void acquireTargets(log::LogContext & lc);
   
   void trimGoneTargets(log::LogContext & lc);
   

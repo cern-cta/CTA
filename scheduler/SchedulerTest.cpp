@@ -668,7 +668,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_NE(nullptr, mount.get());
+    //ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
@@ -677,9 +678,11 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
-    ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
+    ASSERT_NE(nullptr, archiveMount.get());
+    //ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
-    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    //ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
@@ -729,49 +732,52 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
-  // Check that the retrieve request is queued
-  {
-    auto rqsts = scheduler.getPendingRetrieveJobs(lc);
-    // We expect 1 tape with queued jobs
-    ASSERT_EQ(1, rqsts.size());
-    // We expect the queue to contain 1 job
-    ASSERT_EQ(1, rqsts.cbegin()->second.size());
-    // We expect the job to be single copy
-    auto & job = rqsts.cbegin()->second.back();
-    ASSERT_EQ(1, job.tapeCopies.size());
-    // We expect the copy to be on the provided tape.
-    ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
-    // Check the remote target
-    ASSERT_EQ("dstURL", job.request.dstURL);
-    // Check the archive file ID
-    ASSERT_EQ(archiveFileId, job.request.archiveFileID);
-
-    // Check that we can retrieve jobs by VID
-
-    // Get the vid from the above job and submit a separate request for the same vid
-    auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
-    auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
-    // same tests as above
-    ASSERT_EQ(1, rqsts_vid.size());
-    auto &job_vid = rqsts_vid.back();
-    ASSERT_EQ(1, job_vid.tapeCopies.size());
-    ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
-    ASSERT_EQ("dstURL", job_vid.request.dstURL);
-    ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
-  }
-
-  {
-    // Try mounting the tape twice
-    for(int j = 0; j < 2; ++j) {
+  // Try mounting the tape twice
+  for(int j = 0; j < 2; ++j) {
 std::cerr << "Pass " << j << std::endl;
+
+    // Check that the retrieve request is queued
+    {
+      auto rqsts = scheduler.getPendingRetrieveJobs(lc);
+      // We expect 1 tape with queued jobs
+      ASSERT_EQ(1, rqsts.size());
+      // We expect the queue to contain 1 job
+      ASSERT_EQ(1, rqsts.cbegin()->second.size());
+      // We expect the job to be single copy
+      auto & job = rqsts.cbegin()->second.back();
+      ASSERT_EQ(1, job.tapeCopies.size());
+      // We expect the copy to be on the provided tape.
+      ASSERT_TRUE(s_vid == job.tapeCopies.cbegin()->first);
+      // Check the remote target
+      ASSERT_EQ("dstURL", job.request.dstURL);
+      // Check the archive file ID
+      ASSERT_EQ(archiveFileId, job.request.archiveFileID);
+
+      // Check that we can retrieve jobs by VID
+
+      // Get the vid from the above job and submit a separate request for the same vid
+      auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
+      auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
+      // same tests as above
+      ASSERT_EQ(1, rqsts_vid.size());
+      auto &job_vid = rqsts_vid.back();
+      ASSERT_EQ(1, job_vid.tapeCopies.size());
+      ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
+      ASSERT_EQ("dstURL", job_vid.request.dstURL);
+      ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
+    }
+
+    {
       // Emulate a tape server by asking for a mount and then a file
       std::unique_ptr<cta::TapeMount> mount;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-      ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+      ASSERT_NE(nullptr, mount.get());
+      //ASSERT_NE((cta::TapeMount*)NULL, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
       retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
-      ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
+      ASSERT_NE(nullptr, retrieveMount.get());
+      //ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
       // The file should be retried three times
       for(int i = 0; i < 3; ++i)
       {
@@ -805,10 +811,11 @@ std::cerr << "Attempt " << i << std::endl;
         gc.runOnePass(lc);
       }
     }
-    // and the failure should be reported on the jobs to report queue
-    auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
-    ASSERT_EQ(1, retrieveJobToReportList.size());
-  }
+  } // end for
+
+  // and the failure should be reported on the jobs to report queue
+  auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+  ASSERT_EQ(1, retrieveJobToReportList.size());
 }
 
 TEST_P(SchedulerTest, retry_archive_until_max_reached) {

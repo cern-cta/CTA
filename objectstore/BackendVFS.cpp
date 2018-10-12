@@ -261,7 +261,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
     // Create the lock file if missing and the main file can be stated.
     int openErrno = errno;
     struct ::stat sBuff;
-    int statResult = ::stat((m_root + name).c_str(), &sBuff);
+    int statResult = ::stat((m_root + '/' + name).c_str(), &sBuff);
     int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
       int fd=::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
@@ -269,7 +269,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
       ret->set(fd, path);
     } else {
       if (statErrno == ENOENT)
-        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file");
+        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file " + m_root + '/' + name);
       const std::string errnoStr = utils::errnoToString(errno);
       exception::Exception ex;
       ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
