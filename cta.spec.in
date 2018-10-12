@@ -354,7 +354,6 @@ Tools to faciliate working with rmcd and smc in cta
 %package -n cta-tape-developer-acs-tools
 Summary: Cern Advanced mass STORage
 Group: Application/Castor
-Requires: cta-lib = %{version}-%{release}
 Requires: stk-ssi-lib
 BuildRequires: stk-ssi-devel
 %description -n cta-tape-developer-acs-tools

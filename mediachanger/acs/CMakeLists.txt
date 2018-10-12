@@ -46,6 +46,17 @@ set_target_properties (cta-acs PROPERTIES
 ################################################################################
 message(STATUS "Adding cta-acs-dismount target")
 set (ACS_DISMOUNT_SRC_FILES
+  ../../common/exception/Backtrace.cpp
+  ../../common/exception/DismountFailed.cpp
+  ../../common/exception/Errnum.cpp
+  ../../common/exception/Exception.cpp
+  ../../common/exception/InvalidArgument.cpp
+  ../../common/exception/Mismatch.cpp
+  ../../common/exception/MissingOperand.cpp
+  ../../common/exception/RequestFailed.cpp
+  ../../common/utils/strerror_r_wrapper.cpp
+  ../../common/utils/utils.cpp
+  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -60,8 +71,9 @@ set_target_properties (cta-acs-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-acs-dismount
-  ctacommon
-  ${STK_LIBRARIES})
+  ${STK_LIBRARIES}
+  uuid
+  z)
 install (TARGETS cta-acs-dismount DESTINATION /usr/bin)
 install (FILES cta-acs-dismount.1cta DESTINATION /usr/share/man/man1)
 
@@ -69,6 +81,17 @@ install (FILES cta-acs-dismount.1cta DESTINATION /usr/share/man/man1)
 # Rules to build and install cta-acs-mount
 ################################################################################
 set (ACS_MOUNT_SRC_FILES
+  ../../common/exception/Backtrace.cpp
+  ../../common/exception/Errnum.cpp
+  ../../common/exception/Exception.cpp
+  ../../common/exception/InvalidArgument.cpp
+  ../../common/exception/Mismatch.cpp
+  ../../common/exception/MissingOperand.cpp
+  ../../common/exception/MountFailed.cpp
+  ../../common/exception/RequestFailed.cpp
+  ../../common/utils/strerror_r_wrapper.cpp
+  ../../common/utils/utils.cpp
+  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -83,8 +106,9 @@ set_target_properties (cta-acs-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-acs-mount
-ctacommon
-${STK_LIBRARIES})
+  ${STK_LIBRARIES}
+  uuid
+  z)
 install (TARGETS cta-acs-mount DESTINATION /usr/bin)
 install (FILES cta-acs-mount.1cta DESTINATION /usr/share/man/man1)
 
@@ -93,6 +117,17 @@ install (FILES cta-acs-mount.1cta DESTINATION /usr/share/man/man1)
 ################################################################################
 message(STATUS "Adding cta-acs-queryvolume target")
 set (ACS_QUERYVOLUME_SRC_FILES
+  ../../common/exception/Backtrace.cpp
+  ../../common/exception/Errnum.cpp
+  ../../common/exception/Exception.cpp
+  ../../common/exception/InvalidArgument.cpp
+  ../../common/exception/Mismatch.cpp
+  ../../common/exception/MissingOperand.cpp
+  ../../common/exception/QueryVolumeFailed.cpp
+  ../../common/exception/RequestFailed.cpp
+  ../../common/utils/strerror_r_wrapper.cpp
+  ../../common/utils/utils.cpp
+  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -105,8 +140,9 @@ set (ACS_QUERYVOLUME_SRC_FILES
 
 add_executable (cta-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
 target_link_libraries (cta-acs-queryvolume
-ctacommon
-${STK_LIBRARIES})
+  ${STK_LIBRARIES}
+  uuid
+  z)
 set_target_properties (cta-acs-queryvolume PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
@@ -119,6 +155,17 @@ install (FILES cta-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
 ################################################################################
 message(STATUS "Adding cta-acs-querydrive target")
 set (ACS_QUERYDRIVE_SRC_FILES
+  ../../common/exception/Backtrace.cpp
+  ../../common/exception/Errnum.cpp
+  ../../common/exception/Exception.cpp
+  ../../common/exception/InvalidArgument.cpp
+  ../../common/exception/Mismatch.cpp
+  ../../common/exception/MissingOperand.cpp
+  ../../common/exception/QueryVolumeFailed.cpp
+  ../../common/exception/RequestFailed.cpp
+  ../../common/utils/strerror_r_wrapper.cpp
+  ../../common/utils/utils.cpp
+  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -131,8 +178,9 @@ set (ACS_QUERYDRIVE_SRC_FILES
 
 add_executable (cta-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
 target_link_libraries (cta-acs-querydrive
-ctacommon
-${STK_LIBRARIES})
+  ${STK_LIBRARIES}
+  uuid
+  z)
 set_target_properties (cta-acs-querydrive PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
