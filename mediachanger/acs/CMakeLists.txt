@@ -72,7 +72,6 @@ set (ACS_DISMOUNT_SRC_FILES
   ../../common/exception/Backtrace.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
-  ../../common/exception/MissingOperand.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp
@@ -99,7 +98,6 @@ set (ACS_MOUNT_SRC_FILES
   ../../common/exception/Backtrace.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
-  ../../common/exception/MissingOperand.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp
@@ -127,7 +125,6 @@ set (ACS_QUERYVOLUME_SRC_FILES
   ../../common/exception/Backtrace.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
-  ../../common/exception/MissingOperand.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp
@@ -157,7 +154,6 @@ set (ACS_QUERYDRIVE_SRC_FILES
   ../../common/exception/Backtrace.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
-  ../../common/exception/MissingOperand.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp

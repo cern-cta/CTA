@@ -20,7 +20,6 @@
 #include "Acs.hpp"
 #include "AcsQueryVolumeCmdLine.hpp"
 #include "Constants.hpp"
-#include "common/exception/MissingOperand.hpp"
 
 #include <getopt.h>
 #include <stdlib.h>
@@ -76,7 +75,7 @@ cta::mediachanger::acs::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine(const int a
 
   // Check that VID has been specified
   if(nbArgs < 1) {
-    cta::exception::MissingOperand ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "VID must be specified";
     throw ex;
   }

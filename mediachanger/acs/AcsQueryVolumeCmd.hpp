@@ -20,8 +20,6 @@
 
 #include "AcsCmd.hpp"
 #include "AcsQueryVolumeCmdLine.hpp"
-#include "common/exception/MissingOperand.hpp"
-
 
 #include <stdint.h>
 

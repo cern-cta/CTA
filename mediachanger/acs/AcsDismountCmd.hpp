@@ -20,7 +20,6 @@
 
 #include "AcsCmd.hpp"
 #include "AcsDismountCmdLine.hpp"
-#include "common/exception/MissingOperand.hpp"
 
 namespace cta {
 namespace mediachanger {

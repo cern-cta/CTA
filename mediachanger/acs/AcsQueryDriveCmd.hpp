@@ -20,7 +20,6 @@
 
 #include "AcsCmd.hpp"
 #include "AcsQueryDriveCmdLine.hpp"
-#include "common/exception/MissingOperand.hpp"
 #include "mediachanger/CmdLineTool.hpp"
 #include <stdint.h>
 
