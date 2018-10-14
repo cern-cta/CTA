@@ -58,9 +58,18 @@ public:
 protected:
 
   /**
+   * Invalid query interval.
+   */
+  struct InvalidQueryInterval: public exception::Exception {
+    InvalidQueryInterval(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Parses the specified query interval.
    *
    * @return The parse query interval.
+   * @throw InvalidQueryInterval if the query interval is invalid.
    */
   int parseQueryInterval(const std::string &s);
 

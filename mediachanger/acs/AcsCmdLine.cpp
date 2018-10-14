@@ -134,7 +134,7 @@ bool cta::mediachanger::acs::AcsCmdLine::onlyContainsNumerals(const std::string 
 int cta::mediachanger::acs::AcsCmdLine::parseQueryInterval(const std::string &s) {
   const int queryInterval = atoi(s.c_str());
   if(0 >= queryInterval) {
-    cta::exception::InvalidArgument ex;
+    InvalidQueryInterval ex;
     ex.getMessage() << "Query value must be an integer greater than 0"
       ": value=" << queryInterval;
     throw ex;
