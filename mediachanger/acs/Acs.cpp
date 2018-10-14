@@ -17,12 +17,12 @@
  */
 
 #include "Acs.hpp"
-#include "common/utils/utils.hpp"
 
 #include <iomanip>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // destructor
@@ -35,7 +35,20 @@ cta::mediachanger::acs::Acs::~Acs() {
 //------------------------------------------------------------------------------
 DRIVEID cta::mediachanger::acs::Acs::str2DriveId(const std::string &str) {
   std::vector<std::string> components;
-  cta::utils::splitString(str, ':', components);
+
+  if(!str.empty()) {
+    const char separator = ':';
+    std::string::size_type beginIndex = 0;
+    std::string::size_type endIndex   = str.find(separator);
+
+    while(endIndex != std::string::npos) {
+      components.push_back(str.substr(beginIndex, endIndex - beginIndex));
+      beginIndex = ++endIndex;
+      endIndex = str.find(separator, endIndex);
+    }
+
+    components.push_back(str.substr(beginIndex));
+  }
 
   // The drive ID should consist of 4 components: ACS, LSM, Panel and Transport
   if(4 != components.size()) {
