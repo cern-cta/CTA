@@ -128,7 +128,6 @@ set (ACS_QUERYVOLUME_SRC_FILES
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
-  ../../common/exception/QueryVolumeFailed.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp
@@ -159,7 +158,6 @@ set (ACS_QUERYDRIVE_SRC_FILES
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
-  ../../common/exception/QueryVolumeFailed.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp
