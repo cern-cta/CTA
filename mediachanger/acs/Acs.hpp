@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "common/exception/InvalidArgument.hpp"
+#include "common/exception/Exception.hpp"
+
 extern "C" {
 #include "acssys.h"
 #include "acsapi.h"
@@ -56,13 +57,19 @@ public:
     const uint32_t panel, const uint32_t drive);
 
   /**
+   * Invalid volume identifier.
+   */
+  struct InvalidVolid: public exception::Exception {
+    InvalidVolid(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Returns the VOLID equibvalent of the specified string.
-   *
-   * This method throws a cta::exception::InvalidArgument if the string is
-   * longer than EXTERNAL_LABEL_SIZE.
    *
    * @param str The string representation of the volume identifier.
    * @return The VOLID representation of the volume identifier.
+   * @throw InvalidVolid if the string is longer than EXTERNAL_LABEL_SIZE.
    */
   static VOLID str2Volid(const std::string &str);
   

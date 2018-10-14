@@ -50,7 +50,7 @@ DRIVEID cta::mediachanger::acs::Acs::alpd2DriveId(const uint32_t acs,
 //------------------------------------------------------------------------------
 VOLID cta::mediachanger::acs::Acs::str2Volid(const std::string &str) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidVolid ex;
     ex.getMessage() << "Failed to convert string to volume identifier"
       ": String is longer than the " << EXTERNAL_LABEL_SIZE <<
       " character maximum";
