@@ -149,7 +149,7 @@ int cta::mediachanger::acs::AcsCmdLine::parseQueryInterval(const std::string &s)
 int cta::mediachanger::acs::AcsCmdLine::parseTimeout(const std::string &s) {
   const int timeout = atoi(s.c_str());
   if(0 >= timeout) {
-    cta::exception::InvalidArgument ex;
+    InvalidTimeout ex;
     ex.getMessage() << "Timeout value must be an integer greater than 0"
       ": value=" << timeout;
     throw ex;

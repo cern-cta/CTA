@@ -74,9 +74,18 @@ protected:
   int parseQueryInterval(const std::string &s);
 
   /**
+   * Invalid timeout.
+   */
+  struct InvalidTimeout: public exception::Exception {
+    InvalidTimeout(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Parses the specified timeout.
    *
    * @return The parse query interval.
+   * @throw InvalidTimout if the timeout is invalid.
    */
   int parseTimeout(const std::string &s);
 
