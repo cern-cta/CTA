@@ -17,7 +17,6 @@
  */
 
 #include "AcsCmdLine.hpp"
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 
 #include <stdlib.h>
@@ -170,7 +169,7 @@ void cta::mediachanger::acs::AcsCmdLine::handleMissingParameter(const int opt) {
 // handleUnknownOption
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::AcsCmdLine::handleUnknownOption(const int opt) {
-  cta::exception::InvalidArgument ex;
+  UnknownOption ex;
   if(0 == optopt) {
     ex.getMessage() << "Unknown command-line option";
   } else {

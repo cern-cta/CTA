@@ -97,9 +97,18 @@ protected:
   void handleMissingParameter(const int opt);
 
   /**
+   * Unkown option.
+   */
+  struct UnknownOption: public exception::Exception {
+    UnknownOption(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Handles the specified unknown option.
    *
    * @param opt The option.
+   * @throw UnknownOption indepedent of the value of opt.
    */
   void handleUnknownOption(const int opt);
 
