@@ -19,7 +19,6 @@
 #include "Acs.hpp"
 #include "AcsMountCmdLine.hpp"
 #include "Constants.hpp"
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 
 #include <getopt.h>

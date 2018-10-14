@@ -21,7 +21,6 @@
 #include "AcsCmd.hpp"
 #include "AcsDismountCmdLine.hpp"
 #include "common/exception/DismountFailed.hpp"
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 
 namespace cta {

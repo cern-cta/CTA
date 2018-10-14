@@ -20,7 +20,6 @@
 #include "Acs.hpp"
 #include "AcsQueryDriveCmdLine.hpp"
 #include "Constants.hpp"
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 #include <getopt.h>
 #include <stdlib.h>

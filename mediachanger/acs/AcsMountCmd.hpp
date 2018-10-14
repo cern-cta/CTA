@@ -20,7 +20,6 @@
 
 #include "AcsCmd.hpp"
 #include "AcsMountCmdLine.hpp"
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 #include "common/exception/MountFailed.hpp"
 
