@@ -90,9 +90,7 @@ set_target_properties (cta-acs-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-acs-dismount
-  ${STK_LIBRARIES}
-  uuid
-  z)
+  ${STK_LIBRARIES})
 install (TARGETS cta-acs-dismount DESTINATION /usr/bin)
 install (FILES cta-acs-dismount.1cta DESTINATION /usr/share/man/man1)
 
@@ -121,9 +119,7 @@ set_target_properties (cta-acs-mount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
 target_link_libraries (cta-acs-mount
-  ${STK_LIBRARIES}
-  uuid
-  z)
+  ${STK_LIBRARIES})
 install (TARGETS cta-acs-mount DESTINATION /usr/bin)
 install (FILES cta-acs-mount.1cta DESTINATION /usr/share/man/man1)
 
@@ -151,9 +147,7 @@ set (ACS_QUERYVOLUME_SRC_FILES
 
 add_executable (cta-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
 target_link_libraries (cta-acs-queryvolume
-  ${STK_LIBRARIES}
-  uuid
-  z)
+  ${STK_LIBRARIES})
 set_target_properties (cta-acs-queryvolume PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
@@ -185,9 +179,7 @@ set (ACS_QUERYDRIVE_SRC_FILES
 
 add_executable (cta-acs-querydrive ${ACS_QUERYDRIVE_SRC_FILES})
 target_link_libraries (cta-acs-querydrive
-  ${STK_LIBRARIES}
-  uuid
-  z)
+  ${STK_LIBRARIES})
 set_target_properties (cta-acs-querydrive PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
