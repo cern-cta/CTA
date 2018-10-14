@@ -70,7 +70,6 @@ install(TARGETS ctamediachangeracsunittests DESTINATION usr/${CMAKE_INSTALL_LIBD
 message(STATUS "Adding cta-acs-dismount target")
 set (ACS_DISMOUNT_SRC_FILES
   ../../common/exception/Backtrace.cpp
-  ../../common/exception/DismountFailed.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
