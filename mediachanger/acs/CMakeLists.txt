@@ -69,15 +69,11 @@ message(STATUS "Adding cta-acs-dismount target")
 set (ACS_DISMOUNT_SRC_FILES
   ../../common/exception/Backtrace.cpp
   ../../common/exception/DismountFailed.cpp
-  ../../common/exception/Errnum.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/InvalidArgument.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
   ../../common/exception/RequestFailed.cpp
-  ../../common/utils/strerror_r_wrapper.cpp
-  ../../common/utils/utils.cpp
-  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -103,16 +99,12 @@ install (FILES cta-acs-dismount.1cta DESTINATION /usr/share/man/man1)
 ################################################################################
 set (ACS_MOUNT_SRC_FILES
   ../../common/exception/Backtrace.cpp
-  ../../common/exception/Errnum.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/InvalidArgument.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
   ../../common/exception/MountFailed.cpp
   ../../common/exception/RequestFailed.cpp
-  ../../common/utils/strerror_r_wrapper.cpp
-  ../../common/utils/utils.cpp
-  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -139,16 +131,12 @@ install (FILES cta-acs-mount.1cta DESTINATION /usr/share/man/man1)
 message(STATUS "Adding cta-acs-queryvolume target")
 set (ACS_QUERYVOLUME_SRC_FILES
   ../../common/exception/Backtrace.cpp
-  ../../common/exception/Errnum.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/InvalidArgument.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
   ../../common/exception/QueryVolumeFailed.cpp
   ../../common/exception/RequestFailed.cpp
-  ../../common/utils/strerror_r_wrapper.cpp
-  ../../common/utils/utils.cpp
-  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
@@ -177,16 +165,12 @@ install (FILES cta-acs-queryvolume.1cta DESTINATION /usr/share/man/man1)
 message(STATUS "Adding cta-acs-querydrive target")
 set (ACS_QUERYDRIVE_SRC_FILES
   ../../common/exception/Backtrace.cpp
-  ../../common/exception/Errnum.cpp
   ../../common/exception/Exception.cpp
   ../../common/exception/InvalidArgument.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
   ../../common/exception/QueryVolumeFailed.cpp
   ../../common/exception/RequestFailed.cpp
-  ../../common/utils/strerror_r_wrapper.cpp
-  ../../common/utils/utils.cpp
-  ../../common/utils/Regex.cpp
   Acs.cpp
   AcsCmd.cpp
   AcsCmdLine.cpp
