@@ -90,9 +90,18 @@ protected:
   int parseTimeout(const std::string &s);
 
   /**
+   * Missing parameter.
+   */
+  struct MissingParam: public exception::Exception {
+    MissingParam(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Handles the specified parameter that is missing a parameter.
    *
    * @param opt The option.
+   * @throw MissingParam in all cases.
    */
   void handleMissingParameter(const int opt);
 

@@ -17,7 +17,6 @@
  */
 
 #include "AcsCmdLine.hpp"
-#include "common/exception/MissingOperand.hpp"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -160,9 +159,9 @@ int cta::mediachanger::acs::AcsCmdLine::parseTimeout(const std::string &s) {
 // handleMissingParameter
 //------------------------------------------------------------------------------
 void cta::mediachanger::acs::AcsCmdLine::handleMissingParameter(const int opt) {
-  cta::exception::MissingOperand ex;
+  MissingParam ex;
   ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
- throw ex;
+  throw ex;
 }
 
 //------------------------------------------------------------------------------
