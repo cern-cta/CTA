@@ -101,7 +101,6 @@ set (ACS_MOUNT_SRC_FILES
   ../../common/exception/Exception.cpp
   ../../common/exception/Mismatch.cpp
   ../../common/exception/MissingOperand.cpp
-  ../../common/exception/MountFailed.cpp
   ../../common/exception/RequestFailed.cpp
   Acs.cpp
   AcsCmd.cpp

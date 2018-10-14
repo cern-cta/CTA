@@ -21,7 +21,6 @@
 #include "AcsCmd.hpp"
 #include "AcsMountCmdLine.hpp"
 #include "common/exception/MissingOperand.hpp"
-#include "common/exception/MountFailed.hpp"
 
 #include <stdint.h>
 
@@ -79,8 +78,7 @@ protected:
   void sendMountRequest(const SEQ_NO seqNumber);
 
   /**
-   * Throws cta::exception::DismountFailed if the mount was not
-   * successful.
+   * Process mount rsponse.
    *
    * @param buf The mount-response message.
    */
