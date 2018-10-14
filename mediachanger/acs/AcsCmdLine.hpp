@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
+
 extern "C" {
 #include "acssys.h"
 #include "acsapi.h"
@@ -37,13 +39,19 @@ class AcsCmdLine {
 public:
 
   /**
+   * Invalid drive identifier.
+   */
+  struct InvalidDriveId: public exception::Exception {
+    InvalidDriveId(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Parses the specified string and returns the corresponding drive ID object.
-   *
-   * This method throws a cta::exception::InvalidArgument if the syntax of
-   * the string is invalid.
    *
    * @param str The string to be parsed.
    * @return The drive ID object.
+   * @throw InvalidDriveId if the syntax of the string is invalid.
    */
   static DRIVEID str2DriveId(const std::string &str);
 

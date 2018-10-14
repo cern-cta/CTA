@@ -46,8 +46,7 @@ DRIVEID cta::mediachanger::acs::AcsCmdLine::str2DriveId(const std::string &str) 
 
   // The drive ID should consist of 4 components: ACS, LSM, Panel and Transport
   if(4 != components.size()) {
-    //cta::exception::InvalidArgument ex;
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Invalid number of components in drive ID"
       ": expected=4, actual=" << components.size();
     throw ex;
@@ -60,25 +59,25 @@ DRIVEID cta::mediachanger::acs::AcsCmdLine::str2DriveId(const std::string &str) 
 
   // Each of the 4 components must be between 1 and than 3 characters long
   if(1 > acsStr.length() ||  3 < acsStr.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Invalid ACS string length"
       ": expected=1..3, actual=" << acsStr.length();
     throw ex;
   }
   if(1 > lsmStr.length() || 3 < lsmStr.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Invalid LSM string length"
       ": expected=1..3, actual=" << lsmStr.length();
     throw ex;
   }
   if(1 > panStr.length() || 3 < panStr.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Invalid panel string length"
       ": expected=1..3, actual=" << panStr.length();
     throw ex;
   }
   if(1 > drvStr.length() || 3 < drvStr.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Invalid drive string length"
       ": expected=1..3, actual=" << drvStr.length();
     throw ex;
@@ -86,22 +85,22 @@ DRIVEID cta::mediachanger::acs::AcsCmdLine::str2DriveId(const std::string &str) 
 
   // Each of the 4 components must only contain numerals
   if(!onlyContainsNumerals(acsStr)) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "ACS must only contain numerals: value=" << acsStr;
     throw ex;
   }
   if(!onlyContainsNumerals(lsmStr)) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "LSM must only contain numerals: value=" << acsStr;
     throw ex;
   }
   if(!onlyContainsNumerals(panStr)) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Panel must only contain numerals: value=" << acsStr;
     throw ex;
   }
   if(!onlyContainsNumerals(drvStr)) {
-    cta::exception::InvalidArgument ex;
+    InvalidDriveId ex;
     ex.getMessage() << "Drive/Transport must only contain numerals: value=" <<
       acsStr;
     throw ex;

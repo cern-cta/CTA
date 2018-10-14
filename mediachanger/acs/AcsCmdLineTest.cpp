@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/exception/InvalidArgument.hpp"
 #include "mediachanger/acs/AcsCmdLine.hpp"
 
 #include <gtest/gtest.h>
@@ -53,7 +52,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, goodDayStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooManyComponentsStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2:3:4:5");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -62,7 +61,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooManyComponentsStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooFewComponentsStr2DriveIdgoodDayStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2:3");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -71,7 +70,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooFewComponentsStr2DriveIdgoodDaySt
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongAcsComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1111:2:3:4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -80,7 +79,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongAcsComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongLsmComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2222:3:4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -89,7 +88,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongLsmComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongPanComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2:3333:4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -98,7 +97,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongPanComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongDrvComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2:3:4444");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -107,7 +106,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, tooLongDrvComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyAcsComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str(":2:3:4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -116,7 +115,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyAcsComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyLsmComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1::3:4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -125,7 +124,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyLsmComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyPanComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2::4");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 /**
@@ -134,7 +133,7 @@ TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyPanComponentStr2DriveId) {
 TEST_F(cta_mediachanger_acs_AcsCmdLineTest, emptyDrvComponentStr2DriveId) {
   using namespace cta::mediachanger::acs;
   const std::string str("1:2:3:");
-  ASSERT_THROW(AcsCmdLine::str2DriveId(str), cta::exception::InvalidArgument);
+  ASSERT_THROW(AcsCmdLine::str2DriveId(str), AcsCmdLine::InvalidDriveId);
 }
 
 } // namespace unitTests
