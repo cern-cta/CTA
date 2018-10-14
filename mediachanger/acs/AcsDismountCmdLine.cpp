@@ -102,7 +102,7 @@ cta::mediachanger::acs::AcsDismountCmdLine::AcsDismountCmdLine(const int argc,
   optind++;
 
   // Parse DRIVE_SLOT
-  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
+  libraryDriveSlot = str2DriveId(argv[optind]);
 }
 
 //------------------------------------------------------------------------------

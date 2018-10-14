@@ -97,7 +97,7 @@ cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine(const int arg
   }
 
   // Parse DRIVE_SLOT
-  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
+  libraryDriveSlot = str2DriveId(argv[optind]);
 }
 
 //------------------------------------------------------------------------------

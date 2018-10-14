@@ -43,17 +43,6 @@ public:
   virtual ~Acs() = 0;
 
   /**
-   * Parses the specified string and returns the corresponding drive ID object.
-   *
-   * This method throws a cta::exception::InvalidArgument if the syntax of
-   * the string is invalid.
-   *
-   * @param str The string to be parsed.
-   * @return The drive ID object.
-   */
-  static DRIVEID str2DriveId(const std::string &str);
-
-  /**
    * Converts acs, lsm, panel, drive numbers to the corresponding 
    * drive ID object.
    * 
@@ -164,15 +153,6 @@ public:
     const SEQ_NO seqNumber,
     VOLID (&volIds)[MAX_ID],
     const unsigned short count) = 0;
-
-protected:
-
-  /**
-   * Returns true if the specified string only contains numerals else false.
-   *
-   * @return True if the specified string only contains numerals else false.
-   */
-  static bool onlyContainsNumerals(const std::string &str);
 
 }; // class  Acs
 

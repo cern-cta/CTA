@@ -18,6 +18,11 @@
 
 #pragma once
 
+extern "C" {
+#include "acssys.h"
+#include "acsapi.h"
+}
+
 #include <string>
 
 namespace cta {
@@ -28,7 +33,20 @@ namespace acs {
  * Class containing the code common to the parsed command-line of the ACS
  * command-line tools provided by CASTOR.
  */
-struct AcsCmdLine {
+class AcsCmdLine {
+public:
+
+  /**
+   * Parses the specified string and returns the corresponding drive ID object.
+   *
+   * This method throws a cta::exception::InvalidArgument if the syntax of
+   * the string is invalid.
+   *
+   * @param str The string to be parsed.
+   * @return The drive ID object.
+   */
+  static DRIVEID str2DriveId(const std::string &str);
+
 protected:
 
   /**
@@ -58,6 +76,15 @@ protected:
    * @param opt The option.
    */
   void handleUnknownOption(const int opt);
+
+private:
+
+  /**
+   * Returns true if the specified string only contains numerals else false.
+   *
+   * @return True if the specified string only contains numerals else false.
+   */
+  static bool onlyContainsNumerals(const std::string &str);
 
 }; // class AcsCmdLine
 

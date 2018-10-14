@@ -46,6 +46,8 @@ set_target_properties (cta-acs PROPERTIES
 ################################################################################
 
 set(MEDIACHANGER_ACS_UNIT_TESTS_LIB_SRC_FILES
+  AcsCmdLine.cpp
+  AcsCmdLineTest.cpp
   AcsTest.cpp)
 
 add_library (ctamediachangeracsunittests SHARED
