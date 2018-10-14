@@ -101,4 +101,40 @@ TEST_F(cta_mediachanger_acs_AcsTest, tooLongDrvComponentStr2DriveId) {
   ASSERT_THROW(Acs::str2DriveId(str), cta::exception::InvalidArgument);
 }
 
+/**
+ * Tests empty component with Acs::strToDrveId.
+ */
+TEST_F(cta_mediachanger_acs_AcsTest, emptyAcsComponentStr2DriveId) {
+  using namespace cta::mediachanger::acs;
+  const std::string str(":2:3:4");
+  ASSERT_THROW(Acs::str2DriveId(str), cta::exception::InvalidArgument);
+}
+
+/**
+ * Tests empty component with Acs::strToDrveId.
+ */
+TEST_F(cta_mediachanger_acs_AcsTest, emptyLsmComponentStr2DriveId) {
+  using namespace cta::mediachanger::acs;
+  const std::string str("1::3:4");
+  ASSERT_THROW(Acs::str2DriveId(str), cta::exception::InvalidArgument);
+}
+
+/**
+ * Tests empty component with Acs::strToDrveId.
+ */
+TEST_F(cta_mediachanger_acs_AcsTest, emptyPanComponentStr2DriveId) {
+  using namespace cta::mediachanger::acs;
+  const std::string str("1:2::4");
+  ASSERT_THROW(Acs::str2DriveId(str), cta::exception::InvalidArgument);
+}
+
+/**
+ * Tests empty component with Acs::strToDrveId.
+ */
+TEST_F(cta_mediachanger_acs_AcsTest, emptyDrvComponentStr2DriveId) {
+  using namespace cta::mediachanger::acs;
+  const std::string str("1:2:3:");
+  ASSERT_THROW(Acs::str2DriveId(str), cta::exception::InvalidArgument);
+}
+
 } // namespace unitTests
