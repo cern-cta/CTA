@@ -30,6 +30,7 @@ class EntryLogSerDeser;
 
 class RepackIndex: public ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t> {
 public:
+  RepackIndex(Backend & os);
   RepackIndex(const std::string & address, Backend & os);
   RepackIndex(GenericObject & go);
   void initialize();
@@ -43,7 +44,7 @@ public:
    */
   struct RepackRequestAddress {
     std::string vid;
-    std::string driveStateAddress;
+    std::string repackRequestAddress;
   };
   
   // Repack tapes management =========================================================
@@ -76,7 +77,7 @@ public:
   void removeRepackRequest(const std::string & vid);
 
   /**
-   * JSON dump of the drive 
+   * JSON dump of the index 
    * @return 
    */
   std::string dump();

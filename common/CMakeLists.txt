@@ -51,7 +51,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/QueueAndMountSummary.cpp
   dataStructures/ReadTestResult.cpp
   dataStructures/RepackInfo.cpp
-  dataStructures/RepackType.cpp
   dataStructures/RequesterGroupMountRule.cpp
   dataStructures/RequesterMountRule.cpp
   dataStructures/RetrieveJob.cpp

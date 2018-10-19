@@ -448,6 +448,7 @@ message RetrieveQueue {
 // ------------- Repack data strcutures ----------------------------------------
 
 enum RepackRequestStatus {
+  // those value are matching the dataStructures/RepackInfo.hpp: RepackInfo::Status values.
   RRS_Pending = 1;
   RRS_ToExpand = 2;
   RRS_Starting = 3;

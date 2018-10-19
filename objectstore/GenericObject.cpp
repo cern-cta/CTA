@@ -29,6 +29,9 @@
 #include "RetrieveQueue.hpp"
 #include "RetrieveQueueShard.hpp"
 #include "DriveRegister.hpp"
+#include "RepackIndex.hpp"
+#include "RepackQueue.hpp"
+#include "RepackRequest.hpp"
 #include <stdexcept>
 #include <google/protobuf/util/json_util.h>
 
@@ -201,6 +204,15 @@ std::string GenericObject::dump() {
       break;
     case serializers::SchedulerGlobalLock_t:
       bodyDump = dumpWithType<SchedulerGlobalLock>(this);
+      break;
+    case serializers::RepackIndex_t:
+      bodyDump = dumpWithType<RepackIndex>(this);
+      break;
+    case serializers::RepackRequest_t:
+      bodyDump = dumpWithType<RepackRequest>(this);
+      break;
+    case serializers::RepackQueue_t:
+      bodyDump = dumpWithType<RepackQueue>(this);
       break;
     default:
       std::stringstream err;

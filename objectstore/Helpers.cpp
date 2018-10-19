@@ -663,7 +663,7 @@ void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::st
   std::string repackIndexAddress;
   // First, try to get the address of of the repack index lockfree.
   try {
-    re.getRepackIndexAddress();
+    repackIndexAddress = re.getRepackIndexAddress();
   } catch (RootEntry::NotAllocated &){
     ScopedExclusiveLock rel(re);
     re.fetch();

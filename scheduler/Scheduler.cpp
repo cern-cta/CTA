@@ -294,7 +294,7 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
 // repack
 //------------------------------------------------------------------------------
 void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackType repackType, log::LogContext & lc) {
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
   // Check request sanity
   if (vid.empty()) throw exception::UserError("Empty VID name.");
   if (bufferURL.empty()) throw exception::UserError("Empty buffer URL.");

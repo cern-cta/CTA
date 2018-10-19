@@ -20,7 +20,7 @@
 
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
-#include "common/dataStructures/RepackType.hpp"
+#include "common/dataStructures/RepackInfo.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/Timer.hpp"
 
@@ -38,10 +38,14 @@ public:
   
   // Parameters interface
   void setVid(const std::string & vid);
-  void setRepackType(common::dataStructures::RepackType repackType);
+  void setType(common::dataStructures::RepackInfo::Type repackType);
+  void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
+  common::dataStructures::RepackInfo getInfo();
   
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
+    
+  std::string dump();
   
   // An asynchronous request ownership updating class.
   class AsyncOwnerUpdater {

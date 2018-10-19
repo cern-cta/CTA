@@ -275,8 +275,8 @@ public:
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
   
   /* === Repack requests handling =========================================== */
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackType repackType, 
-      log::LogContext &logContext) override;
+  void queueRepack(const std::string& vid, const std::string& bufferURL, 
+    common::dataStructures::RepackInfo::Type repackType, log::LogContext &logContext) override;
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   

@@ -30,7 +30,6 @@
 #include "common/dataStructures/ListStorageClassRequest.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/RepackType.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -191,7 +190,7 @@ public:
     const bool force, const bool lbp);
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
-    const std::string & bufferURL, const common::dataStructures::RepackType repackType, log::LogContext & lc);
+    const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);

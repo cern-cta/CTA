@@ -1030,7 +1030,7 @@ OStoreDB::RetrieveQueueItor_t OStoreDB::getRetrieveJobItor(const std::string &vi
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
 void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
-    common::dataStructures::RepackType repackType, log::LogContext & lc) {
+    common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc) {
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1039,7 +1039,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   // We need to own the request until it is queued in the the pending queue.
   rr->setOwner(m_agentReference->getAgentAddress());
   rr->setVid(vid);
-  rr->setRepackType(repackType);
+  rr->setType(repackType);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
@@ -1065,8 +1065,26 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
 // OStoreDB::queueRepack()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
-  // TODO
-  throw exception::Exception("No implemented");
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  std::list<common::dataStructures::RepackInfo> ret;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    return ret;
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    try {
+      RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      rr.fetchNoLock();
+      ret.push_back(rr.getInfo());
+    } catch (cta::exception::Exception &) {}
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------

@@ -23,13 +23,19 @@
 namespace cta { namespace objectstore {
 
 //------------------------------------------------------------------------------
-// RepackIndex::DriveRegister()
+// RepackIndex::RepackIndex()
 //------------------------------------------------------------------------------
 RepackIndex::RepackIndex(const std::string& address, Backend& os):
   ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t>(os, address) { }
 
 //------------------------------------------------------------------------------
-// RepackIndex::DriveRegister()
+// RepackIndex::RepackIndex()
+//------------------------------------------------------------------------------
+RepackIndex::RepackIndex(Backend& os):
+  ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t>(os) { }
+
+//------------------------------------------------------------------------------
+// RepackIndex::RepackIndex()
 //------------------------------------------------------------------------------
 RepackIndex::RepackIndex(GenericObject& go):
   ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t>(go.objectStore()) {
@@ -98,7 +104,7 @@ std::list<RepackIndex::RepackRequestAddress> RepackIndex::getRepackRequestsAddre
   std::list<RepackRequestAddress> ret;
   for (auto &rt: m_payload.repackrequestpointers()) {
     ret.push_back(RepackRequestAddress());
-    ret.back().driveStateAddress = rt.address();
+    ret.back().repackRequestAddress = rt.address();
     ret.back().vid = rt.vid();
   }
   return ret;
@@ -113,7 +119,7 @@ bool RepackIndex::isEmpty() {
 }
 
 //------------------------------------------------------------------------------
-// DriveRegister::getDriveAddresse()
+// RepackIndex::getDriveAddresse()
 //------------------------------------------------------------------------------
 void RepackIndex::removeRepackRequest(const std::string& vid) {
   checkPayloadWritable();

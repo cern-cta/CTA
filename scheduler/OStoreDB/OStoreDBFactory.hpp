@@ -152,7 +152,7 @@ public:
   }
   
 
-  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackType repackType, log::LogContext& lc) override {
+  void queueRepack(const std::string& vid, const std::string& bufferURL, common::dataStructures::RepackInfo::Type repackType, log::LogContext& lc) override {
     m_OStoreDB.queueRepack(vid, bufferURL, repackType, lc);
   }
   

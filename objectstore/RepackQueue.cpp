@@ -17,20 +17,33 @@
  */
 
 #include "RepackQueue.hpp"
+#include "GenericObject.hpp"
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
 //------------------------------------------------------------------------------
-// Constructor
+// RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
 RepackQueue::RepackQueue(const std::string& address, Backend& os): 
   ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os, address) {}
 
 //------------------------------------------------------------------------------
-// Constructor
+// RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
 RepackQueue::RepackQueue(Backend& os):
   ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os) { }
+
+//------------------------------------------------------------------------------
+// RepackQueue::RepackQueue()
+//------------------------------------------------------------------------------
+RepackQueue::RepackQueue(GenericObject& go):
+  ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
 
 //------------------------------------------------------------------------------
 // RepackQueue::initialize()
@@ -114,6 +127,19 @@ auto RepackQueue::getRequestsSummary() -> RequestsSummary {
 bool RepackQueue::isEmpty() {
   checkPayloadReadable();
   return m_payload.repackrequestpointers().size();
+}
+
+//------------------------------------------------------------------------------
+// RepackQueue::dump()
+//------------------------------------------------------------------------------
+std::string RepackQueue::dump() {
+  checkPayloadReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
 }
 
 

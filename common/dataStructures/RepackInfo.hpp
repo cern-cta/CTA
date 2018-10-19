@@ -18,13 +18,7 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/RepackType.hpp"
 
 namespace cta {
 namespace common {
@@ -35,28 +29,39 @@ namespace dataStructures {
  */
 struct RepackInfo {
 
-  RepackInfo();
-
-  bool operator==(const RepackInfo &rhs) const;
-
-  bool operator!=(const RepackInfo &rhs) const;
-
   std::string vid;
-  std::string tag;
-  uint64_t totalFiles;
-  uint64_t totalSize;
-  uint64_t filesToRetrieve;
-  uint64_t filesToArchive;
-  uint64_t filesFailed;
-  uint64_t filesArchived;
-  RepackType repackType;
-  std::string repackStatus;
-  std::map<uint64_t,std::string> errors;
-  EntryLog creationLog;
+  enum class Type {
+    ExpandAndRepack,
+    ExpandOnly,
+    RepackOnly
+  } type;
+  enum class Status {
+    // Those values are matching the cta.proto values
+    Pending = 1,
+    ToExpand = 2,
+    Starting = 3,
+    Running = 4,
+    Aborting = 5,
+    Aborted = 6,
+    Complete = 7,
+    Failed = 8
+  } status;
+//  std::string tag;
+//  uint64_t totalFiles;
+//  uint64_t totalSize;
+//  uint64_t filesToRetrieve;
+//  uint64_t filesToArchive;
+//  uint64_t filesFailed;
+//  uint64_t filesArchived;
+//  RepackType repackType;
+//  std::string repackStatus;
+//  std::map<uint64_t,std::string> errors;
+//  EntryLog creationLog;
 
 }; // struct RepackInfo
 
-std::ostream &operator<<(std::ostream &os, const RepackInfo &obj);
+std::string toString(RepackInfo::Type type);
+std::string toString(RepackInfo::Status status);
 
 } // namespace dataStructures
 } // namespace common

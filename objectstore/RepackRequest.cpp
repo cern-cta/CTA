@@ -17,6 +17,8 @@
  */
 
 #include "RepackRequest.hpp"
+#include "GenericObject.hpp"
+#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -25,6 +27,17 @@ namespace cta { namespace objectstore {
 //------------------------------------------------------------------------------
 RepackRequest::RepackRequest(const std::string& address, Backend& os):
   ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> (os, address) { }
+
+//------------------------------------------------------------------------------
+// RepackRequest::RepackRequest()
+//------------------------------------------------------------------------------
+RepackRequest::RepackRequest(GenericObject& go):
+  ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>(go.objectStore()) {
+  // Here we transplant the generic object into the new object
+  go.transplantHeader(*this);
+  // And interpret the header.
+  getPayloadFromHeader();
+}
 
 //------------------------------------------------------------------------------
 // RepackRequest::initialize()
@@ -51,22 +64,45 @@ void RepackRequest::setVid(const std::string& vid) {
 //------------------------------------------------------------------------------
 // RepackRequest::setRepackType()
 //------------------------------------------------------------------------------
-void RepackRequest::setRepackType(common::dataStructures::RepackType repackType) {
+void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType) {
   checkPayloadWritable();
-  typedef common::dataStructures::RepackType RepackType;
+  typedef common::dataStructures::RepackInfo::Type RepackType;
   switch (repackType) {
-  case RepackType::expandandrepack:
+  case RepackType::ExpandAndRepack:
     // Nothing to do, this is the default case.
     break;
-  case RepackType::justexpand:
+  case RepackType::ExpandOnly:
     m_payload.set_repackmode(false);
     break;
-  case RepackType::justrepack:
+  case RepackType::RepackOnly:
     m_payload.set_expandmode(false);
     break;
   default:
     throw exception::Exception("In RepackRequest::setRepackType(): unexpected type.");
   }
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::getInfo()
+//------------------------------------------------------------------------------
+common::dataStructures::RepackInfo RepackRequest::getInfo() {
+  checkPayloadReadable();
+  typedef common::dataStructures::RepackInfo RepackInfo;
+  RepackInfo ret;
+  ret.vid = m_payload.vid();
+  ret.status = (RepackInfo::Status) m_payload.status();
+  if (m_payload.repackmode()) {
+    if (m_payload.expandmode()) {
+      ret.type = RepackInfo::Type::ExpandAndRepack;
+    } else {
+      ret.type = RepackInfo::Type::RepackOnly;
+    }
+  } else if (m_payload.expandmode()) {
+    ret.type = RepackInfo::Type::ExpandOnly;
+  } else {
+    throw exception::Exception("In RepackRequest::getInfo(): unexpcted mode: neither expand nor repack.");
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -131,7 +167,17 @@ void RepackRequest::AsyncOwnerUpdater::wait() {
   m_timingReport.insertAndReset("commitUnlockTime", m_timer);
 }
 
-
-
+//------------------------------------------------------------------------------
+// RepackRequest::dump()
+//------------------------------------------------------------------------------
+std::string RepackRequest::dump() {  
+  checkPayloadReadable();
+  google::protobuf::util::JsonPrintOptions options;
+  options.add_whitespace = true;
+  options.always_print_primitive_fields = true;
+  std::string headerDump;
+  google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
+  return headerDump;
+}
 
 }} // namespace cta::objectstore
