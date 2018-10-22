@@ -1062,7 +1062,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::queueRepack()
+// OStoreDB::getRepackInfo()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
   RootEntry re(m_objectStore);
