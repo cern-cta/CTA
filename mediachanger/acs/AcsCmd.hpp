@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include "common/exception/InvalidArgument.hpp"
 #include "common/exception/Mismatch.hpp"
 //#include "common/exception/RequestFailed.hpp"
 #include "common/exception/RequestFailed.hpp"

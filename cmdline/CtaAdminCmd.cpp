@@ -192,6 +192,9 @@ void CtaAdminCmd::send() const
       throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
    }
 
+   // If the server is down, we want an immediate failure. Set client retry to a single attempt.
+   XrdSsiProviderClient->SetTimeout(XrdSsiProvider::connect_N, 1);
+
    // Obtain a Service Provider
    XrdSsiPbServiceType cta_service(config);
 

@@ -19,8 +19,6 @@
 #include "Acs.hpp"
 #include "AcsMountCmdLine.hpp"
 #include "Constants.hpp"
-#include "common/exception/InvalidArgument.hpp"
-#include "common/exception/MissingOperand.hpp"
 
 #include <getopt.h>
 #include <stdlib.h>
@@ -86,7 +84,7 @@ cta::mediachanger::acs::AcsMountCmdLine::AcsMountCmdLine(const int argc,
 
   // Check that both VID and DRIVE_SLOT have been specified
   if(nbArgs < 2) {
-    cta::exception::MissingOperand ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Both VID and DRIVE_SLOT must be specified";
     throw ex;
   }
@@ -98,7 +96,7 @@ cta::mediachanger::acs::AcsMountCmdLine::AcsMountCmdLine(const int argc,
   optind++;
 
   // Parse DRIVE_SLOT
-  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
+  libraryDriveSlot = str2DriveId(argv[optind]);
 }
 
 //------------------------------------------------------------------------------

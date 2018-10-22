@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "common/exception/InvalidArgument.hpp"
-#include "common/exception/MissingOperand.hpp"
 #include "mediachanger/CmdLineTool.hpp"
 #include "mediachanger/MountCmdLine.hpp"
 

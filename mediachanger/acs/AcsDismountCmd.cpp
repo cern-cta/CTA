@@ -83,11 +83,11 @@ void cta::mediachanger::acs::AcsDismountCmd::syncDismount() {
     requestResponsesUntilFinal(requestSeqNumber, buf, m_cmdLine.queryInterval,
       m_cmdLine.timeout);
     processDismountResponse(buf);
-  } catch(cta::exception::Exception &ex) {
-    cta::exception::DismountFailed df;
-    df.getMessage() << "Failed to dismount volume " <<
-      m_cmdLine.volId.external_label << ": " << ex.getMessage().str();
-    throw df;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to dismount volume " <<
+      m_cmdLine.volId.external_label << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -103,7 +103,7 @@ void cta::mediachanger::acs::AcsDismountCmd::sendDismountRequest(
     m_cmdLine.libraryDriveSlot, m_cmdLine.force);
   m_dbg << "Acs::dismount() returned " << acs_status(s) << std::endl;
   if(STATUS_SUCCESS != s) {
-    cta::exception::DismountFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to send request to dismount volume " <<
       m_cmdLine.volId.external_label << " from drive " <<
       m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": force=" <<
@@ -120,7 +120,7 @@ void cta::mediachanger::acs::AcsDismountCmd::processDismountResponse(
   const ACS_DISMOUNT_RESPONSE *const msg = (ACS_DISMOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->dismount_status) {
-    cta::exception::DismountFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Status of dismount response is not success: " <<
       acs_status(msg->dismount_status);
     throw ex;
