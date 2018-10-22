@@ -152,7 +152,7 @@ function execute_log {
 
   if [ "${execute_log_rc}" == "" ]; then
     echo "TIMEOUTING COMMAND, setting exit status to 1"
-    kill -9 ${execute_log_pid}
+    kill -9 -${execute_log_pid}
     execute_log_rc=1
   fi
 
