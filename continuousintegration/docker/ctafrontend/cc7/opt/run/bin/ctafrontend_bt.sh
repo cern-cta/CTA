@@ -11,7 +11,7 @@ yum install -y xrootd-debuginfo cta-debuginfo
 cat <<EOF > /tmp/ctabt.gdb
 file /usr/bin/xrootd
 core ${COREFILE}
-bt
+thread apply all bt
 quit
 EOF
 
