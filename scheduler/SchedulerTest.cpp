@@ -738,7 +738,7 @@ TEST_P(SchedulerTest, repack) {
   common::dataStructures::SecurityIdentity cliId;
   scheduler.queueRepack(cliId, "Tape", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
   auto repacks = scheduler.getRepacks();
-  // TODO ASSERT_EQ(1, repacks.size());
+  ASSERT_EQ(1, repacks.size());
 }
 
 #undef TEST_MOCK_DB

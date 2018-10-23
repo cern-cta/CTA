@@ -705,7 +705,7 @@ std::string RootEntry::getRepackIndexAddress() {
       m_payload.repackindexpointer().address().size()) {
     return m_payload.repackindexpointer().address();
   }
-  throw NotAllocated("In RootEntry::getRepackTapeRegistry: repack tape register not yet allocated");
+  throw NotAllocated("In RootEntry::getRepackIndexAddress: repack tape register not yet allocated");
 }
 
 std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
@@ -721,7 +721,7 @@ std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
     // empty. There should never be garbage collection for this object type.
     //
     // decide on the object's name.
-    std::string rtrAddress (agentRef.nextId("RepackTapeRegister"));
+    std::string rtrAddress (agentRef.nextId("RepackIndex"));
     // Then prepare the repack tape register object
     RepackIndex ri(rtrAddress, m_objectStore);
     ri.initialize();
@@ -750,14 +750,14 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
   ri.fetch();
   // Check the drive register is empty
   if (!ri.isEmpty()) {
-    throw DriveRegisterNotEmpty("In RootEntry::removeRepackTapeRegistryAndCommit: "
+    throw DriveRegisterNotEmpty("In RootEntry::removeRepackIndexAndCommit(): "
       "trying to remove a non-empty repack tape register");
   }
   // we can delete the drive register
   ri.remove();
   log::ScopedParamContainer params(lc);
-  params.add("repackTapeRegister", ri.getAddressIfSet());
-  lc.log(log::INFO, "In RootEntry::removeRepackTapeRegistryAndCommit(): removed repack tape register object.");
+  params.add("repackIndex", ri.getAddressIfSet());
+  lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
   // And update the root entry
   m_payload.mutable_schedulerlockpointer()->set_address("");
   // We commit for safety and symmetry with the add operation

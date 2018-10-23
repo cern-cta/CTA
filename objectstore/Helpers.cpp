@@ -673,6 +673,7 @@ void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::st
   ScopedExclusiveLock ril(ri);
   ri.fetch();
   ri.addRepackRequestAddress(vid, requestAddress);
+  ri.commit();
 }
 
 

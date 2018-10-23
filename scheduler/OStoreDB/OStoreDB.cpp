@@ -1034,7 +1034,7 @@ void OStoreDB::queueRepack(const std::string& vid, const std::string& bufferURL,
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
-  auto rr=cta::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackTapeRequest"), m_objectStore);
+  auto rr=cta::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackRequest"), m_objectStore);
   rr->initialize();
   // We need to own the request until it is queued in the the pending queue.
   rr->setOwner(m_agentReference->getAgentAddress());

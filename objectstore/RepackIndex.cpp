@@ -75,7 +75,7 @@ void RepackIndex::garbageCollect(const std::string &presumedOwner, AgentReferenc
   checkPayloadWritable();
   // We should never have to garbage collect
   log::ScopedParamContainer params(lc);
-  params.add("repackTapeRegister", getAddressIfSet())
+  params.add("repackIndex", getAddressIfSet())
         .add("currentOwner", getOwner())
         .add("backupOwner", getBackupOwner())
         .add("presumedOwner", presumedOwner);
@@ -84,7 +84,7 @@ void RepackIndex::garbageCollect(const std::string &presumedOwner, AgentReferenc
 }
 
 //------------------------------------------------------------------------------
-// RepackIndex::getRepackTapeAddress()
+// RepackIndex::getRepackRequestAddress()
 //------------------------------------------------------------------------------
 std::string RepackIndex::getRepackRequestAddress(const std::string& vid) {
   checkPayloadReadable();
@@ -92,12 +92,12 @@ std::string RepackIndex::getRepackRequestAddress(const std::string& vid) {
     if (rt.vid() == vid)
       return rt.address();
   }
-  throw NoSuchVID("In RepackIndex::getRepackTapeAddress(): no such VID");
+  throw NoSuchVID("In RepackIndex::getRepackRequestAddress(): no such VID");
 }
 
 
 //------------------------------------------------------------------------------
-// RepackIndex::getRepackTapeAddresses()
+// RepackIndex::getRepackRequestsAddresses()
 //------------------------------------------------------------------------------
 std::list<RepackIndex::RepackRequestAddress> RepackIndex::getRepackRequestsAddresses() {
   checkHeaderReadable();
@@ -135,16 +135,16 @@ void RepackIndex::removeRepackRequest(const std::string& vid) {
   }
   if (!found) {
     std::stringstream err;
-    err << "In RepackIndex::removeRepackTape(): vid not found: " << vid;
+    err << "In RepackIndex::removeRepackRequest(): vid not found: " << vid;
     throw cta::exception::Exception(err.str()); 
   }
 }
 
 //------------------------------------------------------------------------------
-// DriveRegister::setRepackTapeAddress()
+// DriveRegister::addRepackRequestAddress()
 //------------------------------------------------------------------------------
 void RepackIndex::addRepackRequestAddress(const std::string& vid, 
-    const std::string& repackTapeAddress) {
+    const std::string& repackRequestAddress) {
   checkPayloadWritable();
   for (int i=0; i< m_payload.mutable_repackrequestpointers()->size(); i++) {
     auto rt=m_payload.mutable_repackrequestpointers(i);
@@ -154,7 +154,7 @@ void RepackIndex::addRepackRequestAddress(const std::string& vid,
   }
   auto rt=m_payload.mutable_repackrequestpointers()->Add();
   rt->set_vid(vid);
-  rt->set_address(repackTapeAddress);
+  rt->set_address(repackRequestAddress);
   return;
 }
 
