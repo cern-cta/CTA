@@ -88,7 +88,7 @@ void RmcdClientCmd::throwUsage(const std::string &error_txt) const
    }
    help << "Usage:\n"
    "\n"
-   "rmcd-client [cmdOptions]\n"
+   "cta-xsmc [cmdOptions]\n"
    "Where cmdOptions can be one of those:\n"
    "\n"
    "\tmount -V vid -D drive_ordinal\n"
