@@ -4792,7 +4792,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       "LEFT OUTER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY "
+        "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
@@ -4876,7 +4878,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
       "INNER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY "
+        "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
     auto rset = stmt.executeQuery();
@@ -4963,7 +4967,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID "
+      "ORDER BY "
+        "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
@@ -5051,7 +5057,9 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
       "WHERE "
         "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID";
+        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID "
+      "ORDER BY "
+        "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
