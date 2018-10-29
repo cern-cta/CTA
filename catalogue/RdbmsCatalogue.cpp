@@ -4877,8 +4877,11 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "INNER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
+        "TAPE.IS_DISABLED = 0 "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
@@ -5055,9 +5058,12 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
       "INNER JOIN TAPE_FILE ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID "
+        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID AND "
+        "TAPE.IS_DISABLED = 0 "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
