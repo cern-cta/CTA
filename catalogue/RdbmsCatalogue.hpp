@@ -1032,21 +1032,42 @@ protected:
     const std::string &tapeDrive);
 
   /**
-   * Returns the specified archive file or a nullptr pointer if it does not
-   * exist.
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
+   * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
+   * there are no rows in the TAPE_FILE table.
+   *
+   * Please note that this method performs a LEFT OUTER JOIN from the
+   * ARCHIVE_FILE table to the TAPE_FILE table.
    *
    * @param conn The database connection.
    * @param archiveFileId The identifier of the archive file.
    * @return The archive file or nullptr.
-   * an empty list.
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByArchiveFileId(
     rdbms::Conn &conn,
     const uint64_t archiveFileId) const;
 
   /**
-   * Returns the specified archive file or a nullptr pointer if it does not
-   * exist.
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there are no corresponding rows in the TAPE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param archiveFileId The identifier of the archive file.
+   * @return The archive file or nullptr.
+   */
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileToRetrieveByArchiveFileId(
+    rdbms::Conn &conn,
+    const uint64_t archiveFileId) const;
+
+  /**
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
+   * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
+   * there are no rows in the TAPE_FILE table.
+   *
+   * Please note that this method performs a LEFT OUTER JOIN from the
+   * ARCHIVE_FILE table to the TAPE_FILE table.
    *
    * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance.
@@ -1059,6 +1080,25 @@ protected:
    * an empty list.
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByDiskFileId(
+    rdbms::Conn &conn,
+    const std::string &diskInstance,
+    const std::string &diskFileId) const;
+
+  /**
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there are no corresponding rows in the TAPE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance.
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @return The archive file or nullptr.
+   * an empty list.
+   */
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileToRetrieveByDiskFileId(
     rdbms::Conn &conn,
     const std::string &diskInstance,
     const std::string &diskFileId) const;
