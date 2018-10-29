@@ -46,7 +46,7 @@ SqliteCatalogue::SqliteCatalogue(
   const uint32_t maxTriesToConnect):
   RdbmsCatalogue(
     log,
-    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename),
+    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0),
     nbConns,
     nbArchiveFileListingConns,
     maxTriesToConnect) {

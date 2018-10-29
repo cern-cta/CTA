@@ -37,11 +37,15 @@ Login::Login(
   const DbType type,
   const std::string &user,
   const std::string &passwd,
-  const std::string &db):
+  const std::string &db,
+  const std::string &host,
+  const uint16_t p):
   dbType(type),
   username(user),
   password(passwd),
-  database(db) {
+  database(db),
+  hostname(host),
+  port(p) {
 }
 
 //------------------------------------------------------------------------------
@@ -67,33 +71,54 @@ Login Login::parseFile(const std::string &filename) {
 Login Login::parseStream(std::istream &inputStream) {
   const std::list<std::string> lines = readNonEmptyLines(inputStream);
 
-  if(1 != lines.size()) {
+  if (1 != lines.size()) {
     throw exception::Exception("There should only be one and only one line containing a connection string");
   }
 
   const std::string connectionString = lines.front();
 
-  if(connectionString == "in_memory") {
-    return Login(DBTYPE_IN_MEMORY, "", "", "");
+  return parseString(connectionString);
+}
+
+
+//------------------------------------------------------------------------------
+// parseStream
+//------------------------------------------------------------------------------
+Login Login::parseString(const std::string &connectionString) {
+  if (connectionString.empty()) {
+    throw exception::Exception("Invalid connection string: Empty string");
   }
 
-  std::vector<std::string> dbTypeAndConnDetails;
-  utils::splitString(connectionString, ':', dbTypeAndConnDetails);
-  if(2 != dbTypeAndConnDetails.size()) {
-    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
-  }
-  const std::string &dbType = dbTypeAndConnDetails[0];
-  const std::string &connDetails = dbTypeAndConnDetails[1];
+  const auto typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
 
-  if(dbType == "oracle") {
-    return parseOracleUserPassAndDb(connDetails);
-  }
-
-  if(dbType == "sqlite") {
-    return Login(DBTYPE_SQLITE, "", "", connDetails);
+  if(typeAndDetails.dbTypeStr == "in_memory") {
+    return Login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  } else if(typeAndDetails.dbTypeStr == "oracle") {
+    return parseOracle(typeAndDetails.connectionDetails);
+  } else if(typeAndDetails.dbTypeStr == "sqlite") {
+    return parseSqlite(typeAndDetails.connectionDetails);
+  } else if(typeAndDetails.dbTypeStr == "mysql") {
+    return parseMySql(typeAndDetails.connectionDetails);
   }
 
-  throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  throw exception::Exception(std::string("Invalid connection string: Unknown database type ") +
+    typeAndDetails.dbTypeStr);
+}
+
+//------------------------------------------------------------------------------
+// parseDbTypeAndConnectionDetails
+//------------------------------------------------------------------------------
+Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const std::string &connectionString) {
+  DbTypeAndConnectionDetails dbTypeAndConnectionDetails;
+
+  // Parsing "databaseType:connectionDetails"
+  std::string::size_type firstColonPos = connectionString.find(':');
+  dbTypeAndConnectionDetails.dbTypeStr = connectionString.substr(0, firstColonPos);
+  if (std::string::npos != firstColonPos && (connectionString.length() - 1) > firstColonPos) {
+    dbTypeAndConnectionDetails.connectionDetails = connectionString.substr(firstColonPos + 1);
+  }
+
+  return dbTypeAndConnectionDetails;
 }
 
 //------------------------------------------------------------------------------
@@ -131,11 +156,11 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
 }
 
 //------------------------------------------------------------------------------
-// parseOracleUserPassAndDb
+// parseOracle
 //------------------------------------------------------------------------------
-Login Login::parseOracleUserPassAndDb(const std::string &userPassAndDb) {
+Login Login::parseOracle(const std::string &connectionDetails) {
   std::vector<std::string> userPassAndDbTokens;
-  utils::splitString(userPassAndDb, '@', userPassAndDbTokens);
+  utils::splitString(connectionDetails, '@', userPassAndDbTokens);
   if(2 != userPassAndDbTokens.size()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
@@ -150,7 +175,23 @@ Login Login::parseOracleUserPassAndDb(const std::string &userPassAndDb) {
   const std::string &user = userAndPassTokens[0];
   const std::string &pass = userAndPassTokens[1];
 
-  return Login(DBTYPE_ORACLE, user, pass, db);
+  return Login(DBTYPE_ORACLE, user, pass, db, "", 0);
+}
+
+//------------------------------------------------------------------------------
+// parseSqlite
+//------------------------------------------------------------------------------
+Login Login::parseSqlite(const std::string &connectionDetails) {
+  const std::string &filename = connectionDetails;
+  return Login(DBTYPE_SQLITE, "", "", filename, "", 0);
+}
+
+//------------------------------------------------------------------------------
+// parseMySql
+//------------------------------------------------------------------------------
+Login Login::parseMySql(const std::string &connectionDetails) {
+  //return Login(DBTYPE_MYSQL, "", "", connectionDetails, "", 0);
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
 } // namespace catalogue

@@ -41,7 +41,7 @@ public:
    */
   virtual cta::rdbms::Login create() {
     using namespace cta::catalogue;
-    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
+    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
   }
 }; // class InMemoryLoginFactory
 

@@ -37,19 +37,19 @@ protected:
 TEST_F(cta_rdbms_LoginTest, constructor) {
   using namespace cta::rdbms;
 
-  const Login inMemoryLogin(Login::DBTYPE_IN_MEMORY, "", "", "");
+  const Login inMemoryLogin(Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
   ASSERT_EQ(Login::DBTYPE_IN_MEMORY, inMemoryLogin.dbType);
   ASSERT_TRUE(inMemoryLogin.username.empty());
   ASSERT_TRUE(inMemoryLogin.password.empty());
   ASSERT_TRUE(inMemoryLogin.database.empty());
 
-  const Login oracleLogin(Login::DBTYPE_ORACLE, "username", "password", "database");
+  const Login oracleLogin(Login::DBTYPE_ORACLE, "username", "password", "database", "", 0);
   ASSERT_EQ(Login::DBTYPE_ORACLE, oracleLogin.dbType);
   ASSERT_EQ(std::string("username"), oracleLogin.username);
   ASSERT_EQ(std::string("password"), oracleLogin.password);
   ASSERT_EQ(std::string("database"), oracleLogin.database);
 
-  const Login sqliteLogin(Login::DBTYPE_SQLITE, "", "", "filename");
+  const Login sqliteLogin(Login::DBTYPE_SQLITE, "", "", "filename", "", 0);
   ASSERT_EQ(Login::DBTYPE_SQLITE, sqliteLogin.dbType);
   ASSERT_TRUE(sqliteLogin.username.empty());
   ASSERT_TRUE(sqliteLogin.password.empty());
@@ -156,6 +156,72 @@ TEST_F(cta_rdbms_LoginTest, parseStream_invalid) {
   inputStream << std::endl;
 
   ASSERT_THROW(Login::parseStream(inputStream), exception::Exception);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_good_day) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString = "dbType:connectionDetails";
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_EQ("dbType", typeAndDetails.dbTypeStr);
+  ASSERT_EQ("connectionDetails", typeAndDetails.connectionDetails);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_non_empty_string_no_colon) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString = "dbType";
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_EQ("dbType", typeAndDetails.dbTypeStr);
+  ASSERT_TRUE(typeAndDetails.connectionDetails.empty());
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_empty_string) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString;
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_TRUE(typeAndDetails.dbTypeStr.empty());
+  ASSERT_TRUE(typeAndDetails.connectionDetails.empty());
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_non_empty_string_colon_is_last) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString = "dbType:";
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_EQ("dbType", typeAndDetails.dbTypeStr);
+  ASSERT_TRUE(typeAndDetails.connectionDetails.empty());
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_just_a_colon) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString = ":";
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_TRUE(typeAndDetails.dbTypeStr.empty());
+  ASSERT_TRUE(typeAndDetails.connectionDetails.empty());
+}
+
+TEST_F(cta_rdbms_LoginTest, parseDbTypeAndConnectionDetails_many_colons) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  const std::string connectionString = ":::::";
+  const auto typeAndDetails = Login::parseDbTypeAndConnectionDetails(connectionString);
+
+  ASSERT_TRUE(typeAndDetails.dbTypeStr.empty());
+  ASSERT_EQ("::::", typeAndDetails.connectionDetails);
 }
 
 } // namespace unitTests

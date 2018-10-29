@@ -40,7 +40,7 @@ TEST_F(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
 
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -60,7 +60,7 @@ TEST_F(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQueries) {
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -80,7 +80,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -94,7 +94,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -114,7 +114,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -128,7 +128,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
