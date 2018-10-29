@@ -42,7 +42,6 @@ target_link_libraries(cta-unitTests
   ctamediachangerunittests
   ctamediachangeracsdaemonunittests
   ctamediachangeracsunittests
-  ${GMOCK_LIB}
   gtest
   pthread)
 
@@ -58,7 +57,6 @@ add_executable(cta-catalogueUnitTests
 
 target_link_libraries(cta-catalogueUnitTests
   ctacatalogueunittests
-  ${GMOCK_LIB}
   gtest
   pthread)
 
@@ -73,7 +71,6 @@ add_executable(cta-unitTests-multiProcess
 target_link_libraries(cta-unitTests-multiProcess
   ctadaemonunittests-multiprocess
   ctacommon
-  ${GMOCK_LIB}
   gtest
   pthread
   ${PROTOBUF3_LIBRAIRES}
