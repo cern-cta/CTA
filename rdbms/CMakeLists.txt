@@ -19,7 +19,6 @@ add_subdirectory (wrapper)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
-find_package (sqlite REQUIRED)
 find_package (oracle-instantclient REQUIRED)
 
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
