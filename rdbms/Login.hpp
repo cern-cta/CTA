@@ -94,7 +94,8 @@ struct Login {
    *
    * The input stream must contain one and only one connection string.
    *
-   * See parseString documentation for the format of the connection string.
+   * See the value of Login::s_fileFormat within Login.cpp for the format of the
+   * connection string.
    *
    * The file can contain multiple comment lines where a comment
    * line starts with optional whitespace and a hash character '#'.
@@ -163,36 +164,30 @@ struct Login {
   static DbTypeAndConnectionDetails parseDbTypeAndConnectionDetails(const std::string &connectionString);
 
   /**
-   * Parses the specified "in memory" database connection details.
+   * Parses the specified database connection details.
    *
-   * @param connectionDetails The connection details of an "in memory" databasei
-   * must be the empty string.
+   * @param connectionDetails The database connection details.
    */
   static Login parseInMemory(const std::string &connectionDetails);
 
   /**
-   * Parses the specified Oracle database connection details.
+   * Parses the specified database connection details.
    *
-   * @param connectionDetails The Oracle database connection details in the
-   * form:
-   * username/password@database
+   * @param connectionDetails The database connection details.
    */
   static Login parseOracle(const std::string &connectionDetails);
 
   /**
-   * Parses the specified SQLite connection details.
+   * Parses the specified connection details.
    *
-   * @param connectionDetails The SQLite database connection details in the
-   * form:
-   * filename
+   * @param connectionDetails The database connection details.
    */
   static Login parseSqlite(const std::string &connectionDetails);
 
   /**
-   * Parses the specified MySQL connection details.
+   * Parses the specified connection details.
    *
-   * @param connectionDetails The MySQL connection details in the form:
-   * mysql:username/password@hostname:port/db_name
+   * @param connectionDetails The database connection details.
    */
   static Login parseMySql(const std::string &connectionDetails);
 
