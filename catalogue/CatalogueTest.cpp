@@ -6474,7 +6474,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   m_catalogue->setTapeDisabled(m_admin, vid2, true);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, userIdentity, dummyLc),
-    exception::Exception);
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId) {
@@ -7037,7 +7037,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingDiskFileId_disable
   m_catalogue->setTapeDisabled(m_admin, vid2, true);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFileByDiskFileId(diskInstanceName1, diskFileId, userIdentity, dummyLc),
-    exception::Exception);
+    exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existance_archiveFileId) {

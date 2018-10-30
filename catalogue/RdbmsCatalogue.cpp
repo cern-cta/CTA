@@ -4335,8 +4335,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     auto archiveFile = getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     if(nullptr == archiveFile.get()) {
-      exception::Exception ex;
-      ex.getMessage() << "No tape files found for archive file with ID " << archiveFileId;
+      exception::UserError ex;
+      ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
       throw ex;
     }
 
@@ -4400,7 +4400,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
     auto archiveFile = getArchiveFileToRetrieveByDiskFileId(conn, diskInstanceName, diskFileId);
     const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     if(nullptr == archiveFile.get()) {
-      exception::Exception ex;
+      exception::UserError ex;
       ex.getMessage() << "No tape files available for archive file with disk instance name " << diskInstanceName <<
         " and disk file ID" << diskFileId;
       throw ex;
