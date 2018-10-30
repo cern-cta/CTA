@@ -21,6 +21,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/MysqlCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 
@@ -52,6 +53,12 @@ std::unique_ptr<Catalogue> CatalogueFactory::create(
     case rdbms::Login::DBTYPE_SQLITE:
       {
         auto c = cta::make_unique<SqliteCatalogue>(log, login.database, nbConns, nbArchiveFileListingConns,
+          maxTriesToConnect);
+        return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
+      }
+    case rdbms::Login::DBTYPE_MYSQL:
+      {
+        auto c = cta::make_unique<MysqlCatalogue>(log, login, nbConns, nbArchiveFileListingConns,
           maxTriesToConnect);
         return cta::make_unique<CatalogueRetryWrapper>(log, std::move(c), maxTriesToConnect);
       }

@@ -40,6 +40,8 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
   SqliteCatalogue.cpp
+  MysqlCatalogue.cpp
+  MysqlCatalogueSchema.cpp
   TapeForWriting.cpp
   UserSpecifiedANonEmptyTape.cpp
   UserSpecifiedANonExistentTape.cpp
@@ -67,12 +69,17 @@ target_link_libraries (ctacatalogue
   ctacommon
   ctardbms)
 
-add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql
+add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     > sqlite_catalogue_schema.sql
+  COMMAND cat 
+    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
+    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
+    > mysql_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -83,6 +90,8 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql)
 
@@ -93,6 +102,21 @@ add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
 add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
   COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp)
+
+# For Mysql
+add_custom_command(OUTPUT mysql_catalogue_schema.cpp
+  COMMAND sed 's/^/\ \ \"/' mysql_catalogue_schema.sql | sed 's/$$/\"/' > mysql_catalogue_schema.cpp
+  DEPENDS mysql_catalogue_schema.sql)
+
+add_custom_command(OUTPUT mysql_catalogue_schema_trigger.cpp
+  COMMAND sed 's/^/\ \ \"/' ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trigger.sql | sed 's/$$/\"/' > mysql_catalogue_schema_trigger.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trigger.sql)
+
+
+add_custom_command(OUTPUT MysqlCatalogueSchema.cpp
+  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_catalogue_schema.cpp' -e '/CTA_SQL_TRIGGER/r mysql_catalogue_schema_trigger.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp > MysqlCatalogueSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp mysql_catalogue_schema.cpp mysql_catalogue_schema_trigger.cpp)
+
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   CatalogueTest.cpp
@@ -141,7 +165,8 @@ add_executable(cta-catalogue-schema-create
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
   OracleCatalogueSchema.cpp
-  SqliteCatalogueSchema.cpp)
+  SqliteCatalogueSchema.cpp
+  MysqlCatalogueSchema.cpp)
 
 target_link_libraries (cta-catalogue-schema-create
   ctacatalogue)

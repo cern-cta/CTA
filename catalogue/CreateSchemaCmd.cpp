@@ -18,11 +18,13 @@
 
 #include "catalogue/CreateSchemaCmd.hpp"
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
+#include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/AutocommitMode.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -69,6 +71,18 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     {
        SqliteCatalogueSchema schema;
        conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    }
+    break;
+  case rdbms::Login::DBTYPE_MYSQL:
+    {
+       MysqlCatalogueSchema schema;
+       conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+
+       // execute triggers
+       auto triggers = schema.triggers();
+       for (auto trigger: triggers) {
+         conn.executeNonQuery(trigger, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+       }
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:

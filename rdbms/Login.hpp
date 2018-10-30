@@ -128,7 +128,7 @@ struct Login {
    *   in_memory
    *   oracle:username/password@database
    *   sqlite:path
-   *   mysql:username/password@hostname:port/db_name
+   *   mysql://username:password@hostname:port/db_name
    *
    * @param connectionString The connection string.
    * @return The database login information.

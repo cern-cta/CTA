@@ -18,9 +18,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/wrapper/OcciConnFactory.hpp"
-#include "rdbms/wrapper/SqliteConnFactory.hpp"
+#include "rdbms/wrapper/MysqlConn.hpp"
 #include "rdbms/wrapper/MysqlConnFactory.hpp"
 
 namespace cta {
@@ -28,28 +26,28 @@ namespace rdbms {
 namespace wrapper {
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+MysqlConnFactory::MysqlConnFactory(const std::string& host, 
+                                   const std::string& user, 
+                                   const std::string& passwd,
+                                   const std::string& db,
+                                   unsigned int port):
+  m_host(host), m_user(user), m_passwd(passwd), m_db(db), m_port(port) {
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+MysqlConnFactory::~MysqlConnFactory() {
+}
+
+//------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
+std::unique_ptr<Conn> MysqlConnFactory::create() {
   try {
-    switch(login.dbType) {
-    case Login::DBTYPE_IN_MEMORY:
-      return cta::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
-    case Login::DBTYPE_ORACLE:
-      return cta::make_unique<OcciConnFactory>(login.username, login.password, login.database);
-    case Login::DBTYPE_SQLITE:
-      return cta::make_unique<SqliteConnFactory>(login.database);
-    case Login::DBTYPE_MYSQL:
-      return cta::make_unique<MysqlConnFactory>(login.hostname, login.username, login.password, login.database, login.port);
-    case Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << login.dbType;
-        throw ex;
-      }
-    }
+    return cta::make_unique<MysqlConn>(m_host, m_user, m_passwd, m_db, m_port);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
