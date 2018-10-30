@@ -38,6 +38,7 @@ struct Login {
     DBTYPE_ORACLE,
     DBTYPE_SQLITE,
     DBTYPE_MYSQL,
+    DBTYPE_POSTGRESQL,
     DBTYPE_NONE
   };
 
@@ -190,6 +191,13 @@ struct Login {
    * @param connectionDetails The database connection details.
    */
   static Login parseMySql(const std::string &connectionDetails);
+
+  /**
+   * Parses the specified connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parsePostgresql(const std::string &connectionDetails);
 
   /**
    * Human readable description of the format of the database

@@ -99,6 +99,8 @@ Login Login::parseString(const std::string &connectionString) {
     return parseSqlite(typeAndDetails.connectionDetails);
   } else if(typeAndDetails.dbTypeStr == "mysql") {
     return parseMySql(typeAndDetails.connectionDetails);
+  } else if(typeAndDetails.dbTypeStr == "postgresql") {
+    return parsePostgresql(typeAndDetails.connectionDetails);
   }
 
   throw exception::Exception(std::string("Invalid connection string: Unknown database type ") +
@@ -201,6 +203,14 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
 //------------------------------------------------------------------------------
 Login Login::parseMySql(const std::string &connectionDetails) {
   //return Login(DBTYPE_MYSQL, "", "", connectionDetails, "", 0);
+  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+}
+
+//------------------------------------------------------------------------------
+// parsePostgresql
+//------------------------------------------------------------------------------
+Login Login::parsePostgresql(const std::string &connectionDetails) {
+  //return Login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
   throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
 }
 
