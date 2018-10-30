@@ -92,7 +92,7 @@ Login Login::parseString(const std::string &connectionString) {
   const auto typeAndDetails = parseDbTypeAndConnectionDetails(connectionString);
 
   if(typeAndDetails.dbTypeStr == "in_memory") {
-    return Login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+    return parseInMemory(typeAndDetails.connectionDetails);
   } else if(typeAndDetails.dbTypeStr == "oracle") {
     return parseOracle(typeAndDetails.connectionDetails);
   } else if(typeAndDetails.dbTypeStr == "sqlite") {
@@ -153,6 +153,16 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
   }
 
   return lines;
+}
+
+//------------------------------------------------------------------------------
+// parseInMemory
+//------------------------------------------------------------------------------
+Login Login::parseInMemory(const std::string &connectionDetails) {
+  if(!connectionDetails.empty()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+  return Login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
 }
 
 //------------------------------------------------------------------------------

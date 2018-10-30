@@ -163,6 +163,14 @@ struct Login {
   static DbTypeAndConnectionDetails parseDbTypeAndConnectionDetails(const std::string &connectionString);
 
   /**
+   * Parses the specified "in memory" database connection details.
+   *
+   * @param connectionDetails The connection details of an "in memory" databasei
+   * must be the empty string.
+   */
+  static Login parseInMemory(const std::string &connectionDetails);
+
+  /**
    * Parses the specified Oracle database connection details.
    *
    * @param connectionDetails The Oracle database connection details in the
