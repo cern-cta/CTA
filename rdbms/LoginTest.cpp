@@ -77,6 +77,24 @@ TEST_F(cta_rdbms_LoginTest, parseStream_in_memory) {
   ASSERT_TRUE(login.database.empty());
 }
 
+TEST_F(cta_rdbms_LoginTest, parseStream_invalid_in_memory) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  std::stringstream inputStream;
+  inputStream << "# A comment" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << "# Another comment" << std::endl;
+  inputStream << "in_memory:invalid";
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+
+  ASSERT_THROW(Login::parseStream(inputStream), exception::Exception);
+}
+
 TEST_F(cta_rdbms_LoginTest, parseStream_oracle) {
   using namespace cta::rdbms;
 
@@ -96,6 +114,24 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle) {
   ASSERT_EQ(std::string("username"), login.username);
   ASSERT_EQ(std::string("password"), login.password);
   ASSERT_EQ(std::string("database"), login.database);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStream_invalid_oracle) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  std::stringstream inputStream;
+  inputStream << "# A comment" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << "# Another comment" << std::endl;
+  inputStream << "oracle:invalid" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+
+  ASSERT_THROW(Login::parseStream(inputStream), exception::Exception);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_oracle_password_with_a_hash) {
@@ -138,6 +174,24 @@ TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
   ASSERT_TRUE(login.username.empty());
   ASSERT_TRUE(login.password.empty());
   ASSERT_EQ(std::string("filename"), login.database);
+}
+
+TEST_F(cta_rdbms_LoginTest, parseStream_invalid_sqlite) {
+  using namespace cta;
+  using namespace cta::rdbms;
+
+  std::stringstream inputStream;
+  inputStream << "# A comment" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << "# Another comment" << std::endl;
+  inputStream << "sqlite:" << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+  inputStream << std::endl;
+
+  ASSERT_THROW(Login::parseStream(inputStream), exception::Exception);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid) {

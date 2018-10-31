@@ -195,6 +195,11 @@ Login Login::parseOracle(const std::string &connectionDetails) {
 //------------------------------------------------------------------------------
 Login Login::parseSqlite(const std::string &connectionDetails) {
   const std::string &filename = connectionDetails;
+
+  if(filename.empty()) {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+
   return Login(DBTYPE_SQLITE, "", "", filename, "", 0);
 }
 
