@@ -50,6 +50,9 @@ public:
   virtual objectstore::Backend & getBackend() = 0;
   virtual objectstore::AgentReference & getAgentReference() = 0;
   virtual cta::OStoreDB & getOstoreDB() = 0;
+
+  //! Create a new agent to allow tests to continue after garbage collection
+  virtual void replaceAgent(objectstore::AgentReference & agentReference) = 0;
 };
 
 }
@@ -72,6 +75,25 @@ public:
   objectstore::Backend& getBackend() override { return *m_backend; }
   
   objectstore::AgentReference& getAgentReference() override { return m_agentReference; }
+
+  void replaceAgent(objectstore::AgentReference & agentReference) override {
+    objectstore::RootEntry re(*m_backend);
+    objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    objectstore::Agent agent(agentReference.getAgentAddress(), *m_backend);
+    agent.initialize();
+    objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
+    log::LogContext lc(*m_logger);
+    re.addOrGetAgentRegisterPointerAndCommit(agentReference, cl, lc);
+    rel.release();
+    agent.insertAndRegisterSelf(lc);
+    rel.lock(re);
+    re.fetch();
+    re.addOrGetDriveRegisterPointerAndCommit(agentReference, cl);
+    re.addOrGetSchedulerGlobalLockAndCommit(agentReference, cl);
+    rel.release();
+    m_OStoreDB.setAgentReference(&agentReference);
+  }
   
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
