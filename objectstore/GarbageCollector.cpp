@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/log/StdoutLogger.hpp"
-
 #include "GarbageCollector.hpp"
 #include "AgentReference.hpp"
 #include "ArchiveRequest.hpp"
@@ -42,12 +40,7 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
   m_agentRegister.fetch();
 }
 
-void GarbageCollector::runOnePass(log::LogContext & ignore_lc) {
-
-  log::StdoutLogger dl("dummy", "unitTest");
-  log::LogContext lc(dl);
-  lc.log(log::INFO, "Entered GarbageCollector::runOnePass()");
-
+void GarbageCollector::runOnePass(log::LogContext & lc) {
   trimGoneTargets(lc);
   acquireTargets(lc);
   checkHeartbeats(lc);
@@ -73,42 +66,43 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
   }
 }
 
-void GarbageCollector::acquireTargets(log::LogContext &lc) {
+void GarbageCollector::acquireTargets(log::LogContext & lc) {
   m_agentRegister.fetchNoLock();
-  // We will now watch all agents we do not know about yet
+  // We will now watch all agents we do not know about yet.
   std::list<std::string> candidatesList = m_agentRegister.getUntrackedAgents();
-  // Build a set of our own tracked agents
+  // Build a set of our own tracked agents.
   std::set<std::string> alreadyTrackedAgents;
-  for(auto &ata: m_watchedAgents) {
+  for (auto &ata: m_watchedAgents) {
     alreadyTrackedAgents.insert(ata.first);
   }
-  for(auto &c: candidatesList) {
+  for (auto &c: candidatesList) {
     // We don't monitor ourselves
-    if(c != m_ourAgentReference.getAgentAddress() && !alreadyTrackedAgents.count(c)) {
-      // So we have a candidate we might want to monitor. First, check that the agent entry exists,
-      // and that ownership is indeed pointing to the agent register.
+    if (c != m_ourAgentReference.getAgentAddress() && !alreadyTrackedAgents.count(c)) {
+      // So we have a candidate we might want to monitor
+      // First, check that the agent entry exists, and that ownership
+      // is indeed pointing to the agent register
       Agent ag(c, m_objectStore);
       try {
         ag.fetchNoLock();
-      } catch(...) {
-        // The agent could simply be gone (if not, let the complaint go through)
-        if(m_objectStore.exists(c)) throw;
+      } catch (...) {
+        // The agent could simply be gone... (if not, let the complaint go through)
+        if (m_objectStore.exists(c)) throw;
         continue;
       }
-      if(ag.getOwner() == m_agentRegister.getAddressIfSet()) {
+      if (ag.getOwner() == m_agentRegister.getAddressIfSet()) {
       }
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", ag.getAddressIfSet())
             .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
       lc.log(log::INFO, "In GarbageCollector::acquireTargets(): started tracking an untracked agent");
-      // Agent is to be tracked, let's track it
-      double timeout = ag.getTimeout();
-      // The creation of the watchdog could fail as well (if agent gets deleted in the meantime)
+      // Agent is to be tracked, let's track it.
+      double timeout=ag.getTimeout();
+      // The creation of the watchdog could fail as well (if agent gets deleted in the meantime).
       try {
         m_watchedAgents[c] = new AgentWatchdog(c, m_objectStore);
         m_watchedAgents[c]->setTimeout(timeout);
-      } catch(...) {
-        if(m_objectStore.exists(c)) throw;
+      } catch (...) {
+        if (m_objectStore.exists(c)) throw;
         m_watchedAgents.erase(c);
         continue;
       }

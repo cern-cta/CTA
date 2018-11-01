@@ -85,13 +85,6 @@ public:
     }
   };
 
-  class FailedToGetDatabase: public std::exception {
-  public:
-    const char *what() const throw() {
-      return "Failed to get scheduler database";
-    }
-  };
-  
   class FailedToGetSchedulerDB: public std::exception {
   public:
     const char *what() const throw() {
@@ -114,7 +107,6 @@ public:
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     const uint32_t maxTriesToConnect = 1;
-    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
   }
@@ -127,7 +119,7 @@ public:
 
   cta::catalogue::Catalogue &getCatalogue() {
     cta::catalogue::Catalogue *const ptr = m_catalogue.get();
-    if(NULL == ptr) {
+    if(nullptr == ptr) {
       throw FailedToGetCatalogue();
     }
     return *ptr;
@@ -135,24 +127,16 @@ public:
 
   cta::Scheduler &getScheduler() {
     cta::Scheduler *const ptr = m_scheduler.get();
-    if(NULL == ptr) {
+    if(nullptr == ptr) {
       throw FailedToGetScheduler();
     }
     return *ptr;
   }
-  
-  cta::SchedulerDatabase &getSchedulerDB() {
-    cta::SchedulerDatabase *const ptr = m_db.get();
-    if(NULL == ptr) {
-      throw FailedToGetSchedulerDB();
-    }
-    return *ptr;
-  }
 
-  cta::objectstore::OStoreDBWrapperInterface &getDb() {
+  cta::objectstore::OStoreDBWrapperInterface &getSchedulerDB() {
     cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if(NULL == ptr) {
-      throw FailedToGetDatabase();
+    if(nullptr == ptr) {
+      throw FailedToGetSchedulerDB();
     }
     return *ptr;
   }
@@ -236,11 +220,11 @@ private:
 
   cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
-  //std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
   
 protected:
+
   // Default parameters for storage classes, etc...
   const std::string s_userName = "user_name";
   const std::string s_diskInstance = "disk_instance";
@@ -249,8 +233,6 @@ protected:
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TestVid";
-  //TempFile m_tempSqliteFile;
-
 }; // class SchedulerTest
 
 TEST_P(SchedulerTest, archive_to_new_file) {
@@ -466,7 +448,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
@@ -475,9 +457,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
-    ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
+    ASSERT_NE(nullptr, archiveMount.get());
     std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
-    ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
@@ -562,16 +544,16 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
-    ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
+    ASSERT_NE(nullptr, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
     auto jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
-    ASSERT_NE((cta::RetrieveJob*)NULL, retrieveJob.get());
+    ASSERT_NE(nullptr, retrieveJob.get());
     retrieveJob->asyncComplete();
     retrieveJob->checkComplete();
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
@@ -667,7 +649,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
-    //ASSERT_NE((cta::TapeMount*)NULL, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
@@ -677,10 +658,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    //ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
     std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1,1,lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
-    //ASSERT_NE((cta::ArchiveJob*)NULL, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
@@ -773,12 +752,10 @@ std::cerr << "Pass " << mountPass << std::endl;
       std::unique_ptr<cta::TapeMount> mount;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
       ASSERT_NE(nullptr, mount.get());
-      //ASSERT_NE((cta::TapeMount*)NULL, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
       retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
       ASSERT_NE(nullptr, retrieveMount.get());
-      //ASSERT_NE((cta::RetrieveMount*)NULL, retrieveMount.get());
       // The file should be retried three times
       for(int i = 0; i < 3; ++i)
       {
@@ -796,7 +773,7 @@ std::cerr << "Attempt " << i << std::endl;
       ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());
       // Set Agent timeout to zero for unit test
       {
-        cta::objectstore::Agent rqAgent(getDb().getAgentReference().getAgentAddress(), getDb().getBackend());
+        cta::objectstore::Agent rqAgent(getSchedulerDB().getAgentReference().getAgentAddress(), getSchedulerDB().getBackend());
         cta::objectstore::ScopedExclusiveLock ralk(rqAgent);
         rqAgent.fetch();
         rqAgent.setTimeout_us(0);
@@ -804,15 +781,15 @@ std::cerr << "Attempt " << i << std::endl;
       }
       // Garbage collect the request
       cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
-      cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), getDb().getBackend());
+      cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), getSchedulerDB().getBackend());
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getDb().getBackend(), gcAgentRef, catalogue);
+        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
-      getDb().replaceAgent(agentRef);
+      getSchedulerDB().replaceAgent(agentRef);
     } // end of retries
   } // end of pass
 
@@ -894,11 +871,11 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     // Emulate a tape server by asking for a mount and then a file
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
-    ASSERT_NE((cta::TapeMount*)NULL, mount.get());
+    ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Archive, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
-    ASSERT_NE((cta::ArchiveMount*)NULL, archiveMount.get());
+    ASSERT_NE(nullptr, archiveMount.get());
     // The file should be retried twice
     for (int i=0; i<=1; i++) {
       std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1,1,lc);
