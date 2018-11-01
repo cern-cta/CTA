@@ -349,10 +349,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveFile(instanceName, archiveFileId, lc);}, m_maxTriesToConnect);
   }
 
-  void deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveFileByDiskFileId(diskInstanceName, diskFileId, lc);}, m_maxTriesToConnect);
-  }
-
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->isAdmin(admin);}, m_maxTriesToConnect);
   }
