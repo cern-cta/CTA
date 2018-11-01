@@ -61,6 +61,9 @@ public:
   ~SqliteCatalogue() override;
 
   /**
+   * SqliteCatalogue implements its own version of deleteArchiveFile() because
+   * SQLite does not supprt 'SELECT FOR UPDATE'.
+   *
    * Deletes the specified archive file and its associated tape copies from the
    * catalogue.
    *
