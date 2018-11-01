@@ -93,10 +93,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, lc);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId, const common::dataStructures::UserIdentity &user, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFileByDiskFileId(diskInstanceName, diskFileId, user, lc);}, m_maxTriesToConnect);
-  }
-
   void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeMountedForRetrieve(vid, drive);}, m_maxTriesToConnect);
   }

@@ -4386,65 +4386,6 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
 }
 
 //------------------------------------------------------------------------------
-// prepareToRetrieveFileByDiskFileId
-//------------------------------------------------------------------------------
-common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetrieveFileByDiskFileId(
-  const std::string &diskInstanceName,
-  const std::string &diskFileId,
-  const common::dataStructures::UserIdentity &user,
-  log::LogContext &lc) {
-  try {
-    cta::utils::Timer t;
-    auto conn = m_connPool.getConn();
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto archiveFile = getArchiveFileToRetrieveByDiskFileId(conn, diskInstanceName, diskFileId);
-    const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
-    if(nullptr == archiveFile.get()) {
-      exception::UserError ex;
-      ex.getMessage() << "No tape files available for archive file with disk instance name " << diskInstanceName <<
-        " and disk file ID" << diskFileId;
-      throw ex;
-    }
-
-    t.reset();
-    const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-      user.group);
-     const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("getConnTime", getConnTime)
-       .add("getArchiveFileTime", getArchiveFileTime)
-       .add("getMountPoliciesTime", getMountPoliciesTime);
-    lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
-
-    // Requester mount policies overrule requester group mount policies
-    common::dataStructures::MountPolicy mountPolicy;
-    if(!mountPolicies.requesterMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
-      mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
-    } else {
-      exception::UserError ue;
-      ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
-        " diskInstanceName=" << diskInstanceName << " diskFileId=" << diskFileId << " archiveFileId=" <<
-        archiveFile->archiveFileID << " path=" << archiveFile->diskFileInfo.path << " requester=" << diskInstanceName <<
-        ":" << user.name << ":" << user.group;
-      throw ue;
-    }
-
-    common::dataStructures::RetrieveFileQueueCriteria criteria;
-    criteria.archiveFile = *archiveFile;
-    criteria.mountPolicy = mountPolicy;
-    return criteria;
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getMountPolicies
 //------------------------------------------------------------------------------
 RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
