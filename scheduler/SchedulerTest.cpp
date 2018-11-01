@@ -709,42 +709,41 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
   }
 
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host="host2";
+    creationLog.time=0;
+    creationLog.username="admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.recoveryBlob="blob";
+    diskFileInfo.group="group2";
+    diskFileInfo.owner="cms_user";
+    diskFileInfo.path="path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve("disk_instance", request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
   // Create a new agent to replace the stale agent reference in the DB
   objectstore::AgentReference agentRef("OStoreDBFactory2", dl);
 
   // Try mounting the tape twice
-  for(int j = 0; j < 2; ++j) {
-std::cerr << "Pass " << j << std::endl;
-    Scheduler scheduler(getCatalogue(), getSchedulerDB(), 5, 2*1000*1000);
-
-    {
-      cta::common::dataStructures::EntryLog creationLog;
-      creationLog.host="host2";
-      creationLog.time=0;
-      creationLog.username="admin1";
-      cta::common::dataStructures::DiskFileInfo diskFileInfo;
-      diskFileInfo.recoveryBlob="blob";
-      diskFileInfo.group="group2";
-      diskFileInfo.owner="cms_user";
-      diskFileInfo.path="path/to/file";
-      cta::common::dataStructures::RetrieveRequest request;
-      request.archiveFileID = archiveFileId;
-      request.creationLog = creationLog;
-      request.diskFileInfo = diskFileInfo;
-      request.dstURL = "dstURL";
-      request.requester.name = s_userName;
-      request.requester.group = "userGroup";
-      scheduler.queueRetrieve("disk_instance", request, lc);
-      scheduler.waitSchedulerDbSubthreadsComplete();
-    }
-
+  for(int mountPass = 0; mountPass < 2; ++mountPass)
+  {
+std::cerr << "Pass " << mountPass << std::endl;
     // Check that the retrieve request is queued
     {
       auto rqsts = scheduler.getPendingRetrieveJobs(lc);
       // We expect 1 tape with queued jobs
       ASSERT_EQ(1, rqsts.size());
       // We expect the queue to contain 1 job
-      ASSERT_EQ(j+1, rqsts.cbegin()->second.size());
+      ASSERT_EQ(1, rqsts.cbegin()->second.size());
       // We expect the job to be single copy
       auto & job = rqsts.cbegin()->second.back();
       ASSERT_EQ(1, job.tapeCopies.size());
@@ -761,7 +760,7 @@ std::cerr << "Pass " << j << std::endl;
       auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
       auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
       // same tests as above
-      ASSERT_EQ(j+1, rqsts_vid.size());
+      ASSERT_EQ(1, rqsts_vid.size());
       auto &job_vid = rqsts_vid.back();
       ASSERT_EQ(1, job_vid.tapeCopies.size());
       ASSERT_TRUE(s_vid == job_vid.tapeCopies.cbegin()->first);
