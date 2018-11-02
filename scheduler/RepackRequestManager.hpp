@@ -19,20 +19,18 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "eos/DiskReporterFactory.hpp"
 
 namespace cta {
 
 class Scheduler;
 
-class DiskReportRunner {
+class RepackRequestManager {
 public:
-  DiskReportRunner(Scheduler & scheduler): m_scheduler(scheduler) {}
+  RepackRequestManager(Scheduler & scheduler): m_scheduler(scheduler) {}
   
   void runOnePass(log::LogContext & lc);
   
 private:
   Scheduler & m_scheduler;
-  eos::DiskReporterFactory m_reporterFactory;
 };
 } // namespace cta

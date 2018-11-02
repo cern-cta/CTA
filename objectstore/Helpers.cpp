@@ -676,6 +676,26 @@ void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::st
   ri.commit();
 }
 
-
+//------------------------------------------------------------------------------
+// Helpers::removeRepackRequestFromIndex()
+//------------------------------------------------------------------------------
+void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backend, log::LogContext& lc) {
+  // Try to reference the object in the index (will fail if there is already a request with this VID.
+  RootEntry re(backend);
+  re.fetchNoLock();
+  std::string repackIndexAddress;
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    repackIndexAddress = re.getRepackIndexAddress();
+  } catch (RootEntry::NotAllocated &){
+    // No repack index, nothing to do.
+    return;
+  }
+  RepackIndex ri(repackIndexAddress, backend);
+  ScopedExclusiveLock ril(ri);
+  ri.fetch();
+  ri.removeRepackRequest(vid);
+  ri.commit();
+}
 
 }} // namespace cta::objectstore.

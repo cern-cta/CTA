@@ -1,5 +1,5 @@
 /*
- * The CERN Tape Archive (CTA) project
+ * The CERN Tape Retrieve (CTA) project
  * Copyright (C) 2015  CERN
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,20 +19,15 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "eos/DiskReporterFactory.hpp"
 
 namespace cta {
 
-class Scheduler;
-
-class DiskReportRunner {
+/**
+ * Control structure for the RepackRequest.
+ */
+class RepackRequest {
 public:
-  DiskReportRunner(Scheduler & scheduler): m_scheduler(scheduler) {}
-  
-  void runOnePass(log::LogContext & lc);
-  
-private:
-  Scheduler & m_scheduler;
-  eos::DiskReporterFactory m_reporterFactory;
-};
+  void expand();
+}; // class RetrieveJob
+
 } // namespace cta

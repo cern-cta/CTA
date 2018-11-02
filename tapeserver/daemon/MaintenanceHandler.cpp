@@ -30,6 +30,7 @@
 #include "rdbms/Login.hpp"
 #include "common/make_unique.hpp"
 #include "scheduler/DiskReportRunner.hpp"
+#include "scheduler/RepackRequestManager.hpp"
 
 #include <signal.h>
 #include <sys/wait.h>
@@ -300,6 +301,7 @@ int MaintenanceHandler::runChild() {
   // Create the garbage collector and the disk reporter
   objectstore::GarbageCollector gc(*backend, backendPopulator->getAgentReference(), *catalogue);
   DiskReportRunner diskReportRunner(*scheduler);
+  RepackRequestManager repackRequestManager(*scheduler);
   
   // Run the maintenance in a loop: garbage collector and disk reporter
   try {

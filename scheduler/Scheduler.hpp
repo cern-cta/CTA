@@ -47,6 +47,7 @@
 #include "common/log/TimingList.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/RepackRequest.hpp"
 
 #include "eos/DiskReporter.hpp"
 #include "eos/DiskReporterFactory.hpp"
@@ -191,7 +192,7 @@ public:
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, 
     const std::string & bufferURL, const common::dataStructures::RepackInfo::Type repackType, log::LogContext & lc);
-  void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid);
+  void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
 
@@ -330,6 +331,11 @@ public:
   
   void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
       eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
+  
+  /*============== Repack support ===========================================*/
+  void moveRepackRequestToToExpandIfNeeded();
+  std::unique_ptr<RepackRequest> getNextRepackJobToExpand();
+  
 public:    
   /*============== Administrator management ==================================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);

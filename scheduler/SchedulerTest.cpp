@@ -739,6 +739,10 @@ TEST_P(SchedulerTest, repack) {
   scheduler.queueRepack(cliId, "Tape", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
   auto repacks = scheduler.getRepacks();
   ASSERT_EQ(1, repacks.size());
+  auto repack = scheduler.getRepack(repacks.front().vid);
+  ASSERT_EQ("Tape", repack.vid);
+  scheduler.cancelRepack(cliId, repack.vid, lc);
+  ASSERT_EQ(0, scheduler.getRepacks().size());
 }
 
 #undef TEST_MOCK_DB

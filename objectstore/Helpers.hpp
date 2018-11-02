@@ -135,10 +135,16 @@ public:
   static std::list<cta::common::dataStructures::DriveState> getAllDriveStates(Backend & backend, log::LogContext & lc);
   
   /**
-   * Helper to get the repack index. As this structure was developed late, we potentially have to create it on the fly.
+   * Helper to register a repack request in the repack index. 
+   * As this structure was developed late, we potentially have to create it on the fly.
    */
   static void registerRepackRequestToIndex(const std::string & vid, const std::string & requestAddress,
       AgentReference & agentReference, Backend & backend, log::LogContext & lc);
+  
+  /**
+   * Helper to remove an entry form the repack index.
+   */
+  static void removeRepackRequestToIndex(const std::string & vid, Backend & backend, log::LogContext & lc);
 };
 
 }} // namespace cta::objectstore

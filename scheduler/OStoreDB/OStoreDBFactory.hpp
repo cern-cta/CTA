@@ -159,8 +159,16 @@ public:
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
     return m_OStoreDB.getRepackInfo();
   }
-
   
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override {
+    return m_OStoreDB.getRepackInfo(vid);
+  }
+  
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override {
+    m_OStoreDB.cancelRepack(vid, lc);
+  }
+
+
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }

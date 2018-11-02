@@ -1389,7 +1389,7 @@ void RequestMessage::processRepack_Rm(const cta::admin::AdminCmd &admincmd, cta:
 
    auto &vid = getRequired(OptionString::VID);
 
-   m_scheduler.cancelRepack(m_cliIdentity, vid);
+   m_scheduler.cancelRepack(m_cliIdentity, vid, m_lc);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

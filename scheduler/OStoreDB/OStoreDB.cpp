@@ -1088,6 +1088,74 @@ std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getRepackInfo()
+//------------------------------------------------------------------------------
+common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vid) {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID (index not present).");
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    if (rra.vid == vid) {
+      try {
+        RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        rr.fetchNoLock();
+        if (rr.getInfo().vid != vid)
+          throw exception::Exception("In OStoreDB::getRepackInfo(): uynexpected vid when reading request");
+        return rr.getInfo();  
+      } catch (cta::exception::Exception &) {}
+    }
+  }
+  throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID.");
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::cancelRepack()
+//------------------------------------------------------------------------------
+void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
+  // Find the request
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (RootEntry::NotAllocated &) {
+    throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    if (rra.vid == vid) {
+      try {
+        RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        ScopedExclusiveLock rrl(rr);
+        rr.fetch();
+        if (rr.getInfo().vid != vid)
+          throw  exception::Exception("In OStoreDB::getRepackInfo(): uynexpected vid when reading request");
+        // We now have a hold of the repack request.
+        // We should delete all the file level subrequests.
+        // TODO
+        // And then delete the request
+        rr.remove();
+        // We now need to dereference, from a queue if needed and from the index for sure.
+        Helpers::removeRepackRequestToIndex(vid, m_objectStore, lc);
+        return;
+      } catch (cta::exception::Exception &) {}
+    }
+  }
+  throw NoSuchRepackRequest("In OStoreDB::cancelRepack(): No repack request for this VID.");
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::getDriveStates()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates(log::LogContext & lc) const {

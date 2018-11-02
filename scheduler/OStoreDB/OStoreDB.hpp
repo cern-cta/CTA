@@ -279,6 +279,10 @@ public:
     common::dataStructures::RepackInfo::Type repackType, log::LogContext &logContext) override;
   
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override;
+
   
   /* === Drive state handling  ============================================== */
   /**
