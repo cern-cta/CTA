@@ -52,7 +52,7 @@ public:
   virtual cta::OStoreDB & getOstoreDB() = 0;
 
   //! Create a new agent to allow tests to continue after garbage collection
-  virtual void replaceAgent(objectstore::AgentReference & agentReference) = 0;
+  virtual void replaceAgent(objectstore::AgentReference * agentReferencePtr) = 0;
 };
 
 }
@@ -74,27 +74,28 @@ public:
   
   objectstore::Backend& getBackend() override { return *m_backend; }
   
-  objectstore::AgentReference& getAgentReference() override { return m_agentReference; }
+  objectstore::AgentReference& getAgentReference() override { return *m_agentReferencePtr; }
 
-  void replaceAgent(objectstore::AgentReference & agentReference) override {
+  void replaceAgent(objectstore::AgentReference *agentReferencePtr) override {
+    m_agentReferencePtr.reset(agentReferencePtr);
     objectstore::RootEntry re(*m_backend);
     objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    objectstore::Agent agent(agentReference.getAgentAddress(), *m_backend);
+    objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
     agent.initialize();
     objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
     log::LogContext lc(*m_logger);
-    re.addOrGetAgentRegisterPointerAndCommit(agentReference, cl, lc);
+    re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
     rel.release();
     agent.insertAndRegisterSelf(lc);
     rel.lock(re);
     re.fetch();
-    re.addOrGetDriveRegisterPointerAndCommit(agentReference, cl);
-    re.addOrGetSchedulerGlobalLockAndCommit(agentReference, cl);
+    re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+    re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
     rel.release();
-    m_OStoreDB.setAgentReference(&agentReference);
+    m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
   }
-  
+
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
   void waitSubthreadsComplete() override {
@@ -202,7 +203,7 @@ private:
   std::unique_ptr <cta::objectstore::Backend> m_backend;
   std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
   cta::OStoreDB m_OStoreDB;
-  objectstore::AgentReference m_agentReference;
+  std::unique_ptr<objectstore::AgentReference> m_agentReferencePtr;
 };
 
 template <>
@@ -210,26 +211,28 @@ OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()), 
 m_catalogue(new cta::catalogue::DummyCatalogue),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger), m_agentReference("OStoreDBFactory", *m_logger) {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
+  m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
+{
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
   re.initialize();
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   log::LogContext lc(*m_logger);
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
+  re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
   rel.release();
   agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
-  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
   rel.release();
-  m_OStoreDB.setAgentReference(&m_agentReference);
+  m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
 template <>
@@ -237,7 +240,9 @@ OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context, const std::string &URL) :
 m_logger(new cta::log::DummyLogger("", "")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()), 
 m_catalogue(new cta::catalogue::DummyCatalogue),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFactory", *m_logger) {
+m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
+  m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
+{
   // We need to first clean up possible left overs in the pool
   auto l = m_backend->list();
   for (auto o=l.begin(); o!=l.end(); o++) {
@@ -251,19 +256,19 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),  m_agentReference("OStoreDBFact
   re.insert();
   objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
-  objectstore::Agent agent(m_agentReference.getAgentAddress(), *m_backend);
+  objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
   agent.initialize();
   objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
   log::LogContext lc(*m_logger);
-  re.addOrGetAgentRegisterPointerAndCommit(m_agentReference, cl, lc);
+  re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
   rel.release();
   agent.insertAndRegisterSelf(lc);
   rel.lock(re);
   re.fetch();
-  re.addOrGetDriveRegisterPointerAndCommit(m_agentReference, cl);
-  re.addOrGetSchedulerGlobalLockAndCommit(m_agentReference, cl);
+  re.addOrGetDriveRegisterPointerAndCommit(*m_agentReferencePtr, cl);
+  re.addOrGetSchedulerGlobalLockAndCommit(*m_agentReferencePtr, cl);
   rel.release();
-  m_OStoreDB.setAgentReference(&m_agentReference);
+  m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
 }

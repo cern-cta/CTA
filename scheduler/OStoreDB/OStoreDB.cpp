@@ -2500,24 +2500,16 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
     }
 
     case NextStep::EnqueueForReport: {
-      throw cta::exception::Exception("NextStep::EnqueueForReport case not implemented");
-#if 0
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaRqtr;
 
       // Algorithms suppose the objects are not locked
-      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
-      m_retrieveRequest.commit();
-      rel.release();
-
-      // The job still has a chance, requeue is to the best tape
-      // Get the best vid from the cache
-      auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-      auto &af = rfqc.archiveFile;
+      auto  retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      auto  rfqc        = m_retrieveRequest.getRetrieveFileQueueCriteria();
+      auto &af          = rfqc.archiveFile;
 
       std::set<std::string> candidateVids;
-      //using serializers::RetrieveJobStatus;
       for(auto &tf: af.tapeFiles) {
-        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
+        if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
           candidateVids.insert(tf.second.vid);
       }
       if(candidateVids.empty()) {
@@ -2527,8 +2519,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       }
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
-      std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids,
-        m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+      std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
+        m_oStoreDB.m_objectStore);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
@@ -2544,6 +2536,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
       });
+      rel.release();
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       caRqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
@@ -2558,17 +2551,15 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
             .add("maxTotalRetries", retryStatus.maxTotalRetries);
       lc.log(log::INFO, "In RetrieveJob::failTransfer(): enqueued job for reporting");
       return;
-#endif
     }
 
     case NextStep::EnqueueForTransfer: {
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> CaRqtr;
 
       // Algorithms suppose the objects are not locked
-      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
-      auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-
-      auto &af = rfqc.archiveFile;
+      auto  retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+      auto  rfqc        = m_retrieveRequest.getRetrieveFileQueueCriteria();
+      auto &af          = rfqc.archiveFile;
 
       std::set<std::string> candidateVids;
       for(auto &tf : af.tapeFiles) {

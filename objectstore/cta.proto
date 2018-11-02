@@ -319,8 +319,8 @@ message ArchiveRequest {
 
 enum RetrieveJobStatus {
   RJS_ToTransfer = 1;
-  RJS_FailedToReport = 998;
-  RJS_Failed = 999;
+  RJS_ToReportForFailure = 997;
+  RJS_Failed = 998;
 }
 
 message SchedulerRetrieveRequest {

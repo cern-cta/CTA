@@ -465,7 +465,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId,
       * j.mutable_failurelogs()->Add() = failureReason;
     }
     if (j.totalretries() >= j.maxtotalretries()) {
-      j.set_status(serializers::RetrieveJobStatus::RJS_FailedToReport);
+      j.set_status(serializers::RetrieveJobStatus::RJS_ToReportForFailure);
       for (auto & j2: m_payload.jobs()) 
         if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
       return true;
@@ -507,7 +507,7 @@ QueueType RetrieveRequest::getQueueType() {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return QueueType::JobsToTransfer;
       break;
-    case serializers::RetrieveJobStatus::RJS_FailedToReport:
+    case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
       // Else any job to report => to report.
       hasToReport=true;
       break;
@@ -592,7 +592,7 @@ auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent job
       }
       break;
     case JobEvent::ReportFailed:
-      if(*currentStatus != RetrieveJobStatus::RJS_FailedToReport) {
+      if(*currentStatus != RetrieveJobStatus::RJS_ToReportForFailure) {
         // Wrong status, but end status will be the same anyway
         log::ScopedParamContainer params(lc);
         params.add("event", eventToString(jobEvent))
@@ -609,7 +609,7 @@ auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent job
       if(!m_payload.failurereported()) {
         m_payload.set_failurereported(true);
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_FailedToReport;
+        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportForFailure;
       } else {
         ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
         ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;

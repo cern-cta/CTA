@@ -709,9 +709,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
-  // Create a new agent to replace the stale agent reference in the DB
-  objectstore::AgentReference agentRef("OStoreDBFactory2", dl);
-
   // Try mounting the tape twice
   for(int mountPass = 0; mountPass < 2; ++mountPass)
   {
@@ -789,12 +786,14 @@ std::cerr << "Attempt " << i << std::endl;
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
-      getSchedulerDB().replaceAgent(agentRef);
+      getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
     } // end of retries
   } // end of pass
 
   {
-    Scheduler &scheduler = getScheduler();
+    // We expect the retrieve queue to be empty
+    auto rqsts = scheduler.getPendingRetrieveJobs(lc);
+    ASSERT_EQ(0, rqsts.size());
     // and the failure should be reported on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
