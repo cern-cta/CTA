@@ -49,8 +49,6 @@ public:
   void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
-  bool isFailureReported();
-  void setFailureReported();
   class JobDump {
   public:
     uint64_t copyNb;

@@ -2457,7 +2457,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
   EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addTransferFailure(selectedCopyNb, m_mountId, failureReason, lc);
-  //
+
   // First set the job status
   m_retrieveRequest.setJobStatus(selectedCopyNb, enQueueingNextStep.nextStatus);
 
@@ -2608,32 +2608,10 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       return;
     }
 
-    case NextStep::StoreInFailedJobsContainer: {
-      throw cta::exception::Exception("NextStep::StoreInFailedJobsContainer case not implemented");
-#if 0
-      // Algorithms suppose the objects are not locked
-      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
-      m_retrieveRequest.commit();
-      rel.release();
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
-      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
-      CaRqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaRqtr::InsertedElement{&m_retrieveRequest, selectedCopyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caRqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", selectedCopyNb)
-            .add("failureReason", failureReason)
-            .add("requestObject", m_retrieveRequest.getAddressIfSet())
-            .add("retriesWithinMount", retryStatus.retriesWithinMount)
-            .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
-            .add("totalRetries", retryStatus.totalRetries)
-            .add("maxTotalRetries", retryStatus.maxTotalRetries);
-      lc.log(log::INFO,
-          "In RetrieveJob::failTransfer(): stored job in failed container for operator handling.");
-      return;
-#endif
-    }
+    case NextStep::StoreInFailedJobsContainer:
+      // For retrieve queues, once the job has been queued for report, we don't retry any more, so we
+      // can never arrive at this case
+      throw cta::exception::Exception("In OStoreDB::RetrieveJob::failTransfer(): case NextStep::StoreInFailedJobsContainer is not implemented");
   }
 }
 
@@ -2705,6 +2683,30 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
       return;
     }
   }
+#endif
+#if 0
+// store job in failed container
+-      // Algorithms suppose the objects are not locked
+-      auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
+-      m_retrieveRequest.commit();
+-      rel.release();
+-      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
+-      CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
+-      CaRqtr::InsertedElement::list insertedElements;
+-      insertedElements.push_back(CaRqtr::InsertedElement{&m_retrieveRequest, selectedCopyNb, archiveFile, cta::nullopt, cta::nullopt });
+-      caRqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
+-      log::ScopedParamContainer params(lc);
+-      params.add("fileId", archiveFile.archiveFileID)
+-            .add("copyNb", selectedCopyNb)
+-            .add("failureReason", failureReason)
+-            .add("requestObject", m_retrieveRequest.getAddressIfSet())
+-            .add("retriesWithinMount", retryStatus.retriesWithinMount)
+-            .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
+-            .add("totalRetries", retryStatus.totalRetries)
+-            .add("maxTotalRetries", retryStatus.maxTotalRetries);
+-      lc.log(log::INFO,
+-          "In RetrieveJob::failTransfer(): stored job in failed container for operator handling.");
+-      return;
 #endif
 }
 

@@ -797,6 +797,8 @@ std::cerr << "Attempt " << i << std::endl;
     // and the failure should be reported on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
+    // Fail the report
+    retrieveJobToReportList.front()->reportFailed("Report failed", lc);
   }
 }
 

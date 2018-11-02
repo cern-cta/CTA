@@ -55,7 +55,6 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
 void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
-  m_payload.set_failurereported(false);
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   // This object is good to go (to storage)
@@ -152,9 +151,7 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    // We need to know if this failure got reported yet.
-    QueueType queueType=isFailureReported()?QueueType::FailedJobs:QueueType::JobsToReport;
-    Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, queueType, lc);
+    Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, QueueType::JobsToReport, lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -175,8 +172,7 @@ queueForFailure:;
             .add("copynb", activeCopyNb)
             .add("vid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
-            .add("commitUnlockQueueTime", commitUnlockQueueTime)
-            .add("queueType", toString(queueType));
+            .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): queued the request to the failed queue.");
     }
   }
@@ -605,21 +601,14 @@ auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent job
   EnqueueingNextStep ret;
   switch(jobEvent)
   {  
-    case JobEvent::TransferFailed: {
-      if(!m_payload.failurereported()) {
-        m_payload.set_failurereported(true);
-        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportForFailure;
-      } else {
-        ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
-        ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
-      }
-    }
-    break;
-    case JobEvent::ReportFailed: {
+    case JobEvent::TransferFailed:
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportForFailure;
+      break;
+
+    case JobEvent::ReportFailed:
       ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
       ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
-    }
   }
   return ret;
 }
@@ -816,22 +805,6 @@ std::list<std::string> RetrieveRequest::getFailures() {
 void RetrieveRequest::setFailureReason(const std::string& reason) {
   checkPayloadWritable();
   m_payload.set_failurereportlog(reason);
-}
-
-//------------------------------------------------------------------------------
-// RetrieveRequest::isFailureReported()
-//------------------------------------------------------------------------------
-bool RetrieveRequest::isFailureReported() {
-  checkPayloadReadable();
-  return m_payload.failurereported();
-}
-
-//------------------------------------------------------------------------------
-// RetrieveRequest::setFailureReported()
-//------------------------------------------------------------------------------
-void RetrieveRequest::setFailureReported() {
-  checkPayloadWritable();
-  m_payload.set_failurereported(true);
 }
 
 //------------------------------------------------------------------------------

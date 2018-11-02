@@ -351,7 +351,6 @@ message RetrieveRequest {
   repeated RetrieveJob jobs = 9154;
   required string failurereporturl = 9155;
   required string failurereportlog = 9156;
-  required bool failurereported = 9157;
 }
 
 message ValueCountPair {
