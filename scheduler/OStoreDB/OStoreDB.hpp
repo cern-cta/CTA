@@ -163,7 +163,7 @@ public:
     friend class OStoreDB::ArchiveMount;
     friend class OStoreDB;
   public:
-    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
@@ -213,7 +213,7 @@ public:
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
     friend class OStoreDB::RetrieveMount;
   public:
-    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
@@ -227,6 +227,7 @@ public:
       m_jobOwned(false), m_oStoreDB(oStoreDB),
       m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
       m_retrieveMount(rm) { }
+    void setJobOwned(bool b = true) { m_jobOwned = b; }
 
   private:
     bool m_jobOwned;
@@ -236,7 +237,7 @@ public:
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
-  
+
   /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);

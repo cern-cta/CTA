@@ -1048,6 +1048,7 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
       rj->archiveFile = j.archiveFile;
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
+      rj->setJobOwned();
       ret.emplace_back(std::move(rj));
     }
     return ret;
@@ -2095,7 +2096,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::ArchiveJob::failTransfer: cannot fail a job not owned");
+    throw JobNotOwned("In OStoreDB::ArchiveJob::failTransfer: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
@@ -2218,7 +2219,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
   if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::ArchiveJob::failReport: cannot fail a job not owned");
+    throw JobNotOwned("In OStoreDB::ArchiveJob::failReport: cannot fail a job not owned");
   // Lock the archive request. Fail the job.
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
@@ -2360,7 +2361,7 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogContext& logContext) {
   if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
+    throw JobNotOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
@@ -2443,7 +2444,7 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc) {
   if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
+    throw JobNotOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rel(m_retrieveRequest);
@@ -2618,15 +2619,15 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
 
-  if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
+  if(!m_jobOwned)
+    throw JobNotOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
 
   log::StdoutLogger dl("dummy", "unitTest");
   log::LogContext lc(dl);
   lc.log(log::INFO, "Entered RetrieveJob::failTransfer()");
 
   // Lock the retrieve request. Fail the job.
-  objectstore::ScopedExclusiveLock arl(m_retrieveRequest);
+  objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
 
   // Algorithms suppose the objects are not locked
@@ -2635,7 +2636,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
 
   std::set<std::string> candidateVids;
   for(auto &tf: af.tapeFiles) {
-    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
+    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
       candidateVids.insert(tf.second.vid);
   }
   if(candidateVids.empty()) {
@@ -2664,22 +2665,23 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
   // First set the job status
   m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
 
+  auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
+
+  // Algorithms suppose the objects are not locked.
+  m_retrieveRequest.commit();
+  rrl.release();
+
   // Now apply the decision
-  // TODO: this will probably need to be factored out
   switch (enQueueingNextStep.nextStep) {
-    // We have a reduced set of supported next steps as some are not compatible with this event (see default).
+    // We have a reduced set of supported next steps as some are not compatible with this event
     case NextStep::EnqueueForReport: {
-      // Algorithms suppose the objects are not locked.
-      m_retrieveRequest.commit();
-      arl.release();
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaAqtr::InsertedElement{
-        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_ToReportForFailure
       });
       caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
-      auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tf.copyNb)
@@ -2691,9 +2693,6 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
       return;
     }
     default: {
-      // Algorithms suppose the objects are not locked.
-      m_retrieveRequest.commit();
-      arl.release();
       typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
@@ -2701,7 +2700,6 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
       });
       caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
-      auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
             .add("copyNb", tf.copyNb)
