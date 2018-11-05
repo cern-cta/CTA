@@ -799,6 +799,14 @@ std::cerr << "Attempt " << i << std::endl;
     ASSERT_EQ(1, retrieveJobToReportList.size());
     // Fail the report
     retrieveJobToReportList.front()->reportFailed("Report failed", lc);
+    // Job should still be on the report queue
+    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    ASSERT_EQ(1, retrieveJobToReportList.size());
+    // Fail the report again
+    retrieveJobToReportList.front()->reportFailed("Report failed", lc);
+    // Job should be gone from the report queue
+    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    ASSERT_EQ(0, retrieveJobToReportList.size());
   }
 }
 

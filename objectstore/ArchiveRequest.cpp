@@ -54,7 +54,7 @@ void cta::objectstore::ArchiveRequest::initialize() {
 
 void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   const std::string& tapepool, const std::string& initialOwner, 
-    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
+    uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
@@ -65,7 +65,7 @@ void cta::objectstore::ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
-  j->set_maxretrieswithinmount(maxRetiesWithinMount);
+  j->set_maxretrieswithinmount(maxRetriesWithinMount);
   j->set_maxtotalretries(maxTotalRetries);
   j->set_totalreportretries(0);
   j->set_maxreportretries(maxReportRetries);

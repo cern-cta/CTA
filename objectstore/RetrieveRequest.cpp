@@ -268,14 +268,14 @@ queueForTransfer:;
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJob()
 //------------------------------------------------------------------------------
-void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries,
+void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
   uint16_t maxReportRetries)
 {
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
   tf->set_copynb(copyNb);
   tf->set_lastmountwithfailure(0);
-  tf->set_maxretrieswithinmount(maxRetiesWithinMount);
+  tf->set_maxretrieswithinmount(maxRetriesWithinMount);
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
   tf->set_totalretries(0);
@@ -521,6 +521,8 @@ RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint16_t copy
       ret.maxRetriesWithinMount = j.maxretrieswithinmount();
       ret.totalRetries = j.totalretries();
       ret.maxTotalRetries = j.maxtotalretries();
+      ret.totalReportRetries = j.totalreportretries();
+      ret.maxReportRetries = j.maxreportretries();
       return ret;
     }
   }

@@ -46,7 +46,7 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
-  void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
+  void addJob(uint64_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
   class JobDump {
