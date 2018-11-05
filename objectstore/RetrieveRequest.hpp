@@ -46,7 +46,7 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
-  void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+  void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
   class JobDump {
@@ -73,6 +73,8 @@ public:
     uint64_t maxRetriesWithinMount = 0;
     uint64_t totalRetries = 0;
     uint64_t maxTotalRetries = 0;
+    uint64_t totalReportRetries = 0;
+    uint64_t maxReportRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
   enum class JobEvent {
@@ -109,6 +111,8 @@ private:
 public:
   //! Returns next step to take with the job
   EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  //! Returns next step to take with the job
+  EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
   QueueType getQueueType();
   std::list<std::string> getFailures();

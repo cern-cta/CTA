@@ -2441,13 +2441,9 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failTransfer()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &ignore_lc) {
+void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc) {
   if (!m_jobOwned)
     throw JobNowOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
-
-  log::StdoutLogger dl("dummy", "unitTest");
-  log::LogContext lc(dl);
-  lc.log(log::INFO, "Entered RetrieveJob::failTransfer()");
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rel(m_retrieveRequest);
@@ -2463,7 +2459,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
   // Now apply the decision
   //
-  // TODO: this will probably need to be factored out.
+  // TODO: this will probably need to be factored out
   switch(enQueueingNextStep.nextStep)
   {
     case NextStep::Nothing: {
@@ -2618,72 +2614,110 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failReport()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc) {
-  throw cta::exception::Exception("OStoreDB::RetrieveJob::failReport(): not implemented.");
-#if 0
-  if (!m_jobOwned)
-    throw JobNowOwned("In OStoreDB::ArchiveJob::failReport: cannot fail a job not owned");
-  // Lock the archive request. Fail the job.
-  objectstore::ScopedExclusiveLock arl(m_archiveRequest);
-  m_archiveRequest.fetch();
-  // Add a job failure. We will know what to do next..
-  typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
+void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &ignore_lc) {
+  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
-  EnqueueingNextStep enQueueingNextStep = 
-      m_archiveRequest.addReportFailure(tapeFile.copyNb, m_mountId, failureReason, lc);
+
+  if (!m_jobOwned)
+    throw JobNowOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
+
+  log::StdoutLogger dl("dummy", "unitTest");
+  log::LogContext lc(dl);
+  lc.log(log::INFO, "Entered RetrieveJob::failTransfer()");
+
+  // Lock the retrieve request. Fail the job.
+  objectstore::ScopedExclusiveLock arl(m_retrieveRequest);
+  m_retrieveRequest.fetch();
+
+  // Algorithms suppose the objects are not locked
+  auto  rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+  auto &af   = rfqc.archiveFile;
+
+  std::set<std::string> candidateVids;
+  for(auto &tf: af.tapeFiles) {
+    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
+      candidateVids.insert(tf.second.vid);
+  }
+  if(candidateVids.empty()) {
+    throw cta::exception::Exception(
+      "In OStoreDB::RetrieveJob::failReport(): no active job after addJobFailure() returned false."
+    );
+  }
+
+  // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
+  std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
+    m_oStoreDB.m_objectStore);
+
+  auto tf_it = af.tapeFiles.begin();
+  for( ; tf_it != af.tapeFiles.end() && tf_it->second.vid != bestVid; ++tf_it) ;
+  if(tf_it == af.tapeFiles.end()) {
+    std::stringstream err;
+    err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
+        << " archiveId=" << af.archiveFileID << " vid=" << bestVid;
+    throw RetrieveRequestHasNoCopies(err.str());
+  }
+  auto &tf = tf_it->second;
+
+  // Add a job failure. We will know what to do next.
+  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
+
   // First set the job status
-  m_archiveRequest.setJobStatus(tapeFile.copyNb, enQueueingNextStep.nextStatus);
-  // Now apply the decision.
-  // TODO: this will probably need to be factored out.
+  m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
+
+  // Now apply the decision
+  // TODO: this will probably need to be factored out
   switch (enQueueingNextStep.nextStep) {
     // We have a reduced set of supported next steps as some are not compatible with this event (see default).
-  case NextStep::EnqueueForReport: {
+    case NextStep::EnqueueForReport: {
       // Algorithms suppose the objects are not locked.
-      m_archiveRequest.commit();
+      m_retrieveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReport> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReport> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      insertedElements.push_back(CaAqtr::InsertedElement{
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+      });
+      caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::JobsToReport, insertedElements, lc);
+      auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", tf.copyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
-            .add("reportRetries", retryStatus.reportRetries)
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
+            .add("totalReportRetries", retryStatus.totalReportRetries)
             .add("maxReportRetries", retryStatus.maxReportRetries);
-      lc.log(log::INFO, "In ArchiveJob::failReport(): requeued job for report retry.");
+      lc.log(log::INFO, "In RetrieveJob::failReport(): requeued job for report retry.");
       return;
     }
-  default: {
+    default: {
       // Algorithms suppose the objects are not locked.
-      m_archiveRequest.commit();
+      m_retrieveRequest.commit();
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue,ArchiveQueueFailed> CaAqtr;
+      typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaAqtr;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
-      insertedElements.push_back(CaAqtr::InsertedElement{&m_archiveRequest, tapeFile.copyNb, archiveFile, cta::nullopt, cta::nullopt });
-      caAqtr.referenceAndSwitchOwnership(tapeFile.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
-      auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
+      insertedElements.push_back(CaAqtr::InsertedElement{
+        &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
+      });
+      caAqtr.referenceAndSwitchOwnership(tf.vid, objectstore::QueueType::FailedJobs, insertedElements, lc);
+      auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveFile.archiveFileID)
-            .add("copyNb", tapeFile.copyNb)
+            .add("copyNb", tf.copyNb)
             .add("failureReason", failureReason)
-            .add("requestObject", m_archiveRequest.getAddressIfSet())
-            .add("reportRetries", retryStatus.reportRetries)
+            .add("requestObject", m_retrieveRequest.getAddressIfSet())
+            .add("totalReportRetries", retryStatus.totalReportRetries)
             .add("maxReportRetries", retryStatus.maxReportRetries);
       if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer)
         lc.log(log::INFO,
-            "In ArchiveJob::failReport(): stored job in failed container for operator handling.");
+            "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
       else
         lc.log(log::ERR,
-            "In ArchiveJob::failReport(): stored job in failed contained after unexpected next step.");
+            "In RetrieveJob::failReport(): stored job in failed contained after unexpected next step.");
       return;
     }
   }
-#endif
 #if 0
 // store job in failed container
 -      // Algorithms suppose the objects are not locked

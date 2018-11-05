@@ -268,7 +268,9 @@ queueForTransfer:;
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJob()
 //------------------------------------------------------------------------------
-void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
+void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries,
+  uint16_t maxReportRetries)
+{
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
   tf->set_copynb(copyNb);
@@ -277,6 +279,8 @@ void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uin
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
   tf->set_totalretries(0);
+  tf->set_maxreportretries(maxReportRetries);
+  tf->set_totalreportretries(0);
   tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
 }
 
@@ -318,6 +322,37 @@ auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, 
   }
   throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
 }
+
+//------------------------------------------------------------------------------
+// addReportFailure()
+//------------------------------------------------------------------------------
+auto RetrieveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason,
+  log::LogContext &lc) -> EnqueueingNextStep
+{
+  checkPayloadWritable();
+  // Find the job and update the number of failures
+  for(int i = 0; i < m_payload.jobs_size(); ++i)
+  {
+    auto &j = *m_payload.mutable_jobs(i);
+    if (j.copynb() == copyNumber) {
+      j.set_totalreportretries(j.totalreportretries() + 1);
+      * j.mutable_reportfailurelogs()->Add() = failureReason;
+    }
+    EnqueueingNextStep ret;
+    if (j.totalreportretries() >= j.maxreportretries()) {
+      // Status is now failed
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
+      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+    } else {
+      // Status is unchanged
+      ret.nextStatus = j.status();
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+    }
+    return ret;
+  }
+  throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
+}
+
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::getLastActiveVid()
@@ -389,7 +424,8 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    const uint32_t hardcodedReportRetries = 2;
+    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
   }
 }
 

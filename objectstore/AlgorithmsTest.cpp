@@ -81,7 +81,7 @@ void fillRetrieveRequests(
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
     sReq.creationLog.time = time(nullptr);
     rr.setSchedulerRequest(sReq);
-    rr.addJob(1, 1, 1);
+    rr.addJob(1, 1, 1, 1);
     rr.setOwner(agentRef.getAgentAddress());
     rr.setActiveCopyNumber(1);
     rr.insert();

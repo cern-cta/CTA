@@ -131,8 +131,8 @@ auto cta::objectstore::ArchiveRequest::addTransferFailure(uint16_t copyNumber,
   throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
-auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string& failureReason,
-    log::LogContext& lc) -> EnqueueingNextStep {
+auto cta::objectstore::ArchiveRequest::addReportFailure(uint16_t copyNumber,
+    uint64_t sessionId, const std::string & failureReason, log::LogContext & lc) -> EnqueueingNextStep {
   checkPayloadWritable();
   // Find the job and update the number of failures
   for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {

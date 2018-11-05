@@ -585,8 +585,8 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
     sReq.creationLog.time=time(nullptr);
     rr.setSchedulerRequest(sReq);
-    rr.addJob(1, 1, 1);
-    rr.addJob(2, 1, 1);    
+    rr.addJob(1, 1, 1, 1);
+    rr.addJob(2, 1, 1, 1);    
     rr.setOwner(agA.getAddressIfSet());
     rr.setActiveCopyNumber(0);
     rr.insert();

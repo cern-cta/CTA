@@ -341,6 +341,9 @@ message RetrieveJob {
   required RetrieveJobStatus status = 9205;
   required uint64 lastmountwithfailure = 9206;
   repeated string failurelogs = 9207;
+  required uint32 maxreportretries = 9208;
+  required uint32 totalreportretries = 9209;
+  repeated string reportfailurelogs = 9210;
 }
 
 message RetrieveRequest {
