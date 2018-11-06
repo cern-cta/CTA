@@ -795,19 +795,28 @@ std::cerr << "Attempt " << i << std::endl;
     // We expect the retrieve queue to be empty
     auto rqsts = scheduler.getPendingRetrieveJobs(lc);
     ASSERT_EQ(0, rqsts.size());
-    // and the failure should be reported on the jobs to report queue
-    auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    // The failed queue should be empty
+    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    ASSERT_EQ(0, retrieveJobFailedList.size());
+    // The failure should be on the jobs to report queue
+    auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
     // Fail the report
     retrieveJobToReportList.front()->reportFailed("Report failed", lc);
     // Job should still be on the report queue
-    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
     // Fail the report again
     retrieveJobToReportList.front()->reportFailed("Report failed", lc);
     // Job should be gone from the report queue
-    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(1,lc);
+    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(0, retrieveJobToReportList.size());
+  }
+
+  {
+    // There should be one failed job
+    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    ASSERT_EQ(1, retrieveJobFailedList.size());
   }
 }
 

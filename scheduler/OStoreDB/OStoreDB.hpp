@@ -284,6 +284,8 @@ public:
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
   /* === Drive state handling  ============================================== */
   /**

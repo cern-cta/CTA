@@ -342,11 +342,24 @@ public:
    * @param filesRequested    the number of files requested
    * @param logContext
    *
-   * @returns    A list of unique_ptr to the next successful archive jobs to report. The list
+   * @returns    A list of unique_ptr to the next successful retrieve jobs to report. The list
    *             is empty when no more jobs can be found. Will return jobs (if available) up
    *             to specified number.
    */
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
+    log::LogContext &logContext);
+
+  /*!
+   * Batch job factory
+   * 
+   * @param filesRequested    The number of files requested. Returns available jobs up to the specified
+   *                          number.
+   * @param logContext        Log Context
+   *
+   * @returns                 A list of unique_ptr to the next batch of failed retrieve jobs. The list
+   *                          is empty when no more jobs can be found.
+   */
+  std::list<std::unique_ptr<RetrieveJob>> getNextFailedRetrieveJobsBatch(uint64_t filesRequested,
     log::LogContext &logContext);
   
 public:    
