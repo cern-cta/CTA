@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/log/StdoutLogger.hpp"
-
 #include "OStoreDB.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
@@ -2652,16 +2650,12 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failReport()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &ignore_lc) {
+void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc) {
   typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
 
   if(!m_jobOwned)
     throw JobNotOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
-
-  log::StdoutLogger dl("dummy", "unitTest");
-  log::LogContext lc(dl);
-  lc.log(log::INFO, "Entered RetrieveJob::failTransfer()");
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);

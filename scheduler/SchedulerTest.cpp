@@ -712,7 +712,6 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   // Try mounting the tape twice
   for(int mountPass = 0; mountPass < 2; ++mountPass)
   {
-std::cerr << "Pass " << mountPass << std::endl;
     // Check that the retrieve request is queued
     {
       auto rqsts = scheduler.getPendingRetrieveJobs(lc);
@@ -756,7 +755,6 @@ std::cerr << "Pass " << mountPass << std::endl;
       // The file should be retried three times
       for(int i = 0; i < 3; ++i)
       {
-std::cerr << "Attempt " << i << std::endl;
         std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1,1,lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI=i;
