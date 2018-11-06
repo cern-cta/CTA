@@ -295,6 +295,7 @@ auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, 
   // Find the job and update the number of failures
   for(int i = 0; i < m_payload.jobs_size(); i++) {
     auto &j = *m_payload.mutable_jobs(i);
+
     if(j.copynb() == copyNumber) {
       if(j.lastmountwithfailure() == mountId) {
         j.set_retrieswithinmount(j.retrieswithinmount() + 1);
@@ -305,19 +306,20 @@ auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, 
       j.set_totalretries(j.totalretries() + 1);
       *j.mutable_failurelogs()->Add() = failureReason;
     }
-    if(j.totalretries() >= j.maxtotalretries()) {
-      // We have to determine if this was the last copy to fail/succeed.
-      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
-    } else {
+
+    if(j.totalretries() < j.maxtotalretries()) {
       EnqueueingNextStep ret;
       ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
-      // Decide if we want the job to have a chance to come back to this mount (requeue) or not. In the latter
-      // case, the job will remain owned by this session and get garbage collected.
-      if(j.retrieswithinmount() >= j.maxretrieswithinmount())
-        ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
-      else
+      if(j.retrieswithinmount() < j.maxretrieswithinmount())
+        // Job can try again within this mount
         ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransfer;
+      else
+        // No more retries within this mount: job remains owned by this session and will be garbage collected
+        ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
       return ret;
+    } else {
+      // All retries within all mounts have been exhausted
+      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
     }
   }
   throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");

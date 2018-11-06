@@ -764,7 +764,8 @@ std::cerr << "Attempt " << i << std::endl;
         ASSERT_NE(0, retrieveJobList.size());
         // Validate we got the right file
         ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
-        retrieveJobList.front()->transferFailed("Retrieve failed", lc);
+        retrieveJobList.front()->transferFailed("Retrieve failed (mount " + std::to_string(mountPass) +
+                                                ", attempt " + std::to_string(i) + ")", lc);
       }
       // Then the request should be gone
       ASSERT_EQ(0, retrieveMount->getNextJobBatch(1,1,lc).size());

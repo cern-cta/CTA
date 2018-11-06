@@ -2443,6 +2443,9 @@ bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogConte
 // OStoreDB::RetrieveJob::failTransfer()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc) {
+  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
+  typedef EnqueueingNextStep::NextStep NextStep;
+
   if (!m_jobOwned)
     throw JobNotOwned("In OStoreDB::RetrieveJob::failTransfer: cannot fail a job not owned");
 
@@ -2451,9 +2454,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   m_retrieveRequest.fetch();
 
   // Add a job failure. We will know what to do next.
-  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
-  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addTransferFailure(selectedCopyNb, m_mountId, failureReason, lc);
+  EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addTransferFailure(selectedCopyNb, m_mountId,
+    failureReason, lc);
 
   // First set the job status
   m_retrieveRequest.setJobStatus(selectedCopyNb, enQueueingNextStep.nextStatus);
@@ -2533,6 +2535,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, serializers::RetrieveJobStatus::RJS_Failed
       });
+      m_retrieveRequest.commit();
       rel.release();
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -2636,7 +2639,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
 
   std::set<std::string> candidateVids;
   for(auto &tf: af.tapeFiles) {
-    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToTransfer)
+    if(m_retrieveRequest.getJobStatus(tf.second.copyNb) == serializers::RetrieveJobStatus::RJS_ToReportForFailure)
       candidateVids.insert(tf.second.vid);
   }
   if(candidateVids.empty()) {
