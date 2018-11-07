@@ -48,8 +48,8 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
 
     ASSERT_TRUE(conn->getTableNames().empty());
 
-    auto stmt = conn->createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    stmt->executeNonQuery();
+    auto stmt = conn->createStmt(sql);
+    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
 
     ASSERT_EQ(1, conn->getTableNames().size());
   }
@@ -62,8 +62,8 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
 
     ASSERT_TRUE(conn->getTableNames().empty());
 
-    auto stmt = conn->createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
-    stmt->executeNonQuery();
+    auto stmt = conn->createStmt(sql);
+    stmt->executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
 
     ASSERT_EQ(1, conn->getTableNames().size());
   }

@@ -42,10 +42,9 @@ namespace wrapper {
 // constructor
 //------------------------------------------------------------------------------
 SqliteStmt::SqliteStmt(
-  const AutocommitMode autocommitMode,
   SqliteConn &conn,
   const std::string &sql):
-  Stmt(sql, autocommitMode),
+  Stmt(sql),
   m_conn(conn),
   m_nbAffectedRows(0) {
   m_stmt = nullptr;
@@ -79,32 +78,6 @@ SqliteStmt::SqliteStmt(
     sqlite3_finalize(m_stmt);
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
       ": sqlite3_prepare_v2 failed: " + msg);
-  }
-
-  // m_stmt has been set so it is safe to call close() from now on
-  try {
-    switch(autocommitMode) {
-    case AutocommitMode::AUTOCOMMIT_ON:
-      // Do nothing because SQLite statements autocommit be default
-      break;
-    case AutocommitMode::AUTOCOMMIT_OFF: {
-      if(!m_conn.m_transactionInProgress) {
-        beginDeferredTransaction();
-        m_conn.m_transactionInProgress = true;
-      }
-      break;
-    }
-    default:
-      throw exception::Exception("Unknown autocommit mode");
-    }
-  } catch(exception::Exception &ex) {
-    close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
-      ex.getMessage().str());
-  } catch(std::exception &se) {
-    close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
-      se.what());
   }
 }
 
@@ -250,15 +223,21 @@ void SqliteStmt::bindOptionalString(const std::string &paramName, const optional
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> SqliteStmt::executeQuery() {
+std::unique_ptr<Rset> SqliteStmt::executeQuery(const AutocommitMode autocommitMode) {
+  threading::MutexLocker connLocker(m_conn.m_mutex);
+
+  startDeferredTransactionIfNecessary(autocommitMode);
+
   return cta::make_unique<SqliteRset>(*this);
 }
 
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void SqliteStmt::executeNonQuery() {
+void SqliteStmt::executeNonQuery(const AutocommitMode autocommitMode) {
   threading::MutexLocker connLocker(m_conn.m_mutex);
+
+  startDeferredTransactionIfNecessary(autocommitMode);
 
   const int stepRc = sqlite3_step(m_stmt);
 
@@ -294,6 +273,35 @@ void SqliteStmt::executeNonQuery() {
 //------------------------------------------------------------------------------
 uint64_t SqliteStmt::getNbAffectedRows() const {
   return m_nbAffectedRows;
+}
+
+//------------------------------------------------------------------------------
+// startDeferredTransactionIfNecessary
+//------------------------------------------------------------------------------
+void SqliteStmt::startDeferredTransactionIfNecessary(const AutocommitMode autocommitMode) {
+  // PLEASE NOTE this method assumes a lock has been taken on m_conn.m_mutex
+  const bool autocommit = autocommitModeToBool(autocommitMode);
+
+  if(m_conn.m_transactionInProgress && autocommit) {
+    throw exception::Exception("SqliteStmt does not support the execution of an AUTOCOMMIT_OFF statement followed an"
+      " AUTOCOMMIT_ON statement.  Use commit() between the statements instead");
+  }
+
+  if(m_conn.m_transactionInProgress && !autocommit) {
+    beginDeferredTransaction();
+    m_conn.m_transactionInProgress = true;
+  }
+}
+
+//------------------------------------------------------------------------------
+// autoCommitModeToBool
+//------------------------------------------------------------------------------
+bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
+  switch(autocommitMode) {
+  case AutocommitMode::AUTOCOMMIT_ON: return true;
+  case AutocommitMode::AUTOCOMMIT_OFF: return false;
+  default: throw exception::Exception("Unknown autocommit mode");
+  }
 }
 
 //------------------------------------------------------------------------------

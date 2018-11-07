@@ -123,17 +123,17 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
+      stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     }
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+      auto stmt = conn.createStmt(sql);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
+      stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     }
     const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
 
@@ -199,8 +199,8 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
            "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-      auto rset = stmt.executeQuery();
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       if(!rset.next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
       }
@@ -238,8 +238,8 @@ uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         "ID AS ID "
       "FROM "
         "STORAGE_CLASS_ID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt.executeQuery();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     if(!rset.next()) {
       throw exception::Exception("STORAGE_CLASS_ID table is empty");
     }
@@ -295,9 +295,9 @@ common::dataStructures::Tape SqliteCatalogue::selectTape(const rdbms::Autocommit
       "WHERE "
         "VID = :VID;";
 
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    auto rset = stmt.executeQuery();
+    auto rset = stmt.executeQuery(autocommitMode);
     if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }

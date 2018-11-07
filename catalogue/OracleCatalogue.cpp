@@ -168,8 +168,8 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt.executeQuery();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
@@ -193,8 +193,8 @@ uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         "STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt.executeQuery();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
     }
@@ -249,9 +249,9 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
       "WHERE "
         "VID = :VID "
       "FOR UPDATE";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    auto rset = stmt.executeQuery();
+    auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     if (!rset.next()) {
       throw exception::Exception(std::string("The tape with VID " + vid + " does not exist"));
     }
@@ -461,7 +461,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    auto stmt = conn.createStmt(sql);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt.setColumn(tapeFileBatch.vid);
     occiStmt.setColumn(tapeFileBatch.fSeq);
@@ -590,7 +590,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt->setBatchErrorMode(true);
 
@@ -684,9 +684,9 @@ std::map<uint64_t, OracleCatalogue::FileSizeAndChecksum> OracleCatalogue::select
         "ARCHIVE_FILE "
       "INNER JOIN TEMP_TAPE_FILE_BATCH ON "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
 
-    auto rset = stmt.executeQuery();
+    auto rset = stmt.executeQuery(autocommitMode);
 
     std::map<uint64_t, FileSizeAndChecksum> fileSizesAndChecksums;
     while (rset.next()) {
@@ -744,7 +744,7 @@ void OracleCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &conn,
         "ARCHIVE_FILE_ID)"
       "VALUES("
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, autocommitMode);
+    auto stmt = conn.createStmt(sql);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt->setBatchErrorMode(false);
 

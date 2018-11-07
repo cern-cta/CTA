@@ -202,7 +202,7 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     }
 
     auto conn = connPool.getConn();
-    m_stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    m_stmt = conn.createStmt(sql);
     if(searchCriteria.archiveFileId) {
       m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
     }
@@ -233,7 +233,7 @@ RdbmsArchiveFileItorImpl::RdbmsArchiveFileItorImpl(
     if(searchCriteria.tapePool) {
       m_stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     }
-    m_rset = m_stmt.executeQuery();
+    m_rset = m_stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
 
     m_rsetIsEmpty = !m_rset.next();
   } catch(exception::UserError &) {

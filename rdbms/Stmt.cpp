@@ -175,9 +175,9 @@ void Stmt::bindOptionalString(const std::string &paramName, const optional<std::
 //-----------------------------------------------------------------------------
 // executeQuery
 //-----------------------------------------------------------------------------
-Rset Stmt::executeQuery() {
+Rset Stmt::executeQuery(const AutocommitMode autocommitMode) {
   if(nullptr != m_stmt) {
-    return Rset(m_stmt->executeQuery());
+    return Rset(m_stmt->executeQuery(autocommitMode));
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Stmt does not contain a cached statement");
   }
@@ -186,9 +186,9 @@ Rset Stmt::executeQuery() {
 //-----------------------------------------------------------------------------
 // executeNonQuery
 //-----------------------------------------------------------------------------
-void Stmt::executeNonQuery() {
+void Stmt::executeNonQuery(const AutocommitMode autocommitMode) {
   if(nullptr != m_stmt) {
-    return m_stmt->executeNonQuery();
+    return m_stmt->executeNonQuery(autocommitMode);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Stmt does not contain a cached statement");
   }

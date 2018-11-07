@@ -26,9 +26,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Stmt::Stmt(const std::string &sql, const AutocommitMode autocommitMode):
+Stmt::Stmt(const std::string &sql):
   m_sql(sql),
-  m_autocommitMode(autocommitMode),
   m_paramNameToIdx(sql) {
 }
 
@@ -43,13 +42,6 @@ Stmt::~Stmt() {
 //------------------------------------------------------------------------------
 const std::string &Stmt::getSql() const {
   return m_sql;
-}
-
-//------------------------------------------------------------------------------
-// getAutocommitMode
-//------------------------------------------------------------------------------
-AutocommitMode Stmt::getAutocommitMode() const noexcept {
-  return m_autocommitMode;
 }
 
 //------------------------------------------------------------------------------

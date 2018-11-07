@@ -82,10 +82,9 @@ public:
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  Stmt createStmt(const std::string &sql, const AutocommitMode autocommitMode);
+  Stmt createStmt(const std::string &sql);
 
   /**
    * Convenience method that parses the specified string of multiple SQL
@@ -96,16 +95,16 @@ public:
    * autocommit ON.
    *
    * @param sqlStmts The SQL statements to be executed.
-   * @param autocommitMode The autocommit mode of the statement.
+   * @param autocommitMode The autocommit mode of the statements.
    */
-  void executeNonQueries(const std::string &sqlStmts);
+  void executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode);
 
   /**
    * Convenience method that wraps Conn::createStmt() followed by
    * Stmt::executeNonQuery().
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
+   * @param autocommitMode The autocommit mode of the statements.
    */
   void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode);
 

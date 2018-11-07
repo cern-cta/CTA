@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
 #include "common/optional.hpp"
 
@@ -161,14 +162,17 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
+   *  @param autocommitMode The autocommit mode of the statement.
    *  @return The result set.
    */
-  Rset executeQuery();
+  Rset executeQuery(const AutocommitMode autocommitMode);
 
   /**
    * Executes the statement.
+   *
+   *  @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery();
+  void executeNonQuery(const AutocommitMode autocommitMode);
 
   /**
    * Returns the number of rows affected by the last execution of this

@@ -68,13 +68,13 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_SQLITE:
     {
        SqliteCatalogueSchema schema;
-       conn.executeNonQueries(schema.sql);
+       conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
     {
       OracleCatalogueSchema schema;
-      conn.executeNonQueries(schema.sql);
+      conn.executeNonQueries(schema.sql, rdbms::AutocommitMode::AUTOCOMMIT_ON);
     }
     break;
   case rdbms::Login::DBTYPE_NONE:

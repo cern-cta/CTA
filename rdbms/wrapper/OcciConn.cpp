@@ -68,7 +68,7 @@ void OcciConn::close() {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, AutocommitMode autocommitMode) {
+std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 
@@ -80,7 +80,7 @@ std::unique_ptr<Stmt> OcciConn::createStmt(const std::string &sql, AutocommitMod
     if (nullptr == stmt) {
       throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
-    return cta::make_unique<OcciStmt>(autocommitMode, sql, *this, stmt);
+    return cta::make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
@@ -140,8 +140,8 @@ std::list<std::string> OcciConn::getTableNames() {
         "USER_TABLES "
       "ORDER BY "
         "TABLE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt->executeQuery();
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_OFF);
     while (rset->next()) {
       auto name = rset->columnOptionalString("TABLE_NAME");
       if(name) {
@@ -168,8 +168,8 @@ std::list<std::string> OcciConn::getSequenceNames() {
         "USER_SEQUENCES "
       "ORDER BY "
         "SEQUENCE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
-    auto rset = stmt->executeQuery();
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_OFF);
     while (rset->next()) {
       auto name = rset->columnOptionalString("SEQUENCE_NAME");
       names.push_back(name.value());
