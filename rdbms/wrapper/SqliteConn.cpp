@@ -185,7 +185,7 @@ void SqliteConn::printSchema(std::ostream &os) {
       "ORDER BY "
         "TYPE, "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::ON);
+    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
     auto rset = stmt->executeQuery();
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
@@ -213,7 +213,7 @@ std::list<std::string> SqliteConn::getTableNames() {
         "TYPE = 'table' "
       "ORDER BY "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::ON);
+    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
     auto rset = stmt->executeQuery();
     std::list<std::string> names;
     while (rset->next()) {

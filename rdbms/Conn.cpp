@@ -100,7 +100,7 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt, AutocommitMode::ON);
+        executeNonQuery(sqlStmt, AutocommitMode::AUTOCOMMIT_ON);
       }
     }
 

@@ -47,7 +47,7 @@ TEST_F(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
 
     ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn.executeNonQuery(sql, AutocommitMode::ON);
+    conn.executeNonQuery(sql, AutocommitMode::AUTOCOMMIT_ON);
 
     ASSERT_EQ(1, conn.getTableNames().size());
   }
@@ -87,7 +87,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
     ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn.executeNonQuery(sql, AutocommitMode::ON);
+    conn.executeNonQuery(sql, AutocommitMode::AUTOCOMMIT_ON);
 
     ASSERT_EQ(1, conn.getTableNames().size());
   }
@@ -101,7 +101,7 @@ TEST_F(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
     ASSERT_TRUE(conn.getTableNames().empty());
 
-    conn.executeNonQuery(sql, AutocommitMode::ON);
+    conn.executeNonQuery(sql, AutocommitMode::AUTOCOMMIT_ON);
 
     ASSERT_EQ(1, conn.getTableNames().size());
   }

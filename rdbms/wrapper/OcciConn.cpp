@@ -140,7 +140,7 @@ std::list<std::string> OcciConn::getTableNames() {
         "USER_TABLES "
       "ORDER BY "
         "TABLE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::OFF);
+    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("TABLE_NAME");
@@ -168,7 +168,7 @@ std::list<std::string> OcciConn::getSequenceNames() {
         "USER_SEQUENCES "
       "ORDER BY "
         "SEQUENCE_NAME";
-    auto stmt = createStmt(sql, AutocommitMode::OFF);
+    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("SEQUENCE_NAME");

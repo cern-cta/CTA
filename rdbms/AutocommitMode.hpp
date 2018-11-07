@@ -25,8 +25,8 @@ namespace rdbms {
  * A database statement can either have auto commiting mode turned on or off.
  */
 enum class AutocommitMode {
-  ON,
-  OFF
+  AUTOCOMMIT_ON,
+  AUTOCOMMIT_OFF
 };
 
 } // namespace rdbms

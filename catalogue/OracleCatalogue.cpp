@@ -168,7 +168,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
@@ -193,7 +193,7 @@ uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         "STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
@@ -249,7 +249,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
       "WHERE "
         "VID = :VID "
       "FOR UPDATE";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -379,20 +379,20 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     // If we had only placeholders and no file recorded, we are done.
     if (fileEvents.empty()) return;
     
     // Create the archive file entries, skipping those that already exist
-    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
 
-    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
 
     // Verify that the archive file entries in the catalogue database agree with
     // the tape file written events
-    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
     for (const auto &event: fileEvents) {
       const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
 
@@ -461,7 +461,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt.setColumn(tapeFileBatch.vid);
     occiStmt.setColumn(tapeFileBatch.fSeq);

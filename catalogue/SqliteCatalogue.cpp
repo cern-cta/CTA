@@ -123,7 +123,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
     t.reset();
     {
       const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
@@ -131,7 +131,7 @@ void SqliteCatalogue::deleteArchiveFile(const std::string &diskInstanceName, con
 
     {
       const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID;";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
@@ -191,7 +191,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
 
     rdbms::AutoRollback autoRollback(conn);
 
-    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::AutocommitMode::OFF);
+    conn.executeNonQuery("UPDATE ARCHIVE_FILE_ID SET ID = ID + 1", rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     uint64_t archiveFileId = 0;
     {
       const char *const sql =
@@ -199,7 +199,7 @@ uint64_t SqliteCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
            "ID AS ID "
         "FROM "
           "ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       auto rset = stmt.executeQuery();
       if(!rset.next()) {
         throw exception::Exception("ARCHIVE_FILE_ID table is empty");
@@ -230,7 +230,7 @@ uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
 
   rdbms::AutoRollback autoRollback(conn);
 
-  conn.executeNonQuery("UPDATE STORAGE_CLASS_ID SET ID = ID + 1", rdbms::AutocommitMode::OFF);
+  conn.executeNonQuery("UPDATE STORAGE_CLASS_ID SET ID = ID + 1", rdbms::AutocommitMode::AUTOCOMMIT_OFF);
   uint64_t storageClassId = 0;
   {
     const char *const sql =
@@ -238,7 +238,7 @@ uint64_t SqliteCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         "ID AS ID "
       "FROM "
         "STORAGE_CLASS_ID";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
       throw exception::Exception("STORAGE_CLASS_ID table is empty");
@@ -372,7 +372,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     threading::MutexLocker locker(m_mutex);
     auto conn = m_connPool.getConn();
 
-    const auto tape = selectTape(rdbms::AutocommitMode::ON, conn, firstEvent.vid);
+    const auto tape = selectTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, firstEvent.vid);
     uint64_t expectedFSeq = tape.lastFSeq + 1;
     uint64_t totalCompressedBytesWritten = 0;
 
@@ -403,14 +403,14 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_ON, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
-        fileWrittenToTape(rdbms::AutocommitMode::ON, conn, fileEvent);
+        fileWrittenToTape(rdbms::AutocommitMode::AUTOCOMMIT_ON, conn, fileEvent);
       } catch (std::bad_cast&) {}
     }
   } catch(exception::UserError &) {
