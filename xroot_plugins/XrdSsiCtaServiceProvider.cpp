@@ -17,13 +17,13 @@
  */
 
 #include "cta_frontend.pb.h"
-#include "catalogue/CatalogueFactory.hpp"
 #include "common/make_unique.hpp"
-#include "common/log/Logger.hpp"
 #include "common/log/SyslogLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/FileLogger.hpp"
+#include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "rdbms/Login.hpp"
 #include "version.h"
@@ -84,16 +84,22 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
    // Instantiate the CTA logging system
    try {
+      // Set the logger URL
       auto loggerURL = config.getOptionValueStr("cta.log.url");
       if(!loggerURL.first) loggerURL.second = "syslog:";
       const auto shortHostname = utils::getShortHostname();
 
+      // Set the logger level
+      int loggerLevel = log::INFO;
+      auto loggerLevelStr = config.getOptionValueStr("cta.log.level");
+      if(loggerLevelStr.first) loggerLevel = log::toLogLevel(loggerLevelStr.second);
+
       if (loggerURL.second == "syslog:") {
-         m_log.reset(new log::SyslogLogger(shortHostname, "cta-frontend", log::DEBUG));
+         m_log.reset(new log::SyslogLogger(shortHostname, "cta-frontend", loggerLevel));
       } else if (loggerURL.second == "stdout:") {
          m_log.reset(new log::StdoutLogger(shortHostname, "cta-frontend"));
       } else if (loggerURL.second.substr(0, 5) == "file:") {
-         m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", loggerURL.second.substr(5), log::DEBUG));
+         m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", loggerURL.second.substr(5), loggerLevel));
       } else {
          throw exception::Exception(std::string("Unknown log URL: ") + loggerURL.second);
       }
