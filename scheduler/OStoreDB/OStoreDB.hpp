@@ -282,7 +282,14 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
   void cancelRepack(const std::string& vid, log::LogContext & lc) override;
-
+  class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
+    friend class OStoreDB;
+  public:
+    CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
+    void promotePendingRequestsForExpansion(size_t requestCount) override;
+  };
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
   
   /* === Drive state handling  ============================================== */
   /**

@@ -1108,7 +1108,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
         RepackRequest rr(rra.repackRequestAddress, m_objectStore);
         rr.fetchNoLock();
         if (rr.getInfo().vid != vid)
-          throw exception::Exception("In OStoreDB::getRepackInfo(): uynexpected vid when reading request");
+          throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         return rr.getInfo();  
       } catch (cta::exception::Exception &) {}
     }
@@ -1139,14 +1139,29 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
         ScopedExclusiveLock rrl(rr);
         rr.fetch();
         if (rr.getInfo().vid != vid)
-          throw  exception::Exception("In OStoreDB::getRepackInfo(): uynexpected vid when reading request");
+          throw  exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         // We now have a hold of the repack request.
         // We should delete all the file level subrequests.
         // TODO
         // And then delete the request
+        std::string repackRequestOwner = rr.getOwner();
         rr.remove();
         // We now need to dereference, from a queue if needed and from the index for sure.
         Helpers::removeRepackRequestToIndex(vid, m_objectStore, lc);
+        if (repackRequestOwner.size()) {
+          // Find the queue into which the request was queued. If the request was not owned by a queue (i.e., another type
+          // of object), we do not care as the garbage collection will remove the reference.
+          objectstore::RepackQueue rq(repackRequestOwner, m_objectStore);
+          objectstore::ScopedExclusiveLock rql;
+          try {
+            rql.lock(rq);
+            rq.fetch();
+          } 
+          catch (objectstore::Backend::NoSuchObject &) { return; }
+          catch (objectstore::ObjectOpsBase::WrongType &) { return; }
+          std::list<std::string> reqs{rr.getAddressIfSet()};
+          rq.removeRequestsAndCommit(reqs);
+        }
         return;
       } catch (cta::exception::Exception &) {}
     }

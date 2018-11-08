@@ -167,7 +167,14 @@ public:
   void cancelRepack(const std::string& vid, log::LogContext & lc) override {
     m_OStoreDB.cancelRepack(vid, lc);
   }
-
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override {
+    return m_OStoreDB.getRepackStatistics();
+  }
+  
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override {
+    return m_OStoreDB.getRepackStatisticsNoLock();
+  }
 
   std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);

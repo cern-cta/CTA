@@ -359,6 +359,24 @@ public:
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
   
+  /**
+   * A class containing all the information needed for pending repack requests promotion.
+   * We need to promote repack requests from "Pending" to "ToExpand" in a controlled
+   * manner. This will ensure the presence of a sufficient amount of repack subrequests 
+   * in the system in order to keep things going without clogging the system with too many
+   * requests in the case of a massive repack.
+   * The mechanism is the same as for TapeMountDecision info. Polling functions (implemented
+   * in the Scheduler) get a lock free version of the requests summary, and if a promotion seems
+   * required does so after re-taking a locked version of the statistics and re-ensuring that the
+   * conditions are still valid, avoiding a race condition system wide.
+   */
+  class RepackRequestStatistics: public std::map<common::dataStructures::RepackInfo::Status, size_t> {
+  public:
+    virtual void promotePendingRequestsForExpansion(size_t requestCount = 1) = 0;
+    virtual ~RepackRequestStatistics() {}
+  };
+  virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;
+  virtual std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() = 0;
   
   /*============ Repack management: maintenance process side =========================*/
   

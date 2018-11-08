@@ -735,6 +735,7 @@ TEST_P(SchedulerTest, repack) {
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
+  // Create and then cancel repack
   common::dataStructures::SecurityIdentity cliId;
   scheduler.queueRepack(cliId, "Tape", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
   auto repacks = scheduler.getRepacks();
@@ -743,6 +744,7 @@ TEST_P(SchedulerTest, repack) {
   ASSERT_EQ("Tape", repack.vid);
   scheduler.cancelRepack(cliId, repack.vid, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
+  // 
 }
 
 #undef TEST_MOCK_DB
