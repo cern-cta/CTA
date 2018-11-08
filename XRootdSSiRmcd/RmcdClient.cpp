@@ -222,7 +222,7 @@ RmcdClientCmd::RmcdClientCmd(int argc, char *const *const argv) :
 
    // Obtain a Service Provider
    std::string resource("/rmc_test");
-   m_rmc_test_service_ptr = make_unique<XrdSsiPbServiceType>(m_endpoint, resource, config);
+   m_rmc_test_service_ptr = std::make_unique<XrdSsiPbServiceType>(m_endpoint, resource, config);
 }
 
 void RmcdClientCmd::processMount(int argc, char *const *const argv) {

@@ -126,7 +126,6 @@ private:
    admincmd_t processTapePool_Add;
    admincmd_t processTapePool_Ch;
    admincmd_t processTapePool_Rm;
-   admincmd_t processTapePool_Ls;
    admincmd_t processTest_Read;
    admincmd_t processTest_Write;
    admincmd_t processTest_WriteAuto;
@@ -148,6 +147,7 @@ private:
    admincmdstream_t processArchiveFile_Ls;
    admincmdstream_t processListPendingArchives;
    admincmdstream_t processListPendingRetrieves;
+   admincmdstream_t processTapePool_Ls;
 
    /*!
     * Log an admin command
