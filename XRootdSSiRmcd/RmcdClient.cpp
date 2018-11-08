@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <common/make_unique.hpp>
 
 #include "XrdSsiPbIStreamBuffer.hpp"
 #include "RmcdClient.hpp"
@@ -27,14 +28,6 @@
 #include <getopt.h>
 
 bool is_metadata_done = false;
-
-// note: this implementation does not disable this overload for array types
- template<typename T, typename... Args>
- std::unique_ptr<T> make_unique(Args&&... args)
- {
-     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-     }
-
 
 // Define XRootD SSI callbacks
 
@@ -222,7 +215,7 @@ RmcdClientCmd::RmcdClientCmd(int argc, char *const *const argv) :
 
    // Obtain a Service Provider
    std::string resource("/rmc_test");
-   m_rmc_test_service_ptr = std::make_unique<XrdSsiPbServiceType>(m_endpoint, resource, config);
+   m_rmc_test_service_ptr = cta::make_unique<XrdSsiPbServiceType>(m_endpoint, resource, config);
 }
 
 void RmcdClientCmd::processMount(int argc, char *const *const argv) {
