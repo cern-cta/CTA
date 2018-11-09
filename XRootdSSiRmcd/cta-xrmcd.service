@@ -1,0 +1,16 @@
+
+[Unit]
+
+Description=CTA rmcd plugin for the XRoot deamon 
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/xrootd -c /etc/cta/cta-xrmcd.conf -k fifo -n cta
+User=cta
+Type=simple
+Restart=no
+LimitCORE=infinity
+LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target

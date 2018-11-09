@@ -186,32 +186,6 @@ public:
     log::LogContext &lc) override;
 
   /**
-   * Prepares for a file retrieval by returning the information required to
-   * queue the associated retrieve request(s).
-   *
-   * @param diskInstanceName The name of the instance from where the retrieval
-   * request originated
-   * @param diskFileId The identifier of the source disk file which is unique
-   * within it's host disk system.  Two files from different disk systems may
-   * have the same identifier.  The combination of diskInstanceName and
-   * diskFileId must be globally unique, in other words unique within the CTA
-   * catalogue.
-   * @param archiveFileId The unique identifier of the archived file that is
-   * to be retrieved.
-   * @param user The user for whom the file is to be retrieved.  This will be
-   * used by the Catalogue to determine the mount policy to be used when
-   * retrieving the file.
-   * @param lc The log context.
-   *
-   * @return The information required to queue the associated retrieve request(s).
-   */
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(
-    const std::string &diskInstanceName,
-    const std::string &diskFileId,
-    const common::dataStructures::UserIdentity &user,
-    log::LogContext &lc) override;
-
-  /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to retrieve files.
    *
@@ -537,6 +511,27 @@ public:
    * @return The archive file.
    */
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) override;
+
+  /**
+   * Deletes the specified archive file and its associated tape copies from the
+   * catalogue.
+   *
+   * Please note that the name of the disk instance is specified in order to
+   * prevent a disk instance deleting an archive file that belongs to another
+   * disk instance.
+   *
+   * Please note that this method is idempotent.  If the file to be deleted does
+   * not exist in the CTA catalogue then this method returns without error.
+   *
+   * @param instanceName The name of the instance from where the deletion request
+   * originated
+   * @param archiveFileId The unique identifier of the archive file.
+   * @param lc The log context.
+   * @return The metadata of the deleted archive file including the metadata of
+   * the associated and also deleted tape copies.
+   */
+  void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId,
+    log::LogContext &lc) override;
 
   /**
    * Returns true if the specified user has administrator privileges.
@@ -1032,21 +1027,42 @@ protected:
     const std::string &tapeDrive);
 
   /**
-   * Returns the specified archive file or a nullptr pointer if it does not
-   * exist.
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
+   * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
+   * there are no rows in the TAPE_FILE table.
+   *
+   * Please note that this method performs a LEFT OUTER JOIN from the
+   * ARCHIVE_FILE table to the TAPE_FILE table.
    *
    * @param conn The database connection.
    * @param archiveFileId The identifier of the archive file.
    * @return The archive file or nullptr.
-   * an empty list.
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByArchiveFileId(
     rdbms::Conn &conn,
     const uint64_t archiveFileId) const;
 
   /**
-   * Returns the specified archive file or a nullptr pointer if it does not
-   * exist.
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there are no corresponding rows in the TAPE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param archiveFileId The identifier of the archive file.
+   * @return The archive file or nullptr.
+   */
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileToRetrieveByArchiveFileId(
+    rdbms::Conn &conn,
+    const uint64_t archiveFileId) const;
+
+  /**
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
+   * a non-nullptr is returned if there is a row in the ARCHIVE_FILE table and
+   * there are no rows in the TAPE_FILE table.
+   *
+   * Please note that this method performs a LEFT OUTER JOIN from the
+   * ARCHIVE_FILE table to the TAPE_FILE table.
    *
    * @param conn The database connection.
    * @param diskInstanceName The name of the disk instance.
@@ -1059,6 +1075,25 @@ protected:
    * an empty list.
    */
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileByDiskFileId(
+    rdbms::Conn &conn,
+    const std::string &diskInstance,
+    const std::string &diskFileId) const;
+
+  /**
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there are no corresponding rows in the TAPE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance.
+   * @param diskFileId The identifier of the source disk file which is unique
+   * within it's host disk system.  Two files from different disk systems may
+   * have the same identifier.  The combination of diskInstanceName and
+   * diskFileId must be globally unique, in other words unique within the CTA
+   * catalogue.
+   * @return The archive file or nullptr.
+   * an empty list.
+   */
+  std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileToRetrieveByDiskFileId(
     rdbms::Conn &conn,
     const std::string &diskInstance,
     const std::string &diskFileId) const;

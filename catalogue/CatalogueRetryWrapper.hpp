@@ -93,10 +93,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, lc);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId, const common::dataStructures::UserIdentity &user, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFileByDiskFileId(diskInstanceName, diskFileId, user, lc);}, m_maxTriesToConnect);
-  }
-
   void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeMountedForRetrieve(vid, drive);}, m_maxTriesToConnect);
   }
@@ -347,10 +343,6 @@ public:
 
   void deleteArchiveFile(const std::string &instanceName, const uint64_t archiveFileId, log::LogContext &lc) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveFile(instanceName, archiveFileId, lc);}, m_maxTriesToConnect);
-  }
-
-  void deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId, log::LogContext &lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteArchiveFileByDiskFileId(diskInstanceName, diskFileId, lc);}, m_maxTriesToConnect);
   }
 
   bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override {

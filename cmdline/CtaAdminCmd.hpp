@@ -39,6 +39,13 @@ public:
       is_first_record = false;
       return c;
    }
+   // Static method to convert time to string
+   static std::string timeToString(const time_t &time)
+   {
+      std::string timeString(ctime(&time));
+      timeString.resize(timeString.size()-1); //remove newline
+      return timeString;
+   }
 
    // Output headers
    static void printAfLsHeader();
@@ -47,6 +54,7 @@ public:
    static void printLpaSummaryHeader();
    static void printLprHeader();
    static void printLprSummaryHeader();
+   static void printTpLsHeader();
 
    // Output records
    static void print(const ArchiveFileLsItem &afls_item);
@@ -55,6 +63,7 @@ public:
    static void print(const ListPendingArchivesSummary &lpa_summary);
    static void print(const ListPendingRetrievesItem &lpr_item);
    static void print(const ListPendingRetrievesSummary &lpr_summary);
+   static void print(const TapePoolLsItem &tpls_item);
 
 private:
    //! Parse the options for a specific command/subcommand

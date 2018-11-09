@@ -37,6 +37,8 @@ struct Login {
     DBTYPE_IN_MEMORY,
     DBTYPE_ORACLE,
     DBTYPE_SQLITE,
+    DBTYPE_MYSQL,
+    DBTYPE_POSTGRESQL,
     DBTYPE_NONE
   };
 
@@ -47,12 +49,16 @@ struct Login {
    * @param user The username.
    * @param passwd The password.
    * @param db The database name.
+   * @param host The hostname of the database server.
+   * @param p The TCP/IP port on which the database server is listening.
    */
   Login(
     const DbType type,
     const std::string &user,
     const std::string &passwd,
-    const std::string &db);
+    const std::string &db,
+    const std::string &host,
+    const uint16_t p);
 
   /**
    * The type of the database.
@@ -75,15 +81,22 @@ struct Login {
   std::string database;
 
   /**
+   * The hostname of the database server.
+   */
+  std::string hostname;
+
+  /**
+   * The TCP/IP port on which the database server is listening.
+   */
+  uint16_t port;
+
+  /**
    * Reads and parses the database login information from the specified file.
    *
    * The input stream must contain one and only one connection string.
    *
-   * The format of the connection string is:
-   *
-   *   in_memory or oracle:username/password@database
-   *
-   * The file can contain multiple empty lines.
+   * See the value of Login::s_fileFormat within Login.cpp for the format of the
+   * connection string.
    *
    * The file can contain multiple comment lines where a comment
    * line starts with optional whitespace and a hash character '#'.
@@ -100,19 +113,27 @@ struct Login {
    *
    * The input stream must contain one and only one connection string.
    *
-   * The format of the connection string is:
-   *
-   *   in_memory or oracle:username/password@database
-   *
-   * The input stream can contain multiple empty lines.
-   *
-   * The input stream can contain multiple comment lines where a comment
-   * line starts with optional whitespace and a hash character '#'.
+   * See parseString documentation for the format of the connection string.
    *
    * @param inputStream The input stream to be read from.
    * @return The database login information.
    */
   static Login parseStream(std::istream &inputStream);
+
+  /**
+   * Reads and parses the database login information from the specified string.
+   *
+   * The format of the connection string is one of the following:
+   *
+   *   in_memory
+   *   oracle:username/password@database
+   *   sqlite:path
+   *   mysql:username/password@hostname:port/db_name
+   *
+   * @param connectionString The connection string.
+   * @return The database login information.
+   */
+  static Login parseString(const std::string &connectionString);
 
   /**
    * Reads the entire contents of the specified stream and returns a list of the
@@ -127,12 +148,56 @@ struct Login {
   static std::list<std::string> readNonEmptyLines(std::istream &inputStream);
 
   /**
-   * Parses the specified Oracle database connection details.
-   *
-   * @param userPassAndDb The Oracle database connection details in the form
-   * username/password@database
+   * Structure containing two strings: the database type string and the
+   * connection details string for that database type.
    */
-  static Login parseOracleUserPassAndDb(const std::string &userPassAndDb);
+  struct DbTypeAndConnectionDetails {
+    std::string dbTypeStr;
+    std::string connectionDetails;
+  };
+
+  /**
+   * Parses the specified connection string.
+   *
+   * @param connectionString The connection string.
+   * @return The database type and connection details.
+   */
+  static DbTypeAndConnectionDetails parseDbTypeAndConnectionDetails(const std::string &connectionString);
+
+  /**
+   * Parses the specified database connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parseInMemory(const std::string &connectionDetails);
+
+  /**
+   * Parses the specified database connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parseOracle(const std::string &connectionDetails);
+
+  /**
+   * Parses the specified connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parseSqlite(const std::string &connectionDetails);
+
+  /**
+   * Parses the specified connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parseMySql(const std::string &connectionDetails);
+
+  /**
+   * Parses the specified connection details.
+   *
+   * @param connectionDetails The database connection details.
+   */
+  static Login parsePostgresql(const std::string &connectionDetails);
 
   /**
    * Human readable description of the format of the database

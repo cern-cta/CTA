@@ -26,8 +26,6 @@
 
 #include "CtaAdminCmd.hpp"
 
-
-
 // Define XRootD SSI Alert message callback
 namespace XrdSsiPb {
 
@@ -68,6 +66,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    std::cout << Log::DumpProtobuf(&record.lpa_summary());  break;
          case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
          case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
+         case Data::kTplsItem:      std::cout << Log::DumpProtobuf(&record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
       }
@@ -80,6 +79,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kLpaSummary:    CtaAdminCmd::print(record.lpa_summary());  break;
          case Data::kLprItem:       CtaAdminCmd::print(record.lpr_item());     break;
          case Data::kLprSummary:    CtaAdminCmd::print(record.lpr_summary());  break;
+         case Data::kTplsItem:      CtaAdminCmd::print(record.tpls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
@@ -219,6 +219,7 @@ void CtaAdminCmd::send() const
             case HeaderType::LISTPENDINGARCHIVES_SUMMARY:  printLpaSummaryHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES:         printLprHeader(); break;
             case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: printLprSummaryHeader(); break;
+            case HeaderType::TAPEPOOL_LS:                  printTpLsHeader(); break;
             case HeaderType::NONE:
             default:                                       break;
          }
@@ -536,6 +537,57 @@ void CtaAdminCmd::print(const cta::admin::ListPendingRetrievesSummary &lpr_summa
    std::cout << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.vid()         << ' '
              << std::setfill(' ') << std::setw(13) << std::right << lpr_summary.total_files() << ' '
              << std::setfill(' ') << std::setw(12) << std::right << lpr_summary.total_size()  << ' '
+             << std::endl;
+}
+
+void CtaAdminCmd::printTpLsHeader()
+{
+   std::cout << TEXT_RED
+             << std::setfill(' ') << std::setw(18) << std::right << "name"        << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << "vo"          << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << "#tapes"      << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << "#partial"    << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << "#phys files" << ' '
+             << std::setfill(' ') << std::setw(5)  << std::right << "size"        << ' '
+             << std::setfill(' ') << std::setw(5)  << std::right << "used"        << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << "avail"       << ' '
+             << std::setfill(' ') << std::setw(6)  << std::right << "use%"        << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "encrypt"     << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "c.user"      << ' '
+             << std::setfill(' ') << std::setw(25) << std::right << "c.host"      << ' '
+             << std::setfill(' ') << std::setw(24) << std::right << "c.time"      << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << "m.user"      << ' '
+             << std::setfill(' ') << std::setw(25) << std::right << "m.host"      << ' '
+             << std::setfill(' ') << std::setw(24) << std::right << "m.time"      << ' '
+             <<                                                     "comment"     << ' '
+             << TEXT_NORMAL << std::endl;
+}
+
+void CtaAdminCmd::print(const cta::admin::TapePoolLsItem &tpls_item)
+{
+   std::string encrypt_str = tpls_item.encrypt() ? "true" : "false";
+   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
+      tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
+   double use_percent = tpls_item.capacity_bytes() > 0 ?
+      (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
+
+   std::cout << std::setfill(' ') << std::setw(18) << std::right << tpls_item.name()                          << ' '
+             << std::setfill(' ') << std::setw(10) << std::right << tpls_item.vo()                            << ' '
+             << std::setfill(' ') << std::setw(7)  << std::right << tpls_item.num_tapes()                     << ' '
+             << std::setfill(' ') << std::setw(9)  << std::right << tpls_item.num_partial_tapes()             << ' '
+             << std::setfill(' ') << std::setw(12) << std::right << tpls_item.num_physical_files()            << ' '
+             << std::setfill(' ') << std::setw(4)  << std::right << tpls_item.capacity_bytes() / 1000000000   << "G "
+             << std::setfill(' ') << std::setw(4)  << std::right << tpls_item.data_bytes()     / 1000000000   << "G "
+             << std::setfill(' ') << std::setw(5)  << std::right << avail                      / 1000000000   << "G "
+             << std::setfill(' ') << std::setw(5)  << std::right << std::fixed << std::setprecision(1) << use_percent << "% "
+             << std::setfill(' ') << std::setw(8)  << std::right << encrypt_str                               << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << tpls_item.created().username()            << ' '
+             << std::setfill(' ') << std::setw(25) << std::right << tpls_item.created().host()                << ' '
+             << std::setfill(' ') << std::setw(24) << std::right << timeToString(tpls_item.created().time())  << ' '
+             << std::setfill(' ') << std::setw(8)  << std::right << tpls_item.modified().username()           << ' '
+             << std::setfill(' ') << std::setw(25) << std::right << tpls_item.modified().host()               << ' '
+             << std::setfill(' ') << std::setw(24) << std::right << timeToString(tpls_item.modified().time()) << ' '
+             <<                                                     tpls_item.comment()
              << std::endl;
 }
 

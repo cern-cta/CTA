@@ -55,14 +55,14 @@ public:
   /**
    * Destructor.
    */
-  virtual ~OcciRset() override;
+  ~OcciRset() override;
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  virtual const std::string &getSql() const override;
+  const std::string &getSql() const override;
 
   /**
    * Attempts to get the next row of the result set.
@@ -70,7 +70,7 @@ public:
    * @return True if a row has been retrieved else false if there are no more
    * rows in the result set.
    */
-  virtual bool next() override;
+  bool next() override;
 
   /**
    * Returns true if the specified column contains a null value.
@@ -78,7 +78,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  virtual bool columnIsNull(const std::string &colName) const override;
+  bool columnIsNull(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as a string.
@@ -88,7 +88,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual optional<std::string> columnOptionalString(const std::string &colName) const override;
+  optional<std::string> columnOptionalString(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -98,7 +98,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
 
 private:
 

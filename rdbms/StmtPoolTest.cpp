@@ -38,14 +38,14 @@ protected:
 TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    auto stmt = pool.getStmt(*conn, sql, AutocommitMode::ON);
+    auto stmt = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_EQ(0, pool.getNbStmts());
   }
   ASSERT_EQ(1, pool.getNbStmts());
@@ -54,14 +54,14 @@ TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
 TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
     Stmt stmt2;
     stmt2 = std::move(stmt1);
     ASSERT_EQ(0, pool.getNbStmts());
@@ -72,14 +72,14 @@ TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
 TEST_F(cta_rdbms_StmtPoolTest, moveConstructor) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
     Stmt stmt2(std::move(stmt1));
     ASSERT_EQ(0, pool.getNbStmts());
   }
@@ -102,14 +102,14 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
     StmtPool pool;
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -119,12 +119,12 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
       stmt.executeNonQuery();
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -137,13 +137,13 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
     StmtPool pool;
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -153,12 +153,12 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
       stmt.executeNonQuery();
     }
 
     {
-      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, selectTableNamesSql, AutocommitMode::AUTOCOMMIT_ON);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
       while(rset.next()) {
@@ -177,7 +177,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -186,7 +186,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
     ASSERT_TRUE(conn->getTableNames().empty());
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
       stmt.executeNonQuery();
     }
 
@@ -195,7 +195,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -204,7 +204,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
     ASSERT_TRUE(conn->getTableNames().empty());
 
     {
-      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::ON);
+      Stmt stmt = pool.getStmt(*conn, createTableSql, AutocommitMode::AUTOCOMMIT_ON);
       stmt.executeNonQuery();
     }
 
@@ -215,15 +215,15 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const std::string sql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
   StmtPool pool;
   ASSERT_EQ(0, pool.getNbStmts());
   {
-    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::ON);
-    Stmt stmt2 = pool.getStmt(*conn, sql, AutocommitMode::ON);
+    Stmt stmt1 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
+    Stmt stmt2 = pool.getStmt(*conn, sql, AutocommitMode::AUTOCOMMIT_ON);
     ASSERT_EQ(0, pool.getNbStmts());
   }
   ASSERT_EQ(2, pool.getNbStmts());
