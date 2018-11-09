@@ -50,10 +50,10 @@ OcciStmt::OcciStmt(
   // call close() from now on
   try {
     switch(autocommitMode) {
-    case AutocommitMode::ON:
+    case AutocommitMode::AUTOCOMMIT_ON:
       m_stmt->setAutoCommit(true);
       break;
-    case AutocommitMode::OFF:
+    case AutocommitMode::AUTOCOMMIT_OFF:
       // Do nothing because an occi::Statement has autocommit turned off by default
       break;
     default:

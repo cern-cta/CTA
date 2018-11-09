@@ -96,14 +96,11 @@ public:
             for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
                Data record;
 
-               // Response type
-               record.mutable_af_item()->set_type(cta::admin::ArchiveFileItem::ARCHIVEFILE_LS);
-
                // Copy number
-               record.mutable_af_item()->set_copy_nb(jt->first);
+               record.mutable_afls_item()->set_copy_nb(jt->first);
 
                // Archive file
-               auto af = record.mutable_af_item()->mutable_af();
+               auto af = record.mutable_afls_item()->mutable_af();
                af->set_archive_id(archiveFile.archiveFileID);
                af->set_disk_instance(archiveFile.diskInstance);
                af->set_disk_id(archiveFile.diskFileId);
@@ -117,7 +114,7 @@ public:
                af->set_creation_time(archiveFile.creationTime);
 
                // Tape file
-               auto tf = record.mutable_af_item()->mutable_tf();
+               auto tf = record.mutable_afls_item()->mutable_tf();
                tf->set_vid(jt->second.vid);
                tf->set_f_seq(jt->second.fSeq);
                tf->set_block_id(jt->second.blockId);
@@ -153,12 +150,9 @@ public:
 
       Data record;
 
-      // Response type
-      record.mutable_af_summary_item()->set_type(cta::admin::ArchiveFileSummaryItem::ARCHIVEFILE_LS);
-
       // Summary statistics
-      record.mutable_af_summary_item()->set_total_files(summary.totalFiles);
-      record.mutable_af_summary_item()->set_total_size(summary.totalBytes);
+      record.mutable_afls_summary()->set_total_files(summary.totalFiles);
+      record.mutable_afls_summary()->set_total_size(summary.totalBytes);
 
       streambuf->Push(record);
 

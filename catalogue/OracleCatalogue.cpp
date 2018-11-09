@@ -146,7 +146,7 @@ OracleCatalogue::OracleCatalogue(
   const uint32_t maxTriesToConnect):
   RdbmsCatalogue(
     log,
-    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database),
+    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
     nbConns,
     nbArchiveFileListingConns,
     maxTriesToConnect) {
@@ -159,352 +159,6 @@ OracleCatalogue::~OracleCatalogue() {
 }
 
 //------------------------------------------------------------------------------
-// deleteArchiveFile
-//------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFile(const std::string &diskInstanceName, const uint64_t archiveFileId,
-  log::LogContext &lc) {
-  try {
-    const char *selectSql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "INNER JOIN STORAGE_CLASS ON "
-        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "WHERE "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
-      "FOR UPDATE";
-    utils::Timer t;
-    auto conn = m_connPool.getConn();
-    rdbms::AutoRollback autoRollback(conn);
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
-    const auto createStmtTime = t.secs();
-    selectStmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-    t.reset();
-    rdbms::Rset selectRset = selectStmt.executeQuery();
-    const auto selectFromArchiveFileTime = t.secs();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while(selectRset.next()) {
-      if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
-
-        archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
-      }
-
-      // If there is a tape file
-      if(!selectRset.columnIsNull("VID")) {
-        // Add the tape file to the archive file's in-memory structure
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset.columnString("VID");
-        tapeFile.fSeq = selectRset.columnUint64("FSEQ");
-        tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
-        tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[selectRset.columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
-
-    if(nullptr == archiveFile.get()) {
-      log::ScopedParamContainer spc(lc);
-      spc.add("fileId", archiveFileId);
-      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
-      return;
-    }
-
-    if(diskInstanceName != archiveFile->diskInstance) {
-      log::ScopedParamContainer spc(lc);
-      spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-         .add("diskInstance", archiveFile->diskInstance)
-         .add("requestDiskInstance", diskInstanceName)
-         .add("diskFileId", archiveFile->diskFileId)
-         .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-         .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-         .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-         .add("fileSize", std::to_string(archiveFile->fileSize))
-         .add("checksumType", archiveFile->checksumType)
-         .add("checksumValue", archiveFile->checksumValue)
-         .add("creationTime", std::to_string(archiveFile->creationTime))
-         .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-         .add("storageClass", archiveFile->storageClass)
-         .add("getConnTime", getConnTime)
-         .add("createStmtTime", createStmtTime)
-         .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
-      for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
-        std::stringstream tapeCopyLogStream;
-        tapeCopyLogStream << "copy number: " << it->first
-          << " vid: " << it->second.vid
-          << " fSeq: " << it->second.fSeq
-          << " blockId: " << it->second.blockId
-          << " creationTime: " << it->second.creationTime
-          << " compressedSize: " << it->second.compressedSize
-          << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-          << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-          << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-        spc.add("TAPE FILE", tapeCopyLogStream.str());
-      }
-      lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
-        "of the archived file");
-
-      exception::UserError ue;
-      ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " path=" <<
-        archiveFile->diskFileInfo.path << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
-        archiveFile->diskInstance;
-      throw ue;
-    }
-
-    t.reset();
-    {
-      const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-
-    {
-      const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
-
-    conn.commit();
-    const auto commitTime = t.secs();
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-       .add("diskInstance", archiveFile->diskInstance)
-       .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-       .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
-       .add("creationTime", std::to_string(archiveFile->creationTime))
-       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-       .add("storageClass", archiveFile->storageClass)
-       .add("getConnTime", getConnTime)
-       .add("createStmtTime", createStmtTime)
-       .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
-       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
-       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
-       .add("commitTime", commitTime);
-    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
-      std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-        << " vid: " << it->second.vid
-        << " fSeq: " << it->second.fSeq
-        << " blockId: " << it->second.blockId
-        << " creationTime: " << it->second.creationTime
-        << " compressedSize: " << it->second.compressedSize
-        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-      spc.add("TAPE FILE", tapeCopyLogStream.str());
-    }
-    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
-// deleteArchiveFileByDiskFileId
-//------------------------------------------------------------------------------
-void OracleCatalogue::deleteArchiveFileByDiskFileId(const std::string &diskInstanceName, const std::string &diskFileId,
-  log::LogContext &lc) {
-  try {
-    const char *const selectSql =
-      "SELECT "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
-        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
-        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
-        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
-        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
-        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
-        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
-        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
-        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
-        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
-        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
-        "TAPE_FILE.VID AS VID,"
-        "TAPE_FILE.FSEQ AS FSEQ,"
-        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
-        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
-        "TAPE_FILE.COPY_NB AS COPY_NB,"
-        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME "
-      "FROM "
-        "ARCHIVE_FILE "
-      "INNER JOIN STORAGE_CLASS ON "
-        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
-      "LEFT OUTER JOIN TAPE_FILE ON "
-        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
-      "WHERE "
-        "ARCHIVE_FILE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "ARCHIVE_FILE.DISK_FILE_ID = :DISK_FILE_ID "
-      "FOR UPDATE";
-    utils::Timer t;
-    auto conn = m_connPool.getConn();
-    const auto getConnTime = t.secs(utils::Timer::resetCounter);
-    auto selectStmt = conn.createStmt(selectSql, rdbms::AutocommitMode::OFF);
-    const auto createStmtTime = t.secs();
-    selectStmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
-    selectStmt.bindString(":DISK_FILE_ID", diskFileId);
-    t.reset();
-    rdbms::Rset selectRset = selectStmt.executeQuery();
-    const auto selectFromArchiveFileTime = t.secs();
-    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
-    while(selectRset.next()) {
-      if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
-
-        archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
-        archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
-        archiveFile->diskFileId = selectRset.columnString("DISK_FILE_ID");
-        archiveFile->diskFileInfo.path = selectRset.columnString("DISK_FILE_PATH");
-        archiveFile->diskFileInfo.owner = selectRset.columnString("DISK_FILE_USER");
-        archiveFile->diskFileInfo.group = selectRset.columnString("DISK_FILE_GROUP");
-        archiveFile->diskFileInfo.recoveryBlob = selectRset.columnString("DISK_FILE_RECOVERY_BLOB");
-        archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-        archiveFile->checksumType = selectRset.columnString("CHECKSUM_TYPE");
-        archiveFile->checksumValue = selectRset.columnString("CHECKSUM_VALUE");
-        archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
-        archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-        archiveFile->reconciliationTime = selectRset.columnUint64("RECONCILIATION_TIME");
-      }
-
-      // If there is a tape file
-      if(!selectRset.columnIsNull("VID")) {
-        // Add the tape file to the archive file's in-memory structure
-        common::dataStructures::TapeFile tapeFile;
-        tapeFile.vid = selectRset.columnString("VID");
-        tapeFile.fSeq = selectRset.columnUint64("FSEQ");
-        tapeFile.blockId = selectRset.columnUint64("BLOCK_ID");
-        tapeFile.compressedSize = selectRset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
-        tapeFile.copyNb = selectRset.columnUint64("COPY_NB");
-        tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-        tapeFile.checksumType = archiveFile->checksumType; // Duplicated for convenience
-        tapeFile.checksumValue = archiveFile->checksumValue; // Duplicated for convenience
-
-        archiveFile->tapeFiles[selectRset.columnUint64("COPY_NB")] = tapeFile;
-      }
-    }
-
-    if(nullptr == archiveFile.get()) {
-      log::ScopedParamContainer spc(lc);
-      spc.add("diskInstanceName", diskInstanceName);
-      spc.add("diskFileId", diskFileId);
-      lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
-      return;
-    }
-
-    t.reset();
-    {
-      const char *const sql = "DELETE FROM TAPE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-
-    {
-      const char *const sql = "DELETE FROM ARCHIVE_FILE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-      auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile->archiveFileID);
-      stmt.executeNonQuery();
-    }
-    const auto deleteFromArchiveFileTime = t.secs(utils::Timer::resetCounter);
-
-    conn.commit();
-    const auto commitTime = t.secs();
-
-    log::ScopedParamContainer spc(lc);
-    spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-       .add("diskInstance", archiveFile->diskInstance)
-       .add("diskFileId", archiveFile->diskFileId)
-       .add("diskFileInfo.path", archiveFile->diskFileInfo.path)
-       .add("diskFileInfo.owner", archiveFile->diskFileInfo.owner)
-       .add("diskFileInfo.group", archiveFile->diskFileInfo.group)
-       .add("fileSize", std::to_string(archiveFile->fileSize))
-       .add("checksumType", archiveFile->checksumType)
-       .add("checksumValue", archiveFile->checksumValue)
-       .add("creationTime", std::to_string(archiveFile->creationTime))
-       .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-       .add("storageClass", archiveFile->storageClass)
-       .add("getConnTime", getConnTime)
-       .add("createStmtTime", createStmtTime)
-       .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
-       .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
-       .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
-       .add("commitTime", commitTime);
-    for(auto it=archiveFile->tapeFiles.begin(); it!=archiveFile->tapeFiles.end(); it++) {
-      std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << it->first
-        << " vid: " << it->second.vid
-        << " fSeq: " << it->second.fSeq
-        << " blockId: " << it->second.blockId
-        << " creationTime: " << it->second.creationTime
-        << " compressedSize: " << it->second.compressedSize
-        << " checksumType: " << it->second.checksumType //this shouldn't be here: repeated field
-        << " checksumValue: " << it->second.checksumValue //this shouldn't be here: repeated field
-        << " copyNb: " << it->second.copyNb; //this shouldn't be here: repeated field
-      spc.add("TAPE FILE", tapeCopyLogStream.str());
-    }
-    lc.log(log::INFO, "Archive file deleted from CTA catalogue");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getNextArchiveFileId
 //------------------------------------------------------------------------------
 uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
@@ -514,7 +168,7 @@ uint64_t OracleCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
         "ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
@@ -539,7 +193,7 @@ uint64_t OracleCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
         "STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID "
       "FROM "
         "DUAL";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
       throw exception::Exception(std::string("Result set is unexpectedly empty"));
@@ -595,7 +249,7 @@ common::dataStructures::Tape OracleCatalogue::selectTapeForUpdate(rdbms::Conn &c
       "WHERE "
         "VID = :VID "
       "FOR UPDATE";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -725,20 +379,20 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, rdbms::AutocommitMode::OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
+    updateTape(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, lastEvent.vid, lastEvent.fSeq, totalCompressedBytesWritten,
       lastEvent.tapeDrive);
 
     // If we had only placeholders and no file recorded, we are done.
     if (fileEvents.empty()) return;
     
     // Create the archive file entries, skipping those that already exist
-    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    idempotentBatchInsertArchiveFiles(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
 
-    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    insertTapeFileBatchIntoTempTable(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
 
     // Verify that the archive file entries in the catalogue database agree with
     // the tape file written events
-    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::OFF, fileEvents);
+    const auto fileSizesAndChecksums = selectArchiveFileSizesAndChecksums(conn, rdbms::AutocommitMode::AUTOCOMMIT_OFF, fileEvents);
     for (const auto &event: fileEvents) {
       const auto fileSizeAndChecksumItor = fileSizesAndChecksums.find(event.archiveFileId);
 
@@ -807,7 +461,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         ":COPY_NB,"
         ":CREATION_TIME,"
         ":ARCHIVE_FILE_ID)";
-    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::OFF);
+    auto stmt = conn.createStmt(sql, rdbms::AutocommitMode::AUTOCOMMIT_OFF);
     rdbms::wrapper::OcciStmt &occiStmt = dynamic_cast<rdbms::wrapper::OcciStmt &>(stmt.getStmt());
     occiStmt.setColumn(tapeFileBatch.vid);
     occiStmt.setColumn(tapeFileBatch.fSeq);

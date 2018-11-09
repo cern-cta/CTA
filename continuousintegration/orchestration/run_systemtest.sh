@@ -18,6 +18,8 @@ useoracle=0
 useceph=0
 # by default do not use systemd to manage services in containers
 usesystemd=0
+# time out for the kubernetes eoscta instance creation
+CREATEINSTANCE_TIMEOUT=1400
 # default systemtest timeout is 1 hour
 SYSTEMTEST_TIMEOUT=3600
 
@@ -150,7 +152,7 @@ function execute_log {
 
   if [ "${execute_log_rc}" == "" ]; then
     echo "TIMEOUTING COMMAND, setting exit status to 1"
-    kill -9 ${execute_log_pid}
+    kill -9 -${execute_log_pid}
     execute_log_rc=1
   fi
 
@@ -165,7 +167,7 @@ function execute_log {
 }
 
 # create instance timeout after 10 minutes
-execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" 1000
+execute_log "./create_instance.sh -n ${namespace} ${CREATE_OPTS} 2>&1" "${log_dir}/create_instance.log" ${CREATEINSTANCE_TIMEOUT}
 
 # launch system test and timeout after ${SYSTEMTEST_TIMEOUT} seconds
 cd $(dirname ${systemtest_script})

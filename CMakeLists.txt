@@ -147,6 +147,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
+  add_subdirectory(XRootdSSiRmcd)
   
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
@@ -170,7 +171,6 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
     RPMTools_ADD_RPM_TARGETS(
       ${PROJECT_NAME} ${PROJECT_NAME}.spec.in)
   endif (RPMTools_FOUND)
-  add_dependencies(cta_rpm cta_python_package_rpm)
 endif (${COMPILE_PACKAGING} STREQUAL "1")
 
 #add_custom_target(test test/castorUnitTests

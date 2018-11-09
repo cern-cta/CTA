@@ -521,6 +521,21 @@ TEST_F(cta_UtilsTest, testGoodDaySplitString) {
 }
 
 /**
+ * Tests passing only separators to the splitString() method.
+ */
+TEST_F(cta_UtilsTest, testSplitStringOnlySeparators) {
+  using namespace cta;
+  const std::string line(":::::");
+  std::vector<std::string> columns;
+
+  ASSERT_NO_THROW(utils::splitString(line, ':', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type)6, columns.size());
+  for(uint32_t i = 0 ; i < 6; i++) {
+    ASSERT_TRUE(columns[i].empty());
+  }
+}
+
+/**
  * Test the case of an empty string being passed to the splitString() method.
  */
 TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {

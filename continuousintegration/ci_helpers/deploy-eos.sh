@@ -83,7 +83,7 @@ then
 fi
 
 # Rely in xrootd to do the copy of files to EOS
-$xrdcp --force --recursive $CI_OUTPUT_DIR/ root://eosuser.cern.ch/$EOS_PATH/ 2>&1 >/dev/null
+$xrdcp --force --recursive $CI_OUTPUT_DIR/ root://eoshome.cern.ch/$EOS_PATH/ 2>&1 >/dev/null
 if [ $? -ne 0 ]
 then
     echo ERROR: Failed to copy files to $EOS_PATH via xrdcp

@@ -27,6 +27,7 @@ using XrdSsiPb::PbException;
 #include <cmdline/CtaAdminCmdParse.hpp>
 #include "XrdCtaArchiveFileLs.hpp"
 #include "XrdCtaListPendingQueue.hpp"
+#include "XrdCtaTapePoolLs.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
 
@@ -250,7 +251,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processTapePool_Rm(request.admincmd(), response);
                break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
-               processTapePool_Ls(request.admincmd(), response);
+               processTapePool_Ls(request.admincmd(), response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_TEST, AdminCmd::SUBCMD_READ):
                processTest_Read(request.admincmd(), response);
@@ -1974,48 +1975,16 @@ void RequestMessage::processTapePool_Rm(const cta::admin::AdminCmd &admincmd, ct
 
 
 
-void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+void RequestMessage::processTapePool_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response, XrdSsiStream* &stream)
 {
    using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+   // Create a XrdSsi stream object to return the results
+   stream = new TapePoolLsStream(m_catalogue);
 
-   const std::list<cta::catalogue::TapePool> tp_list= m_catalogue.getTapePools();
+   // Should the client display column headers?
+   if(has_flag(OptionBoolean::SHOW_HEADER)) response.set_show_header(HeaderType::TAPEPOOL_LS);
 
-   if(!tp_list.empty())
-   {
-      const std::vector<std::string> header = {
-         "name","vo", "# tapes","# partial","size","used","avail","use%","encrypt",
-         "c.user","c.host","c.time","m.user","m.host","m.time","comment"
-      };
-      std::vector<std::vector<std::string>> responseTable;
-      if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);
-      for(auto &tp : tp_list) {
-         std::vector<std::string> currentRow;
-
-         uint64_t avail = tp.capacityBytes > tp.dataBytes ? tp.capacityBytes - tp.dataBytes : 0; 
-         double use_d = (static_cast<double>(tp.dataBytes) / static_cast<double>(tp.capacityBytes)) * 100.0;
-         std::ostringstream use;
-         use << std::fixed << std::setprecision(1) <<(use_d < 0.0 ? 0.0 : use_d) << '%';
-
-         currentRow.push_back(tp.name);
-         currentRow.push_back(tp.vo);
-         currentRow.push_back(std::to_string(tp.nbTapes));
-         currentRow.push_back(std::to_string(tp.nbPartialTapes));
-         currentRow.push_back(std::to_string(tp.capacityBytes/1000000000) + "G");
-         currentRow.push_back(std::to_string(tp.dataBytes/1000000000) + "G");
-         currentRow.push_back(std::to_string(avail/1000000000) + "G");
-         currentRow.push_back(use.str());
-         currentRow.push_back(tp.encryption ? "true" : "false");
-         addLogInfoToResponseRow(currentRow, tp.creationLog, tp.lastModificationLog);
-         currentRow.push_back(tp.comment);
-
-         responseTable.push_back(currentRow);
-      }
-      cmdlineOutput << formatResponse(responseTable);
-   }
-
-   response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

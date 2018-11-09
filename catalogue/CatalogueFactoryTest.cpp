@@ -54,7 +54,7 @@ TEST_F(cta_catalogue_CatalogueFactoryTest, instance_in_memory) {
   using namespace cta;
   using namespace cta::catalogue;
 
-  rdbms::Login login(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "");
+  rdbms::Login login(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
   std::unique_ptr<Catalogue> catalogue(CatalogueFactory::create(m_dummyLog, login, nbConns, nbArchiveFileListingConns));
