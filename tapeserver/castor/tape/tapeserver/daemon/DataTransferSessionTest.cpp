@@ -1662,10 +1662,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
+  size_t archiveFileCount = 0;
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
+    archiveFileCount++;
     // Only the first files made it through.
-    if (afi <= 4) {
+    if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       ASSERT_EQ(sf->adler32(), afs.checksumValue);
@@ -1815,10 +1817,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
+  size_t archiveFileCount = 0;
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
+    archiveFileCount++;
     // Only the first files made it through.
-    if (afi <= 4) {
+    if (archiveFileCount <= 3) {
       auto afs = catalogue.getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       ASSERT_EQ(sf->adler32(), afs.checksumValue);
