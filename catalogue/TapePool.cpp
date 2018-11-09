@@ -29,7 +29,8 @@ TapePool::TapePool():
   encryption(false),
   nbTapes(0),
   capacityBytes(0),
-  dataBytes(0) {
+  dataBytes(0),
+  nbPhysicalFiles(0) {
 }
 
 //------------------------------------------------------------------------------

@@ -17,109 +17,17 @@
  */
 
 #include "Acs.hpp"
-#include "common/utils/utils.hpp"
 
 #include <iomanip>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::mediachanger::acs::Acs::~Acs() {
-}
-
-//------------------------------------------------------------------------------
-// str2DriveId
-//------------------------------------------------------------------------------
-DRIVEID cta::mediachanger::acs::Acs::str2DriveId(const std::string &str) {
-  std::vector<std::string> components;
-  cta::utils::splitString(str, ':', components);
-
-  // The drive ID should consist of 4 components: ACS, LSM, Panel and Transport
-  if(4 != components.size()) {
-    //cta::exception::InvalidArgument ex;
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid number of components in drive ID"
-      ": expected=4, actual=" << components.size();
-    throw ex;
-  }
-
-  const std::string &acsStr = components[0];
-  const std::string &lsmStr = components[1];
-  const std::string &panStr = components[2];
-  const std::string &drvStr = components[3];
-
-  // Each of the 4 components must be between 1 and than 3 characters long
-  if(1 > acsStr.length() ||  3 < acsStr.length()) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid ACS string length"
-      ": expected=1..3, actual=" << acsStr.length();
-    throw ex;
-  }
-  if(1 > lsmStr.length() || 3 < lsmStr.length()) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid LSM string length"
-      ": expected=1..3, actual=" << lsmStr.length();
-    throw ex;
-  }
-  if(1 > panStr.length() || 3 < panStr.length()) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid panel string length"
-      ": expected=1..3, actual=" << panStr.length();
-    throw ex;
-  }
-  if(1 > drvStr.length() || 3 < drvStr.length()) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid drive string length"
-      ": expected=1..3, actual=" << drvStr.length();
-    throw ex;
-  }
-
-  // Each of the 4 components must only contain numerals
-  if(!onlyContainsNumerals(acsStr)) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "ACS must only contain numerals: value=" << acsStr;
-    throw ex;
-  }
-  if(!onlyContainsNumerals(lsmStr)) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "LSM must only contain numerals: value=" << acsStr;
-    throw ex;
-  }
-  if(!onlyContainsNumerals(panStr)) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Panel must only contain numerals: value=" << acsStr;
-    throw ex;
-  }
-  if(!onlyContainsNumerals(drvStr)) {
-    cta::exception::InvalidArgument ex;
-    ex.getMessage() << "Drive/Transport must only contain numerals: value=" <<
-      acsStr;
-    throw ex;
-  }
-
-  DRIVEID driveId;
-  driveId.panel_id.lsm_id.acs = (ACS)atoi(acsStr.c_str());
-  driveId.panel_id.lsm_id.lsm = (LSM)atoi(lsmStr.c_str());
-  driveId.panel_id.panel = (PANEL)atoi(panStr.c_str());
-  driveId.drive = (DRIVE)atoi(drvStr.c_str());
-
-  return driveId;
-}
-
-//------------------------------------------------------------------------------
-// onlyContainsNumerals
-//------------------------------------------------------------------------------
-bool cta::mediachanger::acs::Acs::onlyContainsNumerals(const std::string &str) {
-  for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    itor++) {
-    if(*itor < '0' || *itor  > '9') {
-      return false;
-    }
-  }
-  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -142,7 +50,7 @@ DRIVEID cta::mediachanger::acs::Acs::alpd2DriveId(const uint32_t acs,
 //------------------------------------------------------------------------------
 VOLID cta::mediachanger::acs::Acs::str2Volid(const std::string &str) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
-    cta::exception::InvalidArgument ex;
+    InvalidVolid ex;
     ex.getMessage() << "Failed to convert string to volume identifier"
       ": String is longer than the " << EXTERNAL_LABEL_SIZE <<
       " character maximum";

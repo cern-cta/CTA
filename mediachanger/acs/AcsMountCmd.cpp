@@ -84,11 +84,11 @@ void cta::mediachanger::acs::AcsMountCmd::syncMount() {
     requestResponsesUntilFinal(requestSeqNumber, buf, m_cmdLine.queryInterval,
       m_cmdLine.timeout);
     processMountResponse(buf);
-  } catch(cta::exception::Exception &ex) {
-    cta::exception::MountFailed mf;
-    mf.getMessage() << "Failed to mount volume " <<
-      m_cmdLine.volId.external_label << ": " << ex.getMessage().str();
-    throw mf;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to mount volume " <<
+      m_cmdLine.volId.external_label << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -105,7 +105,7 @@ void cta::mediachanger::acs::AcsMountCmd::sendMountRequest(const SEQ_NO seqNumbe
   m_dbg << "Acs::mount() returned " << acs_status(s) << std::endl;
 
   if(STATUS_SUCCESS != s) {
-    cta::exception::MountFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to send request to mount volume " <<
       m_cmdLine.volId.external_label << " into drive " <<
       m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": readOnly=" <<
@@ -123,7 +123,7 @@ void cta::mediachanger::acs::AcsMountCmd::processMountResponse(
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->mount_status) {
-    cta::exception::MountFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Status of mount response is not success: " <<
       acs_status(msg->mount_status);
     throw ex;

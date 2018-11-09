@@ -37,7 +37,7 @@ protected:
 TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   const uint64_t nbConns = 2;
   ConnPool pool(login, nbConns);
 
@@ -47,7 +47,7 @@ TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
 TEST_F(cta_rdbms_ConnPoolTest, assignment) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   const uint64_t nbConns = 2;
   ConnPool pool(login, nbConns);
 
@@ -61,7 +61,7 @@ TEST_F(cta_rdbms_ConnPoolTest, assignment) {
 TEST_F(cta_rdbms_ConnPoolTest, moveConstructor) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared");
+  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
   const uint64_t nbConns = 2;
   ConnPool pool(login, nbConns);
 

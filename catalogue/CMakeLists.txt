@@ -68,8 +68,17 @@ target_link_libraries (ctacatalogue
   ctardbms)
 
 add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql
-  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql > sqlite_catalogue_schema.sql
-  COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql > oracle_catalogue_schema.sql
+  COMMAND cat
+    ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
+    > sqlite_catalogue_schema.sql
+  COMMAND cat
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
+    | sed 's/VARCHAR/VARCHAR2/g'
+    > oracle_catalogue_schema.sql
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql

@@ -19,7 +19,6 @@
 
 #include "AcsQueryDriveCmd.hpp"
 #include "AcsQueryDriveCmdLine.hpp"
-#include "common/exception/QueryVolumeFailed.hpp"
 #include <getopt.h>
 #include <iostream>
 #include <string.h>
@@ -84,11 +83,11 @@ void cta::mediachanger::acs::AcsQueryDriveCmd::syncQueryDrive() {
     requestResponsesUntilFinal(requestSeqNumber, buf, m_cmdLine.queryInterval,
       m_cmdLine.timeout);
     processQueryResponse(m_out, buf);
-  } catch(cta::exception::Exception &ex) {
-    cta::exception::QueryVolumeFailed qf;
-    qf.getMessage() << "Failed to query drive " <<
-      m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": " << ex.getMessage().str();
-    throw qf;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to query drive " <<
+      m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -103,7 +102,7 @@ void cta::mediachanger::acs::AcsQueryDriveCmd::sendQueryDriveRequest(
   m_dbg << "Acs::queryDrive() returned " << acs_status(s) << std::endl;
 
   if(STATUS_SUCCESS != s) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to send query request for drive " <<
      m_acs.driveId2Str(m_cmdLine.libraryDriveSlot)<< ": " << acs_status(s);
     throw ex;
@@ -120,14 +119,14 @@ void cta::mediachanger::acs::AcsQueryDriveCmd::processQueryResponse(
   const ACS_QUERY_DRV_RESPONSE *const msg = (ACS_QUERY_DRV_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->query_drv_status) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Status of query response is not success: " <<
       acs_status(msg->query_drv_status);
     throw ex;
   }
 
   if((unsigned short)1 != msg->count) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Query response does not contain a single drive: count="
       << msg->count;
     throw ex;
@@ -137,7 +136,7 @@ void cta::mediachanger::acs::AcsQueryDriveCmd::processQueryResponse(
   const QU_DRV_STATUS &drvStatus = msg->drv_status[0];
 
   if(m_acs.driveId2Str(m_cmdLine.libraryDriveSlot)!= m_acs.driveId2Str(drvStatus.drive_id)) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Drive identifier of query response does not match that of request"
       " requestDriveID=" <<m_acs.driveId2Str(m_cmdLine.libraryDriveSlot) <<

@@ -262,11 +262,7 @@ void splitString(const std::string &str, const char separator,
     endIndex = str.find(separator, endIndex);
   }
 
-  // If no separator could not be found then simply append the whole input
-  // string to the result
-  if(endIndex == std::string::npos) {
-    result.push_back(str.substr(beginIndex, str.length()));
-  }
+  result.push_back(str.substr(beginIndex));
 }
 
 //-----------------------------------------------------------------------------

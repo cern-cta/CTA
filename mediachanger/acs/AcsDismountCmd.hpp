@@ -20,9 +20,6 @@
 
 #include "AcsCmd.hpp"
 #include "AcsDismountCmdLine.hpp"
-#include "common/exception/DismountFailed.hpp"
-#include "common/exception/InvalidArgument.hpp"
-#include "common/exception/MissingOperand.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -85,8 +82,7 @@ protected:
   void sendDismountRequest(const SEQ_NO seqNumber);
 
   /**
-   * Throws cta::exception::DismountFailed if the mount was not
-   * successful.
+   * Process dismount response.
    *
    * @param buf The mount-response message.
    */

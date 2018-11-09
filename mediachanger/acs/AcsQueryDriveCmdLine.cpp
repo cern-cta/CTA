@@ -20,8 +20,6 @@
 #include "Acs.hpp"
 #include "AcsQueryDriveCmdLine.hpp"
 #include "Constants.hpp"
-#include "common/exception/InvalidArgument.hpp"
-#include "common/exception/MissingOperand.hpp"
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,7 +82,7 @@ cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine(const int arg
 
   // Check that DRIVE_SLOT has been specified
   if(1 > nbArgs) {
-    cta::exception::MissingOperand ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "DRIVE_SLOT must be specified";
     throw ex;
   }
@@ -97,7 +95,7 @@ cta::mediachanger::acs::AcsQueryDriveCmdLine::AcsQueryDriveCmdLine(const int arg
   }
 
   // Parse DRIVE_SLOT
-  libraryDriveSlot = Acs::str2DriveId(argv[optind]);
+  libraryDriveSlot = str2DriveId(argv[optind]);
 }
 
 //------------------------------------------------------------------------------

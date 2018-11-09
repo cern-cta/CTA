@@ -41,6 +41,14 @@ filename and then running \fBeos stagerm fxid:<fid-hex>\fP.
 Prints the usage message.
 .SH RETURN VALUE
 Zero on success and non-zero on failure.
+.SH FILES
+.TP
+.B /etc/cta/cta-fst-gcd.conf
+The configuration file of the \fBcta-fst-gcd\fP daemon.
+
+.TP
+.B /var/log/eos/fst/cta-fst-gcd.log
+The log file of the \fBcta-fst-gcd\fP daemon.
 
 .SH AUTHOR
 \fBCTA\fP Team

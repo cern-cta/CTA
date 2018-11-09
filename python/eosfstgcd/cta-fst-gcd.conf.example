@@ -23,5 +23,6 @@
 
 # There must always be a main section
 [main]
+mgmhost=HOSTNAME.2NDLEVEL.TOPLEVEL
 minfreebytes = 10000000000 ; Minimum number of free bytes a filesystem should have
 gcagesecs = 7200 ; The age at which a file can be considered for garbage collection

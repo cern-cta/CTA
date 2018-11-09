@@ -84,10 +84,10 @@ SqliteStmt::SqliteStmt(
   // m_stmt has been set so it is safe to call close() from now on
   try {
     switch(autocommitMode) {
-    case AutocommitMode::ON:
+    case AutocommitMode::AUTOCOMMIT_ON:
       // Do nothing because SQLite statements autocommit be default
       break;
-    case AutocommitMode::OFF: {
+    case AutocommitMode::AUTOCOMMIT_OFF: {
       if(!m_conn.m_transactionInProgress) {
         beginDeferredTransaction();
         m_conn.m_transactionInProgress = true;

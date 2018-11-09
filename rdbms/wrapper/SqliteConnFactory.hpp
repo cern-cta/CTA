@@ -40,14 +40,14 @@ public:
   /**
    * Destructor.
    */
-  virtual ~SqliteConnFactory() override;
+  ~SqliteConnFactory() override;
 
   /**
    * Returns a newly created database connection.
    *
    * @return A newly created database connection.
    */
-  virtual std::unique_ptr<Conn> create() override;
+  std::unique_ptr<Conn> create() override;
 
 private:
 

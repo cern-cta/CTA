@@ -157,7 +157,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn, const std::list<std::s
     for(auto tableToDrop : tablesToDrop) {
       const bool tableToDropIsInDb = tablesInDb.end() != std::find(tablesInDb.begin(), tablesInDb.end(), tableToDrop);
       if(tableToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::AutocommitMode::ON);
+        conn.executeNonQuery(std::string("DROP TABLE ") + tableToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
         m_out << "Dropped table " << tableToDrop << std::endl;
       }
     }
@@ -208,7 +208,7 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn, const std::list<std
       const bool sequenceToDropIsInDb = sequencesInDb.end() != std::find(sequencesInDb.begin(), sequencesInDb.end(),
         sequenceToDrop);
       if(sequenceToDropIsInDb) {
-        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::AutocommitMode::ON);
+        conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequenceToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
         m_out << "Dropped sequence " << sequenceToDrop << std::endl;
       }
     }

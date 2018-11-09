@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "common/exception/InvalidArgument.hpp"
+#include "common/exception/Exception.hpp"
+
 extern "C" {
 #include "acssys.h"
 #include "acsapi.h"
@@ -43,17 +44,6 @@ public:
   virtual ~Acs() = 0;
 
   /**
-   * Parses the specified string and returns the corresponding drive ID object.
-   *
-   * This method throws a cta::exception::InvalidArgument if the syntax of
-   * the string is invalid.
-   *
-   * @param str The string to be parsed.
-   * @return The drive ID object.
-   */
-  static DRIVEID str2DriveId(const std::string &str);
-
-  /**
    * Converts acs, lsm, panel, drive numbers to the corresponding 
    * drive ID object.
    * 
@@ -67,13 +57,19 @@ public:
     const uint32_t panel, const uint32_t drive);
 
   /**
+   * Invalid volume identifier.
+   */
+  struct InvalidVolid: public exception::Exception {
+    InvalidVolid(const std::string &context = "", const bool embedBacktrace = true):
+      cta::exception::Exception(context, embedBacktrace) {}
+  };
+
+  /**
    * Returns the VOLID equibvalent of the specified string.
-   *
-   * This method throws a cta::exception::InvalidArgument if the string is
-   * longer than EXTERNAL_LABEL_SIZE.
    *
    * @param str The string representation of the volume identifier.
    * @return The VOLID representation of the volume identifier.
+   * @throw InvalidVolid if the string is longer than EXTERNAL_LABEL_SIZE.
    */
   static VOLID str2Volid(const std::string &str);
   
@@ -164,15 +160,6 @@ public:
     const SEQ_NO seqNumber,
     VOLID (&volIds)[MAX_ID],
     const unsigned short count) = 0;
-
-protected:
-
-  /**
-   * Returns true if the specified string only contains numerals else false.
-   *
-   * @return True if the specified string only contains numerals else false.
-   */
-  static bool onlyContainsNumerals(const std::string &str);
 
 }; // class  Acs
 

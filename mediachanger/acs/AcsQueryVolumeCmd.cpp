@@ -19,7 +19,6 @@
 
 #include "AcsQueryVolumeCmd.hpp"
 #include "AcsQueryVolumeCmdLine.hpp"
-#include "common/exception/QueryVolumeFailed.hpp"
 #include <getopt.h>
 #include <iostream>
 #include <string.h>
@@ -84,11 +83,11 @@ void cta::mediachanger::acs::AcsQueryVolumeCmd::syncQueryVolume() {
     requestResponsesUntilFinal(requestSeqNumber, buf, m_cmdLine.queryInterval,
       m_cmdLine.timeout);
     processQueryResponse(m_out, buf);
-  } catch(cta::exception::Exception &ex) {
-    cta::exception::QueryVolumeFailed qf;
-    qf.getMessage() << "Failed to query volume " <<
-      m_cmdLine.volId.external_label << ": " << ex.getMessage().str();
-    throw qf;
+  } catch(cta::exception::Exception &ne) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "Failed to query volume " <<
+      m_cmdLine.volId.external_label << ": " << ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -109,7 +108,7 @@ void cta::mediachanger::acs::AcsQueryVolumeCmd::sendQueryVolumeRequest(
   m_dbg << "Acs::queryVolume() returned " << acs_status(s) << std::endl;
 
   if(STATUS_SUCCESS != s) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Failed to send query request for volume " <<
       m_cmdLine.volId.external_label << ": " << acs_status(s);
     throw ex;
@@ -126,14 +125,14 @@ void cta::mediachanger::acs::AcsQueryVolumeCmd::processQueryResponse(
   const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->query_vol_status) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Status of query response is not success: " <<
       acs_status(msg->query_vol_status);
     throw ex;
   }
 
   if((unsigned short)1 != msg->count) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() << "Query response does not contain a single volume: count="
       << msg->count;
     throw ex;
@@ -143,7 +142,7 @@ void cta::mediachanger::acs::AcsQueryVolumeCmd::processQueryResponse(
   const QU_VOL_STATUS &volStatus = msg->vol_status[0];
 
   if(strcmp(m_cmdLine.volId.external_label, volStatus.vol_id.external_label)) {
-    cta::exception::QueryVolumeFailed ex;
+    cta::exception::Exception ex;
     ex.getMessage() <<
       "Volume identifier of query response does not match that of request"
       ": requestVID=" << m_cmdLine.volId.external_label <<
