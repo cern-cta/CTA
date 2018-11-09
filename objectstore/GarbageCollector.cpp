@@ -42,7 +42,7 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
 
 void GarbageCollector::runOnePass(log::LogContext & lc) {
   trimGoneTargets(lc);
-  aquireTargets(lc);
+  acquireTargets(lc);
   checkHeartbeats(lc);
 }
   
@@ -66,7 +66,7 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
   }
 }
 
-void GarbageCollector::aquireTargets(log::LogContext & lc) {
+void GarbageCollector::acquireTargets(log::LogContext & lc) {
   m_agentRegister.fetchNoLock();
   // We will now watch all agents we do not know about yet.
   std::list<std::string> candidatesList = m_agentRegister.getUntrackedAgents();
@@ -85,7 +85,7 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
       try {
         ag.fetchNoLock();
       } catch (...) {
-        // The agent could simply be gone... (If not, let the complain go through).
+        // The agent could simply be gone... (if not, let the complaint go through)
         if (m_objectStore.exists(c)) throw;
         continue;
       }
@@ -94,13 +94,12 @@ void GarbageCollector::aquireTargets(log::LogContext & lc) {
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", ag.getAddressIfSet())
             .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
-      lc.log(log::INFO, "In GarbageCollector::aquireTargets(): started tracking an untracked agent");
+      lc.log(log::INFO, "In GarbageCollector::acquireTargets(): started tracking an untracked agent");
       // Agent is to be tracked, let's track it.
       double timeout=ag.getTimeout();
-      // The creation of the watchdog could fail as well (if agent gets deleted in the mean time).
+      // The creation of the watchdog could fail as well (if agent gets deleted in the meantime).
       try {
-        m_watchedAgents[c] =
-          new AgentWatchdog(c, m_objectStore);
+        m_watchedAgents[c] = new AgentWatchdog(c, m_objectStore);
         m_watchedAgents[c]->setTimeout(timeout);
       } catch (...) {
         if (m_objectStore.exists(c)) throw;

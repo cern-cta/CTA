@@ -29,7 +29,7 @@
  * Plan => Garbage collector keeps track of the agents.
  * If an agent is declared dead => tape ownership of owned objects
  * Using the backup owner, re-post the objet to the container.
- * All containers will have a "repost" method, which is more thourough 
+ * All containers will have a "repost" method, which is more thorough 
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
 
@@ -44,7 +44,7 @@ public:
   
   void runOnePass(log::LogContext & lc);
   
-  void aquireTargets(log::LogContext & lc);
+  void acquireTargets(log::LogContext & lc);
   
   void trimGoneTargets(log::LogContext & lc);
   

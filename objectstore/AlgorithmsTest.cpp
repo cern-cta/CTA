@@ -72,7 +72,7 @@ void fillRetrieveRequests(
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
-      cta::make_unique<RetrieveRequest>(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
+      new RetrieveRequest(rrAddr, be), 1, i, 667, mp, serializers::RetrieveJobStatus::RJS_ToTransfer
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();
@@ -81,7 +81,7 @@ void fillRetrieveRequests(
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
     sReq.creationLog.time = time(nullptr);
     rr.setSchedulerRequest(sReq);
-    rr.addJob(1, 1, 1);
+    rr.addJob(1, 1, 1, 1);
     rr.setOwner(agentRef.getAgentAddress());
     rr.setActiveCopyNumber(1);
     rr.insert();

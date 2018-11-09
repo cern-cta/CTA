@@ -79,7 +79,7 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto & sdrj: dbJobBatch) {
-    ret.emplace_back(new RetrieveJob(*this,
+    ret.emplace_back(new RetrieveJob(this,
       sdrj->retrieveRequest, sdrj->archiveFile, sdrj->selectedCopyNb,
       PositioningMethod::ByBlock));
     ret.back()->m_dbJob.reset(sdrj.release());

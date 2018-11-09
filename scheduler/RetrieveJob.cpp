@@ -32,7 +32,7 @@ cta::RetrieveJob::~RetrieveJob() throw() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob(RetrieveMount &mount,
+cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
   const common::dataStructures::RetrieveRequest &retrieveRequest,
   const common::dataStructures::ArchiveFile & archiveFile,
   const uint64_t selectedCopyNb,
@@ -58,6 +58,24 @@ void cta::RetrieveJob::checkComplete() {
   m_dbJob->checkSucceed();
 }
 
+//------------------------------------------------------------------------------
+// reportFailed
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
+  m_dbJob->failReport(failureReason, lc);
+}
+
+
+//------------------------------------------------------------------------------
+// transferFailed
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::transferFailed(const std::string &failureReason, log::LogContext &lc) {
+  // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
+  m_dbJob->failTransfer(failureReason, lc);
+}
+
+#if 0
 //------------------------------------------------------------------------------
 // failed
 //------------------------------------------------------------------------------
@@ -97,6 +115,7 @@ void cta::RetrieveJob::failed(const std::string & failureReason, log::LogContext
     }
   }
 }
+#endif
 
 //------------------------------------------------------------------------------
 // selectedTapeFile

@@ -36,7 +36,7 @@ struct ContainerTraits<RetrieveQueue,C>
   typedef cta::objectstore::JobQueueType QueueType;
 
   struct InsertedElement {
-    std::unique_ptr<RetrieveRequest> retrieveRequest;
+    RetrieveRequest *retrieveRequest;
     uint16_t copyNb;
     uint64_t fSeq;
     uint64_t filesize;
@@ -56,22 +56,20 @@ struct ContainerTraits<RetrieveQueue,C>
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
-    PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
-    PopCriteria& operator-=(const PoppedElementsSummary&);
     uint64_t files;
-    uint64_t bytes;
+    PopCriteria(uint64_t f = 0) : files(f) {}
+    PopCriteria& operator-=(const PoppedElementsSummary&);
   };
   struct PoppedElementsSummary {
-    uint64_t bytes = 0;
-    uint64_t files = 0;
+    uint64_t files;
+    PoppedElementsSummary(uint64_t f = 0) : files(f) {}
     bool operator==(const PoppedElementsSummary &pes) const {
-      return bytes == pes.bytes && files == pes.files;
+      return files == pes.files;
     }
     bool operator<(const PopCriteria &pc) const {
-      return bytes < pc.bytes && files < pc.files;
+      return files < pc.files;
     }
     PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
-      bytes += other.bytes;
       files += other.files;
       return *this;
     }
@@ -145,24 +143,17 @@ struct ContainerTraits<RetrieveQueue,C>
 
   static const std::string c_containerTypeName;
   static const std::string c_identifierType;
+
+private:
+  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
 
 
 // RetrieveQueue partial specialisations for ContainerTraits.
 //
-// Add a full specialisation to override for a specific ArchiveQueue type.
-
-template<typename C>
-void ContainerTraits<RetrieveQueue,C>::PoppedElementsSummary::
-addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) const {
-  params.add("filesAdded", files - previous.files)
-        .add("bytesAdded", bytes - previous.bytes)
-        .add("filesBefore", previous.files)
-        .add("bytesBefore", previous.bytes)
-        .add("filesAfter", files)
-        .add("bytesAfter", bytes);
-}
+// Add a full specialisation to override for a specific RetrieveQueue type.
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::ContainerSummary::
@@ -176,9 +167,16 @@ addDeltaToLog(const ContainerSummary &previous, log::ScopedParamContainer &param
 template<typename C>
 auto ContainerTraits<RetrieveQueue,C>::PopCriteria::
 operator-=(const PoppedElementsSummary &pes) -> PopCriteria & {
-  bytes -= pes.bytes;
   files -= pes.files;
   return *this;
+}
+
+template<typename C>
+void ContainerTraits<RetrieveQueue,C>::PoppedElementsSummary::
+addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) const {
+  params.add("filesAdded", files - previous.files)
+        .add("filesBefore", previous.files)
+        .add("filesAfter", files);
 }
 
 template<typename C>
@@ -197,8 +195,7 @@ void ContainerTraits<RetrieveQueue,C>::PoppedElementsList::insertBack(PoppedElem
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::PoppedElementsBatch::
 addToLog(log::ScopedParamContainer &params) const {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
+  params.add("files", summary.files);
 }
 
 // ContainerTraits
@@ -348,32 +345,8 @@ switchElementsOwnership(typename InsertedElement::list &elemMemCont, const Conta
 
 template<typename C>
 auto ContainerTraits<RetrieveQueue,C>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
-  log::LogContext &lc) -> PoppedElementsBatch
-{
-  PoppedElementsBatch ret;
-
-  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for(auto &cjfq : candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{
-      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
-      cjfq.copyNb,
-      cjfq.size,
-      common::dataStructures::ArchiveFile(),
-      common::dataStructures::RetrieveRequest()
-    });
-    ret.summary.bytes += cjfq.size;
-    ret.summary.files++;
-  }
-
-  return ret;
-}
-
-template<typename C>
-auto ContainerTraits<RetrieveQueue,C>::
 getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
   PoppedElementsSummary ret;
-  ret.bytes = poppedElement.bytes;
   ret.files = 1;
   return ret;
 }
@@ -416,8 +389,8 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
 
 template<typename C>
 void ContainerTraits<RetrieveQueue,C>::
-trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
-  log::LogContext &lc)
+trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+    const ContainerIdentifier &cId, log::LogContext &lc)
 {
   if(cont.isEmpty())
   {
@@ -428,7 +401,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
       RootEntry re(cont.m_objectStore);
       ScopedExclusiveLock rexl(re);
       re.fetch();
-      re.removeRetrieveQueueAndCommit(cId, QueueType::JobsToTransfer, lc);
+      re.removeRetrieveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("vid", cId)
             .add("queueObject", cont.getAddressIfSet());
@@ -442,5 +415,49 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
     }
   }
 }
+
+
+
+// RetrieveQueue full specialisations for ContainerTraits.
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
+  uint64_t files;
+  uint64_t bytes;
+  PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  template<typename PoppedElementsSummary_t>
+  PopCriteria& operator-=(const PoppedElementsSummary_t &pes) {
+    bytes -= pes.bytes;
+    files -= pes.files;
+    return *this;
+  }
+};
+
+template<>
+struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary {
+  uint64_t files;
+  uint64_t bytes;
+  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  bool operator==(const PoppedElementsSummary &pes) const {
+    return bytes == pes.bytes && files == pes.files;
+  }
+  bool operator<(const PopCriteria &pc) const {
+    // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
+    return bytes < pc.bytes && files < pc.files;
+  }
+  PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
+    bytes += other.bytes;
+    files += other.files;
+    return *this;
+  }
+  void addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
+    params.add("filesAdded", files - previous.files)
+          .add("bytesAdded", bytes - previous.bytes)
+          .add("filesBefore", previous.files)
+          .add("bytesBefore", previous.bytes)
+          .add("filesAfter", files)
+          .add("bytesAfter", bytes);
+  }
+};
 
 }} // namespace cta::objectstore

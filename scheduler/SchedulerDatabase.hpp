@@ -348,7 +348,8 @@ public:
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
-    virtual bool fail(const std::string & failureReason, log::LogContext &) = 0;
+    virtual void failTransfer(const std::string &failureReason, log::LogContext &lc) = 0;
+    virtual void failReport(const std::string &failureReason, log::LogContext &lc) = 0;
     virtual ~RetrieveJob() {}
   };
 
@@ -380,6 +381,17 @@ public:
   
   /*============ Repack management: maintenance process side =========================*/
   
+  /*!
+   * Get a a set of failed jobs to report to the client.
+   *
+   * This method is like RetrieveMount::getNextJobBatch. It it not in the context of a mount as any
+   * process can grab a batch of jobs to report and proceed with the reporting.
+   *
+   * @returns    A list of process-owned jobs to report
+   */
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+
   /*============ Label management: user side =================================*/
   // TODO
   

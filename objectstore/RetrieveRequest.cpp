@@ -55,7 +55,6 @@ RetrieveRequest::RetrieveRequest(GenericObject& go):
 void RetrieveRequest::initialize() {
   // Setup underlying object
   ObjectOps<serializers::RetrieveRequest, serializers::RetrieveRequest_t>::initialize();
-  m_payload.set_failurereported(false);
   m_payload.set_failurereportlog("");
   m_payload.set_failurereporturl("");
   // This object is good to go (to storage)
@@ -132,7 +131,7 @@ queueForFailure:;
       }
     }
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
-    // to the latestes queued copy.
+    // to the latest queued copy.
     auto activeCopyNb = m_payload.activecopynb();
     std::string activeVid;
     uint64_t activeFseq;
@@ -152,9 +151,7 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    // We need to know if this failure got reported yet.
-    JobQueueType queueType=isFailureReported()?JobQueueType::FailedJobs:JobQueueType::JobsToReport;
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, queueType, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, bestVid, JobQueueType::JobsToReport, lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -175,8 +172,7 @@ queueForFailure:;
             .add("copynb", activeCopyNb)
             .add("vid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
-            .add("commitUnlockQueueTime", commitUnlockQueueTime)
-            .add("queueType", toString(queueType));
+            .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): queued the request to the failed queue.");
     }
   }
@@ -272,17 +268,93 @@ queueForTransfer:;
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJob()
 //------------------------------------------------------------------------------
-void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries) {
+void RetrieveRequest::addJob(uint64_t copyNb, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
+  uint16_t maxReportRetries)
+{
   checkPayloadWritable();
   auto *tf = m_payload.add_jobs();
   tf->set_copynb(copyNb);
   tf->set_lastmountwithfailure(0);
-  tf->set_maxretrieswithinmount(maxRetiesWithinMount);
+  tf->set_maxretrieswithinmount(maxRetriesWithinMount);
   tf->set_maxtotalretries(maxTotalRetries);
   tf->set_retrieswithinmount(0);
   tf->set_totalretries(0);
+  tf->set_maxreportretries(maxReportRetries);
+  tf->set_totalreportretries(0);
   tf->set_status(serializers::RetrieveJobStatus::RJS_ToTransfer);
 }
+
+//------------------------------------------------------------------------------
+// addTransferFailure()
+//------------------------------------------------------------------------------
+auto RetrieveRequest::addTransferFailure(uint16_t copyNumber, uint64_t mountId, const std::string &failureReason,
+  log::LogContext &lc) -> EnqueueingNextStep
+{
+  checkPayloadWritable();
+
+  // Find the job and update the number of failures
+  for(int i = 0; i < m_payload.jobs_size(); i++) {
+    auto &j = *m_payload.mutable_jobs(i);
+
+    if(j.copynb() == copyNumber) {
+      if(j.lastmountwithfailure() == mountId) {
+        j.set_retrieswithinmount(j.retrieswithinmount() + 1);
+      } else {
+        j.set_retrieswithinmount(1);
+        j.set_lastmountwithfailure(mountId);
+      }
+      j.set_totalretries(j.totalretries() + 1);
+      *j.mutable_failurelogs()->Add() = failureReason;
+    }
+
+    if(j.totalretries() < j.maxtotalretries()) {
+      EnqueueingNextStep ret;
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToTransfer;
+      if(j.retrieswithinmount() < j.maxretrieswithinmount())
+        // Job can try again within this mount
+        ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForTransfer;
+      else
+        // No more retries within this mount: job remains owned by this session and will be garbage collected
+        ret.nextStep = EnqueueingNextStep::NextStep::Nothing;
+      return ret;
+    } else {
+      // All retries within all mounts have been exhausted
+      return determineNextStep(copyNumber, JobEvent::TransferFailed, lc);
+    }
+  }
+  throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
+}
+
+//------------------------------------------------------------------------------
+// addReportFailure()
+//------------------------------------------------------------------------------
+auto RetrieveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason,
+  log::LogContext &lc) -> EnqueueingNextStep
+{
+  checkPayloadWritable();
+  // Find the job and update the number of failures
+  for(int i = 0; i < m_payload.jobs_size(); ++i)
+  {
+    auto &j = *m_payload.mutable_jobs(i);
+    if (j.copynb() == copyNumber) {
+      j.set_totalreportretries(j.totalreportretries() + 1);
+      * j.mutable_reportfailurelogs()->Add() = failureReason;
+    }
+    EnqueueingNextStep ret;
+    if (j.totalreportretries() >= j.maxreportretries()) {
+      // Status is now failed
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
+      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+    } else {
+      // Status is unchanged
+      ret.nextStatus = j.status();
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+    }
+    return ret;
+  }
+  throw NoSuchJob("In RetrieveRequest::addJobFailure(): could not find job");
+}
+
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::getLastActiveVid()
@@ -354,7 +426,8 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
     const uint32_t hardcodedRetriesWithinMount = 3;
     const uint32_t hardcodedTotalRetries = 6;
-    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries);
+    const uint32_t hardcodedReportRetries = 2;
+    addJob(tf.second.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
   }
 }
 
@@ -426,7 +499,7 @@ bool RetrieveRequest::addJobFailure(uint16_t copyNumber, uint64_t mountId,
       * j.mutable_failurelogs()->Add() = failureReason;
     }
     if (j.totalretries() >= j.maxtotalretries()) {
-      j.set_status(serializers::RetrieveJobStatus::RJS_FailedToReport);
+      j.set_status(serializers::RetrieveJobStatus::RJS_ToReportForFailure);
       for (auto & j2: m_payload.jobs()) 
         if (j2.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) return false;
       return true;
@@ -450,6 +523,8 @@ RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint16_t copy
       ret.maxRetriesWithinMount = j.maxretrieswithinmount();
       ret.totalRetries = j.totalretries();
       ret.maxTotalRetries = j.maxtotalretries();
+      ret.totalReportRetries = j.totalreportretries();
+      ret.maxReportRetries = j.maxreportretries();
       return ret;
     }
   }
@@ -468,7 +543,7 @@ JobQueueType RetrieveRequest::getQueueType() {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return JobQueueType::JobsToTransfer;
       break;
-    case serializers::RetrieveJobStatus::RJS_FailedToReport:
+    case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
       // Else any job to report => to report.
       hasToReport=true;
       break;
@@ -491,6 +566,91 @@ std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus
   default:
     return std::string("Unknown (")+std::to_string((uint64_t) status)+")";
   }
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::eventToString()
+//------------------------------------------------------------------------------
+std::string RetrieveRequest::eventToString(JobEvent jobEvent) {
+  switch(jobEvent) {
+    case JobEvent::ReportFailed:   return "ReportFailed";
+    case JobEvent::TransferFailed: return "EventFailed";
+  }
+  return std::string("Unknown (") + std::to_string(static_cast<unsigned int>(jobEvent)) + ")";
+}
+
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::determineNextStep()
+//
+// We have to determine which next step should be taken:
+//
+// * When transfer succeeds or fails:
+//   - If the job got transferred and is not the last (other(s) remain to transfer), it becomes complete.
+//   - If the job failed and is not the last, we will queue it as "failed" in the failed jobs queue.
+//   - If the job is the last and all jobs succeeded, this jobs becomes ToReportForTransfer
+//   - If the job is the last and any (including this one) failed, this job becomes ToReportForFailure.
+//
+// * When report completes or fails:
+//   - If the report was for a failure, the job is 
+//------------------------------------------------------------------------------
+auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobEvent, 
+    log::LogContext& lc) -> EnqueueingNextStep
+{
+  checkPayloadWritable();
+  auto &jl = m_payload.jobs();
+  using serializers::RetrieveJobStatus;
+
+  // Validate the current status
+  //
+  // Get status
+  cta::optional<RetrieveJobStatus> currentStatus;
+  for (auto &j : jl) {
+    if(j.copynb() == copyNumberUpdated) currentStatus = j.status();
+  }
+  if (!currentStatus) {
+    std::stringstream err;
+    err << "In RetrieveRequest::updateJobStatus(): copynb not found : " << copyNumberUpdated << ", exiting ones: ";
+    for(auto &j : jl) err << j.copynb() << "  ";
+    throw cta::exception::Exception(err.str());
+  }
+  // Check status compatibility with event
+  switch (jobEvent)
+  {
+    case JobEvent::TransferFailed:
+      if (*currentStatus != RetrieveJobStatus::RJS_ToTransfer) {
+        // Wrong status, but the context leaves no ambiguity. Just warn.
+        log::ScopedParamContainer params(lc);
+        params.add("event", eventToString(jobEvent))
+              .add("status", statusToString(*currentStatus))
+              .add("fileId", m_payload.archivefile().archivefileid());
+        lc.log(log::WARNING, "In RetrieveRequest::updateJobStatus(): unexpected status. Assuming ToTransfer.");
+      }
+      break;
+    case JobEvent::ReportFailed:
+      if(*currentStatus != RetrieveJobStatus::RJS_ToReportForFailure) {
+        // Wrong status, but end status will be the same anyway
+        log::ScopedParamContainer params(lc);
+        params.add("event", eventToString(jobEvent))
+              .add("status", statusToString(*currentStatus))
+              .add("fileId", m_payload.archivefile().archivefileid());
+        lc.log(log::WARNING, "In RetrieveRequest::updateJobStatus(): unexpected status. Failing the job.");
+      }
+  }
+  // We are in the normal cases now
+  EnqueueingNextStep ret;
+  switch(jobEvent)
+  {  
+    case JobEvent::TransferFailed:
+      ret.nextStep = EnqueueingNextStep::NextStep::EnqueueForReport;
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_ToReportForFailure;
+      break;
+
+    case JobEvent::ReportFailed:
+      ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
+      ret.nextStatus = serializers::RetrieveJobStatus::RJS_Failed;
+  }
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -688,19 +848,17 @@ void RetrieveRequest::setFailureReason(const std::string& reason) {
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::isFailureReported()
+// RetrieveRequest::setJobStatus()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::isFailureReported() {
-  checkPayloadReadable();
-  return m_payload.failurereported();
-}
-
-//------------------------------------------------------------------------------
-// RetrieveRequest::setFailureReported()
-//------------------------------------------------------------------------------
-void RetrieveRequest::setFailureReported() {
+void RetrieveRequest::setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus& status) {
   checkPayloadWritable();
-  m_payload.set_failurereported(true);
+  for (auto j = m_payload.mutable_jobs()->begin(); j != m_payload.mutable_jobs()->end(); j++) {
+    if (j->copynb() == copyNumber) {
+      j->set_status(status);
+      return;
+    }
+  }
+  throw exception::Exception("In RetrieveRequest::setJobStatus(): job not found.");
 }
 
 }} // namespace cta::objectstore

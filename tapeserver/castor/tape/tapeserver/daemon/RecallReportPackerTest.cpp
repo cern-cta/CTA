@@ -58,7 +58,7 @@ protected:
     
     void checkComplete() override {}
 
-    void failed(const std::string& failureReason, cta::log::LogContext&) override {
+    void transferFailed(const std::string &failureReason, cta::log::LogContext&) override {
       failuresRef++;
     }
     

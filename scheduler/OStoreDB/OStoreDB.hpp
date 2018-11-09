@@ -147,14 +147,14 @@ public:
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextJobBatch(uint64_t filesRequested, 
-      uint64_t bytesRequested, log::LogContext& logContext) override;
+    std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested, 
+      uint64_t bytesRequested, log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
   public:
     void setJobBatchTransferred(
-      std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext & lc) override;
+      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> &jobsBatch, log::LogContext &lc) override;
   };
   friend class ArchiveMount;
   
@@ -163,7 +163,7 @@ public:
     friend class OStoreDB::ArchiveMount;
     friend class OStoreDB;
   public:
-    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
@@ -213,22 +213,31 @@ public:
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
     friend class OStoreDB::RetrieveMount;
   public:
-    CTA_GENERATE_EXCEPTION_CLASS(JobNowOwned);
+    CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     virtual void asyncSucceed() override;
     virtual void checkSucceed() override;
-    bool fail(const std::string& failureReason, log::LogContext&) override;
+    void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+    void failReport(const std::string& failureReason, log::LogContext& lc) override;
     virtual ~RetrieveJob() override;
+  //private:
+  // This can't be private any more as it has to be instantiated for queues to report as well as queues
+  // to transfer, i.e. it must be possible to instantiate retrieve jobs independent from a mount
+    RetrieveJob(const std::string &jobAddress, OStoreDB &oStoreDB, RetrieveMount *rm) :
+      m_jobOwned(false), m_oStoreDB(oStoreDB),
+      m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
+      m_retrieveMount(rm) { }
+    void setJobOwned(bool b = true) { m_jobOwned = b; }
+
   private:
-    RetrieveJob(const std::string &, OStoreDB &, RetrieveMount &);
     bool m_jobOwned;
     uint64_t m_mountId;
     OStoreDB & m_oStoreDB;
     objectstore::RetrieveRequest m_retrieveRequest;
-    OStoreDB::RetrieveMount & m_retrieveMount;
+    OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
-  
+
   /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestAlreadyCompleteOrCanceled);
@@ -273,6 +282,10 @@ public:
 
   typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
   /* === Repack requests handling =========================================== */
   void queueRepack(const std::string& vid, const std::string& bufferURL, 

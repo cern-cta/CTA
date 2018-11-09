@@ -69,7 +69,7 @@ void ArchiveRequest::initialize() {
 //------------------------------------------------------------------------------
 void ArchiveRequest::addJob(uint16_t copyNumber,
   const std::string& tapepool, const std::string& initialOwner, 
-    uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
+    uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
   j->set_copynb(copyNumber);
@@ -80,7 +80,7 @@ void ArchiveRequest::addJob(uint16_t copyNumber,
   j->set_totalretries(0);
   j->set_retrieswithinmount(0);
   j->set_lastmountwithfailure(0);
-  j->set_maxretrieswithinmount(maxRetiesWithinMount);
+  j->set_maxretrieswithinmount(maxRetriesWithinMount);
   j->set_maxtotalretries(maxTotalRetries);
   j->set_totalreportretries(0);
   j->set_maxreportretries(maxReportRetries);
@@ -151,9 +151,6 @@ auto ArchiveRequest::addTransferFailure(uint16_t copyNumber,
   throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
-//------------------------------------------------------------------------------
-// ArchiveRequest::addReportFailure()
-//------------------------------------------------------------------------------
 auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string& failureReason,
     log::LogContext& lc) -> EnqueueingNextStep {
   checkPayloadWritable();
@@ -823,6 +820,7 @@ auto ArchiveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobE
       ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
     }
   }
+  break;
   case JobEvent::ReportFailed:
   {
     ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;

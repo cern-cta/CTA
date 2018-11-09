@@ -1093,6 +1093,41 @@ std::list<std::unique_ptr<ArchiveJob> > Scheduler::getNextArchiveJobsToReportBat
 }
 
 //------------------------------------------------------------------------------
+// getNextRetrieveJobsToReportBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::
+getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext)
+{
+  // We need to go through the queues of retrieve jobs to report 
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  // Get the list of jobs to report from the scheduler db
+  auto dbRet = m_db.getNextRetrieveJobsToReportBatch(filesRequested, logContext);
+  for (auto &j : dbRet) {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest, j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// getNextFailedRetrieveJobsBatch
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<RetrieveJob>> Scheduler::
+getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logContext)
+{
+  // We need to go through the queues of failed retrieve jobs
+  std::list<std::unique_ptr<RetrieveJob>> ret;
+  // Get the list of failed jobs from the scheduler db
+  auto dbRet = m_db.getNextRetrieveJobsFailedBatch(filesRequested, logContext);
+  for (auto &j : dbRet) {
+    ret.emplace_back(new RetrieveJob(nullptr, j->retrieveRequest, j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
+    ret.back()->m_dbJob.reset(j.release());
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // reportArchiveJobsBatch
 //------------------------------------------------------------------------------
 void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& archiveJobsBatch,

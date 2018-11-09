@@ -46,11 +46,9 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   // Job management ============================================================
-  void addJob(uint64_t copyNumber, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries);
+  void addJob(uint64_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
   void setFailureReason(const std::string & reason);
-  bool isFailureReported();
-  void setFailureReported();
   class JobDump {
   public:
     uint64_t copyNb;
@@ -75,13 +73,52 @@ public:
     uint64_t maxRetriesWithinMount = 0;
     uint64_t totalRetries = 0;
     uint64_t maxTotalRetries = 0;
+    uint64_t totalReportRetries = 0;
+    uint64_t maxReportRetries = 0;
   };
   RetryStatus getRetryStatus(uint16_t copyNumber);
-  /// Returns queue type depending on the compound statuses of all retrieve requests.
+  enum class JobEvent {
+    TransferFailed,
+    ReportFailed
+  };
+  std::string eventToString (JobEvent jobEvent);
+  struct EnqueueingNextStep {
+    enum class NextStep {
+      Nothing,
+      EnqueueForTransfer,
+      EnqueueForReport,
+      StoreInFailedJobsContainer,
+      Delete
+    } nextStep = NextStep::Nothing;
+    //! The copy number to enqueue. It could be different from the updated one in mixed success/failure scenario.
+    serializers::RetrieveJobStatus nextStatus;
+  };
+private:
+  /*!
+   * Determine and set the new status of the job.
+   *
+   * Determines whether the request should be queued or deleted after the job status change. This method
+   * only handles failures, which have a more varied array of possibilities.
+   *
+   * @param[in] copyNumberToUpdate    the copy number to update
+   * @param[in] jobEvent              the event that happened to the job
+   * @param[in] lc                    the log context
+   *
+   * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
+   *             and status setting
+   */
+  EnqueueingNextStep determineNextStep(uint16_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext &lc);
+public:
+  //! Returns next step to take with the job
+  EnqueueingNextStep addTransferFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  //! Returns next step to take with the job
+  EnqueueingNextStep addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
+  //! Returns queue type depending on the compound statuses of all retrieve requests
   JobQueueType getQueueType();
   std::list<std::string> getFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
   serializers::RetrieveJobStatus getJobStatus(uint16_t copyNumber);
+  void setJobStatus(uint64_t copyNumber, const serializers::RetrieveJobStatus &status);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // An asynchronous job ownership updating class.
   class AsyncJobOwnerUpdater {

@@ -334,8 +334,8 @@ message ArchiveRequest {
 
 enum RetrieveJobStatus {
   RJS_ToTransfer = 1;
-  RJS_FailedToReport = 998;
-  RJS_Failed = 999;
+  RJS_ToReportForFailure = 997;
+  RJS_Failed = 998;
 }
 
 message SchedulerRetrieveRequest {
@@ -356,6 +356,9 @@ message RetrieveJob {
   required RetrieveJobStatus status = 9205;
   required uint64 lastmountwithfailure = 9206;
   repeated string failurelogs = 9207;
+  required uint32 maxreportretries = 9208;
+  required uint32 totalreportretries = 9209;
+  repeated string reportfailurelogs = 9210;
 }
 
 message RetrieveRequest {
@@ -366,7 +369,6 @@ message RetrieveRequest {
   repeated RetrieveJob jobs = 9154;
   required string failurereporturl = 9155;
   required string failurereportlog = 9156;
-  required bool failurereported = 9157;
 }
 
 message ValueCountPair {

@@ -26,4 +26,50 @@ const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_cont
 template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::c_identifierType = "vid";
 
+template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary {
+  PoppedElementsSummary ret;
+  ret.bytes = poppedElement.bytes;
+  ret.files = 1;
+  return ret;
+}
+
+template<>
+void ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsBatch::
+addToLog(log::ScopedParamContainer &params) const {
+  params.add("bytes", summary.bytes)
+        .add("files", summary.files);
+}
+
+template<>
+auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+
+  auto candidateJobsFromQueue = cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  for(auto &cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement{
+      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+      cjfq.copyNb,
+      cjfq.size,
+      common::dataStructures::ArchiveFile(),
+      common::dataStructures::RetrieveRequest()
+    });
+    ret.summary.bytes += cjfq.size;
+    ret.summary.files++;
+  }
+  return ret;
+}
+
+template<>
+void ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::
+trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
+  log::LogContext &lc)
+{
+  trimContainerIfNeeded(cont, QueueType::JobsToTransfer, contLock, cId, lc);
+}
+
 }} // namespace cta::objectstore

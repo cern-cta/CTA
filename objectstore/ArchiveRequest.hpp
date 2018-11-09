@@ -49,7 +49,7 @@ public:
   void setOwner(const std::string &) = delete;
   // Job management ============================================================
   void addJob(uint16_t copyNumber, const std::string & tapepool,
-    const std::string & initialOwner, uint16_t maxRetiesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
+    const std::string & initialOwner, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
     uint64_t maxRetriesWithinMount = 0;

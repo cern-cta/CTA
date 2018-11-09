@@ -51,7 +51,7 @@ namespace unitTests{
   
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
-    TestingRetrieveJob(): cta::RetrieveJob(*((cta::RetrieveMount *)NULL),
+    TestingRetrieveJob(): cta::RetrieveJob(nullptr,
     cta::common::dataStructures::RetrieveRequest(), 
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}
