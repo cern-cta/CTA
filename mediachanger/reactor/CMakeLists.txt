@@ -23,17 +23,10 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build the reactor code that is common to both rmcd and tapeserverd
 ################################################################################
 set (REACTOR_SRC_FILES
- # DummyZMQReactor.cpp
- # PollEventHandler.cpp
- # PollReactor.cpp
- # PollReactorImpl.cpp
   ZMQPollEventHandler.cpp
   ZMQReactor.cpp)
 add_library (ctareactor ${REACTOR_SRC_FILES})
 set_target_properties (ctareactor PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
-target_link_libraries (ctareactor ctacommon ctamediachanger zmq
-  ${STK_LIBRARIES})
-#target_link_libraries (ctareactor ctacommon ctamediachanger)
-
+target_link_libraries (ctareactor ctacommon ctamediachanger zmq)
