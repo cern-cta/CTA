@@ -40,10 +40,14 @@ target_link_libraries(cta-unitTests
   ctaschedulerunittests
   ctadaemonunittests
   ctamediachangerunittests
-  ctamediachangeracsdaemonunittests
-  ctamediachangeracsunittests
   gtest
   pthread)
+
+if (NOT DEFINED NoACS)
+  target_link_libraries(cta-unitTests
+    ctamediachangeracsdaemonunittests
+    ctamediachangeracsunittests)
+endif (NOT DEFINED NoACS)
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
