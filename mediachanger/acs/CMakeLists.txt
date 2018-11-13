@@ -22,6 +22,8 @@
 # Rules to build and install acsd
 ################################################################################
 
+find_package(stk REQUIRED)
+
 add_subdirectory(daemon)
 
 add_library(cta-acs 

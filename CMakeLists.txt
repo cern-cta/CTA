@@ -113,7 +113,6 @@ ELSE(DEFINED PackageOnly)
   # OCCI support is on by default
   set (OCCI_SUPPORT ON)
 
-  find_package(stk REQUIRED)
   # Switch OCCI support off if using gcc 5.1 or higher
   #if (CMAKE_COMPILER_IS_GNUCC)
   #  if (GCC_VERSION VERSION_GREATER 5.0)
