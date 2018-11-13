@@ -582,17 +582,6 @@ std::string RetrieveRequest::eventToString(JobEvent jobEvent) {
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::determineNextStep()
-//
-// We have to determine which next step should be taken:
-//
-// * When transfer succeeds or fails:
-//   - If the job got transferred and is not the last (other(s) remain to transfer), it becomes complete.
-//   - If the job failed and is not the last, we will queue it as "failed" in the failed jobs queue.
-//   - If the job is the last and all jobs succeeded, this jobs becomes ToReportForTransfer
-//   - If the job is the last and any (including this one) failed, this job becomes ToReportForFailure.
-//
-// * When report completes or fails:
-//   - If the report was for a failure, the job is 
 //------------------------------------------------------------------------------
 auto RetrieveRequest::determineNextStep(uint16_t copyNumberUpdated, JobEvent jobEvent, 
     log::LogContext& lc) -> EnqueueingNextStep

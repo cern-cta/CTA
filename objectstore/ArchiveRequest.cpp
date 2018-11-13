@@ -151,6 +151,9 @@ auto ArchiveRequest::addTransferFailure(uint16_t copyNumber,
   throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
 }
 
+//------------------------------------------------------------------------------
+// ArchiveRequest::addReportFailure()
+//------------------------------------------------------------------------------
 auto ArchiveRequest::addReportFailure(uint16_t copyNumber, uint64_t sessionId, const std::string& failureReason,
     log::LogContext& lc) -> EnqueueingNextStep {
   checkPayloadWritable();
