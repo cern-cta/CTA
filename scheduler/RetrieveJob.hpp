@@ -93,6 +93,18 @@ public:
    * be applied by the scheduler.
    */
   virtual void transferFailed(const std::string &failureReason, log::LogContext &lc);
+
+  /**
+   * Get the URL used for reporting
+   * @return The URL used to report to the disk system.
+   */
+  virtual std::string reportURL();
+
+  /**
+   * Get the report type.
+   * @return the type of report (success or failure), as a string
+   */
+  virtual std::string reportType();
   
   /**
    * Triggers a scheduler update following the failure of the report. Retry policy will

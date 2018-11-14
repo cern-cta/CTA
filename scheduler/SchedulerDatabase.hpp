@@ -198,8 +198,8 @@ public:
    * @param jobsBatch
    * @param lc
    */
-  virtual void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch, log::TimingList & timingList, 
-    utils::Timer & t, log::LogContext & lc) = 0;
+  virtual void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch,
+    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
   
   /*============ Retrieve  management: user side ============================*/
 
@@ -342,8 +342,14 @@ public:
   class RetrieveJob {
     friend class RetrieveMount;
   public:
-    cta::common::dataStructures::RetrieveRequest retrieveRequest;
+    enum class ReportType: uint8_t {
+      NoReportRequired,
+      CompletionReport,
+      FailureReport,
+      Report ///< A generic grouped type
+    } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
+    cta::common::dataStructures::RetrieveRequest retrieveRequest;
     uint64_t selectedCopyNb;
     virtual void asyncSucceed() = 0;
     virtual void checkSucceed() = 0;
@@ -361,6 +367,15 @@ public:
    * @returns    A list of process-owned jobs to report
    */
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
+
+  /**
+   * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
+   * @param jobsBatch
+   * @param lc
+   */
+  virtual void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
+    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
+  
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
 
   /*============ Label management: user side =================================*/

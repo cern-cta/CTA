@@ -59,6 +59,55 @@ void cta::RetrieveJob::checkComplete() {
 }
 
 //------------------------------------------------------------------------------
+// ArchiveJob::reportURL
+//------------------------------------------------------------------------------
+std::string cta::RetrieveJob::reportURL() {
+  throw std::runtime_error("RetrieveJob::reportURL(): not implemented");
+#if 0
+  switch (m_dbJob->reportType) {
+  case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
+    return m_dbJob->archiveReportURL;
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
+    {
+      if (m_dbJob->latestError.empty()) {
+        throw exception::Exception("In ArchiveJob::reportURL(): empty failure reason.");
+      }
+      std::string base64ErrorReport;
+      // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
+      const bool noNewLineInBase64Output = false;
+      CryptoPP::StringSource ss1(m_dbJob->latestError, true, 
+        new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+      return m_dbJob->errorReportURL + base64ErrorReport;
+    }
+  default:
+    { 
+      throw exception::Exception("In ArchiveJob::reportURL(): job status does not require reporting.");
+    }
+  }
+#endif
+}
+
+//------------------------------------------------------------------------------
+// ArchiveJob::reportType
+//------------------------------------------------------------------------------
+std::string cta::RetrieveJob::reportType() {
+  throw std::runtime_error("RetrieveJob::reportType(): not implemented");
+#if 0
+  switch (m_dbJob->reportType) {
+  case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
+    return "CompletionReport";
+  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
+    return "ErrorReport";
+  default:
+    { 
+      throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
+    }
+  }
+#endif
+}
+
+//------------------------------------------------------------------------------
 // reportFailed
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {

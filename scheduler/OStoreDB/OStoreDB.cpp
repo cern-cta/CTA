@@ -692,10 +692,11 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::getNextArch
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::setJobBatchReported()
+// OStoreDB::setArchiveJobBatchReported()
 //------------------------------------------------------------------------------
-void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
-    utils::Timer & t, log::LogContext& lc) {
+void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*> & jobsBatch,
+  log::TimingList & timingList, utils::Timer & t, log::LogContext& lc)
+{
   // We can have a mixture of failed and successful jobs, so we will sort them before batch queue/discarding them.
   // First, sort the jobs. Done jobs get deleted (no need to sort further) and failed jobs go to their per-VID queues/containers.
   // Status gets updated on the fly on the latter case.
@@ -767,6 +768,15 @@ void OStoreDB::setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*
     tl.insertAndReset("queueAndSwitchStateTime", t);
     timingList += tl;
   }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setRetrieveJobBatchReported()
+//------------------------------------------------------------------------------
+void OStoreDB::setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
+  log::TimingList & timingList, utils::Timer & t, log::LogContext& lc)
+{
+  throw std::runtime_error("OStoreDB::setRetrieveJobBatchReported() not implemented.");
 }
 
 //------------------------------------------------------------------------------

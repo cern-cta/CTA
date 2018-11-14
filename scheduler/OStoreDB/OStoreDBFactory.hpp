@@ -145,10 +145,15 @@ public:
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextRetrieveJobsFailedBatch(filesRequested, lc);
   }
-  
-  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
+
+  void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
       utils::Timer & t, log::LogContext& lc) override {
-    m_OStoreDB.setJobBatchReported(jobsBatch, timingList, t, lc);
+    m_OStoreDB.setArchiveJobBatchReported(jobsBatch, timingList, t, lc);
+  }
+
+  void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::TimingList & timingList,
+      utils::Timer & t, log::LogContext& lc) override {
+    m_OStoreDB.setRetrieveJobBatchReported(jobsBatch, timingList, t, lc);
   }
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {

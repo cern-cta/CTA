@@ -349,6 +349,9 @@ public:
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext &logContext);
 
+  void reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBatch,
+      eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer&, log::LogContext&);
+
   /*!
    * Batch job factory
    * 

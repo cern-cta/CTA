@@ -187,7 +187,7 @@ public:
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
   friend class ArchiveJob;
-  static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
+  static ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
   
   /* === Retrieve Mount handling ============================================ */
   class RetrieveJob;
@@ -256,8 +256,8 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested, 
      log::LogContext & logContext) override;
   
-  void setJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList, utils::Timer & t,
-     log::LogContext& lc) override;
+  void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*> & jobsBatch,
+     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
   
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
@@ -284,6 +284,9 @@ public:
   RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+
+  void setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
+     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
   
