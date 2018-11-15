@@ -66,6 +66,7 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
     chown daemon:daemon /etc/eos.keytab
   mkdir -p /run/lock/subsys
   mkdir -p /var/eos/config/${eoshost}
+    chown daemon:root /var/eos/config
     chown daemon:root /var/eos/config/${eoshost}
   touch   /var/eos/config/${eoshost}/default.eoscf
     chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
