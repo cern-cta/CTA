@@ -795,7 +795,7 @@ std::cerr << "Error Report URL: " << job.retrieveRequest.errorReportURL << std::
 std::cerr << "VID: " << job.archiveFile.tapeFiles.begin()->second.vid << std::endl;
   }
 
-  // Sort jobs to be updated.
+  // Sort jobs to be updated
   std::map<std::string, std::list<FailedJobToQueue>> failedQueues;
   for(auto &j : jobsBatch) {
     switch(j->reportType) {

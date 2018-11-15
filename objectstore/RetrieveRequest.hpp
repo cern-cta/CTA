@@ -125,6 +125,7 @@ public:
     friend class RetrieveRequest;
   public:
     void wait();
+    serializers::RetrieveJobStatus getJobStatus() { return m_jobStatus; }
     const common::dataStructures::RetrieveRequest &getRetrieveRequest();
     const common::dataStructures::ArchiveFile &getArchiveFile();
   private:
@@ -132,6 +133,7 @@ public:
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     common::dataStructures::RetrieveRequest m_retrieveRequest;
     common::dataStructures::ArchiveFile m_archiveFile;
+    serializers::RetrieveJobStatus m_jobStatus;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
   AsyncJobOwnerUpdater *asyncUpdateJobOwner(uint16_t copyNumber, const std::string &owner, const std::string &previousOwner);

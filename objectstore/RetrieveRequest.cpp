@@ -703,8 +703,8 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string
             payload.InitializationErrorString());
         }
         // Find the copy number
-        auto jl=payload.jobs();
-        for (auto & j: jl) {
+        auto jl = payload.jobs();
+        for (auto &j: jl) {
           if (j.copynb() == copyNumber) {
             // We also need to gather all the job content for the user to get in-memory
             // representation.
@@ -724,6 +724,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint16_t copyNumber, const std::string
             objectstore::ArchiveFileSerDeser af;
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
+            retRef.m_jobStatus = j.status();
             oh.set_payload(payload.SerializePartialAsString());
             return oh.SerializeAsString();
           }

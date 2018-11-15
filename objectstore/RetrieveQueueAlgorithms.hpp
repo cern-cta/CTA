@@ -378,6 +378,13 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       u.get()->wait();
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
+      switch(u.get()->getJobStatus()) {
+        case serializers::RetrieveJobStatus::RJS_ToReportForFailure:
+          e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
+          break;
+        default:
+          e.reportType = SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired;
+      }
     } catch(...) {
       ret.push_back(OpFailure<PoppedElement>(&e, std::current_exception()));
     }
