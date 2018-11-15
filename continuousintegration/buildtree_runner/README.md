@@ -66,7 +66,7 @@ MHVTL should then be setup by running:
 
 ```
 cd ~/CTA/continuousintegration/buildtree_runner
-./recreate_buildtree_running_environment.sh
+sudo ./recreate_buildtree_running_environment.sh
 ```
 
 ### Preparing the test instance
