@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define STDOUT_LOGGING
+
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -703,6 +705,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
+    request.errorReportURL="null:";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
@@ -796,6 +799,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // The failed queue should be empty
     auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
     ASSERT_EQ(0, retrieveJobFailedList.size());
+#if 0
     // The failure should be on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
@@ -809,6 +813,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // Job should be gone from the report queue
     retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(0, retrieveJobToReportList.size());
+#endif
+  }
+
+  {
+    // Emulate the the reporter process
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    eos::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
   }
 
   {

@@ -342,11 +342,12 @@ public:
   class RetrieveJob {
     friend class RetrieveMount;
   public:
+    std::string errorReportURL;
     enum class ReportType: uint8_t {
       NoReportRequired,
-      CompletionReport,
+      //CompletionReport,
       FailureReport,
-      Report ///< A generic grouped type
+      Report //!< A generic grouped type
     } reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;

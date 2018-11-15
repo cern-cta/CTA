@@ -51,6 +51,8 @@ struct ContainerTraits<RetrieveQueue,C>
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
     common::dataStructures::RetrieveRequest rr;
+    std::string errorReportURL;
+    SchedulerDatabase::RetrieveJob::ReportType reportType;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {

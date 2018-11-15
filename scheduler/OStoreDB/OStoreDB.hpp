@@ -202,8 +202,6 @@ public:
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-  private:
-    OStoreDB::RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
   public:
     std::set<cta::SchedulerDatabase::RetrieveJob*> finishSettingJobsBatchSuccessful(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
   };
@@ -212,6 +210,7 @@ public:
   /* === Retrieve Job handling ============================================== */
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
     friend class OStoreDB::RetrieveMount;
+    friend class OStoreDB;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
@@ -237,6 +236,7 @@ public:
     OStoreDB::RetrieveMount *m_retrieveMount;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
   };
+  static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
   /* === Archive requests handling  ========================================= */
   CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
