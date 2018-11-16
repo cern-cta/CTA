@@ -91,8 +91,7 @@ public:
    * statements and calls executeNonQuery() for each individual statement found.
    *
    * Please note that each statement should be a non-query terminated by a
-   * semicolon and that each individual statement will be executed with
-   * autocommit ON.
+   * semicolon.
    *
    * @param sqlStmts The SQL statements to be executed.
    * @param autocommitMode The autocommit mode of the statements.
@@ -100,11 +99,10 @@ public:
   void executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode);
 
   /**
-   * Convenience method that wraps Conn::createStmt() followed by
-   * Stmt::executeNonQuery().
+   * Executes the statement.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statements.
+   * @param autocommitMode The autocommit mode of the statement.
    */
   void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode);
 

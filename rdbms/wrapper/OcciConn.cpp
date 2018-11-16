@@ -17,6 +17,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
@@ -62,6 +63,18 @@ void OcciConn::close() {
   if(nullptr != m_occiConn) {
     m_env->terminateConnection(m_occiConn);
     m_occiConn = nullptr;
+  }
+}
+
+//------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void OcciConn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+  try {
+    auto stmt = createStmt(sql);
+    stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_OFF);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

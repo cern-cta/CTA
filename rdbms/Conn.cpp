@@ -113,11 +113,10 @@ void Conn::executeNonQueries(const std::string &sqlStmts, const AutocommitMode a
 // executeNonQuery
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
-  try {
-    auto stmt = createStmt(sql);
-    stmt.executeNonQuery(autocommitMode);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    m_connAndStmts->conn->executeNonQuery(sql,autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
 }
 

@@ -46,6 +46,14 @@ public:
   virtual void close() = 0;
 
   /**
+   * Executes the statement.
+   *
+   * @param sql The SQL statement.
+   * @param autocommitMode The autocommit mode of the statement.
+   */
+  virtual void executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) = 0;
+
+  /**
    * Creates a prepared statement.
    *
    * @param sql The SQL statement.

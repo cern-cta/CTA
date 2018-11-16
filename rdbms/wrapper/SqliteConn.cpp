@@ -97,6 +97,18 @@ void SqliteConn::close() {
 }
 
 //------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void SqliteConn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+  try {
+    auto stmt = createStmt(sql);
+    stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_ON);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
 std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
