@@ -776,12 +776,8 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
 // OStoreDB::setRetrieveJobBatchReported()
 //------------------------------------------------------------------------------
 void OStoreDB::setRetrieveJobBatchReported(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
-  log::TimingList & timingList, utils::Timer & t, log::LogContext & ignore_lc)
+  log::TimingList & timingList, utils::Timer & t, log::LogContext & lc)
 {
-  log::StdoutLogger dl("dummy", "unitTest");
-  log::LogContext lc(dl);
-  lc.log(log::INFO, "Entered RetrieveJob::setRetrieveJobBatchReported()");
-
   struct FailedJobToQueue {
     RetrieveJob * job;
   };
@@ -2453,90 +2449,6 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
     lc.log(log::INFO, "In OStoreDB::ArchiveJob::~ArchiveJob(): will leave the job owned after destruction.");
   }
 }
-
-#if 0
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveJob::fail()
-//------------------------------------------------------------------------------
-bool OStoreDB::RetrieveJob::fail(const std::string& failureReason, log::LogContext& logContext) {
-  if (!m_jobOwned)
-    throw JobNotOwned("In OStoreDB::RetrieveJob::fail: cannot fail a job not owned");
-  // Lock the retrieve request. Fail the job.
-  objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
-  m_retrieveRequest.fetch();
-  // Add a job failure. If the job is failed, we will delete it.
-  if (m_retrieveRequest.addJobFailure(selectedCopyNb, m_mountId, failureReason, logContext)) {
-    // The job will not be retried. Either another jobs for the same request is 
-    // queued and keeps the request referenced or the request has been deleted.
-    // In any case, we can forget it.
-    m_oStoreDB.m_agentReference->removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
-    m_jobOwned = false;
-    log::ScopedParamContainer params(logContext);
-    params.add("object", m_retrieveRequest.getAddressIfSet());
-    logContext.log(log::ERR, "In OStoreDB::RetrieveJob::fail(): request was definitely failed and deleted.");
-    return true;
-  } else {
-    auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
-    log::ScopedParamContainer params(logContext);
-    params.add("fileId", archiveFile.archiveFileID)
-         .add("copyNb", selectedCopyNb)
-         .add("retriesWithinMount", retryStatus.retriesWithinMount)
-         .add("maxRetriesWithinMount", retryStatus.maxRetriesWithinMount)
-         .add("totalRetries", retryStatus.totalRetries)
-         .add("maxTotalRetries", retryStatus.maxTotalRetries);
-    logContext.log(log::INFO, "OStoreDB::RetrieveJob::fail(): increased the error count for retrieve job.");
-  }
-  // The job still has a chance, requeue is to the best tape.
-  // Get the best vid from the cache
-  std::set<std::string> candidateVids;
-  using serializers::RetrieveJobStatus;
-  for (auto & tf: m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.tapeFiles)
-    if (m_retrieveRequest.getJobStatus(tf.second.copyNb)==serializers::RetrieveJobStatus::RJS_ToTransfer)
-      candidateVids.insert(tf.second.vid);
-  if (candidateVids.empty())
-    throw cta::exception::Exception("In OStoreDB::RetrieveJob::fail(): no active job after addJobFailure() returned false.");
-  std::string bestVid=Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
-  // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
-  uint64_t bestCopyNb;
-  for (auto & tf: m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.tapeFiles) {
-    if (tf.second.vid == bestVid) {
-      bestCopyNb = tf.second.copyNb;
-      goto vidFound;
-    }
-  }
-  {
-    std::stringstream err;
-    err << "In OStoreDB::RetrieveJob::fail(): no tape file for requested vid. archiveId="
-        << m_retrieveRequest.getRetrieveFileQueueCriteria().archiveFile.archiveFileID
-        << " vid=" << bestVid;
-    throw RetrieveRequestHasNoCopies(err.str());
-  }
-  vidFound:
-  {
-    // Add the request to the queue.
-    objectstore::RetrieveQueue rq(m_oStoreDB.m_objectStore);
-    objectstore::ScopedExclusiveLock rql;
-    objectstore::Helpers::getLockedAndFetchedQueue<RetrieveQueue>(rq, rql, 
-        *m_oStoreDB.m_agentReference, bestVid, objectstore::QueueType::JobsToTransfer, logContext);
-    auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-    auto & af = rfqc.archiveFile;
-    auto & tf = af.tapeFiles.at(bestCopyNb);
-    auto sr = m_retrieveRequest.getSchedulerRequest();
-    std::list<objectstore::RetrieveQueue::JobToAdd> jta;
-    jta.push_back({bestCopyNb, tf.fSeq, m_retrieveRequest.getAddressIfSet(), af.fileSize, rfqc.mountPolicy, sr.creationLog.time});
-    rq.addJobsIfNecessaryAndCommit(jta, *m_oStoreDB.m_agentReference, logContext);
-    m_retrieveRequest.setOwner(rq.getAddressIfSet());
-    m_retrieveRequest.commit();
-    // We do not own the request anymore
-    m_jobOwned = false;
-    // The lock on the queue is released here (has to be after the request commit for consistency.
-  }
-  rrl.release();
-  // And relinquish ownership form agent
-  m_oStoreDB.m_agentReference->removeFromOwnership(m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
-  return false;
-}
-#endif
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failTransfer()

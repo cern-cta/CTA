@@ -16,8 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define STDOUT_LOGGING
-
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
