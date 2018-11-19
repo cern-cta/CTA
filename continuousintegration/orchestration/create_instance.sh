@@ -331,7 +331,7 @@ CTA_ENDPOINT=ctafrontend:10955
 
 echo "Setting workflows in namespace ${instance} pod ctaeos:"
 CTA_WF_DIR=/eos/${EOSINSTANCE}/proc/cta/workflow
-for WORKFLOW in sync::create.default sync::closew.default sync::archived.default archive_failed.default sync::prepare.default closew.retrieve_written retrieve_failed.default sync::delete.default
+for WORKFLOW in sync::create.default sync::closew.default sync::archived.default sync::archive_failed.default sync::prepare.default closew.retrieve_written sync::retrieve_failed.default sync::delete.default
 do
   echo "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
   kubectl --namespace=${instance} exec ctaeos -- bash -c "eos attr set sys.workflow.${WORKFLOW}=\"proto\" ${CTA_WF_DIR}"
