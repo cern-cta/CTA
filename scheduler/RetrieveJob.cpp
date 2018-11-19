@@ -92,19 +92,12 @@ std::string cta::RetrieveJob::reportURL() {
 // ArchiveJob::reportType
 //------------------------------------------------------------------------------
 std::string cta::RetrieveJob::reportType() {
-  throw std::runtime_error("RetrieveJob::reportType(): not implemented");
-#if 0
-  switch (m_dbJob->reportType) {
-  case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
-    return "CompletionReport";
-  case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-    return "ErrorReport";
-  default:
-    { 
-      throw exception::Exception("In ArchiveJob::reportType(): job status does not require reporting.");
-    }
+  switch(m_dbJob->reportType) {
+    case SchedulerDatabase::RetrieveJob::ReportType::FailureReport:
+      return "FailureReport";
+    default:
+      throw exception::Exception("In RetrieveJob::reportType(): job status does not require reporting.");
   }
-#endif
 }
 
 //------------------------------------------------------------------------------
