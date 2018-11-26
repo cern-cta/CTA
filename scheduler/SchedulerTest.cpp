@@ -795,7 +795,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     auto rqsts = scheduler.getPendingRetrieveJobs(lc);
     ASSERT_EQ(0, rqsts.size());
     // The failed queue should be empty
-    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
     ASSERT_EQ(0, retrieveJobFailedList.size());
     // Emulate the the reporter process
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
@@ -809,7 +809,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   {
     // There should be one failed job
-    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
     ASSERT_EQ(1, retrieveJobFailedList.size());
   }
 }
@@ -1048,7 +1048,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     auto rqsts = scheduler.getPendingRetrieveJobs(lc);
     ASSERT_EQ(0, rqsts.size());
     // The failed queue should be empty
-    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
     ASSERT_EQ(0, retrieveJobFailedList.size());
     // The failure should be on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
@@ -1067,7 +1067,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   {
     // There should be one failed job
-    auto retrieveJobFailedList = scheduler.getNextFailedRetrieveJobsBatch(10,lc);
+    auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
     ASSERT_EQ(1, retrieveJobFailedList.size());
   }
 }

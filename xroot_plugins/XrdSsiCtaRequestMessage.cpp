@@ -1035,6 +1035,7 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
 {
    //m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
+   //auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
 }
 
 

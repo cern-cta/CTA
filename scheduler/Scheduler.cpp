@@ -1098,10 +1098,10 @@ getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logCo
 }
 
 //------------------------------------------------------------------------------
-// getNextFailedRetrieveJobsBatch
+// getNextRetrieveJobsFailedBatch
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<RetrieveJob>> Scheduler::
-getNextFailedRetrieveJobsBatch(uint64_t filesRequested, log::LogContext &logContext)
+getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext)
 {
   // We need to go through the queues of failed retrieve jobs
   std::list<std::unique_ptr<RetrieveJob>> ret;

@@ -362,8 +362,8 @@ public:
    * @returns                 A list of unique_ptr to the next batch of failed retrieve jobs. The list
    *                          is empty when no more jobs can be found.
    */
-  std::list<std::unique_ptr<RetrieveJob>> getNextFailedRetrieveJobsBatch(uint64_t filesRequested,
-    log::LogContext &logContext);
+  std::list<std::unique_ptr<RetrieveJob>>
+  getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext);
   
 public:    
   /*============== Administrator management ==================================*/
