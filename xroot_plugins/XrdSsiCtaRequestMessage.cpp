@@ -139,6 +139,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
                processDrive_Rm(request.admincmd(), response);
                break;
+            case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
+               processFailedRequest_Ls(request.admincmd(), response);
+               break;
             case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
                processGroupMountRule_Add(request.admincmd(), response);
                break;
@@ -1025,6 +1028,13 @@ void RequestMessage::processDrive_Rm(const cta::admin::AdminCmd &admincmd, cta::
 
    response.set_message_txt(cmdlineOutput.str());
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processFailedRequest_Ls(const cta::admin::AdminCmd &admincmd, cta::xrd::Response &response)
+{
+   //m_scheduler.listQueueItems(m_cliIdentity.username, "failed queue", m_lc);
 }
 
 

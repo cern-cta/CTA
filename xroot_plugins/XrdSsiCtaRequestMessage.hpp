@@ -91,6 +91,7 @@ private:
    admincmd_t processDrive_Down;
    admincmd_t processDrive_Ls;
    admincmd_t processDrive_Rm;
+   admincmd_t processFailedRequest_Ls;
    admincmd_t processGroupMountRule_Add;
    admincmd_t processGroupMountRule_Ch;
    admincmd_t processGroupMountRule_Rm;
