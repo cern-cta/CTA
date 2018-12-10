@@ -21,6 +21,8 @@
 #include "Login.hpp"
 
 #include <fstream>
+#include <sstream>
+#include <algorithm>
 
 namespace cta {
 namespace rdbms {
@@ -207,8 +209,131 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
 // parseMySql
 //------------------------------------------------------------------------------
 Login Login::parseMySql(const std::string &connectionDetails) {
-  //return Login(DBTYPE_MYSQL, "", "", connectionDetails, "", 0);
-  throw exception::Exception(std::string(__FUNCTION__) + " not implemented");
+  // The full url pattern:
+  //     mysql://<username>:<password>@<host>:<port>/<db_name>
+  //
+  // optional: 
+  //   - <username>:<password>@ 
+  //   - <password>
+  //   - <port>
+  //
+  // Note:
+  //   - hostname can also be ipv4 or ipv6 address.
+  //     For ipv6, note hostname is string between "[" and "]", then is the port
+  
+
+  std::string username;
+  std::string password;
+  std::string host;
+  uint16_t port = 3306;
+  std::string database;
+  // connectionDetails is //<username>:<password>@<host>:<port>/<db_name>
+
+  const std::string protocol = "//";
+  const size_t protocol_sz = protocol.size();
+  if (connectionDetails.substr(0, protocol.size()) != protocol) {
+    throw exception::Exception(std::string(__FUNCTION__) + " mysql url format wrong.");
+  }
+
+  const std::string host_sep = "@"; // first "@" or optional 
+  auto idx_sep = connectionDetails.find(host_sep);
+
+  bool has_usr_pwd = true;
+  std::string usr_pwd_str;
+  std::string host_port_db_str;
+  // if "@" is not found, that means no user/password
+  // the password can be in ~/.my.cnf file
+  if (idx_sep == std::string::npos) {
+    has_usr_pwd = false;
+    host_port_db_str = connectionDetails.substr(protocol_sz);
+  } else if (idx_sep+1 < connectionDetails.size()) {
+    usr_pwd_str = connectionDetails.substr(protocol_sz, idx_sep-protocol_sz);
+    host_port_db_str = connectionDetails.substr(idx_sep+1);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " empty url.");
+  }
+
+  // parse username and password 
+  if (has_usr_pwd) {
+    const std::string pass_sep = ":";
+
+    auto idx_pass_sep = usr_pwd_str.find(pass_sep);
+    username = usr_pwd_str.substr(0, idx_pass_sep);
+    if (idx_pass_sep != std::string::npos
+        && (idx_pass_sep+1) < usr_pwd_str.size()) {
+      password = usr_pwd_str.substr(idx_pass_sep+1);
+    }
+
+  }
+
+  // parse host, port and db name
+  //   host and db name should not be optional
+  const std::string db_sep = "/";
+  auto idx_db_sep = host_port_db_str.find(db_sep);
+
+  if (idx_db_sep == std::string::npos) {
+    throw exception::Exception(std::string(__FUNCTION__) + " specify host/dbname");
+  } else if (idx_db_sep+1 >= host_port_db_str.size()) {
+    throw exception::Exception(std::string(__FUNCTION__) + " specify host/dbname");
+  }
+
+  const std::string host_port_str = host_port_db_str.substr(0, idx_db_sep);
+  const std::string db_str = host_port_db_str.substr(idx_db_sep+1);
+
+  if (host_port_str.empty()) {
+      throw exception::Exception(std::string(__FUNCTION__) + " host is missing");
+  }
+
+  if (db_str.empty()) {
+      throw exception::Exception(std::string(__FUNCTION__) + " database is missing");
+  }
+
+
+  // first part: host:port
+  const std::string port_sep = ":";
+  const std::string ipv6_sep_begin = "[";
+  const std::string ipv6_sep_end = "]";
+  size_t idx_port_sep = 0;
+
+  if (host_port_str.substr(0, 1) == ipv6_sep_begin) {
+    // ipv6 addr
+    idx_port_sep = host_port_str.find(ipv6_sep_end);
+
+    // invalid ipv6
+    if (idx_port_sep == std::string::npos // missing "]"
+        or idx_port_sep == 1// empty hostname, such as "[]"
+        ) {
+      throw exception::Exception(std::string(__FUNCTION__) + " invalid ipv6 addr " + host_port_str);
+    }
+
+    idx_port_sep = idx_port_sep  + 1;
+
+  } else {
+    idx_port_sep = host_port_str.find(port_sep);
+  }
+
+  std::string port_str;
+  host = host_port_str.substr(0, idx_port_sep);
+  if (idx_port_sep == std::string::npos 
+      or idx_port_sep+1 >= host_port_str.size()) {
+    // nop: port is omit
+  } else {
+    port_str = host_port_str.substr(idx_port_sep+1);
+
+    // convert number
+    std::stringstream ss;
+    ss << port_str;
+    ss >> port;
+
+    if (ss.fail()) {
+      throw exception::Exception(std::string(__FUNCTION__) + " invalid port " + port_str);
+    }
+  }
+
+  // second part db name
+  database = db_str;  
+
+  return Login(DBTYPE_MYSQL, username, password, database, host, port);
 }
 
 //------------------------------------------------------------------------------

@@ -38,36 +38,12 @@ namespace wrapper {
 // constructor
 //------------------------------------------------------------------------------
 OcciStmt::OcciStmt(
-  const AutocommitMode autocommitMode,
   const std::string &sql,
   OcciConn &conn,
   oracle::occi::Statement *const stmt) :
-  Stmt(sql, autocommitMode),
+  Stmt(sql),
   m_conn(conn),
   m_stmt(stmt) {
-
-  // m_occiConn and m_stmt have been set and m_stmt is not nullptr so it is safe to
-  // call close() from now on
-  try {
-    switch(autocommitMode) {
-    case AutocommitMode::AUTOCOMMIT_ON:
-      m_stmt->setAutoCommit(true);
-      break;
-    case AutocommitMode::AUTOCOMMIT_OFF:
-      // Do nothing because an occi::Statement has autocommit turned off by default
-      break;
-    default:
-      throw exception::Exception("Unknown autocommit mode");
-    }
-  } catch(exception::Exception &ex) {
-    close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    close();
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -178,10 +154,21 @@ void OcciStmt::bindOptionalString(const std::string &paramName, const optional<s
 //------------------------------------------------------------------------------
 // executeQuery
 //------------------------------------------------------------------------------
-std::unique_ptr<Rset> OcciStmt::executeQuery() {
+std::unique_ptr<Rset> OcciStmt::executeQuery(const AutocommitMode autocommitMode) {
   using namespace oracle;
 
   try {
+    switch(autocommitMode) {
+    case AutocommitMode::AUTOCOMMIT_ON:
+      m_stmt->setAutoCommit(true);
+      break;
+    case AutocommitMode::AUTOCOMMIT_OFF:
+      m_stmt->setAutoCommit(false);
+      break;
+    default:
+     throw exception::Exception("Unknown autocommit mode");
+    }
+
     return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(occi::SQLException &ex) {
     std::ostringstream msg;
@@ -207,10 +194,21 @@ std::unique_ptr<Rset> OcciStmt::executeQuery() {
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void OcciStmt::executeNonQuery() {
+void OcciStmt::executeNonQuery(const AutocommitMode autocommitMode) {
   using namespace oracle;
 
   try {
+    switch(autocommitMode) {
+    case AutocommitMode::AUTOCOMMIT_ON:
+      m_stmt->setAutoCommit(true);
+      break;
+    case AutocommitMode::AUTOCOMMIT_OFF:
+      m_stmt->setAutoCommit(false);
+      break;
+    default:
+     throw exception::Exception("Unknown autocommit mode");
+    }
+
     m_stmt->executeUpdate();
   } catch(occi::SQLException &ex) {
     std::ostringstream msg;

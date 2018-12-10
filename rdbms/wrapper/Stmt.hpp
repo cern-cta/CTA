@@ -42,16 +42,8 @@ public:
    * Constructor.
    *
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    */
-  Stmt(const std::string &sql, const AutocommitMode autocommitMode);
-
-  /**
-   * Returns the autocommit mode of teh statement.
-   *
-   * @return The autocommit mode of teh statement.
-   */
-  AutocommitMode getAutocommitMode() const noexcept;
+  Stmt(const std::string &sql);
 
   /**
    * Destructor.
@@ -162,14 +154,17 @@ public:
   /**
    *  Executes the statement and returns the result set.
    *
+   *  @param autocommitMode The autocommit mode of the statement.
    *  @return The result set.
    */
-  virtual std::unique_ptr<Rset> executeQuery() = 0;
+  virtual std::unique_ptr<Rset> executeQuery(const AutocommitMode autocommitMode) = 0;
 
   /**
    * Executes the statement.
+   *
+   *  @param autocommitMode The autocommit mode of the statement.
    */
-  virtual void executeNonQuery() = 0;
+  virtual void executeNonQuery(const AutocommitMode autocommitMode) = 0;
 
   /**
    * Returns the number of rows affected by the last execution of this
@@ -199,11 +194,6 @@ private:
    * The SQL statement.
    */
   std::string m_sql;
-
-  /**
-   * The autocommit mode of the statement.
-   */
-  AutocommitMode m_autocommitMode;
 
   /**
    * Map from SQL parameter name to parameter index.

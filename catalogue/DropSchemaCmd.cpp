@@ -104,6 +104,9 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
     case rdbms::Login::DBTYPE_SQLITE:
       dropSqliteCatalogueSchema(conn);
       break;
+    case rdbms::Login::DBTYPE_MYSQL:
+      dropMysqlCatalogueSchema(conn);
+      break;
     case rdbms::Login::DBTYPE_ORACLE:
       dropOracleCatalogueSchema(conn);
       break;
@@ -147,6 +150,49 @@ void DropSchemaCmd::dropSqliteCatalogueSchema(rdbms::Conn &conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
+
+//------------------------------------------------------------------------------
+// dropSqliteCatalogueSchema
+//------------------------------------------------------------------------------
+void DropSchemaCmd::dropMysqlCatalogueSchema(rdbms::Conn &conn) {
+  try {
+    std::list<std::string> tablesInDb = conn.getTableNames();
+    std::list<std::string> tablesToDrop = {
+      "CTA_CATALOGUE",
+      "ARCHIVE_ROUTE",
+      "TAPE_FILE",
+      "ARCHIVE_FILE",
+      "ARCHIVE_FILE_ID",
+      "TAPE",
+      "REQUESTER_MOUNT_RULE",
+      "REQUESTER_GROUP_MOUNT_RULE",
+      "ADMIN_USER",
+      "STORAGE_CLASS",
+      "STORAGE_CLASS_ID",
+      "TAPE_POOL",
+      "LOGICAL_LIBRARY",
+      "MOUNT_POLICY"};
+    dropDatabaseTables(conn, tablesToDrop);
+
+    std::list<std::string> triggersToDrop = {
+      "TAPE_POOL_IS_ENCRYPTED_BOOL_CK_BEFORE_INSERT",
+      "TAPE_POOL_IS_ENCRYPTED_BOOL_CK_BEFORE_UPDATE",
+      "ARCHIVE_ROUTE_COPY_NB_GT_ZERO_BEFORE_INSERT",
+      "ARCHIVE_ROUTE_COPY_NB_GT_ZERO_BEFORE_UPDATE",
+      "CHECK_TAPE_BEFORE_INSERT",
+      "CHECK_TAPE_BEFORE_UPDATE",
+      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_INSERT",
+      "TAPE_FILE_COPY_NB_GT_ZERO_BEFORE_UPDATE"
+    };
+    for (auto triggerToDrop: triggersToDrop) {
+      conn.executeNonQuery(std::string("DROP TRIGGER IF EXISTS ") + triggerToDrop, rdbms::AutocommitMode::AUTOCOMMIT_ON);
+      m_out << "Dropped Trigger " << triggerToDrop << std::endl;
+    }
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // dropDatabaseTables

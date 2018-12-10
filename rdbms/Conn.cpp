@@ -77,9 +77,9 @@ Conn &Conn::operator=(Conn &&rhs) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-Stmt Conn::createStmt(const std::string &sql, const AutocommitMode autocommitMode) {
+Stmt Conn::createStmt(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-    return m_connAndStmts->stmtPool->getStmt(*m_connAndStmts->conn, sql, autocommitMode);
+    return m_connAndStmts->stmtPool->getStmt(*m_connAndStmts->conn, sql);
   } else {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
@@ -88,7 +88,7 @@ Stmt Conn::createStmt(const std::string &sql, const AutocommitMode autocommitMod
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void Conn::executeNonQueries(const std::string &sqlStmts) {
+void Conn::executeNonQueries(const std::string &sqlStmts, const AutocommitMode autocommitMode) {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
@@ -100,7 +100,7 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
       searchPos = findResult + 1;
 
       if(0 < sqlStmt.size()) { // Ignore empty statements
-        executeNonQuery(sqlStmt, AutocommitMode::AUTOCOMMIT_ON);
+        executeNonQuery(sqlStmt, autocommitMode);
       }
     }
 
@@ -113,11 +113,10 @@ void Conn::executeNonQueries(const std::string &sqlStmts) {
 // executeNonQuery
 //------------------------------------------------------------------------------
 void Conn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
-  try {
-    auto stmt = createStmt(sql, autocommitMode);
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.what());
+  if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
+    m_connAndStmts->conn->executeNonQuery(sql,autocommitMode);
+  } else {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
   }
 }
 

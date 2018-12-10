@@ -49,10 +49,9 @@ public:
    *
    * @param conn The database connection to which the database statements
    * @param sql The SQL statement.
-   * @param autocommitMode The autocommit mode of the statement.
    * @return The prepared statement.
    */
-  Stmt getStmt(wrapper::Conn &conn, const std::string &sql, const AutocommitMode autocommitMode);
+  Stmt getStmt(wrapper::Conn &conn, const std::string &sql);
 
   /**
    * Returns the number of cached statements currently in the pool.
@@ -84,47 +83,12 @@ private:
   mutable threading::Mutex m_stmtsMutex;
 
   /**
-   * Key used to lookup prepares statements within the cache.
-   */
-  struct CachedStmtKey {
-    /**
-     * The SQL of the cached statement.
-     */
-    std::string sql;
-
-    /**
-     * The autocommit mode of the cached statement.
-     */
-    const AutocommitMode autocommitMode;
-
-    /**
-     * Constructor.
-     *
-     * @param s The SQL of the cached statement.
-     * @param a The autocommit mode of the cached statement.
-     */
-    CachedStmtKey(const std::string &s, const AutocommitMode a): sql(s), autocommitMode(a) {
-    }
-
-    /**
-     * Less than operator.
-     */
-    bool operator<(const CachedStmtKey &rhs) const {
-      if(sql != rhs.sql) {
-        return sql < rhs.sql;
-      } else {
-        return autocommitMode < rhs.autocommitMode;
-      }
-    }
-  };
-
-  /**
    * The cached database statements.
    *
    * Please note that for a single key there maybe more than one cached
    * statement, hence the map to list of statements.
    */
-  std::map<CachedStmtKey, std::list< std::unique_ptr<wrapper::Stmt> > > m_stmts;
+  std::map<std::string, std::list< std::unique_ptr<wrapper::Stmt> > > m_stmts;
 
 }; // class StmtPool
 

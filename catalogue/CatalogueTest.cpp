@@ -5993,6 +5993,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   const uint64_t archiveFileId = 1234;
 
+
   ASSERT_FALSE(m_catalogue->getArchiveFiles().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
 

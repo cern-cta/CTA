@@ -97,9 +97,21 @@ void SqliteConn::close() {
 }
 
 //------------------------------------------------------------------------------
+// executeNonQuery
+//------------------------------------------------------------------------------
+void SqliteConn::executeNonQuery(const std::string &sql, const AutocommitMode autocommitMode) {
+  try {
+    auto stmt = createStmt(sql);
+    stmt->executeNonQuery(AutocommitMode::AUTOCOMMIT_ON);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const AutocommitMode autocommitMode) {
+std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 
@@ -107,7 +119,7 @@ std::unique_ptr<Stmt> SqliteConn::createStmt(const std::string &sql, const Autoc
       throw exception::Exception("Connection is closed");
     }
 
-    return cta::make_unique<SqliteStmt>(autocommitMode , *this, sql);
+    return cta::make_unique<SqliteStmt>(*this, sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -185,8 +197,8 @@ void SqliteConn::printSchema(std::ostream &os) {
       "ORDER BY "
         "TYPE, "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
-    auto rset = stmt->executeQuery();
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_ON);
     os << "NAME, TYPE" << std::endl;
     os << "==========" << std::endl;
     while (rset->next()) {
@@ -213,8 +225,8 @@ std::list<std::string> SqliteConn::getTableNames() {
         "TYPE = 'table' "
       "ORDER BY "
         "NAME;";
-    auto stmt = createStmt(sql, AutocommitMode::AUTOCOMMIT_ON);
-    auto rset = stmt->executeQuery();
+    auto stmt = createStmt(sql);
+    auto rset = stmt->executeQuery(AutocommitMode::AUTOCOMMIT_ON);
     std::list<std::string> names;
     while (rset->next()) {
       auto name = rset->columnOptionalString("NAME");

@@ -52,13 +52,11 @@ public:
   /**
    * Constructor.
    *
-   * @param autocommitMode The autocommit mode of the statement.
    * @param sql The SQL statement.
    * @param conn The database connection.
    * @param stmt The OCCI statement.
    */
   OcciStmt(
-    const AutocommitMode autocommitMode,
     const std::string &sql,
     OcciConn &conn,
     oracle::occi::Statement *const stmt);
@@ -124,16 +122,19 @@ public:
   void bindOptionalString(const std::string &paramName, const optional<std::string> &paramValue) override;
 
   /**
-   *  Executes the statement and returns the result set.
+   * Executes the statement and returns the result set.
    *
-   *  @return The result set.
+   * @param autocommitMode The autocommit mode of the statement.
+   * @return The result set.
    */
-  std::unique_ptr<Rset> executeQuery() override;
+  std::unique_ptr<Rset> executeQuery(const AutocommitMode autocommitMode) override;
 
   /**
    * Executes the statement.
+   *
+   * @param autocommitMode The autocommit mode of the statement.
    */
-  void executeNonQuery() override;
+  void executeNonQuery(const AutocommitMode autocommitMode) override;
 
   /**
    * Returns the number of rows affected by the last execution of this
