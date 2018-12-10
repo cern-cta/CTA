@@ -116,9 +116,9 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
 //------------------------------------------------------------------------------
 // RepackRequest::asyncUpdateOwner()
 //------------------------------------------------------------------------------
-RepackRequest::AsyncOwnerUpdater* RepackRequest::asyncUpdateOwner(const std::string& owner, const std::string& previousOwner, 
+RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner, const std::string& previousOwner, 
     cta::optional<serializers::RepackRequestStatus> newStatus) {
-  std::unique_ptr<AsyncOwnerUpdater> ret(new AsyncOwnerUpdater);
+  std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
   auto & retRef = *ret;
   ret->m_updaterCallback=
     [this, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
@@ -141,18 +141,32 @@ RepackRequest::AsyncOwnerUpdater* RepackRequest::asyncUpdateOwner(const std::str
         throw Backend::WrongPreviousOwner("In RepackRequest::asyncUpdateOwner()::lambda(): Request not owned.");
       }
       oh.set_owner(owner);
-      // We only need to modify the pay load if there is a status change.
-      if (newStatus) {
-        serializers::RepackRequest payload;
-        if (!payload.ParseFromString(oh.payload())) {
-          // Use a the tolerant parser to assess the situation.
-          payload.ParsePartialFromString(oh.payload());
-          throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse payload: ")+
-            payload.InitializationErrorString());
-        }
-        payload.set_status(newStatus.value());
-        oh.set_payload(payload.SerializePartialAsString());
+      // Pick up info to return
+      serializers::RepackRequest payload;
+      if (!payload.ParseFromString(oh.payload())) {
+        // Use a the tolerant parser to assess the situation.
+        payload.ParsePartialFromString(oh.payload());
+        throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse payload: ")+
+          payload.InitializationErrorString());
       }
+      // We only need to modify the pay load if there is a status change.
+      if (newStatus) payload.set_status(newStatus.value());
+      typedef common::dataStructures::RepackInfo RepackInfo;
+      retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
+      retRef.m_repackInfo.vid = payload.vid();
+      if (payload.repackmode()) {
+        if (payload.expandmode()) {
+          retRef.m_repackInfo.type = RepackInfo::Type::ExpandAndRepack;
+        } else {
+          retRef.m_repackInfo.type = RepackInfo::Type::RepackOnly;
+        }
+      } else if (payload.expandmode()) {
+        retRef.m_repackInfo.type = RepackInfo::Type::ExpandOnly;
+      } else {
+        throw exception::Exception("In RepackRequest::asyncUpdateOwner()::lambda(): unexpcted mode: neither expand nor repack.");
+      }
+      // We only need to modify the pay load if there is a status change.
+      if (newStatus) oh.set_payload(payload.SerializePartialAsString());
       return oh.SerializeAsString();
     };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
@@ -162,10 +176,18 @@ RepackRequest::AsyncOwnerUpdater* RepackRequest::asyncUpdateOwner(const std::str
 //------------------------------------------------------------------------------
 // RepackRequest::AsyncOwnerUpdater::wait()
 //------------------------------------------------------------------------------
-void RepackRequest::AsyncOwnerUpdater::wait() {
+void RepackRequest::AsyncOwnerAndStatusUpdater::wait() {
   m_backendUpdater->wait();
   m_timingReport.insertAndReset("commitUnlockTime", m_timer);
 }
+
+//------------------------------------------------------------------------------
+// RepackRequest::AsyncOwnerUpdater::wait()
+//------------------------------------------------------------------------------
+common::dataStructures::RepackInfo RepackRequest::AsyncOwnerAndStatusUpdater::getInfo() {
+  return m_repackInfo;
+}
+
 
 //------------------------------------------------------------------------------
 // RepackRequest::dump()

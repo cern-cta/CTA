@@ -18,6 +18,7 @@
 
 #include "RepackQueue.hpp"
 #include "GenericObject.hpp"
+#include "common/range.hpp"
 #include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
@@ -118,6 +119,25 @@ auto RepackQueue::getRequestsSummary() -> RequestsSummary {
   checkPayloadReadable();
   RequestsSummary ret;
   ret.requests = m_payload.repackrequestpointers().size();
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// RepackQueue::getCandidateList()
+//------------------------------------------------------------------------------
+auto RepackQueue::getCandidateList(uint64_t maxRequests, std::set<std::string> repackRequestsToSkip)
+  -> CandidateJobList {
+  checkPayloadReadable();
+  CandidateJobList ret;
+  auto repreq = m_payload.repackrequestpointers().begin();
+  for (auto __attribute__((unused)) i: cta::range<uint64_t>(maxRequests)) {
+    if (repreq == m_payload.repackrequestpointers().end()) break;
+    ret.candidates.push_back(RequestDump());
+    ret.candidates.back().address = repreq->address();
+    ++repreq;
+  }
+  ret.candidateRequests = ret.candidates.size();
+  ret.remainingRequestsAfterCandidates = m_payload.repackrequestpointers_size() - ret.candidateRequests;
   return ret;
 }
 

@@ -1,6 +1,6 @@
-/*
+/**
  * The CERN Tape Archive (CTA) project
- * Copyright (C) 2015  CERN
+ * Copyright © 2018 CERN
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,20 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/SchedulerDatabase.hpp"
+#include "RepackRequestManager.hpp"
 
 namespace cta {
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::SchedulerDatabase::~SchedulerDatabase() throw() { }
-
-SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
-  typedef common::dataStructures::RepackInfo::Status Status;
-  for (auto & s: {Status::Aborted, Status::Aborting, Status::Complete, Status::Failed, Status::Pending, 
-      Status::Running, Status::Starting, Status::ToExpand})
-    operator [](s) = 0;
+void RepackRequestManager::runOnePass(log::LogContext& lc) {
+  // We give ourselves a budget of 30s for those operations...
+  utils::Timer t;
+  // First expand any request to expand
+  // TODO: implement expansion
+  // Next promote requests to ToExpand if needed
+  m_scheduler.promoteRepackRequestsToToExpand();
+  
 }
 
-} //namespace cta
+} // namespace cta

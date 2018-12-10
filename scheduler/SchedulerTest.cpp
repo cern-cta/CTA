@@ -995,16 +995,35 @@ TEST_P(SchedulerTest, repack) {
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   
+  typedef cta::common::dataStructures::RepackInfo RepackInfo;
+  typedef cta::common::dataStructures::RepackInfo::Status Status;
+  
   // Create and then cancel repack
   common::dataStructures::SecurityIdentity cliId;
-  scheduler.queueRepack(cliId, "Tape", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
-  auto repacks = scheduler.getRepacks();
-  ASSERT_EQ(1, repacks.size());
-  auto repack = scheduler.getRepack(repacks.front().vid);
-  ASSERT_EQ("Tape", repack.vid);
-  scheduler.cancelRepack(cliId, repack.vid, lc);
+  std::string tape1 = "Tape";
+  scheduler.queueRepack(cliId, tape1, "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  {
+    auto repacks = scheduler.getRepacks();
+    ASSERT_EQ(1, repacks.size());
+    auto repack = scheduler.getRepack(repacks.front().vid);
+    ASSERT_EQ(tape1, repack.vid);
+  }
+  scheduler.cancelRepack(cliId, tape1, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
-  // 
+  // Recreate a repack and get it moved to ToExpand
+  scheduler.queueRepack(cliId, "Tape2", "root://server/repackDir", common::dataStructures::RepackInfo::Type::RepackOnly, lc);
+  {
+    auto repacks = scheduler.getRepacks();
+    ASSERT_EQ(1, repacks.size());
+    auto repack = scheduler.getRepack(repacks.front().vid);
+    ASSERT_EQ("Tape2", repack.vid);
+  }
+  scheduler.promoteRepackRequestsToToExpand(lc);
+  {
+    auto repacks = scheduler.getRepacks();
+    ASSERT_EQ(1, std::count_if(repacks.begin(), repacks.end(), [](RepackInfo &r){ return r.status == Status::ToExpand; }));
+    ASSERT_EQ(1, repacks.size());
+  }
 }
 
 #undef TEST_MOCK_DB

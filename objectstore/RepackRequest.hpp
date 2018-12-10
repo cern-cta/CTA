@@ -48,18 +48,20 @@ public:
   std::string dump();
   
   // An asynchronous request ownership updating class.
-  class AsyncOwnerUpdater {
+  class AsyncOwnerAndStatusUpdater {
     friend class RepackRequest;
   public:
     void wait();
+    common::dataStructures::RepackInfo getInfo();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     log::TimingList m_timingReport;
     utils::Timer m_timer;
+    common::dataStructures::RepackInfo m_repackInfo;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  AsyncOwnerUpdater *asyncUpdateOwner(const std::string &owner, const std::string &previousOwner,
+  AsyncOwnerAndStatusUpdater *asyncUpdateOwnerAndStatus(const std::string &owner, const std::string &previousOwner,
       cta::optional<serializers::RepackRequestStatus> newStatus);
 };
 

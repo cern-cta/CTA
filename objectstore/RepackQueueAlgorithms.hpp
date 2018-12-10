@@ -21,6 +21,7 @@
 #include "RepackQueue.hpp"
 #include "common/make_unique.hpp"
 #include "common/optional.hpp"
+#include "RepackRequest.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -30,7 +31,7 @@ template<typename C>
 struct ContainerTraits<RepackQueue,C>
 { 
   struct ContainerSummary : public RepackQueue::RequestsSummary {
-    std::string repackRequestAddress;
+    using RepackQueue::RequestsSummary::RequestsSummary;
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
   
@@ -38,6 +39,7 @@ struct ContainerTraits<RepackQueue,C>
 
   struct InsertedElement {
     std::unique_ptr<RepackRequest> repackRequest;
+    cta::optional<serializers::RepackRequestStatus> newStatus;
     typedef std::list<InsertedElement> list;
   };
 
@@ -45,8 +47,7 @@ struct ContainerTraits<RepackQueue,C>
 
   struct PoppedElement {
     std::unique_ptr<RepackRequest> repackRequest;
-    std::string vid;
-    serializers::RepackRequestStatus status;
+    common::dataStructures::RepackInfo repackInfo;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
@@ -83,6 +84,7 @@ struct ContainerTraits<RepackQueue,C>
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
+  typedef serializers::RepackRequestStatus            ElementStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -127,6 +129,11 @@ struct ContainerTraits<RepackQueue,C>
   static typename OpFailure<PoppedElement>::list
   switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
     const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
+  
+  static typename OpFailure<PoppedElement>::list
+  switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
+    const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,
+    cta::optional<ElementStatus> &newStatus = cta::nullopt);
 
   static PoppedElementsSummary getElementSummary(const PoppedElement &);
   static PoppedElementsBatch getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria,
@@ -151,6 +158,25 @@ void ContainerTraits<RepackQueue,C>::ContainerSummary::
 addDeltaToLog(ContainerSummary &previous, log::ScopedParamContainer &params) {
   params.add("queueRequestsBefore", previous.requests)
         .add("queueRequestsAfter", requests);
+}
+
+template<typename C>
+auto ContainerTraits<RepackQueue,C>::
+getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, ElementsToSkipSet& elemtsToSkip,
+  log::LogContext& lc) -> PoppedElementsBatch
+{
+  PoppedElementsBatch ret;
+  auto candidateReqsFromQueue=cont.getCandidateList(unfulfilledCriteria.requests, elemtsToSkip);
+  for (auto &crfq: candidateReqsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement());
+    PoppedElement & elem = ret.elements.back();
+    elem.repackRequest = cta::make_unique<RepackRequest>(crfq.address, cont.m_objectStore);
+    elem.repackInfo.status = common::dataStructures::RepackInfo::Status::Undefined;
+    elem.repackInfo.type = common::dataStructures::RepackInfo::Type::Undefined;
+    elem.repackInfo.vid = "";
+    ret.summary.requests++;
+  }
+  return ret;
 }
 
 template<typename C>
@@ -220,7 +246,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   } catch (RootEntry::NotAllocated &) {
     throw NoSuchContainer("In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): no such repack queue");
   }
-  // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
+  // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
   cont.setAddress(rpkQAddress);
   //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
   try {
@@ -238,17 +264,20 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
       re.removeRepackQueueAndCommit(queueType, lc);
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
+      lc.log(log::INFO, 
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
     } catch (RootEntry::RepackQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+      lc.log(log::INFO, 
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchRepackQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
-      lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
+      lc.log(log::DEBUG, 
+          "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
@@ -298,10 +327,10 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
   const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer &t, log::LogContext& lc)
   -> typename OpFailure<InsertedElement>::list
 {
-  std::list<std::unique_ptr<RepackRequest::AsyncOwnerUpdater>> updaters;
+  std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;
   for (auto & e: elemMemCont) {
     RepackRequest & repr = *e.repackRequest;
-    updaters.emplace_back(repr.asyncUpdateOwner(contAddress, previousOwnerAddress, cta::nullopt));
+    updaters.emplace_back(repr.asyncUpdateOwnerAndStatus(contAddress, previousOwnerAddress, cta::nullopt));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -324,15 +353,15 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
 
 template<typename C>
 auto ContainerTraits<RepackQueue,C>::
-switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
-  const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc)
+switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
+  const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,
+  cta::optional<ElementStatus> &newStatus)
   -> typename OpFailure<PoppedElement>::list
 {
-  std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
+  std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;
   for (auto & e: poppedElementBatch.elements) {
-    ArchiveRequest & ar = *e.archiveRequest;
-    auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
+    RepackRequest & rr = *e.repackRequest;
+    updaters.emplace_back(rr.asyncUpdateOwnerAndStatus(contAddress, previousOwnerAddress, newStatus));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -341,21 +370,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   while (e != poppedElementBatch.elements.end()) {
     try {
       u->get()->wait();
-      e->archiveFile = u->get()->getArchiveFile();
-      e->archiveReportURL = u->get()->getArchiveReportURL();
-      e->errorReportURL = u->get()->getArchiveErrorReportURL();
-      e->srcURL = u->get()->getSrcURL();
-      switch(u->get()->getJobStatus()) {
-        case serializers::ArchiveJobStatus::AJS_ToReportForTransfer:
-          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::CompletionReport;
-          break;
-        case serializers::ArchiveJobStatus::AJS_ToReportForFailure:
-          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::FailureReport;
-          break;
-        default:
-          e->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
-          break;
-      }
+      e->repackInfo = u->get()->getInfo();
     } catch (...) {
       ret.push_back(OpFailure<PoppedElement>());
       ret.back().element = &(*e);
@@ -377,44 +392,5 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 }
 
 
-
-// RepackQueue full specialisations for ContainerTraits.
-
-template<>
-struct ContainerTraits<RepackQueue,RepackQueuePending>::PopCriteria {
-  uint64_t files;
-  uint64_t bytes;
-  PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
-  template<typename PoppedElementsSummary_t>
-  PopCriteria& operator-=(const PoppedElementsSummary_t &pes) {
-    bytes -= pes.bytes;
-    files -= pes.files;
-    return *this;
-  }
-};
-
-template<>
-struct ContainerTraits<RepackQueue,RepackQueuePending>::PoppedElementsSummary {
-  uint64_t files;
-  uint64_t bytes;
-  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
-  bool operator< (const PopCriteria & pc) {
-    // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
-    return bytes < pc.bytes && files < pc.files;
-  }
-  PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
-    bytes += other.bytes;
-    files += other.files;
-    return *this;
-  }
-  void addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
-    params.add("filesAdded", files - previous.files)
-          .add("bytesAdded", bytes - previous.bytes)
-          .add("filesBefore", previous.files)
-          .add("bytesBefore", previous.bytes)
-          .add("filesAfter", files)
-          .add("bytesAfter", bytes);
-  }
-};
 
 }} // namespace cta::objectstore

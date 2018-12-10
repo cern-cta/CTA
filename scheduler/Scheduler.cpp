@@ -331,6 +331,36 @@ common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) 
 }
 
 //------------------------------------------------------------------------------
+// promoteRepackRequestsToToExpand
+//------------------------------------------------------------------------------
+void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
+  // We target 2 fresh requests available for processing (ToExpand or Starting).
+  const size_t targetAvailbleRequests = 2;
+  // Dry-run test to check if promotion
+  auto repackStatsNL = m_db.getRepackStatisticsNoLock();
+  // Statistics are supposed to be initialized for each status value.
+  typedef common::dataStructures::RepackInfo::Status Status;
+  if (targetAvailbleRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting)) {
+    // Let's try to promote a repack request. Take the lock.
+    repackStatsNL.reset();
+    auto repackStats = m_db.getRepackStatistics();
+    if (targetAvailbleRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting)) {
+      auto requestsToPromote = targetAvailbleRequests;
+      requestsToPromote -= repackStats->at(Status::ToExpand);
+      requestsToPromote -= repackStats->at(Status::Starting);
+      auto stats = repackStats->promotePendingRequestsForExpansion(requestsToPromote, lc);
+      log::ScopedParamContainer params(lc);
+      params.add("promotedRequests", stats.promotedRequests)
+            .add("pendingBefore", stats.pendingBefore)
+            .add("toEnpandBefore", stats.toEnpandBefore)
+            .add("pendingAfter", stats.pendingAfter)
+            .add("toExpandAfter", stats.toExpandAfter);
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
 // shrink
 //------------------------------------------------------------------------------
 void Scheduler::shrink(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool) {

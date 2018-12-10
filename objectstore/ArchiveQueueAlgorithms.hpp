@@ -92,6 +92,7 @@ struct ContainerTraits<ArchiveQueue,C>
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
+  typedef serializers::ArchiveJobStatus               ElementStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -272,19 +273,19 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
+      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
+      lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;

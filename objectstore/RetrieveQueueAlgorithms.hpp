@@ -92,6 +92,7 @@ struct ContainerTraits<RetrieveQueue,C>
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
+  typedef serializers::RetrieveJobStatus              ElementStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 

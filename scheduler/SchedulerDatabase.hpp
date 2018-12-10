@@ -33,6 +33,7 @@
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "scheduler/TapeMount.hpp"
@@ -373,9 +374,19 @@ public:
    */
   class RepackRequestStatistics: public std::map<common::dataStructures::RepackInfo::Status, size_t> {
   public:
-    virtual void promotePendingRequestsForExpansion(size_t requestCount = 1) = 0;
+    RepackRequestStatistics();
+    struct PromotionToToExpandResult {
+      size_t pendingBefore;
+      size_t toEnpandBefore;
+      size_t pendingAfter;
+      size_t toExpandAfter;
+      size_t promotedRequests;
+    };
+    virtual PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
+            log::LogContext &lc) = 0;
     virtual ~RepackRequestStatistics() {}
   };
+  CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() = 0;
   

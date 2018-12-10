@@ -20,8 +20,6 @@
 
 namespace cta { namespace objectstore {
 
-// ArchiveQueueFailed full specialisations for ContainerTraits.
-
 template<>
 const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_containerTypeName = "RepackQueuePending";
 
@@ -35,5 +33,14 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
 {
   trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
 }
+
+template<>
+auto ContainerTraits<RepackQueue,RepackQueuePending>::getContainerSummary(Container &cont) -> ContainerSummary
+{
+  ContainerSummary ret;
+  ret.requests = cont.getRequestsSummary().requests;
+  return ret;
+}
+
 
 }} // namespace cta::objectstore

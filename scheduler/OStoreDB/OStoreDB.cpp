@@ -20,14 +20,12 @@
 #include "MemQueues.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/RetrieveQueueAlgorithms.hpp"
+#include "objectstore/RepackQueueAlgorithms.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/DriveState.hpp"
-//#include "objectstore/ArchiveRequest.hpp"
-//#include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RepackQueue.hpp"
-#include "objectstore/RepackQueuePendingAlgorithms.hpp"
 #include "objectstore/Helpers.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
@@ -1114,6 +1112,118 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
   }
   throw NoSuchRepackRequest("In OStoreDB::getRepackInfo(): No repack request for this VID.");
 }
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+//------------------------------------------------------------------------------
+OStoreDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics(
+  objectstore::Backend& backend, objectstore::AgentReference &agentReference):
+  m_backend(backend), m_agentReference(agentReference),
+  m_pendingRepackRequestQueue(backend) {}
+
+//------------------------------------------------------------------------------
+// OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
+//------------------------------------------------------------------------------
+auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
+        log::LogContext &lc) -> PromotionToToExpandResult {
+  // Check we still hold the lock
+  if (!m_lockOnPendingRepackRequestsQueue.isLocked())
+    throw SchedulingLockNotHeld("In RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): lock not held anymore.");
+  // We have a write lock on the repack queue. We will pop the requested amount of requests.
+  PromotionToToExpandResult ret;
+  typedef common::dataStructures::RepackInfo::Status Status; 
+  ret.pendingBefore = at(Status::Pending);
+  ret.toEnpandBefore = at(Status::ToExpand);
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  RQPAlgo::PoppedElementsBatch poppedElements;
+  {
+    RQPAlgo rqpAlgo(m_backend, m_agentReference);
+    objectstore::ContainerTraits<RepackQueue, RepackQueuePending>::PopCriteria criteria;
+    criteria.requests = requestCount;
+    cta::optional<serializers::RepackRequestStatus> newStatus(serializers::RepackRequestStatus::RRS_ToExpand);
+    poppedElements = rqpAlgo.popNextBatchFromContainerAndSwitchStatus(
+      m_pendingRepackRequestQueue, m_lockOnPendingRepackRequestsQueue, 
+      criteria, newStatus, lc);
+    // We now switched the status of the requests. The state change is permanent and visible. The lock was released by
+    // the previous call.
+  }
+  // And we will push the requests to the TeExpand queue.
+  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  {
+    RQTEAlgo rqteAlgo(m_backend, m_agentReference);
+    RQTEAlgo::InsertedElement::list insertedElements;
+    for (auto &rr: poppedElements.elements) {
+      insertedElements.push_back(RQTEAlgo::InsertedElement());
+      insertedElements.back().repackRequest = std::move(rr.repackRequest);
+    }
+    rqteAlgo.referenceAndSwitchOwnership(nullopt, RepackQueueType::ToExpand, m_agentReference.getAgentAddress(),
+        insertedElements, lc);
+  }
+  ret.promotedRequests = poppedElements.summary.requests;
+  ret.pendingAfter = ret.pendingBefore - ret.promotedRequests;
+  ret.toExpandAfter = ret.toEnpandBefore + ret.promotedRequests;
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::populateRepackRequestsStatistics()
+//------------------------------------------------------------------------------
+void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabase::RepackRequestStatistics& stats) {
+  objectstore::RepackIndex ri(re.getRepackIndexAddress(), m_objectStore);
+  ri.fetchNoLock();
+  std::list<objectstore::RepackRequest> requests;
+  std::list<std::unique_ptr<objectstore::RepackRequest::AsyncLockfreeFetcher>> fetchers;
+  for (auto &rra: ri.getRepackRequestsAddresses()) {
+    requests.emplace_back(RepackRequest(rra.repackRequestAddress, m_objectStore));
+    fetchers.emplace_back(requests.back().asyncLockfreeFetch());
+  }
+  auto fet = fetchers.begin();
+  for (auto &req: requests) {
+    try {
+      (*fet)->wait();
+      try {
+        stats.at(req.getInfo().status)++;
+      } catch (std::out_of_range) {
+        stats[req.getInfo().status] = 1;
+      }
+    } catch (...) {}
+    fet++;
+  }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getDRepackStatistics()
+//------------------------------------------------------------------------------
+auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  // We need to take a lock on an object to allow global locking of the repack
+  // requests scheduling.
+  std::unique_ptr<OStoreDB::RepackRequestPromotionStatistics>
+    typedRet(new OStoreDB::RepackRequestPromotionStatistics(m_objectStore, *m_agentReference));
+  // Try to get the lock
+  try {
+    typedRet->m_pendingRepackRequestQueue.setAddress(re.getRepackQueueAddress(RepackQueueType::Pending));
+    typedRet->m_lockOnPendingRepackRequestsQueue.lock(typedRet->m_pendingRepackRequestQueue);
+  } catch (...) {}
+  // In all cases, we get the information from the index and individual requests.
+  populateRepackRequestsStatistics(re, *typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getRepackStatisticsNoLock()
+//------------------------------------------------------------------------------
+auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+  auto typedRet = make_unique<OStoreDB::RepackRequestPromotionStatisticsNoLock>();
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  populateRepackRequestsStatistics(re, *typedRet);
+  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  return ret;
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()

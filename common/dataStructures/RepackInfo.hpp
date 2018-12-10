@@ -33,7 +33,8 @@ struct RepackInfo {
   enum class Type {
     ExpandAndRepack,
     ExpandOnly,
-    RepackOnly
+    RepackOnly,
+    Undefined
   } type;
   enum class Status {
     // Those values are matching the cta.proto values
@@ -44,7 +45,8 @@ struct RepackInfo {
     Aborting = 5,
     Aborted = 6,
     Complete = 7,
-    Failed = 8
+    Failed = 8,
+    Undefined = 999
   } status;
 //  std::string tag;
 //  uint64_t totalFiles;

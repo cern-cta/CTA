@@ -139,18 +139,15 @@ public:
 };
 
 class ArchiveQueueToTransfer: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueToTransfer(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
 
 class ArchiveQueueToReport: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueToReport(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
 
 class ArchiveQueueFailed: public ArchiveQueue {
-public:
-  template<typename...Ts> ArchiveQueueFailed(Ts&...args): ArchiveQueue(args...) {}
+  using ArchiveQueue::ArchiveQueue;
 };
   
 }}

@@ -29,6 +29,7 @@
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RepackQueue.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
@@ -295,12 +296,38 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchRepackRequest);
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
   void cancelRepack(const std::string& vid, log::LogContext & lc) override;
+  
+  /**
+   * A class holding a lock on the pending repack request queue. This is the first
+   * container we will have to lock if we decide to pop a/some request(s)
+   */
   class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
     friend class OStoreDB;
   public:
-    CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
-    void promotePendingRequestsForExpansion(size_t requestCount) override;
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override;
+    virtual ~RepackRequestPromotionStatistics() {};
+  private:
+    RepackRequestPromotionStatistics(objectstore::Backend & backend,
+              objectstore::AgentReference & agentReference);
+    objectstore::Backend & m_backend;
+    objectstore::AgentReference &m_agentReference;
+    objectstore::RepackQueuePending m_pendingRepackRequestQueue;
+    objectstore::ScopedExclusiveLock m_lockOnPendingRepackRequestsQueue;
   };
+  
+  class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {
+    friend class OStoreDB;
+  public:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {
+      throw (SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion"));
+    }
+    virtual ~RepackRequestPromotionStatisticsNoLock() {}
+  };
+  
+private:
+  void populateRepackRequestsStatistics (objectstore::RootEntry & re, SchedulerDatabase::RepackRequestStatistics &stats);
+public:
+  
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
   

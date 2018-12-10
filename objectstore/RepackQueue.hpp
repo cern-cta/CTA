@@ -49,6 +49,20 @@ public:
   
   void addRequestsIfNecessaryAndCommit(const std::list<std::string> & requestAddresses, log::LogContext & lc);
   
+  struct RequestDump {
+    std::string address;
+  };
+  
+  struct CandidateJobList {
+    uint64_t remainingRequestsAfterCandidates = 0;
+    uint64_t candidateRequests = 0;
+    std::list<RequestDump> candidates;
+  };
+  
+  // The set of repack requests to skip are requests previously identified by the caller as bad,
+  // which still should be removed from the queue. They will be disregarded from  listing.
+  CandidateJobList getCandidateList(uint64_t maxRequests, std::set<std::string> repackRequestsToSkip);
+  
   void removeRequestsAndCommit(const std::list<std::string> & requestsAddresses);
   
   bool isEmpty();
@@ -59,13 +73,11 @@ public:
 };
 
 class RepackQueuePending: public RepackQueue {
-public:
-  template<typename...Ts> RepackQueuePending(Ts&...args): RepackQueue(args...) {}
+  using RepackQueue::RepackQueue;
 };
 
 class RepackQueueToExpand: public RepackQueue {
-public:
-  template<typename...Ts> RepackQueueToExpand(Ts&...args): RepackQueue(args...) {}
+  using RepackQueue::RepackQueue;
 };
 
 }} // namespace cta::objectstore

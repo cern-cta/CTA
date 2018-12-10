@@ -38,6 +38,7 @@ public:
     T operator*() { if (m_val == m_limit) throw DereferencingPastEnd("In range::operator*(): dereferencing out of bounds"); return m_val; }
     iterator & operator++() { doInc(); return *this; }
     iterator operator++(int) { iterator ret(*this); doInc(); return ret; }
+  private:
     void doInc() { 
       switch (m_dir) { 
         // Increment/decrement variable, preventing over/underflow, and overshooting the limit.
@@ -64,6 +65,7 @@ public:
           break;
       }
     }
+  public:
     bool operator==(const iterator& other) { checkIteratorsComparable(other); return m_val == other.m_val; }
     bool operator!=(const iterator& other) { checkIteratorsComparable(other); return m_val != other.m_val; }
     CTA_GENERATE_EXCEPTION_CLASS(NonComparableIterators);
