@@ -1893,6 +1893,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.vendor ||
        searchCriteria.logicalLibrary ||
        searchCriteria.tapePool ||
+       searchCriteria.vo ||
        searchCriteria.capacityInBytes ||
        searchCriteria.disabled ||
        searchCriteria.full ||
@@ -1926,6 +1927,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.vo) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE_POOL.VO = :VO";
+      addedAWhereConstraint = true;
+    }
     if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += " TAPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
@@ -1955,6 +1961,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.vendor) stmt.bindString(":VENDOR", searchCriteria.vendor.value());
     if(searchCriteria.logicalLibrary) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+    if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.disabled) stmt.bindBool(":IS_DISABLED", searchCriteria.disabled.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());

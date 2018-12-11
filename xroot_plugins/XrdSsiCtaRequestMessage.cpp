@@ -1830,6 +1830,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       searchCriteria.capacityInBytes = getOptional(OptionUInt64::CAPACITY,        &has_any);
       searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
       searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
+      searchCriteria.vo              = getOptional(OptionString::VO,              &has_any);
       searchCriteria.vid             = getOptional(OptionString::VID,             &has_any);
       searchCriteria.mediaType       = getOptional(OptionString::MEDIA_TYPE,      &has_any);
       searchCriteria.vendor          = getOptional(OptionString::VENDOR,          &has_any);

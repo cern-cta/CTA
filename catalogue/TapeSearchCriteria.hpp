@@ -62,6 +62,11 @@ struct TapeSearchCriteria {
   optional<std::string> tapePool;
 
   /**
+   * The virtual organisation that owns a tape.
+   */
+  optional<std::string> vo;
+
+  /**
    * The capacity of a tape in bytes
    */
   optional<uint64_t> capacityInBytes;

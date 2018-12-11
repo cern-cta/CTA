@@ -2689,6 +2689,16 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   {
     catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vo = vo;
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(vo, vidToTape.begin()->second.vo);
+  }
+
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.capacityInBytes = capacityInBytes;
     const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
