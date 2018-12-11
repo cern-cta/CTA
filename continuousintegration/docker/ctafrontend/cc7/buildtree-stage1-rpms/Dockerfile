@@ -84,6 +84,8 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
       json-c \
       shadow-utils \
       sudo \
+      zeromq \
+      mariadb-devel \
   && \
     yum clean all \
   && \
