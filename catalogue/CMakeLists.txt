@@ -48,9 +48,11 @@ set (CATALOGUE_LIB_SRC_FILES
   UserSpecifiedAnEmptyStringComment.cpp
   UserSpecifiedAnEmptyStringDiskInstanceName.cpp
   UserSpecifiedAnEmptyStringLogicalLibraryName.cpp
+  UserSpecifiedAnEmptyStringMediaType.cpp
   UserSpecifiedAnEmptyStringStorageClassName.cpp
   UserSpecifiedAnEmptyStringTapePoolName.cpp
   UserSpecifiedAnEmptyStringUsername.cpp
+  UserSpecifiedAnEmptyStringVendor.cpp
   UserSpecifiedAnEmptyStringVid.cpp
   UserSpecifiedAnEmptyStringVo.cpp
   UserSpecifiedAZeroCapacity.cpp

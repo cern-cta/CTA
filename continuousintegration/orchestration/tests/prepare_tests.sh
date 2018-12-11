@@ -72,6 +72,8 @@ echo "Preparing CTA configuration for tests"
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add         \
+      --mediatype mediatype                                           \
+      --vendor vendor                                                 \
       --logicallibrary ${LIBRARYNAME}                                 \
       --tapepool ctasystest                                           \
       --capacity 1000000000                                           \

@@ -112,6 +112,8 @@ namespace unitTests {
     
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
+    const std::string mediaType = "media_type";
+    const std::string vendor = "vendor";
     const std::string logicalLibraryName = "logical_library_name";
     const std::string tapePoolName = "tape_pool_name";
     const std::string vo = "vo";
@@ -123,7 +125,7 @@ namespace unitTests {
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, "Create tape pool");
-    m_catalogue->createTape(admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
+    m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;
@@ -258,6 +260,8 @@ namespace unitTests {
     
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
+    const std::string mediaType = "media_type";
+    const std::string vendor = "vendor";
     const std::string logicalLibraryName = "logical_library_name";
     const std::string tapePoolName = "tape_pool_name";
     const std::string vo = "vo";
@@ -269,7 +273,7 @@ namespace unitTests {
 
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, "Create logical library");
     m_catalogue->createTapePool(admin, tapePoolName, vo, 2, true, "Create tape pool");
-    m_catalogue->createTape(admin, vid1, logicalLibraryName, tapePoolName, capacityInBytes,
+    m_catalogue->createTape(admin, vid1, mediaType, vendor, logicalLibraryName, tapePoolName, capacityInBytes,
       disabledValue, fullValue, createTapeComment);
 
     cta::common::dataStructures::StorageClass storageClass;

@@ -26,9 +26,11 @@
 #include "catalogue/UserSpecifiedAnEmptyStringComment.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringDiskInstanceName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringLogicalLibraryName.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringMediaType.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringStorageClassName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringTapePoolName.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringUsername.hpp"
+#include "catalogue/UserSpecifiedAnEmptyStringVendor.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVid.hpp"
 #include "catalogue/UserSpecifiedAnEmptyStringVo.hpp"
 #include "catalogue/UserSpecifiedAZeroCapacity.hpp"
@@ -1624,6 +1626,8 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
 void RdbmsCatalogue::createTape(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid,
+  const std::string &mediaType,
+  const std::string &vendor,
   const std::string &logicalLibraryName,
   const std::string &tapePoolName,
   const uint64_t capacityInBytes,
@@ -1633,6 +1637,14 @@ void RdbmsCatalogue::createTape(
   try {
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
+    }
+
+    if(mediaType.empty()) {
+      throw UserSpecifiedAnEmptyStringMediaType("Cannot create tape because the media type is an empty string");
+    }
+
+    if(vendor.empty()) {
+      throw UserSpecifiedAnEmptyStringVendor("Cannot create tape because the vendor is an empty string");
     }
 
     if(logicalLibraryName.empty()) {
@@ -1669,6 +1681,8 @@ void RdbmsCatalogue::createTape(
     const char *const sql =
       "INSERT INTO TAPE("
         "VID,"
+        "MEDIA_TYPE,"
+        "VENDOR,"
         "LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME,"
         "CAPACITY_IN_BYTES,"
@@ -1688,6 +1702,8 @@ void RdbmsCatalogue::createTape(
         "LAST_UPDATE_TIME)"
       "VALUES("
         ":VID,"
+        ":MEDIA_TYPE,"
+        ":VENDOR,"
         ":LOGICAL_LIBRARY_NAME,"
         ":TAPE_POOL_NAME,"
         ":CAPACITY_IN_BYTES,"
@@ -1708,6 +1724,8 @@ void RdbmsCatalogue::createTape(
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", vid);
+    stmt.bindString(":MEDIA_TYPE", mediaType);
+    stmt.bindString(":VENDOR", vendor);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindUint64(":CAPACITY_IN_BYTES", capacityInBytes);
@@ -1834,6 +1852,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     std::string sql =
       "SELECT "
         "VID AS VID,"
+        "MEDIA_TYPE AS MEDIA_TYPE,"
+        "VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
@@ -1865,12 +1885,14 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       "FROM "
         "TAPE";
 
-    if(searchCriteria.vid||
-       searchCriteria.logicalLibrary||
-       searchCriteria.tapePool||
-       searchCriteria.capacityInBytes||
-       searchCriteria.disabled||
-       searchCriteria.full||
+    if(searchCriteria.vid ||
+       searchCriteria.mediaType ||
+       searchCriteria.vendor ||
+       searchCriteria.logicalLibrary ||
+       searchCriteria.tapePool ||
+       searchCriteria.capacityInBytes ||
+       searchCriteria.disabled ||
+       searchCriteria.full ||
        searchCriteria.lbp) {
       sql += " WHERE ";
     }
@@ -1879,6 +1901,16 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
     if(searchCriteria.vid) {
       sql += " VID = :VID";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.mediaType) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " MEDIA_TYPE = :MEDIA_TYPE";
+      addedAWhereConstraint = true;
+    }
+    if(searchCriteria.vendor) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " VENDOR = :VENDOR";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.logicalLibrary) {
@@ -1916,6 +1948,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     auto stmt = conn.createStmt(sql);
 
     if(searchCriteria.vid) stmt.bindString(":VID", searchCriteria.vid.value());
+    if(searchCriteria.mediaType) stmt.bindString(":MEDIA_TYPE", searchCriteria.mediaType.value());
+    if(searchCriteria.vendor) stmt.bindString(":VENDOR", searchCriteria.vendor.value());
     if(searchCriteria.logicalLibrary) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
@@ -1928,6 +1962,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
@@ -1971,6 +2007,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     std::string sql =
       "SELECT "
         "VID AS VID,"
+        "MEDIA_TYPE AS MEDIA_TYPE,"
+        "VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
@@ -2031,6 +2069,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
@@ -2078,6 +2118,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
     std::string sql =
       "SELECT "
         "VID AS VID,"
+        "MEDIA_TYPE AS MEDIA_TYPE,"
+        "VENDOR AS VENDOR,"
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
@@ -2117,6 +2159,8 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       common::dataStructures::Tape tape;
 
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
@@ -2238,6 +2282,76 @@ optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(con
     tapeLog.time = time.value();
 
     return tapeLog;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeMediaType
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &mediaType) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "MEDIA_TYPE = :MEDIA_TYPE,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":MEDIA_TYPE", mediaType);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyTapeVendor
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &vendor) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "VENDOR = :VENDOR,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VENDOR", vendor);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -4749,6 +4863,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     const char *const sql =
       "SELECT "
         "VID AS VID,"
+        "MEDIA_TYPE AS MEDIA_TYPE,"
+        "VENDOR AS VENDOR,"
         "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "DATA_IN_BYTES AS DATA_IN_BYTES,"
@@ -4770,6 +4886,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     while (rset.next()) {
       TapeForWriting tape;
       tape.vid = rset.columnString("VID");
+      tape.mediaType = rset.columnString("MEDIA_TYPE");
+      tape.vendor = rset.columnString("VENDOR");
       tape.tapePool = rset.columnString("TAPE_POOL_NAME");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");

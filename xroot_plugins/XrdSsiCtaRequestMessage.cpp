@@ -1728,6 +1728,8 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
    using namespace cta::admin;
 
    auto &vid            = getRequired(OptionString::VID);
+   auto &mediaType      = getRequired(OptionString::MEDIA_TYPE);
+   auto &vendor         = getRequired(OptionString::VENDOR);
    auto &logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
    auto &tapepool       = getRequired(OptionString::TAPE_POOL);
    auto &capacity       = getRequired(OptionUInt64::CAPACITY);
@@ -1735,7 +1737,7 @@ void RequestMessage::processTape_Add(const cta::admin::AdminCmd &admincmd, cta::
    auto &full           = getRequired(OptionBoolean::FULL);
    auto  comment        = getOptional(OptionString::COMMENT);
 
-   m_catalogue.createTape(m_cliIdentity, vid, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
+   m_catalogue.createTape(m_cliIdentity, vid, mediaType, vendor, logicallibrary, tapepool, capacity, disabled, full, comment ? comment.value() : "-");
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1829,6 +1831,8 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       searchCriteria.logicalLibrary  = getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
       searchCriteria.tapePool        = getOptional(OptionString::TAPE_POOL,       &has_any);
       searchCriteria.vid             = getOptional(OptionString::VID,             &has_any);
+      searchCriteria.mediaType       = getOptional(OptionString::MEDIA_TYPE,      &has_any);
+      searchCriteria.vendor          = getOptional(OptionString::VENDOR,          &has_any);
 
       if(!has_any) {
          throw cta::exception::UserError("Must specify at least one search option, or --all");
@@ -1841,7 +1845,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","logical library","tapepool","encryption key","capacity","occupancy","last fseq",
+         "vid","media type","vendor","logical library","tapepool","encryption key","capacity","occupancy","last fseq",
          "full","disabled","lbp","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
@@ -1849,6 +1853,8 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
       for(auto it = list.cbegin(); it != list.cend(); it++) {
          std::vector<std::string> currentRow;
          currentRow.push_back(it->vid);
+         currentRow.push_back(it->mediaType);
+         currentRow.push_back(it->vendor);
          currentRow.push_back(it->logicalLibraryName);
          currentRow.push_back(it->tapePoolName);
          currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");

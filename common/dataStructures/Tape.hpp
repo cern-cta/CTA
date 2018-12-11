@@ -43,6 +43,8 @@ struct Tape {
   bool operator!=(const Tape &rhs) const;
 
   std::string vid;
+  std::string mediaType;
+  std::string vendor;
   uint64_t lastFSeq;
   std::string logicalLibraryName;
   std::string tapePoolName;
