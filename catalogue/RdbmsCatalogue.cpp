@@ -1851,39 +1851,42 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     std::list<common::dataStructures::Tape> tapes;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "MEDIA_TYPE AS MEDIA_TYPE,"
-        "VENDOR AS VENDOR,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
     if(searchCriteria.vid ||
        searchCriteria.mediaType ||
@@ -1900,50 +1903,50 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     bool addedAWhereConstraint = false;
 
     if(searchCriteria.vid) {
-      sql += " VID = :VID";
+      sql += " TAPE.VID = :VID";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.mediaType) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " MEDIA_TYPE = :MEDIA_TYPE";
+      sql += " TAPE.MEDIA_TYPE = :MEDIA_TYPE";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.vendor) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " VENDOR = :VENDOR";
+      sql += " TAPE.VENDOR = :VENDOR";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.logicalLibrary) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+      sql += " TAPE.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.tapePool) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " TAPE_POOL_NAME = :TAPE_POOL_NAME";
+      sql += " TAPE.TAPE_POOL_NAME = :TAPE_POOL_NAME";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.capacityInBytes) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
+      sql += " TAPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.disabled) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " IS_DISABLED = :IS_DISABLED";
+      sql += " TAPE.IS_DISABLED = :IS_DISABLED";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.full) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " IS_FULL = :IS_FULL";
+      sql += " TAPE.IS_FULL = :IS_FULL";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.lbp) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += " LBP_IS_ON = :LBP_IS_ON";
+      sql += " TAPE.LBP_IS_ON = :LBP_IS_ON";
     }
 
-    sql += " ORDER BY VID";
+    sql += " ORDER BY TAPE.VID";
 
     auto stmt = conn.createStmt(sql);
 
@@ -1966,6 +1969,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -2006,39 +2010,42 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
     common::dataStructures::VidToTapeMap vidToTapeMap;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "MEDIA_TYPE AS MEDIA_TYPE,"
-        "VENDOR AS VENDOR,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
     if(!vids.empty()) {
       sql += " WHERE ";
@@ -2049,7 +2056,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         if(1 < vidNb) {
           sql += " OR ";
         }
-        sql += "VID = :VID" + std::to_string(vidNb);
+        sql += "TAPE.VID = :VID" + std::to_string(vidNb);
       }
     }
 
@@ -2073,6 +2080,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -2117,39 +2125,42 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
     common::dataStructures::VidToTapeMap vidToTapeMap;
     std::string sql =
       "SELECT "
-        "VID AS VID,"
-        "MEDIA_TYPE AS MEDIA_TYPE,"
-        "VENDOR AS VENDOR,"
-        "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "ENCRYPTION_KEY AS ENCRYPTION_KEY,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ,"
-        "IS_DISABLED AS IS_DISABLED,"
-        "IS_FULL AS IS_FULL,"
-        "LBP_IS_ON AS LBP_IS_ON,"
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.ENCRYPTION_KEY AS ENCRYPTION_KEY,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.IS_DISABLED AS IS_DISABLED,"
+        "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.LBP_IS_ON AS LBP_IS_ON,"
 
-        "LABEL_DRIVE AS LABEL_DRIVE,"
-        "LABEL_TIME AS LABEL_TIME,"
+        "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+        "TAPE.LABEL_TIME AS LABEL_TIME,"
 
-        "LAST_READ_DRIVE AS LAST_READ_DRIVE,"
-        "LAST_READ_TIME AS LAST_READ_TIME,"
+        "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+        "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
 
-        "LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+        "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+        "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "TAPE.USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
-        "TAPE";
+        "TAPE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -2163,6 +2174,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getAllTapes() const {
       tape.vendor = rset.columnString("VENDOR");
       tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
       tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.encryptionKey = rset.columnOptionalString("ENCRYPTION_KEY");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
@@ -4862,16 +4874,19 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
     std::list<TapeForWriting> tapes;
     const char *const sql =
       "SELECT "
-        "VID AS VID,"
-        "MEDIA_TYPE AS MEDIA_TYPE,"
-        "VENDOR AS VENDOR,"
-        "TAPE_POOL_NAME AS TAPE_POOL_NAME,"
-        "CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
-        "DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "LAST_FSEQ AS LAST_FSEQ "
-        "FROM "
+        "TAPE.VID AS VID,"
+        "TAPE.MEDIA_TYPE AS MEDIA_TYPE,"
+        "TAPE.VENDOR AS VENDOR,"
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+        "TAPE_POOL.VO AS VO,"
+        "TAPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+        "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+        "TAPE.LAST_FSEQ AS LAST_FSEQ "
+      "FROM "
         "TAPE "
-        "WHERE "
+      "INNER JOIN TAPE_POOL ON "
+        "TAPE.TAPE_POOL_NAME = TAPE_POOL.TAPE_POOL_NAME "
+      "WHERE "
 //      "LBP_IS_ON IS NOT NULL AND "   // Set when the tape has been labelled
 //      "LABEL_DRIVE IS NOT NULL AND " // Set when the tape has been labelled
 //      "LABEL_TIME IS NOT NULL AND "  // Set when the tape has been labelled
@@ -4889,6 +4904,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       tape.mediaType = rset.columnString("MEDIA_TYPE");
       tape.vendor = rset.columnString("VENDOR");
       tape.tapePool = rset.columnString("TAPE_POOL_NAME");
+      tape.vo = rset.columnString("VO");
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");

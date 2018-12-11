@@ -70,6 +70,11 @@ struct TapeForWriting {
    * The name of the tape pool.
    */
   std::string tapePool;
+  
+  /**
+   * The virtual organisation owning the tape.
+   */
+  std::string vo;
 
   /**
    * The file sequence number of the last file successfully written to the tape.

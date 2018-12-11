@@ -48,6 +48,7 @@ struct Tape {
   uint64_t lastFSeq;
   std::string logicalLibraryName;
   std::string tapePoolName;
+  std::string vo;
   uint64_t capacityInBytes;
   uint64_t dataOnTapeInBytes;
 
