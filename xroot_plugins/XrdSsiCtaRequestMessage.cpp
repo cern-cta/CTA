@@ -1845,8 +1845,8 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
    {
       std::vector<std::vector<std::string>> responseTable;
       std::vector<std::string> header = {
-         "vid","media type","vendor","logical library","tapepool","encryption key","capacity","occupancy","last fseq",
-         "full","disabled","lbp","label drive","label time","last w drive","last w time",
+         "vid","media type","vendor","logical library","tapepool","vo","encryption key","capacity","occupancy",
+         "last fseq","full","disabled","lbp","label drive","label time","last w drive","last w time",
          "last r drive","last r time","c.user","c.host","c.time","m.user","m.host","m.time","comment"
       };
       if(has_flag(OptionBoolean::SHOW_HEADER)) responseTable.push_back(header);    
@@ -1857,6 +1857,7 @@ void RequestMessage::processTape_Ls(const cta::admin::AdminCmd &admincmd, cta::x
          currentRow.push_back(it->vendor);
          currentRow.push_back(it->logicalLibraryName);
          currentRow.push_back(it->tapePoolName);
+         currentRow.push_back(it->vo);
          currentRow.push_back((bool)it->encryptionKey ? it->encryptionKey.value() : "-");
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->capacityInBytes)));
          currentRow.push_back(std::to_string(static_cast<unsigned long long>(it->dataOnTapeInBytes)));
