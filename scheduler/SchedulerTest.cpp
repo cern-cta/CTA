@@ -1054,12 +1054,12 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
     // Fail the report
-    retrieveJobToReportList.front()->reportFailed("Report failed", lc);
+    retrieveJobToReportList.front()->reportFailed("Report failed once", lc);
     // Job should still be on the report queue
     retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
     // Fail the report again
-    retrieveJobToReportList.front()->reportFailed("Report failed", lc);
+    retrieveJobToReportList.front()->reportFailed("Report failed twice", lc);
     // Job should be gone from the report queue
     retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10,lc);
     ASSERT_EQ(0, retrieveJobToReportList.size());
