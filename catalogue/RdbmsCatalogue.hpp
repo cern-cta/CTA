@@ -284,6 +284,8 @@ public:
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
+    const std::string &mediaType,
+    const std::string &vendor,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
@@ -334,6 +336,8 @@ public:
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) override;
 
+  void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override;
+  void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) override;
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) override;
