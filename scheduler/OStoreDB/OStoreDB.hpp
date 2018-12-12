@@ -331,6 +331,8 @@ public:
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
   
+  std::unique_ptr<RepackRequest> getNextRequestToExpand() override;
+  
   /* === Drive state handling  ============================================== */
   /**
    * Get states of all drives.

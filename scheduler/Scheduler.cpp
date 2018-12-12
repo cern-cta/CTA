@@ -359,6 +359,21 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
   }
 }
 
+//------------------------------------------------------------------------------
+// getNextRepackJobToExpand
+//------------------------------------------------------------------------------
+std::unique_ptr<RepackRequest> Scheduler::getNextRepackJobToExpand() {
+  throw exception::Exception("In Scheduler::getNextRepackJobToExpand(): not implemented.");
+}
+
+//------------------------------------------------------------------------------
+// expandRepackRequest
+//------------------------------------------------------------------------------
+void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repqckRequest, log::TimingList&, utils::Timer&, log::LogContext&) {
+  throw exception::Exception("In Scheduler::expandRepackRequest(): not implemented");
+}
+
+
 
 //------------------------------------------------------------------------------
 // shrink
@@ -1224,7 +1239,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
         .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
         .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
-  lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+  lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
 }
 
 } // namespace cta

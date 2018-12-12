@@ -461,11 +461,51 @@ enum RepackRequestStatus {
   RRS_Failed = 8;
 }
 
+enum RepackSubRequestStatus {
+  // In order to handle all failure modes and accompanying  races, we have to record whether
+  // a sub request is expected to be present or not. The process deleting the sub request will
+  // first mark it as delete with this status and then actually delete it. In case of crash in this
+  // process, the switch of this status will be re-done and the sub request deleted on retry.
+  // On the opposite side, this information will allow the creation process to know if a reference to the
+  // sub request should be interpreted as an unfulfilled creation intent (RSRS_Present) and create the
+  // missing sub request or the completion of the request (which can happen anytime after sub request
+  // creation). The two delete flavors allow reconstruction of the sub request counters if need
+  RSRS_Present = 1;
+  RSRS_DeletedAfterSuccess = 2;
+  RSRS_DeletedAfterFailure = 3;
+}
+
+message RepackSubRequestPointer {
+  required string address = 10500;
+  required uint64 fseq = 10510;
+  required uint64 archivefileid = 10520;
+  required bool retrieveaccounted = 10530;
+  required uint32 archivecopynb = 10540;
+  required RepackSubRequestStatus status = 10550;
+}
+
 message RepackRequest {
   required string vid = 11000;
   required RepackRequestStatus status = 11010;
   required bool expandmode = 11400;
   required bool repackmode = 11410;
+  required uint64 totalfilestoretrieve = 11420;
+  required uint64 totalbytestoretrieve = 11430;
+  // We can have more files to archive than we have to retrieve if we plan to also archive a missing
+  // copy of a multi copy file.
+  required uint64 totalfilestoarchive = 11440;
+  required uint64 totalbytestoarchive = 11450;
+  required uint64 userprovidedfiles = 11460;
+  required uint64 userprovidedbytes = 11470;
+  required uint64 retrievedfiles = 11480;
+  required uint64 retrievedbytes = 11490;
+  required uint64 archivedfiles = 11500;
+  required uint64 archivedbytes = 11510;
+  required uint64 failedtoretievefiles = 11520;
+  required uint64 failedtoretrievebytes = 11530;
+  required uint64 failedtoarchivefiles = 11540;
+  required uint64 failedtoarchivebytes = 11550;
+  required uint64 lastexpandedfseq = 11560;
 }
 
 message RepackRequestIndexPointer {

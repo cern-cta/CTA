@@ -28,6 +28,8 @@ namespace cta {
 class RepackRequest {
 public:
   void expand();
+private:
+  std::unique_ptr<cta::SchedulerDatabase::RepackRequest> m_dbReq;
 }; // class RetrieveJob
 
 } // namespace cta

@@ -48,6 +48,21 @@ void RepackRequest::initialize() {
   m_payload.set_status(serializers::RepackRequestStatus::RRS_Pending);
   m_payload.set_expandmode(true);
   m_payload.set_repackmode(true);
+  m_payload.set_totalfilestoretrieve(0);
+  m_payload.set_totalbytestoretrieve(0);
+  m_payload.set_totalfilestoarchive(0);
+  m_payload.set_totalbytestoarchive(0);
+  m_payload.set_userprovidedfiles(0);
+  m_payload.set_userprovidedbytes(0);
+  m_payload.set_retrievedfiles(0);
+  m_payload.set_retrievedbytes(0);
+  m_payload.set_archivedfiles(0);
+  m_payload.set_archivedbytes(0);
+  m_payload.set_failedtoretievefiles(0);
+  m_payload.set_failedtoretrievebytes(0);
+  m_payload.set_failedtoarchivefiles(0);
+  m_payload.set_failedtoarchivebytes(0);
+  m_payload.set_lastexpandedfseq(0);
   // This object is good to go (to storage)
   m_payloadInterpreted = true;
 }

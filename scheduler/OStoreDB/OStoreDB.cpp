@@ -1076,7 +1076,7 @@ std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
   auto rrAddresses = ri.getRepackRequestsAddresses();
   for (auto & rra: rrAddresses) {
     try {
-      RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
       rr.fetchNoLock();
       ret.push_back(rr.getInfo());
     } catch (cta::exception::Exception &) {}
@@ -1102,7 +1102,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
   for (auto & rra: rrAddresses) {
     if (rra.vid == vid) {
       try {
-        RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
         rr.fetchNoLock();
         if (rr.getInfo().vid != vid)
           throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
@@ -1174,7 +1174,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry & re, SchedulerDatabas
   std::list<objectstore::RepackRequest> requests;
   std::list<std::unique_ptr<objectstore::RepackRequest::AsyncLockfreeFetcher>> fetchers;
   for (auto &rra: ri.getRepackRequestsAddresses()) {
-    requests.emplace_back(RepackRequest(rra.repackRequestAddress, m_objectStore));
+    requests.emplace_back(objectstore::RepackRequest(rra.repackRequestAddress, m_objectStore));
     fetchers.emplace_back(requests.back().asyncLockfreeFetch());
   }
   auto fet = fetchers.begin();
@@ -1224,6 +1224,12 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
   return ret;
 }
 
+//------------------------------------------------------------------------------
+// OStoreDB::getNextRequestToExpand()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRequestToExpand() {
+  throw exception::Exception("In OStoreDB::getNextRequestToExpand(): not implemented.");
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::cancelRepack()
@@ -1244,7 +1250,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
   for (auto & rra: rrAddresses) {
     if (rra.vid == vid) {
       try {
-        RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+        objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
         ScopedExclusiveLock rrl(rr);
         rr.fetch();
         if (rr.getInfo().vid != vid)

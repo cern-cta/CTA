@@ -196,8 +196,6 @@ public:
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);
   std::list<cta::common::dataStructures::RepackInfo> getRepacks();
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
-  
-  void promoteRepackRequestsToToExpand(log::LogContext & lc);
 
   void shrink(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &tapepool); 
     // removes extra tape copies from a specific pool(usually an "_2" pool)
@@ -336,8 +334,11 @@ public:
       eos::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
   
   /*============== Repack support ===========================================*/
-  void moveRepackRequestToToExpandIfNeeded();
+  // Promotion of requests
+  void promoteRepackRequestsToToExpand(log::LogContext & lc);
+  // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackJobToExpand();
+  void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
 
   /* ============================== Retrieve reporting support ============================== */
   /*!

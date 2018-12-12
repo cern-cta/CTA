@@ -390,6 +390,18 @@ public:
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() = 0;
   
+  /**
+   * A class providing the per repack request interface. It is also used to create the per file
+   * requests in the object store.
+   */
+  class RepackRequest {
+  public:
+    uint64_t getLastExpandedFseq();
+    void addFileRequestsBatch();
+  };
+  
+  /***/
+  virtual std::unique_ptr<RepackRequest> getNextRequestToExpand() = 0;
   /*============ Repack management: maintenance process side =========================*/
   
   /*!
