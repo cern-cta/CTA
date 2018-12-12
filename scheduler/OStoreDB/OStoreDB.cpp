@@ -428,14 +428,32 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(const catalogue::TapeForWriting& tape, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
+        const catalogue::TapeForWriting& tape,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid, const std::string& tapePool, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid,
+        const std::string& tapePool,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -1501,7 +1519,8 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const catalogue::TapeForWriting & tape, const std::string driveName,
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -1520,7 +1539,11 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Fill up the mount info
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
+  am.mountInfo.vo = vo;
+  am.mountInfo.mediaType = mediaType;
+  am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
+  am.mountInfo.capacityInBytes = capacityInBytes;
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
@@ -1565,7 +1588,8 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStroeDb): m_l
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,const uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
@@ -1593,6 +1617,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   m_schedulerGlobalLock->commit();
   rm.mountInfo.tapePool = tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
+  rm.mountInfo.vo = vo;
+  rm.mountInfo.mediaType = mediaType;
+  rm.mountInfo.vendor = vendor;
+  rm.mountInfo.capacityInBytes = capacityInBytes;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry

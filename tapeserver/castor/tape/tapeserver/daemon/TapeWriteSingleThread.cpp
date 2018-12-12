@@ -175,10 +175,13 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
     );
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("vo",m_archiveMount.getVo());
-    params.add("capacity",m_archiveMount.getDensity());
-    params.add("tapePoolName",m_archiveMount.getPoolName());
-    params.add("dgn",m_drive.config.logicalLibrary);
-    m_logContext.log(cta::log::INFO, "Tape Write session session successfully started");
+    params.add("mediaType",m_archiveMount.getMediaType());
+    params.add("tapePool",m_archiveMount.getPoolName());
+    params.add("logicalLibrary",m_drive.config.logicalLibrary);
+    params.add("mountType",mountTypeToString(m_volInfo.mountType));
+    params.add("vendor",m_archiveMount.getVendor());
+    params.add("capacityInBytes",m_archiveMount.getCapacityInBytes());
+    m_logContext.log(cta::log::INFO, "Tape session started");
   }
   catch (cta::exception::Exception & e) {
     ScopedParam sp0(m_logContext, Param("ErrorMessage", e.getMessageValue()));
@@ -284,10 +287,15 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
-    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("vid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
+    
+    m_watchdog.addParameter(Param("vo",m_archiveMount.getVo()));
+    m_watchdog.addParameter(Param("mediaType",m_archiveMount.getMediaType()));
+    m_watchdog.addParameter(Param("tapePool",m_archiveMount.getPoolName()));
+    m_watchdog.addParameter(Param("logicalLibrary",m_drive.config.logicalLibrary));
     
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash

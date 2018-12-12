@@ -97,10 +97,22 @@ namespace cta {
     std::string getVo() const;
     
     /**
-     * Returns the density (e.g : 8000GC) of the tape
-     * @return de density of the tape
+     * Returns the media type of the tape
+     * @return de media type of the tape
      */
-    std::string getDensity() const;
+    std::string getMediaType() const;
+    
+    /**
+     * Returns the vendor of the tape
+     * @return the vendor of the tape
+     */
+    std::string getVendor() const;
+    
+    /**
+    * Returns the capacity in bytes of the tape
+    * @return the capacity in bytes of the tape
+    */
+    uint64_t getCapacityInBytes() const;
     
     /**
      * Report a drive status change

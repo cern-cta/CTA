@@ -62,7 +62,15 @@ namespace cta {
     
     virtual std::string getVo() const = 0;
     
-    virtual std::string getDensity() const = 0;
+    virtual std::string getMediaType() const = 0;
+    
+    virtual std::string getVendor() const = 0;
+    
+    /**
+    * Returns the capacity in bytes of the tape
+    * @return the capacity in bytes of the tape
+    */
+    uint64_t getCapacityInBytes() const;
 
     /**
      * Indicates that the mount was aborted.

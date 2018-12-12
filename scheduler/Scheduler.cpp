@@ -531,6 +531,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       if (m.type==common::dataStructures::MountType::Retrieve) {
         m.logicalLibrary=tapesInfo[m.vid].logicalLibraryName;
         m.tapePool=tapesInfo[m.vid].tapePoolName;
+        m.vendor = tapesInfo[m.vid].vendor;
+        m.mediaType = tapesInfo[m.vid].mediaType;
+        m.vo = tapesInfo[m.vid].vo;
+        m.capacityInBytes = tapesInfo[m.vid].capacityInBytes;
       }
     }
   }
@@ -838,7 +842,11 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             internalRet->m_dbMount.reset(mountInfo->createArchiveMount(t,
                 driveName, 
                 logicalLibraryName, 
-                utils::getShortHostname(), 
+                utils::getShortHostname(),
+                t.vo,
+                t.mediaType,
+                t.vendor,
+                t.capacityInBytes,
                 time(NULL)).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
@@ -854,6 +862,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             
             params.add("tapepool", m->tapePool)
                   .add("vid", t.vid)
+                  .add("vo",t.vo)
+                  .add("mediaType",t.mediaType)
+                  .add("vendor",t.vendor)
                   .add("mountType", common::dataStructures::toString(m->type))
                   .add("existingMounts", existingMounts)
                   .add("bytesQueued", m->bytesQueued)
@@ -896,6 +907,10 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             driveName,
             logicalLibraryName, 
             utils::getShortHostname(), 
+            m->vo,
+            m->mediaType,
+            m->vendor,
+            m->capacityInBytes,
             time(NULL))));
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
@@ -912,6 +927,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
         params.add("tapepool", m->tapePool)
               .add("vid", m->vid)
+              .add("vo",m->vo)
+              .add("mediaType",m->mediaType)
+              .add("vendor",m->vendor)
               .add("mountType", common::dataStructures::toString(m->type))
               .add("existingMounts", existingMounts)
               .add("bytesQueued", m->bytesQueued)

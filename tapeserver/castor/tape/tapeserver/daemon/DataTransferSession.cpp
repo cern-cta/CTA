@@ -106,7 +106,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
-  lc.pushOrReplace(cta::log::Param("unitName", m_driveConfig.unitName));
+  lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
   setProcessCapabilities("cap_sys_rawio+ep");
   
@@ -182,7 +182,7 @@ schedule:
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
-  params.add("vid", m_volInfo.vid)
+  params.add("tapeVid", m_volInfo.vid)
         .add("mountId", tapeMount->getMountTransactionId());
   {
     cta::log::ScopedParamContainer localParams(lc);

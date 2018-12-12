@@ -72,14 +72,29 @@ std::string cta::ArchiveMount::getPoolName() const {
 // getVo
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getVo() const {
-    return "Alice";//m_dbMount->mountInfo.vo;
+    return m_dbMount->mountInfo.vo;
 }
 
 //------------------------------------------------------------------------------
-// getVo
+// getMediaType
 //------------------------------------------------------------------------------
-std::string cta::ArchiveMount::getDensity() const{
-    return "8000GC";//m_dbMount->mountInfo.density;
+std::string cta::ArchiveMount::getMediaType() const{
+    return m_dbMount->mountInfo.mediaType;
+}
+
+//------------------------------------------------------------------------------
+// getVendor
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getVendor() const{
+    return m_dbMount->mountInfo.vendor;
+}
+
+//------------------------------------------------------------------------------
+// getCapacityInBytes
+//------------------------------------------------------------------------------
+uint64_t cta::ArchiveMount::getCapacityInBytes() const
+{
+    return m_dbMount->mountInfo.capacityInBytes;
 }
 
 //------------------------------------------------------------------------------

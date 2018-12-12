@@ -179,10 +179,14 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("vo",m_retrieveMount.getVo());
-    params.add("capacity",m_retrieveMount.getDensity());
-    params.add("tapePoolName",m_retrieveMount.getPoolName());
-    params.add("dgn",m_drive.config.logicalLibrary);
-    m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
+    params.add("mediaType",m_retrieveMount.getMediaType());
+    params.add("tapePool",m_retrieveMount.getPoolName());
+    params.add("logicalLibrary",m_drive.config.logicalLibrary);
+    params.add("mountType",mountTypeToString(m_volInfo.mountType));
+    params.add("vendor",m_retrieveMount.getVendor());
+    params.add("capacityInBytes",m_retrieveMount.getCapacityInBytes());
+    m_logContext.log(cta::log::INFO, "Tape session started");
+    //m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
   }catch(cta::exception::Exception & ex){
@@ -216,10 +220,15 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   try{
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
-    m_watchdog.addParameter(Param("TPVID", m_volInfo.vid));
+    m_watchdog.addParameter(Param("vid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
+    m_watchdog.addParameter(Param("vo",m_retrieveMount.getVo()));
+    m_watchdog.addParameter(Param("mediaType",m_retrieveMount.getMediaType()));
+    m_watchdog.addParameter(Param("tapePool",m_retrieveMount.getPoolName()));
+    m_watchdog.addParameter(Param("logicalLibrary",m_drive.config.logicalLibrary));
+    
     
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash
@@ -336,10 +345,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("vo",m_retrieveMount.getVo());
-    params.add("capacity",m_retrieveMount.getDensity());
-    params.add("tapePoolName",m_retrieveMount.getPoolName());
-    params.add("dgn",m_drive.config.logicalLibrary);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
     logWithStat(cta::log::INFO, "Tape thread complete",
@@ -383,7 +388,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
   int level, const std::string& msg, cta::log::ScopedParamContainer& params) {
     params.add("type", "read")
-          .add("TPVID", m_volInfo.vid)
+          .add("vid", m_volInfo.vid)
           .add("mountTime", m_stats.mountTime)
           .add("positionTime", m_stats.positionTime)
           .add("waitInstructionsTime", m_stats.waitInstructionsTime)

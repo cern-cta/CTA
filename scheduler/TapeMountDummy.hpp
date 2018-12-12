@@ -45,9 +45,14 @@ class TapeMountDummy: public TapeMount {
       throw exception::Exception("In DummyTapeMount::getVo() : not implemented");
   }
   
-  std::string getDensity() const override {
-      throw exception::Exception("In DummyTapeMount::getDensity() : not implemented");
+  std::string getMediaType() const override {
+      throw exception::Exception("In DummyTapeMount::getMediaType() : not implemented");
   }
+  
+  std::string getVendor() const override{
+      throw exception::Exception("In DummyTapeMount::getVendor() : not implemented");
+  }
+
   void setDriveStatus(cta::common::dataStructures::DriveStatus status) override {}
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
 };
