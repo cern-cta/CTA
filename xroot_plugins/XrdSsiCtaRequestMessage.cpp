@@ -1749,6 +1749,8 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
    using namespace cta::admin;
 
    auto &vid            = getRequired(OptionString::VID);
+   auto  mediaType      = getOptional(OptionString::MEDIA_TYPE);
+   auto  vendor         = getOptional(OptionString::VENDOR);
    auto  logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
    auto  tapepool       = getOptional(OptionString::TAPE_POOL);
    auto  capacity       = getOptional(OptionUInt64::CAPACITY);
@@ -1757,6 +1759,12 @@ void RequestMessage::processTape_Ch(const cta::admin::AdminCmd &admincmd, cta::x
    auto  disabled       = getOptional(OptionBoolean::DISABLED);
    auto  full           = getOptional(OptionBoolean::FULL);
 
+   if(mediaType) {
+      m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
+   }
+   if(vendor) {
+      m_catalogue.modifyTapeVendor(m_cliIdentity, vid, vendor.value());
+   }
    if(logicallibrary) {
       m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
    }
