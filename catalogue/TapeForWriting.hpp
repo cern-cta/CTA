@@ -55,11 +55,26 @@ struct TapeForWriting {
    * The volume identifier of the tape.
    */
   std::string vid;
+
+  /**
+   * The media type of the tape.
+   */
+  std::string mediaType;
+
+  /**
+   * The vendor of the tape.
+   */
+  std::string vendor;
   
   /**
    * The name of the tape pool.
    */
   std::string tapePool;
+  
+  /**
+   * The virtual organisation owning the tape.
+   */
+  std::string vo;
 
   /**
    * The file sequence number of the last file successfully written to the tape.

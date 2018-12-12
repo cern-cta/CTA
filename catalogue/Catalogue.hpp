@@ -285,12 +285,15 @@ public:
   virtual void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid,
+    const std::string &mediaType,
+    const std::string &vendor,
     const std::string &logicalLibraryName,
     const std::string &tapePoolName,
     const uint64_t capacityInBytes,
     const bool disabled,
     const bool full,
     const std::string &comment) = 0;
+
   virtual void deleteTape(const std::string &vid) = 0;
 
   /**
@@ -335,6 +338,8 @@ public:
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid) = 0;
 
+  virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
+  virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const uint64_t capacityInBytes) = 0;

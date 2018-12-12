@@ -233,6 +233,10 @@ protected:
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TestVid";
+  const std::string s_mediaType = "TestMediaType";
+  const std::string s_vendor = "TestVendor";
+  //TempFile m_tempSqliteFile;
+
 }; // class SchedulerTest
 
 TEST_P(SchedulerTest, archive_to_new_file) {
@@ -432,7 +436,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
   const bool lbpIsOn = true;
@@ -632,7 +636,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes,
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
     notDisabled, notFull, tapeComment);
 
   const bool lbpIsOn = true;
@@ -878,8 +882,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   const std::string tapeComment = "Tape comment";
   bool notDisabled = false;
   bool notFull = false;
-  catalogue.createTape(s_adminOnAdminHost, s_vid, s_libraryName, s_tapePoolName, capacityInBytes, notDisabled,
-    notFull, tapeComment);
+  catalogue.createTape(s_adminOnAdminHost, s_vid, s_mediaType, s_vendor, s_libraryName, s_tapePoolName, capacityInBytes,
+    notDisabled, notFull, tapeComment);
 
   const bool lbpIsOn = true;
   catalogue.tapeLabelled(s_vid, "tape_drive", lbpIsOn);
