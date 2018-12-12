@@ -144,6 +144,8 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string density;
       std::string drive;
       std::string host;
       uint64_t mountId;
@@ -298,6 +300,8 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string density;
       std::string drive;
       std::string host;
       uint64_t mountId;

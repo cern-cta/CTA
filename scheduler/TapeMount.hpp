@@ -59,6 +59,10 @@ namespace cta {
      * @return The mount transaction id.
      */
     virtual uint32_t getNbFiles() const = 0;
+    
+    virtual std::string getVo() const = 0;
+    
+    virtual std::string getDensity() const = 0;
 
     /**
      * Indicates that the mount was aborted.

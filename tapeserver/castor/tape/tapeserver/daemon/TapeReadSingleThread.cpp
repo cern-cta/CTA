@@ -37,14 +37,16 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   RecallReportPacker &rrp,
   const bool useLbp,
   const bool useRAO,
-  const std::string & externalEncryptionKeyScript) :
+  const std::string & externalEncryptionKeyScript,
+  const cta::RetrieveMount& retrieveMount) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
     capUtils, lc, externalEncryptionKeyScript),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),
   m_useLbp(useLbp),
-  m_useRAO(useRAO) {}
+  m_useRAO(useRAO),
+  m_retrieveMount(retrieveMount){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -175,6 +177,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try{
     std::unique_ptr<castor::tape::tapeFile::ReadSession> rs(
     new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo, m_useLbp));
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("vo",m_retrieveMount.getVo());
+    params.add("capacity",m_retrieveMount.getDensity());
+    params.add("tapePoolName",m_retrieveMount.getPoolName());
+    params.add("dgn",m_drive.config.logicalLibrary);
     m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
     
     return rs;
@@ -329,6 +336,10 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
+    params.add("vo",m_retrieveMount.getVo());
+    params.add("capacity",m_retrieveMount.getDensity());
+    params.add("tapePoolName",m_retrieveMount.getPoolName());
+    params.add("dgn",m_drive.config.logicalLibrary);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
     logWithStat(cta::log::INFO, "Tape thread complete",

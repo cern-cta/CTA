@@ -1080,7 +1080,6 @@ int DriveHandler::runChild() {
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
     }
-  
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
       lc.logger(),

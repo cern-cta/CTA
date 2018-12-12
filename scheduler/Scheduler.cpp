@@ -851,6 +851,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             } catch (...) {}
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+            
             params.add("tapepool", m->tapePool)
                   .add("vid", t.vid)
                   .add("mountType", common::dataStructures::toString(m->type))

@@ -233,7 +233,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     
     TapeReadSingleThread trst(*drive, m_mc, tsr, m_volInfo, 
         m_castorConf.bulkRequestRecallMaxFiles,m_capUtils,rwd,lc,rrp,
-        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript);
+        m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.externalEncryptionKeyScript,*retrieveMount);
     DiskWriteThreadPool dwtp(m_castorConf.nbDiskThreads,
         rrp,
         rwd,
@@ -315,7 +315,6 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
   if (!drive.get()) return MARK_DRIVE_AS_UP;
   // Once we got hold of the drive, we can run the session
   {
-    
     //dereferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
@@ -335,7 +334,9 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
         m_castorConf.maxFilesBeforeFlush,
         m_castorConf.maxBytesBeforeFlush,
         m_castorConf.useLbp,
-        m_castorConf.externalEncryptionKeyScript);
+        m_castorConf.externalEncryptionKeyScript,
+        *archiveMount);
+ 
     DiskReadThreadPool drtp(m_castorConf.nbDiskThreads,
         m_castorConf.bulkRequestMigrationMaxFiles,
         m_castorConf.bulkRequestMigrationMaxBytes,

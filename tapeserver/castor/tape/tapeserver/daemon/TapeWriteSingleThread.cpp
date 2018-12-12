@@ -37,7 +37,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         MigrationReportPacker & repPacker,
         cta::server::ProcessCap &capUtils,
         uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
-        const bool useLbp, const std::string & externalEncryptionKeyScript):
+        const bool useLbp, const std::string & externalEncryptionKeyScript,
+        const cta::ArchiveMount & archiveMount):
         TapeSingleThreadInterface<TapeWriteTask>(drive, mc, tsr, volInfo, 
           capUtils, lc, externalEncryptionKeyScript),
         m_filesBeforeFlush(filesBeforeFlush),
@@ -47,7 +48,8 @@ castor::tape::tapeserver::drive::DriveInterface & drive,
         m_lastFseq(-1),
         m_compress(true),
         m_useLbp(useLbp),
-        m_watchdog(mwd){}
+        m_watchdog(mwd),
+        m_archiveMount(archiveMount){}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -163,7 +165,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   ScopedParam sp[]={
     ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
     ScopedParam(m_logContext, Param("compression", m_compress)),
-    ScopedParam(m_logContext, Param("useLbp", m_useLbp))
+    ScopedParam(m_logContext, Param("useLbp", m_useLbp)),
   };
   tape::utils::suppresUnusedVariable(sp);
   try {
@@ -171,6 +173,11 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
     new castor::tape::tapeFile::WriteSession(m_drive, m_volInfo, m_lastFseq,
       m_compress, m_useLbp)
     );
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("vo",m_archiveMount.getVo());
+    params.add("capacity",m_archiveMount.getDensity());
+    params.add("tapePoolName",m_archiveMount.getPoolName());
+    params.add("dgn",m_drive.config.logicalLibrary);
     m_logContext.log(cta::log::INFO, "Tape Write session session successfully started");
   }
   catch (cta::exception::Exception & e) {

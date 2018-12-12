@@ -142,6 +142,18 @@ namespace cta {
     std::string getPoolName() const;
     
     /**
+     * Returns the virtual organization of the tape to be mounted
+     * @return the vo of the tape to be mounted
+     */
+    std::string getVo() const;
+    
+    /**
+     * Returns the density (e.g : 8000GC) of the tape to be mounted
+     * @return the density of the tape to be mounted
+     */
+    std::string getDensity() const;
+    
+    /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.

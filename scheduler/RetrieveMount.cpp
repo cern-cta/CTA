@@ -67,6 +67,38 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 }
 
 //------------------------------------------------------------------------------
+// getMountTapePool()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getPoolName() const{
+  std::stringstream sTapePool;
+  if (!m_dbMount.get())
+    throw exception::Exception("In cta::RetrieveMount::getPoolName(): got NULL dbMount");
+  sTapePool << m_dbMount->mountInfo.tapePool;
+  return sTapePool.str();
+}
+
+//------------------------------------------------------------------------------
+// getVo()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getVo() const
+{
+    std::stringstream sVo;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVo(): got NULL dbMount");
+    sVo<<"Alice";//m_dbMount->mountInfo.vo;
+    return sVo.str();
+}
+
+std::string cta::RetrieveMount::getDensity() const
+{
+    std::stringstream sDensity;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getDensity(): got NULL dbMount");
+    sDensity<<"8000GC";//m_dbMount->mountInfo.density;
+    return sDensity.str();
+}
+
+//------------------------------------------------------------------------------
 // getNextJobBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,

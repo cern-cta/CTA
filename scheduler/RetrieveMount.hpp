@@ -83,6 +83,25 @@ namespace cta {
      */
     uint32_t getNbFiles() const override;
     
+     /**
+     * Returns the tape pool of the tape to be mounted
+     * @return The tape pool of the tape to be mounted
+     */
+    std::string getPoolName() const;
+    
+    /**
+     * Returns the virtual organization in which the tape
+     * belongs
+     * @return the vo in which the tape belongs
+     */
+    std::string getVo() const;
+    
+    /**
+     * Returns the density (e.g : 8000GC) of the tape
+     * @return de density of the tape
+     */
+    std::string getDensity() const;
+    
     /**
      * Report a drive status change
      */
