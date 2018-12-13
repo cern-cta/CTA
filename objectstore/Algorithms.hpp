@@ -308,7 +308,8 @@ public:
     log::TimingList timingList;
     utils::Timer t, totalTime;
     bool unexpectedException = false;
-    while (!unexpectedException && ret.summary < popCriteria) {
+    bool didTrim = false;
+    while (!unexpectedException && ret.summary < popCriteria && !didTrim) {
       typename ContainerTraits<Q,C>::PoppedElementsSummary previousSummary = ret.summary;
       log::TimingList localTimingList;
       // Get a container if it exists
@@ -347,7 +348,7 @@ public:
         localTimingList.insertAndReset("containerUpdateTime", t);
         contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
         // If we emptied the container, we have to trim it.
-        ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+        didTrim = ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
         localTimingList.insertAndReset("containerTrimmingTime", t);
         // trimming might release the lock
         if (contLock.isLocked()) contLock.release();
@@ -422,6 +423,9 @@ public:
       localTimingList.addToLog(params);
       lc.log(log::INFO, "In Algorithms::popNextBatch(): did one round of elements retrieval.");
       timingList+=localTimingList;
+      // If we did not get anything more, we stop here. Otherwise, this could put us in a queue creation-deletion
+      // fight with a process trying to push to a queue.
+      if (didTrim) break;
     }
   logAndReturn:
     {

@@ -109,7 +109,7 @@ struct ContainerTraits<RepackQueue,C>
   }
   
   static ContainerSummary getContainerSummary(Container &cont);
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
     const ContainerIdentifier &cId, RepackQueueType queueType, log::LogContext &lc);
@@ -143,7 +143,7 @@ struct ContainerTraits<RepackQueue,C>
   static const std::string c_identifierType;
 
 private:
-  static void trimContainerIfNeeded(Container &cont, JobQueueType queueType, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, JobQueueType queueType, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
@@ -215,11 +215,12 @@ addToLog(log::ScopedParamContainer &params) {
 }
 
 template<typename C>
-void ContainerTraits<RepackQueue,C>::
+bool ContainerTraits<RepackQueue,C>::
 trimContainerIfNeeded(Container& cont, JobQueueType queueType, ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
   // Repack queues are one per status, so we do not need to trim them.
+  return false;
 }
 
 template<typename C>

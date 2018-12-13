@@ -117,7 +117,7 @@ struct ContainerTraits<ArchiveQueue,C>
   }
   
   static ContainerSummary getContainerSummary(Container &cont);
-  static void trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
   static void getLockedAndFetched(Container &cont, ScopedExclusiveLock &contLock, AgentReference &agRef,
     const ContainerIdentifier &cId, QueueType queueType, log::LogContext &lc);
@@ -146,7 +146,7 @@ struct ContainerTraits<ArchiveQueue,C>
   static const std::string c_identifierType;
 
 private:
-  static void trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
+  static bool trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
 };
 
@@ -201,32 +201,32 @@ addToLog(log::ScopedParamContainer &params) {
 }
 
 template<typename C>
-void ContainerTraits<ArchiveQueue,C>::
+bool ContainerTraits<ArchiveQueue,C>::
 trimContainerIfNeeded(Container& cont, QueueType queueType, ScopedExclusiveLock & contLock,
   const ContainerIdentifier & cId, log::LogContext& lc)
 {
-  if (cont.isEmpty()) {
-    // The current implementation is done unlocked.
-    contLock.release();
-    try {
-      // The queue should be removed as it is empty.
-      RootEntry re(cont.m_objectStore);
-      ScopedExclusiveLock rexl(re);
-      re.fetch();
-      re.removeArchiveQueueAndCommit(cId, queueType, lc);
-      log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
-            .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
-    } catch (cta::exception::Exception &ex) {
-      log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
-            .add("queueObject", cont.getAddressIfSet())
-            .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
-    }
-    //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  if (!cont.isEmpty())  return false;
+  // The current implementation is done unlocked.
+  contLock.release();
+  try {
+    // The queue should be removed as it is empty.
+    RootEntry re(cont.m_objectStore);
+    ScopedExclusiveLock rexl(re);
+    re.fetch();
+    re.removeArchiveQueueAndCommit(cId, queueType, lc);
+    log::ScopedParamContainer params(lc);
+    params.add("tapepool", cId)
+          .add("queueObject", cont.getAddressIfSet());
+    lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("tapepool", cId)
+          .add("queueObject", cont.getAddressIfSet())
+          .add("Message", ex.getMessageValue());
+    lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
   }
+  //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
+  return true;
 }
 
 template<typename C>

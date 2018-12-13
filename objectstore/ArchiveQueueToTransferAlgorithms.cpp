@@ -70,11 +70,11 @@ addToLog(log::ScopedParamContainer &params) {
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
+bool ContainerTraits<ArchiveQueue,ArchiveQueueToTransfer>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, JobQueueType::JobsToTransfer, contLock, cId, lc);
+  return trimContainerIfNeeded(cont, JobQueueType::JobsToTransfer, contLock, cId, lc);
 }
 
 }} // namespace cta::objectstore

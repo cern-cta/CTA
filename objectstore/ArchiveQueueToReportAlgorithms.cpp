@@ -76,11 +76,11 @@ getContainerSummary(Container& cont) -> ContainerSummary {
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
+bool ContainerTraits<ArchiveQueue,ArchiveQueueToReport>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, JobQueueType::JobsToReport, contLock, cId, lc);
+  return trimContainerIfNeeded(cont, JobQueueType::JobsToReport, contLock, cId, lc);
 }
 
 }} // namespace cta::objectstore

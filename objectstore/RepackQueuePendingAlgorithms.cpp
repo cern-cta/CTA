@@ -27,11 +27,11 @@ template<>
 const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_identifierType = "uniqueQueue";
 
 template<>
-void ContainerTraits<RepackQueue,RepackQueuePending>::
+bool ContainerTraits<RepackQueue,RepackQueuePending>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
+  return trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
 }
 
 template<>

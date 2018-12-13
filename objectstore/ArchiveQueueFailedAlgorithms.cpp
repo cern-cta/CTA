@@ -31,11 +31,11 @@ template<>
 const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_identifierType = "tapepool";
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
+bool ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
 trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const ContainerIdentifier &cId,
   log::LogContext &lc)
 {
-  trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
+  return trimContainerIfNeeded(cont, JobQueueType::FailedJobs, contLock, cId, lc);
 }
 
 }} // namespace cta::objectstore
