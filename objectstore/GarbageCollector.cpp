@@ -348,7 +348,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.second.vid==vid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
         params3.add("fileId", rr->getArchiveFile().archiveFileID)
                .add("copyNb", copyNb)
-               .add("vid", vid)
+               .add("tapeVid", vid)
                .add("fSeq", fSeq);
         lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
         break;
@@ -626,7 +626,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
             params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                   .add("copyNb", rrup.copyNb)
                   .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                  .add("vid", tape.first)
+                  .add("tapeVid", tape.first)
                   .add("retreveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
@@ -675,7 +675,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       {
         log::ScopedParamContainer params(lc);
         auto jobsSummary = rq.getJobsSummary();
-        params.add("vid", tape.first)
+        params.add("tapeVid", tape.first)
               .add("retrieveQueueObject", rq.getAddressIfSet())
               .add("filesAdded", filesQueued - filesDequeued)
               .add("bytesAdded", bytesQueued - bytesDequeued)

@@ -237,7 +237,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params (lc);
       params.add("queueObject", rqp.address)
-            .add("vid", rqp.vid)
+            .add("tapeVid", rqp.vid)
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
       continue;
@@ -262,7 +262,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", rqp.address)
-          .add("vid", rqp.vid)
+          .add("tapeVid", rqp.vid)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
@@ -412,7 +412,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
         rql.release();
         re.removeRetrieveQueueAndCommit(r.vid, QueueType::LiveJobs, lc);
         log::ScopedParamContainer params(lc);
-        params.add("vid", r.vid)
+        params.add("tapeVid", r.vid)
               .add("queueObject", r.address);
         lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty retrieve queue.");
       }
@@ -772,7 +772,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     uint64_t taskQueueSize = m_taskQueueSize;
     // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
-    params.add("vid", bestVid)
+    params.add("tapeVid", bestVid)
           .add("jobObject", rReq->getAddressIfSet())
           .add("fileId", rReq->getArchiveFile().archiveFileID)
           .add("diskInstance", rReq->getArchiveFile().diskInstance)
@@ -817,7 +817,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
       m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
       double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
-      params.add("vid", bestVid)
+      params.add("tapeVid", bestVid)
             .add("queueObject", owner)
             .add("jobObject", rReq->getAddressIfSet())
             .add("fileId", rReq->getArchiveFile().archiveFileID)
@@ -2190,13 +2190,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
         try {
           re.removeRetrieveQueueAndCommit(mountInfo.vid, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("vid", mountInfo.vid)
+          params.add("tapeVid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): de-referenced missing queue from root entry");
         } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
           // TODO: improve: if we fail here we could retry to fetch a job.
           log::ScopedParamContainer params(logContext);
-          params.add("vid", mountInfo.vid)
+          params.add("tapeVid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
@@ -2209,7 +2209,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       auto queueSummaryBefore = rq.getJobsSummary();
       {
         log::ScopedParamContainer params(logContext);
-        params.add("vid", mountInfo.vid)
+        params.add("tapeVid", mountInfo.vid)
               .add("queueObject", rq.getAddressIfSet())
               .add("queueSize", rq.getJobsSummary().files);
         logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): retrieve queue found.");
@@ -2229,7 +2229,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       }
       {
         log::ScopedParamContainer params(logContext);
-        params.add("vid", mountInfo.vid)
+        params.add("tapeVid", mountInfo.vid)
               .add("queueObject", rq.getAddressIfSet())
               .add("candidatesCount", candidateJobs.size())
               .add("currentFiles", currentFiles)
@@ -2270,7 +2270,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           (*j)->m_jobOwned = true;
           (*j)->m_mountId = mountInfo.mountId;
           log::ScopedParamContainer params(logContext);
-          params.add("vid", mountInfo.vid)
+          params.add("tapeVid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet())
                 .add("fileId", (*j)->archiveFile.archiveFileID);
@@ -2285,7 +2285,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             jobsToDequeue.emplace_back((*j)->m_retrieveRequest.getAddressIfSet());
             // Log the event.
             log::ScopedParamContainer params(logContext);
-            params.add("vid", mountInfo.vid)
+            params.add("tapeVid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             logContext.log(log::WARNING, "In RetrieveMount::getNextJobBatch(): skipped job not owned or not present.");
@@ -2296,7 +2296,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("vid", mountInfo.vid)
+            params.add("tapeVid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2315,7 +2315,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("vid", mountInfo.vid)
+            params.add("tapeVid", mountInfo.vid)
                   .add("queueObject", rq.getAddressIfSet())
                   .add("requestObject", (*j)->m_retrieveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -2365,12 +2365,12 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
           re.fetch();
           re.removeRetrieveQueueAndCommit(mountInfo.vid, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("vid", mountInfo.vid)
+          params.add("tapeVid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): deleted empty queue");
         } catch (cta::exception::Exception &ex) {
           log::ScopedParamContainer params(logContext);
-          params.add("vid", mountInfo.vid)
+          params.add("tapeVid", mountInfo.vid)
                 .add("queueObject", rq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In RetrieveMount::getNextJobBatch(): could not delete a presumably empty queue");
@@ -2380,7 +2380,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
       // We can now summarize this round
       {
         log::ScopedParamContainer params(logContext);
-        params.add("vid", mountInfo.vid)
+        params.add("tapeVid", mountInfo.vid)
               .add("queueObject", rq.getAddressIfSet())
               .add("filesAdded", currentFiles - beforeFiles)
               .add("bytesAdded", currentBytes - beforeBytes)

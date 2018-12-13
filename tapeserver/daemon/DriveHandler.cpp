@@ -165,7 +165,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("unitName", m_configLine.unitName)
+    params.add("tapeDrive", m_configLine.unitName)
           .add("Error", ex.getMessageValue());
     m_processManager.logContext().log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
@@ -255,7 +255,7 @@ void DriveHandler::kill() {
       m_sessionEndContext.pushOrReplace({"Error_sessionKilled", "1"});
       m_sessionEndContext.pushOrReplace({"killSignal", WTERMSIG(status)});
       m_sessionEndContext.pushOrReplace({"status", "failure"});
-      m_sessionEndContext.pushOrReplace({"unitName",m_configLine.unitName});
+      m_sessionEndContext.pushOrReplace({"tapeDrive",m_configLine.unitName});
       m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
       m_sessionEndContext.clear();
       m_pid=-1;
@@ -273,7 +273,7 @@ void DriveHandler::kill() {
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   // Read from the socket pair 
   try {
     serializers::WatchdogMessage message;
@@ -374,7 +374,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processStartingUp(serializers:
   // We expect to reach this state from pending fork. This is the first signal from the new process.
   // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (m_sessionState!=SessionState::PendingFork || m_sessionType!=SessionType::Undetermined) {
     params.add("ExpectedState", session::toString(SessionState::PendingFork))
           .add("ActualState", session::toString(m_sessionState))
@@ -403,7 +403,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers:
   // We are either going to schedule 
   // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   std::set<SessionState> expectedStates = { SessionState::StartingUp, SessionState::Scheduling };
   if (!expectedStates.count(m_sessionState) || 
       m_sessionType != SessionType::Undetermined ||
@@ -439,7 +439,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processChecking(serializers::W
   // We expect to come from statup/undefined and to get into checking/cleanup
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (m_sessionState!=SessionState::StartingUp || m_sessionType!=SessionType::Undetermined||
       (SessionType)message.sessiontype()!=SessionType::Cleanup) {
     params.add("PreviousState", session::toString(m_sessionState))
@@ -473,7 +473,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
   // The only transition expected is from scheduling. Several sessions types are possible
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   std::set<SessionType> expectedNewTypes= { SessionType::Archive, SessionType::Retrieve, SessionType::Label };
   if (m_sessionState!=SessionState::Scheduling ||
       m_sessionType!=SessionType::Undetermined||
@@ -490,7 +490,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::W
           .add("PreviousType", session::toString(m_sessionType))
           .add("NewState", session::toString((SessionState)message.sessionstate()))
           .add("NewType", session::toString((SessionType)message.sessiontype()))
-          .add("VID", message.vid());
+          .add("tapeVid", message.vid());
     m_processManager.logContext().log(log::DEBUG,
         "In DriveHandler::processMounting(): state change.");
   }
@@ -511,7 +511,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
   // We expect the type not to change (and to be in the right range)
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   std::set<SessionState> expectedStates = { SessionState::Mounting, SessionState::Running };
   std::set<SessionType> expectedTypes = { SessionType::Archive, SessionType::Retrieve, SessionType::Label };
   if (!expectedStates.count(m_sessionState) ||
@@ -555,7 +555,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers:
   // of checking in the case of the cleanup session.
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   std::set<std::tuple<SessionState, SessionType>> expectedStateTypes = 
   {
     std::make_tuple( SessionState::Running, SessionType::Archive ),
@@ -588,7 +588,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializ
   // This status transition is expected from unmounting, and only for retrieve sessions.
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (SessionState::Unmounting != m_sessionState ||
       SessionType::Retrieve != m_sessionType) {
     params.add("PreviousState", session::toString(m_sessionState))
@@ -614,7 +614,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processShutingDown(serializers
   // This status transition is expected from unmounting, and only for retrieve sessions.
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   std::set<SessionState> expectedStates = { SessionState::Unmounting, SessionState::DrainingToDisk };
   if (!expectedStates.count(m_sessionState)) {
     params.add("PreviousState", session::toString(m_sessionState))
@@ -640,7 +640,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processFatal(serializers::Watc
   // This status indicates that the session cannot be run and the server should 
   // shut down (central storage unavailable).
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   m_sessionState=(SessionState)message.sessionstate();
   m_sessionType=(SessionType)message.sessiontype();
   m_sessionVid="";
@@ -702,7 +702,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   // be picked up) and -1 if the process is entirely gone.
   // Of course we might not have a child process to begin with.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (-1 == m_pid) return m_processingStatus;
   int processStatus;
   int rc=::waitpid(m_pid, &processStatus, WNOHANG);
@@ -712,7 +712,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   } catch (exception::Exception &ex) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("pid", m_pid)
-          .add("unitName", m_configLine.unitName)
+          .add("tapeDrive", m_configLine.unitName)
           .add("Message", ex.getMessageValue())
           .add("SessionState", session::toString(m_sessionState))
           .add("SessionType", toString(m_sessionType));
@@ -765,7 +765,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       m_sessionEndContext.pushOrReplace({"status", "failure"});
     }
     // In all cases we log the end of the session.
-    m_sessionEndContext.pushOrReplace({"unitName",m_configLine.unitName});
+    m_sessionEndContext.pushOrReplace({"tapeDrive",m_configLine.unitName});
     m_sessionEndContext.moveToTheEndIfPresent("status");
     m_sessionEndContext.log(cta::log::INFO, "Tape session finished");
     m_sessionEndContext.clear();
@@ -782,7 +782,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   // Process manager found that we timed out. Let's log why and kill the child process,
   // if any (there should be one).
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (-1 == m_pid) {
     m_processManager.logContext().log(log::ERR, "In DriveHandler::processTimeout(): Received timeout without child process present.");
     m_processManager.logContext().log(log::INFO, "Re-launching child process.");
@@ -941,7 +941,7 @@ int DriveHandler::runChild() {
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
   if (m_previousSession == PreviousSession::Crashed && m_previousType == SessionType::Cleanup) {
     log::ScopedParamContainer params(lc);
-    params.add("unitName", m_configLine.unitName);
+    params.add("tapeDrive", m_configLine.unitName);
     lc.log(log::ERR, "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.");
     // Get hold of the scheduler.
     try {
@@ -991,8 +991,8 @@ int DriveHandler::runChild() {
     // Log the decision
     {
       log::ScopedParamContainer params(lc);
-      params.add("VID", m_previousVid)
-            .add("unitName", m_configLine.unitName)
+      params.add("tapeVid", m_previousVid)
+            .add("tapeDrive", m_configLine.unitName)
             .add("PreviousState", session::toString(m_sessionState))
             .add("PreviousType", session::toString(m_sessionType));
       lc.log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
@@ -1060,7 +1060,7 @@ int DriveHandler::runChild() {
     if (m_previousSession == PreviousSession::Initiating) {
       // Log that we put the drive's desired state to down and do it.
       log::ScopedParamContainer params(lc);
-      params.add("unitName", m_configLine.unitName);
+      params.add("tapeDrive", m_configLine.unitName);
       lc.log(log::INFO, "Setting the drive down at daemon startup");
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
@@ -1103,7 +1103,7 @@ int DriveHandler::runChild() {
 SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   // TODO: improve in the future (preempt the child process)
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
@@ -1114,8 +1114,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       m_processManager.logContext().log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do not nothing.");
     } else {
       log::ScopedParamContainer params(m_processManager.logContext());
-      params.add("VID", m_sessionVid)
-            .add("unitName", m_configLine.unitName)
+      params.add("tapeVid", m_sessionVid)
+            .add("tapeDrive", m_configLine.unitName)
             .add("sessionState", session::toString(m_sessionState))
             .add("sessionType", session::toString(m_sessionType));
       m_processManager.logContext().log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");

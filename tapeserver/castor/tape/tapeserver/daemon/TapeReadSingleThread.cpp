@@ -390,7 +390,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(
   int level, const std::string& msg, cta::log::ScopedParamContainer& params) {
     params.add("type", "read")
-          .add("vid", m_volInfo.vid)
+          .add("tapeVid", m_volInfo.vid)
           .add("mountTime", m_stats.mountTime)
           .add("positionTime", m_stats.positionTime)
           .add("waitInstructionsTime", m_stats.waitInstructionsTime)

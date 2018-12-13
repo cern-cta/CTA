@@ -523,7 +523,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
 int level,const std::string& msg, cta::log::ScopedParamContainer& params){
   params.add("type", "write")
-        .add("TPVID", m_volInfo.vid)
+        .add("tapeVid", m_volInfo.vid)
         .add("mountTime", m_stats.mountTime)
         .add("positionTime", m_stats.positionTime)
         .add("waitInstructionsTime", m_stats.waitInstructionsTime)
