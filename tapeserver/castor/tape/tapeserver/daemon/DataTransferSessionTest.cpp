@@ -505,7 +505,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  std::cout<<"log to check = "<<logToCheck;
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+                                              "mountId=\"1\" vo=\"vo\" mediaType=\"TestMediaType\" tapePool=\"TestTapePool\" "
+                                              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
+                                              "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
@@ -1689,7 +1692,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  std::cout<<logToCheck<<std::endl;
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" mountId=\"1\" "
+                                              "lastFseq=\"0\" compression=\"1\" useLbp=\"0\" vo=\"vo\" "
+                                              "mediaType=\"TestMediaType\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
+                                              "mountType=\"Archive\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" " 
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));

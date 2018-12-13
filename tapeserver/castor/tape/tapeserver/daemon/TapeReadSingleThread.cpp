@@ -220,15 +220,17 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
   try{
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
-    m_watchdog.addParameter(Param("vid", m_volInfo.vid));
+    m_watchdog.addParameter(Param("tapeVid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", mountTypeToString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
+    m_watchdog.addParameter(Param("tapeDrive",m_drive.config.unitName));
+    m_watchdog.addParameter(Param("vendor",m_retrieveMount.getVendor()));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("vo",m_retrieveMount.getVo()));
     m_watchdog.addParameter(Param("mediaType",m_retrieveMount.getMediaType()));
     m_watchdog.addParameter(Param("tapePool",m_retrieveMount.getPoolName()));
     m_watchdog.addParameter(Param("logicalLibrary",m_drive.config.logicalLibrary));
-    
+    m_watchdog.addParameter(Param("capacityInBytes",m_retrieveMount.getCapacityInBytes()));
     
     // Set the tape thread time in the watchdog for total time estimation in case
     // of crash

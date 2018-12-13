@@ -231,7 +231,7 @@ void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
   // track of the exit state as kill() means we will not be called anymore.
   log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("unitName", m_configLine.unitName);
+  params.add("tapeDrive", m_configLine.unitName);
   if (m_pid != -1) {
     params.add("SubProcessId", m_pid);
     // The socket pair will be reopened on the next fork. Clean it up.
