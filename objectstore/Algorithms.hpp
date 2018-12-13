@@ -423,9 +423,6 @@ public:
       localTimingList.addToLog(params);
       lc.log(log::INFO, "In Algorithms::popNextBatch(): did one round of elements retrieval.");
       timingList+=localTimingList;
-      // If we did not get anything more, we stop here. Otherwise, this could put us in a queue creation-deletion
-      // fight with a process trying to push to a queue.
-      if (didTrim) break;
     }
   logAndReturn:
     {
