@@ -337,7 +337,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       log::ScopedParamContainer params(logContext);
       if (typeid(Queue) == typeid(objectstore::ArchiveQueue)) {
         params.add("type", "Archive")
-              .add("tapepool", queueIndex);
+              .add("tapePool", queueIndex);
       } else if (typeid(Queue) == typeid(objectstore::RetrieveQueue)) {
         params.add("type", "Retrieve")
               .add("tapeVid", queueIndex);

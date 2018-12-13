@@ -297,7 +297,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
               && !inactiveArchiveJobStatuses.count(j.status)) {
             archiveQueuesAndRequests[j.tapePool].emplace_back(ar);
             log::ScopedParamContainer params3(lc);
-            params3.add("tapepool", j.tapePool)
+            params3.add("tapePool", j.tapePool)
                    .add("copynb", j.copyNb)
                    .add("fileId", ar->getArchiveFile().archiveFileID);
             lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
@@ -455,7 +455,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
             params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
                   .add("copyNb", arup.copyNb)
                   .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                  .add("tapepool", tapepool.first)
+                  .add("tapePool", tapepool.first)
                   .add("archiveQueueObject", aq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
@@ -502,7 +502,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       {
         log::ScopedParamContainer params(lc);
         auto jobsSummary = aq.getJobsSummary();
-        params.add("tapepool", tapepool.first)
+        params.add("tapePool", tapepool.first)
               .add("archiveQueueObject", aq.getAddressIfSet())
               .add("filesAdded", filesQueued - filesDequeued)
               .add("bytesAdded", bytesQueued - bytesDequeued)

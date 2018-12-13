@@ -191,7 +191,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params (logContext);
       params.add("queueObject", aqp.address)
-            .add("tapepool", aqp.tapePool)
+            .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
       continue;
@@ -216,7 +216,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", aqp.address)
-          .add("tapepool", aqp.tapePool)
+          .add("tapePool", aqp.tapePool)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
@@ -568,7 +568,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
         arTotalQueueUnlockTime += qUnlockTime;
         linkedTapePools.push_back(j.owner);
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", j.tapePool)
+        params.add("tapePool", j.tapePool)
               .add("queueObject", j.owner)
               .add("jobObject", aReq->getAddressIfSet())
               .add("queueingTime", qTime)
@@ -586,7 +586,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       }
       aReq->remove();
       log::ScopedParamContainer params(logContext);
-      params.add("tapepool", currentTapepool)
+      params.add("tapePool", currentTapepool)
             .add("archiveRequestObject", aReq->getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue())
             .add("jobObject", aReq->getAddressIfSet());
@@ -1765,20 +1765,20 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
         try {
           re.removeArchiveQueueAndCommit(mountInfo.tapePool, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
         } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
           // TODO: improve: if we fail here we could retry to fetch a job.
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
         } catch (RootEntry::NoSuchArchiveQueue & ex) {
           // Somebody removed the queue in the mean time. Barely worth mentioning.
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
           logContext.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
         }
@@ -1790,7 +1790,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       auto queueSummaryBefore = aq.getJobsSummary();
       {
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", mountInfo.tapePool)
+        params.add("tapePool", mountInfo.tapePool)
               .add("queueObject", queueObject)
               .add("jobs", queueSummaryBefore.jobs)
               .add("bytes", queueSummaryBefore.bytes);
@@ -1811,7 +1811,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       }
       {
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", mountInfo.tapePool)
+        params.add("tapePool", mountInfo.tapePool)
               .add("queueObject", aq.getAddressIfSet())
               .add("candidatesCount", candidateJobs.size())
               .add("currentFiles", currentFiles)
@@ -1860,7 +1860,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           (*j)->m_tapePool = mountInfo.tapePool;
           log::ScopedParamContainer params(logContext);
           auto timingsReport = (*ju)->getTimeingsReport();
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
                 .add("requestObject", (*j)->m_archiveRequest.getAddressIfSet())
                 .add("fileId", (*j)->archiveFile.archiveFileID)
@@ -1878,7 +1878,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
             jobsToDequeue.emplace_back((*j)->m_archiveRequest.getAddressIfSet());
             // Log the event.
             log::ScopedParamContainer params(logContext);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("tapePool", mountInfo.tapePool)
                   .add("queueObject", aq.getAddressIfSet())
                   .add("requestObject", (*j)->m_archiveRequest.getAddressIfSet());
             logContext.log(log::WARNING, "In ArchiveMount::getNextJobBatch(): skipped job not owned or not present.");
@@ -1889,7 +1889,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("tapePool", mountInfo.tapePool)
                   .add("queueObject", aq.getAddressIfSet())
                   .add("requestObject", (*j)->m_archiveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -1908,7 +1908,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
             log::ScopedParamContainer params(logContext);
             int demangleStatus;
             char * exceptionTypeStr = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
-            params.add("tapepool", mountInfo.tapePool)
+            params.add("tapePool", mountInfo.tapePool)
                   .add("queueObject", aq.getAddressIfSet())
                   .add("requestObject", (*j)->m_archiveRequest.getAddressIfSet());
             if (!demangleStatus) {
@@ -1958,12 +1958,12 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
           re.fetch();
           re.removeArchiveQueueAndCommit(mountInfo.tapePool, QueueType::LiveJobs, logContext);
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): deleted empty queue");
         } catch (cta::exception::Exception &ex) {
           log::ScopedParamContainer params(logContext);
-          params.add("tapepool", mountInfo.tapePool)
+          params.add("tapePool", mountInfo.tapePool)
                 .add("queueObject", aq.getAddressIfSet())
                 .add("Message", ex.getMessageValue());
           logContext.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not delete a presumably empty queue");
@@ -1973,7 +1973,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       // We can now summarize this round
       {
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", mountInfo.tapePool)
+        params.add("tapePool", mountInfo.tapePool)
               .add("queueObject", aq.getAddressIfSet())
               .add("filesAdded", currentFiles - beforeFiles)
               .add("bytesAdded", currentBytes - beforeBytes)
@@ -2035,7 +2035,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
   }
   {
     log::ScopedParamContainer params(logContext);
-    params.add("tapepool", mountInfo.tapePool)
+    params.add("tapePool", mountInfo.tapePool)
           .add("files", nFiles)
           .add("bytes", nBytes)
           .add("driveRegisterCheckTime", driveRegisterCheckTime)
@@ -2442,7 +2442,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob> > OStoreDB::RetrieveMo
   }
   {
     log::ScopedParamContainer params(logContext);
-    params.add("tapepool", mountInfo.tapePool)
+    params.add("tapePool", mountInfo.tapePool)
           .add("files", nFiles)
           .add("bytes", nBytes)
           .add("driveRegisterCheckTime", driveRegisterCheckTime)

@@ -596,7 +596,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (!mountPassesACriteria || existingMounts >= m->maxDrivesAllowed) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
       }
@@ -616,7 +616,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       // populate the mount with a weight 
       m->ratioOfMountQuotaUsed = 1.0L * existingMounts / m->maxDrivesAllowed;
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", m->tapePool);
+      params.add("tapePool", m->tapePool);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
       }
@@ -708,7 +708,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             existingMounts=existingMountsSummary.at(tpType(m->tapePool, m->type));
           } catch (...) {}
           log::ScopedParamContainer params(lc);
-          params.add("tapepool", m->tapePool)
+          params.add("tapePool", m->tapePool)
                 .add("tapeVid", t.vid)
                 .add("mountType", common::dataStructures::toString(m->type))
                 .add("existingMounts", existingMounts)
@@ -742,7 +742,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
       } catch (...) {}
       schedulerDbTime = getMountInfoTime;
       catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-      params.add("tapepool", m->tapePool)
+      params.add("tapePool", m->tapePool)
             .add("tapeVid", m->vid)
             .add("mountType", common::dataStructures::toString(m->type))
             .add("existingMounts", existingMounts)
@@ -860,7 +860,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
             schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
             catalogueTime = getTapeInfoTime + getTapeForWriteTime;
             
-            params.add("tapepool", m->tapePool)
+            params.add("tapePool", m->tapePool)
                   .add("tapeVid", t.vid)
                   .add("vo",t.vo)
                   .add("mediaType",t.mediaType)
@@ -925,7 +925,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLib
         } catch (...) {}
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
-        params.add("tapepool", m->tapePool)
+        params.add("tapePool", m->tapePool)
               .add("tapeVid", m->vid)
               .add("vo",m->vo)
               .add("mediaType",m->mediaType)
