@@ -195,7 +195,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr));
   bool done = false;
   size_t count = 0;
   while (!done) {
@@ -276,12 +276,12 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host","vo","mediaType", "vendor",123456789, time(nullptr));
   auto done = false;
   auto count = 0;
 #else
   moutInfo = db.getMountInfo(lc);
-  am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", time(nullptr));
+  am = moutInfo->createArchiveMount(tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr));
   done = false;
   count = 0;
 #endif

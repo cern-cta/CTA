@@ -83,6 +83,37 @@ namespace cta {
      */
     uint32_t getNbFiles() const override;
     
+     /**
+     * Returns the tape pool of the tape to be mounted
+     * @return The tape pool of the tape to be mounted
+     */
+    std::string getPoolName() const;
+    
+    /**
+     * Returns the virtual organization in which the tape
+     * belongs
+     * @return the vo in which the tape belongs
+     */
+    std::string getVo() const;
+    
+    /**
+     * Returns the media type of the tape
+     * @return de media type of the tape
+     */
+    std::string getMediaType() const;
+    
+    /**
+     * Returns the vendor of the tape
+     * @return the vendor of the tape
+     */
+    std::string getVendor() const;
+    
+    /**
+    * Returns the capacity in bytes of the tape
+    * @return the capacity in bytes of the tape
+    */
+    uint64_t getCapacityInBytes() const;
+    
     /**
      * Report a drive status change
      */

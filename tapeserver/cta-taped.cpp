@@ -180,7 +180,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 //static void logTpconfigLine(cta::log::Logger &log,
 //  const cta::tape::daemon::TpconfigLine &line) {
 //  std::list<cta::log::Param> params = {
-//    cta::log::Param("unitName", line.unitName),
+//    cta::log::Param("tapeDrive", line.unitName),
 //    cta::log::Param("logicalLibrary", line.logicalLibrary),
 //    cta::log::Param("devFilename", line.devFilename),
 //    cta::log::Param("librarySlot", line.librarySlot)};

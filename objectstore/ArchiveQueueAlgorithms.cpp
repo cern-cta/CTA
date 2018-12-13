@@ -140,19 +140,19 @@ void ContainerTraits<ArchiveQueue>::getLockedAndFetchedNoCreate(Container& cont,
     try {
       re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): de-referenced missing queue from root entry");
     } catch (RootEntry::ArchiveQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue & ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::DEBUG, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry: already done.");
     }
@@ -243,12 +243,12 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Scope
       re.fetch();
       re.removeArchiveQueueAndCommit(cId, QueueType::LiveJobs, lc);
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
-      params.add("tapepool", cId)
+      params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
