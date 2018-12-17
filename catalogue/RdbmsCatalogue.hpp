@@ -496,6 +496,20 @@ public:
   ArchiveFileItor getArchiveFiles(const TapeFileSearchCriteria &searchCriteria) const override;
 
   /**
+   * Returns the specified tape files in file sequence order.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param startFSeq The file sequence number of the first file.  Please note
+   * that there might not be a file with this exact file sequence number.
+   * @param maxNbFiles The maximum number of files to be returned.
+   * @return The tape files.
+   */
+  std::list<common::dataStructures::TapeFile> getTapeFilesForRepack(
+    const std::string &vid,
+    const uint64_t startFSeq,
+    const uint64_t maxNbFiles) const override;
+
+  /**
    * Returns a summary of the tape files that meet the specified search
    * criteria.
    *
