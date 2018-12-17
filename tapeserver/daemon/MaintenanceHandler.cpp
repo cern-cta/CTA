@@ -249,7 +249,7 @@ int MaintenanceHandler::runChild() {
   // collect them like any other crashed agent.
   
   // Set the thread name for process ID:
-  prctl(PR_SET_NAME, "cta-taped-gc");
+  prctl(PR_SET_NAME, "cta-tpd-maint");
   
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
