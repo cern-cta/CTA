@@ -2378,7 +2378,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
       insertedElementsLists[j->tapeFile.vid].emplace_back(AqtrCa::InsertedElement{&j->m_archiveRequest, j->tapeFile.copyNb, 
           j->archiveFile, cta::nullopt, cta::nullopt});
       log::ScopedParamContainer params (lc);
-      params.add("VID", j->tapeFile.vid)
+      params.add("tapeVid", j->tapeFile.vid)
             .add("fileId", j->archiveFile.archiveFileID)
             .add("requestObject", j->m_archiveRequest.getAddressIfSet());
       lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting.");
@@ -2389,13 +2389,13 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         aqtrCa.referenceAndSwitchOwnership(list.first, JobQueueType::JobsToReport, m_oStoreDB.m_agentReference->getAgentAddress(),
             list.second, lc);
         log::ScopedParamContainer params(lc);
-        params.add("VID", list.first)
+        params.add("tapeVid", list.first)
               .add("jobs", list.second.size())
               .add("enqueueTime", t.secs());
         lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for reporting.");
       } catch (cta::exception::Exception & ex) {
         log::ScopedParamContainer params(lc);
-        params.add("VID", list.first)
+        params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting.");
       }

@@ -24,7 +24,7 @@ template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_identifierType = "vid";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_identifierType = "tapeVid";
 
 template<>
 auto ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::
