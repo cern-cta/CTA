@@ -243,19 +243,19 @@ retry:
     try {
       re.removeRetrieveQueueAndCommit(cId, queueType, lc);
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): dereferenced missing queue from root entry");
     } catch (RootEntry::RetrieveQueueNotEmpty &ex) {
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
     } catch (RootEntry::NoSuchRetrieveQueue &ex) {
       // Somebody removed the queue in the meantime. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
-      params.add("vid", cId)
+      params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet());
       lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry: already done.");
     }
@@ -403,12 +403,12 @@ trimContainerIfNeeded(Container &cont, QueueType queueType, ScopedExclusiveLock 
     re.fetch();
     re.removeRetrieveQueueAndCommit(cId, queueType, lc);
     log::ScopedParamContainer params(lc);
-    params.add("vid", cId)
+    params.add("tapeVid", cId)
           .add("queueObject", cont.getAddressIfSet());
     lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
-    params.add("vid", cId)
+    params.add("tapeVid", cId)
           .add("queueObject", cont.getAddressIfSet())
           .add("Message", ex.getMessageValue());
     lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");

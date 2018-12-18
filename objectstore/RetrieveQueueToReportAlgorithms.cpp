@@ -24,7 +24,7 @@ template<>
 const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_containerTypeName = "RetrieveQueueToReport";
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "vid";
+const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::c_identifierType = "tapeVid";
 
 template<>
 auto ContainerTraits<RetrieveQueue,RetrieveQueueToReport>::

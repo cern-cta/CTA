@@ -303,7 +303,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
-  params.add("VID", vid)
+  params.add("tapeVid", vid)
         .add("repackType", toString(repackType));
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");

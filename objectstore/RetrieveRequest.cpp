@@ -119,7 +119,7 @@ queueForFailure:;
               .add("copyNb", j.copynb());
         for (auto &tf: m_payload.archivefile().tapefiles()) {
           if (tf.copynb() == j.copynb()) {
-            params.add("vid", tf.vid())
+            params.add("tapeVid", tf.vid())
                   .add("fSeq", tf.fseq());
             break;
           }
