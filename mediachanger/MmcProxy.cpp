@@ -34,7 +34,7 @@ MmcProxy::MmcProxy(log::Logger &log):
 //------------------------------------------------------------------------------
 void MmcProxy::mountTapeReadOnly( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
-    log::Param("TPVID", vid),
+    log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Tape should be manual mounted for read-only access", params);
 }
@@ -44,7 +44,7 @@ void MmcProxy::mountTapeReadOnly( const std::string &vid, const LibrarySlot &lib
 //------------------------------------------------------------------------------
 void MmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
-    log::Param("TPVID", vid),
+    log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Tape should be manual mounted for read/write access", params);
 }
@@ -54,7 +54,7 @@ void MmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &lib
 //------------------------------------------------------------------------------
 void MmcProxy::dismountTape( const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
-    log::Param("TPVID", vid),
+    log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Tape should be manual dismounted", params);
 }
@@ -64,7 +64,7 @@ void MmcProxy::dismountTape( const std::string &vid, const LibrarySlot &libraryS
 //------------------------------------------------------------------------------
 void MmcProxy::forceDismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
-    log::Param("TPVID", vid),
+    log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Tape should be manual dismounted", params);
 }

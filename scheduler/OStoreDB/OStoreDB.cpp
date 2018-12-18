@@ -194,7 +194,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params (logContext);
       params.add("queueObject", aqp.address)
-            .add("tapepool", aqp.tapePool)
+            .add("tapePool", aqp.tapePool)
             .add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue. Skipping it.");
       continue;
@@ -219,7 +219,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", aqp.address)
-          .add("tapepool", aqp.tapePool)
+          .add("tapePool", aqp.tapePool)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
@@ -240,7 +240,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params (lc);
       params.add("queueObject", rqp.address)
-            .add("vid", rqp.vid)
+            .add("tapeVid", rqp.vid)
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING, "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
       continue;
@@ -265,7 +265,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto processingTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer params (logContext);
     params.add("queueObject", rqp.address)
-          .add("vid", rqp.vid)
+          .add("tapeVid", rqp.vid)
           .add("queueLockTime", queueLockTime)
           .add("queueFetchTime", queueFetchTime)
           .add("processingTime", processingTime);
@@ -417,7 +417,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
           rql.release();
           re.removeRetrieveQueueAndCommit(r.vid, queueType, lc);
           log::ScopedParamContainer params(lc);
-          params.add("vid", r.vid)
+          params.add("tapeVid", r.vid)
                 .add("queueType", toString(queueType))
                 .add("queueObject", r.address);
           lc.log(log::INFO, "In OStoreDB::trimEmptyQueues(): deleted empty retrieve queue.");
@@ -435,14 +435,32 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(const catalogue::TapeForWriting& tape, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
+        const catalogue::TapeForWriting& tape,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid, const std::string& tapePool, const std::string driveName, const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid,
+        const std::string& tapePool,
+        const std::string driveName,
+        const std::string& logicalLibrary,
+        const std::string& hostName,
+        const std::string& vo,
+        const std::string& mediaType,
+        const std::string& vendor,
+        const uint64_t capacityInBytes,
+        time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -558,7 +576,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
         arTotalQueueUnlockTime += qUnlockTime;
         linkedTapePools.push_back(j.owner);
         log::ScopedParamContainer params(logContext);
-        params.add("tapepool", j.tapePool)
+        params.add("tapePool", j.tapePool)
               .add("queueObject", j.owner)
               .add("jobObject", aReq->getAddressIfSet())
               .add("queueingTime", qTime)
@@ -576,7 +594,7 @@ void OStoreDB::queueArchive(const std::string &instanceName, const cta::common::
       }
       aReq->remove();
       log::ScopedParamContainer params(logContext);
-      params.add("tapepool", currentTapepool)
+      params.add("tapePool", currentTapepool)
             .add("archiveRequestObject", aReq->getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue())
             .add("jobObject", aReq->getAddressIfSet());
@@ -847,7 +865,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
     uint64_t taskQueueSize = m_taskQueueSize;
     // Prepare the logs to avoid multithread access on the object.
     log::ScopedParamContainer params(logContext);
-    params.add("vid", bestVid)
+    params.add("tapeVid", bestVid)
           .add("jobObject", rReq->getAddressIfSet())
           .add("fileId", rReq->getArchiveFile().archiveFileID)
           .add("diskInstance", rReq->getArchiveFile().diskInstance)
@@ -892,7 +910,7 @@ std::string OStoreDB::queueRetrieve(const cta::common::dataStructures::RetrieveR
       m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
       double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
       log::ScopedParamContainer params(logContext);
-      params.add("vid", bestVid)
+      params.add("tapeVid", bestVid)
             .add("queueObject", owner)
             .add("jobObject", rReq->getAddressIfSet())
             .add("fileId", rReq->getArchiveFile().archiveFileID)
@@ -1916,7 +1934,8 @@ void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
 std::unique_ptr<SchedulerDatabase::ArchiveMount> 
   OStoreDB::TapeMountDecisionInfo::createArchiveMount(
     const catalogue::TapeForWriting & tape, const std::string driveName,
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -1935,7 +1954,11 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount>
   // Fill up the mount info
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
+  am.mountInfo.vo = vo;
+  am.mountInfo.mediaType = mediaType;
+  am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
+  am.mountInfo.capacityInBytes = capacityInBytes;
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
@@ -1980,7 +2003,8 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStroeDb): m_l
 std::unique_ptr<SchedulerDatabase::RetrieveMount> 
   OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
     const std::string& vid, const std::string & tapePool, const std::string driveName, 
-    const std::string& logicalLibrary, const std::string& hostName, time_t startTime) {
+    const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,const uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to 
@@ -2008,6 +2032,10 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
   m_schedulerGlobalLock->commit();
   rm.mountInfo.tapePool = tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
+  rm.mountInfo.vo = vo;
+  rm.mountInfo.mediaType = mediaType;
+  rm.mountInfo.vendor = vendor;
+  rm.mountInfo.capacityInBytes = capacityInBytes;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry

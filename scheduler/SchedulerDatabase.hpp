@@ -145,9 +145,13 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string mediaType;
+      std::string vendor;
       std::string drive;
       std::string host;
       uint64_t mountId;
+      uint64_t capacityInBytes;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -325,8 +329,12 @@ public:
       std::string vid;
       std::string logicalLibrary;
       std::string tapePool;
+      std::string vo;
+      std::string mediaType;
+      std::string vendor;
       std::string drive;
       std::string host;
+      uint64_t capacityInBytes;
       uint64_t mountId;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
@@ -419,6 +427,11 @@ public:
     std::string vid;              /**< The tape VID (for a retieve) */
     std::string tapePool;         /**< The name of the tape pool for both archive 
                                    * and retrieve */
+    std::string vo;               // Virtual organization of the tape
+    std::string mediaType;        // Media type of the tape
+    std::string vendor;           // Vendor of the tape
+    uint64_t capacityInBytes;     // Capacity in bytes of the tape
+    
     uint64_t priority;            /**< The priority for the mount, defined as the highest 
                                    * priority of all queued jobs */
     uint64_t maxDrivesAllowed;    /**< The maximum number of drives allowed for this 
@@ -490,7 +503,10 @@ public:
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape, const std::string driveName, 
-      const std::string & logicalLibrary, const std::string & hostName, 
+      const std::string & logicalLibrary, const std::string & hostName,
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
@@ -499,6 +515,9 @@ public:
     virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
       const std::string & tapePool, const std::string driveName, 
       const std::string& logicalLibrary, const std::string& hostName,
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};

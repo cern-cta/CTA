@@ -380,7 +380,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueTyp
     commit();
     {
       log::ScopedParamContainer params(lc);
-      params.add("vid", vid)
+      params.add("tapeVid", vid)
             .add("queueType", toString(queueType));
       lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
     }

@@ -114,7 +114,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
           re.removeArchiveQueueAndCommit(tapePool.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("tapepool", tapePool.value())
+          params.add("tapePool", tapePool.value())
                 .add("queueObject", archiveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from root entry.");
@@ -231,7 +231,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
           re.removeRetrieveQueueAndCommit(vid.value(), queueType, lc);
           rootQueueDereferenceTime += t.secs(utils::Timer::resetCounter);
           log::ScopedParamContainer params(lc);
-          params.add("vid", vid.value())
+          params.add("tapeVid", vid.value())
                 .add("queueObject", retrieveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from root entry.");

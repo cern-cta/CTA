@@ -67,6 +67,59 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 }
 
 //------------------------------------------------------------------------------
+// getMountTapePool()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getPoolName() const{
+  std::stringstream sTapePool;
+  if (!m_dbMount.get())
+    throw exception::Exception("In cta::RetrieveMount::getPoolName(): got NULL dbMount");
+  sTapePool << m_dbMount->mountInfo.tapePool;
+  return sTapePool.str();
+}
+
+//------------------------------------------------------------------------------
+// getVo()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getVo() const
+{
+    std::stringstream sVo;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVo(): got NULL dbMount");
+    sVo<<m_dbMount->mountInfo.vo;
+    return sVo.str();
+}
+
+//------------------------------------------------------------------------------
+// getMediaType()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getMediaType() const
+{
+    std::stringstream sMediaType;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getMediaType(): got NULL dbMount");
+    sMediaType<<m_dbMount->mountInfo.mediaType;
+    return sMediaType.str();
+}
+
+//------------------------------------------------------------------------------
+// getVo()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getVendor() const
+{
+    std::stringstream sVendor;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+    sVendor<<m_dbMount->mountInfo.vendor;
+    return sVendor.str();
+}
+
+uint64_t cta::RetrieveMount::getCapacityInBytes() const {
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+    return m_dbMount->mountInfo.capacityInBytes;
+}
+
+//------------------------------------------------------------------------------
 // getNextJobBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
