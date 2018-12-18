@@ -4022,6 +4022,16 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
 }
 
 //------------------------------------------------------------------------------
+// getTapeFilesForRepack
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFilesForRepack(
+  const std::string &vid,
+  const uint64_t startFSeq,
+  const uint64_t maxNbFiles) const {
+  return std::list<common::dataStructures::TapeFile>();
+}
+
+//------------------------------------------------------------------------------
 // getTapeFileSummary
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
