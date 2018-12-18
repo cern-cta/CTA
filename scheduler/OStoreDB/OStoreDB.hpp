@@ -95,11 +95,17 @@ public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
-      const std::string & hostName, time_t startTime) override;
+      const std::string & hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes,
+      time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) override;
     virtual ~TapeMountDecisionInfo();
   private:
@@ -116,11 +122,16 @@ public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       const catalogue::TapeForWriting & tape,
       const std::string driveName, const std::string& logicalLibrary, 
-      const std::string & hostName, time_t startTime) override;
+      const std::string & hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,uint64_t capacityInBytes,
+      time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string & vid, const std::string & tapePool,
       const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName, 
+      const std::string& vo, const std::string& mediaType,
+      const std::string& vendor,
+      const uint64_t capacityInBytes,
       time_t startTime) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };

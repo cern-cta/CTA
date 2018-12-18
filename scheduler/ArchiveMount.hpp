@@ -142,6 +142,30 @@ namespace cta {
     std::string getPoolName() const;
     
     /**
+     * Returns the virtual organization of the tape to be mounted
+     * @return the vo of the tape to be mounted
+     */
+    std::string getVo() const;
+    
+    /**
+     * Returns the media type of the tape
+     * @return de media type of the tape
+     */
+    std::string getMediaType() const;
+    
+    /**
+     * Returns the vendor of the tape
+     * @return the vendor of the tape
+     */
+    std::string getVendor() const;
+    
+    /**
+     * Returns the capacity in bytes of the tape
+     * @return the capacity in bytes of the tape
+     */
+    uint64_t getCapacityInBytes() const;
+    
+    /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.

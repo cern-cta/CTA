@@ -121,7 +121,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleCompletedRequests
     itor != m_acsRequestList.end();itor++) {
     cta::mediachanger::acs::daemon::AcsRequest *const acsRequest = *itor;
     if (acsRequest->isCompleted()) {
-      std::list<log::Param> params = {log::Param("TPVID", acsRequest->getVid()),
+      std::list<log::Param> params = {log::Param("tapeVid", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
         log::Param("lsm", acsRequest->getLsm()),
         log::Param("panel", acsRequest->getPanel()),
@@ -143,7 +143,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::handleFailedRequests() 
     itor != m_acsRequestList.end();itor++) {
     cta::mediachanger::acs::daemon::AcsRequest *const acsRequest = *itor;
     if (acsRequest->isFailed()) {
-      std::list<log::Param> params = {log::Param("TPVID", acsRequest->getVid()),
+      std::list<log::Param> params = {log::Param("tapeVid", acsRequest->getVid()),
         log::Param("acs", acsRequest->getAcs()),
         log::Param("lsm", acsRequest->getLsm()),
         log::Param("panel", acsRequest->getPanel()),
@@ -231,7 +231,7 @@ void cta::mediachanger::acs::daemon::AcsPendingRequests::checkAndAddRequestDismo
 
   checkRequest(vid, acs, lsm, panel, drive);
   
-  std::list<log::Param> params = {log::Param("TPVID", vid),
+  std::list<log::Param> params = {log::Param("tapeVid", vid),
     log::Param("acs", acs),
     log::Param("lsm", lsm),
     log::Param("panel", panel),

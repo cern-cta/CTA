@@ -232,7 +232,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    std::list<log::Param> params = {log::Param("TPVID", vid),
+    std::list<log::Param> params = {log::Param("tapeVid", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),
@@ -277,7 +277,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    std::list<log::Param> params = {log::Param("TPVID", vid),
+    std::list<log::Param> params = {log::Param("tapeVid", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),
@@ -322,7 +322,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
     
-    std::list<log::Param> params = {log::Param("TPVID", vid),
+    std::list<log::Param> params = {log::Param("tapeVid", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),
@@ -371,7 +371,7 @@ cta::mediachanger::Frame cta::mediachanger::acs::daemon::AcsMessageHandler::
     const uint32_t panel  = rqstBody.panel();
     const uint32_t drive  = rqstBody.drive();
 
-    std::list<log::Param> params = {log::Param("TPVID", vid),
+    std::list<log::Param> params = {log::Param("tapeVid", vid),
       log::Param("acs", acs),
       log::Param("lsm", lsm),
       log::Param("panel", panel),

@@ -298,7 +298,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
             try {
               archiveQueuesAndRequests[std::make_tuple(j.tapePool, ar->getJobQueueType(j.copyNb))].emplace_back(ar);
               log::ScopedParamContainer params3(lc);
-              params3.add("tapepool", j.tapePool)
+              params3.add("tapePool", j.tapePool)
                      .add("copynb", j.copyNb)
                      .add("fileId", ar->getArchiveFile().archiveFileID);
               lc.log(log::INFO, "Selected archive request for requeueing to tape pool");
@@ -358,7 +358,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         for (auto & tc: rr->getArchiveFile().tapeFiles) { if (tc.second.vid==vid) { copyNb=tc.first; fSeq=tc.second.fSeq; } }
         params3.add("fileId", rr->getArchiveFile().archiveFileID)
                .add("copyNb", copyNb)
-               .add("vid", vid)
+               .add("tapeVid", vid)
                .add("fSeq", fSeq);
         lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
         break;
@@ -460,7 +460,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
             params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
                   .add("copyNb", arup.copyNb)
                   .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-                  .add("tapepool", tapepool)
+                  .add("tapePool", tapepool)
                   .add("archiveQueueObject", queueAddress)
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
@@ -589,7 +589,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
             params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                   .add("copyNb", rrup.copyNb)
                   .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                  .add("vid", vid)
+                  .add("tapeVid", vid)
                   .add("retreveQueueObject", rq.getAddressIfSet())
                   .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
             lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): requeued retrieve job.");
@@ -641,7 +641,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       {
         log::ScopedParamContainer params(lc);
         auto jobsSummary = rq.getJobsSummary();
-        params.add("vid", vid)
+        params.add("tapeVid", vid)
               .add("retrieveQueueObject", rq.getAddressIfSet())
               .add("filesAdded", filesQueued - filesDequeued)
               .add("bytesAdded", bytesQueued - bytesDequeued)

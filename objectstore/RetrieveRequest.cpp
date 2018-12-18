@@ -170,7 +170,7 @@ queueForFailure:;
             .add("fileId", m_payload.archivefile().archivefileid())
             .add("queueObject", rq.getAddressIfSet())
             .add("copynb", activeCopyNb)
-            .add("vid", activeVid)
+            .add("tapeVid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): queued the request to the failed queue.");
@@ -231,7 +231,7 @@ queueForTransfer:;
             .add("fileId", m_payload.archivefile().archivefileid())
             .add("queueObject", rq.getAddressIfSet())
             .add("copynb", bestTapeFile->copynb())
-            .add("vid", bestTapeFile->vid())
+            .add("tapeVid", bestTapeFile->vid())
             .add("tapeSelectionTime", tapeSelectionTime)
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
@@ -255,7 +255,7 @@ queueForTransfer:;
             .add("fileId", m_payload.archivefile().archivefileid())
             .add("queueObject", rq.getAddressIfSet())
             .add("copynb", bestTapeFile->copynb())
-            .add("vid", bestTapeFile->vid())
+            .add("tapeVid", bestTapeFile->vid())
             .add("tapeSelectionTime", tapeSelectionTime)
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime)
