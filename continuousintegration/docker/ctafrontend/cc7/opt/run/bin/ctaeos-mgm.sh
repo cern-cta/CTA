@@ -218,6 +218,12 @@ fi
   # set interval in which the WFE engine is running
   eos space config default space.wfe.interval=1
 
+# prepare EOS garbage collectors
+  # enable the 'file archived' garbage collector
+  eos space config default space.filearchivedgc=on
+  # set the number of free bytes at which the MGM LRU tape aware garabge collector will start deleting redundant disk files
+  eos space config default space.tapeawaregc.minfreebytes=0
+
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
