@@ -493,15 +493,15 @@ public:
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
-   * Returns the specified tape files in file sequence order.
+   * Returns the specified files in tape file sequence order.
    *
    * @param vid The volume identifier of the tape.
    * @param startFSeq The file sequence number of the first file.  Please note
    * that there might not be a file with this exact file sequence number.
    * @param maxNbFiles The maximum number of files to be returned.
-   * @return The tape files.
+   * @return The specified files in tape file sequence order.
    */
-  virtual std::list<common::dataStructures::TapeFile> getTapeFilesForRepack(
+  virtual std::list<common::dataStructures::ArchiveFile> getFilesForRepack(
     const std::string &vid,
     const uint64_t startFSeq,
     const uint64_t maxNbFiles) const = 0;

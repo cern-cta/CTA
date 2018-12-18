@@ -4022,13 +4022,91 @@ ArchiveFileItor RdbmsCatalogue::getArchiveFiles(const TapeFileSearchCriteria &se
 }
 
 //------------------------------------------------------------------------------
-// getTapeFilesForRepack
+// getFilesForRepack
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeFile> RdbmsCatalogue::getTapeFilesForRepack(
+std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack(
   const std::string &vid,
   const uint64_t startFSeq,
   const uint64_t maxNbFiles) const {
-  return std::list<common::dataStructures::TapeFile>();
+  try {
+    std::string sql =
+      "SELECT "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,"
+        "ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,"
+        "ARCHIVE_FILE.DISK_FILE_PATH AS DISK_FILE_PATH,"
+        "ARCHIVE_FILE.DISK_FILE_USER AS DISK_FILE_USER,"
+        "ARCHIVE_FILE.DISK_FILE_GROUP AS DISK_FILE_GROUP,"
+        "ARCHIVE_FILE.DISK_FILE_RECOVERY_BLOB AS DISK_FILE_RECOVERY_BLOB,"
+        "ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,"
+        "ARCHIVE_FILE.CHECKSUM_TYPE AS CHECKSUM_TYPE,"
+        "ARCHIVE_FILE.CHECKSUM_VALUE AS CHECKSUM_VALUE,"
+        "STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,"
+        "ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME,"
+        "TAPE_FILE.VID AS VID,"
+        "TAPE_FILE.FSEQ AS FSEQ,"
+        "TAPE_FILE.BLOCK_ID AS BLOCK_ID,"
+        "TAPE_FILE.COMPRESSED_SIZE_IN_BYTES AS COMPRESSED_SIZE_IN_BYTES,"
+        "TAPE_FILE.COPY_NB AS COPY_NB,"
+        "TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, "
+        "TAPE.TAPE_POOL_NAME AS TAPE_POOL_NAME "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN STORAGE_CLASS ON "
+        "ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID "
+      "INNER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
+       "WHERE "
+         "TAPE_FILE.VID = :VID "
+       "ORDER BY FSEQ";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+
+    std::list<common::dataStructures::ArchiveFile> archiveFiles;
+    while(rset.next()) {
+      common::dataStructures::ArchiveFile archiveFile;
+
+      archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+      archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
+      archiveFile.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+      archiveFile.diskFileInfo.owner = rset.columnString("DISK_FILE_USER");
+      archiveFile.diskFileInfo.group = rset.columnString("DISK_FILE_GROUP");
+      archiveFile.diskFileInfo.recoveryBlob = rset.columnString("DISK_FILE_RECOVERY_BLOB");
+      archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+      archiveFile.checksumType = rset.columnString("CHECKSUM_TYPE");
+      archiveFile.checksumValue = rset.columnString("CHECKSUM_VALUE");
+      archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
+      archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+      archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+
+      common::dataStructures::TapeFile tapeFile;
+      tapeFile.vid = rset.columnString("VID");
+      tapeFile.fSeq = rset.columnUint64("FSEQ");
+      tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+      tapeFile.compressedSize = rset.columnUint64("COMPRESSED_SIZE_IN_BYTES");
+      tapeFile.copyNb = rset.columnUint64("COPY_NB");
+      tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+      tapeFile.checksumType = archiveFile.checksumType; // Duplicated for convenience
+      tapeFile.checksumValue = archiveFile.checksumValue; // Duplicated for convenience
+
+      archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
+
+      archiveFiles.push_back(archiveFile);
+    }
+    return archiveFiles;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
