@@ -7506,8 +7506,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     const std::string vid = copyNb == 1 ? vid1 : vid2;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
-    auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
-    auto m = archiveFileListToMap(archiveFiles);
+    const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
+    const auto m = archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -7572,9 +7572,9 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     const std::string vid = copyNb == 1 ? vid1 : vid2;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
-    auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
-    auto m = archiveFileListToMap(archiveFiles);
-    ASSERT_EQ(nbArchiveFiles, m.size());
+    const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
+    const auto m = archiveFileListToMap(archiveFiles);
+    ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for(uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
       std::ostringstream diskFileId;
@@ -7636,11 +7636,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
 
   for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? vid1 : vid2;
-    const uint64_t startFseq = 1;
+    const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
-    auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
-    auto m = archiveFileListToMap(archiveFiles);
-    ASSERT_EQ(nbArchiveFiles, m.size());
+    const auto archiveFiles = m_catalogue->getFilesForRepack(vid, startFseq, maxNbFiles);
+    const auto m = archiveFileListToMap(archiveFiles);
+    ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for(uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;

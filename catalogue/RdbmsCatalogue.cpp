@@ -4060,12 +4060,14 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       "INNER JOIN TAPE ON "
         "TAPE_FILE.VID = TAPE.VID "
        "WHERE "
-         "TAPE_FILE.VID = :VID "
+         "TAPE_FILE.VID = :VID AND "
+         "TAPE_FILE.FSEQ >= :START_FSEQ "
        "ORDER BY FSEQ";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
+    stmt.bindUint64(":START_FSEQ", startFSeq);
     auto rset = stmt.executeQuery(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
 
     std::list<common::dataStructures::ArchiveFile> archiveFiles;
@@ -4099,6 +4101,8 @@ std::list<common::dataStructures::ArchiveFile> RdbmsCatalogue::getFilesForRepack
       archiveFile.tapeFiles[rset.columnUint64("COPY_NB")] = tapeFile;
 
       archiveFiles.push_back(archiveFile);
+
+      if(maxNbFiles == archiveFiles.size()) break;
     }
     return archiveFiles;
   } catch(exception::UserError &) {
